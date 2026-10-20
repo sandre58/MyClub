@@ -28,7 +28,9 @@ internal static class StructureMaterializeAssembler
         Competition competition,
         Stage stage,
         IReadOnlyList<Stage> competitionStages,
-        IReadOnlyList<MatchSummaryRow> matchSummaries)
+        IReadOnlyList<MatchSummaryRow> matchSummaries,
+        StructureInboundCompositionDto? inboundComposition = null,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>>? matchSummariesByStage = null)
     {
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(stage);
@@ -43,8 +45,17 @@ internal static class StructureMaterializeAssembler
                 stage,
                 competitionStages,
                 matchSummaries),
-            StructureFormatKind.Groups => AssembleGroups(competition, stage, matchSummaries),
-            StructureFormatKind.Cup => AssembleCup(competition, stage),
+            StructureFormatKind.Groups => AssembleGroups(
+                competition,
+                stage,
+                matchSummaries,
+                inboundComposition),
+            StructureFormatKind.Cup => AssembleCup(
+                competition,
+                stage,
+                competitionStages,
+                inboundComposition,
+                matchSummariesByStage),
             StructureFormatKind.Swiss => null,
             null => null,
             _ => null
@@ -87,7 +98,8 @@ internal static class StructureMaterializeAssembler
     private static StructureMaterializeDto AssembleGroups(
         Competition competition,
         Stage stage,
-        IReadOnlyList<MatchSummaryRow> matchSummaries)
+        IReadOnlyList<MatchSummaryRow> matchSummaries,
+        StructureInboundCompositionDto? inboundComposition)
     {
         var covered = CoveredDirectedPairs(stage.Id, matchSummaries);
         var names = EntryDisplayNames.ToMap(competition);
@@ -140,6 +152,7 @@ internal static class StructureMaterializeAssembler
             materializedCount,
             commandEnabled: eligibleCount > 0 && !blocksProduction,
             rows,
+            inboundComposition,
             groupsPlacementFilledCount: groupsPlacementFilled,
             groupsPlacementCapacityCount: groupsPlacementCapacity,
             prospectiveConfrontationCount: prospectiveConfrontations);
@@ -162,25 +175,29 @@ internal static class StructureMaterializeAssembler
         return pairsPerGroup * stage.Groups.Count;
     }
 
-    private static StructureMaterializeDto AssembleCup(Competition competition, Stage stage)
+    private static StructureMaterializeDto AssembleCup(
+        Competition competition,
+        Stage stage,
+        IReadOnlyList<Stage> competitionStages,
+        StructureInboundCompositionDto? inboundComposition,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>>? matchSummariesByStage)
     {
         var names = EntryDisplayNames.ToMap(competition);
         var mutable = IsCupMutable(competition, stage);
+        var pairContext = new CupBracketPairMaterialization.ResolutionContext(
+            competitionStages,
+            matchSummariesByStage);
         var rows = new List<StructureMaterializeConfrontationDto>(stage.BracketPairs.Count);
         foreach (var pair in stage.BracketPairs.OrderBy(item => item.PairKey, StringComparer.Ordinal))
         {
-            var slotA = stage.FindSlot(pair.SlotAKey);
-            var slotB = stage.FindSlot(pair.SlotBKey);
-            var determined = slotA?.EntryId is { } home
-                             && slotB?.EntryId is { } away
-                             && !home.Equals(away);
-            var materialized = stage.FindFixtureByBracketPairKey(pair.PairKey) is not null;
-            var eligible = determined && !materialized && mutable;
+            var determined = CupBracketPairMaterialization.IsPairDetermined(stage, pair, pairContext);
+            var materialized = CupBracketPairMaterialization.IsConfrontationMaterialized(stage, pair, pairContext);
+            var eligible = mutable && CupBracketPairMaterialization.IsEligibleForMaterialization(stage, pair, pairContext);
             rows.Add(
                 new StructureMaterializeConfrontationDto(
                     pair.PairKey,
-                    SideLabel(slotA, names, pair.SlotAKey),
-                    SideLabel(slotB, names, pair.SlotBKey),
+                    SideLabel(names, pair.SlotAKey, stage, pairContext),
+                    SideLabel(names, pair.SlotBKey, stage, pairContext),
                     determined,
                     materialized,
                     eligible,
@@ -191,7 +208,9 @@ internal static class StructureMaterializeAssembler
         var materializedCount = rows.Count(row => row.Materialized);
         var eligibleCount = rows.Count(row => row.Eligible);
         var hasCanonicalEntryRound = CupCanonicalEntryRoundStartGate.TryGetCanonicalEntryRoundProgress(
+            competition,
             stage,
+            competitionStages,
             out var canonicalEntryPairCount,
             out var undeterminedCanonicalEntryPairCount);
         var canonicalCount = hasCanonicalEntryRound ? canonicalEntryPairCount : 0;
@@ -207,6 +226,7 @@ internal static class StructureMaterializeAssembler
             materializedCount,
             commandEnabled: eligibleCount > 0,
             rows,
+            inboundComposition,
             canonicalEntryPairCount: canonicalCount,
             undeterminedCanonicalEntryPairCount: undeterminedCanonicalCount);
     }
@@ -221,6 +241,7 @@ internal static class StructureMaterializeAssembler
         int materialized,
         bool commandEnabled,
         IReadOnlyList<StructureMaterializeConfrontationDto>? confrontations = null,
+        StructureInboundCompositionDto? inboundComposition = null,
         bool phaseRosterComplete = true,
         int canonicalEntryPairCount = 0,
         int undeterminedCanonicalEntryPairCount = 0,
@@ -241,7 +262,9 @@ internal static class StructureMaterializeAssembler
             eligible,
             materialized,
             commandEnabled,
-            phaseRosterComplete);
+            phaseRosterComplete,
+            inboundComposition,
+            (confrontations ?? []).Count);
         return new StructureMaterializeDto(
             commandCode,
             LabelVariant(determined, eligible, materialized),
@@ -266,7 +289,9 @@ internal static class StructureMaterializeAssembler
         int eligible,
         int materialized,
         bool commandEnabled,
-        bool phaseRosterComplete)
+        bool phaseRosterComplete,
+        StructureInboundCompositionDto? inboundComposition,
+        int totalConfrontationCount)
     {
         var hasDrawRules = stage.Regulation.DrawRules is not null;
         var drawExecutionBadge = StructureViewAssembler.GetDrawExecutionBadge(stage, hasDrawRules);
@@ -285,7 +310,17 @@ internal static class StructureMaterializeAssembler
 
         if (determined > 0 && materialized >= determined)
         {
+            if (totalConfrontationCount > materialized)
+            {
+                return StructureMaterializeDisabledReasons.NoEligibleConfrontations;
+            }
+
             return null;
+        }
+
+        if (MatchProductionInboundFeedDeferral.IsAwaitingResolution(inboundComposition, determined))
+        {
+            return StructureMaterializeDisabledReasons.NoDeterminedConfrontations;
         }
 
         var mutable = format switch
@@ -331,12 +366,16 @@ internal static class StructureMaterializeAssembler
     ];
 
     private static string SideLabel(
-        Slot? slot,
         IReadOnlyDictionary<EntryId, string> names,
-        string slotKey) =>
-        slot?.EntryId is { } entryId
-            ? EntryDisplayNames.Resolve(names, entryId) ?? slotKey
+        string slotKey,
+        Stage stage,
+        CupBracketPairMaterialization.ResolutionContext pairContext)
+    {
+        var entryId = CupBracketPairMaterialization.ResolveSlotEntry(stage, slotKey, pairContext);
+        return entryId is { } resolved
+            ? EntryDisplayNames.Resolve(names, resolved) ?? slotKey
             : slotKey;
+    }
 
     /// <summary>
     /// Read-side eligibility mirrors command preflight in

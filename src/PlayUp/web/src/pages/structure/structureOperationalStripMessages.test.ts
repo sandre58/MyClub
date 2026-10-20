@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   resolveCompositionPopulationMeterCopy,
   resolveEntryRoundPlacementMeterCopy,
+  resolveGroupsPlacementMeterCopy,
   resolvePlaceOccupancyMeterCopy,
 } from './structureOperationalStripMessages';
 
@@ -111,14 +112,51 @@ describe('resolvePlaceOccupancyMeterCopy', () => {
     ).toBe('danger');
   });
 
-  it('uses attention for entry-round meter when pairs incomplete but start not blocked', () => {
+  it('uses danger for entry-round meter when pairs incomplete (aligned with drawer gate)', () => {
     expect(
       resolveEntryRoundPlacementMeterCopy({
         t,
         gaugeRatio: { filled: 1, capacity: 4 },
         blocksPhaseStart: false,
       })?.kind,
-    ).toBe('attention');
+    ).toBe('danger');
+  });
+
+  it('uses info awaiting-draw copy for groups placement when presentation kind is info', () => {
+    const result = resolveGroupsPlacementMeterCopy({
+      t,
+      gaugeRatio: { filled: 0, capacity: 8 },
+      presentationKind: 'info',
+    });
+    expect(result.kind).toBe('info');
+    expect(result.text).toBe(
+      'fiche.operational.production.stateMessage.groupsPlacementAwaitingDraw',
+    );
+  });
+
+  it('uses info awaiting-draw copy when presentation kind is info', () => {
+    const result = resolveEntryRoundPlacementMeterCopy({
+      t,
+      gaugeRatio: { filled: 0, capacity: 8 },
+      blocksPhaseStart: false,
+      presentationKind: 'info',
+    });
+    expect(result?.kind).toBe('info');
+    expect(result?.text).toBe(
+      'fiche.operational.production.stateMessage.entryRoundAwaitingDraw',
+    );
+  });
+
+  it('uses success when all entry pairs are ready', () => {
+    const result = resolveEntryRoundPlacementMeterCopy({
+      t,
+      gaugeRatio: { filled: 8, capacity: 8 },
+      blocksPhaseStart: false,
+    });
+    expect(result?.kind).toBe('success');
+    expect(result?.text).toBe(
+      'fiche.operational.production.stateMessage.entryRoundAllReady',
+    );
   });
 
   it('uses attention for partial occupancy in Draft when SlotFeedMissing is active', () => {

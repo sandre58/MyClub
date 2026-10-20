@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
@@ -37,12 +38,18 @@ public static class MaterializeCupFromOccupiedSlots
         Stage stage,
         IReadOnlyList<string>? pairKeys,
         IReadOnlyList<Match> existingMatches,
-        IClock clock)
+        IClock clock,
+        IReadOnlyList<Stage>? competitionStages = null,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>>? matchSummariesByStage = null)
     {
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(existingMatches);
         ArgumentNullException.ThrowIfNull(clock);
+
+        CupBracketPairMaterialization.ResolutionContext? pairContext = competitionStages is null
+            ? null
+            : new CupBracketPairMaterialization.ResolutionContext(competitionStages, matchSummariesByStage);
 
         if (!stage.CompetitionId.Equals(competition.Id))
         {
@@ -62,12 +69,13 @@ public static class MaterializeCupFromOccupiedSlots
         }
 
         var requestEmpty = pairKeys is null || pairKeys.Count == 0;
-        var targets = ResolveTargetPairs(stage, pairKeys, requestEmpty);
+        var targets = ResolveTargetPairs(stage, pairKeys, requestEmpty, pairContext);
         if (targets.Count == 0)
         {
             return requestEmpty
                    && stage.BracketPairs.Count > 0
-                   && stage.BracketPairs.All(pair => stage.FindFixtureByBracketPairKey(pair.PairKey) is not null)
+                   && stage.BracketPairs.All(pair =>
+                       CupBracketPairMaterialization.IsConfrontationMaterialized(stage, pair, pairContext))
                 ? new MaterializeCupFromOccupiedSlotsResult([], [], AlreadyComplete: true)
                 : throw new ApplicationFailureException(
                     "No eligible bracket pairs to materialize.",
@@ -81,17 +89,27 @@ public static class MaterializeCupFromOccupiedSlots
             .Where(match => stage.HasMatch(match.Id))
             .ToDictionary(match => match.Id);
 
-        List<(BracketPair Pair, Fixture Fixture, EntryId Home, EntryId Away)> resolved =
-        [
-            with(targets.Count),
-            .. from pair in targets
-            let slotA = stage.FindSlot(pair.SlotAKey)
-            let slotB = stage.FindSlot(pair.SlotBKey)
-            let fixture =
-                stage.FindFixtureByBracketPairKey(pair.PairKey) ??
-                stage.AddFixtureForMatchProduction(round.Id, clock, pair.SlotAKey, pair.SlotBKey, pair.PairKey)
-            select (pair, fixture, slotA.EntryId!.Value, slotB.EntryId!.Value)
-        ];
+        var resolved = new List<(BracketPair Pair, Fixture Fixture, EntryId Home, EntryId Away)>(targets.Count);
+        foreach (var pair in targets)
+        {
+            if (!CupBracketPairMaterialization.TryResolvePairEntries(stage, pair, pairContext, out var home, out var away))
+            {
+                throw new ApplicationFailureException(
+                    $"Bracket pair '{pair.PairKey}' is not eligible for materialization.",
+                    ApplicationErrorCodes.MaterializationFailure);
+            }
+
+            EnsureSlotOccupant(stage, pair.SlotAKey, home, clock);
+            EnsureSlotOccupant(stage, pair.SlotBKey, away, clock);
+            var fixture = stage.FindFixtureByBracketPairKey(pair.PairKey)
+                          ?? stage.AddFixtureForMatchProduction(
+                              round.Id,
+                              clock,
+                              pair.SlotAKey,
+                              pair.SlotBKey,
+                              pair.PairKey);
+            resolved.Add((pair, fixture, home, away));
+        }
 
         var matchedIndexes = new HashSet<int>();
         var matchedMatchIds = new HashSet<MatchId>();
@@ -156,14 +174,23 @@ public static class MaterializeCupFromOccupiedSlots
         return new MaterializeCupFromOccupiedSlotsResult(created, attached, AlreadyComplete: false);
     }
 
+    private static void EnsureSlotOccupant(Stage stage, string slotKey, EntryId entryId, IClock clock)
+    {
+        if (stage.FindSlot(slotKey)?.EntryId is null)
+        {
+            stage.ApplyResolvedEntry(slotKey, entryId, clock);
+        }
+    }
+
     private static List<BracketPair> ResolveTargetPairs(
         Stage stage,
         IReadOnlyList<string>? pairKeys,
-        bool requestEmpty)
+        bool requestEmpty,
+        CupBracketPairMaterialization.ResolutionContext? pairContext)
     {
         if (requestEmpty)
         {
-            return [.. stage.BracketPairs.Where(pair => IsEligible(stage, pair))];
+            return [.. stage.BracketPairs.Where(pair => IsEligible(stage, pair, pairContext))];
         }
 
         var seen = new HashSet<string>(StringComparer.Ordinal);
@@ -201,7 +228,7 @@ public static class MaterializeCupFromOccupiedSlots
                            $"Bracket pair '{key}' was not found on the stage.",
                            ApplicationErrorCodes.MaterializationFailure);
 
-            if (!IsEligible(stage, pair))
+            if (!IsEligible(stage, pair, pairContext))
             {
                 throw new ApplicationFailureException(
                     $"Bracket pair '{key}' is not eligible for materialization.",
@@ -233,13 +260,11 @@ public static class MaterializeCupFromOccupiedSlots
     /// <summary>
     /// Eligible: both slots occupied with distinct entries, and no fixture already bound to this PairKey.
     /// </summary>
-    private static bool IsEligible(Stage stage, BracketPair pair)
-    {
-        var slotA = stage.FindSlot(pair.SlotAKey);
-        var slotB = stage.FindSlot(pair.SlotBKey);
-        return slotA?.EntryId is not null && slotB?.EntryId is not null && !slotA.EntryId.Equals(slotB.EntryId) &&
-               stage.FindFixtureByBracketPairKey(pair.PairKey) is null;
-    }
+    private static bool IsEligible(
+        Stage stage,
+        BracketPair pair,
+        CupBracketPairMaterialization.ResolutionContext? pairContext = null) =>
+        CupBracketPairMaterialization.IsEligibleForMaterialization(stage, pair, pairContext);
 
     /// <summary>
     /// Late materialization of a not-yet-started Cup stage is allowed while the competition runs.

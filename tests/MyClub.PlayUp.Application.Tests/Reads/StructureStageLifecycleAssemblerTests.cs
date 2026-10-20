@@ -580,6 +580,26 @@ public sealed class StructureStageLifecycleAssemblerTests
     }
 
     [Fact]
+    public void Assemble_Ready_cup_without_slots_or_matches_blocks_Start_with_no_determined_reason()
+    {
+        var situation = TestCompetition.Create("Cup empty bracket", _clock)
+            .WithTeams("A", "B", "C", "D")
+            .WithStructure(StructureIntent.Cup(4));
+        situation.PreparePrimaryStage();
+
+        var view = StructureViewAssembler.Assemble(situation.Competition, situation.Stages);
+        var hub = view.Stages.Single();
+
+        hub.Lifecycle!.Transition.Code.Should().Be(OverviewAssembler.ActionStartStage);
+        hub.Lifecycle.Transition.Enabled.Should().BeFalse();
+        hub.Lifecycle.Transition.DisabledReasonCode.Should().BeOneOf(
+            StructureStageLifecycleAssembler.DisabledIncompleteEntryRound,
+            StructureStageLifecycleAssembler.DisabledNoDeterminedConfrontations);
+        hub.Materialize!.DisabledReason.Should()
+            .Be(StructureMaterializeDisabledReasons.NoDeterminedConfrontations);
+    }
+
+    [Fact]
     public void Assemble_Ready_cup_slotted_non_playable_initial_round_blocks_Start_with_placement_remediation()
     {
         var situation = TestCompetition.Create("Cup initial round not playable", _clock)

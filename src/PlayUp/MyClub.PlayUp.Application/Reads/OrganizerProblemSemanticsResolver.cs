@@ -70,6 +70,7 @@ public static class OrganizerProblemSemanticsResolver
                     [],
                     TransportCode: StructurePresentedStageDiagnostics.PresentedAwaitingInboundQualification),
             StructureStageLifecycleAssembler.DisabledIncompleteEntryRound
+                or StructureStageLifecycleAssembler.DisabledNoDeterminedConfrontations
                 or StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations
                 or StructureStageLifecycleAssembler.DisabledNoExploitableInitialConfrontations
                 or StructureStageLifecycleAssembler.DisabledPhaseRosterIncomplete
@@ -81,7 +82,8 @@ public static class OrganizerProblemSemanticsResolver
     public static OrganizerProblemReadDto? TryFromStartTransitionBlocker(string disabledReasonCode) =>
         disabledReasonCode switch
         {
-            StructureStageLifecycleAssembler.DisabledIncompleteEntryRound =>
+            StructureStageLifecycleAssembler.DisabledIncompleteEntryRound
+                or StructureStageLifecycleAssembler.DisabledNoDeterminedConfrontations =>
                 new OrganizerProblemReadDto(
                     disabledReasonCode,
                     OrganizerProblemSemanticLevels.Gate,

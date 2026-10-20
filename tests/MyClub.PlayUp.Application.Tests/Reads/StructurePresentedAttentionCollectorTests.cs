@@ -409,16 +409,16 @@ public sealed class StructurePresentedAttentionCollectorTests
         hub.Lifecycle!.Transition.Code.Should().Be(OverviewAssembler.ActionStartStage);
         hub.Lifecycle.Transition.Enabled.Should().BeFalse();
         hub.Lifecycle.Transition.DisabledReasonCode.Should()
-            .Be(StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations);
+            .Be(StructureStageLifecycleAssembler.DisabledIncompleteEntryRound);
 
         var items = new List<NeedsAttentionItemDto>();
         StructurePresentedAttentionCollector.Collect(view, items);
 
         items.Should().Contain(item =>
-            item.Source == StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations
+            item.Source == StructureStageLifecycleAssembler.DisabledIncompleteEntryRound
             && item.Severity == NeedsAttentionAssembler.SeverityBlocking);
         items.Should().Contain(item =>
-            item.Source == StructureStageLifecycleAssembler.DisabledIncompleteEntryRound
+            item.Source == StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations
             && item.Severity == NeedsAttentionAssembler.SeverityBlocking);
     }
 

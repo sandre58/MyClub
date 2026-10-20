@@ -187,13 +187,7 @@ internal static class StageConfrontationMaterializationState
         var eligible = 0;
         foreach (var pair in stage.BracketPairs)
         {
-            var slotA = stage.FindSlot(pair.SlotAKey);
-            var slotB = stage.FindSlot(pair.SlotBKey);
-            var determined = slotA?.EntryId is { } home
-                             && slotB?.EntryId is { } away
-                             && !home.Equals(away);
-            var materialized = stage.FindFixtureByBracketPairKey(pair.PairKey) is not null;
-            if (determined && !materialized)
+            if (CupBracketPairMaterialization.IsEligibleForMaterialization(stage, pair))
             {
                 eligible++;
             }

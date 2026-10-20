@@ -274,6 +274,7 @@
       "AuthoredAwardUnreachablePaused": "Paire source introuvable (constat en pause)",
       "ExpectedRankUnreachablePaused": "Rang de compétition inaccessible via l’attribution (constat en pause)",
       "IncompleteEntryRound": "Paires d’entrée du tableau incomplètes — démarrage bloqué",
+      "NoDeterminedConfrontations": "Aucune confrontation déterminée — démarrage bloqué",
       "UnmaterializedConfrontations": "Matchs éligibles non créés — démarrage bloqué",
       "PhaseRosterIncomplete": "Composition de phase incomplète",
       "PhaseRosterIncompletePaused": "Composition de phase incomplète (constat en pause)",
@@ -305,6 +306,7 @@
       "AuthoredAwardUnreachable": "Source attribution absente",
       "ExpectedRankUnreachable": "Rang inaccessible",
       "IncompleteEntryRound": "Paires d’entrée incomplètes",
+      "NoDeterminedConfrontations": "Aucune confrontation déterminée",
       "UnmaterializedConfrontations": "Matchs non créés",
       "PhaseRosterIncomplete": "Composition incomplète",
       "PhaseRosterIncompleteEligibilityGap": "Éligibilité au démarrage insuffisante",
@@ -396,7 +398,8 @@
     },
     "remediation": {
       "InitialRoundNotPlayable": "Aller au placement opérationnel",
-      "IncompleteEntryRound": "Aller au placement opérationnel"
+      "IncompleteEntryRound": "Aller au placement opérationnel",
+      "NoDeterminedConfrontations": "Aller au placement opérationnel"
     },
     "disabled": {
       "_unknown": "Cette action de cycle de phase est indisponible pour le moment.",
@@ -405,6 +408,7 @@
       "Places": "Complétez le pool de composition (poules) avant de marquer la phase comme prête.",
       "InitialRoundNotPlayable": "Le premier tour n’est pas encore jouable — vérifiez places, tirage et production des matchs.",
       "IncompleteEntryRound": "Complétez toutes les paires d’entrée du tableau avant de démarrer la phase.",
+      "NoDeterminedConfrontations": "Déterminez au moins une confrontation sur le tableau avant de démarrer la phase.",
       "StageNotReady": "Complétez la structure de cette phase avant de la marquer comme prête.",
       "StructureGraphInvalid": "Corrigez les connexions de structure avant de préparer la phase.",
       "OpenMatches": "Chaque match doit être terminé ou annulé avant de clôturer la phase.",
@@ -463,6 +467,7 @@
       "DrawObsoleteForConsumption": "Ce tirage ne correspond plus à la phase — annulez-le ou rétablissez la cohérence avant d’appliquer ou de produire des matchs.",
       "InitialRoundNotPlayable": "Le premier tour n’est pas encore jouable — vérifiez places, tirage et production des matchs.",
       "IncompleteEntryRound": "Complétez toutes les paires d’entrée du tableau avant de démarrer la phase.",
+      "NoDeterminedConfrontations": "Déterminez au moins une confrontation sur le tableau avant de démarrer la phase.",
       "StageNotReady": "Complétez la structure de cette phase avant de la marquer comme prête.",
       "StructureGraphInvalid": "Corrigez les connexions de structure avant de préparer la phase.",
       "OpenMatches": "Chaque match doit être terminé ou annulé avant de clôturer la phase.",
@@ -609,6 +614,7 @@
         "meterCaptionMatches": "matchs créés",
         "meterCaptionEntryPairs": "paires d’entrée",
         "entryRoundRatioCaption": "Paires",
+        "entryRoundResolvedCaption": "Résolues",
         "meterAriaEntryPairs": "Avancement du remplissage des paires d’entrée du tableau",
         "groupsPlacementRatioCaption": "Places",
         "meterAriaGroupsPlacement": "Avancement du remplissage des places en poules",
@@ -636,7 +642,8 @@
           "partial_one": "Il reste {{count}} match à créer.",
           "partial_other": "Il reste {{count}} matchs à créer.",
           "noDeterminedConfrontations": "Aucune confrontation déterminée",
-          "groupsPlacementIncomplete": "Les poules ne sont pas prêtes pour la production de matchs — complétez l’affectation ({{filled}} / {{capacity}}).",
+          "groupsPlacementIncomplete": "Complétez l’affectation en poules avant de créer les matchs.",
+          "groupsPlacementAwaitingDraw": "Les places en poules seront remplies après le tirage.",
           "groupsPlacementReady": "Toutes les places en poules sont assignées.",
           "matchesBlockedByGroupsPools": "Complétez les places en poules avant de pouvoir créer les matchs.",
           "determinedPartial_one": "Il reste {{count}} confrontation à déterminer.",
@@ -644,6 +651,8 @@
           "determinedComplete": "Toutes les confrontations exposées sont déterminées.",
           "entryRoundRemainingBeforeStart_one": "{{count}} paire d’entrée à compléter avant le démarrage.",
           "entryRoundRemainingBeforeStart_other": "{{count}} paires d’entrée à compléter avant le démarrage.",
+          "entryRoundAllReady": "Toutes les paires d’entrée du tableau sont prêtes.",
+          "entryRoundAwaitingDraw": "Les paires d’entrée seront déterminées après le tirage.",
           "frozenPartial_one": "{{filled}} match créé sur {{capacity}} — production figée tant que la phase est en cours.",
           "frozenPartial_other": "{{filled}} matchs créés sur {{capacity}} — production figée tant que la phase est en cours."
         }

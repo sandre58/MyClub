@@ -115,6 +115,40 @@ public sealed class StructureMatchProductionPresentationAssemblerTests
     }
 
     [Fact]
+    public void Groups_draw_to_launch_uses_info_for_placement_prerequisite()
+    {
+        var competition = CreateCompetition.Execute("Groups draw pending", _clock);
+        for (var i = 0; i < 4; i++)
+        {
+            AddEntry.Execute(competition, $"T{i}", _clock);
+        }
+
+        var configured = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Groups(2, 2),
+            _clock);
+        var stage = configured.Stage;
+        ReplaceStageDrawRules.Execute(
+            stage,
+            new DrawRules(DrawMode.Random, potRules: new PotRules(2)),
+            _clock);
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(competition, stage, [stage], _clock);
+
+        var presentation = StructureViewAssembler.Assemble(competition, [stage]).Stages[0]
+            .MatchProductionPresentation;
+
+        presentation.Should().NotBeNull();
+        presentation!.PrerequisiteGauge.Should().NotBeNull();
+        presentation.PrerequisiteGauge!.MessageCode.Should().Be(
+            StructureMatchProductionMessageCodes.PrerequisiteGroupsPlacement);
+        presentation.PrerequisiteGauge.MessageKind.Should().Be(
+            StructureMatchProductionPresentationAssembler.MessageKindInfo);
+        presentation.PrimaryGauge.MessageKind.Should().Be(
+            StructureMatchProductionPresentationAssembler.MessageKindInfo);
+    }
+
+    [Fact]
     public void Groups_not_ready_prospective_match_slots_and_groups_prerequisite()
     {
         var competition = CreateCompetition.Execute("Groups partial", _clock);
@@ -244,6 +278,30 @@ public sealed class StructureMatchProductionPresentationAssemblerTests
             StructureMatchProductionPresentationAssembler.MessageKindSuccess);
         presentation.FollowUp.Should().BeNull();
         presentation.Materialize.Enabled.Should().BeFalse();
+        presentation.PrerequisiteGauge.Should().BeNull();
+    }
+
+    [Fact]
+    public void Cup_no_determined_shows_entry_round_prerequisite_from_confrontation_rows()
+    {
+        var situation = TestCompetition.Create("Cup partial pair", _clock)
+            .WithTeams("A", "B", "C", "D")
+            .WithStructure(StructureIntent.Cup(4));
+        var stage = situation.RequirePrimaryStage();
+        stage.ApplyResolvedEntry("S1", situation.Competition.Entries.First().Id, _clock);
+        situation.PreparePrimaryStage();
+
+        var hub = StructureViewAssembler.Assemble(situation.Competition, [stage]).Stages[0];
+        var presentation = hub.MatchProductionPresentation;
+
+        presentation.Should().NotBeNull();
+        hub.Materialize!.DisabledReason.Should()
+            .Be(StructureMaterializeDisabledReasons.NoDeterminedConfrontations);
+        presentation!.PrerequisiteGauge.Should().NotBeNull();
+        presentation.PrerequisiteGauge!.MessageCode.Should().Be(
+            StructureMatchProductionMessageCodes.PrerequisiteCupEntryRound);
+        presentation.PrerequisiteGauge.Current.Should().Be(0);
+        presentation.PrerequisiteGauge.Capacity.Should().BeGreaterThan(0);
     }
 
     [Fact]
@@ -265,19 +323,327 @@ public sealed class StructureMatchProductionPresentationAssemblerTests
         presentation.Should().NotBeNull();
         materialize.UndeterminedCanonicalEntryPairCount.Should().BeGreaterThan(0);
 
-        if (materialize.CommandEnabled)
+        presentation!.PrerequisiteGauge.Should().NotBeNull();
+        presentation.PrerequisiteGauge!.MessageCode.Should().Be(
+            StructureMatchProductionMessageCodes.PrerequisiteCupEntryRound);
+        presentation.PrerequisiteGauge.MessageKind.Should().Be(
+            StructureMatchProductionPresentationAssembler.MessageKindDanger);
+        if (!materialize.CommandEnabled)
         {
-            presentation!.PrerequisiteGauge.Should().BeNull();
-        }
-        else
-        {
-            presentation!.PrerequisiteGauge.Should().NotBeNull();
-            presentation.PrerequisiteGauge!.MessageCode.Should().Be(
-                StructureMatchProductionMessageCodes.PrerequisiteCupEntryRound);
-            presentation.PrerequisiteGauge.MessageKind.Should().Be(
-                StructureMatchProductionPresentationAssembler.MessageKindAttention);
             presentation.PrerequisiteGauge.BlocksPhaseStart.Should().BeTrue();
         }
+    }
+
+    [Fact]
+    public void Cup_partial_materialized_with_incomplete_pairs_uses_danger_partial_when_materialize_command_disabled()
+    {
+        var situation = TestCompetition.Create("Cup partial R0 gauge", _clock)
+            .WithTeams("A", "B", "C", "D")
+            .WithStructure(StructureIntent.Cup(4));
+        var stage = situation.PrimaryStage!;
+        var entries = situation.Competition.Entries.Select(entry => entry.Id).ToArray();
+        stage.ApplyResolvedEntry("S1", entries[0], _clock);
+        stage.ApplyResolvedEntry("S2", entries[1], _clock);
+        situation.PreparePrimaryStage();
+
+        var materialized = MaterializeCupFromOccupiedSlots.Execute(
+            situation.Competition,
+            stage,
+            ["P1"],
+            [],
+            _clock);
+        var summaries = new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>
+        {
+            [stage.Id] = StageStartReadinessGuard.ToSummaryRows(materialized.CreatedMatches)
+        };
+
+        var hub = StructureViewAssembler.Assemble(
+            situation.Competition,
+            situation.Stages,
+            matchSummariesByStage: summaries).Stages.Single();
+        var presentation = hub.MatchProductionPresentation;
+
+        presentation.Should().NotBeNull();
+        hub.Materialize!.CommandEnabled.Should().BeFalse();
+        hub.Lifecycle!.Transition.Enabled.Should().BeFalse();
+        presentation!.PrimaryGauge.Capacity.Should().BeGreaterThan(presentation.PrimaryGauge.Current);
+        presentation.PrimaryGauge.MessageCode.Should().Be(StructureMatchProductionMessageCodes.Partial);
+        presentation.PrimaryGauge.MessageKind.Should().Be(
+            StructureMatchProductionPresentationAssembler.MessageKindDanger);
+    }
+
+    [Fact]
+    public void Cup_one_determined_pair_uses_full_round_match_capacity_entry_prerequisite_and_danger_partial()
+    {
+        var situation = TestCompetition.Create("Cup16 partial", _clock)
+            .WithTeams(16)
+            .WithStructure(StructureIntent.Cup(16));
+        var stage = situation.RequirePrimaryStage();
+        var entries = situation.Competition.Entries.Select(entry => entry.Id).ToArray();
+        stage.ApplyResolvedEntry("S1", entries[0], _clock);
+        stage.ApplyResolvedEntry("S2", entries[1], _clock);
+        stage.Prepare(_clock);
+
+        var hub = StructureViewAssembler.Assemble(situation.Competition, [stage]).Stages[0];
+        var materialize = hub.Materialize!;
+        var presentation = hub.MatchProductionPresentation;
+
+        presentation.Should().NotBeNull();
+        materialize.DeterminedCount.Should().BeGreaterThan(0);
+        materialize.CommandEnabled.Should().BeTrue();
+        presentation!.PrimaryGauge.Current.Should().Be(0);
+        presentation.PrimaryGauge.Capacity.Should().Be(8);
+        presentation.PrimaryGauge.MessageCode.Should().Be(StructureMatchProductionMessageCodes.Partial);
+        presentation.PrimaryGauge.MessageKind.Should().Be(
+            StructureMatchProductionPresentationAssembler.MessageKindDanger);
+        presentation.PrerequisiteGauge.Should().NotBeNull();
+        presentation.PrerequisiteGauge!.MessageCode.Should().Be(
+            StructureMatchProductionMessageCodes.PrerequisiteCupEntryRound);
+        presentation.PrerequisiteGauge.Current.Should().Be(1);
+        presentation.PrerequisiteGauge.Capacity.Should().Be(8);
+        presentation.Materialize.Visible.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Cup_ready_all_entry_pairs_shows_materialize_cta_when_no_matches_attached()
+    {
+        var situation = TestCompetition.Create("Cup4 ready", _clock)
+            .WithTeams("A", "B", "C", "D")
+            .WithStructure(StructureIntent.Cup(4));
+        var stage = situation.RequirePrimaryStage();
+        var entries = situation.Competition.Entries.Select(entry => entry.Id).ToArray();
+        for (var i = 0; i < 4; i++)
+        {
+            stage.ApplyResolvedEntry($"S{i + 1}", entries[i], _clock);
+        }
+
+        stage.Prepare(_clock);
+
+        var hub = StructureViewAssembler.Assemble(situation.Competition, [stage]).Stages[0];
+        var presentation = hub.MatchProductionPresentation;
+
+        presentation.Should().NotBeNull();
+        hub.Materialize!.CommandEnabled.Should().BeTrue();
+        presentation!.PrimaryGauge.Current.Should().Be(0);
+        presentation.PrimaryGauge.Capacity.Should().Be(2);
+        presentation.PrimaryGauge.MessageCode.Should().Be(StructureMatchProductionMessageCodes.Partial);
+        presentation.PrerequisiteGauge.Should().BeNull();
+        presentation.Materialize.Visible.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Cup_direct_assignments_count_as_resolved_form_teams_without_prog_resolution()
+    {
+        var situation = TestCompetition.Create("Cup4 direct", _clock)
+            .WithTeams("A", "B", "C", "D")
+            .WithStructure(StructureIntent.Cup(4));
+        var stage = situation.RequirePrimaryStage();
+        var entries = situation.Competition.Entries.Select(entry => entry.Id).ToArray();
+        stage.ApplyResolvedEntry("S1", entries[0], _clock);
+        stage.ApplyResolvedEntry("S2", entries[1], _clock);
+
+        var resolved = CupEntryRoundResolvedTeamGauge.CountResolvedEntryRoundTeams(
+            situation.Competition,
+            stage,
+            [stage]);
+
+        resolved.Should().Be(2);
+    }
+
+    [Fact]
+    public void Cup_ready_keeps_materialize_visible_when_fixtures_exist_without_attached_matches()
+    {
+        var situation = TestCompetition.Create("Cup4 fixtures", _clock)
+            .WithTeams("A", "B", "C", "D")
+            .WithStructure(StructureIntent.Cup(4));
+        var stage = situation.RequirePrimaryStage();
+        var entries = situation.Competition.Entries.Select(entry => entry.Id).ToArray();
+        for (var i = 0; i < 4; i++)
+        {
+            stage.ApplyResolvedEntry($"S{i + 1}", entries[i], _clock);
+        }
+
+        foreach (var pair in stage.BracketPairs)
+        {
+            _ = stage.AddFixture(
+                stage.Rounds[0].Id,
+                _clock,
+                pair.SlotAKey,
+                pair.SlotBKey,
+                pair.PairKey);
+        }
+
+        stage.Prepare(_clock);
+
+        var hub = StructureViewAssembler.Assemble(situation.Competition, [stage]).Stages[0];
+        var presentation = hub.MatchProductionPresentation;
+
+        presentation.Should().NotBeNull();
+        hub.Materialize!.MaterializedCount.Should().Be(0);
+        hub.Materialize.EligibleCount.Should().Be(2);
+        hub.Materialize.CommandEnabled.Should().BeTrue();
+        presentation!.PrimaryGauge.Current.Should().Be(0);
+        presentation.PrimaryGauge.Capacity.Should().Be(2);
+        presentation.Materialize.Visible.Should().BeTrue();
+        presentation.Materialize.Enabled.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Groups_match_production_awaiting_inbound_feed_uses_info_no_determined_and_inbound_prerequisite()
+    {
+        var situation = TestCompetition.Create("Groups inbound", _clock)
+            .WithTeams("A", "B", "C", "D")
+            .WithStructure(StructureIntent.Groups(2, 2));
+        var stage = situation.RequirePrimaryStage();
+        situation.PreparePrimaryStage();
+        var inbound = new StructureInboundCompositionDto(4, 0, []);
+        var materialize = new StructureMaterializeDto(
+            OverviewAssembler.ActionMaterializeMatches,
+            StructureMaterializeAssembler.LabelVariantIdle,
+            0,
+            0,
+            0,
+            false,
+            [],
+            StructureMaterializeDisabledReasons.NoDeterminedConfrontations,
+            GroupsPlacementFilledCount: 0,
+            GroupsPlacementCapacityCount: 4,
+            ProspectiveConfrontationCount: 2);
+
+        var presentation = StructureMatchProductionPresentationAssembler.Assemble(
+            new StructureMatchProductionPresentationAssembler.Input(
+                situation.Competition,
+                stage,
+                [stage],
+                StructureFormatKind.Groups,
+                materialize,
+                null,
+                0,
+                1,
+                null,
+                4,
+                0,
+                null,
+                new StructureStageLifecycleDto(
+                    new StructureStageLifecycleTransitionDto(
+                        OverviewAssembler.ActionStartStage,
+                        false,
+                        StructureStageLifecycleAssembler.DisabledNoDeterminedConfrontations),
+                    null),
+                false,
+                null,
+                inbound))!;
+
+        presentation.PrimaryGauge.MessageCode.Should().Be(
+            StructureMatchProductionMessageCodes.NoDeterminedConfrontations);
+        presentation.PrimaryGauge.MessageKind.Should().Be(
+            StructureMatchProductionPresentationAssembler.MessageKindInfo);
+        presentation.PrerequisiteGauge.Should().NotBeNull();
+        presentation.PrerequisiteGauge!.MessageCode.Should().Be(
+            StructureMatchProductionMessageCodes.PrerequisiteInboundFeed);
+        presentation.PrerequisiteGauge.Current.Should().Be(0);
+        presentation.PrerequisiteGauge.Capacity.Should().Be(4);
+        presentation.PrerequisiteGauge.MessageKind.Should().Be(
+            StructureMatchProductionPresentationAssembler.MessageKindInfo);
+    }
+
+    [Fact]
+    public void Cup_explicit_topology_entry_round_gauge_counts_slot_resolved_pairs_not_skeleton_confrontations()
+    {
+        var competition = CreateCompetition.Execute("SF explicit", _clock);
+        for (var i = 0; i < 4; i++)
+        {
+            competition.AddEntry(TeamId.New(), $"T{i}", _clock);
+        }
+
+        var stage = Stage.Create(
+            competition.Id,
+            new StageName("Demi"),
+            SampleRegulations.Standard(),
+            _clock);
+        stage.AddRound("Tour", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        stage.AddSlot("SF-A");
+        stage.AddSlot("SF-B");
+        stage.AddSlot("SF-C");
+        stage.AddSlot("SF-D");
+        stage.ReplaceBracketPairs(
+        [
+            new BracketPair("P1", "SF-A", "SF-B"),
+            new BracketPair("P2", "SF-C", "SF-D"),
+        ]);
+        competition.AddStage(stage.Id, _clock);
+        _ = stage.AddFixture(stage.Rounds[0].Id, _clock, "SF-A", "SF-B", "P1");
+        _ = stage.AddFixture(stage.Rounds[0].Id, _clock, "SF-C", "SF-D", "P2");
+        var entries = competition.Entries.Select(entry => entry.Id).ToArray();
+        stage.ApplyResolvedEntry("SF-A", entries[0], _clock);
+        stage.ApplyResolvedEntry("SF-B", entries[1], _clock);
+        stage.Prepare(_clock);
+
+        var hub = StructureViewAssembler.Assemble(competition, [stage]).Stages[0];
+        var presentation = hub.MatchProductionPresentation;
+
+        presentation.Should().NotBeNull();
+        hub.Materialize!.CanonicalEntryPairCount.Should().Be(0);
+        presentation!.PrerequisiteGauge.Should().NotBeNull();
+        presentation.PrerequisiteGauge!.MessageCode.Should().Be(
+            StructureMatchProductionMessageCodes.PrerequisiteCupEntryRound);
+        presentation.PrerequisiteGauge.Current.Should().Be(1);
+        presentation.PrerequisiteGauge.Capacity.Should().Be(2);
+    }
+
+    [Fact]
+    public void Cup_incomplete_entry_round_prerequisite_takes_priority_over_inbound_feed_deferral()
+    {
+        var situation = TestCompetition.Create("Cup inbound defer", _clock)
+            .WithTeams("A", "B", "C", "D")
+            .WithStructure(StructureIntent.Cup(4));
+        var stage = situation.RequirePrimaryStage();
+        var entries = situation.Competition.Entries.Select(entry => entry.Id).ToArray();
+        stage.ApplyResolvedEntry("S1", entries[0], _clock);
+        stage.ApplyResolvedEntry("S2", entries[1], _clock);
+        situation.PreparePrimaryStage();
+        var inbound = new StructureInboundCompositionDto(2, 0, []);
+        var materialize = new StructureMaterializeDto(
+            OverviewAssembler.ActionMaterializeFromOccupiedSlots,
+            StructureMaterializeAssembler.LabelVariantIdle,
+            0,
+            0,
+            0,
+            false,
+            [],
+            StructureMaterializeDisabledReasons.NoDeterminedConfrontations,
+            CanonicalEntryPairCount: 2,
+            UndeterminedCanonicalEntryPairCount: 1);
+
+        var presentation = StructureMatchProductionPresentationAssembler.Assemble(
+            new StructureMatchProductionPresentationAssembler.Input(
+                situation.Competition,
+                stage,
+                [stage],
+                StructureFormatKind.Cup,
+                materialize,
+                null,
+                0,
+                1,
+                null,
+                3,
+                0,
+                null,
+                new StructureStageLifecycleDto(
+                    new StructureStageLifecycleTransitionDto(
+                        OverviewAssembler.ActionStartStage,
+                        false,
+                        StructureStageLifecycleAssembler.DisabledIncompleteEntryRound),
+                    null),
+                false,
+                null,
+                inbound))!;
+
+        presentation.PrerequisiteGauge.Should().NotBeNull();
+        presentation.PrerequisiteGauge!.MessageCode.Should().Be(
+            StructureMatchProductionMessageCodes.PrerequisiteCupEntryRound);
+        presentation.PrerequisiteGauge.Current.Should().Be(1);
+        presentation.PrerequisiteGauge.Capacity.Should().Be(2);
     }
 
     [Fact]
@@ -592,7 +958,8 @@ public sealed class StructureMatchProductionPresentationAssemblerTests
                 null,
                 lifecycle,
                 true,
-                drawBadge))!;
+                drawBadge,
+                null))!;
     }
 
     private StructureMatchProductionPresentationDto AssembleNoDeterminedPresentation(
@@ -635,7 +1002,8 @@ public sealed class StructureMatchProductionPresentationAssemblerTests
                 null,
                 null,
                 hasDrawRules,
-                drawBadge))!;
+                drawBadge,
+                null))!;
     }
 
     private StructureMatchProductionPresentationDto AssembleBlockedPresentation(string disabledReason)
@@ -672,6 +1040,7 @@ public sealed class StructureMatchProductionPresentationAssemblerTests
                 null,
                 null,
                 false,
+                null,
                 null))!;
     }
 

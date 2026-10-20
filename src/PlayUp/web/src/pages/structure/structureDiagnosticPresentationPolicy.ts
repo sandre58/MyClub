@@ -98,6 +98,7 @@ function resolveMatrixCell(
 
   if (
     code === 'IncompleteEntryRound'
+    || code === 'NoDeterminedConfrontations'
     || code === 'UnmaterializedConfrontations'
     || code === 'NoExploitableInitialConfrontations'
     || code === 'GroupsNotReady'

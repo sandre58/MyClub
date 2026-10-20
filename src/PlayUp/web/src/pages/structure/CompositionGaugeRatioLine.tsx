@@ -1,7 +1,7 @@
 export function compositionGaugeFilledTone(
   current: number,
   capacity: number,
-): 'complete' | 'partial' | 'over' | 'neutral' {
+): 'complete' | 'brand' | 'over' | 'neutral' {
   if (capacity <= 0) {
     return 'neutral';
   }
@@ -10,7 +10,7 @@ export function compositionGaugeFilledTone(
     return current > capacity ? 'over' : 'complete';
   }
 
-  return 'partial';
+  return 'brand';
 }
 
 export function CompositionGaugeRatioLine({

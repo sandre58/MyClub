@@ -30,12 +30,14 @@ public static class StageSchematicAssembler
     /// <param name="competition">Owning competition (entry presentation).</param>
     /// <param name="competitionStages">All competition stages (inbound WhoFeeds).</param>
     /// <param name="matchRows">Stage match rows (pairing-draw cup sides); empty when unavailable.</param>
+    /// <param name="matchSummariesByStage">Upstream fixture rows for Qual/Prog seat projection on cup slots.</param>
     /// <returns>The assembled schematic.</returns>
     public static StageSchematicDto Assemble(
         Stage stage,
         Competition competition,
         IReadOnlyList<Stage> competitionStages,
-        IReadOnlyList<MatchSummaryRow>? matchRows = null)
+        IReadOnlyList<MatchSummaryRow>? matchRows = null,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>>? matchSummariesByStage = null)
     {
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(competition);
@@ -46,7 +48,12 @@ public static class StageSchematicAssembler
 
         return format switch
         {
-            StructureFormatKind.Cup => AssembleCup(stage, competitionStages, entries, matchRows ?? []),
+            StructureFormatKind.Cup => AssembleCup(
+                stage,
+                competitionStages,
+                entries,
+                matchRows ?? [],
+                matchSummariesByStage),
             StructureFormatKind.Groups => AssembleGroups(stage, competitionStages, entries),
             StructureFormatKind.Championship or StructureFormatKind.Swiss =>
                 AssembleRosterCapacity(stage, competition, competitionStages, format.Value, entries),
@@ -70,7 +77,8 @@ public static class StageSchematicAssembler
         Stage stage,
         IReadOnlyList<Stage> competitionStages,
         IReadOnlyDictionary<EntryId, CompetitionEntry> entries,
-        IReadOnlyList<MatchSummaryRow> matchRows)
+        IReadOnlyList<MatchSummaryRow> matchRows,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>>? matchSummariesByStage)
     {
         _ = matchRows;
         var feedBySlot = ResolveFeedsTolerant(stage, competitionStages);
@@ -86,6 +94,12 @@ public static class StageSchematicAssembler
             {
                 var feed = feedBySlot.GetValueOrDefault(slot.SlotKey);
                 var hasAddress = addressBySlot.TryGetValue(slot.SlotKey, out var address);
+                var occupantId = slot.EntryId
+                    ?? CupInboundSlotEntryResolver.TryResolve(
+                        stage,
+                        slot.SlotKey,
+                        competitionStages,
+                        matchSummariesByStage);
                 return new SchematicCaseDto(
                     new SchematicFormPositionDto(
                         FormKindCupSlot,
@@ -96,7 +110,7 @@ public static class StageSchematicAssembler
                         RoundName: hasAddress ? address.RoundName : null,
                         PairOrdinal: hasAddress ? address.PairOrdinal : null),
                     MapFeedOrigin(feed, slot.SlotKey, competitionStages),
-                    MapEntry(slot.EntryId, entries),
+                    MapEntry(occupantId, entries),
                     MapAssignment(slot.EntryId, entries));
             })
             .ToArray();

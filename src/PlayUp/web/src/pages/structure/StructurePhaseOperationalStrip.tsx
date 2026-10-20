@@ -101,6 +101,7 @@ import {
 } from './swissMatchsGuidance';
 import {
   resolveDrawPoolMeterCopy,
+  resolveGroupsPlacementMeterCopy,
   resolvePlaceOccupancyMeterCopy,
 } from './structureOperationalStripMessages';
 import { StripSection } from './structureOperationalStripSection';
@@ -1146,6 +1147,7 @@ function renderMatchProductionPrerequisiteGauge(
 ): ReactNode {
   switch (gauge.messageCode) {
     case 'PrerequisiteComposition':
+    case 'PrerequisiteInboundFeed':
       return (
         <CompositionInboundResolvedGauge
           resolved={gauge.current}
@@ -1164,12 +1166,18 @@ function renderMatchProductionPrerequisiteGauge(
           filled={gauge.current}
           capacity={gauge.capacity}
           blocksPhaseStart={gauge.blocksPhaseStart === true}
+          presentationKind={mapMessageKind(gauge.messageKind)}
         />
       );
     case 'PrerequisiteGroupsPlacement': {
       const messageKind = mapMessageKind(gauge.messageKind);
+      const placementMeter = resolveGroupsPlacementMeterCopy({
+        t,
+        gaugeRatio: { filled: gauge.current, capacity: gauge.capacity },
+        presentationKind: messageKind,
+      });
       const poolTone = operationalStripPoolTone(
-        messageKind,
+        placementMeter.kind,
         resolveDrawCtaPoolTone(gauge.current, gauge.capacity),
       );
       return (
@@ -1177,17 +1185,12 @@ function renderMatchProductionPrerequisiteGauge(
           size="compact"
           current={gauge.current}
           capacity={gauge.capacity}
-          messageKind={toRatioMessageGaugeKind(messageKind)}
+          messageKind={toRatioMessageGaugeKind(placementMeter.kind)}
           ratioTone={drawPoolToneToRatioGaugeTone(poolTone)}
-          ratioCaption={`${gauge.current}/${gauge.capacity}`}
-          message={
-            gauge.current >= gauge.capacity
-              ? t('fiche.operational.production.stateMessage.groupsPlacementReady')
-              : t(
-                  'fiche.operational.production.stateMessage.groupsPlacementIncomplete',
-                  { filled: gauge.current, capacity: gauge.capacity },
-                )
-          }
+          ratioCaption={t(
+            'fiche.operational.production.groupsPlacementRatioCaption',
+          )}
+          message={placementMeter.text}
           ariaLabel={t('fiche.operational.production.meterAriaGroupsPlacement')}
         />
       );
@@ -1478,12 +1481,20 @@ function MatchesColumn({
       )
       : null;
 
-  const asideProblemSlot =
-    asideMatchsTile && (prerequisiteGaugeSection || asideBlockedCompactMessage)
+  const asideCompactProblemSlot =
+    asideMatchsTile && asideBlockedCompactMessage
+      ? (
+        <div className="structure-operational-strip__aside-problem">
+          {asideBlockedCompactMessage}
+        </div>
+      )
+      : null;
+
+  const asidePrerequisiteSlot =
+    asideMatchsTile && prerequisiteGaugeSection
       ? (
         <div className="structure-operational-strip__aside-problem">
           {prerequisiteGaugeSection}
-          {asideBlockedCompactMessage}
         </div>
       )
       : null;
@@ -1645,6 +1656,7 @@ function MatchesColumn({
       matchesContent = (
         <>
           {productionGauge}
+          {asideCompactProblemSlot}
           {productionErrors}
           {exploitationGauge}
           {productionLeadingActions ? (
@@ -1658,7 +1670,7 @@ function MatchesColumn({
               {productionLeadingActions}
             </div>
           ) : null}
-          {asideProblemSlot}
+          {asidePrerequisiteSlot}
           {followUpMessage}
         </>
       );

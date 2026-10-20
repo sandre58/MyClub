@@ -17,6 +17,7 @@ import {
 import { resolveLifecycleMutationMessageKey } from './lifecycleMutationMessageKey';
 import {
   shouldShowDraftPrepareDisabledTooltip,
+  shouldShowHeaderLifecycleRemediation,
   shouldShowLifecycleRemediationLink,
   shouldShowPrimaryBlockMessage,
   shouldShowRevertDisabledParagraph,
@@ -104,6 +105,25 @@ describe('matchsColumnVisibility', () => {
     expect(shouldShowPrimaryBlockMessage('Draft', 'ConstructionFrozen')).toBe(false);
     expect(
       shouldShowPrimaryBlockMessage('Ready', 'UnmaterializedConfrontations'),
+    ).toBe(false);
+  });
+
+  it('never shows header lifecycle remediation links', () => {
+    expect(
+      shouldShowHeaderLifecycleRemediation(
+        'ConstructionFrozen',
+        false,
+        '/competitions/x/overview',
+        null,
+      ),
+    ).toBe(false);
+    expect(
+      shouldShowHeaderLifecycleRemediation(
+        'InitialRoundNotPlayable',
+        false,
+        '/competitions/x/structure?focus=operational-placement',
+        'InitialRoundNotPlayable',
+      ),
     ).toBe(false);
   });
 

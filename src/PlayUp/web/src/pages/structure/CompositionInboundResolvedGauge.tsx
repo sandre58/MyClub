@@ -24,11 +24,7 @@ export function CompositionInboundResolvedGauge({
     : t('composition.gauge.inboundUnresolved', { count: unresolved });
 
   const messageKind = complete ? 'success' : mode === 'historical' ? 'info' : 'info';
-  const ratioTone: RatioMessageGaugeRatioTone = complete
-    ? 'complete'
-    : mode === 'exploitation' || mode === 'historical'
-      ? 'brand'
-      : 'partial';
+  const ratioTone: RatioMessageGaugeRatioTone = complete ? 'complete' : 'brand';
 
   const rootClass = [
     'structure-phase-composition__population-gauge',

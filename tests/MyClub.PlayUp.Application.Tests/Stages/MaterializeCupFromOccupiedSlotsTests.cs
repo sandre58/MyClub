@@ -125,6 +125,27 @@ public sealed class MaterializeCupFromOccupiedSlotsTests
     }
 
     [Fact]
+    public void Execute_attaches_matches_when_progression_skeleton_fixtures_exist()
+    {
+        var competition = CreateCompetition.Execute("Cup-skeleton-fixtures", _clock);
+        var stage = CreateSemiStage(competition.Id);
+        _ = stage.AddFixture(stage.Rounds[0].Id, _clock, "SF1-A", "SF1-B", "P1");
+        _ = stage.AddFixture(stage.Rounds[0].Id, _clock, "SF2-A", "SF2-B", "P2");
+        stage.ApplyResolvedEntry("SF1-A", EntryId.New(), _clock);
+        stage.ApplyResolvedEntry("SF1-B", EntryId.New(), _clock);
+        stage.ApplyResolvedEntry("SF2-A", EntryId.New(), _clock);
+        stage.ApplyResolvedEntry("SF2-B", EntryId.New(), _clock);
+
+        EnsureCupMaterializeReady(stage);
+        var result = MaterializeCupFromOccupiedSlots.Execute(competition, stage, null, [], _clock);
+
+        result.AlreadyComplete.Should().BeFalse();
+        result.CreatedMatches.Should().HaveCount(2);
+        stage.Rounds[0].Fixtures.Should().HaveCount(2);
+        stage.Rounds[0].Fixtures.Should().OnlyContain(fixture => fixture.Attachments.Count == 1);
+    }
+
+    [Fact]
     public void Execute_omit_when_all_pairs_materialized_is_already_complete()
     {
         var competition = CreateCompetition.Execute("Cup-C2-Idem", _clock);

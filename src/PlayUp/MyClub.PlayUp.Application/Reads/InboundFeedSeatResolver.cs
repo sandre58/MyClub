@@ -18,6 +18,46 @@ namespace MyClub.PlayUp.Application.Reads;
 /// </summary>
 internal static class InboundFeedSeatResolver
 {
+    internal static EntryId? ResolveQualificationEntry(
+        QualificationPath path,
+        Stage destination,
+        Stage sourceStage,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>>? matchSummariesByStage)
+    {
+        if (path.Destination.TargetsForm || path.Destination.TargetsPopulation)
+        {
+            var fingerprint = FormPathResolutionKey.FromQualification(sourceStage.Id, path);
+            var fromWitness = destination.FormPathResolutions
+                .FirstOrDefault(resolution => resolution.PathFingerprint == fingerprint)
+                ?.EntryId;
+            return fromWitness ?? InboundQualificationSeatProjection.TryResolveSeat(
+                path,
+                sourceStage,
+                destination,
+                matchSummariesByStage);
+        }
+
+        if (path.Destination.TargetsGroup)
+        {
+            return null;
+        }
+
+        if (!string.IsNullOrWhiteSpace(path.Destination.SlotKey))
+        {
+            var occupant = destination.FindSlot(path.Destination.SlotKey)?.EntryId;
+            if (occupant is not null)
+            {
+                return occupant;
+            }
+        }
+
+        return InboundQualificationSeatProjection.TryResolveSeat(
+            path,
+            sourceStage,
+            destination,
+            matchSummariesByStage);
+    }
+
     internal static EntryId? ResolveProgressionEntry(
         ProgressionPath path,
         Stage destination,

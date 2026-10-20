@@ -26,4 +26,5 @@ public static class StructureMatchProductionMessageCodes
     public const string PrerequisiteComposition = "PrerequisiteComposition";
     public const string PrerequisiteGroupsPlacement = "PrerequisiteGroupsPlacement";
     public const string PrerequisiteCupEntryRound = "PrerequisiteCupEntryRound";
+    public const string PrerequisiteInboundFeed = "PrerequisiteInboundFeed";
 }

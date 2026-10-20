@@ -409,7 +409,18 @@ public static class StructureViewAssembler
             drawExecutionBadge,
             compositionCapacity);
         var formatKind = StructureSkeleton.InferFormat(stage);
-        var materialize = StructureMaterializeAssembler.Assemble(competition, stage, competitionStages, summaries);
+        var inboundComposition = StructureInboundCompositionAssembler.Assemble(
+            competition,
+            stage,
+            competitionStages,
+            matchSummariesByStage);
+        var materialize = StructureMaterializeAssembler.Assemble(
+            competition,
+            stage,
+            competitionStages,
+            summaries,
+            inboundComposition,
+            matchSummariesByStage);
         var lifecycle = StructureStageLifecycleAssembler.Assemble(
             new StructureStageLifecycleInput(
                 competition,
@@ -427,12 +438,6 @@ public static class StructureViewAssembler
                 affectation.Count,
                 drawExecutionBadge,
                 materialize));
-
-        var inboundComposition = StructureInboundCompositionAssembler.Assemble(
-            competition,
-            stage,
-            competitionStages,
-            matchSummariesByStage);
 
         var compositionBandResolved = StructureCompositionGaugeAssembler.ResolveResolvedSeatCount(
             stage,
@@ -476,7 +481,9 @@ public static class StructureViewAssembler
                 phaseRosterPresentation,
                 lifecycle,
                 hasDrawRules,
-                drawExecutionBadge));
+                drawExecutionBadge,
+                inboundComposition,
+                matchSummariesByStage));
 
         return new StructureStageHubSummaryDto(
             stage.Id.Value,
@@ -525,7 +532,7 @@ public static class StructureViewAssembler
             DrawConstraints: drawConstraints,
             DefaultsBinding: MapDefaultsBinding(stage),
             ConfrontationSegments: confrontationSegments,
-            Actions: BuildStageActions(competition, stage),
+            Actions: BuildStageActions(competition, stage, competitionStages),
             QualificationIntents: qualificationIntents,
             ProgressionIntents: progressionIntents,
             StructureIssues: structureIssues,
@@ -803,14 +810,15 @@ public static class StructureViewAssembler
 
     private static List<string> BuildStageActions(
         Competition competition,
-        Stage stage)
+        Stage stage,
+        IReadOnlyList<Stage> competitionStages)
     {
         var attachedMatches = CountAttachedMatches(stage);
 
         return stage.Status switch
         {
             StageStatus.Draft => BuildDraftStageActions(competition, stage, attachedMatches),
-            StageStatus.Ready => BuildReadyStageActions(stage, attachedMatches),
+            StageStatus.Ready => BuildReadyStageActions(competition, stage, competitionStages, attachedMatches),
             StageStatus.Running or StageStatus.Suspended => BuildExploitationStageActions(stage),
             StageStatus.Completed => [],
             _ => stage.CanRenameDisplayName() ? [ActionRenameStage] : []
@@ -913,10 +921,15 @@ public static class StructureViewAssembler
     }
 
     /// <summary>Ready — operational only when no production (G-OPS1 / D2); form frozen (A2).</summary>
-    private static List<string> BuildReadyStageActions(Stage stage, int attachedMatches)
+    private static List<string> BuildReadyStageActions(
+        Competition competition,
+        Stage stage,
+        IReadOnlyList<Stage> competitionStages,
+        int attachedMatches)
     {
         var actions = new List<string> { ActionRenameStage };
-        if (attachedMatches > 0 && !CupCanonicalEntryRoundStartGate.BlocksStart(stage))
+        if (attachedMatches > 0
+            && !CupCanonicalEntryRoundStartGate.BlocksStart(stage, competition, competitionStages))
         {
             return actions;
         }

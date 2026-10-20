@@ -35,6 +35,7 @@
     "RevertToReadyBlocked": "Terminez ou annulez les matchs engagés avant de mettre la phase en pause.",
     "StartBlockedUnmaterialized": "Matérialisez chaque confrontation éligible avant de démarrer la phase.",
     "StartBlockedIncompleteEntryRound": "Complétez toutes les paires d’entrée du tableau avant de démarrer la phase.",
+    "StartBlockedNoDeterminedConfrontations": "Déterminez au moins une confrontation sur le tableau avant de démarrer la phase.",
     "StartBlockedNoExploitableInitialConfrontations": "Ajoutez suffisamment de participants pour établir des confrontations initiales avant de démarrer la phase.",
     "StartBlockedPhaseRosterIncomplete": "Complétez la composition de la phase avec suffisamment d’équipes actives éligibles avant de démarrer.",
     "StartBlockedGroupsNotReady": "Complétez l’affectation des poules avant de démarrer la phase.",

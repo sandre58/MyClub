@@ -410,7 +410,7 @@ public sealed record StructureMatchProductionDematerializeActionDto(
 /// <param name="Confrontations">Exhaustive rows (empty for Championship phase grain).</param>
 /// <param name="DisabledReason">When command is disabled and not terminal — minimal causal code for UI copy.</param>
 /// <param name="CanonicalEntryPairCount">Canonical Cup entry-round pair count; zero when not applicable.</param>
-/// <param name="UndeterminedCanonicalEntryPairCount">Canonical pairs without two distinct entries; zero when not applicable.</param>
+/// <param name="UndeterminedCanonicalEntryPairCount">Canonical pairs with at least one placement slot empty (aligned with operational « Paires » gauge); zero when not applicable.</param>
 /// <param name="GroupsPlacementFilledCount">Groups: entries assigned across pools; zero when not applicable.</param>
 /// <param name="GroupsPlacementCapacityCount">Groups: groupCount × placesPerGroup; zero when not applicable.</param>
 /// <param name="ProspectiveConfrontationCount">Groups: round-robin pairs if every pool were filled to PlacesPerGroup; zero when not applicable.</param>

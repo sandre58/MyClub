@@ -48,6 +48,10 @@ public static class StructureStageLifecycleAssembler
     /// <summary>Start disabled — canonical mono-round Cup entry pairs not all determined.</summary>
     public const string DisabledIncompleteEntryRound = StageStartReadinessGuard.DisabledIncompleteEntryRound;
 
+    /// <summary>Start disabled — Cup bracket has no determined confrontation yet.</summary>
+    public const string DisabledNoDeterminedConfrontations =
+        StageStartReadinessGuard.DisabledNoDeterminedConfrontations;
+
     /// <summary>Lifecycle disabled — local structure not ready for Prepare.</summary>
     public const string DisabledStageNotReady = "StageNotReady";
 
@@ -360,7 +364,8 @@ public static class StructureStageLifecycleAssembler
                 return ("tirage", null, false, true);
             case ChecklistPlaces
                 or DisabledInitialRoundNotPlayable
-                or DisabledIncompleteEntryRound:
+                or DisabledIncompleteEntryRound
+                or DisabledNoDeterminedConfrontations:
                 return (null, "operational-placement", true, false);
             case ChecklistMatches
                 or DisabledUnmaterializedConfrontations

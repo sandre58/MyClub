@@ -145,7 +145,7 @@ describe('StructurePhaseFicheHeader', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('shows overview remediation link without block paragraph for ConstructionFrozen', () => {
+  it('shows no header remediation link for ConstructionFrozen', () => {
     const stage: StructureStageHubSummary = {
       ...baseStage,
       status: 'Draft',
@@ -167,11 +167,11 @@ describe('StructurePhaseFicheHeader', () => {
       screen.queryByText(/Complétez la structure de cette phase/i),
     ).not.toBeInTheDocument();
     expect(
-      screen.getByRole('link', { name: /Voir la synthèse/i }),
-    ).toHaveAttribute('href', `/competitions/${competitionId}/overview`);
+      screen.queryByRole('link', { name: /Voir la synthèse/i }),
+    ).not.toBeInTheDocument();
   });
 
-  it('shows placement remediation link without long block copy for InitialRoundNotPlayable', () => {
+  it('shows no header remediation link for InitialRoundNotPlayable', () => {
     const remediationHref = `/competitions/${competitionId}/structure?stage=${baseStage.stageId}&focus=operational-placement&manual=1`;
     const stage: StructureStageHubSummary = {
       ...baseStage,
@@ -198,9 +198,36 @@ describe('StructurePhaseFicheHeader', () => {
     expect(
       screen.queryByText(/Le premier tour n’est pas encore jouable/i),
     ).not.toBeInTheDocument();
-    const remediationLink = screen.getByRole('link', {
-      name: /Aller au placement opérationnel/i,
-    });
-    expect(remediationLink).toHaveAttribute('href', remediationHref);
+    expect(
+      screen.queryByRole('link', {
+        name: /Aller au placement opérationnel/i,
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('hides placement remediation link when Start is blocked for cup entry pairs in Matchs tile', () => {
+    const remediationHref = `/competitions/${competitionId}/structure?stage=${baseStage.stageId}&focus=operational-placement&manual=1`;
+    const stage: StructureStageHubSummary = {
+      ...baseStage,
+      status: 'Ready',
+      formatKind: 'Cup',
+      lifecycle: {
+        transition: {
+          code: 'StartStage',
+          enabled: false,
+          disabledReasonCode: 'NoDeterminedConfrontations',
+          remediation: {
+            href: remediationHref,
+            labelKey: 'NoDeterminedConfrontations',
+          },
+        },
+      },
+    };
+
+    renderHeader(stage);
+
+    expect(
+      screen.queryByRole('link', { name: /Aller au placement opérationnel/i }),
+    ).not.toBeInTheDocument();
   });
 });

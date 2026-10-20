@@ -304,11 +304,19 @@ public sealed partial class UseCaseExecutor
             competitionStages = [.. competition.StageIds.Select(id => byId[id])];
         }
 
-        // Match rows enrich cup fixture connections when sides are already attached.
-        var matchRows = await matches.ListSummaryRowsByStageReadOnlyAsync(stageId, cancellationToken)
-            .ConfigureAwait(false);
+        var matchSummariesByStage = competition.StageIds.Count == 0
+            ? new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>> { [stageId] = [] }
+            : await matches
+                .ListSummaryRowsByStageIdsReadOnlyAsync(competition.StageIds, cancellationToken)
+                .ConfigureAwait(false);
 
-        return StageSchematicAssembler.Assemble(stage, competition, competitionStages, matchRows);
+        matchSummariesByStage.TryGetValue(stageId, out var matchRows);
+        return StageSchematicAssembler.Assemble(
+            stage,
+            competition,
+            competitionStages,
+            matchRows ?? [],
+            matchSummariesByStage);
     }
 
     /// <summary>

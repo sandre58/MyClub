@@ -12,6 +12,7 @@ using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
+using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using Xunit;
@@ -498,5 +499,78 @@ public sealed class StageSchematicAssemblerTests
         var peerStructureOnly = StageSchematicAssembler.Assemble(target, competition, allStages);
 
         peerStructureOnly.Should().BeEquivalentTo(reference);
+    }
+
+    [Fact]
+    public void Cup_cross_stage_progression_projects_winner_on_slot_when_upstream_match_finished()
+    {
+        var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
+        var home = competition.AddEntry(TeamId.New(), "FC Menton", _clock);
+        var away = competition.AddEntry(TeamId.New(), "Away", _clock);
+        var source = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
+        source.AddRound("QF", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        source.AddSlot("QF1-A");
+        source.AddSlot("QF1-B");
+        source.ReplaceBracketPairs([new BracketPair("P1", "QF1-A", "QF1-B")]);
+        competition.AddStage(source.Id, _clock);
+
+        var destination = Stage.Create(competition.Id, new StageName("SF"), SampleRegulations.Standard(), _clock);
+        destination.AddRound("SF", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        destination.AddSlot("SF1-A");
+        destination.AddSlot("SF1-B");
+        destination.ReplaceBracketPairs([new BracketPair("P1", "SF1-A", "SF1-B")]);
+        competition.AddStage(destination.Id, _clock);
+
+        var fixture = source.AddFixture(source.Rounds[0].Id, _clock, "QF1-A", "QF1-B", "P1");
+        source.ApplyResolvedEntry("QF1-A", home.Id, _clock);
+        source.ApplyResolvedEntry("QF1-B", away.Id, _clock);
+        var match = Match.Create(competition.Id, source.Id, home.Id, away.Id, _clock);
+        match.Start(_clock);
+        match.Finish(new MatchResult(ResultType.Played, new Score(2, 1)), _clock);
+        source.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
+        source.ReplaceProgressionRules(
+            new ProgressionRules(
+            [
+                new ProgressionPath(
+                    "P1",
+                    ProgressionOutcome.Winner,
+                    ProgressionDestination.ForSlot(destination.Id, "SF1-B"))
+            ]),
+            _clock);
+
+        destination.Prepare(_clock);
+
+        var summaries = new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>
+        {
+            [source.Id] =
+            [
+                new MatchSummaryRow(
+                    match.Id,
+                    match.StageId,
+                    match.Status,
+                    match.HomeEntryId,
+                    match.AwayEntryId,
+                    match.Result)
+            ]
+        };
+
+        destination.FindSlot("SF1-B")!.EntryId.Should().BeNull();
+
+        var schematic = StageSchematicAssembler.Assemble(
+            destination,
+            competition,
+            [source, destination],
+            [],
+            summaries);
+
+        schematic.Cases.Single(c => c.FormPosition.SlotKey == "SF1-B").Entry!.DisplayName.Should().Be("FC Menton");
+
+        CupEntryRoundResolvedTeamGauge.CountResolvedEntryRoundTeams(
+                competition,
+                destination,
+                [source, destination],
+                summaries)
+            .Should()
+            .Be(1);
     }
 }

@@ -45,7 +45,8 @@ public static class StructureInboundCompositionAssembler
             destination,
             competition,
             competitionStages,
-            destinationMatchRows);
+            destinationMatchRows,
+            matchSummariesByStage);
         var entriesById = competition.Entries.ToDictionary(entry => entry.Id);
 
         var rules = new List<StructureInboundFeedRuleDto>();
@@ -132,7 +133,7 @@ public static class StructureInboundCompositionAssembler
 
         if (qualPath is not null)
         {
-            entryId = ResolveQualificationSeat(
+            entryId = InboundFeedSeatResolver.ResolveQualificationEntry(
                 qualPath,
                 destination,
                 sourceStage,
@@ -171,34 +172,6 @@ public static class StructureInboundCompositionAssembler
         entriesById.TryGetValue(resolvedId, out var entry);
         var displayName = entry?.DisplayName;
         return new StructureInboundFeedSeatDto(resolvedId.Value, displayName, placed);
-    }
-
-    private static EntryId? ResolveQualificationSeat(
-        QualificationPath path,
-        Stage destination,
-        Stage sourceStage,
-        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>>? matchSummariesByStage)
-    {
-        if (path.Destination.TargetsForm || path.Destination.TargetsPopulation)
-        {
-            var fingerprint = FormPathResolutionKey.FromQualification(sourceStage.Id, path);
-            var fromWitness = destination.FormPathResolutions
-                .FirstOrDefault(resolution => resolution.PathFingerprint == fingerprint)
-                ?.EntryId;
-            return fromWitness ?? InboundQualificationSeatProjection.TryResolveSeat(
-                path,
-                sourceStage,
-                destination,
-                matchSummariesByStage);
-        }
-
-        if (path.Destination.TargetsGroup)
-        {
-            return null;
-        }
-
-        var slotKey = path.Destination.SlotKey;
-        return string.IsNullOrWhiteSpace(slotKey) ? null : destination.FindSlot(slotKey)?.EntryId;
     }
 
     private static EntryId? ResolveFromSchematicInboundCase(

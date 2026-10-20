@@ -176,6 +176,13 @@ const BY_CODE: Record<string, StructureDiagnosticMeta> = {
     tone: 'danger',
     titleKey: 'graph.issues.IncompleteEntryRound',
   },
+  NoDeterminedConfrontations: {
+    family: 'execution',
+    tile: 'confrontation',
+    cta: 'places',
+    tone: 'danger',
+    titleKey: 'graph.issues.NoDeterminedConfrontations',
+  },
   UnmaterializedConfrontations: {
     family: 'execution',
     tile: 'confrontation',

@@ -411,6 +411,12 @@ public static class ApplicationErrorCodes
     public const string StartBlockedIncompleteEntryRound = "Application.StartBlockedIncompleteEntryRound";
 
     /// <summary>
+    /// Gets the code when Start is refused because no Cup confrontation is determined yet.
+    /// </summary>
+    public const string StartBlockedNoDeterminedConfrontations =
+        "Application.StartBlockedNoDeterminedConfrontations";
+
+    /// <summary>
     /// Gets the code when Start is refused because Championship / Groups require initial confrontations but none are established.
     /// </summary>
     public const string StartBlockedNoExploitableInitialConfrontations =

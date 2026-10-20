@@ -11,6 +11,7 @@ const EXTRA_STRUCTURE_ATTENTION_SOURCES = new Set([
   'CupBracketInvalid',
   'MissingPotRules',
   'IncompleteEntryRound',
+  'NoDeterminedConfrontations',
   'UnmaterializedConfrontations',
   'NoExploitableInitialConfrontations',
   'PhaseRosterIncomplete',

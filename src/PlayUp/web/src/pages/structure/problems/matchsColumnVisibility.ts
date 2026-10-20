@@ -50,6 +50,7 @@ export function remediationHref(
 const LIFECYCLE_REMEDIATION_LABEL_KEYS = new Set([
   'InitialRoundNotPlayable',
   'IncompleteEntryRound',
+  'NoDeterminedConfrontations',
 ]);
 
 export function resolveLifecycleRemediationLabel(
@@ -114,20 +115,14 @@ export function shouldShowHeaderLifecycleInlineCopy(
   return false;
 }
 
+/** Fiche header lifecycle toolbar — action only (no inline hint or remediation link). */
 export function shouldShowHeaderLifecycleRemediation(
-  disabledReasonCode: string | null | undefined,
-  actionEnabled: boolean,
-  remediationHrefValue: string | null,
-  remediationLabelKey?: string | null,
+  _disabledReasonCode: string | null | undefined,
+  _actionEnabled: boolean,
+  _remediationHrefValue: string | null,
+  _remediationLabelKey?: string | null,
 ): boolean {
-  if (actionEnabled || !disabledReasonCode) {
-    return false;
-  }
-  return shouldShowLifecycleRemediationLink(
-    disabledReasonCode,
-    remediationHrefValue,
-    remediationLabelKey,
-  );
+  return false;
 }
 
 /** Lifecycle UI in the Matchs operational column. */

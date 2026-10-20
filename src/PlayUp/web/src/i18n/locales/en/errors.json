@@ -35,6 +35,7 @@
     "RevertToReadyBlocked": "Finish or cancel engaged matches before pausing the phase.",
     "StartBlockedUnmaterialized": "Materialize every eligible confrontation before starting the phase.",
     "StartBlockedIncompleteEntryRound": "Complete every entry-bracket pair before starting the phase.",
+    "StartBlockedNoDeterminedConfrontations": "Determine at least one bracket confrontation before starting the phase.",
     "StartBlockedNoExploitableInitialConfrontations": "Add enough participants to establish initial confrontations before starting the phase.",
     "StartBlockedPhaseRosterIncomplete": "Complete the phase composition with enough active, eligible teams before starting.",
     "StartBlockedGroupsNotReady": "Complete group assignments before starting the phase.",

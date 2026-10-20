@@ -48,6 +48,11 @@ public static class StructurePresentedStageDiagnostics
             }
         }
 
+        if (ReportsCupEntryRoundPairGap(stage))
+        {
+            AddDistinct(codes, StructureStageLifecycleAssembler.DisabledIncompleteEntryRound);
+        }
+
         if (ReportsGroupsMatchProductionAttentionGap(stage))
         {
             AddDistinct(
@@ -115,6 +120,16 @@ public static class StructurePresentedStageDiagnostics
                 code == StructureStageLifecycleAssembler.DisabledGroupsNotReady);
         }
 
+        if (IsSlotFeedAwaitingDraw(stage))
+        {
+            filtered.RemoveAll(SuppressCupProductionBlockerForAwaitingDraw);
+        }
+
+        if (IsAwaitingInboundFeedResolution(stage))
+        {
+            filtered.RemoveAll(SuppressMatchProductionBlockerForAwaitingInbound);
+        }
+
         if (filtered.Contains(CompetitionFlowAnalyzer.PopulationShortfall, CodeComparer))
         {
             filtered.RemoveAll(code => code == CompetitionFlowAnalyzer.NonRootUnfed);
@@ -142,6 +157,12 @@ public static class StructurePresentedStageDiagnostics
             stage.HasDrawRules,
             stage.DrawExecutionBadge);
 
+    /// <summary>SPA: match production / start blockers deferred while Qual/Prog inbound seats are unresolved.</summary>
+    public static bool IsAwaitingInboundFeedResolution(StructureStageHubSummaryDto stage) =>
+        MatchProductionInboundFeedDeferral.IsAwaitingResolution(
+            stage.InboundComposition,
+            stage.Materialize?.DeterminedCount ?? 0);
+
     /// <summary>SPA: <c>stageHasEngagedMissingPots</c>.</summary>
     public static bool StageHasEngagedMissingPots(StructureStageHubSummaryDto stage) =>
         stage is { FormatKind: StructureFormatKind.Groups, HasDrawRules: true, NumberOfPots: null };
@@ -156,6 +177,11 @@ public static class StructurePresentedStageDiagnostics
 
     private static bool ReportsGroupsMatchProductionAttentionGap(StructureStageHubSummaryDto stage)
     {
+        if (IsAwaitingInboundFeedResolution(stage))
+        {
+            return false;
+        }
+
         if (stage.Status is not StageStatus.Ready || stage.FormatKind is not StructureFormatKind.Groups)
         {
             return false;
@@ -185,20 +211,29 @@ public static class StructurePresentedStageDiagnostics
         if (!string.IsNullOrWhiteSpace(primaryDisabledReasonCode)
             && primaryDisabledReasonCode is
                 StructureStageLifecycleAssembler.DisabledIncompleteEntryRound
+                or StructureStageLifecycleAssembler.DisabledNoDeterminedConfrontations
                 or StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations
                 or StructureStageLifecycleAssembler.DisabledNoExploitableInitialConfrontations
                 or StructureStageLifecycleAssembler.DisabledPhaseRosterIncomplete
                 or StructureStageLifecycleAssembler.DisabledGroupsNotReady)
         {
-            if (primaryDisabledReasonCode
-                    != StructureStageLifecycleAssembler.DisabledGroupsNotReady
-                || !DeferGroupsNotReadyForDraw(stage))
+            var suppressForDraw = IsSlotFeedAwaitingDraw(stage)
+                                  && SuppressCupProductionBlockerForAwaitingDraw(
+                                      primaryDisabledReasonCode);
+            var suppressForInbound = IsAwaitingInboundFeedResolution(stage)
+                                     && SuppressMatchProductionBlockerForAwaitingInbound(
+                                         primaryDisabledReasonCode);
+            if (!suppressForDraw
+                && !suppressForInbound
+                && (primaryDisabledReasonCode
+                        != StructureStageLifecycleAssembler.DisabledGroupsNotReady
+                    || !DeferGroupsNotReadyForDraw(stage)))
             {
                 yield return primaryDisabledReasonCode;
             }
         }
 
-        if (ReportsCanonicalEntryRoundStartGap(stage))
+        if (ReportsCupEntryRoundPairGap(stage))
         {
             yield return StructureStageLifecycleAssembler.DisabledIncompleteEntryRound;
         }
@@ -209,8 +244,23 @@ public static class StructurePresentedStageDiagnostics
         }
     }
 
-    private static bool ReportsCanonicalEntryRoundStartGap(StructureStageHubSummaryDto stage)
+    private static bool SuppressCupProductionBlockerForAwaitingDraw(string code) =>
+        code is StructureStageLifecycleAssembler.DisabledIncompleteEntryRound
+            or StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations
+            or StructureStageLifecycleAssembler.DisabledNoDeterminedConfrontations;
+
+    private static bool SuppressMatchProductionBlockerForAwaitingInbound(string code) =>
+        code is StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations
+            or StructureStageLifecycleAssembler.DisabledNoDeterminedConfrontations
+            or StructureStageLifecycleAssembler.DisabledGroupsNotReady;
+
+    private static bool ReportsCupEntryRoundPairGap(StructureStageHubSummaryDto stage)
     {
+        if (IsSlotFeedAwaitingDraw(stage))
+        {
+            return false;
+        }
+
         if (stage.Status is not StageStatus.Ready)
         {
             return false;
@@ -223,14 +273,24 @@ public static class StructurePresentedStageDiagnostics
         }
 
         var canonical = materialize.CanonicalEntryPairCount;
-        var undetermined = materialize.UndeterminedCanonicalEntryPairCount;
-        return canonical > 0 && undetermined > 0;
+        var placementIncomplete = materialize.UndeterminedCanonicalEntryPairCount;
+        if (canonical > 0)
+        {
+            return placementIncomplete > 0;
+        }
+
+        return materialize.Confrontations.Any(row => !row.Determined);
     }
 
     private static bool ReportsUnmaterializedConfrontationsStartGap(
         StructureStageHubSummaryDto stage,
         string? primaryDisabledReasonCode)
     {
+        if (IsSlotFeedAwaitingDraw(stage) || IsAwaitingInboundFeedResolution(stage))
+        {
+            return false;
+        }
+
         switch (primaryDisabledReasonCode)
         {
             case StructureStageLifecycleAssembler.DisabledPhaseRosterIncomplete
@@ -246,8 +306,21 @@ public static class StructurePresentedStageDiagnostics
         }
 
         var materialize = stage.Materialize;
-        return materialize is not null && (materialize.EligibleCount != 0
-                                            || materialize.MaterializedCount < materialize.DeterminedCount) && (materialize.EligibleCount > 0
-            || materialize.DeterminedCount > materialize.MaterializedCount);
+        if (materialize is null)
+        {
+            return false;
+        }
+
+        if (materialize.CommandCode == OverviewAssembler.ActionMaterializeFromOccupiedSlots
+            && stage.MatchProductionPresentation?.PrimaryGauge is { } primary
+            && primary.Capacity > primary.Current)
+        {
+            return true;
+        }
+
+        return (materialize.EligibleCount != 0
+                || materialize.MaterializedCount < materialize.DeterminedCount)
+               && (materialize.EligibleCount > 0
+                   || materialize.DeterminedCount > materialize.MaterializedCount);
     }
 }

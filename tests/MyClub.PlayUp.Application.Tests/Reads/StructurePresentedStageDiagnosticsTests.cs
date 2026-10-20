@@ -7,8 +7,11 @@
 using FluentAssertions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
+using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
+using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.TestKit;
@@ -89,6 +92,131 @@ public sealed class StructurePresentedStageDiagnosticsTests
                     $"stage {hub.Name} should surface {code} on /attention");
             }
         }
+    }
+
+    [Fact]
+    public void Assemble_groups_ready_awaiting_prog_inbound_suppresses_match_presented_blockers()
+    {
+        var situation = TestCompetition.Create("Prog groups presented", _clock)
+            .WithTeams(4)
+            .WithStructure(StructureIntent.Cup(4));
+        var semi = situation.RequirePrimaryStage();
+        var entries = situation.Competition.Entries.Select(entry => entry.Id).ToArray();
+        for (var i = 0; i < 4; i++)
+        {
+            semi.ApplyResolvedEntry($"S{i + 1}", entries[i], _clock);
+        }
+
+        foreach (var pair in semi.BracketPairs)
+        {
+            _ = semi.AddFixture(
+                semi.Rounds[0].Id,
+                _clock,
+                pair.SlotAKey,
+                pair.SlotBKey,
+                pair.PairKey);
+        }
+
+        var groups = situation.AddBareStage("Poules");
+        groups.AddGroup("A", _clock);
+        groups.AddGroup("B", _clock);
+        groups.AddMatchday(1, _clock);
+        groups.SetPlacesPerGroup(2);
+        groups.SetMatchGenerationFormat(MatchGenerationFormat.SingleRoundRobin);
+        groups.ReplaceDrawRules(null, _clock);
+
+        var orderedGroups = groups.Groups.OrderBy(group => group.Name, StringComparer.Ordinal).ToArray();
+        var semiPairs = semi.BracketPairs.OrderBy(pair => pair.PairKey, StringComparer.Ordinal).ToArray();
+        semi.ReplaceProgressionRules(
+            new ProgressionRules(
+            [
+                new ProgressionPath(
+                    semiPairs[0].PairKey,
+                    ProgressionOutcome.Winner,
+                    ProgressionDestination.ForGroup(groups.Id, orderedGroups[0].Id)),
+                new ProgressionPath(
+                    semiPairs[1].PairKey,
+                    ProgressionOutcome.Winner,
+                    ProgressionDestination.ForGroup(groups.Id, orderedGroups[1].Id))
+            ]),
+            _clock);
+
+        PrepareStage.Execute(groups, situation.Stages, _clock);
+
+        var hub = StructureViewAssembler.Assemble(situation.Competition, situation.Stages)
+            .Stages.Single(stage => stage.StageId == groups.Id.Value);
+
+        hub.InboundComposition.Should().NotBeNull();
+        hub.InboundComposition!.ConfiguredVolume.Should().BeGreaterThan(0);
+        hub.InboundComposition.ResolvedCount.Should().Be(0);
+        hub.Materialize!.DeterminedCount.Should().Be(0);
+        StructurePresentedStageDiagnostics.IsAwaitingInboundFeedResolution(hub).Should().BeTrue();
+        hub.PresentedIssueCodes.Should().NotContain(
+            StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations);
+        hub.PresentedIssueCodes.Should().NotContain(
+            StructureStageLifecycleAssembler.DisabledNoDeterminedConfrontations);
+    }
+
+    [Fact]
+    public void Assemble_cup_with_draw_to_launch_suppresses_match_and_pair_production_presented_blockers()
+    {
+        var situation = TestCompetition.Create("Cup draw pending", _clock)
+            .WithTeams(16)
+            .WithStructure(StructureIntent.Cup(16));
+        var stage = situation.RequirePrimaryStage();
+        ReplaceStageDrawRules.Execute(stage, new DrawRules(DrawMode.Random), _clock);
+        situation.PreparePrimaryStage();
+
+        var hub = StructureViewAssembler.Assemble(situation.Competition, [stage]).Stages.Single();
+
+        hub.HasDrawRules.Should().BeTrue();
+        hub.DrawExecutionBadge.Should().Be(StructureDrawExecutionBadge.ToLaunch);
+        hub.PresentedIssueCodes.Should().NotContain(
+            StructureStageLifecycleAssembler.DisabledIncompleteEntryRound);
+        hub.PresentedIssueCodes.Should().NotContain(
+            StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations);
+        hub.MatchProductionPresentation!.PrerequisiteGauge!.MessageKind.Should().Be(
+            StructureMatchProductionPresentationAssembler.MessageKindInfo);
+        hub.MatchProductionPresentation.PrerequisiteGauge.BlocksPhaseStart.Should().BeFalse();
+        hub.MatchProductionPresentation.PrimaryGauge.MessageKind.Should().Be(
+            StructureMatchProductionPresentationAssembler.MessageKindInfo);
+    }
+
+    [Fact]
+    public void Assemble_cup_partial_round_materialization_surfaces_start_and_presented_match_gaps()
+    {
+        var situation = TestCompetition.Create("Cup partial presented", _clock)
+            .WithTeams("A", "B", "C", "D")
+            .WithStructure(StructureIntent.Cup(4));
+        var stage = situation.PrimaryStage!;
+        var entries = situation.Competition.Entries.Select(entry => entry.Id).ToArray();
+        stage.ApplyResolvedEntry("S1", entries[0], _clock);
+        stage.ApplyResolvedEntry("S2", entries[1], _clock);
+        situation.PreparePrimaryStage();
+
+        var materialized = MaterializeCupFromOccupiedSlots.Execute(
+            situation.Competition,
+            stage,
+            ["P1"],
+            [],
+            _clock);
+        var summaries = new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>
+        {
+            [stage.Id] = StageStartReadinessGuard.ToSummaryRows(materialized.CreatedMatches)
+        };
+
+        var hub = StructureViewAssembler.Assemble(
+            situation.Competition,
+            situation.Stages,
+            matchSummariesByStage: summaries).Stages.Single();
+
+        hub.Lifecycle!.Transition.Enabled.Should().BeFalse();
+        hub.PresentedIssueCodes.Should().Contain(
+            StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations);
+        hub.PresentedIssueCodes.Should().Contain(
+            StructureStageLifecycleAssembler.DisabledIncompleteEntryRound);
+        hub.MatchProductionPresentation!.PrimaryGauge.MessageKind.Should().Be(
+            StructureMatchProductionPresentationAssembler.MessageKindDanger);
     }
 
     [Fact]

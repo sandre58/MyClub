@@ -10,6 +10,7 @@ using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
+using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Stages;
@@ -33,6 +34,9 @@ internal static class StageStartReadinessGuard
 
     internal const string DisabledGroupsNotReady = StructureMaterializeDisabledReasons.GroupsNotReady;
 
+    internal const string DisabledNoDeterminedConfrontations =
+        StructureMaterializeDisabledReasons.NoDeterminedConfrontations;
+
     private const string DisabledInitialRoundNotPlayable = "InitialRoundNotPlayable";
 
     internal static void EnsureReadyToStart(
@@ -44,6 +48,13 @@ internal static class StageStartReadinessGuard
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(matchSummaries);
+
+        if (CupCanonicalEntryRoundStartGate.BlocksStart(stage, competition, competitionStages ?? [stage]))
+        {
+            throw new ApplicationFailureException(
+                "Start is blocked because canonical Cup entry-round pairs are not all placement-complete.",
+                ApplicationErrorCodes.StartBlockedIncompleteEntryRound);
+        }
 
         if (TryGetProductionStartGap(competition, stage, matchSummaries, competitionStages) is { } productionGap)
         {
@@ -60,11 +71,11 @@ internal static class StageStartReadinessGuard
                 ApplicationErrorCodes.StartBlockedNoExploitableInitialConfrontations);
         }
 
-        if (CupCanonicalEntryRoundStartGate.BlocksStart(stage))
+        if (CupReadyLacksDeterminedConfrontations(stage, matchSummaries))
         {
             throw new ApplicationFailureException(
-                "Start is blocked because canonical Cup entry-round pairs are not all determined.",
-                ApplicationErrorCodes.StartBlockedIncompleteEntryRound);
+                "Start is blocked because no confrontation is determined for this Cup phase.",
+                ApplicationErrorCodes.StartBlockedNoDeterminedConfrontations);
         }
 
         StructureDrawConsumptionGate.EnsureNoObsoleteDrawsOnStage(stage);
@@ -79,6 +90,11 @@ internal static class StageStartReadinessGuard
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(matchSummaries);
+
+        if (CupCanonicalEntryRoundStartGate.BlocksStart(stage, competition, competitionStages ?? [stage]))
+        {
+            return DisabledIncompleteEntryRound;
+        }
 
         if (TryGetProductionStartGap(competition, stage, matchSummaries, competitionStages) is { } productionGap)
         {
@@ -98,15 +114,50 @@ internal static class StageStartReadinessGuard
             return DisabledDrawObsoleteForConsumption;
         }
 
-        if (CupCanonicalEntryRoundStartGate.BlocksStart(stage))
+        if (CupReadyLacksDeterminedConfrontations(stage, matchSummaries))
         {
-            return DisabledIncompleteEntryRound;
+            return DisabledNoDeterminedConfrontations;
         }
 
         var format = StructureSkeleton.InferFormat(stage);
         return format == StructureFormatKind.Cup && !IsInitialRoundPlayable(stage)
             ? DisabledInitialRoundNotPlayable
             : null;
+    }
+
+    private static bool CupReadyLacksDeterminedConfrontations(
+        Stage stage,
+        IReadOnlyList<MatchSummaryRow> matchSummaries)
+    {
+        if (StructureSkeleton.InferFormat(stage) != StructureFormatKind.Cup
+            || stage.Status is not StageStatus.Ready)
+        {
+            return false;
+        }
+
+        if (stage.BracketPairs.Count == 0)
+        {
+            return false;
+        }
+
+        if (matchSummaries.Any(row => row.StageId.Equals(stage.Id)))
+        {
+            return false;
+        }
+
+        foreach (var pair in stage.BracketPairs)
+        {
+            var slotA = stage.FindSlot(pair.SlotAKey);
+            var slotB = stage.FindSlot(pair.SlotBKey);
+            if (slotA?.EntryId is { } home
+                && slotB?.EntryId is { } away
+                && !home.Equals(away))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static string? TryGetProductionStartGap(
@@ -123,12 +174,13 @@ internal static class StageStartReadinessGuard
         var stages = competitionStages ?? [stage];
         var format = StructureSkeleton.InferFormat(stage);
         return (format == StructureFormatKind.Groups
-                && GroupsPlacementReadiness.BlocksProduction(stage)) ||
-               StageConfrontationMaterializationState.CountEligibleUnmaterialized(
+                && GroupsPlacementReadiness.BlocksProduction(stage))
+               || StageConfrontationMaterializationState.CountEligibleUnmaterialized(
                    competition,
                    stage,
                    matchSummaries,
                    competitionStages) > 0
+               || CupReadyEntryRoundMatchProductionIncomplete(stage)
             ? DisabledUnmaterializedConfrontations
             : format switch
             {
@@ -137,6 +189,25 @@ internal static class StageStartReadinessGuard
                     => DisabledPhaseRosterIncomplete,
                 _ => null
             };
+    }
+
+    private static bool CupReadyEntryRoundMatchProductionIncomplete(Stage stage)
+    {
+        if (StructureSkeleton.InferFormat(stage) != StructureFormatKind.Cup
+            || stage.Status is not StageStatus.Ready
+            || stage.BracketPairs.Count == 0)
+        {
+            return false;
+        }
+
+        var legs = TieFormat.OrDefaultOneLeg(stage.Regulation.TieFormat).NumberOfLegs;
+        if (legs < 1)
+        {
+            legs = 1;
+        }
+
+        var targetMatchSlots = stage.BracketPairs.Count * legs;
+        return StructureSkeleton.CountAttachedMatches(stage) < targetMatchSlots;
     }
 
     private static void ThrowStartBlockedForProductionGap(string productionGap) =>

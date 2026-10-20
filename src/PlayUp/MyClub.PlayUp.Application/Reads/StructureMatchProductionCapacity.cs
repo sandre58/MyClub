@@ -57,6 +57,21 @@ internal static class StructureMatchProductionCapacity
         {
             if (materialize.CommandCode == OverviewAssembler.ActionMaterializeFromOccupiedSlots)
             {
+                if (formatKind == StructureFormatKind.Cup)
+                {
+                    var canonical = materialize.CanonicalEntryPairCount;
+                    if (canonical > 0)
+                    {
+                        return ConfrontationsToMatchSlots(canonical, legsPerConfrontation);
+                    }
+
+                    var rows = materialize.Confrontations.Count;
+                    if (rows > 0)
+                    {
+                        return ConfrontationsToMatchSlots(rows, legsPerConfrontation);
+                    }
+                }
+
                 var capacityConfrontations = Math.Max(determined, materialize.MaterializedCount);
                 return ConfrontationsToMatchSlots(capacityConfrontations, legsPerConfrontation);
             }

@@ -259,6 +259,51 @@ public sealed class StructureMaterializeAssemblerTests
     }
 
     [Fact]
+    public void Cup_does_not_flag_incomplete_entry_round_when_pair_placement_is_full_before_team_resolution()
+    {
+        var competition = CreateCompetition.Execute("Cup SF placement", _clock);
+        var source = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
+        var round = source.AddRound("QF", tieFormat: null, _clock);
+        source.AddSlot("KO-A");
+        source.AddSlot("KO-B");
+        source.ReplaceBracketPairs([new BracketPair("P1", "KO-A", "KO-B")]);
+        source.AddFixture(round.Id, _clock, "KO-A", "KO-B", "P1");
+
+        var destination = Stage.Create(competition.Id, new StageName("SF"), SampleRegulations.Standard(), _clock);
+        var destinationRound = destination.AddRound("SF", tieFormat: null, _clock);
+        destination.AddSlot("SF1-A");
+        destination.AddSlot("SF1-B");
+        destination.ReplaceBracketPairs([new BracketPair("P1", "SF1-A", "SF1-B")]);
+        destination.AddFixture(destinationRound.Id, _clock, "SF1-A", "SF1-B", "P1");
+        var direct = EntryId.New();
+        destination.ReplaceAffectationAuthoring([direct], _clock);
+        destination.AssignEntryToSlot("SF1-A", direct);
+        source.ReplaceProgressionRules(
+            new ProgressionRules(
+            [
+                new ProgressionPath(
+                    "P1",
+                    ProgressionOutcome.Winner,
+                    ProgressionDestination.ForSlot(destination.Id, "SF1-B"))
+            ]),
+            _clock);
+        destination.Prepare(_clock);
+
+        var materialize = StructureMaterializeAssembler.Assemble(
+            competition,
+            destination,
+            [source, destination],
+            [],
+            inboundComposition: null)!;
+
+        materialize.CanonicalEntryPairCount.Should().Be(1);
+        materialize.UndeterminedCanonicalEntryPairCount.Should().Be(0);
+        CupCanonicalEntryRoundStartGate.BlocksStart(destination, competition, [source, destination])
+            .Should()
+            .BeFalse();
+    }
+
+    [Fact]
     public void Cup_lists_pair_keys_and_selection_flags()
     {
         var situation = TestCompetition.Create("Cup", _clock)
@@ -389,6 +434,181 @@ public sealed class StructureMaterializeAssemblerTests
 
         materialize.CommandEnabled.Should().BeTrue();
         materialize.DisabledReason.Should().BeNull();
+    }
+
+    [Fact]
+    public void Cup_progression_projected_pair_enables_materialize_when_both_sides_resolved()
+    {
+        var competition = CreateCompetition.Execute("Cup SF prog", _clock);
+        var hyeres = competition.AddEntry(TeamId.New(), "ES Hyères", _clock);
+        var menton = competition.AddEntry(TeamId.New(), "FC Menton", _clock);
+        var fillerA = competition.AddEntry(TeamId.New(), "Filler A", _clock);
+        var fillerB = competition.AddEntry(TeamId.New(), "Filler B", _clock);
+        var source = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
+        source.AddRound("QF", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        source.AddSlot("KO-A");
+        source.AddSlot("KO-B");
+        source.AddSlot("KO-C");
+        source.AddSlot("KO-D");
+        source.ReplaceBracketPairs(
+        [
+            new BracketPair("P1", "KO-A", "KO-B"),
+            new BracketPair("P2", "KO-C", "KO-D")
+        ]);
+        competition.AddStage(source.Id, _clock);
+
+        var destination = Stage.Create(competition.Id, new StageName("SF"), SampleRegulations.Standard(), _clock);
+        destination.AddRound("SF", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        destination.AddSlot("S1");
+        destination.AddSlot("S2");
+        destination.AddSlot("S3");
+        destination.AddSlot("S4");
+        destination.ReplaceBracketPairs(
+        [
+            new BracketPair("P1", "S1", "S2"),
+            new BracketPair("P2", "S3", "S4")
+        ]);
+        competition.AddStage(destination.Id, _clock);
+
+        var fixtureP1 = source.AddFixture(source.Rounds[0].Id, _clock, "KO-A", "KO-B", "P1");
+        source.ApplyResolvedEntry("KO-A", menton.Id, _clock);
+        source.ApplyResolvedEntry("KO-B", fillerA.Id, _clock);
+        var matchP1 = Match.Create(competition.Id, source.Id, menton.Id, fillerA.Id, _clock);
+        matchP1.Start(_clock);
+        matchP1.Finish(new MatchResult(ResultType.Played, new Score(2, 0)), _clock);
+        source.AttachMatch(fixtureP1.Id, matchP1.Id, legIndex: 1, _clock);
+
+        var fixtureP2 = source.AddFixture(source.Rounds[0].Id, _clock, "KO-C", "KO-D", "P2");
+        source.ApplyResolvedEntry("KO-C", hyeres.Id, _clock);
+        source.ApplyResolvedEntry("KO-D", fillerB.Id, _clock);
+        var matchP2 = Match.Create(competition.Id, source.Id, hyeres.Id, fillerB.Id, _clock);
+        matchP2.Start(_clock);
+        matchP2.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
+        source.AttachMatch(fixtureP2.Id, matchP2.Id, legIndex: 1, _clock);
+
+        source.ReplaceProgressionRules(
+            new ProgressionRules(
+            [
+                new ProgressionPath(
+                    "P2",
+                    ProgressionOutcome.Winner,
+                    ProgressionDestination.ForSlot(destination.Id, "S1")),
+                new ProgressionPath(
+                    "P1",
+                    ProgressionOutcome.Winner,
+                    ProgressionDestination.ForSlot(destination.Id, "S2"))
+            ]),
+            _clock);
+        destination.Prepare(_clock);
+
+        var summaries = new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>
+        {
+            [source.Id] = [Summary(matchP1), Summary(matchP2)]
+        };
+
+        var view = StructureViewAssembler.Assemble(
+            competition,
+            [source, destination],
+            matchSummariesByStage: summaries);
+        var hub = view.Stages.Single(stage => stage.StageId == destination.Id.Value);
+        var materialize = hub.Materialize!;
+
+        materialize.DeterminedCount.Should().Be(1);
+        materialize.EligibleCount.Should().Be(1);
+        materialize.CommandEnabled.Should().BeTrue();
+        materialize.Confrontations.Should().ContainSingle(row =>
+            row.Key == "P1" && row.Determined && row.Eligible && row.SideA == "ES Hyères" && row.SideB == "FC Menton");
+    }
+
+    [Fact]
+    public void Cup_after_partial_materialization_create_matches_stays_visible_but_disabled()
+    {
+        var competition = CreateCompetition.Execute("Cup SF partial", _clock);
+        var hyeres = competition.AddEntry(TeamId.New(), "ES Hyères", _clock);
+        var menton = competition.AddEntry(TeamId.New(), "FC Menton", _clock);
+        var fillerA = competition.AddEntry(TeamId.New(), "Filler A", _clock);
+        var fillerB = competition.AddEntry(TeamId.New(), "Filler B", _clock);
+        var source = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
+        source.AddRound("QF", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        source.AddSlot("KO-A");
+        source.AddSlot("KO-B");
+        source.AddSlot("KO-C");
+        source.AddSlot("KO-D");
+        source.ReplaceBracketPairs(
+        [
+            new BracketPair("P1", "KO-A", "KO-B"),
+            new BracketPair("P2", "KO-C", "KO-D")
+        ]);
+        competition.AddStage(source.Id, _clock);
+
+        var destination = Stage.Create(competition.Id, new StageName("SF"), SampleRegulations.Standard(), _clock);
+        destination.AddRound("SF", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        destination.AddSlot("S1");
+        destination.AddSlot("S2");
+        destination.AddSlot("S3");
+        destination.AddSlot("S4");
+        destination.ReplaceBracketPairs(
+        [
+            new BracketPair("P1", "S1", "S2"),
+            new BracketPair("P2", "S3", "S4")
+        ]);
+        competition.AddStage(destination.Id, _clock);
+
+        var fixtureP1 = source.AddFixture(source.Rounds[0].Id, _clock, "KO-A", "KO-B", "P1");
+        source.ApplyResolvedEntry("KO-A", menton.Id, _clock);
+        source.ApplyResolvedEntry("KO-B", fillerA.Id, _clock);
+        var matchP1 = Match.Create(competition.Id, source.Id, menton.Id, fillerA.Id, _clock);
+        matchP1.Start(_clock);
+        matchP1.Finish(new MatchResult(ResultType.Played, new Score(2, 0)), _clock);
+        source.AttachMatch(fixtureP1.Id, matchP1.Id, legIndex: 1, _clock);
+
+        var fixtureP2 = source.AddFixture(source.Rounds[0].Id, _clock, "KO-C", "KO-D", "P2");
+        source.ApplyResolvedEntry("KO-C", hyeres.Id, _clock);
+        source.ApplyResolvedEntry("KO-D", fillerB.Id, _clock);
+        var matchP2 = Match.Create(competition.Id, source.Id, hyeres.Id, fillerB.Id, _clock);
+        matchP2.Start(_clock);
+        matchP2.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
+        source.AttachMatch(fixtureP2.Id, matchP2.Id, legIndex: 1, _clock);
+
+        source.ReplaceProgressionRules(
+            new ProgressionRules(
+            [
+                new ProgressionPath(
+                    "P2",
+                    ProgressionOutcome.Winner,
+                    ProgressionDestination.ForSlot(destination.Id, "S1")),
+                new ProgressionPath(
+                    "P1",
+                    ProgressionOutcome.Winner,
+                    ProgressionDestination.ForSlot(destination.Id, "S2"))
+            ]),
+            _clock);
+        destination.Prepare(_clock);
+
+        var summaries = new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>
+        {
+            [source.Id] = [Summary(matchP1), Summary(matchP2)]
+        };
+        var stages = new[] { source, destination };
+
+        MaterializeCupFromOccupiedSlots.Execute(
+            competition,
+            destination,
+            ["P1"],
+            [],
+            _clock,
+            stages,
+            summaries);
+
+        var view = StructureViewAssembler.Assemble(competition, stages, matchSummariesByStage: summaries);
+        var hub = view.Stages.Single(stage => stage.StageId == destination.Id.Value);
+        var presentation = hub.MatchProductionPresentation!;
+
+        presentation.Materialize.Visible.Should().BeTrue();
+        presentation.Materialize.Enabled.Should().BeFalse();
+        presentation.Materialize.DisabledReason.Should().Be(
+            StructureMaterializeDisabledReasons.NoEligibleConfrontations);
+        presentation.PrimaryGauge.Current.Should().Be(1);
     }
 
     private static MatchSummaryRow Summary(Match match) =>

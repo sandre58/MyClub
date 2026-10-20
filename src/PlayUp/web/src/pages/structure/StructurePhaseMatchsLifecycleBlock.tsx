@@ -27,7 +27,6 @@ import {
   resolveLifecycleMutationMessage,
   shouldShowDraftPrepareDisabledTooltip,
   resolveLifecycleRemediationLabel,
-  shouldShowHeaderLifecycleRemediation,
   shouldShowLifecycleRemediationLink,
   shouldShowPrimaryBlockMessage,
   shouldShowRevertDisabledParagraph,
@@ -144,34 +143,27 @@ function transitionActionIcon(code: 'PrepareStage' | 'StartStage' | 'CompleteSta
   }
 }
 
-type LifecycleChromePart = 'full' | 'actions' | 'messages' | 'header';
+type LifecycleChromePart =
+  | 'full'
+  | 'actions'
+  | 'messages'
+  | 'header'
+  | 'headerAlerts';
 
-function LifecycleHeaderRemediationLink({
-  disabledReason,
-  remediationTarget,
-  remediationLabelKey,
+function LifecycleMutationAlert({
+  error,
   t,
 }: {
-  disabledReason: string;
-  remediationTarget: string;
-  remediationLabelKey: string | null;
+  error: unknown;
   t: ReturnType<typeof useTranslation<'structure'>>['t'];
 }) {
-  const label = resolveLifecycleRemediationLabel(
-    t,
-    disabledReason,
-    remediationLabelKey,
-  );
-  if (!label) {
+  if (!error) {
     return null;
   }
   return (
-    <Link
-      className="ds-text-link structure-fiche__header-remediation"
-      to={remediationTarget}
-    >
-      {label}
-    </Link>
+    <Alert tone="danger" role="alert">
+      {resolveLifecycleMutationMessage(t, error)}
+    </Alert>
   );
 }
 
@@ -253,46 +245,25 @@ export function StructurePhaseDraftMatchsPrepare({
     );
 
   const errorAlert = transitionMutation.isError ? (
-    <Alert tone="danger" role="alert">
-      {resolveLifecycleMutationMessage(t, transitionMutation.error)}
-    </Alert>
+    <LifecycleMutationAlert error={transitionMutation.error} t={t} />
   ) : null;
 
-  const remediationTarget = remediationHref(competitionId, stage);
-  const remediationLabelKey = transition?.remediation?.labelKey ?? null;
-  const showHeaderRemediation =
-    part === 'header' &&
-    prepareProjected &&
-    shouldShowHeaderLifecycleRemediation(
-      disabledReason,
-      actionEnabled,
-      remediationTarget,
-      remediationLabelKey,
-    );
+  if (part === 'headerAlerts') {
+    return errorAlert;
+  }
 
   if (part === 'header') {
-    if (!prepareProjected && !errorAlert) {
+    if (!prepareProjected) {
       return null;
     }
     return (
       <div className="structure-fiche__header-lifecycle-panel">
-        {prepareProjected ? (
-          <div
-            className="structure-fiche__header-lifecycle-toolbar"
-            aria-label={t('lifecycle.state.Draft.lead')}
-          >
-            {showHeaderRemediation && remediationTarget && disabledReason ? (
-              <LifecycleHeaderRemediationLink
-                disabledReason={disabledReason}
-                remediationTarget={remediationTarget}
-                remediationLabelKey={remediationLabelKey}
-                t={t}
-              />
-            ) : null}
-            {prepareButton}
-          </div>
-        ) : null}
-        {errorAlert}
+        <div
+          className="structure-fiche__header-lifecycle-toolbar"
+          aria-label={t('lifecycle.state.Draft.lead')}
+        >
+          {prepareButton}
+        </div>
       </div>
     );
   }
@@ -473,15 +444,6 @@ function StructurePhaseMatchsLifecycleBlockBody({
       remediationTarget,
       remediationLabelKey,
     );
-  const showHeaderRemediation =
-    part === 'header' &&
-    shouldShowHeaderLifecycleRemediation(
-      disabledReason,
-      actionEnabled,
-      remediationTarget,
-      remediationLabelKey,
-    );
-
   const hasCopy =
     (showBlockMessage && disabledReason) ||
     (showRevertParagraph && revertDisabledReason) ||
@@ -548,9 +510,7 @@ function StructurePhaseMatchsLifecycleBlockBody({
         </p>
       ) : null}
       {transitionMutation.isError ? (
-        <Alert tone="danger" role="alert">
-          {resolveLifecycleMutationMessage(t, transitionMutation.error)}
-        </Alert>
+        <LifecycleMutationAlert error={transitionMutation.error} t={t} />
       ) : null}
     </div>
   ) : null;
@@ -643,33 +603,24 @@ function StructurePhaseMatchsLifecycleBlockBody({
     </div>
   ) : null;
 
+  if (part === 'headerAlerts') {
+    return transitionMutation.isError ? (
+      <LifecycleMutationAlert error={transitionMutation.error} t={t} />
+    ) : null;
+  }
+
   if (part === 'header') {
-    if (!hasLifecycleActionsEnd && !transitionMutation.isError) {
+    if (!hasLifecycleActionsEnd) {
       return null;
     }
     return (
       <div className="structure-fiche__header-lifecycle-panel">
-        {hasLifecycleActionsEnd ? (
-          <div
-            className="structure-fiche__header-lifecycle-toolbar"
-            aria-label={blockAriaLabel}
-          >
-            {showHeaderRemediation && remediationTarget && disabledReason ? (
-              <LifecycleHeaderRemediationLink
-                disabledReason={disabledReason}
-                remediationTarget={remediationTarget}
-                remediationLabelKey={remediationLabelKey}
-                t={t}
-              />
-            ) : null}
-            {lifecycleActionsEnd}
-          </div>
-        ) : null}
-        {transitionMutation.isError ? (
-          <Alert tone="danger" role="alert">
-            {resolveLifecycleMutationMessage(t, transitionMutation.error)}
-          </Alert>
-        ) : null}
+        <div
+          className="structure-fiche__header-lifecycle-toolbar"
+          aria-label={blockAriaLabel}
+        >
+          {lifecycleActionsEnd}
+        </div>
       </div>
     );
   }
@@ -711,8 +662,8 @@ function StructurePhaseMatchsLifecycleBlockBody({
       className="structure-operational-strip__lifecycle"
       aria-label={blockAriaLabel}
     >
-      {messageStack}
       {actionsRow}
+      {messageStack}
     </div>
   );
 }

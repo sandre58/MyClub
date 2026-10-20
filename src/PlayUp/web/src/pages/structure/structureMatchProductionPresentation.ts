@@ -232,6 +232,8 @@ export function mapPrerequisiteMessageCode(code: string): string {
       return 'groupsPlacement';
     case 'PrerequisiteCupEntryRound':
       return 'cupEntryRound';
+    case 'PrerequisiteInboundFeed':
+      return 'inboundFeed';
     default:
       return code;
   }

@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
@@ -943,7 +944,22 @@ public sealed partial class UseCaseExecutor
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
         var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken).ConfigureAwait(false);
         var existing = await matches.ListByStageForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false);
-        var result = MaterializeCupFromOccupiedSlots.Execute(competition, stage, pairKeys, existing, clock);
+        var competitionStages = await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken)
+            .ConfigureAwait(false);
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>> matchSummariesByStage =
+            competition.StageIds.Count == 0
+                ? new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>()
+                : await matches
+                    .ListSummaryRowsByStageIdsReadOnlyAsync(competition.StageIds, cancellationToken)
+                    .ConfigureAwait(false);
+        var result = MaterializeCupFromOccupiedSlots.Execute(
+            competition,
+            stage,
+            pairKeys,
+            existing,
+            clock,
+            competitionStages,
+            matchSummariesByStage);
         foreach (var created in result.CreatedMatches)
         {
             matches.Add(created);

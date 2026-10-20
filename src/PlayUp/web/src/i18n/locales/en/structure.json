@@ -274,6 +274,7 @@
       "AuthoredAwardUnreachablePaused": "Source pair not found (noted while paused)",
       "ExpectedRankUnreachablePaused": "Competition rank unreachable via attribution (noted while paused)",
       "IncompleteEntryRound": "Entry-bracket pairs incomplete — start blocked",
+      "NoDeterminedConfrontations": "No confrontation determined — start blocked",
       "UnmaterializedConfrontations": "Eligible matches not created — start blocked",
       "PhaseRosterIncomplete": "Phase composition incomplete",
       "PhaseRosterIncompletePaused": "Phase composition incomplete (noted while paused)",
@@ -305,6 +306,7 @@
       "AuthoredAwardUnreachable": "Award source missing",
       "ExpectedRankUnreachable": "Rank unreachable",
       "IncompleteEntryRound": "Incomplete entry pairs",
+      "NoDeterminedConfrontations": "No confrontation determined",
       "UnmaterializedConfrontations": "Matches not created",
       "PhaseRosterIncomplete": "Composition incomplete",
       "PhaseRosterIncompleteEligibilityGap": "Insufficient start eligibility",
@@ -396,7 +398,8 @@
     },
     "remediation": {
       "InitialRoundNotPlayable": "Go to operational placement",
-      "IncompleteEntryRound": "Go to operational placement"
+      "IncompleteEntryRound": "Go to operational placement",
+      "NoDeterminedConfrontations": "Go to operational placement"
     },
     "disabled": {
       "_unknown": "This phase lifecycle action is unavailable right now.",
@@ -405,6 +408,7 @@
       "Places": "Complete the composition pool (groups) before marking the phase as ready.",
       "InitialRoundNotPlayable": "The first round is not playable yet — check places, draw, and match production.",
       "IncompleteEntryRound": "Complete every entry-bracket pair before starting the phase.",
+      "NoDeterminedConfrontations": "Determine at least one bracket confrontation before starting the phase.",
       "StageNotReady": "Complete this phase’s structure before marking it ready.",
       "StructureGraphInvalid": "Fix structure connections before preparing the phase.",
       "OpenMatches": "Every match must be finished or cancelled before completing the phase.",
@@ -463,6 +467,7 @@
       "DrawObsoleteForConsumption": "This draw no longer matches the phase — cancel it or restore coherence before applying or producing matches.",
       "InitialRoundNotPlayable": "The first round is not playable yet — check places, draw, and match production.",
       "IncompleteEntryRound": "Complete every entry-bracket pair before starting the phase.",
+      "NoDeterminedConfrontations": "Determine at least one bracket confrontation before starting the phase.",
       "StageNotReady": "Complete this phase’s structure before marking it ready.",
       "StructureGraphInvalid": "Fix structure connections before preparing the phase.",
       "OpenMatches": "Every match must be finished or cancelled before completing the phase.",
@@ -609,6 +614,7 @@
         "meterCaptionMatches": "matches created",
         "meterCaptionEntryPairs": "entry pairs",
         "entryRoundRatioCaption": "Pairs",
+        "entryRoundResolvedCaption": "Resolved",
         "meterAriaEntryPairs": "Entry-bracket pair fill progress",
         "groupsPlacementRatioCaption": "Places",
         "meterAriaGroupsPlacement": "Group pool place assignment progress",
@@ -636,7 +642,8 @@
           "partial_one": "{{count}} match left to create.",
           "partial_other": "{{count}} matches left to create.",
           "noDeterminedConfrontations": "No confrontation determined",
-          "groupsPlacementIncomplete": "Groups are not ready for match production — complete assignments ({{filled}} / {{capacity}}).",
+          "groupsPlacementIncomplete": "Complete group assignments before creating matches.",
+          "groupsPlacementAwaitingDraw": "Group places will be filled after the draw.",
           "groupsPlacementReady": "All group places are assigned.",
           "matchesBlockedByGroupsPools": "Complete group places before matches can be created.",
           "determinedPartial_one": "{{count}} confrontation left to determine.",
@@ -644,6 +651,8 @@
           "determinedComplete": "All listed confrontations are determined.",
           "entryRoundRemainingBeforeStart_one": "{{count}} entry pair to complete before start.",
           "entryRoundRemainingBeforeStart_other": "{{count}} entry pairs to complete before start.",
+          "entryRoundAllReady": "All bracket entry pairs are ready.",
+          "entryRoundAwaitingDraw": "Entry pairs will be determined after the draw.",
           "frozenPartial_one": "{{filled}} match created of {{capacity}} — production is frozen while the phase is in play.",
           "frozenPartial_other": "{{filled}} matches created of {{capacity}} — production is frozen while the phase is in play."
         }

@@ -227,22 +227,63 @@ export function resolveDrawPoolMeterCopy(input: {
 }
 
 export function entryRoundPlacementMessageKind(
-  blocksPhaseStart: boolean,
+  _blocksPhaseStart: boolean,
 ): StripMeterCopy['kind'] {
-  return blocksPhaseStart ? 'danger' : 'attention';
+  return 'danger';
+}
+
+export function resolveGroupsPlacementMeterCopy(input: {
+  t: (key: string, opts?: Record<string, unknown>) => string;
+  gaugeRatio: { filled: number; capacity: number };
+  presentationKind?: StripMeterCopy['kind'];
+}): { text: string; kind: StripMeterCopy['kind'] } {
+  const { t, gaugeRatio, presentationKind } = input;
+  if (gaugeRatio.filled >= gaugeRatio.capacity) {
+    return {
+      text: t('fiche.operational.production.stateMessage.groupsPlacementReady'),
+      kind: 'success',
+    };
+  }
+  if (presentationKind === 'info') {
+    return {
+      text: t(
+        'fiche.operational.production.stateMessage.groupsPlacementAwaitingDraw',
+      ),
+      kind: 'info',
+    };
+  }
+  return {
+    text: t('fiche.operational.production.stateMessage.groupsPlacementIncomplete'),
+    kind: 'attention',
+  };
 }
 
 export function resolveEntryRoundPlacementMeterCopy(input: {
   t: (key: string, opts?: Record<string, unknown>) => string;
   gaugeRatio: { filled: number; capacity: number };
   blocksPhaseStart?: boolean;
+  presentationKind?: StripMeterCopy['kind'];
 }): { text: string; kind: StripMeterCopy['kind'] } | null {
-  const { t, gaugeRatio, blocksPhaseStart = false } = input;
+  const { t, gaugeRatio, blocksPhaseStart = false, presentationKind } = input;
   const remaining = gaugeRatio.capacity - gaugeRatio.filled;
   if (remaining <= 0) {
-    return null;
+    return {
+      text: t('fiche.operational.production.stateMessage.entryRoundAllReady'),
+      kind: 'success',
+    };
   }
-  const kind = entryRoundPlacementMessageKind(blocksPhaseStart);
+  const kind =
+    presentationKind === 'info'
+      ? 'info'
+      : presentationKind === 'danger' || blocksPhaseStart
+        ? 'danger'
+        : entryRoundPlacementMessageKind(blocksPhaseStart);
+  if (kind === 'info') {
+    return {
+      text: t('fiche.operational.production.stateMessage.entryRoundAwaitingDraw'),
+      kind: 'info',
+    };
+  }
   return {
     text: t('fiche.operational.production.stateMessage.entryRoundRemainingBeforeStart', {
       count: remaining,

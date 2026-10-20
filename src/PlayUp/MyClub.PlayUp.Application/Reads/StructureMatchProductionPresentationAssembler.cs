@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
@@ -39,7 +40,9 @@ internal static class StructureMatchProductionPresentationAssembler
         PhaseRosterPresentationKind? PhaseRosterPresentation,
         StructureStageLifecycleDto? Lifecycle,
         bool HasDrawRules,
-        StructureDrawExecutionBadge? DrawExecutionBadge);
+        StructureDrawExecutionBadge? DrawExecutionBadge,
+        StructureInboundCompositionDto? InboundComposition,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>>? MatchSummariesByStage = null);
 
     internal static StructureMatchProductionPresentationDto? Assemble(Input input)
     {
@@ -265,6 +268,13 @@ internal static class StructureMatchProductionPresentationAssembler
         bool rosterBlocks,
         MaterializePresentationKind presentation)
     {
+        if (IsAwaitingInboundFeedResolution(input, materialize) && current <= 0)
+        {
+            return (
+                StructureMatchProductionMessageCodes.NoDeterminedConfrontations,
+                MessageKindInfo);
+        }
+
         if (materialize.DisabledReason == StructureMaterializeDisabledReasons.NoDeterminedConfrontations
             && current <= 0)
         {
@@ -294,11 +304,18 @@ internal static class StructureMatchProductionPresentationAssembler
             return (StructureMatchProductionMessageCodes.Complete, MessageKindSuccess);
         }
 
-        if (StructureMatchProductionCapacity.IsGroupsPoolPlacementIncomplete(materialize))
+        if (StructureMatchProductionCapacity.IsGroupsPoolPlacementIncomplete(materialize)
+            && !IsAwaitingInboundFeedResolution(input, materialize))
         {
+            var groupsBlockedKind =
+                StructurePlaceOccupancyIssues.DeferGroupsNotReadyForDraw(
+                    input.HasDrawRules,
+                    input.DrawExecutionBadge)
+                    ? MessageKindInfo
+                    : MessageKindAttention;
             return (
                 StructureMatchProductionMessageCodes.MatchesBlockedByGroupsPools,
-                MessageKindAttention);
+                groupsBlockedKind);
         }
 
         if (rosterBlocks)
@@ -322,7 +339,7 @@ internal static class StructureMatchProductionPresentationAssembler
         {
             return (
                 StructureMatchProductionMessageCodes.Partial,
-                ResolvePartialMessageKind(input, current, capacity));
+                ResolvePartialMessageKind(input, current, capacity, materialize));
         }
 
         if (presentation == MaterializePresentationKind.Blocked && materialize.DisabledReason is { } reason)
@@ -330,10 +347,16 @@ internal static class StructureMatchProductionPresentationAssembler
             return (reason, MessageKindAttention);
         }
 
-        return (StructureMatchProductionMessageCodes.Partial, MessageKindAttention);
+        return (
+            StructureMatchProductionMessageCodes.Partial,
+            ResolvePartialMessageKind(input, current, capacity, materialize));
     }
 
-    private static string ResolvePartialMessageKind(Input input, int current, int capacity)
+    private static string ResolvePartialMessageKind(
+        Input input,
+        int current,
+        int capacity,
+        StructureMaterializeDto? materialize = null)
     {
         if (capacity <= current)
         {
@@ -350,6 +373,23 @@ internal static class StructureMatchProductionPresentationAssembler
 
         if (input.HasDrawRules
             && input.DrawExecutionBadge == StructureDrawExecutionBadge.Applied)
+        {
+            return MessageKindDanger;
+        }
+
+        materialize ??= input.Materialize;
+        if (StructurePlaceOccupancyIssues.IsSlotFeedAwaitingDraw(
+                input.HasDrawRules,
+                input.DrawExecutionBadge)
+            && input.FormatKind == StructureFormatKind.Cup)
+        {
+            return MessageKindInfo;
+        }
+
+        if (input.FormatKind == StructureFormatKind.Cup
+            && input.Stage.Status == StageStatus.Ready
+            && materialize?.CommandCode == OverviewAssembler.ActionMaterializeFromOccupiedSlots
+            && capacity > current)
         {
             return MessageKindDanger;
         }
@@ -375,8 +415,31 @@ internal static class StructureMatchProductionPresentationAssembler
             return MessageKindInfo;
         }
 
+        if (input.FormatKind == StructureFormatKind.Cup
+            && input.Stage.Status == StageStatus.Ready
+            && input.Lifecycle?.Transition is
+            {
+                Enabled: false,
+                DisabledReasonCode: StructureMaterializeDisabledReasons.NoDeterminedConfrontations
+            })
+        {
+            return MessageKindDanger;
+        }
+
+        if (IsAwaitingInboundFeedResolution(input, input.Materialize))
+        {
+            return MessageKindInfo;
+        }
+
         return MessageKindAttention;
     }
+
+    private static bool IsAwaitingInboundFeedResolution(
+        Input input,
+        StructureMaterializeDto? materialize) =>
+        MatchProductionInboundFeedDeferral.IsAwaitingResolution(
+            input.InboundComposition,
+            materialize?.DeterminedCount ?? 0);
 
     private static StructureMatchProductionGaugeDto? ResolvePrerequisiteGauge(
         Input input,
@@ -399,64 +462,160 @@ internal static class StructureMatchProductionPresentationAssembler
                 MessageKindAttention);
         }
 
-        if (StructureMatchProductionCapacity.IsGroupsPoolPlacementIncomplete(materialize))
+        if (TryResolveCupEntryRoundPrerequisite(input, materialize) is { } cupEntryRound)
+        {
+            return cupEntryRound;
+        }
+
+        if (input.FormatKind == StructureFormatKind.Groups
+            && IsAwaitingInboundFeedResolution(input, materialize)
+            && input.InboundComposition is { ConfiguredVolume: > 0 } inbound)
+        {
+            var complete = inbound.ResolvedCount >= inbound.ConfiguredVolume;
+            return new StructureMatchProductionGaugeDto(
+                inbound.ResolvedCount,
+                inbound.ConfiguredVolume,
+                StructureMatchProductionMessageCodes.PrerequisiteInboundFeed,
+                complete ? MessageKindSuccess : MessageKindInfo);
+        }
+
+        if (StructureMatchProductionCapacity.IsGroupsPoolPlacementIncomplete(materialize)
+            && !IsAwaitingInboundFeedResolution(input, materialize))
         {
             var capacity = materialize.GroupsPlacementCapacityCount;
             var filled = materialize.GroupsPlacementFilledCount;
             if (capacity > 0)
             {
+                var awaitingDraw = StructurePlaceOccupancyIssues.DeferGroupsNotReadyForDraw(
+                    input.HasDrawRules,
+                    input.DrawExecutionBadge);
                 return new StructureMatchProductionGaugeDto(
                     filled,
                     capacity,
                     StructureMatchProductionMessageCodes.PrerequisiteGroupsPlacement,
-                    MessageKindAttention);
+                    awaitingDraw ? MessageKindInfo : MessageKindAttention);
             }
-        }
-
-        if (materialize.CommandCode == OverviewAssembler.ActionMaterializeFromOccupiedSlots
-            && !materialize.CommandEnabled
-            && TryCupEntryRoundGauge(materialize) is { } entryRound)
-        {
-            return new StructureMatchProductionGaugeDto(
-                entryRound.Filled,
-                entryRound.Capacity,
-                StructureMatchProductionMessageCodes.PrerequisiteCupEntryRound,
-                MessageKindAttention,
-                CupEntryRoundBlocksPhaseStart(input));
         }
 
         return null;
     }
 
+    private static StructureMatchProductionGaugeDto? TryResolveCupEntryRoundPrerequisite(
+        Input input,
+        StructureMaterializeDto materialize)
+    {
+        if (input.FormatKind != StructureFormatKind.Cup
+            || input.Stage.Status != StageStatus.Ready
+            || materialize.CommandCode != OverviewAssembler.ActionMaterializeFromOccupiedSlots
+            || TryCupEntryRoundGauge(input, materialize) is not { } entryRound)
+        {
+            return null;
+        }
+
+        var pairsComplete = entryRound.Filled >= entryRound.Capacity;
+        if (pairsComplete)
+        {
+            if (CupReadyEntryRoundMatchesFullyMaterialized(input, materialize))
+            {
+                return null;
+            }
+
+            if (TryResolveCupFormResolvedTeamsPrerequisite(input) is { } resolvedTeams)
+            {
+                return resolvedTeams;
+            }
+
+            return null;
+        }
+
+        var awaitingDraw = StructurePlaceOccupancyIssues.IsSlotFeedAwaitingDraw(
+            input.HasDrawRules,
+            input.DrawExecutionBadge);
+        var incompleteKind = awaitingDraw
+            ? MessageKindInfo
+            : MessageKindDanger;
+        return new StructureMatchProductionGaugeDto(
+            entryRound.Filled,
+            entryRound.Capacity,
+            StructureMatchProductionMessageCodes.PrerequisiteCupEntryRound,
+            incompleteKind,
+            CupEntryRoundBlocksPhaseStart(input));
+    }
+
+    private static StructureMatchProductionGaugeDto? TryResolveCupFormResolvedTeamsPrerequisite(
+        Input input)
+    {
+        if (CupEntryRoundResolvedTeamGauge.TryMeasure(input) is not { Resolved: var resolved, Capacity: var capacity }
+            || resolved >= capacity)
+        {
+            return null;
+        }
+
+        return new StructureMatchProductionGaugeDto(
+            resolved,
+            capacity,
+            StructureMatchProductionMessageCodes.PrerequisiteComposition,
+            MessageKindInfo);
+    }
+
+    private static bool CupReadyEntryRoundMatchesFullyMaterialized(
+        Input input,
+        StructureMaterializeDto materialize)
+    {
+        var legs = StructureMatchProductionCapacity.ResolveLegsPerConfrontation(
+            input.DefaultTieFormat,
+            input.NumberOfLegs);
+        var capacity = StructureMatchProductionCapacity.ResolveProductionCapacityMatchSlots(
+            materialize,
+            input.FormatKind,
+            legs,
+            input.Competition,
+            input.Stage,
+            input.CompetitionStages);
+        return capacity > 0 && input.AttachedMatchCount >= capacity;
+    }
+
     private static bool CupEntryRoundBlocksPhaseStart(Input input)
     {
+        if (StructurePlaceOccupancyIssues.IsSlotFeedAwaitingDraw(
+                input.HasDrawRules,
+                input.DrawExecutionBadge))
+        {
+            return false;
+        }
+
         if (input.Stage.Status != StageStatus.Ready)
         {
             return false;
         }
 
         var transition = input.Lifecycle?.Transition;
-        if (transition is { Enabled: false, DisabledReasonCode: var code }
-            && code == StructureStageLifecycleAssembler.DisabledIncompleteEntryRound)
+        if (transition is not { Enabled: false, DisabledReasonCode: var code })
         {
-            return true;
+            return false;
         }
 
-        return false;
+        return code is StructureStageLifecycleAssembler.DisabledIncompleteEntryRound
+            or StructureStageLifecycleAssembler.DisabledNoDeterminedConfrontations;
     }
 
-    private static (int Filled, int Capacity)? TryCupEntryRoundGauge(StructureMaterializeDto materialize)
+    private static (int Filled, int Capacity)? TryCupEntryRoundGauge(
+        Input input,
+        StructureMaterializeDto materialize)
     {
-        var capacity = materialize.CanonicalEntryPairCount;
-        var undetermined = materialize.UndeterminedCanonicalEntryPairCount;
-        if (capacity > 0 && undetermined > 0)
+        if (CupEntryRoundPairPlacementGauge.TryMeasure(
+                input.Competition,
+                input.Stage,
+                input.CompetitionStages) is { } placement)
         {
-            return (capacity - undetermined, capacity);
+            return placement;
         }
 
-        if (materialize.Confrontations.Count > 0 && materialize.DeterminedCount <= 0 && capacity > 0)
+        if (materialize.Confrontations.Count > 0)
         {
-            return (0, capacity);
+            var pairCapacity = materialize.Confrontations.Count;
+            var filled = materialize.Confrontations.Count(row => row.Determined);
+            return (filled, pairCapacity);
         }
 
         return null;
@@ -515,10 +674,15 @@ internal static class StructureMatchProductionPresentationAssembler
             input,
             materialize,
             legs);
+        var totalConfrontationCapacity = ResolveTotalConfrontationCapacity(
+            input,
+            materialize,
+            legs);
         var visible = frozenRemaining > 0
                       || (presentation == MaterializePresentationKind.Blocked
                           && StructureMatchProductionCapacity.IsGroupsPoolPlacementIncomplete(materialize))
                       || confrontationCapacity > materialize.MaterializedCount
+                      || totalConfrontationCapacity > materialize.MaterializedCount
                       || (materialize.CommandEnabled && confrontationCapacity > 0);
 
         if (!visible && materialize.CommandEnabled)
@@ -605,6 +769,27 @@ internal static class StructureMatchProductionPresentationAssembler
             return determined;
         }
 
+        return ResolveProspectiveConfrontationCapacity(input, materialize, legs);
+    }
+
+    private static int ResolveTotalConfrontationCapacity(
+        Input input,
+        StructureMaterializeDto materialize,
+        int legs)
+    {
+        if (materialize.Confrontations.Count > 0)
+        {
+            return materialize.Confrontations.Count;
+        }
+
+        return ResolveProspectiveConfrontationCapacity(input, materialize, legs);
+    }
+
+    private static int ResolveProspectiveConfrontationCapacity(
+        Input input,
+        StructureMaterializeDto materialize,
+        int legs)
+    {
         var matchSlots = StructureMatchProductionCapacity.ResolveProductionCapacityMatchSlots(
             materialize,
             input.FormatKind,

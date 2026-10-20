@@ -6,6 +6,7 @@ import {
   drawPoolToneToRatioGaugeTone,
   operationalStripPoolTone,
 } from './structureOperationalCopy';
+import type { StripOperationalMessageKind } from './structureOperationalStripUi';
 import { resolveEntryRoundPlacementMeterCopy } from './structureOperationalStripMessages';
 
 /** Cup canonical entry-round pairs — compact footer gauge (same pattern as composition Entrées). */
@@ -13,11 +14,13 @@ export function CupEntryRoundPlacementGauge({
   filled,
   capacity,
   blocksPhaseStart = false,
+  presentationKind,
   className,
 }: {
   filled: number;
   capacity: number;
   blocksPhaseStart?: boolean;
+  presentationKind?: StripOperationalMessageKind;
   className?: string;
 }) {
   const { t } = useTranslation('structure');
@@ -25,14 +28,16 @@ export function CupEntryRoundPlacementGauge({
     t,
     gaugeRatio: { filled, capacity },
     blocksPhaseStart,
+    presentationKind,
   });
   if (meter == null) {
     return null;
   }
 
+  const complete = filled >= capacity;
   const poolTone = operationalStripPoolTone(
     meter.kind,
-    resolveDrawCtaPoolTone(filled, capacity),
+    complete ? 'complete' : resolveDrawCtaPoolTone(filled, capacity),
   );
 
   const rootClass = [

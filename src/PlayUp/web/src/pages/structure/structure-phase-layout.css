@@ -575,8 +575,8 @@
   text-transform: none;
 }
 
-.structure-phase-composition__qual-resolved-meta__filled--partial {
-  color: var(--color-attention);
+.structure-phase-composition__qual-resolved-meta__filled--brand {
+  color: var(--color-brand);
 }
 
 .structure-phase-composition__qual-resolved-meta__filled--complete {

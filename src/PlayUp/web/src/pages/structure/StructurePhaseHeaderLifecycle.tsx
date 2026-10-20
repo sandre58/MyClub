@@ -1,9 +1,19 @@
+import type { ReactNode } from 'react';
+
 import type { StructureStageHubSummary } from '../../types';
 import { shouldShowMatchsLifecycle } from './structurePhaseStatusBandModel';
 import {
   StructurePhaseDraftMatchsPrepare,
   StructurePhaseMatchsLifecycleBlock,
 } from './StructurePhaseMatchsLifecycleBlock';
+
+function HeaderLifecycleChrome({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  return <div className="structure-fiche__header-lifecycle">{children}</div>;
+}
 
 export function StructurePhaseHeaderLifecycle({
   competitionId,
@@ -20,11 +30,20 @@ export function StructurePhaseHeaderLifecycle({
 
   if (stage.status === 'Draft') {
     return (
-      <StructurePhaseDraftMatchsPrepare
-        competitionId={competitionId}
-        stage={stage}
-        part="header"
-      />
+      <HeaderLifecycleChrome>
+        <StructurePhaseDraftMatchsPrepare
+          competitionId={competitionId}
+          stage={stage}
+          part="header"
+        />
+        <div className="structure-fiche__header-lifecycle-messages">
+          <StructurePhaseDraftMatchsPrepare
+            competitionId={competitionId}
+            stage={stage}
+            part="headerAlerts"
+          />
+        </div>
+      </HeaderLifecycleChrome>
     );
   }
 
@@ -33,11 +52,21 @@ export function StructurePhaseHeaderLifecycle({
   }
 
   return (
-    <StructurePhaseMatchsLifecycleBlock
-      competitionId={competitionId}
-      stage={stage}
-      productionBusy={productionBusy}
-      part="header"
-    />
+    <HeaderLifecycleChrome>
+      <StructurePhaseMatchsLifecycleBlock
+        competitionId={competitionId}
+        stage={stage}
+        productionBusy={productionBusy}
+        part="header"
+      />
+      <div className="structure-fiche__header-lifecycle-messages">
+        <StructurePhaseMatchsLifecycleBlock
+          competitionId={competitionId}
+          stage={stage}
+          productionBusy={productionBusy}
+          part="headerAlerts"
+        />
+      </div>
+    </HeaderLifecycleChrome>
   );
 }
