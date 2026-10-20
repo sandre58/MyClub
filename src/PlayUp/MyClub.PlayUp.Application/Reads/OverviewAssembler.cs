@@ -246,7 +246,7 @@ public static class OverviewAssembler
         var dimensions = BuildDimensions(competition, structureView, stages, matchCounts, matchesByStage);
         var actions = BuildActions(competition, stages, matchesByStage, structureView, attention, completion, fixtureToMatch);
         var fromSlotsOpportunities = stages
-            .Where(stage => TryDescribeFromSlotsOpportunity(competition, stage, out _))
+            .Where(stage => TryDescribeFromSlotsOpportunity(competition, stage, stages, out _))
             .Select(stage => stage.Id)
             .ToArray();
         var progression = ResolveNaturalProgression(
@@ -680,7 +680,7 @@ public static class OverviewAssembler
             return;
         }
 
-        if (!stages.Any(stage => TryDescribeFromSlotsOpportunity(competition, stage, out _))) return;
+        if (!stages.Any(stage => TryDescribeFromSlotsOpportunity(competition, stage, stages, out _))) return;
         readiness.Add(
             new OverviewTransitionReadinessDto(
                 TransitionMaterializeFromOccupiedSlots,
@@ -1516,7 +1516,7 @@ public static class OverviewAssembler
 
         foreach (var stage in stages)
         {
-            if (!TryDescribeFromSlotsOpportunity(competition, stage, out var occupiedSlotCount))
+            if (!TryDescribeFromSlotsOpportunity(competition, stage, stages, out var occupiedSlotCount))
             {
                 continue;
             }
@@ -1870,6 +1870,7 @@ public static class OverviewAssembler
     private static bool TryDescribeFromSlotsOpportunity(
         Competition competition,
         Stage stage,
+        IReadOnlyList<Stage> competitionStages,
         out int occupiedSlotCount)
     {
         occupiedSlotCount = 0;
@@ -1889,7 +1890,7 @@ public static class OverviewAssembler
         }
 
         occupiedSlotCount = stage.Slots.Count(slot => slot.EntryId is not null);
-        return MaterializeCupFromOccupiedSlots.CountEligiblePairs(stage) > 0;
+        return MaterializeCupFromOccupiedSlots.CountEligiblePairs(stage, competition, competitionStages) > 0;
     }
 
     private static Dictionary<string, string> MaterializeCommandParams(

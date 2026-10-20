@@ -190,9 +190,17 @@ internal static class StructureMaterializeAssembler
         var rows = new List<StructureMaterializeConfrontationDto>(stage.BracketPairs.Count);
         foreach (var pair in stage.BracketPairs.OrderBy(item => item.PairKey, StringComparer.Ordinal))
         {
-            var determined = CupBracketPairMaterialization.IsPairDetermined(stage, pair, pairContext);
-            var materialized = CupBracketPairMaterialization.IsConfrontationMaterialized(stage, pair, pairContext);
-            var eligible = mutable && CupBracketPairMaterialization.IsEligibleForMaterialization(stage, pair, pairContext);
+            var evaluation = CupPairEvaluation.Evaluate(
+                new CupPairEvaluationInput(
+                    competition,
+                    stage,
+                    pair,
+                    competitionStages,
+                    matchSummariesByStage,
+                    mutable));
+            var determined = evaluation.DeterminedForDisplay;
+            var materialized = evaluation.Materialized;
+            var eligible = evaluation.EligibleForMaterialize;
             rows.Add(
                 new StructureMaterializeConfrontationDto(
                     pair.PairKey,

@@ -161,6 +161,11 @@ public sealed class UseCaseExecutorReadTests
         matches
             .Setup(repository => repository.ListSummaryRowsByStageReadOnlyAsync(target.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
+        matches
+            .Setup(repository => repository.ListSummaryRowsByStageIdsReadOnlyAsync(
+                It.IsAny<IReadOnlyList<StageId>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>());
 
         var executor = new UseCaseExecutor(
             stages.Object,

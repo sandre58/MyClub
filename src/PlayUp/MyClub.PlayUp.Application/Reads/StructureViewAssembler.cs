@@ -226,7 +226,8 @@ public static class StructureViewAssembler
             format.Kind,
             structure,
             attachedMatchCount,
-            stageHubs);
+            stageHubs,
+            stages);
         var actions = BuildActions(competition);
 
         var view = new StructureViewDto(
@@ -1330,7 +1331,8 @@ public static class StructureViewAssembler
         StructureFormatKind? formatKind,
         StructureTopologySummaryDto structure,
         int attachedMatchCount,
-        IReadOnlyList<StructureStageHubSummaryDto> stageHubs)
+        IReadOnlyList<StructureStageHubSummaryDto> stageHubs,
+        IReadOnlyList<Stage> stages)
     {
         var blockerDetails = new List<StructureReadinessBlockerDto>();
 
@@ -1383,8 +1385,9 @@ public static class StructureViewAssembler
         {
             if (hub.FormatKind == StructureFormatKind.Cup)
             {
-                var cupEntryPlaces = ResolveCupEntryPlacesFromHub(hub);
-                if (cupEntryPlaces is null or < 2 || !IsPowerOfTwo(cupEntryPlaces.Value))
+                var stage = stages.FirstOrDefault(candidate => candidate.Id.Value == hub.StageId);
+                if (stage is not null
+                    && CupPrepareBracketReadiness.ShouldSurfaceCupBracketInvalidBlocker(stage))
                 {
                     blockerDetails.Add(new StructureReadinessBlockerDto(BlockerCupBracketInvalid, hub.StageId));
                 }
@@ -1530,16 +1533,8 @@ public static class StructureViewAssembler
             blockerDetails);
     }
 
-    internal static bool IsCupBracketReadinessInvalid(Stage stage)
-    {
-        if (StructureSkeleton.InferFormat(stage) != StructureFormatKind.Cup)
-        {
-            return false;
-        }
-
-        var cupEntryPlaces = ResolveCupEntryPlaces(stage);
-        return cupEntryPlaces is null or < 2 || !IsPowerOfTwo(cupEntryPlaces.Value);
-    }
+    internal static bool IsCupBracketReadinessInvalid(Stage stage) =>
+        CupPrepareBracketReadiness.ShouldSurfaceCupBracketInvalidBlocker(stage);
 
     internal static IReadOnlyList<string> DeriveLegacyBlockerCodes(
         IReadOnlyList<StructureReadinessBlockerDto> blockerDetails)

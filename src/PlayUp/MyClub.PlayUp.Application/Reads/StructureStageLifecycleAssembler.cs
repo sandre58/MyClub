@@ -161,7 +161,7 @@ public static class StructureStageLifecycleAssembler
         }
 
         if (input.FormatKind == StructureFormatKind.Cup
-            && StructureViewAssembler.IsCupBracketReadinessInvalid(input.Stage))
+            && CupPrepareBracketReadiness.ShouldSurfaceCupBracketInvalidBlocker(input.Stage))
         {
             return BlockedTransition(
                 code,

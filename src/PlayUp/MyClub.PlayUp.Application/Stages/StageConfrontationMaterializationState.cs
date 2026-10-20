@@ -73,7 +73,7 @@ internal static class StageConfrontationMaterializationState
         {
             StructureFormatKind.Championship => CountChampionshipEligible(competition, stage, stages, matchSummaries),
             StructureFormatKind.Groups => CountGroupsEligible(competition, stage, matchSummaries),
-            StructureFormatKind.Cup => CountCupEligible(stage),
+            StructureFormatKind.Cup => CountCupEligible(competition, stage, stages, matchSummaries),
             StructureFormatKind.Swiss => 0,
             null => 0,
             _ => 0
@@ -177,17 +177,30 @@ internal static class StageConfrontationMaterializationState
     private static bool AreGroupsReady(Stage stage) =>
         stage.Groups.Count > 0 && stage.Groups.All(group => group.EntryIds.Count >= 2);
 
-    private static int CountCupEligible(Stage stage)
+    private static int CountCupEligible(
+        Competition competition,
+        Stage stage,
+        IReadOnlyList<Stage> competitionStages,
+        IReadOnlyList<MatchSummaryRow> matchSummaries)
     {
         if (stage.BracketPairs.Count == 0)
         {
             return 0;
         }
 
+        var summariesByStage = matchSummaries
+            .GroupBy(row => row.StageId)
+            .ToDictionary(group => group.Key, group => (IReadOnlyList<MatchSummaryRow>)[.. group]);
+
         var eligible = 0;
         foreach (var pair in stage.BracketPairs)
         {
-            if (CupBracketPairMaterialization.IsEligibleForMaterialization(stage, pair))
+            if (CupBracketPairMaterialization.IsEligibleForMaterialization(
+                    stage,
+                    pair,
+                    new CupBracketPairMaterialization.ResolutionContext(competitionStages, summariesByStage),
+                    competition,
+                    competitionStages))
             {
                 eligible++;
             }

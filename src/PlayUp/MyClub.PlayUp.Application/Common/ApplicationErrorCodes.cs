@@ -432,4 +432,25 @@ public static class ApplicationErrorCodes
     /// Gets the code when Start is refused because groups are not ready on a groups phase.
     /// </summary>
     public const string StartBlockedGroupsNotReady = "Application.StartBlockedGroupsNotReady";
+
+    /// <summary>
+    /// Gets the code when materialization is refused because a slot occupant conflicts with the configured feed.
+    /// </summary>
+    public const string MaterializationOccupantConflict = "Application.MaterializationOccupantConflict";
+
+    /// <summary>
+    /// Gets the code when inbound replay for materialization is ambiguous or impossible.
+    /// </summary>
+    public const string InboundResolutionAmbiguous = "Application.InboundResolutionAmbiguous";
+
+    /// <summary>
+    /// Gets the code when progression outcome is projected but not applied on slots for materialization.
+    /// </summary>
+    public const string ProgressionNotAppliedForMaterialization =
+        "Application.ProgressionNotAppliedForMaterialization";
+
+    /// <summary>
+    /// Gets the code when a Prog/Qual slot destination is not satisfied for materialization.
+    /// </summary>
+    public const string InboundDestinationNotSatisfied = "Application.InboundDestinationNotSatisfied";
 }

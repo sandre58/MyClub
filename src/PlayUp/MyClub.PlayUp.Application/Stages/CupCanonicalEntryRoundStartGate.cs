@@ -26,19 +26,30 @@ internal static class CupCanonicalEntryRoundStartGate
     {
         ArgumentNullException.ThrowIfNull(stage);
 
-        if (competition is not null && competitionStages is not null
-            && CupEntryRoundPairPlacementGauge.TryGetCanonicalEntryRoundProgress(
+        if (competition is not null && competitionStages is not null)
+        {
+            if (CupEntryRoundPairPlacementGauge.TryGetCanonicalEntryRoundProgress(
+                    competition,
+                    stage,
+                    competitionStages,
+                    out var canonicalPairCount,
+                    out var incompleteCanonicalPairs)
+                && canonicalPairCount > 0)
+            {
+                return incompleteCanonicalPairs > 0;
+            }
+
+            var explicitMeasure = CupEntryRoundPairPlacementGauge.TryMeasure(
                 competition,
                 stage,
-                competitionStages,
-                out var canonical,
-                out var placementIncomplete)
-            && canonical > 0)
-        {
-            return placementIncomplete > 0;
+                competitionStages);
+            if (explicitMeasure is { Capacity: > 0 })
+            {
+                return explicitMeasure.Value.Filled < explicitMeasure.Value.Capacity;
+            }
         }
 
-        if (TryGetCanonicalEntryRoundProgress(stage, out canonical, out placementIncomplete)
+        if (TryGetCanonicalEntryRoundProgress(stage, out var canonical, out var placementIncomplete)
             && canonical > 0)
         {
             return placementIncomplete > 0;

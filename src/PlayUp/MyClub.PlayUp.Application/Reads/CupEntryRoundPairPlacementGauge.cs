@@ -49,16 +49,18 @@ internal static class CupEntryRoundPairPlacementGauge
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(competitionStages);
 
-        var measure = TryMeasure(competition, stage, competitionStages);
-        if (measure is null)
+        var pairs = CupBracketTopologyClassifier.ExpectedCanonicalPairs(stage);
+        if (pairs.Count == 0)
         {
             canonicalPairCount = 0;
             placementIncompletePairCount = 0;
             return false;
         }
 
-        canonicalPairCount = measure.Value.Capacity;
-        placementIncompletePairCount = measure.Value.Capacity - measure.Value.Filled;
+        var schematic = StageSchematicAssembler.Assemble(stage, competition, competitionStages);
+        var filled = pairs.Count(pair => IsPairPlacementComplete(schematic, pair));
+        canonicalPairCount = pairs.Count;
+        placementIncompletePairCount = pairs.Count - filled;
         return true;
     }
 

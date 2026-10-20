@@ -7,6 +7,7 @@
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Stages;
@@ -105,6 +106,28 @@ internal static class CupBracketPairMaterialization
     internal static bool IsEligibleForMaterialization(
         Stage stage,
         BracketPair pair,
-        ResolutionContext? context = null) =>
-        IsPairDetermined(stage, pair, context) && !IsConfrontationMaterialized(stage, pair, context);
+        ResolutionContext? context = null,
+        Competition? competition = null,
+        IReadOnlyList<Stage>? competitionStages = null,
+        bool phaseMutable = true) =>
+        competition is not null && competitionStages is not null
+            ? CupPairEvaluation.Evaluate(
+                new CupPairEvaluationInput(
+                    competition,
+                    stage,
+                    pair,
+                    competitionStages,
+                    context?.MatchSummariesByStage,
+                    phaseMutable)).EligibleForMaterialize
+            : IsPairPersistedDistinct(stage, pair)
+              && !IsConfrontationMaterialized(stage, pair, context);
+
+    internal static bool IsPairPersistedDistinct(Stage stage, BracketPair pair)
+    {
+        var slotA = stage.FindSlot(pair.SlotAKey);
+        var slotB = stage.FindSlot(pair.SlotBKey);
+        return slotA?.EntryId is { } home
+               && slotB?.EntryId is { } away
+               && !home.Equals(away);
+    }
 }

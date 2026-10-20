@@ -43,7 +43,8 @@ public static class PrepareStage
         StructurePrepareAttributionGate.Ensure(target);
         EnsurePrepareGateDiagnostics(target, competitionStages);
         CupCanonicalBracketTopologyGate.EnsureBeforePrepare(target);
-        if (StructureViewAssembler.IsCupBracketReadinessInvalid(target))
+        var cupRegime = CupPrepareBracketRegimeResolver.Resolve(target);
+        if (CupPrepareBracketReadiness.RejectsCanonicalPowerOfTwo(target, cupRegime))
         {
             throw new ApplicationFailureException(
                 $"Stage '{target.Id}' prepare refused: cup entry bracket shape is invalid.",

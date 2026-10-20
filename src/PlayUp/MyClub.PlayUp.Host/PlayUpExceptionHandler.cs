@@ -112,6 +112,8 @@ internal sealed partial class PlayUpExceptionHandler(ILogger<PlayUpExceptionHand
                 (StatusCodes.Status409Conflict, "Applied draw slot placement protected", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.DrawObsoleteForConsumption } application =>
                 (StatusCodes.Status409Conflict, "Draw obsolete for consumption", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.MaterializationOccupantConflict } application =>
+                (StatusCodes.Status409Conflict, "Materialization occupant conflict", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.DrawLaunchGridNotVacant } application =>
                 (StatusCodes.Status409Conflict, "Draw launch grid not vacant", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.DrawLaunchDirectAssignmentPresent } application =>

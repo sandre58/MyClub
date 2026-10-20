@@ -163,11 +163,11 @@ public sealed class StructureStageLifecycleAssemblerTests
         hub.Lifecycle!.Transition.Code.Should().Be(OverviewAssembler.ActionStartStage);
         hub.Lifecycle.Transition.Enabled.Should().BeFalse();
         hub.Lifecycle.Transition.DisabledReasonCode.Should()
-            .Be(StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations);
+            .Be(StructureStageLifecycleAssembler.DisabledIncompleteEntryRound);
 
         hub.Lifecycle.Transition.Remediation.Should().NotBeNull();
-        hub.Lifecycle.Transition.Remediation!.Href.Should().Contain("section=matchs");
-        hub.Lifecycle.Transition.Remediation.Href.Should().NotContain("operational-placement");
+        hub.Lifecycle.Transition.Remediation!.Href.Should().Contain("focus=operational-placement");
+        hub.Lifecycle.Transition.Remediation.Href.Should().NotContain("section=matchs");
 
         hub.Materialize.Should().NotBeNull();
         hub.Materialize!.CommandEnabled.Should().BeTrue();
@@ -631,7 +631,7 @@ public sealed class StructureStageLifecycleAssemblerTests
         hub.Materialize!.CommandEnabled.Should().BeFalse();
         hub.Materialize.EligibleCount.Should().Be(0);
         hub.Materialize.DeterminedCount.Should().Be(0);
-        hub.Materialize.MaterializedCount.Should().Be(2, "fixture shells bound to bracket pairs without entries");
+        hub.Materialize.MaterializedCount.Should().Be(0, "fixture shells without attached legs are not materialized confrontations");
         hub.Materialize.DisabledReason.Should()
             .Be(StructureMaterializeDisabledReasons.NoDeterminedConfrontations);
     }

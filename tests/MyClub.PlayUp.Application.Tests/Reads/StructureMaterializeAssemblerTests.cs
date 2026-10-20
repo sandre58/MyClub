@@ -296,7 +296,7 @@ public sealed class StructureMaterializeAssemblerTests
             [],
             inboundComposition: null)!;
 
-        materialize.CanonicalEntryPairCount.Should().Be(1);
+        materialize.CanonicalEntryPairCount.Should().Be(0, "explicit SF slot naming is not canonical entry-round");
         materialize.UndeterminedCanonicalEntryPairCount.Should().Be(0);
         CupCanonicalEntryRoundStartGate.BlocksStart(destination, competition, [source, destination])
             .Should()
@@ -437,7 +437,7 @@ public sealed class StructureMaterializeAssemblerTests
     }
 
     [Fact]
-    public void Cup_progression_projected_pair_enables_materialize_when_both_sides_resolved()
+    public void Cup_progression_projected_pair_shows_determined_but_not_eligible_without_slot_apply()
     {
         var competition = CreateCompetition.Execute("Cup SF prog", _clock);
         var hyeres = competition.AddEntry(TeamId.New(), "ES Hyères", _clock);
@@ -514,10 +514,10 @@ public sealed class StructureMaterializeAssemblerTests
         var materialize = hub.Materialize!;
 
         materialize.DeterminedCount.Should().Be(1);
-        materialize.EligibleCount.Should().Be(1);
-        materialize.CommandEnabled.Should().BeTrue();
+        materialize.EligibleCount.Should().Be(0);
+        materialize.CommandEnabled.Should().BeFalse();
         materialize.Confrontations.Should().ContainSingle(row =>
-            row.Key == "P1" && row.Determined && row.Eligible && row.SideA == "ES Hyères" && row.SideB == "FC Menton");
+            row.Key == "P1" && row.Determined && !row.Eligible && row.SideA == "ES Hyères" && row.SideB == "FC Menton");
     }
 
     [Fact]
@@ -584,6 +584,10 @@ public sealed class StructureMaterializeAssemblerTests
             ]),
             _clock);
         destination.Prepare(_clock);
+        destination.ApplyResolvedEntry("S1", hyeres.Id, _clock);
+        destination.ApplyResolvedEntry("S2", menton.Id, _clock);
+        destination.AddResolvedPopulationEntry(hyeres.Id, _clock);
+        destination.AddResolvedPopulationEntry(menton.Id, _clock);
 
         var summaries = new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>
         {
