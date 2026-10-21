@@ -42,5 +42,5 @@ Run full `dotnet test -c Release` before closing wave 1 on the integration machi
 ## Next
 
 1. **AUD-0005-C** arbitrated — see `phase-4-lot-d1-plan.md` + `dotnet-warnings-baseline.json` + CI script.
-2. D2 — document `StageRepository` hot paths + measurement protocol (no Include change without data).
+2. D2 — see `phase-4-d2-stage-repository-investigation.md` + `Category=PerformanceBaseline` tests.
 3. D3 — product call on Cup C2 A3 / cas assign (see `phase-3-lot-c3-plan.md` reserves).

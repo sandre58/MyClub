@@ -59,5 +59,6 @@
 - [x] D1 — garde-fou CI + baseline JSON (`verify-dotnet-warnings-baseline.sh`).
 - [x] D1 — SA1137 corrigé ; baseline **82** warnings (SA1143 seul).
 - [x] D1-B — SA1143 solution-wide ; baseline **0** (garde-fou CI inchangé).
-- [ ] D2 — investigation AUD-0012.
+- [x] D2 — investigation AUD-0012 (`phase-4-lot-d2-plan.md`, `phase-4-d2-stage-repository-investigation.md`, `StageRepositoryLoadBaselineTests`).
+- [ ] D2-B — optimisation Include/hydration (only after arbitrage + baselines).
 - [ ] D3 — arbitrage produit AUD-0004 (réserve).
