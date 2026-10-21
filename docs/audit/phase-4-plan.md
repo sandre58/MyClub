@@ -65,4 +65,5 @@
 - [x] D3 — arbitrage validé Q1–Q2 + Q3-A ([contrat Notion](https://www.notion.com/p/40075fb92d1081979ed7c15846a62c0b)).
 - [x] D3 — preuve backend A3/A5 (`CupC2Impasse`).
 - [x] D3 — rejouage SPA A3 / A4–A5 (`phase-4-lot-d3-plan.md` §1, 2026-10-22).
-- [ ] D3 — **go D3-B** (écarts Q1 attention partiel) + lot correctif écarts.
+- [x] D3 — **go D3-B** + lot présentation Q1 (2026-10-22).
+- [ ] D3 — merge PR(s) + clôture phase après revue.

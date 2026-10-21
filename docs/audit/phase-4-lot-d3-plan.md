@@ -31,7 +31,7 @@
 
 **Écart Q2 (17/10) :** run historique « Start enabled @ 2/2 » → **non reproductible** sur build courant (Start reste disabled). Traiter comme observation isolée, pas comme correctif présumé.
 
-**Suite arbitrage :** candidat D3-B **borné Q1** (alignement présentation SPA / attention vs motif lifecycle) **si** le décideur valide ; **pas** de D3-B Q2 sur cette base.
+**Suite arbitrage :** D3-B **go 2026-10-22** — lot **Q1 présentation** uniquement (`StructurePresentedStageDiagnostics` : pas de `UnmaterializedConfrontations` parallèle quand Start = `IncompleteEntryRound`). **Pas** de D3-B Q2.
 
 **Interdit dans D3-B :** modifier `StageStartReadinessGuard`, règles Cup domaine, ou couvrir **cas assign** (Q3-A).
 
@@ -83,8 +83,8 @@ Pour **chaque** question (Q1–Q3), la fiche Notion doit figer avant tout code :
 - [x] Validation décideur Q1–Q2 + **Q3-A** (Notion).
 - [x] Tests backend référence A3 + A5 (2026-10-22).
 - [x] Rejouage SPA RECETTE C2 A3 + A4–A5 (2026-10-22) ; écarts listés §1.
-- [ ] **Go explicite D3-B** (décideur).
-- [ ] D3-B : lot correctif borné (read-model / UX / docs / tests — **pas** guard/domaine sauf nouveau arbitrage).
+- [x] **Go explicite D3-B** (décideur, 2026-10-22).
+- [x] D3-B : présentation `presentedIssueCodes` / attention — **pas** guard/domaine/HTTP/lifecycle.
 
 ---
 
