@@ -60,5 +60,6 @@
 - [x] D1 — SA1137 corrigé ; baseline **82** warnings (SA1143 seul).
 - [x] D1-B — SA1143 solution-wide ; baseline **0** (garde-fou CI inchangé).
 - [x] D2 — investigation AUD-0012 livrée (finding registre **non** clos — dette acceptée maintenue).
-- [ ] D2-B — optimisation Include/hydration (arbitrage explicite + critères avant/après — voir `phase-4-lot-d2-plan.md`).
+- [x] D2-B lot 1 — hydration batch attachments (`phase-4-lot-d2-b-attachment-batch.md`).
+- [ ] D2-B suite / clôture registre AUD-0012 (arbitrage après revue gains).
 - [ ] D3 — arbitrage produit AUD-0004 (réserve).

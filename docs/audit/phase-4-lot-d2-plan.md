@@ -38,15 +38,17 @@ Requires Docker (Testcontainers PostgreSQL 18). Copy SQL counts from test output
 | Stream | Statut phase 4 | Registre AUD-0012 |
 | --- | --- | --- |
 | **D2 investigation** | **Livré** (`0c0657c0` on `feature/audit-d2-stage-repository`) | Finding **not** closed — remains **dette acceptée** until optimization is arbitrated and closure criteria met |
-| **D2-B** | Not authorized | Would require explicit go + before/after on same scenarios |
+| **D2-B** | Lot 1 livré (batch attachments — `phase-4-lot-d2-b-attachment-batch.md`) | Finding still **dette acceptée** |
 
 **D1** (warnings / AUD-0005-C policy) is **closed on `main`** (baseline 0, CI gate). **D3** (AUD-0004) stays **pending**.
 
 Gap **Summary → Full** (e.g. cup-qf-sf: 8 → 17 SQL commands in Testcontainers) signals **cost to investigate**, not proof that `Full` is wrong for command paths.
 
-## D2-B preparation (not started)
+## D2-B lot 1 (delivered)
 
-Authorize only after review of D2 deliverables and reproducible baseline run (`Category=PerformanceBaseline`).
+See `phase-4-lot-d2-b-attachment-batch.md` — single batched `FixtureAttachmentRef` load per stage hydration.
+
+## D2-B preparation (further lots)
 
 | Prerequisite | Content |
 | --- | --- |

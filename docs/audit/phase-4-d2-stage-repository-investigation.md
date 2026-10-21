@@ -114,6 +114,8 @@ For ad-hoc analysis (local only), enable EF logging on the fixture `DbContext` o
 | cup-qf-sf | `GetByIdForUpdate(Full)` | 17 |
 | cup-qf-sf | `GetByIdsReadOnly(Full)` N=2 | 18 |
 | cup-qf-sf | Attention `StageCapabilities` | 17 |
+| groups:running | `ListMatchesByStage` (executor) | 18 (post D2-B; was 20) |
+| champions-league:running | `ListMatchesByStage` | 18 (post D2-B; was 20) |
 | cup-qf-sf | `GetOverviewViewAsync` | see `ReadPerformanceBaselineTests` output |
 | champions-league:running | `ListMatchesByStageAsync` | see `ReadPerformanceBaselineTests` output |
 

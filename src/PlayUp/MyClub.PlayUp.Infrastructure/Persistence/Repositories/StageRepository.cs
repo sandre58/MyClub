@@ -344,13 +344,15 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
             .ToList();
         StageOrderedCollectionsAccessor.ReorderRounds(stage, rounds);
 
+        var fixturesForAttachments = new List<Fixture>();
+
         foreach (var round in rounds)
         {
             var fixtures = StageOrderedCollectionsAccessor.GetRoundFixtures(round)
                 .OrderBy(fixture => context.Entry(fixture).Property<int>("SortOrder").CurrentValue)
                 .ToList();
             StageOrderedCollectionsAccessor.ReorderRoundFixtures(round, fixtures);
-            await HydrateAttachmentsAsync(fixtures, cancellationToken).ConfigureAwait(false);
+            fixturesForAttachments.AddRange(fixtures);
         }
 
         var matchdays = StageOrderedCollectionsAccessor.GetMatchdays(stage)
@@ -364,8 +366,10 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
                 .OrderBy(fixture => context.Entry(fixture).Property<int>("SortOrder").CurrentValue)
                 .ToList();
             StageOrderedCollectionsAccessor.ReorderMatchdayFixtures(matchday, fixtures);
-            await HydrateAttachmentsAsync(fixtures, cancellationToken).ConfigureAwait(false);
+            fixturesForAttachments.AddRange(fixtures);
         }
+
+        await HydrateAttachmentsAsync(fixturesForAttachments, cancellationToken).ConfigureAwait(false);
 
         if (StageOrderedCollectionsAccessor.GetDraws(stage).Count > 0)
         {
