@@ -12,7 +12,12 @@ function viewWithCupBlocker(
     name: 'Test',
     status: 'Draft',
     participants: { activeCount: 0, occupyingCount: 0, entries: [] },
-    format: { kind: 'Groups', primaryStageId: otherStageId },
+    format: {
+      kind: 'Groups',
+      primaryStageId: otherStageId,
+      primaryStageName: 'Other',
+      primaryStageStatus: 'Draft',
+    },
     structure: {
       groupCount: 2,
       roundCount: 0,

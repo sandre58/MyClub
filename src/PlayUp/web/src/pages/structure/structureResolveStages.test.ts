@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { StructureView } from '../../types';
+import { structureReadiness } from '../../test/structureTestFixtures';
 import { resolveStructureHubStages } from './structureResolveStages';
 
 function minimalView(
@@ -32,16 +33,7 @@ function minimalView(
       hasExtraTime: false,
       hasPenaltyShootout: false,
     },
-    readiness: {
-      readyForNextSlice: true,
-      readyForDraw: false,
-      readyForMaterialization: false,
-      readyForSchedule: false,
-      readyForMatchOperation: false,
-      readyForSchedulePath: false,
-      attachedMatchCount: 0,
-      blockers: [],
-    },
+    readiness: structureReadiness({ readyForNextSlice: true }),
     actions: [],
     stages: [],
     ...overrides,

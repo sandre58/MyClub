@@ -12,6 +12,7 @@ import {
   startMatch,
 } from '../../api';
 import type { MatchDetail, StructureView, StageOverview } from '../../types';
+import { structureReadiness } from '../../test/structureTestFixtures';
 import { MatchPage } from './MatchPage';
 
 vi.mock('../../api', async (importOriginal) => {
@@ -104,16 +105,7 @@ const emptyStructure: StructureView = {
     matchGenerationFormat: 'SingleRoundRobin',
   },
   actions: [],
-  readiness: {
-    readyForNextSlice: false,
-    readyForDraw: false,
-    readyForMaterialization: false,
-    readyForSchedule: false,
-    readyForMatchOperation: false,
-    readyForSchedulePath: false,
-    attachedMatchCount: 0,
-    blockers: [],
-  },
+  readiness: structureReadiness(),
   stages: [],
 };
 

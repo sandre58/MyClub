@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fetchStageSchematic, replaceStageQualificationRules } from '../../api';
+import { structureReadiness } from '../../test/structureTestFixtures';
 import type {
   SchematicCase,
   StageSchematic,
@@ -91,16 +92,7 @@ function structureView(
       matchGenerationFormat: 'SingleRoundRobin',
     },
     stages: [source, destination],
-    readiness: {
-      readyForNextSlice: true,
-      readyForDraw: false,
-      readyForMaterialization: false,
-      readyForSchedule: false,
-      readyForMatchOperation: false,
-      readyForSchedulePath: false,
-      attachedMatchCount: 0,
-      blockers: [],
-    },
+    readiness: structureReadiness({ readyForNextSlice: true }),
     actions: [],
   };
 }

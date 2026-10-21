@@ -12,6 +12,7 @@ import {
   prepareStage,
   startCompetition,
 } from '../../api';
+import { structureReadiness } from '../../test/structureTestFixtures';
 import { CompetitionOverviewPage } from './CompetitionOverviewPage';
 import {
   overviewIds,
@@ -315,16 +316,7 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
       },
       stages: [],
       actions: [],
-      readiness: {
-        readyForNextSlice: false,
-        readyForDraw: false,
-        readyForMaterialization: false,
-        readyForSchedule: false,
-        readyForMatchOperation: false,
-        readyForSchedulePath: false,
-        attachedMatchCount: 0,
-        blockers: [],
-      },
+      readiness: structureReadiness(),
     });
     vi.mocked(fetchCompetitionOverview).mockResolvedValue(
       overviewView({

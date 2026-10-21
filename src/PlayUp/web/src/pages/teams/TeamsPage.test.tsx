@@ -16,6 +16,7 @@ import {
 } from '../../api';
 import { TOOLTIP_DELAY_OPEN_MS } from '../../design-system/components/Tooltip';
 import type { DeclaredMember, StructureView } from '../../types';
+import { structureReadiness } from '../../test/structureTestFixtures';
 import { TeamsPage } from './TeamsPage';
 
 vi.mock('../../api', async (importOriginal) => {
@@ -97,16 +98,9 @@ function structureView(
       matchGenerationFormat: 'SingleRoundRobin',
     },
     actions: ['AddEntry', 'RenameEntry', 'DeleteEntry'],
-    readiness: {
-      readyForNextSlice: false,
-      readyForDraw: false,
-      readyForMaterialization: false,
-      readyForSchedule: false,
-      readyForMatchOperation: false,
-      readyForSchedulePath: false,
-      attachedMatchCount: 0,
+    readiness: structureReadiness({
       blockers: ['InsufficientParticipants'],
-    },
+    }),
     stages: [],
     ...overrides,
   };

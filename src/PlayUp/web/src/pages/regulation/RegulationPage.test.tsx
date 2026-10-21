@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import { fetchStructureView, replaceCompetitionRegulation } from '../../api';
+import { structureReadiness } from '../../test/structureTestFixtures';
 import { RegulationPage } from './RegulationPage';
 import type {
   StructureStageDefaultsBinding,
@@ -169,16 +170,7 @@ function structureView(overrides: Partial<StructureView> = {}): StructureView {
       matchGenerationFormat: 'SingleRoundRobin',
     },
     actions: ['ReplaceRegulation'],
-    readiness: {
-      readyForNextSlice: false,
-      readyForDraw: false,
-      readyForMaterialization: false,
-      readyForSchedule: false,
-      readyForMatchOperation: false,
-      readyForSchedulePath: false,
-      attachedMatchCount: 0,
-      blockers: [],
-    },
+    readiness: structureReadiness(),
     stages: [groupesStage(), finaleStage()],
     ...overrides,
   };

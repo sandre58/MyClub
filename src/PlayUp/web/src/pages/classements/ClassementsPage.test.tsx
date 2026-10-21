@@ -9,6 +9,7 @@ import type {
   ConsultationView,
   StructureView,
 } from '../../types';
+import { structureReadiness } from '../../test/structureTestFixtures';
 import { ClassementsPage } from './ClassementsPage';
 
 vi.mock('../../api', async (importOriginal) => {
@@ -61,16 +62,14 @@ function structureView(overrides: Partial<StructureView> = {}): StructureView {
       matchGenerationFormat: 'SingleRoundRobin',
     },
     actions: [],
-    readiness: {
+    readiness: structureReadiness({
       readyForNextSlice: true,
-      readyForDraw: false,
       readyForMaterialization: true,
       readyForSchedule: true,
       readyForMatchOperation: true,
       readyForSchedulePath: true,
       attachedMatchCount: 1,
-      blockers: [],
-    },
+    }),
     stages: [],
     ...overrides,
   };

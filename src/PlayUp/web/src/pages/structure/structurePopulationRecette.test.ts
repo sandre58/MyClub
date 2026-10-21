@@ -12,6 +12,7 @@ import {
 } from './structureReadinessSummary';
 import { stagePresentedIssueCodes } from './structureStagePresentedIssues';
 import type { StructureStageHubSummary, StructureView } from '../../types';
+import { structureReadiness } from '../../test/structureTestFixtures';
 
 type PopulationRecetteObservation = {
   stageStatus: string;
@@ -67,18 +68,44 @@ function hubFromObservation(
 function viewFromObservation(
   obs: PopulationRecetteObservation,
 ): StructureView {
+  const hub = hubFromObservation(obs);
   return {
     competitionId: 'recette-competition',
+    name: 'Recette competition',
     status: obs.stageStatus === 'Running' ? 'Running' : 'Ready',
-    format: { kind: 'Championship' },
-    readiness: { blockers: [], blockerDetails: [] },
+    format: {
+      kind: 'Championship',
+      primaryStageId: hub.stageId,
+      primaryStageName: hub.name,
+      primaryStageStatus: hub.status,
+    },
+    regulation: {
+      minimumTeams: 2,
+      maximumTeams: 64,
+      durationPerPeriod: 45,
+      numberOfPeriods: 2,
+      winPoints: 3,
+      drawPoints: 1,
+      lossPoints: 0,
+    },
+    structure: {
+      groupCount: 0,
+      roundCount: 0,
+      matchdayCount: 0,
+      slotCount: 0,
+      hasDrawRules: false,
+      numberOfPots: null,
+      matchGenerationFormat: 'SingleRoundRobin',
+    },
+    actions: [],
+    readiness: structureReadiness(),
     participants: {
       activeCount: obs.participantsActiveCount,
       occupyingCount: obs.participantsOccupyingCount,
       entries: [],
     },
-    stages: [hubFromObservation(obs)],
-  } as StructureView;
+    stages: [hub],
+  };
 }
 
 function titleKeysForCodes(

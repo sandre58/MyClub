@@ -84,11 +84,12 @@ describe('resolveStructurePhaseHeroFacts', () => {
           eligibleCount: 6,
           materializedCount: 4,
           commandEnabled: true,
+          confrontations: [],
         },
       }),
       false,
     );
-    expect(facts.some((f) => f.statKey === 'matches')).toBe(false);
+    expect(facts.map((f) => f.statKey)).not.toContain('matches');
   });
 
   it('Places N uses compositionCapacity only', () => {

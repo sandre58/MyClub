@@ -6,6 +6,7 @@ import {
   fetchStageOverview,
   replaceStagePlacementAwardRules,
 } from '../../api';
+import { structureReadiness } from '../../test/structureTestFixtures';
 import type {
   StageOverview,
   StructureStageHubSummary,
@@ -99,16 +100,7 @@ function structureView(stage: StructureStageHubSummary): StructureView {
       matchGenerationFormat: 'SingleRoundRobin',
     },
     stages: [stage],
-    readiness: {
-      readyForNextSlice: false,
-      readyForDraw: false,
-      readyForMaterialization: false,
-      readyForSchedule: false,
-      readyForMatchOperation: false,
-      readyForSchedulePath: false,
-      attachedMatchCount: 0,
-      blockers: [],
-    },
+    readiness: structureReadiness(),
     actions: [],
   };
 }

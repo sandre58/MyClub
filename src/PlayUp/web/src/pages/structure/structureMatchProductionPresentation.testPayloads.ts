@@ -21,7 +21,8 @@ type HubOverrides = {
   materializeDisabledReason?: string | null;
   dematerializeVisible?: boolean;
   dematerializeEnabled?: boolean;
-  dematerializeDisabledReason?: DematerializeDisabledReason | null;
+  /** Presentation-layer codes (e.g. StructureNotMutable) are strings on the wire. */
+  dematerializeDisabledReason?: string | null;
   dematerializeScope?: StructureMatchProductionPresentation['dematerialize']['scope'];
 };
 
@@ -51,7 +52,8 @@ export function readyMatchProductionHub(
     dematerialize: {
       visible: overrides.dematerializeVisible ?? false,
       enabled: overrides.dematerializeEnabled ?? false,
-      disabledReason: overrides.dematerializeDisabledReason ?? null,
+      disabledReason: (overrides.dematerializeDisabledReason ??
+        null) as DematerializeDisabledReason | null,
       scope: overrides.dematerializeScope ?? null,
     },
   };

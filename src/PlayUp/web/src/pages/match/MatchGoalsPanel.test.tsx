@@ -15,6 +15,7 @@ import {
   setRunningScore,
   startMatch,
 } from '../../api';
+import { structureReadiness } from '../../test/structureTestFixtures';
 import type {
   DeclaredParticipation,
   MatchDetail,
@@ -141,16 +142,7 @@ const emptyStructure: StructureView = {
     matchGenerationFormat: 'SingleRoundRobin',
   },
   actions: [],
-  readiness: {
-    readyForNextSlice: false,
-    readyForDraw: false,
-    readyForMaterialization: false,
-    readyForSchedule: false,
-    readyForMatchOperation: false,
-    readyForSchedulePath: false,
-    attachedMatchCount: 0,
-    blockers: [],
-  },
+  readiness: structureReadiness(),
   stages: [],
 };
 
