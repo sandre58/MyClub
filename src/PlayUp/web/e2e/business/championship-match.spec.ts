@@ -1,7 +1,8 @@
 import { expect, test } from '@playwright/test';
 import {
   findChampionshipReadyCompetition,
-  findFirstScheduledMatchId,
+  findFirstScheduledMatch,
+  openSportiveExploitation,
   playUpApiBase,
 } from './hostSeed';
 
@@ -15,7 +16,11 @@ test.describe('Play’Up business (Host + PostgreSQL)', () => {
     request,
   }) => {
     const competition = await findChampionshipReadyCompetition(request);
-    const matchId = await findFirstScheduledMatchId(request, competition.id);
+    const { matchId, stageId } = await findFirstScheduledMatch(
+      request,
+      competition.id,
+    );
+    await openSportiveExploitation(request, competition.id, stageId);
 
     const matchResponse = await request.get(
       `${playUpApiBase()}/matches/${matchId}`,

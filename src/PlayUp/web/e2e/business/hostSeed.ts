@@ -39,10 +39,15 @@ export async function findChampionshipReadyCompetition(
   return hit;
 }
 
-export async function findFirstScheduledMatchId(
+export type ScheduledMatchRef = {
+  matchId: string;
+  stageId: string;
+};
+
+export async function findFirstScheduledMatch(
   request: APIRequestContext,
   competitionId: string,
-): Promise<string> {
+): Promise<ScheduledMatchRef> {
   const response = await request.get(
     `${playUpApiBase()}/competitions/${competitionId}/matches-hub`,
   );
@@ -56,11 +61,40 @@ export async function findFirstScheduledMatchId(
   for (const stage of hub.stages) {
     const scheduled = stage.matches.find((m) => m.status === 'Scheduled');
     if (scheduled) {
-      return scheduled.matchId;
+      return { matchId: scheduled.matchId, stageId: stage.stageId };
     }
   }
 
   throw new Error(
     `No Scheduled match in matches-hub for competition ${competitionId}`,
   );
+}
+
+/**
+ * championship-ready leaves competition/stage Ready; match Start requires Running (StageExploitationGuard).
+ */
+export async function openSportiveExploitation(
+  request: APIRequestContext,
+  competitionId: string,
+  stageId: string,
+): Promise<void> {
+  const stageStart = await request.post(
+    `${playUpApiBase()}/stages/${stageId}/start`,
+  );
+  if (!stageStart.ok()) {
+    const body = await stageStart.text();
+    throw new Error(
+      `POST /stages/${stageId}/start failed (${stageStart.status()}): ${body}`,
+    );
+  }
+
+  const competitionStart = await request.post(
+    `${playUpApiBase()}/competitions/${competitionId}/start`,
+  );
+  if (!competitionStart.ok()) {
+    const body = await competitionStart.text();
+    throw new Error(
+      `POST /competitions/${competitionId}/start failed (${competitionStart.status()}): ${body}`,
+    );
+  }
 }
