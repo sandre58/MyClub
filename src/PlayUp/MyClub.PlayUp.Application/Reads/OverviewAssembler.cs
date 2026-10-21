@@ -1015,19 +1015,11 @@ public static class OverviewAssembler
         IReadOnlyDictionary<EntryId, string> names)
     {
         var instructions = ResolvePlacementAwards.Execute(stages, matchesByStage);
-        if (instructions.Count == 0)
+        return [.. instructions.Select(instruction =>
         {
-            return [];
-        }
-
-        return [
-            .. instructions.Select(instruction =>
-            {
-                var displayName = EntryDisplayNames.Resolve(names, instruction.EntryId)
-                    ?? instruction.EntryId.Value.ToString();
-                return new FinalPlacementDto(instruction.Rank, instruction.EntryId.Value, displayName);
-            })
-        ];
+            var displayName = EntryDisplayNames.Resolve(names, instruction.EntryId) ?? instruction.EntryId.Value.ToString();
+            return new FinalPlacementDto(instruction.Rank, instruction.EntryId.Value, displayName);
+        })];
     }
 
     private static IReadOnlyList<FinalPlacementDto>? ProjectStandingOutcomePlaces(
