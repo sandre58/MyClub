@@ -76,19 +76,19 @@ On partial production (e.g. RECETTE C2, Ready, single leg): gauge `materializedC
 
 ### RECETTE C2 — impasse chain (executable, 2026-10-17)
 
-**Test:** `CupC2ImpasseRecetteProtocolTests.C2_manual_recette_chain_documents_backend_and_read_modelAsync`  
+**Tests:** `CupC2ImpasseRecetteProtocolTests` — `C2_A3_*` (track A3), `C2_A5_*` (tracks A4→A5).  
 **Seed:** `structure-materialize-recette` → competition **RECETTE C2 — Cup 1/2 partial** (after `Prepare` → Ready).
 
 | Step | Observation (backend + hub read model) |
 |------|----------------------------------------|
-| 1 — Ready baseline | `materializedCount=1`, `determinedCount=2`, `eligibleCount=1` (jauge **1/2**). |
-| 2 — New placement | `AssignEntryToSlot` → `Application.StructureNotMutable`. Hub **without** `AssignEntryToSlot` (D2 / attached production). |
-| 3 — Start | `StartStageAsync` → `Application.StartBlockedUnmaterialized`; hub `disabledReasonCode` **`UnmaterializedConfrontations`**. |
-| 4 — After materializing remaining eligible pair | `2/2` on determined pairs; **2/4** bracket confrontations still undetermined. Start **allowed** → **Running**. |
-| 5 — Complete empty pairs while Running | `AssignEntryToSlot` → `Application.StructureNotMutable`; hub still no assign action. |
+| 1 — Ready baseline (A1) | `materializedCount=1`, `determinedCount=2`, `eligibleCount=1` (jauge **1/2**). |
+| 2 — New placement (A2) | `AssignEntryToSlot` → `Application.StructureNotMutable`. Hub **without** `AssignEntryToSlot` (D2 / attached production). |
+| 3 — Start at 1/2 without manual assign (A3) | `StartStageAsync` → `Application.StartBlockedIncompleteEntryRound`; hub `disabledReasonCode` **`IncompleteEntryRound`** (SPA may still surface `UnmaterializedConfrontations` — document drift, do not force in protocol test). |
+| 4 — After materializing remaining eligible pair (A4) | `2/2` on determined pairs; **2/4** bracket confrontations still undetermined. |
+| 5 — Start after 2/2 eligible materialized (A5) | Start **still blocked** — `Application.StartBlockedIncompleteEntryRound` (impasse; no Running via Start). |
 | Recovery (partial) | Dematerialize while **Running** → `Application.StructureNotMutable`. **Revert to Ready** succeeds but **matches remain attached** → placement still blocked until **dematerialize** (Cup dematerialize allowed in **Ready** per `DematerializeCup` — confirm in SPA manually). |
 
-**Takeaway:** C2 refines the impasse story: Option A blocks Start at **1/2**; structural incompleteness appears after **2/2 eligible** materialized, when Start is allowed with **half the entry bracket** still empty.
+**Takeaway:** C2 impasse: Start remains blocked once **all eligible** confrontations are materialized while **half** of canonical entry-round pairs are still undetermined (guard **1a**). Manual assign before Start at 1/2 (**cas assign**) is a separate contract — not covered by these tests (AUD-0004).
 
 **SPA:** impasse track + Q3 recovery — [cup-c2-spa-recette-checklist.md](./cup-c2-spa-recette-checklist.md) (**not** signed off end-to-end; dematerialize in SPA after Revert to Ready remains the open gate for Q3).
 

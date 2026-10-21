@@ -21,9 +21,9 @@ Deep link: `/competitions/{competitionId}/structure?stage={stageId}&section=matc
 |------|-----------|--------------------------------|
 | A1 | Jauge **1/2** on Aside **Matchs** | Same counts on structure read |
 | A2 | Cannot assign on empty bracket slot (no manual assign affordance **or** API error if forced) | `StructureNotMutable` |
-| A3 | **Start** disabled; reason **UnmaterializedConfrontations** (problems / lifecycle) | `StartBlockedUnmaterialized` |
-| A4 | Materialize remaining eligible confrontation → **2/2**; **2/4** pairs still empty on schematic | Start becomes enabled |
-| A5 | After **2/2** mat. with **2/4** pairs filled: **Start blocked** (`IncompleteEntryRound`) — **1a** ; no Running impasse via Start | `Application.StartBlockedIncompleteEntryRound` |
+| A3 | **Start** disabled; SPA may show **UnmaterializedConfrontations** on lifecycle | Backend protocol (AUD-0004 C3): `StartBlockedIncompleteEntryRound` at **1/2** without manual assign — guard **1a** before production-gap on RECETTE C2 seed |
+| A4 | Materialize remaining eligible confrontation → **2/2**; **2/4** pairs still empty on schematic | Same counts on structure read; **Start stays disabled** (impasse — not “enabled then blocked”) |
+| A5 | After **2/2** mat. with **2/4** bracket pairs undetermined: **Start blocked** (`IncompleteEntryRound`) — **1a** | `Application.StartBlockedIncompleteEntryRound` (`CupC2ImpasseRecetteProtocolTests` A5) |
 
 **Documented impasse:** not at 1/2, but after **all eligible** confrontations are materialized while **half** of entry bracket pairs remain undetermined.
 

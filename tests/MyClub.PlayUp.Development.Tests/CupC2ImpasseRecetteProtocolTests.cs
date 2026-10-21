@@ -23,9 +23,10 @@ using Xunit;
 namespace MyClub.PlayUp.Development.Tests;
 
 /// <summary>
-/// Executable recette C2 — Start / D2 / recovery chain (Notion Cup arbitration).
-/// Maps to checklist track A (impasse): A3 at 1/2, A4 materialize, A5 Start blocked (1a).
-/// Cas assign (manual slot before Start @ impasse 1/2) hors checklist A2 — arbitrage AUD-0004 : à qualifier (p.ex. piste B4), pas couvert ici.
+/// Executable recette C2 — Cup impasse Start guards (Notion Cup arbitration, AUD-0004 option 2).
+/// Track A: <see cref="C2_A3_at_one_of_two_without_manual_assign_start_blocked_as_incomplete_entry_roundAsync"/> (A3),
+/// <see cref="C2_A5_after_all_eligible_materialized_start_still_blocked_incomplete_entry_roundAsync"/> (A4→A5).
+/// Manual assign before Start at 1/2 (cas assign) is out of scope — qualify in a future decision before a dedicated test.
 /// </summary>
 [Collection("DevelopmentPostgres")]
 [Trait("Category", "Integration")]
@@ -34,33 +35,34 @@ public sealed class CupC2ImpasseRecetteProtocolTests(DevelopmentPostgresFixture 
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 10, 17, 19, 0, 0, TimeSpan.Zero));
 
     [Fact]
-    public async Task C2_manual_recette_chain_documents_backend_and_read_modelAsync()
+    public async Task C2_A3_at_one_of_two_without_manual_assign_start_blocked_as_incomplete_entry_roundAsync()
+    {
+        var scope = await OpenRecetteCupScopeAsync("RECETTE C2");
+        await using var _ = scope;
+        var (competition, stage, hub, _) = scope;
+        EnsureRecetteCupReady(competition, stage);
+
+        hub.Materialize!.MaterializedCount.Should().Be(1);
+        hub.Materialize.DeterminedCount.Should().Be(2);
+        hub.Materialize.EligibleCount.Should().Be(1);
+
+        // No manual assign before Start (checklist A2/A3). Guard 1a runs before production-gap Unmaterialized on this seed.
+        hub.Lifecycle!.Transition.DisabledReasonCode.Should()
+            .Be(StructureStageLifecycleAssembler.DisabledIncompleteEntryRound);
+
+        var executor = scope.ServiceProvider.GetRequiredService<UseCaseExecutor>();
+        var startAct = async () => await executor.StartStageAsync(stage.Id);
+        (await startAct.Should().ThrowAsync<ApplicationFailureException>())
+            .Which.Code.Should().Be(ApplicationErrorCodes.StartBlockedIncompleteEntryRound);
+    }
+
+    [Fact]
+    public async Task C2_A5_after_all_eligible_materialized_start_still_blocked_incomplete_entry_roundAsync()
     {
         var scope = await OpenRecetteCupScopeAsync("RECETTE C2");
         await using var _ = scope;
         var (competition, stage, hub, matches) = scope;
         EnsureRecetteCupReady(competition, stage);
-
-        matches.Should().NotBeNull();
-        hub.Should().NotBeNull();
-
-        matches = await scope.ReloadMatchesAsync();
-        hub = AssembleHub(competition, [stage], matches);
-
-        hub.Status.Should().Be(StageStatus.Ready);
-        hub.Materialize!.MaterializedCount.Should().Be(1);
-        hub.Materialize.DeterminedCount.Should().Be(2);
-        hub.Materialize.EligibleCount.Should().Be(1);
-
-        var executor = scope.ServiceProvider.GetRequiredService<UseCaseExecutor>();
-
-        // A3 @ 1/2 without assign — backend guard/read: IncompleteEntryRound (checklist SPA may still say Unmaterialized).
-        hub.Lifecycle!.Transition.DisabledReasonCode.Should()
-            .Be(StructureStageLifecycleAssembler.DisabledIncompleteEntryRound);
-
-        var startAct = async () => await executor.StartStageAsync(stage.Id);
-        (await startAct.Should().ThrowAsync<ApplicationFailureException>())
-            .Which.Code.Should().Be(ApplicationErrorCodes.StartBlockedIncompleteEntryRound);
 
         var materializeSecond = MaterializeCupFromOccupiedSlots.Execute(competition, stage, null, matches, _clock);
         materializeSecond.CreatedMatches.Should().HaveCount(1);
@@ -83,8 +85,9 @@ public sealed class CupC2ImpasseRecetteProtocolTests(DevelopmentPostgresFixture 
         hub.Lifecycle.Transition.DisabledReasonCode.Should()
             .Be(StructureStageLifecycleAssembler.DisabledIncompleteEntryRound);
 
-        var startAfterMatAct = async () => await executor.StartStageAsync(stage.Id);
-        (await startAfterMatAct.Should().ThrowAsync<ApplicationFailureException>())
+        var executor = scope.ServiceProvider.GetRequiredService<UseCaseExecutor>();
+        var startAct = async () => await executor.StartStageAsync(stage.Id);
+        (await startAct.Should().ThrowAsync<ApplicationFailureException>())
             .Which.Code.Should().Be(ApplicationErrorCodes.StartBlockedIncompleteEntryRound);
         stage.Status.Should().Be(StageStatus.Ready);
     }
