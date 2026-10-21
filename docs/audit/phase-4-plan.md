@@ -59,5 +59,6 @@
 - [x] D1 — garde-fou CI + baseline JSON (`verify-dotnet-warnings-baseline.sh`).
 - [x] D1 — SA1137 corrigé ; baseline **82** warnings (SA1143 seul).
 - [ ] D1 — passe SA1143 (réduction progressive ; pas de `NoWarn` global).
+- [x] D1-B (lot 1) — Host SA1143 (−4) ; baseline **78**.
 - [ ] D2 — investigation AUD-0012.
 - [ ] D3 — arbitrage produit AUD-0004 (réserve).

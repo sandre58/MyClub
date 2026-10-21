@@ -20,9 +20,9 @@ Avoid permanent tolerance (83+ warnings drift) and avoid premature global hard-f
 
 | Code | Count | Notes |
 | --- | ---: | --- |
-| SA1143 | 82 | Nested conditional formatting (StyleCop) |
+| SA1143 | 78 | Nested conditional formatting (StyleCop); **Host cleared** in D1-B (2026-10-21) |
 | SA1137 | 0 | Fixed 2026-10-21 (`DevelopmentTestsArchitectureIsolationTests.cs` — collection expression indentation) |
-| **Total** | **82** | See `docs/audit/dotnet-warnings-baseline.json` (was 83 @ wave-1) |
+| **Total** | **78** | See `docs/audit/dotnet-warnings-baseline.json` (was 82 after D1-A) |
 
 **SA1143:** rule enforces consistent parenthesis/line breaks for nested conditional expressions. `dotnet format analyzers` was tried and **rejected** (warning count increased); fixes will be intentional per site.
 
