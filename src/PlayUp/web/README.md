@@ -36,12 +36,12 @@ Open `http://127.0.0.1:5173/` — Accueil hub (list + create). `/competitions` r
 
 Shared Run Configurations live in the repo under [`.run/`](../../../.run/) (not under gitignored `.idea/`):
 
-| Configuration         | Role                                                                                       |
-| --------------------- | ------------------------------------------------------------------------------------------ |
+| Configuration         | Role                                                                                                                                   |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | **PlayUp Host**       | ASP.NET Host (`launchSettings` → `http://localhost:5287`; custom `--urls` → [host-exposure.md](../../../docs/guides/host-exposure.md)) |
-| **PlayUp Web**        | `npm run dev` in this folder (Vite → `http://127.0.0.1:5173/`)                             |
-| **PlayUp Host + Web** | Compound — starts Host + Vite in parallel                                                  |
-| **PlayUp DevRunner**  | One-shot CLI reset/seed (run when you need workspace data; not part of the daily compound) |
+| **PlayUp Web**        | `npm run dev` in this folder (Vite → `http://127.0.0.1:5173/`)                                                                         |
+| **PlayUp Host + Web** | Compound — starts Host + Vite in parallel                                                                                              |
+| **PlayUp DevRunner**  | One-shot CLI reset/seed (run when you need workspace data; not part of the daily compound)                                             |
 
 **Daily use:** select **PlayUp Host + Web** in the Run widget → Run (or Debug for the Host). Stop the compound to stop both.
 
