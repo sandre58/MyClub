@@ -61,10 +61,7 @@ public sealed class StageRepositoryLoadBaselineTests(
         var competitionId = await SeedCompetitionAsync("cup-qf-sf");
         var stageIds = await LoadStageIdsAsync(competitionId);
 
-        var multiSql = await MeasureAsync(async stages =>
-        {
-            _ = await stages.GetByIdsReadOnlyAsync(stageIds, StageLoadProfile.Full);
-        });
+        var multiSql = await MeasureAsync(async stages => _ = await stages.GetByIdsReadOnlyAsync(stageIds, StageLoadProfile.Full));
 
         WriteBlock(
             "cup-qf-sf — GetByIdsReadOnly(Full) for all competition stages",
@@ -82,10 +79,7 @@ public sealed class StageRepositoryLoadBaselineTests(
         var stageId = await SeedSingleStageAsync("cup-qf-sf");
         var capabilities = CompetitionReadBundleSpec.Attention.StageCapabilities;
 
-        var sql = await MeasureAsync(async stages =>
-        {
-            _ = await stages.GetByIdsReadOnlyAsync([stageId], capabilities);
-        });
+        var sql = await MeasureAsync(async stages => _ = await stages.GetByIdsReadOnlyAsync([stageId], capabilities));
 
         WriteBlock(
             "cup-qf-sf — GetByIdsReadOnly(Attention StageCapabilities)",
