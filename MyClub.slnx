@@ -49,7 +49,6 @@
     <File Path="stylecop.json" />
   </Folder>
   <Folder Name="/docker/">
-    <File Path=".env" />
     <File Path=".env.example" />
     <File Path="compose.yml" />
   </Folder>
