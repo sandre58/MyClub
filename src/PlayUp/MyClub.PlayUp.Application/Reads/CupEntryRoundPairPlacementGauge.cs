@@ -31,14 +31,8 @@ internal static class CupEntryRoundPairPlacementGauge
         }
 
         var schematic = StageSchematicAssembler.Assemble(stage, competition, competitionStages);
-        var startedPairs = pairs.Where(pair => PairPlacementStarted(schematic, pair)).ToArray();
-        if (startedPairs.Length == 0)
-        {
-            return null;
-        }
-
-        var filled = startedPairs.Count(pair => IsPairPlacementComplete(schematic, pair));
-        return (filled, startedPairs.Length);
+        var filled = pairs.Count(pair => IsPairPlacementComplete(schematic, pair));
+        return filled == 0 && pairs.All(pair => !PairPlacementStarted(schematic, pair)) ? null : (filled, pairs.Count);
     }
 
     /// <summary>
@@ -73,7 +67,7 @@ internal static class CupEntryRoundPairPlacementGauge
         Competition competition,
         Stage stage,
         IReadOnlyList<Stage> competitionStages) =>
-        TryGetCanonicalEntryRoundProgress(
+        TryGetCanonicalEntryRoundDisplayProgress(
             competition,
             stage,
             competitionStages,

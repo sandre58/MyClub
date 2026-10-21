@@ -400,6 +400,11 @@ internal static class StructureMatchProductionPresentationAssembler
             return null;
         }
 
+        if (TryResolveCupEntryRoundPrerequisite(input, materialize) is { } cupEntryRound)
+        {
+            return cupEntryRound;
+        }
+
         if (rosterBlocks
             && input.CompositionCapacity is > 0)
         {
@@ -409,11 +414,6 @@ internal static class StructureMatchProductionPresentationAssembler
                 input.CompositionCapacity.Value,
                 StructureMatchProductionMessageCodes.PrerequisiteComposition,
                 MessageKindAttention);
-        }
-
-        if (TryResolveCupEntryRoundPrerequisite(input, materialize) is { } cupEntryRound)
-        {
-            return cupEntryRound;
         }
 
         if (input.FormatKind == StructureFormatKind.Groups
@@ -535,6 +535,17 @@ internal static class StructureMatchProductionPresentationAssembler
         Input input,
         StructureMaterializeDto materialize)
     {
+        if (CupEntryRoundPairPlacementGauge.TryGetCanonicalEntryRoundDisplayProgress(
+                input.Competition,
+                input.Stage,
+                input.CompetitionStages,
+                out var canonicalPairs,
+                out var incompletePairs)
+            && canonicalPairs > 0)
+        {
+            return (canonicalPairs - incompletePairs, canonicalPairs);
+        }
+
         if (CupEntryRoundPairPlacementGauge.TryMeasure(
                 input.Competition,
                 input.Stage,

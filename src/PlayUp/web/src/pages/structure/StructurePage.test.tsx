@@ -16,6 +16,7 @@ import type { StructureStageHubSummary, StructureView } from '../../types';
 import { StructurePage } from './StructurePage';
 import { relevantPhaseSections } from './structureHubSections';
 import { withFixturePresentedIssueCodes } from './structurePresentedIssueCodes.fixture';
+import { readyMatchProductionHub } from './structureMatchProductionPresentation.testPayloads';
 
 vi.mock('../../api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../api')>();
@@ -1280,6 +1281,13 @@ describe('StructurePage Structure hub', () => {
               commandEnabled: true,
               confrontations: [],
             },
+            matchProductionPresentation: readyMatchProductionHub({
+              primaryCurrent: 0,
+              primaryCapacity: 1,
+              primaryMessageCode: 'Partial',
+              materializeVisible: true,
+              materializeEnabled: true,
+            }),
           }),
         ],
         participants: {

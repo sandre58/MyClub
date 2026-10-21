@@ -212,7 +212,7 @@ internal static class StructureMaterializeAssembler
         var determinedCount = rows.Count(row => row.Determined);
         var materializedCount = rows.Count(row => row.Materialized);
         var eligibleCount = rows.Count(row => row.Eligible);
-        var hasCanonicalEntryRound = CupCanonicalEntryRoundStartGate.TryGetCanonicalEntryRoundProgress(
+        var hasCanonicalEntryRound = CupEntryRoundPairPlacementGauge.TryGetCanonicalEntryRoundDisplayProgress(
             competition,
             stage,
             competitionStages,

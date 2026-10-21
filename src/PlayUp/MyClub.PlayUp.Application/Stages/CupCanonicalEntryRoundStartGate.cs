@@ -36,7 +36,7 @@ internal static class CupCanonicalEntryRoundStartGate
                   && HasUndeterminedBracketPairs(stage);
         }
 
-        if (CupEntryRoundPairPlacementGauge.TryGetCanonicalEntryRoundProgress(
+        if (CupEntryRoundPairPlacementGauge.TryGetCanonicalEntryRoundDisplayProgress(
                 competition,
                 stage,
                 competitionStages,
