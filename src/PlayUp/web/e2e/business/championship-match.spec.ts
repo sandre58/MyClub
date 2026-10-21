@@ -21,7 +21,9 @@ test.describe('Play’Up business (Host + PostgreSQL)', () => {
       `${playUpApiBase()}/matches/${matchId}`,
     );
     if (!matchResponse.ok()) {
-      throw new Error(`GET /matches/${matchId} failed (${matchResponse.status()})`);
+      throw new Error(
+        `GET /matches/${matchId} failed (${matchResponse.status()})`,
+      );
     }
     const match = (await matchResponse.json()) as {
       home: { displayName?: string | null };

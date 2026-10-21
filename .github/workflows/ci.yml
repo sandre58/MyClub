@@ -98,9 +98,9 @@ jobs:
   e2e-integration:
     runs-on: ubuntu-latest
     env:
-      ConnectionStrings__PlayUpDev: Host=localhost;Port=5432;Database=myclub_dev;Username=postgres;Password=postgres
-      ConnectionStrings__PlayUp: Host=localhost;Port=5432;Database=myclub_dev;Username=postgres;Password=postgres
-      ConnectionStrings__Media: Host=localhost;Port=5432;Database=myclub_dev;Username=postgres;Password=postgres
+      ConnectionStrings__PlayUpDev: "Host=localhost;Port=5432;Database=myclub_dev;Username=postgres;Password=postgres"
+      ConnectionStrings__PlayUp: "Host=localhost;Port=5432;Database=myclub_dev;Username=postgres;Password=postgres"
+      ConnectionStrings__Media: "Host=localhost;Port=5432;Database=myclub_dev;Username=postgres;Password=postgres"
     services:
       postgres:
         image: postgres:18
@@ -123,8 +123,11 @@ jobs:
         with:
           global-json-file: global.json
 
+      - name: Restore
+        run: dotnet restore MyClub.slnx
+
       - name: Build .NET (Release)
-        run: dotnet build --configuration Release
+        run: dotnet build MyClub.slnx --no-restore --configuration Release
 
       - name: Seed championship-ready
         run: >

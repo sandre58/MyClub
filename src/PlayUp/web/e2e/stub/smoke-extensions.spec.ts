@@ -7,13 +7,9 @@ test.describe('Play’Up smoke extensions (stub API)', () => {
     await stubPlayUpApi(page, { withAttentionItem: true });
     await page.goto(`/competitions/${IDS.competitionId}`);
 
-    await page
-      .getByRole('button', { name: 'À traiter, 1 élément' })
-      .click();
+    await page.getByRole('button', { name: 'À traiter, 1 élément' }).click();
 
-    await expect(
-      page.getByRole('dialog', { name: /À traiter/ }),
-    ).toBeVisible();
+    await expect(page.getByRole('dialog', { name: /À traiter/ })).toBeVisible();
     await expect(
       page.getByRole('link', { name: /Progression en attente/i }),
     ).toBeVisible();
