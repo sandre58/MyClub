@@ -24,7 +24,8 @@ namespace MyClub.PlayUp.Development.Tests;
 
 /// <summary>
 /// Executable recette C2 — Start / D2 / recovery chain (Notion Cup arbitration).
-/// Maps to manual protocol steps 1–4 + Start blocked (1a); Running impasse via Start is no longer reachable.
+/// Maps to checklist track A (impasse): A3 at 1/2, A4 materialize, A5 Start blocked (1a).
+/// Cas assign (manual slot before Start @ impasse 1/2) hors checklist A2 — arbitrage AUD-0004 : à qualifier (p.ex. piste B4), pas couvert ici.
 /// </summary>
 [Collection("DevelopmentPostgres")]
 [Trait("Category", "Integration")]
@@ -52,36 +53,14 @@ public sealed class CupC2ImpasseRecetteProtocolTests(DevelopmentPostgresFixture 
         hub.Materialize.EligibleCount.Should().Be(1);
 
         var executor = scope.ServiceProvider.GetRequiredService<UseCaseExecutor>();
-        if (stage.Slots
-            .Where(slot => slot.EntryId is null)
-            .FirstOrDefault(slot => stage.BracketPairs.Any(pair =>
-            {
-                if (!string.Equals(pair.SlotAKey, slot.SlotKey, StringComparison.Ordinal)
-                    && !string.Equals(pair.SlotBKey, slot.SlotKey, StringComparison.Ordinal))
-                {
-                    return false;
-                }
 
-                var sideA = stage.FindSlot(pair.SlotAKey)?.EntryId;
-                var sideB = stage.FindSlot(pair.SlotBKey)?.EntryId;
-                return sideA is not null || sideB is not null;
-            })) is { } emptySlot)
-        {
-            var entryForAssign = stage.CompositionEntries
-                .Select(e => e.EntryId)
-                .First(id => stage.Slots.All(s => s.EntryId is null || !s.EntryId.Equals(id)));
-            await executor.AssignEntryToSlotAsync(stage.Id, emptySlot.SlotKey, entryForAssign);
-            matches = await scope.ReloadMatchesAsync();
-            hub = AssembleHub(competition, [stage], matches);
-            hub.Actions.Should().Contain(StructureViewAssembler.ActionAssignEntryToSlot);
-        }
+        // A3 @ 1/2 without assign — backend guard/read: IncompleteEntryRound (checklist SPA may still say Unmaterialized).
+        hub.Lifecycle!.Transition.DisabledReasonCode.Should()
+            .Be(StructureStageLifecycleAssembler.DisabledIncompleteEntryRound);
 
         var startAct = async () => await executor.StartStageAsync(stage.Id);
         (await startAct.Should().ThrowAsync<ApplicationFailureException>())
-            .Which.Code.Should().Be(ApplicationErrorCodes.StartBlockedUnmaterialized);
-
-        hub.Lifecycle!.Transition.DisabledReasonCode.Should()
-            .Be(StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations);
+            .Which.Code.Should().Be(ApplicationErrorCodes.StartBlockedIncompleteEntryRound);
 
         var materializeSecond = MaterializeCupFromOccupiedSlots.Execute(competition, stage, null, matches, _clock);
         materializeSecond.CreatedMatches.Should().HaveCount(1);
