@@ -21,13 +21,13 @@ jobs:
           global-json-file: global.json
 
       - name: Restore
-        run: dotnet restore
+        run: dotnet restore MyClub.slnx
 
       - name: NuGet vulnerable packages
         run: dotnet list MyClub.slnx package --vulnerable --include-transitive
 
       - name: Build
-        run: dotnet build --no-restore --configuration Release
+        run: dotnet build MyClub.slnx --no-restore --configuration Release
 
       - name: Test
         run: dotnet test --no-build --configuration Release --verbosity normal
@@ -97,10 +97,6 @@ jobs:
 
   e2e-integration:
     runs-on: ubuntu-latest
-    env:
-      ConnectionStrings__PlayUpDev: "Host=localhost;Port=5432;Database=myclub_dev;Username=postgres;Password=postgres"
-      ConnectionStrings__PlayUp: "Host=localhost;Port=5432;Database=myclub_dev;Username=postgres;Password=postgres"
-      ConnectionStrings__Media: "Host=localhost;Port=5432;Database=myclub_dev;Username=postgres;Password=postgres"
     services:
       postgres:
         image: postgres:18
@@ -130,6 +126,8 @@ jobs:
         run: dotnet build MyClub.slnx --no-restore --configuration Release
 
       - name: Seed championship-ready
+        env:
+          ConnectionStrings__PlayUpDev: "Host=localhost;Port=5432;Database=myclub_dev;Username=postgres;Password=postgres"
         run: >
           dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner
           --configuration Release --no-build
@@ -176,3 +174,5 @@ jobs:
         env:
           CI: true
           VITE_API_PROXY_TARGET: http://127.0.0.1:5287
+          ConnectionStrings__PlayUp: "Host=localhost;Port=5432;Database=myclub_dev;Username=postgres;Password=postgres"
+          ConnectionStrings__Media: "Host=localhost;Port=5432;Database=myclub_dev;Username=postgres;Password=postgres"
