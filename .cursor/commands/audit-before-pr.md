@@ -7,8 +7,9 @@ Assist preparing a pull request. This is **not** a second CI — recommend the r
 1. Inspect the current diff (staged + unstaged) and list impacted areas (Domain / Application / Infrastructure / Host / TestKit / Development / web / docs / migrations).
 2. Check architectural boundaries against `architecture.mdc` (Host ↛ Development/TestKit; TestKit ↛ Infra; etc.). Flag violations; do not “fix” silently unless asked.
 3. Check source comments against `documentation.mdc` (English; no Notion/history/V1 framing).
-4. If Play’Up web is touched: remind data path (`api.ts`, `queryKeys.ts`, TanStack Query) and suggest:
-   `cd src/PlayUp/web && npm run format:check && npm run lint && npm run typecheck && npm run test:run`
+4. If Play’Up web is touched: remind data path (`api.ts`, `queryKeys.ts`, TanStack Query) and suggest the same gates as CI job `web` (see `playup-web-quality.mdc`):
+   `cd src/PlayUp/web && npm run format:check && npm run lint && npm run lint:css && npm run typecheck && npm run test:run && npm run build`
+   (`npm run build` runs `tsc -b` and catches test-project type errors — do not rely on `typecheck` alone.)
 5. If .NET is touched, suggest:
    - `dotnet build`
    - `dotnet test --filter Category!=Integration` (full `dotnet test` when Docker is available)

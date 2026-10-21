@@ -27,7 +27,9 @@ Do not introduce microservices, kitchen-sink shared libs, or a Platform layer wi
 
 - **TestKit** → Domain + Application only (situations for tests and Development). Never Infra/Host/Media/Development.
 - **Development** → Domain + Application + TestKit (+ Media.Application). Never Infra/Host. May persist via `IUnitOfWork` outside the executor (seed scenarios).
-- **DevRunner** → Development + Infrastructure (CLI composition root). Must not ship with Host.
+- **Development.Tests** → may reference **Infrastructure** (and Media.Infrastructure) as the Postgres integration composition root for executable recette protocols; must **not** reference Host or DevRunner. The **Development** library itself stays Infra-free (enforced by `DevelopmentArchitectureIsolationTests`).
+- **DevRunner** → Development + Infrastructure (CLI composition root). Must not ship with Host. Contributor flow: `docs/guides/local-persistence.md`.
+- **Media** (transverse module) → no separate Host; HTTP via Play’Up Host. Contributor contract: `docs/guides/media.md`.
 
 ## Anti-patterns
 

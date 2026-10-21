@@ -21,3 +21,5 @@ Snapshot at execution SHA `93b09f161739f47b768caad63aed90d0d3c1469f`.
 **Counts:** 5 global alwaysApply · 4 product/tech scoped · 12 design numbered rules · 2 `.cursor/commands` (PR helpers, not rules).
 
 **Wave 5 (governance, no rewrites):** see `phase-1-wave-5.md` §4 — dual design entry (`design/00` vs `design-system.mdc`), `audit-before-pr` suggests `typecheck` without `build` (masks **AUD-0002**), no `AGENTS.md`, Media/DevRunner not scoped by dedicated rules.
+
+**Lot C8 (2026-10-21):** targeted closure — `AGENTS.md` at repo root; `audit-before-pr` aligned with CI `web` (`lint:css`, `build`); `architecture.mdc` / `testing.mdc` document **Development.Tests** + Media/DevRunner pointers; `design-system.mdc` links `design/00-design-principles.mdc`. Dedicated Media/DevRunner rule files still **deferred**; see `phase-3-lot-c8-plan.md`.

@@ -6,7 +6,7 @@ alwaysApply: false
 
 # Design System evolution (Play’Up web)
 
-Operational SoT: `src/PlayUp/web/docs/design-system.md`. Product intent: Notion **Identité visuelle**.
+Operational SoT: `src/PlayUp/web/docs/design-system.md`. Product intent: Notion **Identité visuelle**. Source hierarchy (Notion / Lab / rules / code): `design/00-design-principles.mdc`.
 
 ## Gate — every visual change
 

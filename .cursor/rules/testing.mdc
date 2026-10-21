@@ -27,6 +27,12 @@ alwaysApply: false
 - `Category=Integration` → Testcontainers PostgreSQL (Docker). Skip locally with `--filter Category!=Integration`.
 - Do not point those tests at the Compose `myclub` volume.
 
+## Development.Tests (recette protocols)
+
+- **`MyClub.PlayUp.Development.Tests`** wires **Infrastructure** for full-stack integration (seeds, `UseCaseExecutor`, EF) — intentional exception to the Development library boundary.
+- Prefer **TestKit** situations inside tests; do not reference **Host** or **DevRunner** from this project.
+- Executable Cup/Structure protocols live here (e.g. `CupC2ImpasseRecetteProtocolTests`); see `docs/design/structure-lifecycle/cup-materialize-recette-protocol.md`.
+
 ## Refactoring
 
 - Understand behaviour and regression risk first; prefer not mixing large refactors with features in one change.
