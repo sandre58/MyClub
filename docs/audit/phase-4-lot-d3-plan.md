@@ -8,17 +8,19 @@
 
 ---
 
-## 1. Recommandation d’arbitrage produit (2026-10-22)
+## 1. Arbitrage produit validé (2026-10-22)
 
-Orientation proposée par le décideur — **à figer sur fiche Notion** avant autorisation **D3-B**.
+**Fiche Notion :** [Contrat Q1–Q3](https://www.notion.com/p/40075fb92d1081979ed7c15846a62c0b).
 
-| Question | Décision recommandée | Justification |
-| --- | --- | --- |
-| **Q1 — A3 : motif de blocage** | Aligner read-model et UX sur un **motif métier explicite**, sans masquer la distinction entre états backend. | L’utilisateur doit comprendre pourquoi Start est bloqué ; la SPA ne doit pas interpréter un code backend comme un autre sans contrat explicite. |
-| **Q2 — A4/A5 : Start @ 2/2 mat.** | Définir un **contrat produit unique**, puis **confronter** le run SPA (2026-10-17) et le protocole backend (A5) à ce contrat — **ne pas** déclarer l’une des preuves vraie par défaut. | Un run SPA isolé ne suffit pas ; un test backend seul ne prouve pas le parcours utilisateur. |
-| **Q3 — assign @ 1/2** | **Hors lot D3-B** tant que le statut produit n’est pas établi : qualifier explicitement scénario **supporté** vs **hors contrat**. | Éviter d’élargir le périmètre ou d’ajouter un comportement implicite au domaine. |
+| Question | Décision |
+| --- | --- |
+| **Q1** | Contrat normatif **`IncompleteEntryRound`** @ 1/2 sans assign — SPA alignée, sans substituer `UnmaterializedConfrontations`. |
+| **Q2** | Règle impasse @ 2/2 mat. eligible **indépendante** des runs ; backend A5 puis SPA A4–A5. |
+| **Q3** | **Option A** — assign @ 1/2 **hors contrat D3-B** (pas guard/domaine ; futur = contrat distinct). |
 
-**Interdit à ce stade :** modifier `StageStartReadinessGuard`, règles Cup domaine, ou contrats HTTP.
+**Vérification backend (2026-10-22) :** `dotnet test … --filter CupC2Impasse` → **2/2** (A3 + A5). **SPA A3 / A4–A5 :** à rejouer avant go D3-B.
+
+**Interdit dans D3-B :** modifier `StageStartReadinessGuard`, règles Cup domaine, ou couvrir **cas assign** (Q3-A).
 
 ---
 
@@ -65,9 +67,10 @@ Pour **chaque** question (Q1–Q3), la fiche Notion doit figer avant tout code :
 
 - [x] Plan d’arbitrage + recommandation Q1–Q3 (this file).
 - [x] Proposition de contrat Notion (5 champs × Q1–Q3) — [fiche](https://www.notion.com/p/40075fb92d1081979ed7c15846a62c0b).
-- [ ] Validation décideur Q1–Q2 + **tranche Q3** (supporté vs hors contrat).
-- [ ] Contrat figé = prérequis D3-B.
-- [ ] **Autorisation explicite D3-B** (décideur).
+- [x] Validation décideur Q1–Q2 + **Q3-A** (Notion).
+- [x] Tests backend référence A3 + A5 (2026-10-22).
+- [ ] Rejouage SPA RECETTE C2 A3 + A4–A5 ; écarts listés.
+- [ ] **Go explicite D3-B** (décideur).
 - [ ] D3-B : lot correctif borné (read-model / UX / docs / tests — **pas** guard/domaine sauf nouveau arbitrage).
 
 ---
