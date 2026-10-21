@@ -13,7 +13,8 @@ alwaysApply: false
 | Format | **Prettier** | Not oxfmt/Biome |
 | Lint | **Oxlint** | `--deny-warnings`; do **not** add ESLint in parallel |
 | Types | `tsc -b` (`npm run typecheck`) | Strict via `tsconfig` |
-| CSS lint | **Stylelint** | `lint:css` — `src/design-system/**/*.css` only |
+| CSS lint | **Stylelint** | `lint:css` — `src/**/*.css` (CI); README notes some legacy page CSS intentionally out of scope for DS-only rules |
+| Hygiene audits | `css:audit`, `i18n:audit`, `tile:check` | Structure-scoped scripts under `scripts/`; not CI gates (lot C7 / AUD-0001) |
 | Coverage | Vitest V8 | `test:coverage` — measurement only, no CI threshold |
 
 ```bash
