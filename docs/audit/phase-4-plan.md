@@ -59,7 +59,7 @@
 - [x] D1 — garde-fou CI + baseline JSON (`verify-dotnet-warnings-baseline.sh`).
 - [x] D1 — SA1137 corrigé ; baseline **82** warnings (SA1143 seul).
 - [x] D1-B — SA1143 solution-wide ; baseline **0** (garde-fou CI inchangé).
-- [x] D2 — investigation AUD-0012 livrée (finding registre **non** clos — dette acceptée maintenue).
-- [x] D2-B lot 1 — hydration batch attachments (`phase-4-lot-d2-b-attachment-batch.md`).
-- [ ] D2-B suite / clôture registre AUD-0012 (arbitrage après revue gains).
-- [ ] D3 — arbitrage produit AUD-0004 (réserve).
+- [x] D2 — investigation + D2-B lot 1 mergés @ `9faf3f16` (AUD-0012 **dette acceptée** maintenue).
+- [ ] D2 — clôture registre AUD-0012 (optionnel : accepter mitigation documentée).
+- [x] D3 — lancement arbitrage (`phase-4-lot-d3-plan.md`).
+- [ ] D3 — décision Q1–Q3 + lot D3-B si autorisé.
