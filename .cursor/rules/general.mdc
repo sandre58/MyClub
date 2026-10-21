@@ -1,0 +1,18 @@
+---
+description: Baseline agent behaviour for MyClub — minimal diffs, no unjustified complexity
+alwaysApply: true
+---
+
+# General
+
+- Understand existing architecture and conventions before changing code.
+- Prefer the simplest solution that meets the need; do not invent patterns or abstractions without a demonstrated problem.
+- Keep changes focused — no unrelated refactors or drive-by rewrites.
+- Do not generate unnecessary files.
+- Ask when requirements are ambiguous; challenge risks and alternatives before major changes.
+
+# Dependencies
+
+- Do not add a dependency unless the need is clear and existing code cannot cover it.
+- Prefer lightweight, maintained libraries.
+- Add package versions in `Directory.Packages.props` (CPM); do not pin versions in `.csproj` without justification.

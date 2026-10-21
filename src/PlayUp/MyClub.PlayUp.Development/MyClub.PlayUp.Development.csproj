@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Play'Up Development Workspace — deterministic Domain-first scenario/template seeding for local UX/dev.</Description>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CA2007</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MyClub.PlayUp.Domain\MyClub.PlayUp.Domain.csproj" />
+    <ProjectReference Include="..\MyClub.PlayUp.Application\MyClub.PlayUp.Application.csproj" />
+    <ProjectReference Include="..\MyClub.PlayUp.TestKit\MyClub.PlayUp.TestKit.csproj" />
+    <ProjectReference Include="..\..\Media\MyClub.Media.Application\MyClub.Media.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Datasets\*.json" />
+    <EmbeddedResource Include="Generators\*.json" />
+    <Content Include="Assets\seed-logos\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>Assets\seed-logos\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Content>
+  </ItemGroup>
+
+</Project>

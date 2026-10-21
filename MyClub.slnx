@@ -1,0 +1,120 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/PlayUp/">
+    <Project Path="src/PlayUp/MyClub.PlayUp.Domain/MyClub.PlayUp.Domain.csproj" />
+    <Project Path="src/PlayUp/MyClub.PlayUp.Application/MyClub.PlayUp.Application.csproj" />
+    <Project Path="src/PlayUp/MyClub.PlayUp.Infrastructure/MyClub.PlayUp.Infrastructure.csproj" />
+    <Project Path="src/PlayUp/MyClub.PlayUp.Host/MyClub.PlayUp.Host.csproj" />
+  </Folder>
+  <Folder Name="/src/PlayUp/Support/">
+    <Project Path="src/PlayUp/MyClub.PlayUp.TestKit/MyClub.PlayUp.TestKit.csproj" />
+  </Folder>
+  <Folder Name="/src/PlayUp/Development/">
+    <Project Path="src/PlayUp/MyClub.PlayUp.Development/MyClub.PlayUp.Development.csproj" />
+    <Project Path="src/PlayUp/MyClub.PlayUp.DevRunner/MyClub.PlayUp.DevRunner.csproj" />
+  </Folder>
+  <Folder Name="/src/Media/">
+    <Project Path="src/Media/MyClub.Media.Domain/MyClub.Media.Domain.csproj" />
+    <Project Path="src/Media/MyClub.Media.Application/MyClub.Media.Application.csproj" />
+    <Project Path="src/Media/MyClub.Media.Infrastructure/MyClub.Media.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MyClub.PlayUp.Domain.Tests/MyClub.PlayUp.Domain.Tests.csproj" />
+    <Project Path="tests/MyClub.PlayUp.Application.Tests/MyClub.PlayUp.Application.Tests.csproj" />
+    <Project Path="tests/MyClub.PlayUp.Infrastructure.Tests/MyClub.PlayUp.Infrastructure.Tests.csproj" />
+    <Project Path="tests/MyClub.PlayUp.Host.Tests/MyClub.PlayUp.Host.Tests.csproj" />
+    <Project Path="tests/MyClub.PlayUp.Development.Tests/MyClub.PlayUp.Development.Tests.csproj" />
+    <Project Path="tests/MyClub.PlayUp.DevRunner.Tests/MyClub.PlayUp.DevRunner.Tests.csproj" />
+    <Project Path="tests/MyClub.PlayUp.TestKit.Tests/MyClub.PlayUp.TestKit.Tests.csproj" />
+    <Project Path="tests/MyClub.Media.Domain.Tests/MyClub.Media.Domain.Tests.csproj" />
+    <Project Path="tests/MyClub.Media.Application.Tests/MyClub.Media.Application.Tests.csproj" />
+    <Project Path="tests/MyClub.Media.Infrastructure.Tests/MyClub.Media.Infrastructure.Tests.csproj" />
+  </Folder>
+  <Folder Name="/build/">
+    <File Path=".editorconfig" />
+    <File Path=".runsettings" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Build.targets" />
+    <File Path="Directory.Packages.props" />
+    <File Path="GitVersion.yml" />
+    <File Path="NuGet.config" />
+    <File Path="build/code-analysis.props" />
+    <File Path="build/dependencies.props" />
+    <File Path="build/local-mynet-feed.props" />
+    <File Path="build/local-nuget-pack.props" />
+    <File Path="build/package.props" />
+    <File Path="build/repo.props" />
+    <File Path="global.json" />
+    <File Path="stylecop.json" />
+  </Folder>
+  <Folder Name="/docker/">
+    <File Path=".env.example" />
+    <File Path="compose.yml" />
+  </Folder>
+  <Folder Name="/run/">
+    <File Path=".run/PlayUp Host.run.xml" />
+    <File Path=".run/PlayUp Web.run.xml" />
+    <File Path=".run/PlayUp Host + Web.run.xml" />
+  </Folder>
+  <Folder Name="/docs/">
+    <File Path="CONTRIBUTING.md" />
+    <File Path="LICENSE" />
+    <File Path="README.md" />
+    <File Path="SECURITY.md" />
+  </Folder>
+  <Folder Name="/docs/guides/">
+    <File Path="docs/guides/http-api-contract.md" />
+    <File Path="docs/guides/local-persistence.md" />
+    <File Path="docs/guides/media.md" />
+    <File Path="docs/guides/README.md" />
+  </Folder>
+  <Folder Name="/git/">
+    <File Path=".gitattributes" />
+    <File Path=".gitignore" />
+    <File Path=".gitmessage" />
+  </Folder>
+  <Folder Name="/github/">
+    <File Path=".github/CODEOWNERS" />
+    <File Path=".github/PULL_REQUEST_TEMPLATE.md" />
+    <File Path=".github/dependabot.yml" />
+  </Folder>
+  <Folder Name="/github/workflows/">
+    <File Path=".github/workflows/ci.yml" />
+  </Folder>
+  <Folder Name="/github/ISSUE_TEMPLATE/">
+    <File Path=".github/ISSUE_TEMPLATE/bug.yml" />
+    <File Path=".github/ISSUE_TEMPLATE/config.yml" />
+    <File Path=".github/ISSUE_TEMPLATE/feature.yml" />
+  </Folder>
+  <Folder Name="/cursor/" />
+  <Folder Name="/cursor/commands/">
+    <File Path=".cursor/commands/audit-before-pr.md" />
+    <File Path=".cursor/commands/cross-design-review.md" />
+  </Folder>
+  <Folder Name="/cursor/rules/">
+    <File Path=".cursor/rules/architecture.mdc" />
+    <File Path=".cursor/rules/csharp.mdc" />
+    <File Path=".cursor/rules/design-system.mdc" />
+    <File Path=".cursor/rules/documentation.mdc" />
+    <File Path=".cursor/rules/general.mdc" />
+    <File Path=".cursor/rules/no-cargo-cult.mdc" />
+    <File Path=".cursor/rules/playup-web-quality.mdc" />
+    <File Path=".cursor/rules/testing.mdc" />
+    <File Path=".cursor/rules/workflow.mdc" />
+  </Folder>
+  <Folder Name="/cursor/rules/design/">
+    <File Path=".cursor/rules/design/00-design-principles.mdc" />
+    <File Path=".cursor/rules/design/01-brand.mdc" />
+    <File Path=".cursor/rules/design/02-tokens.mdc" />
+    <File Path=".cursor/rules/design/03-typography.mdc" />
+    <File Path=".cursor/rules/design/04-layout.mdc" />
+    <File Path=".cursor/rules/design/05-surfaces.mdc" />
+    <File Path=".cursor/rules/design/06-components.mdc" />
+    <File Path=".cursor/rules/design/07-navigation.mdc" />
+    <File Path=".cursor/rules/design/08-data-display.mdc" />
+    <File Path=".cursor/rules/design/09-icons.mdc" />
+    <File Path=".cursor/rules/design/10-motion.mdc" />
+    <File Path=".cursor/rules/design/11-patterns.mdc" />
+  </Folder>
+</Solution>
+

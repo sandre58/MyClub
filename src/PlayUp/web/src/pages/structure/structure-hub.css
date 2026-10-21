@@ -1,0 +1,300 @@
+/*
+ * Structure hub — topology master list (master-detail layout).
+ * Loaded via structure.css.
+ */
+
+/* ---------- Structure hub master-detail ---------- */
+
+.structure-hub__layout {
+  display: grid;
+  gap: var(--space-16);
+  align-items: stretch;
+}
+
+.structure-hub > .ds-empty--idle {
+  flex: 1 1 auto;
+  min-height: 16rem;
+  padding: var(--space-32) var(--space-8);
+}
+
+@media (min-width: 52rem) {
+  .structure-hub__layout {
+    grid-template-columns: minmax(14rem, 0.34fr) minmax(0, 1fr);
+  }
+
+  .structure-hub__layout--single-phase {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .structure-topology,
+  .structure-fiche {
+    height: 100%;
+  }
+}
+
+.structure-topology {
+  min-width: 0;
+  container-type: inline-size;
+  container-name: structure-topology;
+}
+
+.structure-topology__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.structure-topology__item {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.structure-topology__bridge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 2.8rem;
+  box-sizing: border-box;
+  margin: var(--space-4);
+}
+
+.structure-topology__connector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  color: var(--color-text-secondary);
+}
+
+.structure-topology__connector-arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--color-border-strong);
+}
+
+.structure-topology__connector-shaft {
+  display: block;
+  width: 1px;
+  height: var(--space-16);
+  background: currentColor;
+}
+
+.structure-topology__connector-head {
+  display: block;
+  width: 0;
+  height: 0;
+  border-left: 0.3rem solid transparent;
+  border-right: 0.3rem solid transparent;
+  border-top: 0.4rem solid currentColor;
+}
+
+.structure-topology__edge {
+  margin: 0;
+  max-width: 100%;
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
+  text-align: center;
+}
+
+.structure-topology__outbound {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8) var(--space-16);
+  padding-inline: var(--space-8);
+}
+
+.structure-topology__outbound-link {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-brand);
+  font: inherit;
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
+  text-align: start;
+  cursor: pointer;
+}
+
+.structure-topology__outbound-link:hover {
+  text-decoration: underline;
+}
+
+.structure-topology__outbound-summary {
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
+}
+
+.structure-topology__tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  width: 100%;
+  margin: 0;
+  padding: var(--space-12);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.structure-topology__tile-head {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-8);
+}
+
+.structure-topology__tile-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
+.structure-topology__format-icon {
+  display: inline-flex;
+  flex: none;
+  color: var(--color-brand);
+  line-height: 0;
+  opacity: 0.85;
+}
+
+.structure-topology__format-icon .ds-icon {
+  color: inherit;
+}
+
+.structure-topology__tile-name {
+  min-width: 0;
+  color: var(--color-text-primary);
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--leading-tight);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.structure-topology__tile-status {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-8);
+  flex-shrink: 0;
+}
+
+.structure-topology__issue {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+.structure-topology__issue[data-tone='danger'] {
+  color: var(--color-error);
+}
+
+.structure-topology__issue[data-tone='attention'] {
+  color: var(--color-attention);
+}
+
+.structure-topology__issue[data-tone='progress'] {
+  color: var(--color-info);
+}
+
+.structure-topology__tile-facts {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+  width: 100%;
+}
+
+.structure-topology__fact {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
+/* Narrow topology column (tablet 2-col): wrap then stack ? container query, not viewport. */
+@container structure-topology (max-width: 20rem) {
+  .structure-topology__tile-facts {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    row-gap: var(--space-8);
+  }
+
+  .structure-topology__fact {
+    flex: 0 1 auto;
+  }
+}
+
+@container structure-topology (max-width: 15.5rem) {
+  .structure-topology__tile-head {
+    flex-wrap: wrap;
+  }
+
+  .structure-topology__tile-facts {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+  }
+}
+
+.structure-topology__fact-icon {
+  display: inline-flex;
+  flex: none;
+  color: var(--color-brand);
+  line-height: 0;
+}
+
+.structure-topology__fact-icon .ds-icon {
+  color: inherit;
+}
+
+.structure-topology__fact-value {
+  color: var(--color-text-primary);
+  font-size: var(--text-meta);
+  line-height: var(--leading-tight);
+  font-variant-numeric: tabular-nums;
+}
+
+.structure-topology__draw-signal {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  align-self: flex-start;
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
+}
+
+.structure-topology__draw-signal--info {
+  color: var(--color-info);
+}
+
+.structure-topology__draw-signal--live {
+  color: var(--color-live);
+}
+
+.structure-topology__draw-signal--attention {
+  color: var(--color-attention);
+}
+
+.structure-topology__draw-signal--done {
+  color: var(--color-success);
+}

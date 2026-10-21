@@ -1,0 +1,56 @@
+/*
+ * Structure hub — master-detail N1|N2.
+ * Page shell / column tiles aligned with Teams & Regulation (DS surfaces).
+ */
+
+.page.page--structure {
+  width: 100%;
+  max-width: none;
+  margin-inline: 0;
+  padding: var(--space-16);
+  gap: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  overflow-x: hidden;
+}
+
+.structure-hub {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  flex: 1 1 auto;
+  /* Content height must extend the page scroll area (avoid flex min-height: 0 trap). */
+  min-height: min-content;
+}
+
+/* ---------- Panel ---------- */
+
+.structure-panel__muted {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-label);
+  line-height: var(--leading-normal);
+}
+
+/* ---------- PageHead note width (readiness = DS Status multiline) ---------- */
+
+.page.page--structure .ds-page-head__note {
+  max-width: none;
+  width: 100%;
+}
+
+/* ---------- Entries list shell ---------- */
+
+.structure-entries {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Dialog chrome lives in design-system Dialog. */

@@ -1,0 +1,7 @@
+﻿<Project>
+  <PropertyGroup>
+    <RepositoryUrl>https://github.com/sandre58/MyClub</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/sandre58/MyClub</PackageProjectUrl>
+    <PackageReleaseNotes>https://github.com/sandre58/MyClub/releases</PackageReleaseNotes>
+  </PropertyGroup>
+</Project>

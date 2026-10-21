@@ -1,0 +1,41 @@
+---
+description: Play'Up typography roles including numeric treatments
+globs: src/PlayUp/web/**
+alwaysApply: false
+---
+
+# Typography
+
+Typeface: **IBM Plex Sans** (via `design-system/fonts`). No other family.
+
+SoT for sizes: `design-system/tokens/typography.css`. Align this rule to the
+tokens — never invent a parallel scale.
+
+## Text roles
+
+| Role | Usage | Token |
+|---|---|---|
+| Display | Page titles | `--text-display`, bold |
+| Heading | Panel titles | `--text-heading`, bold |
+| Body | Content | `--text-body` |
+| Label | Meta, compact chrome | `--text-label` |
+| Meta / eyebrow | Uppercase eyebrows, quiet facts | `--text-meta`, letter-spacing +0.06em when eyebrow |
+
+## Numeric roles (identity carriers)
+
+All product numbers use **tabular figures** (`.ds-num`:
+`font-variant-numeric: tabular-nums`).
+
+| Role | Class / token | Where |
+|---|---|---|
+| Hero numeric | `.ds-num-hero` / `--text-hero-num` | Overview "Où en est-on ?", Match Hero score / kickoff |
+| Score | `.ds-num-score` / `--text-score` | Large match scores |
+| Row score | `.ds-num-row-score` / `--text-row-score` | MatchRow scores |
+| Standings points | `.ds-num-pts` / `--text-standings-pts` | Pts column (dominates the row) |
+| Counter | `.ds-num-counter` / `--text-counter` | À traiter counts, plateau occupancy |
+
+Rules:
+- A match score is always **bigger and bolder** than the team names around it.
+- Points dominate a standings row; team name stays regular weight.
+- Dates/times are body-size, secondary color — numbers dominate only when they
+  are sport-meaningful (score, rank, points, matchday, plateau count).

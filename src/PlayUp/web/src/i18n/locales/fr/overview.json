@@ -1,0 +1,132 @@
+{
+  "dimensions": {
+    "teams": {
+      "title": "Équipes",
+      "figureLabel": "équipes inscrites",
+      "figureLabelIdentity": "équipes",
+      "crestsLabel": "Équipes inscrites",
+      "crestsLabelIdentity": "Équipes participantes",
+      "minimumRequired": "Minimum requis : {{minimumTeams}}"
+    },
+    "structure": {
+      "title": "Structure",
+      "none": "Format non configuré",
+      "phases_one": "{{count}} phase",
+      "phases_other": "{{count}} phases",
+      "phasesDetail_one": "{{count}} phase · {{names}}",
+      "phasesDetail_other": "{{count}} phases · {{names}}",
+      "groups_one": "{{count}} groupe",
+      "groups_other": "{{count}} groupes",
+      "rounds_one": "{{count}} tour",
+      "rounds_other": "{{count}} tours",
+      "matchdays_one": "{{count}} journée",
+      "matchdays_other": "{{count}} journées",
+      "swissRounds": "Swiss · {{generated}} / {{planned}} tours générés",
+      "swissByes_one": "{{count}} bye (événement d’appariement)",
+      "swissByes_other": "{{count}} byes (événements d’appariement)",
+      "swissByesHint": "Pas un match — l’équipe est exemptée pour le tour.",
+      "slots_one": "{{count}} emplacement",
+      "slots_other": "{{count}} emplacements",
+      "matches_one": "{{count}} match",
+      "matches_other": "{{count}} matchs",
+      "matchesNone": "Aucun match créé"
+    },
+    "regulation": {
+      "title": "Règlement",
+      "pointsValue": "{{value}} pts",
+      "pointsWin": "Victoire",
+      "pointsDraw": "Nul",
+      "pointsLoss": "Défaite",
+      "formatDuration": "{{periods}}×{{duration}} min",
+      "elimination": "Élimination directe",
+      "twoLegs": "2 manches",
+      "twoLegsAggregate": "2 manches · cumul des scores",
+      "extraTime": "Prolongation",
+      "penalties": "Tirs au but",
+      "swissPlannedRounds_one": "{{count}} journée planifiée",
+      "swissPlannedRounds_other": "{{count}} journées planifiées"
+    },
+    "calendar": {
+      "title": "Calendrier sportif",
+      "matchdays_one": "{{count}} journée",
+      "matchdays_other": "{{count}} journées",
+      "matches_one": "{{count}} match",
+      "matches_other": "{{count}} matchs",
+      "matchdayLine_one": "Journée {{number}} · {{count}} match",
+      "matchdayLine_other": "Journée {{number}} · {{count}} matchs",
+      "nextHeading": "Prochain rendez-vous",
+      "nextLine": "{{home}} – {{away}}",
+      "nextMatchday": "J{{number}}"
+    },
+    "openMatches": "Voir les matchs",
+    "openTeams": "Voir les équipes",
+    "openRegulation": "Voir le règlement",
+    "openStructure": "Voir la structure"
+  },
+  "situations": {
+    "heading": "À traiter"
+  },
+  "attention": {
+    "triageHint": "{{count}} situation(s) — détail dans le panneau À traiter (en-tête)."
+  },
+  "progression": {
+    "heading": "Prochaine action",
+    "codes": {
+      "MaterializeMatches": "Créez les matchs pour avancer (championnat / groupes).",
+      "MaterializeMatchesComplete": "Des confrontations déterminées n’ont pas encore de match — complétez le calendrier.",
+      "MaterializeFromOccupiedSlots": "Des emplacements occupés peuvent produire des matchs.",
+      "MaterializeFromOccupiedSlotsComplete": "Des confrontations déterminées n’ont pas encore de match — complétez le calendrier.",
+      "GenerateNextRound": "Générez le prochain tour Swiss (appariements + matchs) — après résultats du tour courant si besoin.",
+      "PublishDraw": "Publiez le tirage pour figer la composition.",
+      "PublishAndApplyDraw": "Publiez et appliquez le tirage pour peupler la phase.",
+      "ApplyDraw": "Appliquez le tirage publié pour placer les équipes.",
+      "ApplyProgression": "Appliquez la progression pour avancer la phase.",
+      "ApplyQualification": "Appliquez la qualification pour alimenter la phase suivante.",
+      "PrepareCompetition": "Passez la compétition en état prêt.",
+      "StartCompetition": "Ouvrez le cycle sportif — la compétition démarre.",
+      "PrepareStage": "Finalisez la configuration de la phase avant les opérations sportives.",
+      "StartStage": "Ouvrez la phase pour les matchs et le pilotage sportif.",
+      "CompleteCompetition": "La clôture normale de la compétition est envisageable."
+    }
+  },
+  "materializeFollowUp": {
+    "heading": "Matchs créés",
+    "created": "{{created}} match(s) créé(s) · {{total}} attaché(s).",
+    "alreadyComplete": "Les matchs étaient déjà créés ({{count}} attaché(s)).",
+    "openMatches": "Voir les matchs",
+    "dismiss": "Fermer"
+  },
+  "actions": {
+    "busy": "Exécution…",
+    "openSpace": "Continuer"
+  },
+  "sport": {
+    "standingTitle": "Classement",
+    "standingGroupTitle": "Groupe {{name}}",
+    "standingOpen": "Voir le classement",
+    "outcomeTitle": "Résultat",
+    "outcomeWinnerLabel": "Vainqueur",
+    "outcomeChampionLabel": "Champion",
+    "outcomeOpenFull": "Voir le classement complet",
+    "groupNav": "Groupes",
+    "recentTitle": "Dernières rencontres",
+    "nextTitle": "Prochaines rencontres",
+    "recentEmpty": "Aucune unité engagée pour le moment",
+    "nextEmpty": "Aucune prochaine journée n’est encore générée",
+    "unitMatchday": "Journée {{number}}",
+    "unitMatchCount": "{{count}} matchs",
+    "unitMatchCount_one": "{{count}} match",
+    "liveBadge": "Live",
+    "scheduledUnset": "Non planifié",
+    "cols": {
+      "position": "Pos.",
+      "team": "Équipe",
+      "played": "MJ",
+      "points": "Pts"
+    }
+  },
+  "nature": {
+    "Blocking": "Bloquant",
+    "Informational": "Information"
+  }
+}

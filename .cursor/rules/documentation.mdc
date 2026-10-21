@@ -1,0 +1,34 @@
+---
+description: Notion vs Git SoT and source-comment policy
+alwaysApply: true
+---
+
+# Documentation
+
+## SoT
+
+- **Notion** — product, domain, UX intent, durable decisions (Décisions DB; never ADR Markdown in Git).
+- **Git** — code, HTTP contract, local persistence, active i18n conventions, contributor docs (`docs/**`).
+- Cross-link Notion ↔ Git docs/README. Do **not** put Notion links or decision provenance in source comments.
+- One normative truth → one SoT; elsewhere link only.
+
+## Code comments (all languages)
+
+- Professional **English**.
+- Explain non-obvious behaviour or real technical constraints only.
+- Prefer naming/structure over comments; no comments that restate the next line.
+- Do **not** document project history, discarded alternatives, V1/V2/MVP framing, or “as decided in …”.
+- Remove or rewrite comments that contradict current code; prefer no comment over an invented one.
+
+## When to update docs
+
+- Code-only, product truth unchanged → Git only.
+- Product / domain / UX / architecture truth changes → update the Notion reference page.
+- Durable trade-off → Décision row + SoT link + update reference.
+- On close: fix false Play’Up status / README summaries when they no longer match reality.
+
+## Public docs language
+
+- `README.md`, `CONTRIBUTING.md`, `SECURITY.md`, contributor-facing `docs/**` → **English**.
+- Pull request **titles and bodies** created or drafted for this repository → **English**, professional tone (clear, concise, no slang or casual asides). Align with `.github/PULL_REQUEST_TEMPLATE.md` when filling a description.
+- Product narratives in Notion may be French.

@@ -1,0 +1,17 @@
+{
+  "listLabel": "Compétitions",
+  "schedule": {
+    "both": "{{start}} → {{end}}",
+    "from": "À partir du {{date}}",
+    "until": "Jusqu’au {{date}}"
+  },
+  "emptyHint": "Un nom suffit. Vous configurerez équipes et format ensuite.",
+  "create": {
+    "cta": "Créer une compétition",
+    "heading": "Nouvelle compétition",
+    "nameLabel": "Nom",
+    "namePlaceholder": "Ex. Tournoi printemps",
+    "submit": "Créer",
+    "submitting": "Création…"
+  }
+}

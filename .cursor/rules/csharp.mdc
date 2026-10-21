@@ -1,0 +1,122 @@
+---
+description: C# / .NET coding conventions
+globs: "**/*.{cs,csproj,props,targets}"
+alwaysApply: false
+---
+
+# C# / .NET
+
+## Updating conventions
+
+When Domain / C# conventions change, update this file and the Notion Architecture technique / existing Décision on C# Domain conventions (iterate that Décision — do not create a duplicate). Sync Forge scaffolds outside this repo separately when applicable.
+
+## Naming
+
+- PascalCase for types, methods, and public members.
+- camelCase for locals; `_camelCase` for private fields.
+- Prefix interfaces with `I`.
+- Prefer meaningful names over abbreviations.
+- Async methods end with `Async`.
+
+### Application / Host wire contracts
+
+- **HTTP inbound bodies** (Host Minimal API / controllers) use the suffix **`Request`**  
+  (e.g. `FinishMatchRequest`, `ApplyDrawRequest`). Live under `Host/Contracts/`.
+- **Product / HTTP wire shapes** assembled for API responses (or shared as Application read contracts returned by Host) use the suffix **`Dto`**  
+  (e.g. `CompetitionDetailDto`, `MatchDetailDto`). Nested wire types also use `Dto`.
+- **Do not** put `Dto` / `Request` on Domain types (entities, VOs, events).
+- **Do not** require `Dto` on Application-internal results that are not HTTP wire contracts  
+  (e.g. `ApplyDrawResult`, Domain snapshots used only inside use cases).
+- Prefer intention in the name (`Overview`, `Summary`, `Detail`) **plus** the role suffix (`Dto` / `Request`), not a bare Domain mirror.
+
+### Application folder for product reads
+
+- Prefer **`Application/Reads/`** for the read surface (DTOs + assemblers + display-name helpers).
+- **Do not** rename it to `Dtos/` — `Dto` is a type-role suffix, not a module; assemblers are not DTOs; a stereotype folder fights use-case cohesion.
+- Host inbound contracts stay in `Host/Contracts/` (`*Request`), separate from Application reads.
+
+## Language
+
+- Prefer file-scoped namespaces.
+- Prefer `var` when the type is obvious.
+- Prefer expression-bodied members when they improve clarity (single expression).
+- Prefer primary constructors for simple types (test doubles, simple records/classes without complex inheritance).
+- Prefer an explicit constructor (expression-bodied when possible) when validation would clash with a primary-constructor property (e.g. typed IDs with `Value`).
+- Use modern C# features when they improve readability, safety, or performance.
+- Nullable reference types are enabled — honor nullability.
+
+## File header
+
+- Every `.cs` file starts with the StyleCop copyright header from `stylecop.json`.
+- Always leave a blank line between the header and the first `using` / `namespace`.
+- Files end with a single trailing newline.
+
+## Usings
+
+- Do **not** add project-level `GlobalUsings.cs` files.
+- Put `using` directives in each file that needs them.
+- Keep SDK `ImplicitUsings` for BCL namespaces (`System`, etc.).
+
+## Namespaces (Play'Up Domain)
+
+- Under `Domain/Common/`, use a **flat** namespace `MyClub.PlayUp.Domain.Common` even when files live in physical subfolders (`Ids/`, `Enums/`).
+- Aggregate roots use a **plural** folder + namespace (`Domain.Stages`, `Domain.Matches`, `Domain.Competitions`, `Domain.Standings`) with a **singular** type (`Stage`, `Match`, …) to avoid C# type≡namespace collisions. Mirror under Application (`Application.Stages`, …).
+- Organizational subfolders under an aggregate (`Stages/Draw`, `Feed`, `Outcome`, `Assignment`) and under `Rules/` do **not** create nested namespaces — mark them **Namespace Provider = False** in the Domain `.csproj`. Exception: `Events/` → nested `Domain.Stages.Events` (etc.).
+- Mark `Common/Ids` and `Common/Enums` as Rider **Namespace Provider = False** in the Domain `.csproj`.
+- Disable Roslyn `IDE0130` and Rider `resharper_check_namespace_highlighting` for `src/PlayUp/**`.
+
+## Encapsulation (Domain)
+
+- Mutate aggregate/entity state through expressive business methods — not public setters.
+- Private fields, `private set`, and `init` are preferred over public auto-property setters.
+- Keep `csharp_style_prefer_auto_properties` silent; do not “fix” rich domain types into anemic auto-properties.
+- Keep CA1051 (no public instance fields).
+
+## ToString, DebuggerDisplay, logging
+
+- Value Objects **may** override `ToString()` when there is a natural business representation (typed IDs → Guid string is fine).
+- Entities and Aggregate Roots **do not** override `ToString()` unless there is an explicit, documented business justification.
+- Use `[DebuggerDisplay("...")]` for debugger-friendly identity/state (e.g. on `Entity` / `AggregateRoot`).
+- Application/infrastructure logs use **structured logging** only (`"{Property}"` templates + arguments) — never rely on `ToString()` for log content.
+
+## XML documentation
+
+- Document public Domain API: types, public/protected members, enum values.
+- Property summaries use “Gets …” / “Gets or sets …”.
+- Skip trivial `internal` / private members and test projects.
+- Prefer useful domain wording over paraphrases (“The Id property”).
+- Follow the source-comment policy in `documentation.mdc` (English; current constraints only; no Notion / Décision / V1–MVP history).
+
+## Analyzers challenged for DDD
+
+- **Disabled:** CA1032, RCS1194 (full Exception constructor set) — domain exceptions need message/`Code`/inner only.
+- **Kept:** CA1051 and other rules that protect encapsulation.
+- Prefer analyzers that reinforce architecture over legacy “framework exception / DTO” conventions.
+
+## Async
+
+- Use async/await for asynchronous operations.
+- Avoid `.Result` and `.Wait()`.
+- Do not wrap async APIs in sync wrappers without a valid reason.
+
+## Dependency injection
+
+- Prefer constructor injection over static dependencies.
+- Keep dependencies explicit.
+- Avoid service locator patterns.
+
+## Exceptions
+
+- Do not silently catch exceptions.
+- Add useful context when rethrowing.
+- Use custom exceptions only when they provide meaningful value.
+- Domain exceptions do not need a parameterless constructor.
+
+## Quality
+
+- Aim for zero analyzer warnings on Domain (and Domain tests) in Release.
+- Write readable, self-explanatory code.
+- Avoid premature optimization and clever solutions that hurt maintainability.
+- Keep methods and classes focused on one responsibility.
+- Remove dead code instead of commenting it out.
+- Comments explain non-obvious behaviour or genuine technical constraints — not obvious code, project history, or decision provenance (see `documentation.mdc`).

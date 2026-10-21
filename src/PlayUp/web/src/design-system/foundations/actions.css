@@ -1,0 +1,188 @@
+/*
+ * Action foundations — not a Button library.
+ * Primary = brand fill (lighter than ink).
+ * One primary max per region. No pills, no glow, no underline on actions.
+ */
+
+.ds-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  min-height: var(--control-height);
+  padding: 0 var(--space-16);
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--color-ink);
+  font-family: inherit;
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color var(--motion-duration) var(--motion-easing),
+    border-color var(--motion-duration) var(--motion-easing),
+    color var(--motion-duration) var(--motion-easing);
+}
+
+.ds-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.ds-btn:disabled:has(.ds-spinner) {
+  opacity: 1;
+  cursor: wait;
+}
+
+.ds-btn--primary {
+  background: var(--color-brand);
+  border-color: var(--color-brand);
+  color: var(--color-on-brand);
+}
+
+.ds-btn--primary:hover:not(:disabled) {
+  background: var(--color-brand-hover);
+  border-color: var(--color-brand-hover);
+  color: var(--color-on-brand);
+}
+
+/* Styled anchors as buttons — never inherit content-link styles. */
+.ds-root a.ds-btn,
+.ds-root a.ds-btn:hover {
+  text-decoration: none;
+}
+
+.ds-root a.ds-btn--primary,
+.ds-root a.ds-btn--primary:hover {
+  background: var(--color-brand);
+  border-color: var(--color-brand);
+  color: var(--color-on-brand);
+}
+
+.ds-root a.ds-btn--primary:hover:not(:disabled) {
+  background: var(--color-brand-hover);
+  border-color: var(--color-brand-hover);
+  color: var(--color-on-brand);
+}
+
+.ds-root a.ds-btn--secondary,
+.ds-root a.ds-btn--secondary:hover {
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.ds-root a.ds-btn--destructive,
+.ds-root a.ds-btn--destructive:hover {
+  color: var(--color-error);
+  text-decoration: none;
+}
+
+.ds-root a.ds-btn--attention,
+.ds-root a.ds-btn--attention:hover {
+  color: var(--color-attention);
+  text-decoration: none;
+}
+
+.ds-btn--secondary {
+  background: var(--color-surface);
+  border-color: var(--color-border-strong);
+  color: var(--color-ink);
+}
+
+.ds-btn--secondary:hover:not(:disabled) {
+  background: var(--color-surface-secondary);
+}
+
+.ds-btn--ghost:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-ink) 6%, transparent);
+}
+
+/* Dense tertiary actions (toolbar rows, under-card groups). */
+.ds-btn--sm {
+  min-height: var(--control-height-compact);
+  padding: 0 var(--space-12);
+  font-size: var(--text-label);
+  gap: var(--space-8);
+}
+
+.ds-btn--sm svg {
+  width: var(--icon-size-sm);
+  height: var(--icon-size-sm);
+}
+
+.ds-btn--destructive {
+  color: var(--color-error);
+  border-color: color-mix(in srgb, var(--color-error) 40%, var(--color-border));
+}
+
+.ds-btn--destructive:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-error) 8%, var(--color-canvas));
+}
+
+.ds-btn--attention {
+  color: var(--color-attention);
+  border-color: color-mix(in srgb, var(--color-attention) 40%, var(--color-border));
+}
+
+.ds-btn--attention:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-attention) 8%, var(--color-canvas));
+  border-color: color-mix(in srgb, var(--color-attention) 55%, var(--color-border));
+}
+
+.ds-icon-button {
+  width: var(--control-height);
+  min-width: var(--control-height);
+  padding: 0;
+}
+
+.ds-icon-button svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+/*
+ * Compact icon toolbar — chrome on tiles / dense rows.
+ * Hit target 1.75rem, glyph sm. Not a React widget: compose ds-btn.
+ */
+.ds-icon-toolbar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+}
+
+.ds-btn.ds-icon-button--compact {
+  width: 1.75rem;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  min-height: 1.75rem;
+}
+
+.ds-btn.ds-icon-button--compact svg {
+  width: var(--icon-size-sm);
+  height: var(--icon-size-sm);
+}
+
+/*
+ * Commit pair in dense icon toolbars (inline rename, etc.):
+ * affirm = brand ink — not primary fill (fill stays for surface CTAs).
+ * dismiss = secondary ink — quieter than affirm, still ghost chrome.
+ */
+.ds-btn.ds-icon-button--affirm {
+  color: var(--color-brand);
+}
+
+.ds-btn.ds-icon-button--affirm:hover:not(:disabled) {
+  color: var(--color-brand-hover);
+  background: color-mix(in srgb, var(--color-brand) 8%, transparent);
+}
+
+.ds-btn.ds-icon-button--dismiss {
+  color: var(--color-text-secondary);
+}
+
+.ds-icon-toolbar .ds-btn--destructive {
+  border: 0;
+}

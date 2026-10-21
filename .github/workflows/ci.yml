@@ -1,99 +1,198 @@
-# Copyright (c) Stéphane ANDRE.
-# Licensed under the MIT license.
-
-# This continuous integration pipeline is triggered anytime a user pushes code to main branch.
-# This pipeline builds the solution and runs unit tests
-
-name: Build
+name: CI - Build and Test
 
 on:
   push:
-      branches:
-        - main
-      paths:
-        - .github/workflows/ci.yml
-        - 'src/**'
+    branches: [ "main", "feature/*" ]
+  pull_request:
+    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
-
-  # Build
   build:
-    runs-on: windows-latest
-    name: Build all projects
-    env:
-      DOTNET_SYSTEM_CONSOLE_ALLOW_ANSI_COLOR_REDIRECTION: true
-      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
-      DOTNET_NOLOGO: true
-      DOTNET_CLI_TELEMETRY_OPTOUT: true
-
+    runs-on: ubuntu-24.04
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Setup .NET 8.0.201
-        uses: actions/setup-dotnet@v3
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.201
+          dotnet-version: |
+            11.0.100-rc.1.26425.128
+            11.0.100-rc.2.26504.105
 
-      - name: Add NuGet Feed
-        shell: pwsh
+      - name: Restore
+        run: bash .github/scripts/restore-with-diagnostics.sh MyClub.slnx
+
+      - name: Upload restore diagnostic logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: restore-diagnostic-${{ github.job }}
+          path: ${{ runner.temp }}/myclub-restore-diag/
+          retention-days: 7
+
+      - name: NuGet vulnerable packages
+        run: dotnet list MyClub.slnx package --vulnerable --include-transitive
+
+      - name: Build
+        run: dotnet build MyClub.slnx --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test --no-build --configuration Release --verbosity normal
+
+      - name: Publish Host (architecture isolation)
         run: |
-          $userName = "${{ vars.PRIVATE_NUGET_API_USERNAME }}"
-          $token = "${{ secrets.PRIVATE_NUGET_API_KEY }}"
-          if ($userName -eq '' || $token -eq '') {
-            dotnet nuget add source ${{ vars.PRIVATE_NUGET_API_SOURCE }} -n NuGetFeed
-          } else {
-            dotnet nuget add source ${{ vars.PRIVATE_NUGET_API_SOURCE }} -u $userName -p $token -n NuGetFeed
-          }
+          dotnet publish src/PlayUp/MyClub.PlayUp.Host/MyClub.PlayUp.Host.csproj --no-build --configuration Release --output "${RUNNER_TEMP}/playup-host-publish"
+          if [ -f "${RUNNER_TEMP}/playup-host-publish/MyClub.PlayUp.Development.dll" ]; then
+            echo "MyClub.PlayUp.Development.dll must not be published with Host" >&2
+            exit 1
+          fi
+          if [ -f "${RUNNER_TEMP}/playup-host-publish/MyClub.PlayUp.DevRunner.dll" ]; then
+            echo "MyClub.PlayUp.DevRunner.dll must not be published with Host" >&2
+            exit 1
+          fi
+          if [ -f "${RUNNER_TEMP}/playup-host-publish/MyClub.PlayUp.TestKit.dll" ]; then
+            echo "MyClub.PlayUp.TestKit.dll must not be published with Host" >&2
+            exit 1
+          fi
 
-      - name: NuGet Restore
-        run: dotnet restore .\src\MyClub.sln
+  web:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: src/PlayUp/web
+    steps:
+      - uses: actions/checkout@v4
 
-      - name: Build Packages
-        run: dotnet build .\src\MyClub.sln -c Release
-
-      - name: Run Tests
-        run: dotnet test .\src\MyClub.sln --configuration Release --logger GitHubActions --no-build --no-restore --blame-crash --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
-
-      - name: Upload Teamup application
-        uses: actions/upload-artifact@v3
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          name: Teamup
-          path: |
-              ./build/Teamup/Release/**
-              !./build/Teamup/Release/Plugins/
-              !./build/Teamup/Release/Mocks/
-              !./build/Teamup/Release/*.xml
-              !./build/Teamup/Release/*.pdb
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: src/PlayUp/web/package-lock.json
 
-      - name: Upload Scorer application
-        uses: actions/upload-artifact@v3
-        with:
-          name: Scorer
-          path: |
-              ./build/Scorer/Release/**
-              !./build/Scorer/Release/Plugins/
-              !./build/Scorer/Release/Mocks/
-              !./build/Scorer/Release/*.xml
-              !./build/Scorer/Release/*.pdb
+      - name: Install
+        run: npm ci
 
-      - name: Upload Teamup Plugins
-        uses: actions/upload-artifact@v3
-        with:
-          name: Teamup Plugins 
-          path: |
-              ./build/Teamup/Release/Plugins/**
-              !./build/Teamup/Release/Plugins/*.xml
-              !./build/Teamup/Release/Plugins/*.pdb
+      - name: npm production audit
+        run: npm audit --omit=dev
 
-      - name: Upload Scorer Plugins
-        uses: actions/upload-artifact@v3
+      - name: Format
+        run: npm run format:check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Lint CSS (design-system)
+        run: npm run lint:css
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm run test:run
+
+      - name: Build
+        run: npm run build
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: E2E smoke (stub API)
+        run: npx playwright test
+        env:
+          CI: true
+
+  e2e-integration:
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: myclub_dev
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
-          name: Scorer Plugins
-          path: |
-              ./build/Scorer/Release/Plugins/**
-              !./build/Scorer/Release/Plugins/*.xml
-              !./build/Scorer/Release/Plugins/*.pdb
+          dotnet-version: |
+            11.0.100-rc.1.26425.128
+            11.0.100-rc.2.26504.105
+
+      - name: Restore
+        run: bash .github/scripts/restore-with-diagnostics.sh MyClub.slnx
+
+      - name: Upload restore diagnostic logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: restore-diagnostic-${{ github.job }}
+          path: ${{ runner.temp }}/myclub-restore-diag/
+          retention-days: 7
+
+      - name: Build .NET (Release)
+        run: dotnet build MyClub.slnx --no-restore --configuration Release
+
+      - name: Seed championship-ready
+        env:
+          ConnectionStrings__PlayUpDev: "Host=localhost;Port=5432;Database=myclub_dev;Username=postgres;Password=postgres"
+        run: >
+          dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner
+          --configuration Release --no-build
+          -- --reset --scenarios championship-ready
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: src/PlayUp/web/package-lock.json
+
+      - name: Install web dependencies
+        working-directory: src/PlayUp/web
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        working-directory: src/PlayUp/web
+        run: npx playwright install --with-deps chromium
+
+      - name: E2E business (Host + PostgreSQL)
+        working-directory: src/PlayUp/web
+        run: |
+          export Media__StorageRoot="${RUNNER_TEMP}/playup-e2e-media"
+          mkdir -p "${Media__StorageRoot}"
+          dotnet run --project ../MyClub.PlayUp.Host/MyClub.PlayUp.Host.csproj \
+            --configuration Release --no-build \
+            --urls http://127.0.0.1:5287 &
+          HOST_PID=$!
+          for i in $(seq 1 60); do
+            if curl -sf http://127.0.0.1:5287/competitions > /dev/null; then
+              echo "Host ready"
+              break
+            fi
+            if [ "$i" -eq 60 ]; then
+              echo "Host failed to become ready" >&2
+              kill "$HOST_PID" 2>/dev/null || true
+              exit 1
+            fi
+            sleep 2
+          done
+          npx playwright test -c playwright.host.config.ts
+          kill "$HOST_PID" 2>/dev/null || true
+        env:
+          CI: true
+          VITE_API_PROXY_TARGET: http://127.0.0.1:5287
+          ConnectionStrings__PlayUp: "Host=localhost;Port=5432;Database=myclub_dev;Username=postgres;Password=postgres"
+          ConnectionStrings__Media: "Host=localhost;Port=5432;Database=myclub_dev;Username=postgres;Password=postgres"

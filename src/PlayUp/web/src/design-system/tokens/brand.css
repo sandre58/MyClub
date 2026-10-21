@@ -1,0 +1,6 @@
+/*
+ * Brand system tokens — fixed brand skew (−12°).
+ */
+.ds-root {
+  --brand-skew: -12deg;
+}

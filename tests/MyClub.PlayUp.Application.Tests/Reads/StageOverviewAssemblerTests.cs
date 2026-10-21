@@ -1,0 +1,225 @@
+// -----------------------------------------------------------------------
+// <copyright file="StageOverviewAssemblerTests.cs" company="Stéphane ANDRE">
+// Copyright (c) Stéphane ANDRE. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
+
+using FluentAssertions;
+using MyClub.PlayUp.Application.Competitions;
+using MyClub.PlayUp.Application.Reads;
+using MyClub.PlayUp.Application.Stages;
+using MyClub.PlayUp.Application.Tests.Common;
+using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Competitions;
+using MyClub.PlayUp.Domain.Rules;
+using MyClub.PlayUp.Domain.Stages;
+using Xunit;
+
+namespace MyClub.PlayUp.Application.Tests.Reads;
+
+public sealed class StageOverviewAssemblerTests
+{
+    private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 14, 22, 10, 0, TimeSpan.Zero));
+
+    [Fact]
+    public void Assemble_maps_rounds_fixtures_empty_slots_and_draft_draw()
+    {
+        var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
+        var home = competition.AddEntry(TeamId.New(), "Home", _clock);
+        var away = competition.AddEntry(TeamId.New(), "Away", _clock);
+        var stage = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
+        stage.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock);
+        stage.AddSlot("QF1-A");
+        stage.AddSlot("QF1-B");
+        var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
+
+        var overview = StageOverviewAssembler.Assemble(stage, competition);
+
+        overview.Id.Should().Be(stage.Id.Value);
+        overview.CompetitionId.Should().Be(competition.Id.Value);
+        overview.Name.Should().Be("QF");
+        overview.Rounds.Should().ContainSingle();
+        overview.Rounds[0].Fixtures.Should().ContainSingle();
+        overview.Rounds[0].Fixtures[0].Id.Should().Be(fixture.Id.Value);
+        overview.Rounds[0].Fixtures[0].Attachments.Should().BeEmpty();
+        overview.Slots.Should().HaveCount(2);
+        overview.Slots.Should().OnlyContain(slot =>
+            slot.EntryId == null && slot.DisplayName == null && !slot.CoveredByCompleteFixture);
+        overview.Draws.Should().ContainSingle();
+        overview.Draws[0].Id.Should().Be(draw.Id.Value);
+        overview.Draws[0].Kind.Should().Be(DrawResolutionKind.Slot);
+        overview.Draws[0].Status.Should().Be(DrawStatus.Draft);
+        overview.Draws[0].ResolutionState.Should().Be(DrawResolutionState.NotResolved);
+        overview.Draws[0].SlotPlacements.Should().BeEmpty();
+        home.Id.Should().NotBe(away.Id);
+    }
+
+    [Fact]
+    public void Assemble_projects_bracket_pairs_without_requiring_fixtures()
+    {
+        var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
+        var stage = Stage.Create(competition.Id, new StageName("Finale"), SampleRegulations.Standard(), _clock);
+        stage.AddRound("F", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        stage.AddSlot("F-A");
+        stage.AddSlot("F-B");
+        stage.ReplaceBracketPairs([new BracketPair("FINAL", "F-A", "F-B")]);
+
+        var overview = StageOverviewAssembler.Assemble(stage, competition);
+
+        overview.Rounds[0].Fixtures.Should().BeEmpty();
+        overview.BracketPairs.Should().ContainSingle(p =>
+            p.PairKey == "FINAL" && p.SlotAKey == "F-A" && p.SlotBKey == "F-B");
+    }
+
+    [Fact]
+    public void Assemble_maps_resolved_slot_draw_and_populated_slots_with_display_names()
+    {
+        var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
+        var home = competition.AddEntry(TeamId.New(), "Alpha", _clock);
+        var away = competition.AddEntry(TeamId.New(), "Beta", _clock);
+        var stage = Stage.Create(competition.Id, new StageName("SF"), SampleRegulations.Standard(), _clock);
+        stage.AddSlot("SF1-A");
+        stage.AddSlot("SF1-B");
+        stage.ReplaceAffectationAuthoring([home.Id, away.Id], _clock);
+        stage.AssignEntryToSlot("SF1-A", home.Id);
+
+        var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([home.Id, away.Id]));
+        stage.RecordDrawResolution(
+            draw.Id,
+            DrawResolution.ResolvedSlots(
+            [
+                new SlotDrawPlacement(home.Id, "SF1-A"),
+                new SlotDrawPlacement(away.Id, "SF1-B")
+            ]),
+            _clock);
+        stage.PublishDraw(draw.Id, _clock);
+
+        var overview = StageOverviewAssembler.Assemble(stage, competition);
+
+        overview.Slots.Single(slot => slot.SlotKey == "SF1-A").EntryId.Should().Be(home.Id.Value);
+        overview.Slots.Single(slot => slot.SlotKey == "SF1-A").DisplayName.Should().Be("Alpha");
+        overview.Slots.Single(slot => slot.SlotKey == "SF1-B").EntryId.Should().BeNull();
+        overview.Draws[0].Status.Should().Be(DrawStatus.Published);
+        overview.Draws[0].ResolutionState.Should().Be(DrawResolutionState.Resolved);
+        overview.Draws[0].SlotPlacements.Should().HaveCount(2);
+        overview.Draws[0].SlotPlacements.Single(p => p.SlotKey == "SF1-A").DisplayName.Should().Be("Alpha");
+        overview.Draws[0].SlotPlacements.Single(p => p.SlotKey == "SF1-A").ShortName.Should().NotBeNullOrWhiteSpace();
+        overview.Draws[0].SlotPlacements.Single(p => p.SlotKey == "SF1-B").DisplayName.Should().Be("Beta");
+        overview.Draws[0].SlotPlacements.Single(p => p.SlotKey == "SF1-B").ShortName.Should().NotBeNullOrWhiteSpace();
+        overview.Draws[0].SlotPlacements.Should().OnlyContain(p => p.LogoMediaId == null);
+    }
+
+    [Fact]
+    public void Assemble_maps_slot_draw_placements()
+    {
+        var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
+        var entry = competition.AddEntry(TeamId.New(), "Seeded", _clock);
+        var logoId = Guid.CreateVersion7();
+        competition.UpdateEntryPresentation(
+            entry.Id,
+            new EntryPresentation(
+                ShortName.CreateRequired("SEE"),
+                new LogoMediaId(logoId),
+                TeamColor.Create("#112233")),
+            _clock);
+        var stage = Stage.Create(competition.Id, new StageName("Groups"), SampleRegulations.Standard(), _clock);
+        stage.AddSlot("A");
+        var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entry.Id]));
+        stage.RecordDrawResolution(
+            draw.Id,
+            DrawResolution.ResolvedSlots([new SlotDrawPlacement(entry.Id, "A")]),
+            _clock);
+
+        var overview = StageOverviewAssembler.Assemble(stage, competition);
+
+        overview.Draws[0].SlotPlacements.Should().ContainSingle();
+        overview.Draws[0].SlotPlacements[0].SlotKey.Should().Be("A");
+        overview.Draws[0].SlotPlacements[0].DisplayName.Should().Be("Seeded");
+        overview.Draws[0].SlotPlacements[0].ShortName.Should().Be("SEE");
+        overview.Draws[0].SlotPlacements[0].LogoMediaId.Should().Be(logoId);
+        overview.Draws[0].SlotPlacements[0].PrimaryColor.Should().Be("#112233");
+        overview.Draws[0].GroupPlacements.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Assemble_marks_slots_covered_by_complete_fixture()
+    {
+        var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
+        var a = competition.AddEntry(TeamId.New(), "Alpha", _clock);
+        var b = competition.AddEntry(TeamId.New(), "Beta", _clock);
+        var c = competition.AddEntry(TeamId.New(), "Gamma", _clock);
+        var d = competition.AddEntry(TeamId.New(), "Delta", _clock);
+        var stage = Stage.Create(competition.Id, new StageName("SF"), SampleRegulations.Standard(), _clock);
+        stage.AddRound("SF", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        stage.AddSlot("SF1-A");
+        stage.AddSlot("SF1-B");
+        stage.AddSlot("SF2-A");
+        stage.AddSlot("SF2-B");
+        stage.SeedEntryRoundBracketPairs();
+        stage.ApplyResolvedEntry("SF1-A", a.Id, _clock);
+        stage.ApplyResolvedEntry("SF1-B", b.Id, _clock);
+        stage.ApplyResolvedEntry("SF2-A", c.Id, _clock);
+        stage.ApplyResolvedEntry("SF2-B", d.Id, _clock);
+        stage.Prepare(_clock);
+
+        MaterializeCupFromOccupiedSlots.Execute(
+            competition,
+            stage,
+            ["P1"],
+            [],
+            _clock);
+
+        var overview = StageOverviewAssembler.Assemble(stage, competition);
+
+        overview.Slots.Single(slot => slot.SlotKey == "SF1-A").CoveredByCompleteFixture.Should().BeTrue();
+        overview.Slots.Single(slot => slot.SlotKey == "SF1-B").CoveredByCompleteFixture.Should().BeTrue();
+        overview.Slots.Single(slot => slot.SlotKey == "SF2-A").CoveredByCompleteFixture.Should().BeFalse();
+        overview.Slots.Single(slot => slot.SlotKey == "SF2-B").CoveredByCompleteFixture.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Assemble_draw_obsolete_flag_matches_IsObsoleteForConsumption_predicate()
+    {
+        var competition = CreateCompetition.Execute("overview-obsolete", _clock);
+        var ids = Enumerable.Range(0, 4)
+            .Select(i => AddEntry.Execute(competition, $"T{i}", _clock).Id)
+            .ToArray();
+        var stage = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Groups(2, 2),
+            _clock).Stage;
+        ReplaceStageDrawRules.Execute(
+            stage,
+            new DrawRules(DrawMode.Random, potRules: new PotRules(2)),
+            _clock);
+        stage.ReplaceAffectationAuthoring(ids, _clock);
+
+        var draw = CreateDraw.Execute(stage, DrawResolutionKind.Group, _clock);
+        ConfigureDrawInputs.Execute(
+            stage,
+            draw.Id,
+            DrawInputsFactory.CreateDefault(stage, DrawResolutionKind.Group));
+        GenerateDrawResolution.Execute(
+            stage,
+            draw.Id,
+            _clock,
+            groupTargets: [.. stage.Groups.Select(g => g.Id)]).IsResolved.Should().BeTrue();
+        PublishDraw.Execute(stage, draw.Id, _clock);
+
+        var before = StageOverviewAssembler.Assemble(stage, competition);
+        var domainDraw = stage.GetDraw(draw.Id);
+        before.Draws[0].IsObsoleteForConsumption.Should()
+            .Be(DrawConsumptionConformance.IsObsoleteForConsumption(domainDraw, stage));
+
+        stage.ReplaceAffectationAuthoring([ids[0], ids[1], ids[2]], _clock);
+
+        var after = StageOverviewAssembler.Assemble(stage, competition);
+        after.Draws[0].IsObsoleteForConsumption.Should().BeTrue();
+        after.Draws[0].IsObsoleteForConsumption.Should()
+            .Be(DrawConsumptionConformance.IsObsoleteForConsumption(domainDraw, stage));
+    }
+}

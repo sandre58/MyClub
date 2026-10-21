@@ -1,0 +1,31 @@
+/*
+ * Slate — dark content theme (workspace only).
+ * Applied via [data-theme='dark'] on :root (early paint) and .ds-root.
+ *
+ * CONTENT primitives ONLY — chrome (--primitive-chrome*) stays in slate.css
+ * and must never be overridden here.
+ */
+:root[data-theme='dark'],
+.ds-root[data-theme='dark'],
+.ds-root[data-palette='slate'][data-theme='dark'] {
+  --primitive-canvas: #0f1419;
+  --primitive-surface: #1a2028;
+  --primitive-surface-secondary: #232b36;
+  --primitive-ink: #e8ecf5;
+  --primitive-text-primary: #e8ecf5;
+  --primitive-text-secondary: #9aa3b2;
+  --primitive-border: #2d3642;
+  --primitive-border-strong: #3d4858;
+  --primitive-brand: #3d8fd9;
+  --primitive-brand-hover: #5aa3e8;
+  --primitive-brand-deep: #2f7bc4;
+  --primitive-brand-bright: #6eb5f0;
+  --primitive-live: #22b56a;
+  --primitive-success: #3d9e6a;
+  --primitive-attention: #d4a017;
+  --primitive-error: #e0525c;
+  --primitive-info: #4a9fd4;
+  --primitive-focus: #3d8fd9;
+  --primitive-on-ink: #0f1419;
+  --primitive-on-brand: #f3faf6;
+}

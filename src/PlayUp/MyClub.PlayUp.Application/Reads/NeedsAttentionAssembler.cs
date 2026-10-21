@@ -1,0 +1,494 @@
+// -----------------------------------------------------------------------
+// <copyright file="NeedsAttentionAssembler.cs" company="Stéphane ANDRE">
+// Copyright (c) Stéphane ANDRE. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
+
+using MyClub.PlayUp.Application.Abstractions;
+using MyClub.PlayUp.Application.Stages;
+using MyClub.PlayUp.Application.Standings;
+using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Competitions;
+using MyClub.PlayUp.Domain.Matches;
+using MyClub.PlayUp.Domain.Progression;
+using MyClub.PlayUp.Domain.Qualification;
+using MyClub.PlayUp.Domain.Rules;
+using MyClub.PlayUp.Domain.Stages;
+using MyClub.PlayUp.Domain.Standings;
+
+namespace MyClub.PlayUp.Application.Reads;
+
+/// <summary>
+/// Assembles Needs Attention items from competition state (derived; never persisted).
+/// </summary>
+/// <remarks>
+/// Normal incomplete stages / Finished matches without pending consequences are not attentions.
+/// Scheduled / Live / Finished matches are not attentions by themselves.
+/// Draw Draft / Published / Resolved / Applied / Cancelled are normal states — only NoSolution is attention.
+/// Schedule NoSolution is not persisted today — omitted until a durable diagnostic exists.
+/// Completion blockers are not Needs Attention (see <see cref="CompletionAnalyzer"/>).
+/// Construction participant deficit (<c>InsufficientParticipants</c>) is Needs Attention only in Draft/Ready —
+/// never after Start (forfait reducing actives does not reopen this attention).
+/// </remarks>
+public static class NeedsAttentionAssembler
+{
+    /// <summary>Draw resolution NoSolution.</summary>
+    public const string SourceDrawNoSolution = "DrawNoSolution";
+
+    /// <summary>Qualification destination empty while path is resolvable.</summary>
+    public const string SourceQualificationPending = "QualificationPending";
+
+    /// <summary>Qualification destination occupied by a different entry than standing implies.</summary>
+    public const string SourceQualificationConflict = "QualificationConflict";
+
+    /// <summary>Progression destination empty while fixture outcome is known.</summary>
+    public const string SourceProgressionPending = "ProgressionPending";
+
+    /// <summary>Progression destination occupied by a different entry than outcome implies.</summary>
+    public const string SourceProgressionConflict = "ProgressionConflict";
+
+    /// <summary>
+    /// Fewer Active entries than EntryRules.MinimumTeams during construction (Draft/Ready only).
+    /// </summary>
+    public const string SourceInsufficientParticipants = "InsufficientParticipants";
+
+    /// <summary>Blocking severity.</summary>
+    public const string SeverityBlocking = "Blocking";
+
+    /// <summary>Non-blocking severity (drawer warning group).</summary>
+    public const string SeverityWarning = "Warning";
+
+    /// <summary>
+    /// Builds Needs Attention for a competition.
+    /// </summary>
+    /// <param name="competition">Loaded competition.</param>
+    /// <param name="stages">Competition stages (canonical).</param>
+    /// <param name="matchesByStage">Full matches keyed by stage (Overview path).</param>
+    /// <returns>Needs Attention DTO.</returns>
+    public static NeedsAttentionDto Assemble(
+        Competition competition,
+        IReadOnlyList<Stage> stages,
+        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage) =>
+        Assemble(competition, stages, MatchAttentionSlice.FromMatchesByStage(matchesByStage));
+
+    /// <summary>
+    /// Builds Needs Attention from projected match slices.
+    /// </summary>
+    /// <param name="competition">Loaded competition.</param>
+    /// <param name="stages">Competition stages (canonical).</param>
+    /// <param name="matchesByStage">Attention slices keyed by stage id.</param>
+    /// <returns>Needs Attention DTO.</returns>
+    public static NeedsAttentionDto Assemble(
+        Competition competition,
+        IReadOnlyList<Stage> stages,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchAttentionSlice>> matchesByStage)
+    {
+        ArgumentNullException.ThrowIfNull(competition);
+        ArgumentNullException.ThrowIfNull(stages);
+        ArgumentNullException.ThrowIfNull(matchesByStage);
+
+        var items = new List<NeedsAttentionItemDto>();
+        CollectInsufficientParticipants(competition, items);
+        foreach (var stage in stages)
+        {
+            CollectDrawNoSolutions(stage, items);
+            var matches = matchesByStage.TryGetValue(stage.Id, out var list) ? list : [];
+            CollectQualificationAttentions(stage, stages, matches, items);
+            CollectProgressionAttentions(stage, stages, matches, items);
+        }
+
+        if (stages.Count == 0) return new NeedsAttentionDto(competition.Id.Value, items);
+        var matchSummariesByStage = ToMatchSummaryRowsByStage(matchesByStage);
+        var structureView = StructureViewAssembler.Assemble(
+            competition,
+            stages,
+            matchSummariesByStage: matchSummariesByStage);
+        StructurePresentedAttentionCollector.Collect(structureView, items);
+
+        return new NeedsAttentionDto(competition.Id.Value, items);
+    }
+
+    private static void CollectInsufficientParticipants(
+        Competition competition,
+        List<NeedsAttentionItemDto> items)
+    {
+        if (competition.Status is not (CompetitionStatus.Draft or CompetitionStatus.Ready))
+        {
+            return;
+        }
+
+        var activeCount = competition.Entries.Count(entry => entry.Status == EntryStatus.Active);
+        var minimum = competition.Regulation.EntryRules.MinimumTeams;
+        if (activeCount >= minimum)
+        {
+            return;
+        }
+
+        items.Add(
+            new NeedsAttentionItemDto(
+                SourceInsufficientParticipants,
+                SeverityBlocking,
+                "Competition",
+                competition.Id.Value.ToString(),
+                new Dictionary<string, string>
+                {
+                    ["activeCount"] = activeCount.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    ["minimumTeams"] = minimum.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    ["missingCount"] = (minimum - activeCount).ToString(
+                        System.Globalization.CultureInfo.InvariantCulture)
+                }));
+    }
+
+    private static void CollectDrawNoSolutions(Stage stage, List<NeedsAttentionItemDto> items) =>
+        items.AddRange(
+            from draw in stage.Draws
+            where draw.Status != DrawStatus.Cancelled
+            where draw.Resolution.State == DrawResolutionState.NoSolution
+            select new NeedsAttentionItemDto(
+                SourceDrawNoSolution,
+                SeverityBlocking,
+                "Draw",
+                draw.Id.Value.ToString(),
+                new Dictionary<string, string>
+                {
+                    ["stageId"] = stage.Id.Value.ToString()
+                }));
+
+    private static void CollectQualificationAttentions(
+        Stage source,
+        IReadOnlyList<Stage> stages,
+        IReadOnlyList<MatchAttentionSlice> matches,
+        List<NeedsAttentionItemDto> items)
+    {
+        var paths = source.Regulation.QualificationRules?.Paths;
+        if (paths is null || paths.Count == 0)
+        {
+            return;
+        }
+
+        Standing? overall;
+        Dictionary<GroupId, Standing> groups;
+        try
+        {
+            overall = BuildOverall(source, matches);
+            groups = BuildGroups(source, matches);
+        }
+        catch (Exception)
+        {
+            return;
+        }
+
+        foreach (var path in paths)
+        {
+            Standing standing;
+            try
+            {
+                standing = ResolveStanding(source, path, overall, groups, matches);
+            }
+            catch (Exception)
+            {
+                continue;
+            }
+
+            QualificationInstruction? instruction;
+            try
+            {
+                instruction = QualificationApplier.Apply(path, standing);
+            }
+            catch (Exception)
+            {
+                continue;
+            }
+
+            if (instruction is null)
+            {
+                continue;
+            }
+
+            var destination = stages.FirstOrDefault(stage => stage.Id.Equals(path.Destination.StageId));
+            if (destination is null)
+            {
+                items.Add(QualificationPendingItem(
+                    "Stage",
+                    path.Destination.StageId.Value.ToString()));
+                continue;
+            }
+
+            switch (DestinationSatisfaction.EvaluateQualification(
+                        destination,
+                        source.Id,
+                        path,
+                        instruction.EntryId))
+            {
+                case DestinationSatisfaction.Kind.Pending:
+                    items.Add(QualificationPendingItem(
+                        ResolveAttentionTargetType(path.Destination),
+                        ResolveAttentionTargetId(destination, path.Destination)));
+                    break;
+                case DestinationSatisfaction.Kind.Conflict:
+                    items.Add(new NeedsAttentionItemDto(
+                        SourceQualificationConflict,
+                        SeverityBlocking,
+                        ResolveAttentionTargetType(path.Destination),
+                        ResolveAttentionTargetId(destination, path.Destination)));
+                    break;
+                case DestinationSatisfaction.Kind.Satisfied:
+                default:
+                    break;
+            }
+        }
+    }
+
+    private static void CollectProgressionAttentions(
+        Stage source,
+        IReadOnlyList<Stage> stages,
+        IReadOnlyList<MatchAttentionSlice> matches,
+        List<NeedsAttentionItemDto> items)
+    {
+        var paths = source.Regulation.ProgressionRules?.Paths;
+        if (paths is null || paths.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var pathGroup in paths.GroupBy(path => path.SourcePairKey))
+        {
+            var sourcePairKey = pathGroup.Key;
+            var fixture = ResolveFixtureFromSourcePairKey(source, sourcePairKey);
+            if (fixture is null)
+            {
+                // Pair defined but fixture not materialized yet — not ready for Apply.
+                continue;
+            }
+
+            var fixtureId = fixture.Id;
+            if (!AllLegsFinished(fixture, matches))
+            {
+                continue;
+            }
+
+            var round = source.Rounds.FirstOrDefault(candidate =>
+                candidate.Fixtures.Any(fixtureCandidate => fixtureCandidate.Id.Equals(fixtureId)));
+            if (round is null)
+            {
+                continue;
+            }
+
+            FixtureOutcome outcome;
+            try
+            {
+                var snapshot = FixtureConfrontationSnapshotAssembler.Assemble(fixture, matches);
+                outcome = FixtureOutcomeResolver.Resolve(
+                    TieFormat.OrDefaultOneLeg(round.TieFormat),
+                    snapshot);
+            }
+            catch (Exception)
+            {
+                continue;
+            }
+
+            foreach (var path in pathGroup)
+            {
+                ProgressionInstruction instruction;
+                try
+                {
+                    instruction = ProgressionApplier.Apply(path, sourcePairKey, outcome);
+                }
+                catch (Exception)
+                {
+                    continue;
+                }
+
+                var destination = stages.FirstOrDefault(stage => stage.Id.Equals(path.Destination.StageId));
+                if (destination is null)
+                {
+                    items.Add(new NeedsAttentionItemDto(
+                        SourceProgressionPending,
+                        SeverityBlocking,
+                        "Fixture",
+                        fixtureId.Value.ToString()));
+                    continue;
+                }
+
+                switch (DestinationSatisfaction.EvaluateProgression(
+                            destination,
+                            source.Id,
+                            path,
+                            instruction.EntryId))
+                {
+                    case DestinationSatisfaction.Kind.Pending:
+                        items.Add(new NeedsAttentionItemDto(
+                            SourceProgressionPending,
+                            SeverityBlocking,
+                            ResolveAttentionTargetType(path.Destination),
+                            ResolveAttentionTargetId(destination, path.Destination, fixtureId)));
+                        break;
+                    case DestinationSatisfaction.Kind.Conflict:
+                        items.Add(new NeedsAttentionItemDto(
+                            SourceProgressionConflict,
+                            SeverityBlocking,
+                            ResolveAttentionTargetType(path.Destination),
+                            ResolveAttentionTargetId(destination, path.Destination, fixtureId)));
+                        break;
+                    case DestinationSatisfaction.Kind.Satisfied:
+                    default:
+                        break;
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Resolves the execution fixture for a structural SourcePairKey (Cup = PairKey).
+    /// </summary>
+    private static Fixture? ResolveFixtureFromSourcePairKey(Stage stage, string sourcePairKey) =>
+        stage.FindFixtureByBracketPairKey(sourcePairKey);
+
+    private static string ResolveAttentionTargetType(QualificationDestination destination) =>
+        destination.TargetsSlot
+            ? "Slot"
+            : destination.TargetsGroup
+                ? "Group"
+                : destination.TargetsForm
+                    ? "Form"
+                    : "Stage";
+
+    private static string ResolveAttentionTargetType(ProgressionDestination destination) =>
+        destination.TargetsSlot
+            ? "Slot"
+            : destination.TargetsGroup
+                ? "Group"
+                : destination.TargetsForm
+                    ? "Form"
+                    : "Stage";
+
+    private static string ResolveAttentionTargetId(
+        Stage destination,
+        QualificationDestination dest) =>
+        dest.TargetsSlot
+            ? $"{destination.Id.Value}:{dest.SlotKey}"
+            : dest.TargetsGroup
+                ? $"{destination.Id.Value}:{dest.GroupId!.Value.Value}"
+                : destination.Id.Value.ToString();
+
+    private static string ResolveAttentionTargetId(
+        Stage destination,
+        ProgressionDestination dest,
+        FixtureId fixtureId) =>
+        dest.TargetsSlot
+            ? $"{destination.Id.Value}:{dest.SlotKey}"
+            : dest.TargetsGroup
+                ? $"{destination.Id.Value}:{dest.GroupId!.Value.Value}"
+                : dest.TargetsForm
+                    ? destination.Id.Value.ToString()
+                    : fixtureId.Value.ToString();
+
+    private static bool AllLegsFinished(Fixture fixture, IReadOnlyList<MatchAttentionSlice> matches)
+    {
+        if (fixture.Attachments.Count == 0)
+        {
+            return false;
+        }
+
+        var byId = matches.ToDictionary(match => match.Id);
+        foreach (var attachment in fixture.Attachments)
+        {
+            if (!byId.TryGetValue(attachment.MatchId, out var match)
+                || match.Status != MatchStatus.Finished
+                || match.Result is null)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static Standing BuildOverall(Stage source, IReadOnlyList<MatchAttentionSlice> matches)
+    {
+        var participants = matches
+            .Where(match => match is { Status: MatchStatus.Finished, Result: not null })
+            .SelectMany(match => new[] { match.HomeEntryId, match.AwayEntryId })
+            .Distinct()
+            .ToArray();
+        return CalculateStanding.Execute(
+            participants,
+            matches,
+            RequireStandingRules(source),
+            MatchFilter.All,
+            CalculateStanding.ToStandingPenalties(source.Penalties));
+    }
+
+    private static Dictionary<GroupId, Standing> BuildGroups(Stage source, IReadOnlyList<MatchAttentionSlice> matches)
+    {
+        var result = new Dictionary<GroupId, Standing>();
+        var rules = RequireStandingRules(source);
+        foreach (var group in source.Groups)
+        {
+            result[group.Id] = CalculateStanding.Execute(
+                group.EntryIds,
+                matches,
+                rules,
+                MatchFilter.All,
+                CalculateStanding.ToStandingPenalties(source.Penalties));
+        }
+
+        return result;
+    }
+
+    private static StandingRules RequireStandingRules(Stage source) =>
+        source.Regulation.StandingRules
+        ?? throw new ApplicationFailureException(
+            "Standing rules are required for qualification attention evaluation.",
+            StandingErrorCodes.RulesRequired);
+
+    private static Standing ResolveStanding(
+        Stage sourceStage,
+        QualificationPath path,
+        Standing? overallStanding,
+        Dictionary<GroupId, Standing> groupStandings,
+        IReadOnlyList<MatchAttentionSlice> matches)
+    {
+        if (path.Source.Scope == RankingScope.AcrossGroups)
+        {
+            var position = path.Source.AcrossGroupsPosition
+                ?? throw new InvalidOperationException("AcrossGroups position missing.");
+            return CrossGroupStandingAssembler.BuildFromAttentionSlices(
+                sourceStage.Groups,
+                groupStandings,
+                position,
+                matches,
+                RequireStandingRules(sourceStage),
+                CalculateStanding.ToStandingPenalties(sourceStage.Penalties));
+        }
+
+        if (path.Source.GroupId is null && path.Source.Scope != RankingScope.Group)
+            return overallStanding ?? throw new InvalidOperationException("Overall standing missing.");
+        var groupId = path.Source.GroupId
+                      ?? throw new InvalidOperationException("Group id missing.");
+        return groupStandings[groupId];
+    }
+
+    private static NeedsAttentionItemDto QualificationPendingItem(
+        string? targetType,
+        string? targetId) =>
+        new(
+            SourceQualificationPending,
+            SeverityBlocking,
+            targetType,
+            targetId,
+            Problem: OrganizerProblemSemanticsResolver.TryFromAttentionSource(SourceQualificationPending));
+
+    private static Dictionary<StageId, IReadOnlyList<MatchSummaryRow>> ToMatchSummaryRowsByStage(
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchAttentionSlice>> matchesByStage) =>
+        matchesByStage.ToDictionary(
+            pair => pair.Key,
+            pair => (IReadOnlyList<MatchSummaryRow>)[
+                .. pair.Value.Select(match => new MatchSummaryRow(
+                    match.Id,
+                    match.StageId,
+                    match.Status,
+                    match.HomeEntryId,
+                    match.AwayEntryId,
+                    match.Result))]);
+}

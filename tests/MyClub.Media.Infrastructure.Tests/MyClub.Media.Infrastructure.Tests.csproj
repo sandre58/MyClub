@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);CA1515;CA2007;CA1031</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Testcontainers.PostgreSql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Media\MyClub.Media.Application\MyClub.Media.Application.csproj" />
+    <ProjectReference Include="..\..\src\Media\MyClub.Media.Domain\MyClub.Media.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Media\MyClub.Media.Infrastructure\MyClub.Media.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

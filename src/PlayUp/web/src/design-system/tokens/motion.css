@@ -1,0 +1,27 @@
+/*
+ * Motion is comprehension, not signature. No glow / bounce tokens.
+ */
+:root,
+.ds-root {
+  --motion-duration: 160ms;
+  --motion-easing: cubic-bezier(0.2, 0, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root,
+  .ds-root {
+    --motion-duration: 0ms;
+  }
+
+  .ds-root *,
+  .ds-root *::before,
+  .ds-root *::after,
+  .ds-popover,
+  .ds-popover::before,
+  .ds-tooltip,
+  .ds-tooltip::before,
+  .ds-select__dropdown {
+    animation: none !important;
+    transition: none !important;
+  }
+}

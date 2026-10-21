@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);CA2007</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\PlayUp\MyClub.PlayUp.Application\MyClub.PlayUp.Application.csproj" />
+    <ProjectReference Include="..\..\src\PlayUp\MyClub.PlayUp.Domain\MyClub.PlayUp.Domain.csproj" />
+    <ProjectReference Include="..\..\src\PlayUp\MyClub.PlayUp.TestKit\MyClub.PlayUp.TestKit.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,66 @@
+{
+  "navigation": {
+    "overview": "Overview",
+    "structure": "Structure",
+    "matches": "Schedule & matches",
+    "classements": "Standings",
+    "teams": "Teams",
+    "regulation": "Regulations"
+  },
+  "groups": {
+    "pilotage": "Operations",
+    "competition": "Competition",
+    "referentiel": "Reference"
+  },
+  "sidebar": {
+    "label": "Main sidebar",
+    "primary": "Primary navigation",
+    "expand": "Expand sidebar",
+    "collapse": "Collapse sidebar",
+    "menuOpen": "Open navigation menu",
+    "menuClose": "Close navigation menu",
+    "home": "Play’Up home"
+  },
+  "competition": {
+    "choose": "Choose a competition",
+    "none": "No competition",
+    "loading": "Loading",
+    "unavailable": "Context unavailable",
+    "contextLabel": "Competition context"
+  },
+  "attention": {
+    "label": "Needs attention",
+    "trigger_zero": "Needs attention, no items",
+    "trigger_one": "Needs attention, {{count}} item",
+    "trigger_other": "Needs attention, {{count}} items",
+    "closeDrawer": "Close Needs attention",
+    "emptyHost": "No competition is available.",
+    "noContext": "Open a competition to see what needs your attention.",
+    "loadError": "Unable to load items needing attention.",
+    "loadErrorAuth": "You do not have access to load this list.",
+    "loadErrorServer": "The service is temporarily unavailable. Try again in a moment.",
+    "retry": "Try again",
+    "emptyTitle": "Nothing to handle for now",
+    "emptyHint": "Items appear here when a blocked or pending situation is reported.",
+    "emptyStructureLink": "Open Structure",
+    "lede": "Situations that need action.",
+    "ledePaused": "Findings on paused phases. Listed situations remain available to review. Some actions require resuming the phase.",
+    "groupBlocking": "Blocking",
+    "groupAttention": "Needs attention"
+  },
+  "preferences": {
+    "open": "Open preferences",
+    "title": "Preferences",
+    "language": "Language",
+    "locale": {
+      "fr": "Français",
+      "en": "English"
+    },
+    "theme": {
+      "label": "Theme",
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
+    }
+  }
+}

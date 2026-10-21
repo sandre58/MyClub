@@ -1,0 +1,41 @@
+---
+description: Play'Up navigation and shell rules
+globs: src/PlayUp/web/**
+alwaysApply: false
+---
+
+# Navigation & shell
+
+- **Chrome unifié (A, 2026-09-02)** — rail + header share `--color-chrome`
+  (`#0f1728`). No rail `border`. Workspace = `--color-canvas` with
+  `--shell-workspace-radius` (`--space-12`, 12px) on the start-start corner.
+- **Rail**: Accueil lockup (`PlayUpLockupMark` + `PlayUpWordmark surface="chrome"`)
+  on top → grouped destinations → collapse control **inside** the rail footer.
+  Collapsed width `--shell-rail-width-collapsed` (3.5rem); the workspace grows.
+  Collapse keeps labels/wordmark in the tree and clips+fades them with the
+  width (no `visually-hidden` snap — that caused a horizontal scrollbar flash
+  and a lockup jump). `overflow-x: hidden` on the rail. Nav `overflow-y: auto`.
+  Nav labels: `--font-weight-regular` (groups stay semibold uppercase meta).
+- **Groups**: Pilotage (**Vue d'ensemble**) · Compétition (Structure, Calendrier & matchs,
+  Classements) · Référentiel (Équipes, Stades, Règlement — visible, no routes yet).
+- **Current item**: inset chip (`--shell-rail-item-radius` / `--radius-panel`),
+  wash `--shell-rail-wash-current`, **straight** 3px `--color-chrome-accent` bar
+  flush start, clipped by overflow. **Not** `--brand-skew`. Idle: no wash, full
+  `on-chrome` opacity. Hover wash 8%; current+hover 16%. Current hover keeps
+  accent on label + icon — only the wash changes.
+- **Header** (on chrome, aligned with the workspace column): `TeamCrest` `lg`
+  (no white plate — same Accueil crest grammar) + name (`--text-heading`) +
+  Accueil status badge (`soft`, `compact`) + dates · À traiter bell + badge. No swap, no
+  profile. Mark → Accueil (rail; phone overlay only).
+- **Responsive chrome** (2026-09-02): `data-shell-vp` from matchMedia.
+  Desktop `64rem+` = user expand/collapse (`localStorage`). Tablet `48–64rem` =
+  icon rail in-flow (session expand allowed, does not overwrite desktop
+  preference).   Phone `<48rem` = same rail as overlay from start, below the header (not
+  under it). Accueil lockup stays at the top of that overlay (above Pilotage),
+  visible only when the menu is open — header is competition context + menu +
+  bell. Menu uses existing expand/close glyphs, crest `md`, dates hidden,
+  no in-rail chevron, no workspace start-start radius. Viewport changes snap
+  (`data-nav-ready`); in-viewport expand still animates. No bottom tab bar.
+- Classes: `ds-shell-rail`, `ds-shell-header`, `ds-shell-workspace` in
+  `foundations/shell.css`.
+- Nav icons: `design-system/icons/shellIcons.tsx`.

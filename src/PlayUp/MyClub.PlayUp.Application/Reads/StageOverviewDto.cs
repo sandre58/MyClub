@@ -1,0 +1,152 @@
+// -----------------------------------------------------------------------
+// <copyright file="StageOverviewDto.cs" company="Stéphane ANDRE">
+// Copyright (c) Stéphane ANDRE. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
+
+using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Stages;
+
+namespace MyClub.PlayUp.Application.Reads;
+
+/// <summary>
+/// Product overview of a stage: structure, slots, fixtures, draws, and Cup BracketPairs.
+/// </summary>
+/// <param name="Id">Stage identity.</param>
+/// <param name="CompetitionId">Owning competition.</param>
+/// <param name="Name">Stage display name.</param>
+/// <param name="Status">Stage lifecycle status.</param>
+/// <param name="Rounds">Rounds with fixtures.</param>
+/// <param name="Slots">Bracket / destination slots.</param>
+/// <param name="Draws">Draw lifecycle and summarized resolution.</param>
+/// <param name="BracketPairs">Cup structural confrontations (empty for Groups).</param>
+/// <param name="Groups">Group membership snapshot (empty for non-Groups formats).</param>
+/// <param name="DrawBracketLaunchFacts">Bracket occupancy for Tirage launch; null when draw mechanism not applicable.</param>
+public sealed record StageOverviewDto(
+    Guid Id,
+    Guid CompetitionId,
+    string Name,
+    StageStatus Status,
+    IReadOnlyList<StageRoundDto> Rounds,
+    IReadOnlyList<StageSlotDto> Slots,
+    IReadOnlyList<StageDrawDto> Draws,
+    IReadOnlyList<StageBracketPairDto> BracketPairs,
+    IReadOnlyList<StageGroupOverviewDto> Groups,
+    StageDrawBracketLaunchFactsDto? DrawBracketLaunchFacts = null);
+
+/// <summary>
+/// Group membership line for stage overview (draw release / alignment checks).
+/// </summary>
+/// <param name="Id">Group identity.</param>
+/// <param name="Name">Group display name.</param>
+/// <param name="EntryIds">Entries currently assigned to the group.</param>
+public sealed record StageGroupOverviewDto(
+    Guid Id,
+    string Name,
+    IReadOnlyList<Guid> EntryIds);
+
+/// <summary>
+/// Structural Cup confrontation potential (PairKey P1… = SlotA ↔ SlotB).
+/// </summary>
+/// <param name="PairKey">Persistent pair identity (e.g. P1).</param>
+/// <param name="SlotAKey">First place key.</param>
+/// <param name="SlotBKey">Second place key.</param>
+public sealed record StageBracketPairDto(string PairKey, string SlotAKey, string SlotBKey);
+
+/// <summary>
+/// Round with fixtures for stage overview.
+/// </summary>
+/// <param name="Id">Round identity.</param>
+/// <param name="Name">Round display name.</param>
+/// <param name="Fixtures">Fixtures in this round.</param>
+public sealed record StageRoundDto(Guid Id, string Name, IReadOnlyList<StageFixtureDto> Fixtures);
+
+/// <summary>
+/// Fixture line for stage overview.
+/// </summary>
+/// <param name="Id">Fixture identity.</param>
+/// <param name="SlotAKey">Optional bracket slot A.</param>
+/// <param name="SlotBKey">Optional bracket slot B.</param>
+/// <param name="Attachments">Attached matches (leg index).</param>
+public sealed record StageFixtureDto(
+    Guid Id,
+    string? SlotAKey,
+    string? SlotBKey,
+    IReadOnlyList<StageFixtureAttachmentDto> Attachments);
+
+/// <summary>
+/// Match attachment on a fixture.
+/// </summary>
+/// <param name="MatchId">Attached match.</param>
+/// <param name="LegIndex">Leg index within the fixture.</param>
+public sealed record StageFixtureAttachmentDto(Guid MatchId, int LegIndex);
+
+/// <summary>
+/// Slot line for stage overview (progression visible via <see cref="EntryId"/>).
+/// </summary>
+/// <param name="SlotKey">Business slot key.</param>
+/// <param name="EntryId">Resolved occupant when set.</param>
+/// <param name="DisplayName">Occupant display name when known.</param>
+/// <param name="CoveredByCompleteFixture">True when a complete SlotA/B Fixture already covers this key (from-slots pairing excludes it).</param>
+public sealed record StageSlotDto(
+    string SlotKey,
+    Guid? EntryId,
+    string? DisplayName,
+    bool CoveredByCompleteFixture);
+
+/// <summary>
+/// Draw summary for stage overview (no rules, inputs, or soft violations).
+/// </summary>
+/// <param name="Id">Draw identity.</param>
+/// <param name="Kind">Resolution kind.</param>
+/// <param name="Status">Lifecycle status.</param>
+/// <param name="ResolutionState">Resolution state.</param>
+/// <param name="SlotPlacements">Slot placements when resolved as Slot; otherwise empty.</param>
+/// <param name="GroupPlacements">Group placements when resolved as Group; otherwise empty.</param>
+/// <param name="IsApplied">Derived occupancy (Publish ≠ Apply) via <c>DrawAppliedState</c>.</param>
+/// <param name="IsObsoleteForConsumption">C-ENF-Detect — draw resolution obsolete for Apply/Materialize consumption.</param>
+public sealed record StageDrawDto(
+    Guid Id,
+    DrawResolutionKind Kind,
+    DrawStatus Status,
+    DrawResolutionState ResolutionState,
+    IReadOnlyList<StageDrawSlotPlacementDto> SlotPlacements,
+    IReadOnlyList<StageDrawGroupPlacementDto> GroupPlacements,
+    bool IsApplied,
+    bool IsObsoleteForConsumption);
+
+/// <summary>
+/// Slot placement result summary.
+/// </summary>
+/// <param name="SlotKey">Destination slot.</param>
+/// <param name="EntryId">Placed entry.</param>
+/// <param name="DisplayName">Display name when known.</param>
+/// <param name="ShortName">Short name when known.</param>
+/// <param name="LogoMediaId">Optional Media Guid for the logo.</param>
+/// <param name="PrimaryColor">Optional primary kit color (#RRGGBB).</param>
+public sealed record StageDrawSlotPlacementDto(
+    string SlotKey,
+    Guid EntryId,
+    string? DisplayName,
+    string? ShortName = null,
+    Guid? LogoMediaId = null,
+    string? PrimaryColor = null);
+
+/// <summary>
+/// Group placement result summary.
+/// </summary>
+/// <param name="GroupId">Destination group.</param>
+/// <param name="GroupDisplayName">Group display name when known.</param>
+/// <param name="EntryId">Placed entry.</param>
+/// <param name="DisplayName">Entry display name when known.</param>
+/// <param name="ShortName">Short name when known.</param>
+/// <param name="LogoMediaId">Optional Media Guid for the logo.</param>
+/// <param name="PrimaryColor">Optional primary kit color (#RRGGBB).</param>
+public sealed record StageDrawGroupPlacementDto(
+    Guid GroupId,
+    string? GroupDisplayName,
+    Guid EntryId,
+    string? DisplayName,
+    string? ShortName = null,
+    Guid? LogoMediaId = null,
+    string? PrimaryColor = null);

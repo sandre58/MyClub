@@ -1,0 +1,11 @@
+<Project>
+  <!--
+    Copy this file to Directory.Build.local.props (gitignored) for local-only overrides.
+  -->
+
+  <!-- Consume local MyNet packages from ../MyNet/packages (0.0.0-local). -->
+  <Import Project="$(MSBuildThisFileDirectory)build/local-mynet-feed.props" />
+
+  <!-- Emit MyClub 0.0.0-local packages on every build (when IsPackable): -->
+  <!-- <Import Project="$(MSBuildThisFileDirectory)build/local-nuget-pack.props" /> -->
+</Project>

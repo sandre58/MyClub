@@ -1,0 +1,61 @@
+---
+description: Play'Up recurring UI patterns — overview, next action, match hero, empty/loading/error
+globs: src/PlayUp/web/**
+alwaysApply: false
+---
+
+# Patterns
+
+Reference implementations: `src/PlayUp/web/src/design-lab/` (visual arbiter).
+
+## Overview (Vue d'ensemble)
+
+Composition emerges from lifecycle state, top to bottom:
+1. Hero band (≈1.6/1): "Où en est-on ?" (hero numeric + one-sentence reading
+   + cycle line) | "Prochaine action" (eyebrow + title + why + primary button).
+2. À traiter groupe (only if items exist): D9 rows.
+3. Sport band (≈1.45/1): current matchday | compact standings.
+
+## Prochaine action
+
+Always exactly one, always with a "why" line, always the only primary button
+of the surface.
+
+## Match Hero (fiche match)
+
+Object header with three states — center swaps, frame stays:
+- Scheduled: kickoff time as hero numeric, "Démarrer le match" primary.
+- Live: score hero + minute badge, +/− stepper under each team,
+  "Terminer le match" primary.
+- Finished: score hero, "Résultat officiel" pill, ghost "Corriger le résultat".
+Meta band below: calendar/clock/pin icons + referee, on surface-secondary.
+
+## Calendrier
+
+One panel; rounds as typographic sections (label + date + state pill);
+MatchRow per match; live rows outrank everything.
+
+## Classement
+
+Legend before table; zones as left bars; Pts dominant; trends slanted.
+
+## Accueil
+
+Hub ops hors Shell: lockup + one panel of interactive rows (crest, name,
+declared dates, status, chevron). Hover A: `--color-surface-secondary`
+full-bleed wash; chevron → ink. Pressed = hover. No brand bar, shadow, lift,
+or underline. Whole row is one hit target. Lockup proportions (mark vs
+wordmark + tagline) are the same at desktop / tablet / phone: the block
+scales as a unit when the 42rem column is narrower. Phone: padding and
+safe-area tighten; Créer stacks under the section title.
+
+## Empty / loading / error
+
+- Empty states explain **what will appear and why** ("Les matchs apparaîtront
+  ici dès que…"), optional single secondary action. Never an illustration dump.
+- Loading: `WaitMark` — Accueil mark, orbiting ring, label **centered under
+  the animation**. Sizes: `home` (Accueil), `page` (workspace), `region`
+  (panel). No dashed box, no shimmer. Copy stays « Chargement… » (reads).
+  Buttons: `PendingLabel` spinner + « Traitement… » (writes); the mark is
+  not a control glyph.
+- Error: `error` tone, reserved for real failures — never for pending work.

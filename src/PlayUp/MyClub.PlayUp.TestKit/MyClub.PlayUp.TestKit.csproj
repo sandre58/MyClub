@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>
+      Play'Up TestKit — shared deterministic situation construction for automated tests.
+      Orchestrates Domain/Application only; no DevSeed, Media, or Infrastructure references.
+    </Description>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MyClub.PlayUp.Domain\MyClub.PlayUp.Domain.csproj" />
+    <ProjectReference Include="..\MyClub.PlayUp.Application\MyClub.PlayUp.Application.csproj" />
+  </ItemGroup>
+
+</Project>

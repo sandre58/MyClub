@@ -1,0 +1,66 @@
+{
+  "navigation": {
+    "overview": "Vue d'ensemble",
+    "structure": "Structure",
+    "matches": "Calendrier & matchs",
+    "classements": "Classements",
+    "teams": "Équipes",
+    "regulation": "Règlement"
+  },
+  "groups": {
+    "pilotage": "Pilotage",
+    "competition": "Compétition",
+    "referentiel": "Référentiel"
+  },
+  "sidebar": {
+    "label": "Barre latérale principale",
+    "primary": "Navigation principale",
+    "expand": "Développer la barre latérale",
+    "collapse": "Réduire la barre latérale",
+    "menuOpen": "Ouvrir le menu de navigation",
+    "menuClose": "Fermer le menu de navigation",
+    "home": "Accueil Play’Up"
+  },
+  "competition": {
+    "choose": "Choisir une compétition",
+    "none": "Aucune compétition",
+    "loading": "Chargement",
+    "unavailable": "Contexte indisponible",
+    "contextLabel": "Contexte compétition"
+  },
+  "attention": {
+    "label": "À traiter",
+    "trigger_zero": "À traiter, aucun élément",
+    "trigger_one": "À traiter, {{count}} élément",
+    "trigger_other": "À traiter, {{count}} éléments",
+    "closeDrawer": "Fermer À traiter",
+    "emptyHost": "Aucune compétition n’est disponible.",
+    "noContext": "Ouvrez une compétition pour voir ce qui demande votre attention.",
+    "loadError": "Impossible de charger les éléments à traiter.",
+    "loadErrorAuth": "Vous n’avez pas accès à cette liste.",
+    "loadErrorServer": "Le service est momentanément indisponible. Réessayez dans un instant.",
+    "retry": "Réessayer",
+    "emptyTitle": "Rien à traiter pour l'instant",
+    "emptyHint": "Les éléments apparaissent ici lorsqu’une situation bloquée ou en attente est signalée.",
+    "emptyStructureLink": "Ouvrir Structure",
+    "lede": "Situations qui demandent une action.",
+    "ledePaused": "Constats sur les phases en pause. Les situations recensées restent consultables. Certaines actions nécessitent de reprendre la phase.",
+    "groupBlocking": "Bloquant",
+    "groupAttention": "À traiter"
+  },
+  "preferences": {
+    "open": "Ouvrir les préférences",
+    "title": "Préférences",
+    "language": "Langue",
+    "locale": {
+      "fr": "Français",
+      "en": "English"
+    },
+    "theme": {
+      "label": "Thème",
+      "system": "Système",
+      "light": "Clair",
+      "dark": "Sombre"
+    }
+  }
+}

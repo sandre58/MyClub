@@ -1,0 +1,29 @@
+---
+description: No cargo-cult patterns — require a real problem, alternatives, and trade-offs
+alwaysApply: true
+---
+
+# No Cargo Cult
+
+“Best practice” is **never** sufficient justification for a non-trivial pattern, abstraction, or library.
+
+For each candidate:
+
+1. name the **problem**
+2. verify the problem **exists here**
+3. list main **alternatives**
+4. state the **trade-off**
+5. choose the **simplest** solution that meets the need
+
+Especially strict for **React** and **TypeScript**.
+
+## Do not introduce by default
+
+- Redux / Zustand (or other global stores) without demonstrated shared-client-state need
+- Generic abstractions, premature design systems
+- Frontend Repository / artificial Service layer mirroring .NET
+- Premature generic hooks, premature `useMemo` / `useCallback` / `memo`
+- Frontend CQRS or excess architecture “like the backend”
+- Libraries added only because they are popular
+
+If the simpler approach works, use it. Escalate complexity only when pain is real or measurable.

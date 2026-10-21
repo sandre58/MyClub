@@ -1,95 +1,198 @@
-<div id="top"></div>
+﻿<div align="center">
 
-<!-- PROJECT INFO -->
-<br />
-<div align="center">
-  <a href="https://github.com/sandre58/MyClub">
-    <img src="images/logo.png" width="256" height="256">
-  </a>
+# MyClub
 
-<h1 align="center">My Club</h1>
+**Software suite for amateur sports clubs** — competitions, teams, and training as focused products, starting with Play'Up.
 
-[![Downloads][downloads-shield]][downloads-url]
-[![Forks][forks-shield]][forks-url]
-[![Stargazers][stars-shield]][stars-url]
-[![Issues][issues-shield]][issues-url]
-[![MIT License][license-shield]][license-url]
+[![License](https://img.shields.io/github/license/sandre58/MyClub?style=for-the-badge)](https://github.com/sandre58/MyClub/blob/main/LICENSE)
+[![GitHub issues](https://img.shields.io/github/issues/sandre58/MyClub?style=for-the-badge)](https://github.com/sandre58/MyClub/issues)
+[![Contributors](https://img.shields.io/github/contributors/sandre58/MyClub?style=for-the-badge)](https://github.com/sandre58/MyClub/graphs/contributors)
+[![Last commit](https://img.shields.io/github/last-commit/sandre58/MyClub/main?style=for-the-badge)](https://github.com/sandre58/MyClub/commits/main/)
+[![Repo size](https://img.shields.io/github/repo-size/sandre58/MyClub?style=for-the-badge)](https://github.com/sandre58/MyClub)
 
-  <p align="center">
-    <br />
-    Welcome to the Club Management WPF Applications repository! This repository contains a suite of WPF applications designed to manage various aspects of club life. From handling player rosters and scheduling training sessions to tracking team results and league standings, these applications provide comprehensive tools to efficiently run and organize a sports club. Whether you're a coach, manager, or club administrator, these applications help streamline operations, improve communication, and enhance overall club performance.
-  </p>
+[![.NET](https://img.shields.io/badge/.NET-11.0-512BD4?style=for-the-badge)](https://dotnet.microsoft.com/download/dotnet/11.0)
+[![Language](https://img.shields.io/github/languages/top/sandre58/MyClub?style=for-the-badge)](https://github.com/sandre58/MyClub/search?l=c%23)
+[![Architecture](https://img.shields.io/badge/Architecture-DDD%20%7C%20Modular%20Monolith-2EA44F?style=for-the-badge)](docs/README.md)
 
-[![Language][language-shield]][language-url]
-[![Build][build-shield]][build-url]
+[![CI](https://github.com/sandre58/MyClub/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/sandre58/MyClub/actions/workflows/ci.yml)
 
-</div>
+[![Semantic Versioning](https://img.shields.io/badge/SemVer-2.0.0-3C1E70?style=for-the-badge)](https://semver.org/)
+[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-FE5196?style=for-the-badge)](https://www.conventionalcommits.org/)
 
-## Features
+[![GitHub stars](https://img.shields.io/github/stars/sandre58/MyClub?style=social)](https://github.com/sandre58/MyClub/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/sandre58/MyClub?style=social)](https://github.com/sandre58/MyClub/network/members)
 
-- **Roster Management**: Easily manage player rosters, including adding, updating, and removing player information.
-- **Training Management**: Schedule training sessions, track attendance, and assign exercises to players.
-- **Match Results**: Record and track the results of matches played by the club's teams.
-- **League Standings**: Monitor and update league standings to keep track of the team's performance.
-- **Communication**: Facilitate communication with players through integrated messaging features.
-
-## Applications included
-
-### Team'up
-
-<div align="center">
-<img src="images/teamup.png" width="100" height="100">
-<br />
-
-[![Framework][framework-shield]][framework-url]
-[![Version][teamup-version-shield]][teamup-version-url]
+[Documentation](docs/README.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [Report a bug](https://github.com/sandre58/MyClub/issues)
 
 </div>
 
-Experience comprehensive football team management with this application designed to streamline every aspect of team organization. From scheduling and tracking training sessions to managing player rosters and facilitating communication, this tool empowers coaches and managers to efficiently oversee their football teams. With features for monitoring player attendance, assigning drills, accessing player profiles, and communicating important updates, this application simplifies the complexities of team management, enabling coaches to focus on maximizing team performance and fostering a cohesive and successful football program.
+---
 
-### Scor'er
+## Overview
 
-<div align="center">
-<img src="images/scorer.png" width="100" height="100">
-<br />
+**MyClub** is a suite of specialized applications that help amateur sports clubs (starting with football) modernize day-to-day organization: competitions, teams, and training — without replacing volunteers with enterprise software they do not need.
 
-[![Framework][framework-shield]][framework-url]
-[![Version][scorer-version-shield]][scorer-version-url]
+| Highlight | Description |
+| :-------- | :---------- |
+| **Product suite** | Independent apps that stay valuable alone and stronger together. |
+| **Domain-first** | Rich domain model, clean architecture, long-term maintainability. |
+| **Play'Up first** | Customizable amateur competitions are the current implementation focus. |
+| **Quality-minded** | Automated tests, analyzers, Conventional Commits, and GitHub Actions CI. |
 
-</div>
+Vision, product roadmap, and architectural decisions are maintained in **Notion**. This repository is the source of truth for **code**, issues, pull requests, and releases.
 
-Introducing a versatile tournament management application that empowers users to create and oversee customized sports tournaments effortlessly. With intuitive features for scheduling matches, managing participant registrations, and tracking scores, this application caters to a wide range of sporting events and formats. Whether organizing local leagues, friendly competitions, or large-scale tournaments, users can tailor the experience to suit their specific needs, ensuring seamless and enjoyable sporting experiences for all participants.
+---
 
-## Installation
+## Vision
 
-To use the applications in this repository, clone the repository to your local machine and build the projects using Visual Studio.
+Amateur clubs often run on spreadsheets, messaging apps, and tools that do not match sports workflows. MyClub aims to become a practical digital toolbox for volunteers, coaches, and organizers — simple, specialized, and adapted to amateur constraints.
+
+Initial domain: **amateur football**.
+
+---
+
+## Products
+
+| Product | Role | Status |
+| :------ | :--- | :----- |
+| **Play'Up** | Create and run customizable competitions (formats, rules, fixtures, results, standings, stats). | **In development** — Domain + Host API + organizer SPA (shell, Accueil, Vue d'ensemble, Structure, match hub). See Notion Play'Up + [`docs/guides/http-api-contract.md`](docs/guides/http-api-contract.md). |
+| **Team'up** | Day-to-day team life (rosters, convocations, attendance). | Planned (not started) |
+| **Train'in** | Training session design and follow-up. | Future (not started) |
+
+**Play'Up** is designed to work **autonomously**: participants can be managed without requiring personal accounts. Catalog/templates are an application capability for bootstrapping competitions — not a separate bounded context.
+
+---
+
+## Architecture
+
+**Target style:** Modular Monolith with Domain / Application / Infrastructure / Host for each product (Play'Up first). No shared “kitchen-sink” library and no Platform layer until a real trigger exists.
+
+**Current codebase:** Domain + Application use cases + Infrastructure (EF Core / PostgreSQL) + Host Minimal APIs + React SPA (`src/PlayUp/web`). Host exposes organizer write/read surfaces (stage prepare, draw publish/apply, match lifecycle, progression, competition/stage/match reads, and additional workspace/structure/attention reads). Contract details: [`docs/guides/http-api-contract.md`](docs/guides/http-api-contract.md). Catalog bootstrap remains a later tranche.
+
+```text
+src/
+└── PlayUp/
+    ├── MyClub.PlayUp.Domain/           # Competition · Stage · Match · Common · Rules · Scheduling
+    ├── MyClub.PlayUp.Application/      # Use cases + ports + UseCaseExecutor (named methods)
+    ├── MyClub.PlayUp.Infrastructure/   # PlayUpDbContext, AR mappings, migrations, PostgreSQL DI
+    ├── MyClub.PlayUp.Host/             # Composition root · Minimal APIs
+    └── web/                            # React SPA (Vite · TypeScript · TanStack Query)
+tests/
+    ├── MyClub.PlayUp.Domain.Tests/
+    ├── MyClub.PlayUp.Application.Tests/
+    ├── MyClub.PlayUp.Infrastructure.Tests/ # Unit + Testcontainers PostgreSQL (Category=Integration)
+    └── MyClub.PlayUp.Host.Tests/           # WebApplicationFactory + Testcontainers (Category=Integration)
+```
+
+**Dependency flow:**
+
+```text
+Domain  ←  Application  ←  Infrastructure
+                ↑
+               Host (composition root + Minimal APIs)
+```
+
+Details and naming conventions live in the Notion project *MyClub* (architecture pages and **Décisions** database) — not as ADR Markdown in this repository.
+
+This repository is an **application suite**: it does **not** publish NuGet packages today (`IsPackable=false` by default).
+
+---
+
+## Tech stack
+
+| Area | Choice |
+| :--- | :----- |
+| Runtime | .NET 11 |
+| Style | DDD, Modular Monolith |
+| API | ASP.NET Core Minimal APIs |
+| Frontend | React SPA · TypeScript · Vite · React Router · TanStack Query (`src/PlayUp/web`) |
+| Persistence | EF Core 11 + PostgreSQL 18 (Compose for local Host; Testcontainers for integration tests) |
+| Tests | xUnit, FluentAssertions, Moq (via Central Package Management); Vitest/RTL on the web app |
+| Quality | Nullable, StyleCop / Roslynator / NetAnalyzers, Coverlet |
+| Versioning | GitVersion + SemVer + Conventional Commits |
+
+---
+
+## Prerequisites
+
+- [.NET 11 SDK](https://dotnet.microsoft.com/download/dotnet/11.0) (see [`global.json`](global.json))
+- Git
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) — required for local PostgreSQL (`compose.yml`) and for Testcontainers integration tests
+- Node.js (LTS) + npm — for the Play'Up web SPA in [`src/PlayUp/web`](src/PlayUp/web) (see that folder's README)
+
+---
+
+## Getting started
+
+```bash
+dotnet restore
+dotnet build
+dotnet test --filter Category!=Integration
+```
+
+### Local PostgreSQL (Host development)
+
+Persistent PostgreSQL 18 via Docker Compose. Copy `.env.example` → `.env`, set a local password, then:
+
+```bash
+docker compose up -d
+dotnet user-secrets set "ConnectionStrings:PlayUp" "Host=localhost;Port=5432;Database=myclub;Username=myclub;Password=YOUR_LOCAL_PASSWORD" --project src/PlayUp/MyClub.PlayUp.Host
+dotnet tool restore
+dotnet ef database update --project src/PlayUp/MyClub.PlayUp.Infrastructure --startup-project src/PlayUp/MyClub.PlayUp.Host
+dotnet run --project src/PlayUp/MyClub.PlayUp.Host
+```
+
+Full bootstrap (volume persistence, secrets vs `.env`, `docker compose down` vs `down -v`, Compose vs Testcontainers): [docs/guides/local-persistence.md](docs/guides/local-persistence.md).
+
+### Integration tests
+
+PostgreSQL integration tests (`Category=Integration`) use **Testcontainers** (ephemeral containers), not the Compose volume:
+
+```bash
+dotnet test
+```
+
+Optional coverage:
+
+```bash
+dotnet test /p:CollectCoverage=true
+```
+
+---
+
+## Repository layout
+
+| Path | Purpose |
+| :--- | :------ |
+| `src/PlayUp/` | Play'Up product projects (Domain / Application / Infrastructure / Host + `web/` SPA) |
+| `tests/` | Test projects (`*Tests`) |
+| `build/` | Shared MSBuild props |
+| `compose.yml` | Local PostgreSQL 18 (Docker Compose) |
+| `docs/` | Contributor docs (pointers to Notion; guides) |
+| `.config/` | Local .NET tools (`dotnet-ef`) |
+| `.cursor/rules/` | AI assistant conventions for this repo |
+
+---
+
+## Conventions
+
+- **Commits:** [Conventional Commits](.gitmessage)
+- **Branches:** `main` / `feature/*`
+- **Code:** `net11.0`, nullable enabled, [`.editorconfig`](.editorconfig), [`stylecop.json`](stylecop.json)
+- **Packages:** Central Package Management — [`Directory.Packages.props`](Directory.Packages.props)
+- **Public docs:** English (`README`, `CONTRIBUTING`, `SECURITY`, contributor `docs/**`)
+- **Decisions:** Notion **Décisions** database — never ADR Markdown in Git
+
+---
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Please run `dotnet build` and `dotnet test --filter Category!=Integration` before opening a pull request. Run the full `dotnet test` suite when Docker is available.
+
+Security reports: [SECURITY.md](SECURITY.md).
+
+---
 
 ## License
 
-Copyright © Stéphane ANDRE.
-
-My Club is provided as-is under the MIT license. For more information see [LICENSE](./LICENSE).
-
-<!-- MARKDOWN LINKS & IMAGES -->
-<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[language-shield]: https://img.shields.io/github/languages/top/sandre58/MyClub
-[language-url]: https://github.com/sandre58/MyClub
-[forks-shield]: https://img.shields.io/github/forks/sandre58/MyClub?style=for-the-badge
-[forks-url]: https://github.com/sandre58/MyClub/network/members
-[stars-shield]: https://img.shields.io/github/stars/sandre58/MyClub?style=for-the-badge
-[stars-url]: https://github.com/sandre58/MyClub/stargazers
-[issues-shield]: https://img.shields.io/github/issues/sandre58/MyClub?style=for-the-badge
-[issues-url]: https://github.com/sandre58/MyClub/issues
-[license-shield]: https://img.shields.io/github/license/sandre58/MyClub?style=for-the-badge
-[license-url]: https://github.com/sandre58/MyClub/blob/main/LICENSE
-[build-shield]: https://img.shields.io/github/actions/workflow/status/sandre58/MyClub/ci.yml?logo=github&label=CI
-[build-url]: https://github.com/sandre58/MyClub/actions
-[downloads-shield]: https://img.shields.io/github/downloads/sandre58/MyClub/total?style=for-the-badge
-[downloads-url]: https://github.com/sandre58/MyClub/releases
-[framework-shield]: https://img.shields.io/badge/.NET-8.0-purple
-[framework-url]: https://github.com/sandre58/MyClub/tree/main/src/Teamup/MyClub.Teamup.Wpf
-[teamup-version-shield]: https://img.shields.io/badge/version-1.0.0-blue
-[teamup-version-url]: https://github.com/sandre58/MyClub/releases
-[scorer-version-shield]: https://img.shields.io/badge/version-1.0.0-blue
-[scorer-version-url]: https://github.com/sandre58/MyClub/releases
+[MIT](LICENSE) © Stéphane ANDRE

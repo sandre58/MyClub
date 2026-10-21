@@ -1,0 +1,62 @@
+{
+  "title": "Classements",
+  "back": "Vue d'ensemble",
+  "context": {
+    "format": "Format"
+  },
+  "loading": "Chargement des classements…",
+  "error": "Impossible de charger les classements.",
+  "empty": "Aucun classement à afficher pour le moment.",
+  "emptyHint": "Les matchs joués alimenteront le classement lorsqu’ils seront disponibles.",
+  "notApplicable": {
+    "title": "Classement non applicable",
+    "CupFormat": "Ce format (coupe) ne produit pas de classement.",
+    "NoStructure": "Aucune structure sportive ne permet encore de calculer un classement.",
+    "unknown": "Le classement n’est pas applicable à cette compétition."
+  },
+  "table": {
+    "overall": "Classement général",
+    "group": "{{name}}",
+    "stage": "{{name}}"
+  },
+  "columns": {
+    "position": "Pos.",
+    "team": "Équipe",
+    "played": "PJ",
+    "wins": "V",
+    "draws": "N",
+    "losses": "D",
+    "goalsFor": "BP",
+    "goalsAgainst": "BC",
+    "goalDifference": "Diff.",
+    "points": "Pts"
+  },
+  "lastMatchday": {
+    "title": "Dernière journée",
+    "matchday": "Journée {{n}}",
+    "empty": "Aucun résultat à afficher pour le moment.",
+    "pending": "—",
+    "openMatches": "Voir tous les matchs",
+    "resultType": {
+      "Forfeit": "Forfait",
+      "WalkOver": "Walk-over"
+    }
+  },
+  "regulation": {
+    "title": "Règlement du classement",
+    "lede": "Barème et paramètres de match issus de la structure — le classement affiché ci-dessus est calculé par le moteur métier.",
+    "pointsHeading": "Barème de points",
+    "pointsValue": "{{value}} pts",
+    "pointsWin": "Victoire",
+    "pointsDraw": "Nul",
+    "pointsLoss": "Défaite",
+    "match": "Durée du match",
+    "matchValue": "{{periods}} × {{duration}} min",
+    "teams": "Effectif prévu",
+    "teamsValue": "{{min}} – {{max}} équipes",
+    "rankingHint": "Les critères de départage (différence de buts, etc.) restent ceux du Domain ; ils ne sont pas recalculés ici.",
+    "loading": "Chargement du règlement…",
+    "unavailable": "Le détail du règlement n’est pas disponible pour le moment.",
+    "openStructure": "Voir la structure"
+  }
+}

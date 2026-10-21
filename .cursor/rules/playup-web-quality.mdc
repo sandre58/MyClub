@@ -1,0 +1,47 @@
+---
+description: Play’Up web quality stack, data path, CI gates
+globs: src/PlayUp/web/**/*.{ts,tsx,css,json}
+alwaysApply: false
+---
+
+# Play’Up web — quality
+
+## Stack (intentional)
+
+| Concern | Tool | Notes |
+|---|---|---|
+| Format | **Prettier** | Not oxfmt/Biome |
+| Lint | **Oxlint** | `--deny-warnings`; do **not** add ESLint in parallel |
+| Types | `tsc -b` (`npm run typecheck`) | Strict via `tsconfig` |
+| CSS lint | **Stylelint** | `lint:css` — `src/**/*.css` (CI); README notes some legacy page CSS intentionally out of scope for DS-only rules |
+| Hygiene audits | `css:audit`, `i18n:audit`, `tile:check` | Structure-scoped scripts under `scripts/`; not CI gates (lot C7 / AUD-0001) |
+| Coverage | Vitest V8 | `test:coverage` — measurement only, no CI threshold |
+
+```bash
+cd src/PlayUp/web
+npm run format:check
+npm run lint
+npm run lint:css
+npm run typecheck
+npm run test:run
+```
+
+CI `web` fails on **errors and Oxlint warnings** from those steps (plus `build` and Playwright smoke).
+
+## Data path
+
+- HTTP → **`api.ts` only** (`fetch` lives there). Do not call `fetch` from pages/components.
+- Server state → **TanStack Query** (`useQuery` / `useMutation`); do not load API data in `useEffect`.
+- Query keys → **`queryKeys.ts`** factory; do not invent parallel key shapes.
+- Do not add a second HTTP client or a global client-state library without a demonstrated need.
+
+## Loading UX
+
+Section/tile **initial load** vs **background refresh** → see `loading-states.mdc`.
+
+## Conventions
+
+- Prettier: single quotes, trailing commas, semis, `printWidth` 80 (CSS 120).
+- Prefer extracting non-component exports over disabling `only-export-components`.
+- Form `onSubmit`: `SubmitEvent`, not deprecated `FormEvent`.
+- Source comments: English; current constraints only — see `documentation.mdc`.

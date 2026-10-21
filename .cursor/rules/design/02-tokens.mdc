@@ -1,0 +1,35 @@
+---
+description: Play'Up design tokens — colors, spacing, radius, borders, shadows
+globs: src/PlayUp/web/**
+alwaysApply: false
+---
+
+# Tokens
+
+Single source: `src/PlayUp/web/src/design-system/` (scoped to `.ds-root`).
+Primitives (`palettes/slate.css`) feed semantic tokens (`tokens/*.css`).
+**Always use semantic tokens** (`--color-*`, `--space-*`, `--radius-*`,
+`--shadow-*`, `--text-*`); never primitives, never raw hex in components.
+
+## Color roles
+
+- Canvas `--color-canvas` / Surface `--color-surface` / Surface secondary.
+- Text: `--color-text-primary` / `--color-text-secondary`.
+- Brand `--color-brand` (+hover, +deep, +bright) — actions and brand accents;
+  deep/bright = logo gradient endpoints only.
+- Semantic: `success`, `attention`, `error`, `info`, **`live`** (activity ≠ success).
+- Chrome: `--color-chrome` + `on-chrome` + `chrome-accent` (uses brand-bright).
+- Brand angle: `--brand-skew: -12deg` (`tokens/brand.css`).
+
+## Typography (numeric roles)
+
+- `--text-score`, `--text-hero-num`, `--text-row-score`, `--text-standings-pts`, `--text-counter`
+- Classes: `ds-num`, `ds-num-score`, `ds-num-hero`, `ds-num-row-score`, `ds-num-pts`, `ds-num-counter`
+
+## Forbidden
+
+- No raw hex / abandoned palette values in components; no `color-mix()` improvisations outside token files.
+- No new spacing/radius/shadow values: use the existing scale
+  (`--space-4/8/12/16/24/32`, `--radius-control/panel`, `--shadow-*`).
+
+If a needed token does not exist, stop and flag it instead of hardcoding.

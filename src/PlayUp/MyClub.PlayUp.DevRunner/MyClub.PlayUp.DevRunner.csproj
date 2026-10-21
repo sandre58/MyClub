@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <Description>CLI composition root for Play'Up Development Workspace (reset + scenario seed).</Description>
+    <IsPackable>false</IsPackable>
+    <NoWarn>$(NoWarn);CA2007;CA1303;CA1515;SA0001</NoWarn>
+    <UserSecretsId>MyClub.PlayUp.Host</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MyClub.PlayUp.Development\MyClub.PlayUp.Development.csproj" />
+    <ProjectReference Include="..\MyClub.PlayUp.Infrastructure\MyClub.PlayUp.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Media\MyClub.Media.Infrastructure\MyClub.Media.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <Content Include="..\MyClub.PlayUp.Development\Assets\seed-logos\**\*">
+      <Link>Assets\seed-logos\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>

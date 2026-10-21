@@ -1,0 +1,38 @@
+---
+description: Testing conventions — behaviour, TestKit, Integration
+globs: "**/*Tests*/**/*.{cs,csproj}"
+alwaysApply: false
+---
+
+# Testing
+
+- Add tests for important business logic and regressions.
+- Prefer behaviour over implementation details; name tests by scenario / expectation / rule.
+- Notion reference business cases may inspire tests; they are not automatically unit tests.
+- Prefer tests that build the case without bypassing invariants or the model.
+
+## Stack
+
+- xUnit, FluentAssertions, Moq, AutoFixture — via `build/dependencies.props` for `*Tests`.
+- Coverage via `.runsettings` (Coverlet) when `CollectCoverage=true`.
+- Play’Up web: Vitest / Testing Library — see `playup-web-quality.mdc`.
+
+## TestKit
+
+- Domain / Application situations → **`MyClub.PlayUp.TestKit`** (shared with Development).
+- Do not invent a parallel situation kit or pull Infrastructure into TestKit.
+
+## Integration
+
+- `Category=Integration` → Testcontainers PostgreSQL (Docker). Skip locally with `--filter Category!=Integration`.
+- Do not point those tests at the Compose `myclub` volume.
+
+## Development.Tests (recette protocols)
+
+- **`MyClub.PlayUp.Development.Tests`** wires **Infrastructure** for full-stack integration (seeds, `UseCaseExecutor`, EF) — intentional exception to the Development library boundary.
+- Prefer **TestKit** situations inside tests; do not reference **Host** or **DevRunner** from this project.
+- Executable Cup/Structure protocols live here (e.g. `CupC2ImpasseRecetteProtocolTests`); see `docs/design/structure-lifecycle/cup-materialize-recette-protocol.md`.
+
+## Refactoring
+
+- Understand behaviour and regression risk first; prefer not mixing large refactors with features in one change.

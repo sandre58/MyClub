@@ -1,8 +1,0 @@
-<Project>
-  <Target Name="RemoveWpfTemp" AfterTargets="Build">
-    <ItemGroup>
-      <WpfTempDirectories Include="$([System.IO.Directory]::GetDirectories(&quot;$(OutputPath)..&quot;,&quot;$(MSBuildProjectName)_*_wpftmp&quot;))"/>
-    </ItemGroup>
-    <RemoveDir Directories="@(WpfTempDirectories)" />
-  </Target>
-</Project>

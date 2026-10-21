@@ -1,0 +1,224 @@
+// -----------------------------------------------------------------------
+// <copyright file="ReplaceStageProgressionRules.cs" company="Stéphane ANDRE">
+// Copyright (c) Stéphane ANDRE. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
+
+using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Matches;
+using MyClub.PlayUp.Domain.Rules;
+using MyClub.PlayUp.Domain.Stages;
+
+namespace MyClub.PlayUp.Application.Stages;
+
+/// <summary>
+/// Application use case: replace ProgressionRules on a Stage (thin authoring).
+/// Prefers <see cref="ProgressionIntentSpec"/> when provided; otherwise path specs.
+/// </summary>
+public static class ReplaceStageProgressionRules
+{
+    /// <summary>
+    /// Replaces progression from authoring intents (null/empty clears).
+    /// </summary>
+    public static void Execute(
+        Stage stage,
+        IReadOnlyList<ProgressionIntentSpec>? intents,
+        IClock clock,
+        IReadOnlyList<Stage>? competitionStages = null,
+        IReadOnlyList<Match>? upstreamMatches = null,
+        IReadOnlyDictionary<StageId, IReadOnlyList<Match>>? destinationMatchesByStage = null)
+    {
+        ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(clock);
+
+        ProgressionRules? afterRules;
+        if (intents is null || intents.Count == 0)
+        {
+            afterRules = null;
+        }
+        else
+        {
+            var domainIntents = new List<ProgressionIntent>(intents.Count);
+            foreach (var spec in intents)
+            {
+                ArgumentNullException.ThrowIfNull(spec);
+                domainIntents.Add(ToDomainIntent(stage, spec));
+            }
+
+            afterRules = ProgressionRules.FromIntents(domainIntents, stage.Rounds, stage.BracketPairs);
+        }
+
+        EnsureAndApply(stage, afterRules, clock, competitionStages, upstreamMatches, destinationMatchesByStage);
+    }
+
+    /// <summary>
+    /// Replaces progression paths on the stage (null/empty clears rules).
+    /// </summary>
+    public static void Execute(
+        Stage stage,
+        IReadOnlyList<ProgressionPathSpec>? paths,
+        IClock clock,
+        IReadOnlyList<Stage>? competitionStages = null,
+        IReadOnlyList<Match>? upstreamMatches = null,
+        IReadOnlyDictionary<StageId, IReadOnlyList<Match>>? destinationMatchesByStage = null)
+    {
+        ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(clock);
+
+        var afterRules = paths is null || paths.Count == 0 ? null : BuildRulesFromPaths(paths);
+        EnsureAndApply(stage, afterRules, clock, competitionStages, upstreamMatches, destinationMatchesByStage);
+    }
+
+    private static void EnsureAndApply(
+        Stage stage,
+        ProgressionRules? afterRules,
+        IClock clock,
+        IReadOnlyList<Stage>? competitionStages,
+        IReadOnlyList<Match>? upstreamMatches,
+        IReadOnlyDictionary<StageId, IReadOnlyList<Match>>? destinationMatchesByStage)
+    {
+        StructureOperationalExitEditGuard.Ensure(stage, upstreamMatches, "Progression rules");
+        if (competitionStages is not null)
+        {
+            StructureReadyConsumerFeedGate.EnsureProgressionReplaceAllowed(stage, afterRules, competitionStages);
+            StructureProgressionImpactGate.EnsureReplaceAllowed(
+                stage,
+                afterRules,
+                competitionStages,
+                upstreamMatches,
+                destinationMatchesByStage);
+        }
+
+        stage.ReplaceProgressionRulesOperationally(afterRules, clock);
+    }
+
+    private static ProgressionRules BuildRulesFromPaths(IReadOnlyList<ProgressionPathSpec> paths)
+    {
+        var domainPaths = new List<ProgressionPath>(paths.Count);
+        foreach (var spec in paths)
+        {
+            ArgumentNullException.ThrowIfNull(spec);
+            if (!Enum.IsDefined(spec.Outcome))
+            {
+                throw new ApplicationFailureException(
+                    $"Unknown progression outcome '{spec.Outcome}'.",
+                    ApplicationErrorCodes.InvalidStructureIntent);
+            }
+
+            if (string.IsNullOrWhiteSpace(spec.SourcePairKey))
+            {
+                throw new ApplicationFailureException(
+                    "Progression path requires SourcePairKey.",
+                    ApplicationErrorCodes.InvalidStructureIntent);
+            }
+
+            var destination = ResolvePathDestination(
+                spec.DestinationStageId,
+                spec.DestinationSlotKey,
+                spec.DestinationGroupId,
+                spec.DestinationForm);
+
+            domainPaths.Add(
+                new ProgressionPath(
+                    spec.SourcePairKey,
+                    spec.Outcome,
+                    destination));
+        }
+
+        return new ProgressionRules(domainPaths);
+    }
+
+    private static ProgressionDestination ResolvePathDestination(
+        StageId stageId,
+        string? slotKey,
+        GroupId? destinationGroupId,
+        bool destinationForm)
+    {
+        var hasSlot = !string.IsNullOrWhiteSpace(slotKey);
+        var hasGroup = destinationGroupId is not null;
+        var modes = (destinationForm ? 1 : 0) + (hasSlot ? 1 : 0) + (hasGroup ? 1 : 0);
+        return modes > 1
+            ? throw new ApplicationFailureException(
+                "Progression path destination must be exactly one of: population, form, slot, or group.",
+                ApplicationErrorCodes.InvalidStructureIntent)
+            : destinationForm
+            ? ProgressionDestination.ForForm(stageId)
+            : hasGroup
+            ? ProgressionDestination.ForGroup(stageId, destinationGroupId!.Value)
+            : hasSlot
+            ? ProgressionDestination.ForSlot(stageId, slotKey!)
+            : ProgressionDestination.ForPopulation(stageId);
+    }
+
+    private static ProgressionIntent ToDomainIntent(Stage stage, ProgressionIntentSpec spec)
+    {
+        if (!Enum.IsDefined(spec.Outcome))
+        {
+            throw new ApplicationFailureException(
+                $"Unknown progression outcome '{spec.Outcome}'.",
+                ApplicationErrorCodes.InvalidStructureIntent);
+        }
+
+        if (!stage.HasRound(spec.RoundId))
+        {
+            throw new ApplicationFailureException(
+                $"Round '{spec.RoundId}' was not found on the stage.",
+                ApplicationErrorCodes.InvalidStructureIntent);
+        }
+
+        var intentId = spec.IntentId is { } guid && guid != Guid.Empty
+            ? new IntentId(guid)
+            : IntentId.New();
+
+        var slotKeys = spec.DestinationSlotKeys is { Count: > 0 }
+            ? spec.DestinationSlotKeys
+            : string.IsNullOrWhiteSpace(spec.DestinationSlotKey)
+                ? null
+                : [spec.DestinationSlotKey];
+
+        var groupIds = spec.DestinationGroupIds is { Count: > 0 }
+            ? spec.DestinationGroupIds
+            : null;
+
+        return new ProgressionIntent(
+            intentId,
+            spec.Order,
+            spec.RoundId,
+            spec.Outcome,
+            spec.DestinationStageId,
+            slotKeys,
+            groupIds,
+            spec.DestinationForm);
+    }
+}
+
+/// <summary>
+/// Application DTO for one progression path (not a Domain VO).
+/// </summary>
+/// <param name="SourcePairKey">Structural key (Cup = BracketPair.PairKey).</param>
+/// <param name="Outcome">Winner or Loser.</param>
+/// <param name="DestinationStageId">Destination stage.</param>
+/// <param name="DestinationSlotKey">Optional Place slot.</param>
+/// <param name="DestinationGroupId">Optional group destination.</param>
+/// <param name="DestinationForm">When true, ForForm destination.</param>
+public sealed record ProgressionPathSpec(
+    string SourcePairKey,
+    ProgressionOutcome Outcome,
+    StageId DestinationStageId,
+    string? DestinationSlotKey = null,
+    GroupId? DestinationGroupId = null,
+    bool DestinationForm = false);
+
+/// <summary>
+/// Application DTO for one progression intent (Round × Outcome → Destination).
+/// </summary>
+public sealed record ProgressionIntentSpec(
+    Guid? IntentId,
+    int Order,
+    RoundId RoundId,
+    ProgressionOutcome Outcome,
+    StageId DestinationStageId,
+    IReadOnlyList<string>? DestinationSlotKeys = null,
+    string? DestinationSlotKey = null,
+    IReadOnlyList<GroupId>? DestinationGroupIds = null,
+    bool DestinationForm = false);

@@ -1,0 +1,47 @@
+---
+description: Play'Up design principles, source hierarchy, and mandatory workflow before any UI work
+globs: src/PlayUp/web/**
+alwaysApply: false
+---
+
+# Play'Up — Design principles
+
+## Source hierarchy (no competing truths)
+
+| Source | Role | Documents |
+|---|---|---|
+| **Notion** | **Why** — intentions, product/UX decisions, constraints | rationale, trade-offs |
+| **Design Lab** (`/design-lab`) | **What** — the visual arbiter | surfaces, patterns, proportions |
+| **`.cursor/rules/design/`** | **How** — reproduction rules for agents | tokens, components, forbidden patterns |
+| **Code** | Implementation — implements the Lab; does not redefine design | `design-system/`, pages |
+
+If Notion and the Lab diverge, the Lab wins until Notion reflects a **new** arbitrated decision. Notion must not become a second design system.
+
+## Design Lab — normative reference
+
+The Lab is frozen as the visual reference. Extend it only for a **real gap** found during product work — not a new artistic direction, and not because a feature is hard to fit.
+
+## Mandatory workflow for any UI creation or modification
+
+1. **Inspect `/design-lab`** for the closest existing surface or pattern.
+2. **Use matching `.cursor/rules/design/` rules** (attached when editing frontend).
+3. **Search for an existing component** (design system, shell, Lab) before creating one.
+4. **If the Design System cannot express the feature** → flag the gap; propose Lab extension → validation → rules → product. Do not invent a parallel visual language in page CSS.
+5. **Never introduce without explicit justification**: a new color, type size, radius, shadow, spacing value, button style, or card pattern.
+
+## Acceptance test
+
+> Could this have been designed naturally in the Design Lab?
+
+- **Yes** → implement in product code.
+- **No** → return to the Design Lab before coding.
+
+## Principles (priority order)
+
+1. **Lisible avant d'être lu** — hierarchy from scale and position, not color.
+2. **State before action** — "où en est-on ?" before "que faire ?". One primary action per surface.
+3. **Attention ≠ erreur** — `attention` for pending work; `error` for real failures.
+4. **Numbers are the identity** — tabular, bold, larger when sport-meaningful.
+5. **No card farm** — typographic sectioning over nested boxes.
+6. **Grayscale test** — color confirms, never carries meaning alone.
+7. **Sport sans folklore** — personality through scale, numbers, angle system; no broadcast/gamified styling.

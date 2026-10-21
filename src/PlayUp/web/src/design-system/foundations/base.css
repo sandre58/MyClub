@@ -1,0 +1,48 @@
+.ds-root {
+  box-sizing: border-box;
+  min-height: 100vh;
+  background: var(--color-canvas);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans), sans-serif;
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+}
+
+html:has(.shell),
+body:has(.shell),
+#root:has(.shell) {
+  height: 100%;
+  overflow: hidden;
+}
+
+.shell {
+  height: 100dvh;
+}
+
+.ds-root *,
+.ds-root *::before,
+.ds-root *::after {
+  box-sizing: border-box;
+}
+
+/*
+ * Content links only — scoped to shell main + playground preview.
+ * Chrome (sidebar) and overlays are outside this scope so they keep
+ * on-chrome / local colors. Exit links carry their own color.
+ */
+/* prettier-ignore */
+.shell-main a:not(.ds-btn):not(.ds-text-link):not(.ds-back-link):not(.matches-link),
+.ds-preview a:not(.ds-btn):not(.ds-text-link):not(.ds-back-link) {
+  color: var(--color-ink);
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.18em;
+}
+
+/* prettier-ignore */
+.shell-main a:not(.ds-btn):not(.ds-text-link):not(.ds-back-link):not(.matches-link):hover,
+.ds-preview a:not(.ds-btn):not(.ds-text-link):not(.ds-back-link):hover {
+  color: var(--color-ink);
+  text-decoration-thickness: 0.12em;
+}

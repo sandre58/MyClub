@@ -1,0 +1,31 @@
+/*
+ * Family B — selectable entity tile (list/grid).
+ * Shared selected chrome for Teams, Structure topology, qualif/prog rows, draw master.
+ * Border brand + light brand tint via tokens (never hard-coded blue).
+ * Page classes layout content only; do not re-style selection here.
+ */
+
+.ds-selectable-tile {
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+  color: inherit;
+  transition:
+    background-color var(--motion-duration) var(--motion-easing),
+    border-color var(--motion-duration) var(--motion-easing);
+}
+
+.ds-selectable-tile:hover:not(:disabled):not([aria-disabled='true']) {
+  background-color: var(--color-surface-secondary);
+}
+
+.ds-selectable-tile[data-selected='true'],
+.ds-selectable-tile--selected {
+  border-color: var(--color-brand);
+  background: color-mix(in srgb, var(--color-brand) 6%, var(--color-surface));
+}
+
+.ds-selectable-tile[data-selected='true']:hover:not(:disabled):not([aria-disabled='true']),
+.ds-selectable-tile--selected:hover:not(:disabled):not([aria-disabled='true']) {
+  background: color-mix(in srgb, var(--color-brand) 9%, var(--color-surface));
+}

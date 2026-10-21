@@ -1,0 +1,674 @@
+/*
+ * Design Lab — chrome prototype only (/design-lab).
+ * Product grammar lives in design-system/ (Lots 1–6).
+ */
+
+.dlab {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-canvas);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans), sans-serif;
+  font-size: var(--text-body);
+  line-height: var(--leading-normal);
+}
+
+.dlab-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8) var(--space-16);
+  padding: var(--space-8) var(--space-16);
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      transparent 0 12px,
+      color-mix(in srgb, var(--color-attention) 7%, transparent) 12px 24px
+    ),
+    var(--color-surface);
+  border-bottom: var(--border-width) solid var(--color-border-strong);
+  font-size: var(--text-label);
+}
+
+.dlab-bar__title {
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.dlab-bar__group {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.dlab-bar__group-label {
+  color: var(--color-text-secondary);
+  margin-right: var(--space-4);
+}
+
+.dlab-bar__chip {
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-family: inherit;
+  font-weight: var(--font-weight-semibold);
+  padding: var(--space-4) var(--space-12);
+  cursor: pointer;
+}
+
+.dlab-bar__chip[data-active='true'] {
+  background: var(--color-ink);
+  border-color: var(--color-ink);
+  color: var(--color-on-ink);
+}
+
+.dlab-bar__spacer {
+  flex: 1;
+}
+
+.dlab-bar a {
+  color: var(--color-text-secondary);
+}
+
+.dlab-shell {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  background: var(--color-chrome);
+  position: relative;
+  --shell-phone-chrome-end: var(--shell-header-min-height-phone);
+}
+
+.dlab-shell[data-shell-vp='tablet'] {
+  width: 768px;
+  max-width: 100%;
+  margin-inline: auto;
+  min-height: 0;
+}
+
+.dlab-shell[data-shell-vp='phone'] {
+  width: 390px;
+  max-width: 100%;
+  margin-inline: auto;
+  min-height: 667px;
+  overflow: hidden;
+}
+
+.dlab-column {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.dlab-rail .ds-shell-rail__brand {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+}
+
+.dlab-header__crest {
+  display: inline-flex;
+  align-items: center;
+}
+
+.dlab-main {
+  flex: 1;
+  overflow: auto;
+  padding: var(--space-24);
+}
+
+/* ------------------------------------------------------------------ */
+/* Structure PageHead readiness — Lab specimen (not product)          */
+/* ------------------------------------------------------------------ */
+
+.dlab-structure-pagehead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-32);
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+}
+
+.dlab-structure-pagehead__intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  max-width: 42rem;
+}
+
+.dlab-structure-pagehead__title {
+  margin: 0;
+  font-size: var(--text-heading);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--leading-tight);
+}
+
+.dlab-structure-pagehead__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  min-width: 0;
+}
+
+.dlab-structure-pagehead__stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+  min-width: 0;
+}
+
+.dlab-structure-pagehead__shape-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  gap: var(--space-16);
+  min-width: 0;
+}
+
+.dlab-structure-pagehead__shape-caption {
+  margin: 0 0 var(--space-8);
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.dlab-structure-pagehead__specimen {
+  padding: var(--space-16);
+  border: var(--border-width) dashed var(--color-border);
+  border-radius: var(--radius-panel);
+  background: var(--color-canvas);
+  min-width: 0;
+}
+
+.dlab-structure-pagehead__specimen .ds-page-head__note {
+  max-width: none;
+  width: 100%;
+}
+
+/* ------------------------------------------------------------------ */
+/* Wait states — lab-only (not DS foundations)             */
+/* ------------------------------------------------------------------ */
+
+.dlab-wait-board {
+  flex: 1;
+  overflow: auto;
+  padding: var(--space-24);
+}
+
+.dlab-wait-board__intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  max-width: 42rem;
+}
+
+.dlab-wait-board__intro h1 {
+  margin: 0;
+}
+
+.dlab-wait-board__intro p {
+  margin: 0;
+}
+
+.dlab-wait-board__grid {
+  display: grid;
+  grid-template-columns: minmax(4.5rem, auto) 1fr 1fr;
+  gap: var(--space-16) var(--space-24);
+  align-items: start;
+}
+
+.dlab-wait-board__col-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.dlab-wait-board__col-head p {
+  margin: 0;
+}
+
+.dlab-wait-board__row-label {
+  margin: 0;
+  padding-top: var(--space-8);
+}
+
+.dlab-wait-board__cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
+.dlab-wait-board__ghost {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-label);
+}
+
+.dlab-wait-region {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-16);
+}
+
+.dlab-wait {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-8);
+  margin: 0;
+  color: var(--color-brand);
+  font-size: var(--text-label);
+}
+
+.dlab-wait--home,
+.dlab-wait--page {
+  padding: var(--space-24) 0;
+}
+
+.dlab-wait--region {
+  padding: var(--space-8) 0;
+}
+
+.dlab-wait__row {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.dlab-wait__label {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+}
+
+.dlab-wait--c:not(.dlab-wait--button) .dlab-wait__row {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.ds-btn.dlab-wait--button {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-8);
+  color: var(--color-on-brand);
+}
+
+.ds-btn.dlab-wait--button:disabled {
+  opacity: 1;
+  cursor: wait;
+}
+
+.ds-btn.dlab-wait--button .dlab-wait__label,
+.ds-btn.dlab-wait--button {
+  color: var(--color-on-brand);
+}
+
+.dlab-wait-spin {
+  box-sizing: border-box;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 3px solid color-mix(in srgb, currentColor 28%, transparent);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: dlab-wait-spin 0.65s linear infinite;
+  flex: none;
+}
+
+.dlab-wait--button .dlab-wait-spin {
+  width: 1.125rem;
+  height: 1.125rem;
+  border-width: 2px;
+}
+
+.dlab-wait--page .dlab-wait-spin {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.dlab-wait-bar {
+  display: block;
+  width: 8rem;
+  height: 4px;
+  overflow: hidden;
+  background: color-mix(in srgb, currentColor 28%, transparent);
+  transform: skewX(-12deg);
+  transform-origin: left center;
+}
+
+.dlab-wait--region .dlab-wait-bar {
+  width: 6rem;
+}
+
+.dlab-wait-bar__run {
+  display: block;
+  width: 40%;
+  height: 100%;
+  background: currentColor;
+  animation: dlab-wait-slide 0.85s ease-in-out infinite;
+}
+
+@keyframes dlab-wait-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes dlab-wait-slide {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(280%);
+  }
+}
+
+@media (max-width: 48rem) {
+  .dlab-wait-board__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dlab-wait-board__grid > .dlab-wait-board__col-head:first-child {
+    display: none;
+  }
+
+  .dlab-wait-board__row-label {
+    padding-top: var(--space-16);
+  }
+
+  .dlab-wait-region {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dlab-wait-spin,
+  .dlab-wait-bar__run {
+    animation: none;
+  }
+}
+
+/* ---------- Dialog board ---------- */
+
+.dlab-dialog-board {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--space-24);
+}
+
+/* ---------- Toast board ---------- */
+
+.dlab-toast-board {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--space-24);
+}
+
+.dlab-toast {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+  max-width: 42rem;
+}
+
+.dlab-toast__intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.dlab-toast__title {
+  margin: 0;
+  font-size: var(--text-display);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--leading-tight);
+}
+
+.dlab-toast__lede {
+  margin: 0;
+  color: var(--color-text-secondary);
+  max-width: 36rem;
+}
+
+.dlab-toast__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.dlab-toast__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+
+.dlab-toast__checklist {
+  margin: 0;
+  padding-inline-start: 1.25rem;
+  color: var(--color-text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* Tooltip board — surface vs ink lab mock (not a DS recipe) */
+.dlab-tooltip-compare {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--space-16);
+  align-items: start;
+}
+
+.dlab-tooltip-compare__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin: 0;
+}
+
+.dlab-tooltip-compare__item figcaption {
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+  line-height: var(--leading-normal);
+}
+
+.dlab-tooltip-mock {
+  box-sizing: border-box;
+  width: fit-content;
+  max-width: 16rem;
+  padding: var(--space-4) var(--space-8);
+  border-radius: var(--radius-control);
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--leading-normal);
+}
+
+.dlab-tooltip-mock--surface {
+  border: var(--border-width) solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--color-ink) 14%, transparent);
+}
+
+.dlab-tooltip-mock--ink {
+  border: none;
+  background: var(--color-ink);
+  color: var(--color-on-ink);
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--color-ink) 22%, transparent);
+}
+
+/* ---------- Form board ---------- */
+
+.dlab-form-board {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--space-24);
+}
+
+.dlab-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+  max-width: 64rem;
+}
+
+.dlab-form__intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  max-width: 42rem;
+}
+
+.dlab-form__title {
+  margin: 0;
+  font-size: var(--text-display);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--leading-tight);
+}
+
+.dlab-form__lede {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-body);
+  line-height: var(--leading-normal);
+}
+
+.dlab-form__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: var(--space-16);
+  align-items: start;
+}
+
+.dlab-form__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  padding: var(--space-16);
+}
+
+.dlab-form__panel--compose {
+  grid-column: 1 / -1;
+  max-width: 28rem;
+}
+
+.dlab-form__panel-title {
+  margin: 0;
+  font-size: var(--text-heading);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--leading-tight);
+}
+
+.dlab-form__stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.dlab-form__upload-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-16);
+}
+
+.dlab-form__specimen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-8);
+  margin: 0;
+}
+
+.dlab-form__specimen figcaption {
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+}
+
+.dlab-form__hint {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+}
+
+.dlab-form__footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.dlab-editor__switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12);
+}
+
+.dlab-form__presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+
+.dlab-form__preset-btn {
+  margin: 0;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+}
+
+.dlab-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+  max-width: 42rem;
+}
+
+.dlab-dialog__intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.dlab-dialog__title {
+  margin: 0;
+  font-size: var(--text-display);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--leading-tight);
+}
+
+.dlab-dialog__lede {
+  margin: 0;
+  color: var(--color-text-secondary);
+  max-width: 36rem;
+}
+
+.dlab-dialog__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.dlab-dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+
+.dlab-dialog__checklist {
+  margin: 0;
+  padding-inline-start: 1.25rem;
+  color: var(--color-text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}

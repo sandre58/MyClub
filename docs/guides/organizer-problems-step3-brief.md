@@ -1,0 +1,213 @@
+# Organizer problems — Step 3 brief (documentation phase)
+
+**Status:** **Phase 1–2 implemented** (Application + SPA consumption of optional `problem` for pilot surfaces). Further resolver codes optional. Matchs contract doc **still Paused** (local module only; no cross-surface generalization).
+
+**Purpose:** Record Step 2 follow-up: documentation perimeter, alias registry, and **Phase 1** additive read-model enrichment (approved 2026-10-12). Phase 1 **does not** change ProblemDetails, drawer policy, or the Paused Matchs pilot.
+
+**References:**
+
+- [Organizer problems audit](./organizer-problems-audit.md) — Step 2 record, VERIFY checklist, V1–V5 report  
+- [Structure problems contract (Matchs — Paused)](./structure-problems-contract.md)
+
+**Last updated:** 2026-10-12
+
+---
+
+## 1. Objectives
+
+1. **Document** how Step 2 semantic principles would map onto **three existing read families** for **three pilot problems**, without inventing a universal DTO.
+2. **Produce a pilot alias registry** (canon ↔ wire transports), grounded in VERIFY observations — especially POST ↔ read equivalence where it holds, and **documented divergence** where it does not (V2).
+3. **Document read enrichment** per family — **O3 DECIDED:** optional `problem` / `structureIssueSemantics[]` (Phase 1 wire).
+4. **Prepare an implementation proposal** (DTO touch list, migration notes) as a **separate appendix** — submitted for explicit approval; **not** executed under this brief.
+
+---
+
+## 2. Authorization boundary
+
+| Phase 1 — done (2026-10-12) | Still not allowed without explicit approval |
+| :-------------------------- | :------------------------------------------ |
+| Additive optional `problem` on R1/R2 DTOs; `structureIssueSemantics` on R3 | `ProblemDetails` / HTTP error contract changes |
+| `OrganizerProblemSemanticsResolver` + Application tests | Matchs `structure.problems` pilot unpause or generalization |
+| Pilot alias doc + TS type mirrors (no UI consumption) | Drawer denylist / Overview presentation refactor |
+| Git docs (this brief, audit, aliases) | Universal organizer-problem DTO or cross-surface merge |
+
+| Documentation phase (ongoing) | |
+| :---------------------------- | :- |
+| Alias tables, VERIFY extensions, product calls on V2/V3 (O1/O2) | |
+
+---
+
+## 3. Pilot scope
+
+### 3.1 Read families (max three)
+
+| # | Read family | Host / Application entry | Role in Step 3 |
+| :- | :---------- | :----------------------- | :------------- |
+| R1 | **Stage lifecycle transition** | `StructureStageLifecycleAssembler` → `lifecycle.transition` (and related disabled codes) | Anticipated **Gate** on actions (`PrepareStage`, `CompleteStage`, …) |
+| R2 | **Needs attention item** | `NeedsAttentionAssembler` → `GET /attention` | **Attention** / runtime intervention (`QualificationPending`) |
+| R3 | **Structure hub issue fact** | `StructureViewAssembler` → `structureIssues[]` | **Signal** / **Gate** source fact (`CycleDetected`); link to aggregates (V5) |
+
+Other transports (readiness blockers, Overview situations, materialize disabled) are **referenced** in alias tables where they touch pilot codes but are **not** enrichment targets in the first documentation phase.
+
+### 3.2 Pilot problems (three)
+
+| Code | Primary read surfaces (today) | Step 2 semantic (target doc) | VERIFY summary |
+| :--- | :---------------------------- | :--------------------------- | :------------- |
+| **`OpenMatches`** | R1 Complete transition; POST Complete | Gate on **`CompleteStage`** only | **V1 closed** (engineering): same rule read vs POST; POST code `Application.StageCompletionBlocked` + `reasons` alias |
+| **`CycleDetected`** | R3 issue; R1 Prepare (often via aggregate); POST Prepare | Gate on **`PrepareStage`** (when prepare gate applies) | **V2 open**: lifecycle may show `StructureGraphInvalid` while POST shows `Application.StructureCycleDetected` |
+| **`QualificationPending`** | R2 attention | **Attention**; remediation **`ApplyQualification`** | **V3 open**: not lifecycle disabled shape; `blocksAction` vs actionable attention |
+
+Stable **action vocabulary** for documentation (reuse existing Host / Overview codes — do not invent new action enums):
+
+- `PrepareStage`, `CompleteStage`, `ApplyQualification` (from `OverviewAssembler` action constants and lifecycle transition codes).
+
+---
+
+## 4. Deliverables
+
+### D1 — Pilot alias and canon registry (Markdown + optional CSV)
+
+**Content:**
+
+- One row per **pilot problem** with columns: hypothesized **canon**, **semantic level** (Gate / Signal / Attention), **candidate `blocksAction`**, and every **observed wire** variant (R1 disabled, R3 issue, POST code, `reasons[]`, readiness aggregate if applicable).
+- Explicit **equivalence** column: `same rule` | `presentation aggregate` | `divergent — see notes` (from VERIFY).
+- **V1 row:** document POST alias `Application.StageCompletionBlocked` + `OpenMatches` reason ↔ canon `OpenMatches`.
+- **V2 row:** document three layers (issue `CycleDetected`, lifecycle `StructureGraphInvalid`, POST `Application.StructureCycleDetected`) — **requires product choice** (see §5.1).
+- **V3 row:** source `QualificationPending`; no POST alias required for Step 3 unless a command refusal is identified in audit.
+
+**Acceptance:** No alias marked `same rule` without pointer to VERIFY observation or test reference.
+
+### D2 — Conceptual read-model enrichment (per family)
+
+For **R1, R2, R3** separately, a short spec describing **conceptual** additions (names illustrative until wire DECIDED):
+
+| Concept | Description |
+| :------ | :---------- |
+| `canonCode` | Stable fact id (pilot trio only) |
+| `semanticLevel` | Gate \| Signal \| Attention \| Information (Step 2 definitions) |
+| `blocksAction` | Zero or more stable action codes; empty = no action gate in this contract sense |
+| `transportCode` | Actual string on this DTO today (may differ from canon — alias) |
+| `sourceKind` | e.g. `anticipated` \| `attention` \| `issueFact` \| `aggregate` |
+
+**Acceptance:** Spec states **compatibility**: existing string fields remain; enrichment is additive or documented mapping only — no breaking wire change in the proposal without a flagged migration section.
+
+### D3 — Semantic assignment sheet (testable phrases)
+
+One **testable phrase** per pilot row, e.g.:
+
+- `OpenMatches` blocks `CompleteStage`.
+- `CycleDetected` blocks `PrepareStage` when prepare gate policy applies (canon on hub; lifecycle may show aggregate disabled code).
+- `QualificationPending` expects organizer intervention; `ApplyQualification` is the projected remediation (not necessarily a `blocksAction` gate).
+
+**Acceptance:** Phrases align with Step 2 definitions; drawer inclusion **not** implied.
+
+### D4 — Open decisions log
+
+Track resolution of:
+
+| ID | Topic | Owner | Blocks |
+| :- | :---- | :---- | :----- |
+| O1 | V2: one problem vs presentation layers for cycle prepare | Product + tech | **DECIDED 2026-10-12 — Option B (layered)** |
+| O2 | V3: `blocksAction` for qualification attention | Product | **DECIDED 2026-10-12 — Option A (Attention + remediation)** |
+| O3 | Wire shape (enum vs dual fields) | Product + tech lead | **DECIDED 2026-10-12 — Option A structured `problem`** |
+
+### D5 — Implementation proposal (appendix — proposal only)
+
+After D1–D4 approved:
+
+- Ordered list of **DTOs** and **fields** to add or map (max: lifecycle transition DTO, attention item DTO, optional issue detail on hub).
+- Explicit **non-touch**: `ProblemDetails`, drawer SPA, Matchs pilot, Overview situation assembly.
+- Test plan outline (Application read tests + existing Host contract tests to extend).
+
+**This appendix is not executed** until a separate sign-off (product + tech) after brief approval.
+
+---
+
+## 5. Product decisions required during Step 3 doc work
+
+### 5.1 V2 — Cycle prepare — **DECIDED (2026-10-12, O1 Option B)**
+
+**Layered model (retained):**
+
+- **Canon:** `CycleDetected` on hub `structureIssues[]` (most precise diagnostic fact).
+- **Lifecycle read projection:** Prepare transition `disabledReasonCode` **`StructureGraphInvalid`** when any graph-gate issue is present — **not** interchangeable with canon for copy or equality checks.
+- **Command transport:** POST Prepare **`Application.StructureCycleDetected`** when cycle is among prepare gate codes.
+- **Consumer rule:** Same underlying prepare gate; **do not assume one string across surfaces** — prefer optional `problem.canonCode` + `problem.transportCode` on lifecycle when populated (Phase 1).
+
+Option A (single problem, flat aliases) **rejected** for this pilot — it understates the lifecycle aggregate vs hub fact distinction (VERIFY V2/V5).
+
+### 5.2 V3 — Qualification attention — **DECIDED (2026-10-12, O2 Option A)**
+
+- **Semantic level:** **Attention** only — not a lifecycle `disabledReasonCode` Gate.
+- **Remediation:** **`ApplyQualification`** as **suggested action** (`suggestedActionCode` on optional `problem`; Overview `actionCode` unchanged).
+- **`blockedActions`:** **Empty** for this code — do **not** invent a gate list without a future engineering audit (Option B **deferred** unless product reopens).
+
+Option B (explicit blocked-action list) **not adopted** for the pilot; revisit only if product needs parity with command-level refusals on qualification paths.
+
+### 5.3 O3 — Wire shape — **DECIDED (2026-10-12, Option A)**
+
+**Normative pilot JSON (additive):**
+
+- R1 / R2: optional **`problem`** on the existing DTO.
+- R3: optional **`structureIssueSemantics[]`** (same field set per entry).
+
+**Fields:** `semanticLevel` (four Step 2 values as strings), `canonCode`, `blockedActions`, optional `transportCode`, optional `suggestedActionCode`.
+
+**Out of scope on Application wire:** UI severity, drawer flags, `factKind` + `organizerPriority` dual enum (Option B **rejected**). Presentation stays SPA (`functionalProblemPresentation`, attention `nature`, etc.).
+
+**Illustrative only (not wire today):** D2 `sourceKind` (`anticipated` \| `attention` \| …) — document mapping in audit; add to wire only under a future decision.
+
+Phase 1 implementation **is** the O3 contract for the pilot perimeter.
+
+---
+
+## 6. Work plan (documentation phase)
+
+| Step | Activity | Output |
+| :--- | :------- | :----- |
+| 1 | Review Step 2 + VERIFY report with product | O1/O2/O3 logged |
+| 2 | Draft D1 alias table (pilot trio) | MR-ready Markdown in Git |
+| 3 | Draft D2 conceptual enrichment (R1–R3) | Section in this brief or audit appendix |
+| 4 | Draft D3 phrase sheet | Same |
+| 5 | Resolve O1/O2 (product) | Update D1/D2 |
+| 6 | Draft D5 implementation proposal | Appendix — **for approval only** |
+| 7 | Brief review sign-off | Record date + approvers in Git header |
+
+**Estimated effort (doc only):** 1–2 working sessions after O1/O2 resolution.
+
+---
+
+## 7. Exit gate (pilote Step 3)
+
+**Pilote status (2026-10-12):** **closed** — Application trio + O1–O3 + [G0 report](./organizer-problems-g0-report.md). **Post-pilot** work (drawer P1, G2–G5) tracked in organizer errors roadmap — not Step 3 doc phase.
+
+- [x] D1 pilot alias registry linked from audit
+- [x] O1–O3 **DECIDED** (Notion + Git)
+- [x] Phase 1 Application read enrichment shipped (`4194102e`)
+- [ ] D5 implementation proposal — **DEFERRED** (owner: product + tech lead; condition: new phase needs scoped DTO/Host/SPA contract beyond pilote; **no** `organizer-problems-implementation-proposal.md` until arbitrated)
+- [ ] Product + tech sign-off on **post-pilot** drawer/Structure tranches (optional)
+- [x] `structure-problems-contract.md` remains **Paused**
+
+Follow-on SPA/host changes are **post-pilot increments**, not retroactive approval via D5.
+
+---
+
+## 8. Non-goals (explicit)
+
+- Universal organizer problem DTO or shared SPA error framework  
+- Changing Needs attention drawer selection policy (V4 aligned — maintain intent)  
+- i18n consolidation (`structure.problems`, `graph.issues`, `errors:*`, `enums.attentionSource`)  
+- Reconciliation of Matchs column local pilot with transversal contract  
+- Backend changes to Prepare/Complete/Qualification business rules  
+
+---
+
+## 9. Suggested Git layout after Step 3 doc merge
+
+| Artifact | Location |
+| :------- | :------- |
+| This brief | `docs/guides/organizer-problems-step3-brief.md` |
+| Alias registry (D1) | `docs/guides/organizer-problems-pilot-aliases.md` *(create when D1 drafted)* |
+| Implementation proposal (D5) | `docs/guides/organizer-problems-implementation-proposal.md` *(create after brief approval)* |
+
+Update audit **Recommended sequence** item 3 to point here when brief is approved.

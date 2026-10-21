@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Play'Up competition domain model (aggregates, value objects, domain services).</Description>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <!-- Physical folders under Common / Rules organize files; they must not append namespace segments (convention B / Rider). -->
+  <ItemGroup>
+    <Folder Include="Common\Ids">
+      <NamespaceProvider>False</NamespaceProvider>
+    </Folder>
+    <Folder Include="Common\Enums">
+      <NamespaceProvider>False</NamespaceProvider>
+    </Folder>
+    <Folder Include="Rules\Entry">
+      <NamespaceProvider>False</NamespaceProvider>
+    </Folder>
+    <Folder Include="Rules\Match">
+      <NamespaceProvider>False</NamespaceProvider>
+    </Folder>
+    <Folder Include="Rules\Standing">
+      <NamespaceProvider>False</NamespaceProvider>
+    </Folder>
+    <Folder Include="Rules\TieFormat">
+      <NamespaceProvider>False</NamespaceProvider>
+    </Folder>
+    <Folder Include="Rules\Draw">
+      <NamespaceProvider>False</NamespaceProvider>
+    </Folder>
+    <Folder Include="Rules\Qualification">
+      <NamespaceProvider>False</NamespaceProvider>
+    </Folder>
+    <Folder Include="Rules\Progression">
+      <NamespaceProvider>False</NamespaceProvider>
+    </Folder>
+    <Folder Include="Stages\Feed">
+      <NamespaceProvider>False</NamespaceProvider>
+    </Folder>
+    <Folder Include="Stages\Outcome">
+      <NamespaceProvider>False</NamespaceProvider>
+    </Folder>
+    <Folder Include="Stages\Draw">
+      <NamespaceProvider>False</NamespaceProvider>
+    </Folder>
+    <Folder Include="Stages\Assignment">
+      <NamespaceProvider>False</NamespaceProvider>
+    </Folder>
+  </ItemGroup>
+
+</Project>

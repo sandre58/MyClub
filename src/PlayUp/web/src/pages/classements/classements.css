@@ -1,0 +1,171 @@
+/*
+ * Standings — same surface language as Overview:
+ * airy white panels, light shadow, title + content with gap.
+ * Composition: banner · table · [Last matchday | Regulation].
+ */
+
+.page.page--classements {
+  --classements-shadow:
+    0 1px 2px color-mix(in srgb, var(--color-ink) 5%, transparent),
+    0 2px 10px color-mix(in srgb, var(--color-ink) 6%, transparent);
+
+  width: 100%;
+  max-width: none;
+  margin-inline: 0;
+  padding: var(--space-16);
+  gap: 0;
+}
+
+.classements {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.page--classements .ds-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  border: none;
+  border-radius: var(--radius-panel);
+  padding: var(--space-24);
+  box-shadow: var(--classements-shadow);
+}
+
+/* ---------- Panel header (same as overview) ---------- */
+
+.classements-panel__muted {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-label);
+  line-height: var(--leading-normal);
+}
+
+.classements-panel__footer {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0;
+  padding: 0;
+}
+
+.page--classements .ds-panel .classements-panel__footer {
+  margin-top: auto;
+  padding-top: var(--space-8);
+}
+
+/* ---------- Context banner ---------- */
+
+.classements-band {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.classements-band__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-8) var(--space-12);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+  box-shadow: var(--classements-shadow);
+  color: var(--color-text-primary);
+  font-size: var(--text-label);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
+}
+
+.classements-band__chip--muted {
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-regular);
+}
+
+.classements-band__chip--status {
+  background: color-mix(in srgb, var(--color-brand) 10%, var(--color-surface));
+  color: var(--color-brand);
+}
+
+/* ---------- Tables (multiple groups) ---------- */
+
+.classements__tables {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+/* ---------- Page footer ---------- */
+
+.classements__bottom {
+  display: grid;
+  gap: var(--space-16);
+}
+
+@media (min-width: 52rem) {
+  .classements__bottom {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    align-items: stretch;
+  }
+}
+
+.classements-panel__footer--start {
+  justify-content: flex-start;
+}
+
+.classements-panel__lede {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--text-body);
+  line-height: var(--leading-normal);
+}
+
+.classements-panel__section-label {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.classements-facts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin: 0;
+  padding: 0;
+}
+
+.classements-fact {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-8) var(--space-16);
+  padding: var(--space-8) 0;
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+.classements-fact:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.classements-fact dt {
+  color: var(--color-text-secondary);
+  font-size: var(--text-label);
+  line-height: var(--leading-tight);
+}
+
+.classements-fact dd {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--text-label);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
+  font-variant-numeric: tabular-nums;
+}

@@ -1,0 +1,594 @@
+/* -- Phases: schematics (StageSchematic DTO) -- */
+.regulation-schematic {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  min-height: 14rem;
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-16);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface-secondary);
+  box-sizing: border-box;
+}
+
+/* -- Shared slot design (same across Groups / Championship / Swiss / Cup) -- */
+.schematic-slot {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.1rem;
+  min-width: 0;
+  min-height: 2rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-control);
+  border: var(--border-width) solid color-mix(in srgb, var(--color-brand) 30%, var(--color-border));
+  background: var(--color-surface);
+  box-sizing: border-box;
+}
+
+.schematic-slot--empty {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--color-brand) 20%, var(--color-border));
+  background: color-mix(in srgb, var(--color-surface) 55%, transparent);
+}
+
+.schematic-slot--ghost {
+  visibility: hidden;
+}
+
+.schematic-slot--interactive {
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  appearance: none;
+}
+
+.schematic-slot--interactive:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.schematic-slot__primary {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-label);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  line-height: 1.2;
+}
+
+.schematic-slot--empty .schematic-slot__primary {
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-regular);
+}
+
+/* Qual / Prog / Draw without occupant — construction rule, not team identity (R7). */
+.schematic-slot__primary--pending {
+  font-style: italic;
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-secondary);
+  opacity: 0.85;
+}
+
+/* Withdrawn occupant — muted, not empty (dashed) or pending construction (italic). */
+.schematic-slot--withdrawn:not(.schematic-slot--empty) {
+  opacity: 0.72;
+}
+
+.schematic-slot__primary--withdrawn {
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-regular);
+}
+
+/* DS Tooltip host — Cup absolute geometry on the host; flow formats stretch.
+ * Host wraps Tooltip so `.ds-tooltip-trigger` does not steal absolute top/height.
+ * Trigger is DS `inline-flex` by default — force full width or slots shrink-wrap. */
+.schematic-slot-tip {
+  display: block;
+  box-sizing: border-box;
+  min-width: 0;
+  width: 100%;
+}
+
+.schematic-slot-tip > .ds-tooltip-trigger {
+  display: block;
+  width: 100%;
+  max-width: none;
+}
+
+.schematic-slot-tip .schematic-slot {
+  width: 100%;
+}
+
+.schematic-cup .schematic-slot-tip > .ds-tooltip-trigger {
+  height: 100%;
+}
+
+.schematic-cup .schematic-slot-tip .schematic-slot {
+  height: 100%;
+  min-height: 0;
+}
+
+/* Structured case tip — identity first, provenance under rule (all formats). */
+.schematic-case-tip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 11rem;
+  max-width: 18rem;
+  text-align: start;
+}
+
+.schematic-case-tip__address {
+  margin: 0;
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+.schematic-case-tip__primary {
+  margin: 0;
+  min-width: 0;
+  font-size: var(--text-label);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.schematic-case-tip__subject {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.schematic-case-tip__resolved {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.schematic-case-tip__resolved-name {
+  margin: 0;
+  min-width: 0;
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-secondary);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+/* Compact crest in tip — smaller than TeamCrest sm. */
+.schematic-case-tip__crest.team-crest--sm {
+  width: 1.05rem;
+  height: 1.2rem;
+}
+
+.schematic-case-tip__crest.team-crest--sm .team-crest__initial {
+  font-size: 0.45rem;
+}
+
+.schematic-case-tip__subject-name {
+  margin: 0;
+  min-width: 0;
+  font-size: var(--text-label);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.schematic-case-tip__withdrawn {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.15rem 0 0;
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-regular);
+  font-style: italic;
+  color: var(--color-text-secondary);
+  line-height: 1.25;
+}
+
+.schematic-case-tip__withdrawn-icon.ds-icon {
+  flex: none;
+  width: 0.75rem;
+  height: 0.75rem;
+  color: var(--color-text-secondary);
+}
+
+.schematic-case-tip__rule {
+  height: 0;
+  margin: 0.05rem 0 0;
+  border: 0;
+  border-top: var(--border-width) solid color-mix(in srgb, var(--color-border) 85%, transparent);
+}
+
+.schematic-case-tip__origin {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-secondary);
+  line-height: 1.25;
+}
+
+.schematic-case-tip__origin-icon.ds-icon {
+  flex: none;
+  width: 0.75rem;
+  height: 0.75rem;
+  color: var(--color-text-secondary);
+}
+
+.schematic-case-tip__origin-copy {
+  min-width: 0;
+}
+
+.schematic-case-tip__origin-lead {
+  color: var(--color-text-secondary);
+}
+
+.schematic-case-tip__origin-emphasis {
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-primary);
+}
+
+.schematic-case-tip__action {
+  margin: 0;
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-secondary);
+  line-height: 1.25;
+}
+
+/* Slot body: optional crest + copy when a real team is resolved. */
+.schematic-slot__body {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.schematic-slot__crest.team-crest--sm {
+  width: 0.85rem;
+  height: 0.95rem;
+}
+
+.schematic-slot__crest.team-crest--sm .team-crest__initial {
+  font-size: 0.38rem;
+}
+
+.schematic-slot__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  min-width: 0;
+}
+
+/* U4 — Place address chrome (secondary; never replaces S3 primary). */
+.schematic-slot__address {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-secondary);
+  line-height: 1.15;
+  opacity: 0.9;
+}
+
+/* Resolution (team) = discreet secondary information (S3). */
+.schematic-slot__secondary {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-secondary);
+  line-height: 1.2;
+}
+
+/* -- Groups -- */
+.regulation-schematic--groups {
+  align-items: stretch;
+}
+
+.regulation-schematic__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  gap: var(--space-12);
+  width: 100%;
+  min-width: 0;
+}
+
+.regulation-schematic__card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  min-width: 0;
+  padding: var(--space-8);
+  border-radius: var(--radius-control);
+  border: var(--border-width) solid color-mix(in srgb, var(--color-brand) 18%, var(--color-border));
+  background: color-mix(in srgb, var(--color-brand) 8%, var(--color-surface));
+}
+
+.regulation-schematic__card--1 {
+  border-color: color-mix(in srgb, var(--color-brand) 12%, var(--color-border));
+  background: color-mix(in srgb, var(--color-brand-bright, var(--color-brand)) 10%, var(--color-surface));
+}
+
+.regulation-schematic__card--2 {
+  border-color: color-mix(in srgb, var(--color-success) 28%, var(--color-border));
+  background: color-mix(in srgb, var(--color-success) 10%, var(--color-surface));
+}
+
+.regulation-schematic__card--3 {
+  border-color: color-mix(in srgb, var(--color-attention) 28%, var(--color-border));
+  background: color-mix(in srgb, var(--color-attention) 10%, var(--color-surface));
+}
+
+.regulation-schematic__card-label {
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.regulation-schematic__card-feed {
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+  line-height: 1.2;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.regulation-schematic__card-slots {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-4);
+  width: 100%;
+  min-width: 0;
+}
+
+.regulation-schematic__card-slots > .schematic-slot {
+  width: 100%;
+}
+
+/* -- Championship -- */
+.regulation-schematic--championship {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: var(--space-8);
+}
+
+.regulation-schematic__league {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+  min-width: 0;
+}
+
+/* -- Swiss (pool of places + planned rounds, no structural ranks) -- */
+.regulation-schematic--swiss {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: var(--space-8);
+}
+
+.regulation-schematic__swiss-caption {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.regulation-schematic__swiss-places {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: var(--space-4);
+  width: 100%;
+  min-width: 0;
+}
+
+/* -- Cup: HTML slots + SVG wires sharing pixel geometry -- */
+.regulation-schematic--cup {
+  align-items: center;
+  justify-content: center;
+}
+
+/* Fit shell owns chrome; inner bracket size must match geometry exactly. */
+.schematic-cup-fit {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+  overflow-y: visible;
+  display: flex;
+  justify-content: center;
+  padding: var(--space-16);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface-secondary);
+  box-sizing: border-box;
+}
+
+.schematic-cup-fit--scroll {
+  overflow-x: auto;
+  overflow-y: visible;
+  justify-content: flex-start;
+}
+
+.schematic-cup-fit__scale {
+  flex: none;
+  overflow: visible;
+}
+
+.schematic-cup-fit .regulation-schematic--cup {
+  min-height: 0;
+  width: auto;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+}
+
+.schematic-cup {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  max-width: 100%;
+  min-width: 0;
+}
+
+.schematic-cup--multi {
+  position: relative;
+  display: block;
+  flex: none;
+  overflow: visible;
+}
+
+.schematic-cup__round {
+  position: absolute;
+  top: 0;
+  overflow: visible;
+}
+
+.schematic-cup__slots {
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  width: clamp(9rem, 30vw, 13rem);
+  min-width: 0;
+  overflow: visible;
+}
+
+.schematic-cup__slots .schematic-slot {
+  width: 100%;
+}
+
+.schematic-cup .schematic-slot {
+  /* Geometry owns height — do not let the shared min-height inflate/clip slots. */
+  min-height: 0;
+}
+
+.schematic-cup__wires {
+  display: block;
+  flex: none;
+  overflow: visible;
+}
+
+.schematic-cup__wires--overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.schematic-cup__wire-line {
+  fill: none;
+  stroke: color-mix(in srgb, var(--color-brand) 55%, var(--color-border));
+  stroke-width: 1.25;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.schematic-cup__match-n {
+  fill: var(--color-text-secondary);
+  font-size: 10px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.schematic-cup__pair-ordinal[data-production-state='eligible'] {
+  fill: color-mix(in srgb, var(--color-brand) 85%, var(--color-ink));
+  font-weight: 600;
+}
+
+.schematic-cup__pair-ordinal[data-production-state='incomplete'] {
+  fill: var(--color-text-secondary);
+}
+
+.schematic-cup__match-n[data-production-state='materialized'] {
+  fill: color-mix(in srgb, var(--color-success) 75%, var(--color-ink));
+  font-weight: 600;
+}
+
+.schematic-cup__pair-ordinal[data-production-state='materialized'] {
+  fill: color-mix(in srgb, var(--color-success) 75%, var(--color-ink));
+  font-weight: 600;
+  opacity: 1;
+}
+
+.schematic-cup__pair-ordinal {
+  fill: var(--color-text-secondary);
+  font-size: 10px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.85;
+}
+
+.schematic-slot--crest {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.schematic-slot--compact {
+  min-height: 0;
+}
+
+.schematic-cup__trophy {
+  display: inline-flex;
+  flex: none;
+  align-self: center;
+  color: var(--color-brand);
+}
+
+.schematic-cup__trophy--absolute {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+/* -- Regulation page rule columns (unrelated to schematic; kept here historically) -- */
+.regulation-rule-col__sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.regulation-rule-section__title {
+  margin: 0 0 var(--space-4);
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
+}

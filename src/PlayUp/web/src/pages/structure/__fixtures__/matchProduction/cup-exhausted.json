@@ -1,0 +1,28 @@
+{
+  "productionVisible": true,
+  "showPrimaryGauge": true,
+  "primaryGauge": {
+    "current": 1,
+    "capacity": 1,
+    "messageCode": "Complete",
+    "messageKind": "success",
+    "blocksPhaseStart": false
+  },
+  "primaryGaugeMode": "materialized",
+  "prerequisiteGauge": null,
+  "frozenPartial": null,
+  "followUp": null,
+  "materialize": {
+    "visible": false,
+    "enabled": false,
+    "commandCode": "MaterializeFromOccupiedSlots",
+    "labelVariant": "exhausted",
+    "disabledReason": null
+  },
+  "dematerialize": {
+    "visible": true,
+    "enabled": false,
+    "disabledReason": "MaterializationStateInconsistent",
+    "scope": "FullPhase"
+  }
+}

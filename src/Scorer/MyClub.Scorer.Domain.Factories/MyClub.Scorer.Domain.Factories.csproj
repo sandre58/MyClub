@@ -1,9 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <ItemGroup>
-    <PackageReference Include="MyNet.Humanizer" Version="2.0.0" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\Common\MyClub.CrossCutting.Localization\MyClub.CrossCutting.Localization.csproj" />
-    <ProjectReference Include="..\MyClub.Scorer.Domain\MyClub.Scorer.Domain.csproj" />
-  </ItemGroup>
-</Project>

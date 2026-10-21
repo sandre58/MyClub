@@ -1,0 +1,52 @@
+name: Feature request
+description: Suggest an enhancement or new capability
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the problem you are trying to solve and how a change would help.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What limitation or pain point does this address?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: API sketch, behavior, or example usage if you have one
+      render: csharp
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Workarounds or different shapes you evaluated
+
+  - type: dropdown
+    id: breaking
+    attributes:
+      label: Breaking change?
+      options:
+        - "No"
+        - "Yes — acceptable with major version bump"
+        - "Unsure"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I am willing to submit a pull request for this feature
+          required: false

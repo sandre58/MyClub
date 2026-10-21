@@ -1,0 +1,137 @@
+/*
+ * Status / badge primitive — context (rows, bands), compact (chrome meta),
+ * dense (inline text, no fill).
+ *
+ * Wash is the tone at opacity over whatever sits behind (canvas or chrome),
+ * not a mix with --color-surface. Text follows color-scheme: full tone on
+ * light, slightly lifted on dark chrome (`color-scheme: dark` on the header).
+ *
+ *   variant soft    — tinted text + transparent wash (default)
+ *   variant outline — tinted border + lighter wash
+ *   variant plain   — tinted text only
+ *   shape rounded   — radius-control (default)
+ *   shape pill      — reserved for an explicit need
+ */
+
+.ds-status {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
+  white-space: nowrap;
+}
+
+.ds-status--context {
+  padding: var(--space-4) var(--space-12);
+  font-size: var(--text-label);
+}
+
+.ds-status--compact {
+  padding: 1px var(--space-8);
+  font-size: var(--text-meta);
+}
+
+.ds-status--dense {
+  padding: 0;
+  font-size: var(--text-label);
+  color: var(--color-text-secondary);
+}
+
+.ds-status--rounded {
+  border-radius: var(--radius-control);
+}
+
+.ds-status--pill {
+  border-radius: 999px;
+}
+
+.ds-status--tone-neutral,
+.ds-status--tone-done {
+  --status-ink: var(--color-text-secondary);
+}
+
+.ds-status--tone-info {
+  --status-ink: var(--color-info);
+}
+
+.ds-status--tone-success {
+  --status-ink: var(--color-success);
+}
+
+.ds-status--tone-live {
+  --status-ink: var(--color-live);
+}
+
+.ds-status--tone-attention {
+  --status-ink: var(--color-attention);
+}
+
+.ds-status--tone-error {
+  --status-ink: var(--color-error);
+}
+
+.ds-status--soft,
+.ds-status--outline,
+.ds-status--plain {
+  color: light-dark(var(--status-ink), color-mix(in srgb, var(--status-ink) 58%, white));
+}
+
+.ds-status--soft {
+  --status-wash: 18%;
+  background: color-mix(in srgb, var(--status-ink) var(--status-wash), transparent);
+}
+
+.ds-status--soft.ds-status--tone-live {
+  --status-wash: 22%;
+}
+
+.ds-status--outline {
+  --status-wash: 10%;
+  border: var(--border-width) solid color-mix(in srgb, var(--status-ink) 32%, transparent);
+  background: color-mix(in srgb, var(--status-ink) var(--status-wash), transparent);
+}
+
+.ds-status--outline.ds-status--tone-neutral,
+.ds-status--outline.ds-status--tone-done {
+  border-color: var(--color-border-strong);
+}
+
+.ds-status--plain {
+  padding: 0;
+  background: none;
+  border: none;
+}
+
+/* Multiline chips — hub notes, drawer labels; not single-line meta chips */
+.ds-status--multiline {
+  white-space: normal;
+  max-width: min(100%, 42rem);
+  align-items: center;
+  line-height: var(--leading-normal);
+}
+
+.ds-status--context.ds-status--text-body {
+  font-size: var(--text-body);
+}
+
+.ds-status-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-width: 0;
+  text-align: start;
+}
+
+.ds-status-inline__icon {
+  display: inline-flex;
+  flex: none;
+  color: inherit;
+}
+
+/* Outline multiline: stronger ink + border (default outline reads muted / “disabled”) */
+.ds-status--outline.ds-status--multiline {
+  --status-wash: 14%;
+  border-color: color-mix(in srgb, var(--status-ink) 44%, transparent);
+  color: var(--status-ink);
+}

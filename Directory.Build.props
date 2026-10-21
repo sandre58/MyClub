@@ -1,0 +1,75 @@
+<Project>
+    <!-- Reference: https://docs.microsoft.com/en-us/visualstudio/msbuild/customize-your-build -->
+
+    <!-- Informations -->
+    <PropertyGroup>
+        <Authors>Stéphane ANDRE</Authors>
+        <Owners>Stéphane ANDRE</Owners>
+        <Company>My .NET</Company>
+        <Copyright>Copyright © 2016-$([System.DateTime]::Now.ToString(yyyy)) - Stéphane ANDRE. All Rights Reserved.</Copyright>
+    </PropertyGroup>
+
+    <!-- Automatic project type detection — default non-packable (apps); libraries set IsPackable=true in csproj -->
+    <PropertyGroup>
+        <IsTestProject>$(MSBuildProjectName.EndsWith('Tests'))</IsTestProject>
+        <IsDemoProject>$(MSBuildProjectName.Contains('.Demo'))</IsDemoProject>
+        <IsPackable Condition="'$(IsPackable)' == ''">false</IsPackable>
+        <IsPackable Condition="'$(IsDemoProject)' == 'True' Or '$(IsTestProject)' == 'True'">false</IsPackable>
+    </PropertyGroup>
+
+    <!-- Configuration -->
+    <PropertyGroup>
+        <TargetFramework Condition="'$(TargetFrameworks)' == '' and '$(TargetFramework)' == ''">net11.0</TargetFramework>
+        <LangVersion>preview</LangVersion>
+        <NeutralLanguage>fr</NeutralLanguage>
+        <Nullable Condition="'$(Nullable)' == ''">enable</Nullable>
+        <ImplicitUsings Condition="'$(ImplicitUsings)' == ''">enable</ImplicitUsings>
+        <GenerateDocumentationFile Condition="'$(IsPackable)' == 'true'">true</GenerateDocumentationFile>
+        <GenerateDocumentationFile Condition="'$(IsPackable)' != 'true'">false</GenerateDocumentationFile>
+        <EnableAnalyzers Condition="'$(EnableAnalyzers)' == ''">true</EnableAnalyzers>
+        <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
+    </PropertyGroup>
+
+    <!-- Versioning (GitVersion → MSBuild) -->
+    <PropertyGroup>
+        <GitVersionMajor Condition="'$(GitVersion_Major)' != ''">$(GitVersion_Major)</GitVersionMajor>
+        <GitVersionMinor Condition="'$(GitVersion_Minor)' != ''">$(GitVersion_Minor)</GitVersionMinor>
+        <GitVersionPatch Condition="'$(GitVersion_Patch)' != ''">$(GitVersion_Patch)</GitVersionPatch>
+        <GitVersionMajor Condition="'$(GitVersionMajor)' == ''">1</GitVersionMajor>
+        <GitVersionMinor Condition="'$(GitVersionMinor)' == ''">0</GitVersionMinor>
+        <GitVersionPatch Condition="'$(GitVersionPatch)' == ''">0</GitVersionPatch>
+
+        <Version>$(GitVersionMajor).$(GitVersionMinor).$(GitVersionPatch)</Version>
+        <AssemblyVersion>$(GitVersionMajor).$(GitVersionMinor).0.0</AssemblyVersion>
+        <FileVersion>$(GitVersionMajor).$(GitVersionMinor).$(GitVersionPatch).0</FileVersion>
+        <VersionSuffix Condition="'$(GitVersion_PreReleaseLabel)' != ''">$(GitVersion_PreReleaseLabel).$(GitVersion_PreReleaseNumber)</VersionSuffix>
+    </PropertyGroup>
+
+    <!-- Test projects — use .runsettings via VSTestSetting (not VSTestCLIRunSettings) -->
+    <PropertyGroup Condition="'$(IsTestProject)' == 'True'">
+        <RunSettingsFile>$(MSBuildThisFileDirectory).runsettings</RunSettingsFile>
+        <VSTestSetting>$(RunSettingsFile)</VSTestSetting>
+    </PropertyGroup>
+
+    <!-- Without XML docs, IDE0005 cannot run and CSC emits EnableGenerateDocumentationFile noise.
+         Disable IDE0005 only when docs generation is off (tests, DevRunner, etc.) — production
+         projects with GenerateDocumentationFile=true keep full style analysis. -->
+    <PropertyGroup Condition="'$(GenerateDocumentationFile)' != 'true'">
+        <NoWarn>$(NoWarn);IDE0005</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup Condition="'$(IsTestProject)' == 'True' And Exists('$(RunSettingsFile)')">
+        <None Include="$(RunSettingsFile)" Link=".runsettings" Visible="false" />
+    </ItemGroup>
+
+    <!-- Optional coverage props (add build/coverage/ when needed) -->
+    <Import Project="$(MSBuildThisFileDirectory)build/coverage/Coverage.props" Condition="'$(IsTestProject)' == 'True' And Exists('$(MSBuildThisFileDirectory)build/coverage/Coverage.props')" />
+
+    <!-- Imports -->
+    <Import Project="$(MSBuildThisFileDirectory)build/code-analysis.props" Condition="Exists('$(MSBuildThisFileDirectory)build/code-analysis.props') and '$(EnableAnalyzers)' == 'true'" />
+    <Import Project="$(MSBuildThisFileDirectory)build/dependencies.props" Condition="Exists('$(MSBuildThisFileDirectory)build/dependencies.props')" />
+    <Import Project="$(MSBuildThisFileDirectory)build/repo.props" Condition="Exists('$(MSBuildThisFileDirectory)build/repo.props')" />
+    <Import Project="$(MSBuildThisFileDirectory)build/package.props" Condition="Exists('$(MSBuildThisFileDirectory)build/package.props') and '$(IsPackable)' == 'true'" />
+    <Import Project="$(MSBuildThisFileDirectory)Directory.Build.local.props" Condition="Exists('$(MSBuildThisFileDirectory)Directory.Build.local.props')" />
+
+</Project>

@@ -1,0 +1,51 @@
+---
+description: Play'Up layout — width strategy, gutters, asymmetric composition, density
+globs: src/PlayUp/web/**
+alwaysApply: false
+---
+
+# Layout
+
+## Width strategy
+
+Content is **fluid at 100%** of the main region width, with **constant lateral
+gutters only** (`--space-16` on the main padding). No centered max-width column.
+
+- Operational surfaces (Overview, Match, Calendrier, Classements): fill the main
+  area edge-to-gutter.
+- Forms / focused tasks / dialogs: constrained width (28–40rem), never full width.
+- Text never touches the viewport edge — gutters handle that, not a narrow column.
+
+## Asymmetric composition ("asymétrie signifiante")
+
+- The dominant region must visibly weigh more: hero band ≈ 1.6/1,
+  two-column groups ≈ 1.45/1 (`dlab-grid-2--major`), never mechanical 50/50
+  unless the two blocks are true peers.
+- The reading order is: situation (top-left, largest) → next action (top-right)
+  → pending work → detail.
+
+## Density
+
+- Standard density everywhere; grids may be denser but rows stay ≥ 40px tall.
+- Whitespace between groups > whitespace inside groups.
+
+## Page head
+
+Workspace Shell pages use `PageHead` (`--text-display`, optional actions/note/tools).
+No back link on primary rail destinations. Drill-downs use `back` / `PageHeader`.
+
+## Responsive
+
+Three **independent** breakpoint tiers — do not unify into a single value.
+
+| Tier | Threshold | Role | SoT in Git |
+|---|---|---|---|
+| **Shell chrome** | phone `<48rem` · tablet `48–64rem` · desktop `≥64rem` | Rail overlay / icon-rail / expanded nav | `layout/viewportBreakpoints.ts`, `shell/useShellViewport.ts` |
+| **Page grids** | `52rem` (`max-width: 51.999rem` narrow) | Two-column operational surfaces (Overview, Organisation, Matchs, Classements, Équipes split) | same + page CSS |
+| **DS composition** | `56rem` | Asymmetric panel pairs collapse | `design-system/foundations/panels.css` |
+
+Accueil (hors Shell): compact chrome at **48rem** (same as shell phone).
+
+Équipes below **52rem**: master-detail — checkbox = bulk selection (list stays visible); tile body = open roster (detail full width). Header ops row: plateau left, selection bar + Add right (`teams__ops-row`). See Notion page **Équipes** § Responsive.
+
+Legacy rule: two-column groups collapse below **56rem**, dominant block first.

@@ -1,0 +1,24 @@
+/*
+ * Shell sidebar (A) — product rail on ds-shell-rail foundations.
+ *
+ * Width, overflow clip, and collapse interior motion live in
+ * foundations/shell.css. This file is product layout only (height, stacking).
+ */
+
+.shell-sidebar {
+  position: relative;
+  z-index: 3;
+  isolation: isolate;
+  align-self: stretch;
+  height: 100%;
+  min-height: 0;
+}
+
+.shell[data-shell-vp='phone'] .shell-sidebar {
+  position: absolute;
+  z-index: 5;
+  isolation: auto;
+  inset-block-start: var(--shell-phone-chrome-end);
+  inset-block-end: 0;
+  height: auto;
+}

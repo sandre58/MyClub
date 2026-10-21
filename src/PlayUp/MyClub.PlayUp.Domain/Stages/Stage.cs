@@ -1,0 +1,3400 @@
+// -----------------------------------------------------------------------
+// <copyright file="Stage.cs" company="Stéphane ANDRE">
+// Copyright (c) Stéphane ANDRE. All rights reserved.
+// </copyright>
+// -----------------------------------------------------------------------
+
+using System.Diagnostics;
+using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Rules;
+using MyClub.PlayUp.Domain.Stages.Events;
+
+namespace MyClub.PlayUp.Domain.Stages;
+
+/// <summary>
+/// Aggregate root for a competition phase: lifecycle, structure, and materialized regulation.
+/// </summary>
+[DebuggerDisplay("{Name} ({Status})")]
+public sealed class Stage : AggregateRoot<StageId>
+{
+    private readonly List<Group> _groups = [];
+    private readonly List<Round> _rounds = [];
+    private readonly List<Matchday> _matchdays = [];
+    private readonly List<Slot> _slots = [];
+    private readonly List<BracketPair> _bracketPairs = [];
+    private readonly List<DirectAssignment> _directAssignments = [];
+    private readonly List<CompositionEntry> _affectationAuthoring = [];
+    private readonly List<CompositionEntry> _compositionEntries = [];
+    private readonly List<FormPathResolution> _formPathResolutions = [];
+    private readonly List<Draw> _draws = [];
+    private readonly List<Penalty> _penalties = [];
+    private readonly List<MatchPlacement> _matchPlacements = [];
+    private readonly List<SwissBye> _swissByeHistory = [];
+
+    private Stage(
+        StageId id,
+        CompetitionId competitionId,
+        StageName name,
+        StageRegulation regulation,
+        DefaultsBinding defaultsBinding)
+        : base(id)
+    {
+        CompetitionId = competitionId;
+        Name = name;
+        Regulation = regulation;
+        DefaultsBinding = defaultsBinding;
+        Status = StageStatus.Draft;
+        MatchGenerationFormat = MatchGenerationFormat.SingleRoundRobin;
+    }
+
+    /// <summary>
+    /// Gets the owning competition identity (immutable).
+    /// </summary>
+    public CompetitionId CompetitionId { get; }
+
+    /// <summary>
+    /// Gets the stage name.
+    /// </summary>
+    public StageName Name { get; private set; }
+
+    /// <summary>
+    /// Gets the materialized stage regulation (independent from the competition regulation).
+    /// </summary>
+    public StageRegulation Regulation { get; private set; }
+
+    /// <summary>
+    /// Gets which heritable regulation parts still follow Competition defaults.
+    /// </summary>
+    public DefaultsBinding DefaultsBinding { get; private set; }
+
+    /// <summary>
+    /// Gets the stage lifecycle status.
+    /// </summary>
+    public StageStatus Status { get; private set; }
+
+    /// <summary>
+    /// Gets how Championship / Groups matches are generated for this stage.
+    /// </summary>
+    /// <remarks>Cup and Swiss materialization ignore this value. Default is <see cref="MatchGenerationFormat.SingleRoundRobin"/>.</remarks>
+    public MatchGenerationFormat MatchGenerationFormat { get; private set; }
+
+    /// <summary>
+    /// Gets Swiss Kind settings when this stage is Swiss; otherwise <see langword="null"/>.
+    /// </summary>
+    public SwissSettings? SwissSettings { get; private set; }
+
+    /// <summary>
+    /// Gets structural places per group for Groups form capacity (Places N = groupCount × this).
+    /// Independent of DrawRules — Clear Draw must not clear this.
+    /// </summary>
+    public int? PlacesPerGroup { get; private set; }
+
+    /// <summary>
+    /// Gets a value indicating whether this stage is configured as Swiss Kind.
+    /// </summary>
+    public bool IsSwiss => SwissSettings is not null;
+
+    /// <summary>
+    /// Gets the groups in this stage.
+    /// </summary>
+    public IReadOnlyList<Group> Groups => _groups.AsReadOnly();
+
+    /// <summary>
+    /// Gets the rounds in this stage.
+    /// </summary>
+    public IReadOnlyList<Round> Rounds => _rounds.AsReadOnly();
+
+    /// <summary>
+    /// Gets the matchdays in this stage.
+    /// </summary>
+    public IReadOnlyList<Matchday> Matchdays => _matchdays.AsReadOnly();
+
+    /// <summary>
+    /// Gets the positional slots in this stage.
+    /// </summary>
+    public IReadOnlyList<Slot> Slots => _slots.AsReadOnly();
+
+    /// <summary>
+    /// Gets the structural Cup confrontation potentials (distinct from materialized fixtures).
+    /// </summary>
+    public IReadOnlyList<BracketPair> BracketPairs => _bracketPairs.AsReadOnly();
+
+    /// <summary>
+    /// Gets the direct slot assignments (configuration feeds).
+    /// </summary>
+    public IReadOnlyList<DirectAssignment> DirectAssignments => _directAssignments.AsReadOnly();
+
+    /// <summary>
+    /// Gets the Affectation authoring set (manual population producers). Not runtime membership.
+    /// </summary>
+    public IReadOnlyList<CompositionEntry> AffectationAuthoring => _affectationAuthoring.AsReadOnly();
+
+    /// <summary>
+    /// Gets the runtime population membership (Draw / Live pool). Union of Affectation authoring and Apply resolutions.
+    /// </summary>
+    public IReadOnlyList<CompositionEntry> CompositionEntries => _compositionEntries.AsReadOnly();
+
+    /// <summary>
+    /// Gets ForForm Apply provenances (path fingerprint → entry). Execution detail for Structure reads.
+    /// </summary>
+    public IReadOnlyList<FormPathResolution> FormPathResolutions => _formPathResolutions.AsReadOnly();
+
+    /// <summary>
+    /// Gets the draws owned by this stage.
+    /// </summary>
+    public IReadOnlyList<Draw> Draws => _draws.AsReadOnly();
+
+    /// <summary>
+    /// Gets the standing penalties owned by this stage.
+    /// Applicable solely by presence in this collection (no Active/Revoked status).
+    /// </summary>
+    public IReadOnlyList<Penalty> Penalties => _penalties.AsReadOnly();
+
+    /// <summary>
+    /// Gets materialized calendar placements (one per attached <see cref="MatchId"/>).
+    /// </summary>
+    public IReadOnlyList<MatchPlacement> MatchPlacements => _matchPlacements.AsReadOnly();
+
+    /// <summary>
+    /// Gets recorded Swiss byes (pairing events — no Fixture/Match).
+    /// </summary>
+    public IReadOnlyList<SwissBye> SwissByeHistory => _swissByeHistory.AsReadOnly();
+
+    private bool HasStructure => _groups.Count > 0 || _rounds.Count > 0 || _matchdays.Count > 0;
+
+    /// <summary>
+    /// Creates a new stage in Draft status with a regulation materialized from the competition.
+    /// </summary>
+    /// <param name="competitionId">The owning competition identity.</param>
+    /// <param name="name">The stage name.</param>
+    /// <param name="competitionRegulation">The competition regulation to materialize from.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <returns>The created stage.</returns>
+    public static Stage Create(
+        CompetitionId competitionId,
+        StageName name,
+        Regulation competitionRegulation,
+        IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(competitionRegulation);
+        const bool classifying = true;
+        return Create(
+            competitionId,
+            name,
+            StageRegulation.MaterializeFrom(competitionRegulation),
+            DefaultsBinding.AllBound(classifying),
+            clock);
+    }
+
+    /// <summary>
+    /// Creates a new stage in Draft status with a generated identity, materializing regulation from the competition.
+    /// </summary>
+    /// <param name="competitionId">The owning competition identity.</param>
+    /// <param name="name">The stage name.</param>
+    /// <param name="competitionRegulation">The competition regulation to materialize from.</param>
+    /// <param name="id">The stage identity (must not be empty).</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <returns>The created stage.</returns>
+    public static Stage Create(
+        CompetitionId competitionId,
+        StageName name,
+        Regulation competitionRegulation,
+        StageId id,
+        IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(competitionRegulation);
+        const bool classifying = true;
+        return Create(
+            competitionId,
+            name,
+            StageRegulation.MaterializeFrom(competitionRegulation),
+            DefaultsBinding.AllBound(classifying),
+            id,
+            clock);
+    }
+
+    /// <summary>
+    /// Creates a new stage in Draft status with an independent copy of the given stage regulation.
+    /// Binding defaults to all-bound for classifying capacity when standing is present.
+    /// </summary>
+    public static Stage Create(
+        CompetitionId competitionId,
+        StageName name,
+        StageRegulation regulation,
+        IClock clock) =>
+        Create(
+            competitionId,
+            name,
+            regulation,
+            DefaultsBinding.AllBound(regulation.StandingRules is not null),
+            StageId.New(),
+            clock);
+
+    /// <summary>
+    /// Creates a new stage with an explicit defaults binding (MaterializeFrom + AllBound path).
+    /// </summary>
+    public static Stage Create(
+        CompetitionId competitionId,
+        StageName name,
+        StageRegulation regulation,
+        DefaultsBinding defaultsBinding,
+        IClock clock) =>
+        Create(competitionId, name, regulation, defaultsBinding, StageId.New(), clock);
+
+    /// <summary>
+    /// Creates a new stage in Draft status with an explicit identity and an independent copy of the given stage regulation.
+    /// </summary>
+    public static Stage Create(
+        CompetitionId competitionId,
+        StageName name,
+        StageRegulation regulation,
+        StageId id,
+        IClock clock) =>
+        Create(
+            competitionId,
+            name,
+            regulation,
+            DefaultsBinding.AllBound(regulation.StandingRules is not null),
+            id,
+            clock);
+
+    /// <summary>
+    /// Creates a new stage in Draft with explicit regulation and defaults binding.
+    /// </summary>
+    public static Stage Create(
+        CompetitionId competitionId,
+        StageName name,
+        StageRegulation regulation,
+        DefaultsBinding defaultsBinding,
+        StageId id,
+        IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        ArgumentNullException.ThrowIfNull(regulation);
+        ArgumentNullException.ThrowIfNull(defaultsBinding);
+        ArgumentNullException.ThrowIfNull(clock);
+
+        var stage = new Stage(id, competitionId, name, regulation.Copy(), defaultsBinding.Copy());
+        stage.Raise(new StageCreated(stage.Id, competitionId, name.Value, clock));
+        return stage;
+    }
+
+    /// <summary>
+    /// Replaces the stage regulation as a whole (specialization). Unbinds heritable parts that change.
+    /// Allowed in Draft only (structure locked from Ready).
+    /// </summary>
+    public void ReplaceRegulation(StageRegulation regulation, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(regulation);
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+        UnbindChangedMatchParts(Regulation.MatchRules, regulation.MatchRules);
+        UnbindChangedStandingParts(Regulation.StandingRules, regulation.StandingRules);
+
+        Regulation = regulation.Copy();
+        EnsureStandingRulesInvariant();
+        Raise(new StageRegulationReplaced(Id, clock));
+    }
+
+    /// <summary>
+    /// Replaces match rules (specialization). Unbinds each Match part whose value changes.
+    /// Allowed in Draft only (structure locked from Ready).
+    /// </summary>
+    public void ReplaceMatchRules(MatchRules matchRules, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(matchRules);
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+        UnbindChangedMatchParts(Regulation.MatchRules, matchRules);
+        Regulation = Regulation.WithMatchRules(matchRules);
+        Raise(new StageRegulationReplaced(Id, clock));
+    }
+
+    /// <summary>
+    /// Replaces standing rules only. Allowed after Start (calculation ≠ structure).
+    /// Specialization: unbinds Points and RankingCriteria.
+    /// </summary>
+    public void ReplaceStandingRules(StandingRules standingRules, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(standingRules);
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStandingRulesMutable();
+
+        if (Regulation.StandingRules is null || StageClassification.IsNonClassifyingPhase(this))
+        {
+            throw new DomainException(
+                "Standing rules cannot be replaced on a non-classifying stage (StandingRules absent).",
+                StageErrorCodes.StandingRulesInvariant);
+        }
+
+        DefaultsBinding = DefaultsBinding
+            .Unbind(HeritableRegulationPart.Points)
+            .Unbind(HeritableRegulationPart.RankingCriteria);
+
+        Regulation = Regulation.WithStandingRules(standingRules);
+        Raise(new StageStandingRulesReplaced(Id, clock));
+    }
+
+    /// <summary>
+    /// Copies bound heritable parts from Competition defaults into this stage's effective regulation.
+    /// Never mutates <see cref="DefaultsBinding"/>. No-op when status is not Draft or Ready.
+    /// </summary>
+    public void PropagateBoundDefaults(Regulation competitionRegulation, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(competitionRegulation);
+        ArgumentNullException.ThrowIfNull(clock);
+
+        if (Status is not StageStatus.Draft)
+        {
+            return;
+        }
+
+        var match = Regulation.MatchRules;
+        var duration = DefaultsBinding.IsBound(HeritableRegulationPart.MatchDuration)
+            ? CloneMatchDuration(competitionRegulation.MatchRules.Duration)
+            : match.Duration;
+        var administrative = DefaultsBinding.IsBound(HeritableRegulationPart.AdministrativeResult)
+            ? CloneAdministrative(competitionRegulation.MatchRules.AdministrativeResultPolicy)
+            : match.AdministrativeResultPolicy;
+        var extraTime = DefaultsBinding.IsBound(HeritableRegulationPart.ExtraTime)
+            ? CloneExtraTime(competitionRegulation.MatchRules.ExtraTimePolicy)
+            : match.ExtraTimePolicy;
+        var shootout = DefaultsBinding.IsBound(HeritableRegulationPart.PenaltyShootout)
+            ? CloneShootout(competitionRegulation.MatchRules.PenaltyShootoutPolicy)
+            : match.PenaltyShootoutPolicy;
+
+        var nextMatch = new MatchRules(duration, administrative, extraTime, shootout);
+        var nextStanding = Regulation.StandingRules;
+
+        if (nextStanding is not null)
+        {
+            var points = DefaultsBinding.IsBound(HeritableRegulationPart.Points)
+                ? ClonePoints(competitionRegulation.StandingRules.Points)
+                : nextStanding.Points;
+            var criteria = DefaultsBinding.IsBound(HeritableRegulationPart.RankingCriteria)
+                ? competitionRegulation.StandingRules.RankingCriteria
+                : nextStanding.RankingCriteria;
+            nextStanding = new StandingRules(points, criteria);
+        }
+
+        var previous = Regulation;
+        Regulation = previous.WithMatchRules(nextMatch);
+        if (nextStanding is not null)
+        {
+            Regulation = Regulation.WithStandingRules(nextStanding);
+        }
+
+        if (!Regulation.Equals(previous))
+        {
+            Raise(new StageRegulationReplaced(Id, clock));
+        }
+    }
+
+    /// <summary>
+    /// Rebinds a heritable part to Competition defaults (copies value + marks bound).
+    /// Domain primitive — no Host/SPA surface.
+    /// </summary>
+    public void BindToCompetition(HeritableRegulationPart part, Regulation competitionRegulation, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(competitionRegulation);
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+
+        switch (part)
+        {
+            case HeritableRegulationPart.MatchDuration:
+                Regulation = Regulation.WithMatchRules(
+                    new MatchRules(
+                        CloneMatchDuration(competitionRegulation.MatchRules.Duration),
+                        Regulation.MatchRules.AdministrativeResultPolicy,
+                        Regulation.MatchRules.ExtraTimePolicy,
+                        Regulation.MatchRules.PenaltyShootoutPolicy));
+                break;
+            case HeritableRegulationPart.ExtraTime:
+                Regulation = Regulation.WithMatchRules(
+                    new MatchRules(
+                        Regulation.MatchRules.Duration,
+                        Regulation.MatchRules.AdministrativeResultPolicy,
+                        CloneExtraTime(competitionRegulation.MatchRules.ExtraTimePolicy),
+                        Regulation.MatchRules.PenaltyShootoutPolicy));
+                break;
+            case HeritableRegulationPart.PenaltyShootout:
+                Regulation = Regulation.WithMatchRules(
+                    new MatchRules(
+                        Regulation.MatchRules.Duration,
+                        Regulation.MatchRules.AdministrativeResultPolicy,
+                        Regulation.MatchRules.ExtraTimePolicy,
+                        CloneShootout(competitionRegulation.MatchRules.PenaltyShootoutPolicy)));
+                break;
+            case HeritableRegulationPart.AdministrativeResult:
+                Regulation = Regulation.WithMatchRules(
+                    new MatchRules(
+                        Regulation.MatchRules.Duration,
+                        CloneAdministrative(competitionRegulation.MatchRules.AdministrativeResultPolicy),
+                        Regulation.MatchRules.ExtraTimePolicy,
+                        Regulation.MatchRules.PenaltyShootoutPolicy));
+                break;
+            case HeritableRegulationPart.Points:
+                EnsureStandingPresentForBind();
+                Regulation = Regulation.WithStandingRules(
+                    new StandingRules(
+                        ClonePoints(competitionRegulation.StandingRules.Points),
+                        [.. Regulation.StandingRules!.RankingCriteria]));
+                break;
+            case HeritableRegulationPart.RankingCriteria:
+                EnsureStandingPresentForBind();
+                Regulation = Regulation.WithStandingRules(
+                    new StandingRules(
+                        Regulation.StandingRules!.Points,
+                        [.. competitionRegulation.StandingRules.RankingCriteria]));
+                break;
+            default:
+                throw new DomainException(
+                    $"Unknown heritable regulation part '{part}'.",
+                    StageErrorCodes.InvalidTransition);
+        }
+
+        DefaultsBinding = DefaultsBinding.Bind(part);
+        Raise(new StageRegulationReplaced(Id, clock));
+    }
+
+    /// <summary>
+    /// Clears standing rules (Cup/KO alignment). Draft only.
+    /// </summary>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ClearStandingRules(IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+        if (Regulation.StandingRules is null)
+        {
+            return;
+        }
+
+        Regulation = Regulation.WithStandingRules(null);
+        EnsureStandingRulesInvariant();
+        Raise(new StageRegulationReplaced(Id, clock));
+    }
+
+    /// <summary>
+    /// Seeds standing rules from competition defaults when absent (classifying phases).
+    /// Allowed in Draft only (structure locked from Ready). No-op when standing already present.
+    /// </summary>
+    /// <param name="standingDefaults">Competition standing defaults (A4 seed).</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void SeedStandingRules(StandingRules standingDefaults, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(standingDefaults);
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+
+        if (Regulation.StandingRules is not null)
+        {
+            return;
+        }
+
+        Regulation = Regulation.WithStandingRules(standingDefaults);
+        EnsureStandingRulesInvariant();
+        Raise(new StageRegulationReplaced(Id, clock));
+    }
+
+    /// <summary>
+    /// Replaces draw rules. Draft only (structure locked from Ready).
+    /// Clear is refused while any non-cancelled Draw exists.
+    /// Replace (non-null) is refused once a non-cancelled Draw has left NotResolved
+    /// (Generate consumed the rules for that execution — L2 lock).
+    /// </summary>
+    /// <param name="drawRules">The new draw rules, or <see langword="null"/>.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ReplaceDrawRules(DrawRules? drawRules, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+        if (drawRules is null && _draws.Any(draw => draw.Status != DrawStatus.Cancelled))
+        {
+            throw new DomainException(
+                "Cannot clear draw rules while a non-cancelled draw exists.",
+                StageErrorCodes.DrawRulesClearBlockedByActiveDraw);
+        }
+
+        if (drawRules is not null && HasDrawWithGeneratedResolution())
+        {
+            throw new DomainException(
+                "Cannot replace draw rules after a non-cancelled draw has been generated. Cancel the execution first.",
+                StageErrorCodes.DrawRulesReplaceBlockedAfterGenerate);
+        }
+
+        Regulation = Regulation.WithDrawRules(drawRules);
+        Raise(new StageRegulationReplaced(Id, clock));
+    }
+
+    /// <summary>
+    /// True when any non-cancelled Draw has left <see cref="DrawResolutionState.NotResolved"/>
+    /// (Resolved or NoSolution) — DrawRules are locked for that execution cycle.
+    /// </summary>
+    private bool HasDrawWithGeneratedResolution() =>
+        _draws.Any(draw =>
+            draw.Status != DrawStatus.Cancelled
+            && draw.Resolution.State != DrawResolutionState.NotResolved);
+
+    /// <summary>
+    /// Adds a standing points deduction for an entry (mutable until Completed).
+    /// </summary>
+    /// <param name="entryId">Targeted competition entry.</param>
+    /// <param name="pointsDeducted">Points to deduct (&gt; 0).</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <param name="reason">Optional free-text reason (traceability only).</param>
+    /// <returns>The created penalty.</returns>
+    public Penalty AddPenalty(EntryId entryId, int pointsDeducted, IClock clock, string? reason = null)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsurePenaltiesMutable();
+
+        var penalty = new Penalty(PenaltyId.New(), entryId, pointsDeducted, reason);
+        _penalties.Add(penalty);
+        Raise(new StagePenaltyAdded(Id, penalty.Id, penalty.EntryId, penalty.PointsDeducted, penalty.Reason, clock));
+        return penalty;
+    }
+
+    /// <summary>
+    /// Removes a standing penalty from this stage (delete revocation).
+    /// </summary>
+    /// <param name="penaltyId">Penalty identity.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void RemovePenalty(PenaltyId penaltyId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsurePenaltiesMutable();
+
+        var penalty = FindPenalty(penaltyId)
+                      ?? throw new DomainException(
+                          $"Penalty '{penaltyId}' was not found.",
+                          StageErrorCodes.PenaltyNotFound);
+
+        _penalties.Remove(penalty);
+        Raise(new StagePenaltyRemoved(Id, penalty.Id, penalty.EntryId, penalty.PointsDeducted, clock));
+    }
+
+    /// <summary>
+    /// Finds a penalty by identity, or <see langword="null"/> when absent.
+    /// </summary>
+    public Penalty? FindPenalty(PenaltyId penaltyId) =>
+        _penalties.FirstOrDefault(p => p.Id.Equals(penaltyId));
+
+    /// <summary>
+    /// Creates a draft draw with the given resolution kind (inputs configured separately).
+    /// </summary>
+    /// <param name="kind">Principal resolution kind (immutable for this draw).</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <returns>The created draw.</returns>
+    public Draw CreateDraw(DrawResolutionKind kind, IClock clock) =>
+        CreateDraw(kind, DrawId.New(), clock);
+
+    /// <summary>
+    /// Creates a draft draw with an explicit identity.
+    /// </summary>
+    /// <param name="kind">Principal resolution kind (immutable for this draw).</param>
+    /// <param name="id">The draw identity (must not be empty).</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <returns>The created draw.</returns>
+    public Draw CreateDraw(DrawResolutionKind kind, DrawId id, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureOperationalExitRulesMutable();
+        if (_draws.Any(draw => draw.Status != DrawStatus.Cancelled))
+        {
+            throw new DomainException(
+                "A phase cannot have more than one non-cancelled draw.",
+                StageErrorCodes.NonCancelledDrawAlreadyExists);
+        }
+
+        var draw = new Draw(id, kind);
+        _draws.Add(draw);
+        Raise(new StageDrawCreated(Id, draw.Id, kind, clock));
+        return draw;
+    }
+
+    /// <summary>
+    /// Configures draw inputs (Draft draw only). Sole entry point for Entries / SeedMap / Pot / fixed placements.
+    /// </summary>
+    public void ConfigureDrawInputs(DrawId drawId, DrawInputs inputs)
+    {
+        ArgumentNullException.ThrowIfNull(inputs);
+        EnsureOperationalExitRulesMutable();
+        GetDraw(drawId).ConfigureInputs(inputs);
+    }
+
+    /// <summary>
+    /// Records a typed resolution matching the draw kind (Draft only).
+    /// </summary>
+    public void RecordDrawResolution(DrawId drawId, DrawResolution resolution, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(resolution);
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureOperationalExitRulesMutable();
+        var draw = GetDraw(drawId);
+        draw.RecordResolution(resolution);
+        Raise(new StageDrawResolutionRecorded(Id, drawId, resolution.State, clock));
+    }
+
+    /// <summary>
+    /// Marks that no admissible solution exists (Draft only; ≠ Cancel).
+    /// </summary>
+    public void MarkDrawNoSolution(DrawId drawId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureOperationalExitRulesMutable();
+        var draw = GetDraw(drawId);
+        draw.MarkNoSolution();
+        Raise(new StageDrawResolutionRecorded(Id, drawId, DrawResolutionState.NoSolution, clock));
+    }
+
+    /// <summary>
+    /// Publishes a resolved draw (immutable thereafter). Required before WhoFeeds exposes Draw targets.
+    /// </summary>
+    public void PublishDraw(DrawId drawId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureOperationalExitRulesMutable();
+
+        var draw = GetDraw(drawId);
+        draw.Publish();
+        Raise(new StageDrawPublished(Id, drawId, clock));
+    }
+
+    /// <summary>
+    /// Cancels a draw. A new draw is required for a rerun.
+    /// </summary>
+    public void CancelDraw(DrawId drawId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureOperationalExitRulesMutable();
+        var draw = GetDraw(drawId);
+        if (draw.Status == DrawStatus.Cancelled)
+        {
+            return;
+        }
+
+        draw.Cancel();
+        Raise(new StageDrawCancelled(Id, drawId, clock));
+    }
+
+    /// <summary>
+    /// Replaces qualification rules. Draft only (structure locked from Ready).
+    /// Destinations target peer-stage population or Place — cannot target this stage.
+    /// </summary>
+    /// <param name="qualificationRules">The new qualification rules, or <see langword="null"/>.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ReplaceQualificationRules(QualificationRules? qualificationRules, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+        ApplyQualificationRulesReplacement(qualificationRules, clock);
+    }
+
+    /// <summary>
+    /// Replaces qualification rules while the stage is <see cref="StageStatus.Draft"/> or
+    /// <see cref="StageStatus.Ready"/> (operational exit edit). Caller enforces production and D1 guards.
+    /// </summary>
+    /// <param name="qualificationRules">The new qualification rules, or <see langword="null"/>.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ReplaceQualificationRulesOperationally(QualificationRules? qualificationRules, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureOperationalExitRulesMutable();
+        ApplyQualificationRulesReplacement(qualificationRules, clock);
+    }
+
+    private void ApplyQualificationRulesReplacement(QualificationRules? qualificationRules, IClock clock)
+    {
+        if (qualificationRules is not null)
+        {
+            if (qualificationRules.Paths.Any(path => path.Destination.StageId.Equals(Id)))
+            {
+                throw new DomainException(
+                    "Qualification destination cannot target the source stage.",
+                    RulesErrorCodes.QualificationRulesInvalid);
+            }
+        }
+
+        Regulation = Regulation.WithQualificationRules(qualificationRules);
+        Raise(new StageRegulationReplaced(Id, clock));
+    }
+
+    /// <summary>
+    /// Replaces progression rules. Draft only (structure locked from Ready).
+    /// Each path source must be a known <see cref="BracketPair.PairKey"/> (Cup structural identity).
+    /// Local Place destinations must reference an existing slot and must not conflict with a direct assignment.
+    /// Cross-stage Place is allowed when SlotKey exists on the destination stage form (validated at Prepare/Apply).
+    /// </summary>
+    /// <param name="progressionRules">The new progression rules, or <see langword="null"/>.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ReplaceProgressionRules(ProgressionRules? progressionRules, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+        ApplyProgressionRulesReplacement(progressionRules, clock);
+    }
+
+    /// <summary>
+    /// Replaces progression rules while the stage is <see cref="StageStatus.Draft"/> or
+    /// <see cref="StageStatus.Ready"/> (operational exit edit). Caller enforces production and D1 guards.
+    /// </summary>
+    /// <param name="progressionRules">The new progression rules, or <see langword="null"/>.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ReplaceProgressionRulesOperationally(ProgressionRules? progressionRules, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureOperationalExitRulesMutable();
+        ApplyProgressionRulesReplacement(progressionRules, clock);
+    }
+
+    private void ApplyProgressionRulesReplacement(ProgressionRules? progressionRules, IClock clock)
+    {
+        if (progressionRules is not null)
+        {
+            foreach (var path in progressionRules.Paths)
+            {
+                EnsureStructuralConfrontationSource(path.SourcePairKey);
+                EnsureWinnerPathOnChampionshipTerminal(path);
+
+                if (path.Destination.TargetsPopulation)
+                {
+                    if (path.Destination.StageId.Equals(Id))
+                    {
+                        throw new DomainException(
+                            "Progression population destination cannot target the source stage.",
+                            RulesErrorCodes.ProgressionRulesInvalid);
+                    }
+
+                    continue;
+                }
+
+                // Place on this stage: slot or group must exist (slot must not conflict with Direct).
+                // Cross-stage Place: destination form ownership is validated at Prepare/Apply.
+                if (!path.Destination.StageId.Equals(Id)) continue;
+                if (path.Destination.TargetsGroup)
+                {
+                    EnsureLocalGroupDestination(path.Destination.GroupId!.Value);
+                }
+                else
+                {
+                    EnsureLocalPathDestination(path.Destination.SlotKey!);
+                }
+            }
+        }
+
+        Regulation = Regulation.WithProgressionRules(progressionRules);
+        Raise(new StageRegulationReplaced(Id, clock));
+    }
+
+    /// <summary>
+    /// Replaces placement award rules. Draft only (structure locked from Ready).
+    /// Each path fixture must belong to this stage.
+    /// Distinct from <see cref="ReplaceProgressionRules"/> — awards final ranks, does not feed slots.
+    /// </summary>
+    /// <param name="placementAwardRules">The new placement award rules, or <see langword="null"/>.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ReplacePlacementAwardRules(PlacementAwardRules? placementAwardRules, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+        ApplyPlacementAwardRulesReplacement(placementAwardRules, clock);
+    }
+
+    /// <summary>
+    /// Replaces placement award rules while the stage is Draft or Ready (operational attribution edit).
+    /// </summary>
+    /// <param name="placementAwardRules">The new placement award rules, or <see langword="null"/>.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ReplacePlacementAwardRulesOperationally(PlacementAwardRules? placementAwardRules, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureOperationalExitRulesMutable();
+        ApplyPlacementAwardRulesReplacement(placementAwardRules, clock);
+    }
+
+    private void ApplyPlacementAwardRulesReplacement(PlacementAwardRules? placementAwardRules, IClock clock)
+    {
+        if (placementAwardRules is not null)
+        {
+            foreach (var path in placementAwardRules.Paths)
+            {
+                EnsureStructuralConfrontationSource(
+                    path.SourcePairKey,
+                    RulesErrorCodes.PlacementAwardRulesInvalid);
+            }
+        }
+
+        Regulation = Regulation.WithPlacementAwardRules(placementAwardRules);
+        Raise(new StageRegulationReplaced(Id, clock));
+    }
+
+    /// <summary>
+    /// Replaces the default stage tie format (source for new rounds). Allowed in Draft or Ready.
+    /// </summary>
+    /// <param name="tieFormat">The new default tie format, or <see langword="null"/>.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ReplaceDefaultTieFormat(TieFormat? tieFormat, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+        Regulation = Regulation.WithTieFormat(tieFormat);
+        Raise(new StageRegulationReplaced(Id, clock));
+    }
+
+    /// <summary>
+    /// Gets a group by identity.
+    /// </summary>
+    /// <param name="groupId">The group identity.</param>
+    /// <returns>The group.</returns>
+    public Group GetGroup(GroupId groupId) =>
+        _groups.FirstOrDefault(g => g.Id.Equals(groupId))
+        ?? throw new DomainException($"Group '{groupId}' was not found.", StageErrorCodes.GroupNotFound);
+
+    /// <summary>
+    /// Gets a draw by identity.
+    /// </summary>
+    /// <param name="drawId">The draw identity.</param>
+    /// <returns>The draw.</returns>
+    public Draw GetDraw(DrawId drawId) =>
+        _draws.FirstOrDefault(d => d.Id.Equals(drawId))
+        ?? throw new DomainException($"Draw '{drawId}' was not found.", StageErrorCodes.DrawNotFound);
+
+    /// <summary>
+    /// Finds a draw by identity, if any.
+    /// </summary>
+    public Draw? FindDraw(DrawId drawId) =>
+        _draws.FirstOrDefault(d => d.Id.Equals(drawId));
+
+    /// <summary>
+    /// Finds a group by identity, if any.
+    /// </summary>
+    /// <param name="groupId">The group identity.</param>
+    /// <returns>The group, or <see langword="null"/>.</returns>
+    public Group? FindGroup(GroupId groupId) =>
+        _groups.FirstOrDefault(g => g.Id.Equals(groupId));
+
+    /// <summary>
+    /// Determines whether a group is present.
+    /// </summary>
+    /// <param name="groupId">The group identity.</param>
+    /// <returns><see langword="true"/> if present; otherwise, <see langword="false"/>.</returns>
+    public bool HasGroup(GroupId groupId) => FindGroup(groupId) is not null;
+
+    /// <summary>
+    /// Determines whether a round is present.
+    /// </summary>
+    /// <param name="roundId">The round identity.</param>
+    /// <returns><see langword="true"/> if present; otherwise, <see langword="false"/>.</returns>
+    public bool HasRound(RoundId roundId) => _rounds.Any(r => r.Id.Equals(roundId));
+
+    /// <summary>
+    /// Determines whether a matchday is present.
+    /// </summary>
+    /// <param name="matchdayId">The matchday identity.</param>
+    /// <returns><see langword="true"/> if present; otherwise, <see langword="false"/>.</returns>
+    public bool HasMatchday(MatchdayId matchdayId) => _matchdays.Any(m => m.Id.Equals(matchdayId));
+
+    /// <summary>
+    /// Gets a fixture by identity.
+    /// </summary>
+    /// <param name="fixtureId">The fixture identity.</param>
+    /// <returns>The fixture.</returns>
+    public Fixture GetFixture(FixtureId fixtureId) =>
+        FindFixture(fixtureId)
+        ?? throw new DomainException($"Fixture '{fixtureId}' was not found.", StageErrorCodes.FixtureNotFound);
+
+    /// <summary>
+    /// Finds a fixture by identity, if any.
+    /// </summary>
+    /// <param name="fixtureId">The fixture identity.</param>
+    /// <returns>The fixture, or <see langword="null"/>.</returns>
+    public Fixture? FindFixture(FixtureId fixtureId) =>
+        _rounds.Select(r => r.FindFixture(fixtureId)).FirstOrDefault(f => f is not null)
+        ?? _matchdays.Select(m => m.FindFixture(fixtureId)).FirstOrDefault(f => f is not null);
+
+    /// <summary>
+    /// Finds a fixture bound to the given structural <see cref="BracketPair"/> key, if any.
+    /// </summary>
+    /// <param name="pairKey">The persistent pair key (e.g. P1).</param>
+    /// <returns>The fixture, or <see langword="null"/>.</returns>
+    public Fixture? FindFixtureByBracketPairKey(string pairKey)
+    {
+        var key = BracketPair.NormalizePairKey(pairKey);
+        return EnumerateFixtures()
+            .FirstOrDefault(fixture =>
+                fixture.BracketPairKey is not null
+                && string.Equals(fixture.BracketPairKey, key, StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// Finds the fixture that currently attaches <paramref name="matchId"/>, if any.
+    /// </summary>
+    /// <param name="matchId">The match identity.</param>
+    /// <returns>The fixture identity, or <see langword="null"/>.</returns>
+    public FixtureId? FindFixtureIdContainingMatch(MatchId matchId)
+    {
+        foreach (var fixture in EnumerateFixtures())
+        {
+            if (fixture.Contains(matchId))
+            {
+                return fixture.Id;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Determines whether a fixture is present.
+    /// </summary>
+    /// <param name="fixtureId">The fixture identity.</param>
+    /// <returns><see langword="true"/> if present; otherwise, <see langword="false"/>.</returns>
+    public bool HasFixture(FixtureId fixtureId) => FindFixture(fixtureId) is not null;
+
+    /// <summary>
+    /// Determines whether a match identity is attached to any fixture in this stage.
+    /// </summary>
+    /// <param name="matchId">The match identity.</param>
+    /// <returns><see langword="true"/> if attached; otherwise, <see langword="false"/>.</returns>
+    public bool HasMatch(MatchId matchId) =>
+        _rounds.SelectMany(r => r.Fixtures).Any(f => f.Contains(matchId))
+        || _matchdays.SelectMany(m => m.Fixtures).Any(f => f.Contains(matchId));
+
+    /// <summary>
+    /// Whether the display name may be renamed (C-18 / O-04 — not when the phase is completed).
+    /// </summary>
+    public bool CanRenameDisplayName() => Status is not StageStatus.Completed;
+
+    /// <summary>
+    /// Renames the stage. No-op when the normalized name is unchanged.
+    /// </summary>
+    /// <param name="name">The new name.</param>
+    public void Rename(StageName name)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        EnsureDisplayNameMutable();
+
+        if (Name.Equals(name))
+        {
+            return;
+        }
+
+        Name = name;
+    }
+
+    /// <summary>
+    /// Sets how RR (matchday-based) matches are generated. No-op when unchanged.
+    /// </summary>
+    /// <remarks>
+    /// Topology gate (not product format names): forbidden when Swiss or when knockout rounds exist.
+    /// Allowed for unstructured Draft, Championship (matchdays), and Groups (+ matchdays).
+    /// </remarks>
+    /// <param name="format">The match generation format.</param>
+    public void SetMatchGenerationFormat(MatchGenerationFormat format)
+    {
+        EnsureStructureMutable();
+
+        if (MatchGenerationFormat == format)
+        {
+            return;
+        }
+
+        if (!Enum.IsDefined(format))
+        {
+            throw new DomainException(
+                $"Unknown match generation format '{format}'.",
+                StageErrorCodes.InvalidMatchGenerationFormat);
+        }
+
+        EnsureMatchGenerationFormatApplicable();
+        MatchGenerationFormat = format;
+    }
+
+    /// <summary>
+    /// Enables or updates Swiss Kind settings. Pass <see langword="null"/> to clear when history is empty.
+    /// </summary>
+    /// <param name="settings">Swiss settings, or <see langword="null"/> to clear.</param>
+    public void SetSwissSettings(SwissSettings? settings)
+    {
+        EnsureStructureMutable();
+
+        if (Equals(SwissSettings, settings))
+        {
+            return;
+        }
+
+        if (settings is null)
+        {
+            if (_swissByeHistory.Count > 0)
+            {
+                throw new DomainException(
+                    "Swiss settings cannot be cleared while bye history exists.",
+                    StageErrorCodes.SwissSettingsInvalid);
+            }
+
+            SwissSettings = null;
+            return;
+        }
+
+        EnsureSwissCompositionAllowed();
+        var maxByeRound = _swissByeHistory.Count == 0
+            ? 0
+            : _swissByeHistory.Max(bye => bye.RoundIndex);
+        if (settings.RoundCount < maxByeRound)
+        {
+            throw new DomainException(
+                $"Swiss round count cannot be less than highest recorded bye round ({maxByeRound}).",
+                StageErrorCodes.SwissSettingsInvalid);
+        }
+
+        SwissSettings = settings;
+    }
+
+    /// <summary>
+    /// Records a Swiss bye for a round. Allowed while Running (GenerateNextRound); not a Fixture/Match.
+    /// </summary>
+    /// <param name="roundIndex">1-based Swiss round index.</param>
+    /// <param name="entryId">Entry receiving the bye.</param>
+    public void RecordSwissBye(int roundIndex, EntryId entryId)
+    {
+        EnsureSwissByeMutable();
+
+        var settings = SwissSettings
+                       ?? throw new DomainException(
+                           "Swiss bye can only be recorded on a Swiss stage.",
+                           StageErrorCodes.SwissByeInvalid);
+
+        if (roundIndex < 1 || roundIndex > settings.RoundCount)
+        {
+            throw new DomainException(
+                $"Swiss bye round index must be between 1 and {settings.RoundCount}.",
+                StageErrorCodes.SwissByeInvalid);
+        }
+
+        if (_swissByeHistory.Any(bye => bye.RoundIndex == roundIndex))
+        {
+            throw new DomainException(
+                $"Swiss bye already recorded for round {roundIndex}.",
+                StageErrorCodes.SwissByeInvalid);
+        }
+
+        _swissByeHistory.Add(new SwissBye(roundIndex, entryId));
+    }
+
+    /// <summary>
+    /// Counts recorded byes for an entry (I6 pairing input).
+    /// </summary>
+    /// <param name="entryId">Entry identity.</param>
+    /// <returns>Number of byes in history.</returns>
+    public int CountSwissByes(EntryId entryId) =>
+        _swissByeHistory.Count(bye => bye.EntryId.Equals(entryId));
+
+    /// <summary>
+    /// Adds the next Swiss Matchday (progressive round). Allowed while Running — does not unlock global structure.
+    /// </summary>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <returns>The created matchday (number = previous max + 1).</returns>
+    public Matchday AddSwissRoundMatchday(IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureSwissProgressiveMutable();
+        EnsureCanAddMatchday();
+
+        var settings = SwissSettings!;
+        var nextNumber = _matchdays.Count == 0 ? 1 : _matchdays.Max(matchday => matchday.Number) + 1;
+        if (nextNumber > settings.RoundCount)
+        {
+            throw new DomainException(
+                $"Swiss stage already reached RoundCount {settings.RoundCount}.",
+                StageErrorCodes.SwissSettingsInvalid);
+        }
+
+        var matchday = new Matchday(MatchdayId.New(), nextNumber);
+        _matchdays.Add(matchday);
+        Raise(new StageMatchdayAdded(Id, matchday.Id, clock));
+        return matchday;
+    }
+
+    /// <summary>
+    /// Adds a Fixture under a Swiss Matchday while Running (GenerateNextRound).
+    /// </summary>
+    /// <param name="matchdayId">Target Swiss matchday.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <returns>The created fixture.</returns>
+    public Fixture AddSwissRoundFixture(MatchdayId matchdayId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureSwissProgressiveMutable();
+
+        var matchday = _matchdays.FirstOrDefault(candidate => candidate.Id.Equals(matchdayId))
+                       ?? throw new DomainException(
+                           $"Matchday '{matchdayId}' was not found.",
+                           StageErrorCodes.MatchdayNotFound);
+
+        var fixture = new Fixture(FixtureId.New(), slotAKey: null, slotBKey: null);
+        matchday.AddFixture(fixture);
+        Raise(new StageFixtureAdded(Id, fixture.Id, clock));
+        return fixture;
+    }
+
+    /// <summary>
+    /// Attaches a Match to a Swiss Fixture while Running (GenerateNextRound). LegIndex 1 only.
+    /// </summary>
+    /// <param name="fixtureId">Fixture identity.</param>
+    /// <param name="matchId">Match identity.</param>
+    /// <param name="legIndex">1-based leg index.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void AttachSwissRoundMatch(FixtureId fixtureId, MatchId matchId, int legIndex, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureSwissProgressiveMutable();
+
+        var fixture = GetFixture(fixtureId);
+        if (fixture.Contains(matchId))
+        {
+            return;
+        }
+
+        if (HasMatch(matchId))
+        {
+            throw new DomainException(
+                $"Match '{matchId}' is already attached to another fixture.",
+                StageErrorCodes.MatchAlreadyAttached);
+        }
+
+        fixture.AttachMatch(matchId, legIndex);
+        Raise(new StageMatchAttached(Id, fixtureId, matchId, legIndex, clock));
+    }
+
+    /// <summary>
+    /// Removes one Swiss round (fixtures, matchday, optional bye) while Running.
+    /// Does not remove Match aggregates — Application deletes those.
+    /// </summary>
+    /// <param name="roundNumber">1-based Swiss round / matchday number.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <returns>Distinct match identities that were attached on the removed round.</returns>
+    public IReadOnlyList<MatchId> RemoveSwissRoundMaterialization(int roundNumber, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureSwissProgressiveMutable();
+
+        var matchday = _matchdays.FirstOrDefault(candidate => candidate.Number == roundNumber)
+                       ?? throw new DomainException(
+                           $"Matchday for Swiss round {roundNumber} was not found.",
+                           StageErrorCodes.MatchdayNotFound);
+
+        var fixtureIds = matchday.Fixtures.Select(fixture => fixture.Id).ToArray();
+        var matchIds = matchday.Fixtures.SelectMany(fixture => fixture.MatchIds).Distinct().ToArray();
+
+        foreach (var fixtureId in fixtureIds)
+        {
+            RemoveSwissRoundFixture(fixtureId, clock);
+        }
+
+        _matchdays.Remove(matchday);
+        Raise(new StageMatchdayRemoved(Id, matchday.Id, clock));
+        RemoveSwissByeForRound(roundNumber);
+
+        return matchIds;
+    }
+
+    /// <summary>
+    /// Clears Swiss Kind settings and bye history (Structure reconfigure). Draft/Ready only.
+    /// </summary>
+    public void ClearSwissConfiguration()
+    {
+        EnsureStructureMutable();
+        _swissByeHistory.Clear();
+        SwissSettings = null;
+    }
+
+    /// <summary>
+    /// Sets or clears structural places-per-group (Groups form capacity). Draft/Ready only.
+    /// Independent of <see cref="ReplaceDrawRules"/> — clearing Draw does not clear this value.
+    /// </summary>
+    /// <remarks>
+    /// Non-null requires at least one Group. Clearing (<see langword="null"/>) is always allowed
+    /// so Structure Clear can reset capacity after groups are removed.
+    /// </remarks>
+    /// <param name="placesPerGroup">Places per group (≥ 2), or <see langword="null"/> to clear.</param>
+    public void SetPlacesPerGroup(int? placesPerGroup)
+    {
+        EnsureStructureMutable();
+
+        switch (placesPerGroup)
+        {
+            case null:
+                PlacesPerGroup = null;
+                return;
+            case < 2:
+                throw new DomainException(
+                    "Places per group must be at least 2.",
+                    StageErrorCodes.InvalidConfiguration);
+            default:
+                if (_groups.Count == 0)
+                {
+                    throw new DomainException(
+                        "Places per group requires at least one group.",
+                        StageErrorCodes.PlacesPerGroupNotApplicable);
+                }
+
+                PlacesPerGroup = placesPerGroup;
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Adds a group to the stage.
+    /// </summary>
+    /// <param name="name">The group name.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <returns>The created group.</returns>
+    public Group AddGroup(string name, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+        EnsureCanAddGroup();
+
+        var group = new Group(GroupId.New(), name);
+        _groups.Add(group);
+        Raise(new StageGroupAdded(Id, group.Id, clock));
+        return group;
+    }
+
+    /// <summary>
+    /// Removes a group from the stage.
+    /// </summary>
+    /// <param name="groupId">The group identity.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void RemoveGroup(GroupId groupId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+
+        var group = GetGroup(groupId);
+        _groups.Remove(group);
+        Raise(new StageGroupRemoved(Id, groupId, clock));
+    }
+
+    /// <summary>
+    /// Renames a group. No-op when the normalized name is unchanged.
+    /// </summary>
+    /// <param name="groupId">The group identity.</param>
+    /// <param name="name">The new name.</param>
+    public void RenameGroup(GroupId groupId, string name)
+    {
+        EnsureStructureMutable();
+        GetGroup(groupId).Rename(name);
+    }
+
+    /// <summary>
+    /// Assigns an entry to a group. Application validates that the entry belongs to the competition.
+    /// </summary>
+    /// <param name="groupId">The group identity.</param>
+    /// <param name="entryId">The entry identity.</param>
+    public void AssignEntryToGroup(GroupId groupId, EntryId entryId)
+    {
+        EnsureOperationalExitRulesMutable();
+
+        var owningGroup = _groups.FirstOrDefault(g => g.Contains(entryId));
+        if (owningGroup is not null)
+        {
+            if (owningGroup.Id.Equals(groupId))
+            {
+                return;
+            }
+
+            throw new DomainException(
+                $"Entry '{entryId}' is already assigned to another group.",
+                StageErrorCodes.DuplicateEntry);
+        }
+
+        var group = GetGroup(groupId);
+        group.Assign(entryId);
+    }
+
+    /// <summary>
+    /// Removes an entry from a group.
+    /// </summary>
+    /// <param name="groupId">The group identity.</param>
+    /// <param name="entryId">The entry identity.</param>
+    /// <param name="materializedParticipants">
+    /// Participant snapshots of matches attached on this stage (empty when none). Required for C3 F1.
+    /// </param>
+    public void RemoveEntryFromGroup(
+        GroupId groupId,
+        EntryId entryId,
+        IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants = null)
+    {
+        EnsureStructureMutable();
+
+        var group = GetGroup(groupId);
+        if (!group.Contains(entryId))
+        {
+            throw new DomainException(
+                $"Entry '{entryId}' was not found in group '{groupId}'.",
+                StageErrorCodes.EntryNotFound);
+        }
+
+        MaterializedOpponentCoherence.EnsureEntryNotBoundToAttachedMatch(
+            this,
+            entryId,
+            materializedParticipants ?? []);
+
+        group.Remove(entryId);
+    }
+
+    /// <summary>
+    /// Adds a positional slot. Draft only.
+    /// </summary>
+    /// <param name="slotKey">Business slot key unique within the stage.</param>
+    /// <returns>The created slot.</returns>
+    public Slot AddSlot(string slotKey)
+    {
+        EnsureStructureMutable();
+        EnsureNotSwiss("Slots");
+
+        var key = Slot.NormalizeKey(slotKey);
+        if (_slots.Any(s => string.Equals(s.SlotKey, key, StringComparison.Ordinal)))
+        {
+            throw new DomainException(
+                $"Slot key '{key}' already exists.",
+                StageErrorCodes.DuplicateSlotKey);
+        }
+
+        var slot = new Slot(key);
+        _slots.Add(slot);
+        return slot;
+    }
+
+    /// <summary>
+    /// Removes a slot when it is not referenced by direct assignment, local progression,
+    /// local qualification, fixture slots, or a bracket pair.
+    /// </summary>
+    /// <param name="slotKey">The slot key to remove.</param>
+    public void RemoveSlot(string slotKey)
+    {
+        EnsureStructureMutable();
+
+        var key = Slot.NormalizeKey(slotKey);
+        var slot = FindSlot(key)
+                   ?? throw new DomainException($"Slot '{key}' was not found.", StageErrorCodes.SlotNotFound);
+
+        if (_directAssignments.Any(a => string.Equals(a.SlotKey, key, StringComparison.Ordinal)))
+        {
+            throw new DomainException(
+                $"Slot '{key}' is referenced by a direct assignment.",
+                StageErrorCodes.SlotReferenced);
+        }
+
+        if (IsSlotReferencedByLocalProgression(key)
+            || IsSlotReferencedByFixture(key)
+            || IsSlotReferencedByBracketPair(key))
+        {
+            throw new DomainException(
+                $"Slot '{key}' is still referenced.",
+                StageErrorCodes.SlotReferenced);
+        }
+
+        _slots.Remove(slot);
+    }
+
+    /// <summary>
+    /// Finds a bracket pair by persistent key.
+    /// </summary>
+    /// <param name="pairKey">The pair key (e.g. P1).</param>
+    /// <returns>The pair when found; otherwise <see langword="null"/>.</returns>
+    public BracketPair? FindBracketPair(string pairKey)
+    {
+        var key = BracketPair.NormalizePairKey(pairKey);
+        return _bracketPairs.FirstOrDefault(p => string.Equals(p.PairKey, key, StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// Replaces the stage bracket pairs. Draft only (structure locked from Ready).
+    /// Rejects when an existing fixture references a pair key that would be removed.
+    /// </summary>
+    /// <param name="pairs">The new pair set (may be empty).</param>
+    public void ReplaceBracketPairs(IReadOnlyList<BracketPair> pairs)
+    {
+        ArgumentNullException.ThrowIfNull(pairs);
+        EnsureStructureMutable();
+
+        var pairKeys = new HashSet<string>(StringComparer.Ordinal);
+        var coveredSlots = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var pair in pairs)
+        {
+            if (!pairKeys.Add(pair.PairKey))
+            {
+                throw new DomainException(
+                    $"Duplicate BracketPair key '{pair.PairKey}'.",
+                    StageErrorCodes.InvalidConfiguration);
+            }
+
+            EnsureBracketPairSlotExists(pair.SlotAKey);
+            EnsureBracketPairSlotExists(pair.SlotBKey);
+
+            if (!coveredSlots.Add(pair.SlotAKey))
+            {
+                throw new DomainException(
+                    $"Slot '{pair.SlotAKey}' is referenced by more than one BracketPair.",
+                    StageErrorCodes.InvalidConfiguration);
+            }
+
+            if (!coveredSlots.Add(pair.SlotBKey))
+            {
+                throw new DomainException(
+                    $"Slot '{pair.SlotBKey}' is referenced by more than one BracketPair.",
+                    StageErrorCodes.InvalidConfiguration);
+            }
+        }
+
+        EnsureNoReferencedBracketPairRemoved(pairKeys);
+
+        _bracketPairs.Clear();
+        _bracketPairs.AddRange(pairs);
+    }
+
+    /// <summary>
+    /// Clears all bracket pairs. Draft only (structure locked from Ready).
+    /// </summary>
+    public void ClearBracketPairs() => ReplaceBracketPairs([]);
+
+    /// <summary>
+    /// Seeds mono-round entry pairs from current slots in structural order.
+    /// </summary>
+    public void SeedEntryRoundBracketPairs() =>
+        ReplaceBracketPairs(BracketPair.CreateEntryRoundPairs([.. _slots.Select(s => s.SlotKey)]));
+
+    /// <summary>
+    /// Appends canonical bracket pairs without structure mutability (Ready-safe add-only repair).
+    /// Caller must supply pairs validated by <see cref="CupCanonicalBracketPairEnsurer"/>.
+    /// </summary>
+    /// <param name="pairs">Pairs to append; each key must be absent and slots must not already belong to a pair.</param>
+    public void AppendCanonicalBracketPairs(IReadOnlyList<BracketPair> pairs)
+    {
+        ArgumentNullException.ThrowIfNull(pairs);
+        if (pairs.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var pair in pairs)
+        {
+            if (FindBracketPair(pair.PairKey) is not null)
+            {
+                throw new DomainException(
+                    $"BracketPair '{pair.PairKey}' already exists.",
+                    StageErrorCodes.InvalidConfiguration);
+            }
+
+            EnsureBracketPairSlotExists(pair.SlotAKey);
+            EnsureBracketPairSlotExists(pair.SlotBKey);
+
+            if (IsSlotReferencedByBracketPair(pair.SlotAKey)
+                || IsSlotReferencedByBracketPair(pair.SlotBKey))
+            {
+                throw new DomainException(
+                    $"Cannot append BracketPair '{pair.PairKey}' because a slot is already paired.",
+                    StageErrorCodes.InvalidConfiguration);
+            }
+
+            _bracketPairs.Add(pair);
+        }
+    }
+
+    /// <summary>
+    /// Adds a resolved entry to the phase population (B1-M2 / Progression inter → population).
+    /// Does not touch slots or <see cref="DirectAssignment"/>. Idempotent when already present.
+    /// Allowed under the same mutability as dynamic slot resolution (Draft/Ready/Running/Suspended).
+    /// </summary>
+    /// <param name="entryId">Resolved competition entry.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void AddResolvedPopulationEntry(EntryId entryId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureResolutionMutable();
+
+        if (_compositionEntries.Any(entry => entry.EntryId.Equals(entryId)))
+        {
+            return;
+        }
+
+        _compositionEntries.Add(new CompositionEntry(entryId));
+        Raise(new StageCompositionEntriesReplaced(Id, clock));
+    }
+
+    /// <summary>
+    /// Records ForForm Apply provenance (path → entry). Upserts by fingerprint — idempotent rejeu.
+    /// Does not address RosterPlace. Allowed under the same mutability as population resolution.
+    /// </summary>
+    /// <param name="pathFingerprint">Stable ForForm path key (<see cref="FormPathResolutionKey"/>).</param>
+    /// <param name="entryId">Materialised entry.</param>
+    public void RecordFormPathResolution(string pathFingerprint, EntryId entryId)
+    {
+        EnsureResolutionMutable();
+
+        var existingIndex = _formPathResolutions.FindIndex(r => r.PathFingerprint == pathFingerprint);
+        if (existingIndex >= 0)
+        {
+            if (_formPathResolutions[existingIndex].EntryId.Equals(entryId))
+            {
+                return;
+            }
+
+            _formPathResolutions[existingIndex] = new FormPathResolution(pathFingerprint, entryId);
+            return;
+        }
+
+        _formPathResolutions.Add(new FormPathResolution(pathFingerprint, entryId));
+    }
+
+    /// <summary>
+    /// Replaces the Affectation authoring set and syncs runtime membership by diff.
+    /// Never replaces <see cref="CompositionEntries"/> wholesale — Apply-resolved entries remain.
+    /// Allowed in Draft only (structure locked from Ready). Duplicates rejected; order preserved.
+    /// </summary>
+    /// <param name="entryIds">Authoring entry identities (may be empty to clear Affectation).</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ReplaceAffectationAuthoring(IReadOnlyList<EntryId> entryIds, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(entryIds);
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+        ApplyAffectationAuthoringReplacement(entryIds, clock);
+    }
+
+    /// <summary>
+    /// Replaces Affectation authoring while <see cref="StageStatus.Draft"/> or <see cref="StageStatus.Ready"/>.
+    /// Caller enforces production freeze (D2). No D1 downstream exit guard.
+    /// </summary>
+    /// <param name="entryIds">Authoring entry identities (may be empty to clear Affectation).</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ReplaceAffectationAuthoringOperationally(IReadOnlyList<EntryId> entryIds, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(entryIds);
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureOperationalExitRulesMutable();
+        ApplyAffectationAuthoringReplacement(entryIds, clock);
+    }
+
+    private void ApplyAffectationAuthoringReplacement(IReadOnlyList<EntryId> entryIds, IClock clock)
+    {
+        var distinct = new List<EntryId>(entryIds.Count);
+        var seen = new HashSet<EntryId>();
+        foreach (var entryId in entryIds)
+        {
+            if (!seen.Add(entryId))
+            {
+                throw new DomainException(
+                    $"Entry '{entryId}' is duplicated in the Affectation authoring set.",
+                    StageErrorCodes.DuplicateEntry);
+            }
+
+            distinct.Add(entryId);
+        }
+
+        if (_affectationAuthoring.Count == distinct.Count
+            && _affectationAuthoring.Select(entry => entry.EntryId).SequenceEqual(distinct))
+        {
+            return;
+        }
+
+        var previous = _affectationAuthoring.Select(entry => entry.EntryId).ToHashSet();
+        var next = distinct.ToHashSet();
+
+        _affectationAuthoring.Clear();
+        foreach (var entryId in distinct)
+        {
+            _affectationAuthoring.Add(new CompositionEntry(entryId));
+        }
+
+        Raise(new StageAffectationAuthoringReplaced(Id, clock));
+
+        var compositionChanged = false;
+        foreach (var removed in previous.Where(id => !next.Contains(id)))
+        {
+            if (_compositionEntries.RemoveAll(entry => entry.EntryId.Equals(removed)) > 0)
+            {
+                compositionChanged = true;
+            }
+        }
+
+        foreach (var added in next.Where(id => !previous.Contains(id)))
+        {
+            if (_compositionEntries.Any(entry => entry.EntryId.Equals(added)))
+            {
+                continue;
+            }
+
+            _compositionEntries.Add(new CompositionEntry(added));
+            compositionChanged = true;
+        }
+
+        if (compositionChanged)
+        {
+            Raise(new StageCompositionEntriesReplaced(Id, clock));
+        }
+    }
+
+    /// <summary>
+    /// Clears Affectation authoring, runtime membership, and ForForm provenances (Structure rebuild).
+    /// Draft/Ready only.
+    /// </summary>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ClearCompositionEntries(IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        if (_affectationAuthoring.Count == 0
+            && _compositionEntries.Count == 0
+            && _formPathResolutions.Count == 0)
+        {
+            return;
+        }
+
+        EnsureStructureMutable();
+        var hadAffectation = _affectationAuthoring.Count > 0;
+        var hadComposition = _compositionEntries.Count > 0;
+        _affectationAuthoring.Clear();
+        _compositionEntries.Clear();
+        _formPathResolutions.Clear();
+
+        if (hadAffectation)
+        {
+            Raise(new StageAffectationAuthoringReplaced(Id, clock));
+        }
+
+        if (hadComposition)
+        {
+            Raise(new StageCompositionEntriesReplaced(Id, clock));
+        }
+    }
+
+    /// <summary>
+    /// Removes an entry from Affectation authoring and runtime membership when present
+    /// (e.g. hard-delete of a competition entry). Drops provenances that pointed at that entry.
+    /// </summary>
+    /// <param name="entryId">Entry identity.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void RemoveCompositionEntryIfPresent(EntryId entryId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        var hadAffectation = _affectationAuthoring.Any(entry => entry.EntryId.Equals(entryId));
+        var hadEntry = _compositionEntries.Any(entry => entry.EntryId.Equals(entryId));
+        var hadResolution = _formPathResolutions.Any(resolution => resolution.EntryId.Equals(entryId));
+        if (!hadAffectation && !hadEntry && !hadResolution)
+        {
+            return;
+        }
+
+        EnsureStructureMutable();
+        _formPathResolutions.RemoveAll(resolution => resolution.EntryId.Equals(entryId));
+        if (hadAffectation)
+        {
+            _affectationAuthoring.RemoveAll(entry => entry.EntryId.Equals(entryId));
+            Raise(new StageAffectationAuthoringReplaced(Id, clock));
+        }
+
+        if (!hadEntry) return;
+        _compositionEntries.RemoveAll(entry => entry.EntryId.Equals(entryId));
+        Raise(new StageCompositionEntriesReplaced(Id, clock));
+    }
+
+    /// <summary>
+    /// Assigns an entry directly to a slot (configuration + synchronized resolution).
+    /// Requires the entry to already belong to the stage population (no auto-admit).
+    /// </summary>
+    /// <param name="slotKey">Target slot key.</param>
+    /// <param name="entryId">Entry identity.</param>
+    /// <param name="materializedParticipants">
+    /// Participant snapshots of matches attached on this stage (empty when none). Required for Cup F1.
+    /// </param>
+    public void AssignEntryToSlot(
+        string slotKey,
+        EntryId entryId,
+        IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants = null)
+    {
+        EnsureOperationalExitRulesMutable();
+
+        var key = Slot.NormalizeKey(slotKey);
+        var slot = FindSlot(key)
+                   ?? throw new DomainException($"Slot '{key}' was not found.", StageErrorCodes.SlotNotFound);
+
+        if (_compositionEntries.All(entry => !entry.EntryId.Equals(entryId)))
+        {
+            throw new DomainException(
+                $"Entry '{entryId}' is not in the stage population.",
+                StageErrorCodes.EntryNotInPopulation);
+        }
+
+        if (IsSlotFedByLocalProgression(key))
+        {
+            throw new DomainException(
+                $"Slot '{key}' already has a declarative progression feed.",
+                StageErrorCodes.SlotFeedConflict);
+        }
+
+        var occupyingSlot = _slots.FirstOrDefault(s => s.EntryId is { } occupied && occupied.Equals(entryId));
+        if (occupyingSlot is not null && !string.Equals(occupyingSlot.SlotKey, key, StringComparison.Ordinal))
+        {
+            throw new DomainException(
+                $"Entry '{entryId}' already occupies slot '{occupyingSlot.SlotKey}'.",
+                StageErrorCodes.DuplicateEntry);
+        }
+
+        var proposed = MaterializedOpponentCoherence.CopySlotOccupants(this);
+        proposed[key] = entryId;
+        MaterializedOpponentCoherence.EnsureCupPairsCoherent(
+            this,
+            proposed,
+            materializedParticipants ?? []);
+
+        var existingIndex = _directAssignments.FindIndex(a => string.Equals(a.SlotKey, key, StringComparison.Ordinal));
+        var assignment = new DirectAssignment(key, entryId);
+        if (existingIndex >= 0)
+        {
+            _directAssignments[existingIndex] = assignment;
+        }
+        else
+        {
+            _directAssignments.Add(assignment);
+        }
+
+        slot.SetEntry(entryId);
+    }
+
+    /// <summary>
+    /// Clears a direct assignment and the slot's resolved entry.
+    /// </summary>
+    /// <param name="slotKey">Target slot key.</param>
+    /// <param name="materializedParticipants">
+    /// Participant snapshots of matches attached on this stage (empty when none). Required for Cup F1.
+    /// </param>
+    public void ClearSlotAssignment(
+        string slotKey,
+        IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants = null)
+    {
+        EnsureOperationalExitRulesMutable();
+
+        var key = Slot.NormalizeKey(slotKey);
+        var slot = FindSlot(key)
+                   ?? throw new DomainException($"Slot '{key}' was not found.", StageErrorCodes.SlotNotFound);
+
+        var index = _directAssignments.FindIndex(a => string.Equals(a.SlotKey, key, StringComparison.Ordinal));
+        if (index < 0)
+        {
+            // Direct clear only — do not wipe EntryId resolved by future Appliers / Draw.
+            return;
+        }
+
+        var proposed = MaterializedOpponentCoherence.CopySlotOccupants(this);
+        proposed[key] = null;
+        MaterializedOpponentCoherence.EnsureCupPairsCoherent(
+            this,
+            proposed,
+            materializedParticipants ?? []);
+
+        _directAssignments.RemoveAt(index);
+        slot.ClearEntry();
+    }
+
+    /// <summary>
+    /// Resolves a slot occupant dynamically without creating or modifying a <see cref="DirectAssignment"/>.
+    /// </summary>
+    /// <remarks>
+    /// Resolution mutation (not structure): allowed in Draft, Ready, Running, and Suspended; forbidden when Completed.
+    /// Does not demote Ready to Draft. A DirectAssignment on the target slot yields <see cref="StageErrorCodes.SlotFeedConflict"/>.
+    /// When the entry already occupies another slot of this stage, it is moved (previous slot cleared without a separate event).
+    /// Cup F1: validates final simulated BracketPair occupants against attached match participants.
+    /// </remarks>
+    /// <param name="slotKey">Target slot key.</param>
+    /// <param name="entryId">Resolved entry identity.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <param name="materializedParticipants">
+    /// Participant snapshots of matches attached on this stage (empty when none). Required for Cup F1.
+    /// </param>
+    public void ApplyResolvedEntry(
+        string slotKey,
+        EntryId entryId,
+        IClock clock,
+        IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants = null)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureResolutionMutable();
+
+        var key = Slot.NormalizeKey(slotKey);
+        var slot = FindSlot(key)
+                   ?? throw new DomainException($"Slot '{key}' was not found.", StageErrorCodes.SlotNotFound);
+
+        if (_directAssignments.Exists(a => string.Equals(a.SlotKey, key, StringComparison.Ordinal)))
+        {
+            throw new DomainException(
+                $"Slot '{key}' is owned by a direct assignment and cannot receive a dynamic resolution.",
+                StageErrorCodes.SlotFeedConflict);
+        }
+
+        if (slot.EntryId is { } current && current.Equals(entryId))
+        {
+            return;
+        }
+
+        var proposed = MaterializedOpponentCoherence.CopySlotOccupants(this);
+        foreach (var other in _slots)
+        {
+            if (!ReferenceEquals(other, slot)
+                && other.EntryId is { } occupied
+                && occupied.Equals(entryId))
+            {
+                proposed[other.SlotKey] = null;
+            }
+        }
+
+        proposed[key] = entryId;
+        MaterializedOpponentCoherence.EnsureCupPairsCoherent(
+            this,
+            proposed,
+            materializedParticipants ?? []);
+
+        foreach (var other in _slots.Where(other => !ReferenceEquals(other, slot)))
+        {
+            if (other.EntryId is { } occupied && occupied.Equals(entryId))
+            {
+                other.ClearEntry();
+            }
+        }
+
+        var previousEntryId = slot.EntryId;
+        slot.SetEntry(entryId);
+        Raise(new StageSlotOccupantChanged(Id, key, previousEntryId, entryId, clock));
+    }
+
+    /// <summary>
+    /// Resolves group membership dynamically (Groups A1 Placement) under resolution mutability.
+    /// </summary>
+    /// <remarks>
+    /// Mirrors <see cref="AssignEntryToGroup"/> membership invariants (at most one group per entry;
+    /// same-group is a no-op; other-group throws <see cref="StageErrorCodes.DuplicateEntry"/>)
+    /// but does <strong>not</strong> require structure mutability and does not demote Ready.
+    /// Do not call <see cref="AssignEntryToGroup"/> from Qual/Prog Apply — that path is Draw/structure only.
+    /// </remarks>
+    /// <param name="groupId">Target group identity.</param>
+    /// <param name="entryId">Resolved entry identity.</param>
+    public void ApplyResolvedGroupEntry(GroupId groupId, EntryId entryId)
+    {
+        EnsureResolutionMutable();
+
+        var group = FindGroup(groupId)
+                    ?? throw new DomainException($"Group '{groupId}' was not found.", StageErrorCodes.GroupNotFound);
+
+        var owningGroup = _groups.FirstOrDefault(g => g.Contains(entryId));
+        if (owningGroup is not null)
+        {
+            if (owningGroup.Id.Equals(groupId))
+            {
+                return;
+            }
+
+            throw new DomainException(
+                $"Entry '{entryId}' is already assigned to another group.",
+                StageErrorCodes.DuplicateEntry);
+        }
+
+        group.Assign(entryId);
+    }
+
+    /// <summary>
+    /// Clears a dynamically resolved slot occupant without affecting <see cref="DirectAssignment"/>.
+    /// </summary>
+    /// <remarks>
+    /// Same mutability rules as <see cref="ApplyResolvedEntry"/>. No-op when already vacant.
+    /// A DirectAssignment on the target slot yields <see cref="StageErrorCodes.SlotFeedConflict"/>.
+    /// </remarks>
+    /// <param name="slotKey">Target slot key.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <param name="materializedParticipants">
+    /// Participant snapshots of matches attached on this stage (empty when none). Required for Cup F1.
+    /// </param>
+    public void ClearResolvedEntry(
+        string slotKey,
+        IClock clock,
+        IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants = null)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureResolutionMutable();
+
+        var key = Slot.NormalizeKey(slotKey);
+        var slot = FindSlot(key)
+                   ?? throw new DomainException($"Slot '{key}' was not found.", StageErrorCodes.SlotNotFound);
+
+        if (_directAssignments.Exists(a => string.Equals(a.SlotKey, key, StringComparison.Ordinal)))
+        {
+            throw new DomainException(
+                $"Slot '{key}' is owned by a direct assignment and cannot receive a dynamic resolution.",
+                StageErrorCodes.SlotFeedConflict);
+        }
+
+        if (slot.EntryId is null)
+        {
+            return;
+        }
+
+        var proposed = MaterializedOpponentCoherence.CopySlotOccupants(this);
+        proposed[key] = null;
+        MaterializedOpponentCoherence.EnsureCupPairsCoherent(
+            this,
+            proposed,
+            materializedParticipants ?? []);
+
+        var previousEntryId = slot.EntryId;
+        slot.ClearEntry();
+        Raise(new StageSlotOccupantChanged(Id, key, previousEntryId, entryId: null, clock));
+    }
+
+    /// <summary>
+    /// Finds a slot by key.
+    /// </summary>
+    /// <param name="slotKey">The slot key.</param>
+    /// <returns>The slot, or <see langword="null"/>.</returns>
+    public Slot? FindSlot(string? slotKey)
+    {
+        var key = Slot.NormalizeKey(slotKey ?? string.Empty);
+        return _slots.FirstOrDefault(s => string.Equals(s.SlotKey, key, StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// Arranges groups in the given order. No-op when the order is unchanged.
+    /// </summary>
+    /// <param name="orderedGroupIds">A permutation of current group identities.</param>
+    public void ArrangeGroups(IReadOnlyList<GroupId> orderedGroupIds)
+    {
+        ArgumentNullException.ThrowIfNull(orderedGroupIds);
+        EnsureStructureMutable();
+        EnsurePermutation(orderedGroupIds, _groups.ConvertAll(g => g.Id));
+
+        if (_groups.Select(g => g.Id).SequenceEqual(orderedGroupIds))
+        {
+            return;
+        }
+
+        var map = _groups.ToDictionary(g => g.Id);
+        _groups.Clear();
+        foreach (var id in orderedGroupIds)
+        {
+            _groups.Add(map[id]);
+        }
+    }
+
+    /// <summary>
+    /// Adds a round to the stage, materializing <see cref="StageRegulation.TieFormat"/> when present.
+    /// </summary>
+    /// <param name="name">The round name.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <returns>The created round.</returns>
+    public Round AddRound(string name, IClock clock) =>
+        AddRound(name, Regulation.TieFormat, clock);
+
+    /// <summary>
+    /// Adds a round with an explicit tie format (or <see langword="null"/> to omit one).
+    /// </summary>
+    /// <param name="name">The round name.</param>
+    /// <param name="tieFormat">The tie format to materialize, or <see langword="null"/>.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <returns>The created round.</returns>
+    public Round AddRound(string name, TieFormat? tieFormat, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+        EnsureCanAddRound();
+
+        var round = new Round(RoundId.New(), name, tieFormat?.Copy());
+        _rounds.Add(round);
+
+        // Becoming knockout (A5): standing capacity is removed with the topology change.
+        if (Regulation.StandingRules is not null)
+        {
+            Regulation = Regulation.WithStandingRules(null);
+            Raise(new StageRegulationReplaced(Id, clock));
+        }
+
+        EnsureStandingRulesInvariant();
+        Raise(new StageRoundAdded(Id, round.Id, clock));
+        return round;
+    }
+
+    /// <summary>
+    /// Replaces the tie format of a round. Allowed before the stage structure is locked.
+    /// </summary>
+    /// <param name="roundId">The round identity.</param>
+    /// <param name="tieFormat">The new tie format, or <see langword="null"/>.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ReplaceRoundTieFormat(RoundId roundId, TieFormat? tieFormat, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+
+        var round = _rounds.FirstOrDefault(r => r.Id.Equals(roundId))
+                    ?? throw new DomainException($"Round '{roundId}' was not found.", StageErrorCodes.RoundNotFound);
+
+        round.ReplaceTieFormat(tieFormat?.Copy());
+        Raise(new StageRoundTieFormatReplaced(Id, roundId, clock));
+    }
+
+    /// <summary>
+    /// Removes a round from the stage.
+    /// </summary>
+    /// <param name="roundId">The round identity.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void RemoveRound(RoundId roundId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStructureMutable();
+
+        var round = _rounds.FirstOrDefault(r => r.Id.Equals(roundId))
+                    ?? throw new DomainException($"Round '{roundId}' was not found.", StageErrorCodes.RoundNotFound);
+
+        _rounds.Remove(round);
+        Raise(new StageRoundRemoved(Id, roundId, clock));
+    }
+
+    /// <summary>
+    /// Renames a round. No-op when the normalized name is unchanged.
+    /// </summary>
+    /// <param name="roundId">The round identity.</param>
+    /// <param name="name">The new name.</param>
+    public void RenameRound(RoundId roundId, string name)
+    {
+        EnsureStructureMutable();
+
+        var round = _rounds.FirstOrDefault(r => r.Id.Equals(roundId))
+                    ?? throw new DomainException($"Round '{roundId}' was not found.", StageErrorCodes.RoundNotFound);
+        round.Rename(name);
+    }
+
+    /// <summary>
+    /// Arranges rounds in the given order. No-op when the order is unchanged.
+    /// </summary>
+    /// <param name="orderedRoundIds">A permutation of current round identities.</param>
+    public void ArrangeRounds(IReadOnlyList<RoundId> orderedRoundIds)
+    {
+        ArgumentNullException.ThrowIfNull(orderedRoundIds);
+        EnsureStructureMutable();
+        EnsurePermutation(orderedRoundIds, _rounds.ConvertAll(r => r.Id));
+
+        if (_rounds.Select(r => r.Id).SequenceEqual(orderedRoundIds))
+        {
+            return;
+        }
+
+        var map = _rounds.ToDictionary(r => r.Id);
+        _rounds.Clear();
+        foreach (var id in orderedRoundIds)
+        {
+            _rounds.Add(map[id]);
+        }
+    }
+
+    /// <summary>
+    /// Adds a matchday to the stage.
+    /// </summary>
+    /// <param name="number">The 1-based matchday number.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <returns>The created matchday.</returns>
+    public Matchday AddMatchday(int number, IClock clock) =>
+        AddMatchdayInternal(number, clock, forMatchProduction: false);
+
+    /// <summary>
+    /// Adds a matchday while materializing matches (Ready or Draft). Not for structure authoring.
+    /// </summary>
+    /// <param name="number">The 1-based matchday number.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <returns>The created matchday.</returns>
+    public Matchday AddMatchdayForMatchProduction(int number, IClock clock) =>
+        AddMatchdayInternal(number, clock, forMatchProduction: true);
+
+    private Matchday AddMatchdayInternal(int number, IClock clock, bool forMatchProduction)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        if (forMatchProduction)
+        {
+            EnsureMatchProductionMutable();
+        }
+        else
+        {
+            EnsureStructureMutable();
+        }
+
+        EnsureCanAddMatchday();
+
+        var matchday = new Matchday(MatchdayId.New(), number);
+        _matchdays.Add(matchday);
+        Raise(new StageMatchdayAdded(Id, matchday.Id, clock));
+        return matchday;
+    }
+
+    /// <summary>
+    /// Removes a matchday from the stage.
+    /// </summary>
+    /// <param name="matchdayId">The matchday identity.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void RemoveMatchday(MatchdayId matchdayId, IClock clock) =>
+        RemoveMatchdayInternal(matchdayId, clock, forMatchProduction: false);
+
+    /// <summary>
+    /// Removes a matchday while dematerializing matches (Ready or Draft).
+    /// </summary>
+    public void RemoveMatchdayForMatchProduction(MatchdayId matchdayId, IClock clock) =>
+        RemoveMatchdayInternal(matchdayId, clock, forMatchProduction: true);
+
+    private void RemoveMatchdayInternal(MatchdayId matchdayId, IClock clock, bool forMatchProduction)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        if (forMatchProduction)
+        {
+            EnsureMatchProductionMutable();
+        }
+        else
+        {
+            EnsureStructureMutable();
+        }
+
+        var matchday = _matchdays.FirstOrDefault(m => m.Id.Equals(matchdayId))
+                       ?? throw new DomainException(
+                           $"Matchday '{matchdayId}' was not found.",
+                           StageErrorCodes.MatchdayNotFound);
+
+        _matchdays.Remove(matchday);
+        Raise(new StageMatchdayRemoved(Id, matchdayId, clock));
+    }
+
+    /// <summary>
+    /// Arranges matchdays in the given order. No-op when the order is unchanged.
+    /// </summary>
+    /// <param name="orderedMatchdayIds">A permutation of current matchday identities.</param>
+    public void ArrangeMatchdays(IReadOnlyList<MatchdayId> orderedMatchdayIds)
+    {
+        ArgumentNullException.ThrowIfNull(orderedMatchdayIds);
+        EnsureStructureMutable();
+        EnsurePermutation(orderedMatchdayIds, _matchdays.ConvertAll(m => m.Id));
+
+        if (_matchdays.Select(m => m.Id).SequenceEqual(orderedMatchdayIds))
+        {
+            return;
+        }
+
+        var map = _matchdays.ToDictionary(m => m.Id);
+        _matchdays.Clear();
+        foreach (var id in orderedMatchdayIds)
+        {
+            _matchdays.Add(map[id]);
+        }
+    }
+
+    /// <summary>
+    /// Adds a fixture under a round.
+    /// </summary>
+    /// <param name="roundId">The round identity.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <param name="slotAKey">Optional bracket slot A.</param>
+    /// <param name="slotBKey">Optional bracket slot B.</param>
+    /// <param name="bracketPairKey">Optional structural bracket pair key.</param>
+    /// <returns>The created fixture.</returns>
+    public Fixture AddFixture(
+        RoundId roundId,
+        IClock clock,
+        string? slotAKey = null,
+        string? slotBKey = null,
+        string? bracketPairKey = null) =>
+        AddFixtureOnRoundInternal(roundId, clock, slotAKey, slotBKey, bracketPairKey, forMatchProduction: false);
+
+    /// <inheritdoc cref="AddFixture(RoundId, IClock, string?, string?, string?)"/>
+    public Fixture AddFixtureForMatchProduction(
+        RoundId roundId,
+        IClock clock,
+        string? slotAKey = null,
+        string? slotBKey = null,
+        string? bracketPairKey = null) =>
+        AddFixtureOnRoundInternal(roundId, clock, slotAKey, slotBKey, bracketPairKey, forMatchProduction: true);
+
+    private Fixture AddFixtureOnRoundInternal(
+        RoundId roundId,
+        IClock clock,
+        string? slotAKey,
+        string? slotBKey,
+        string? bracketPairKey,
+        bool forMatchProduction)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        if (forMatchProduction)
+        {
+            EnsureMatchProductionMutable();
+        }
+        else
+        {
+            EnsureStructureMutable();
+        }
+
+        var round = _rounds.FirstOrDefault(r => r.Id.Equals(roundId))
+                    ?? throw new DomainException($"Round '{roundId}' was not found.", StageErrorCodes.RoundNotFound);
+
+        EnsureSlotKeysExist(slotAKey, slotBKey);
+        EnsureFixtureBracketPairBinding(slotAKey, slotBKey, bracketPairKey);
+        var fixture = new Fixture(FixtureId.New(), slotAKey, slotBKey, bracketPairKey);
+        round.AddFixture(fixture);
+        Raise(new StageFixtureAdded(Id, fixture.Id, clock));
+        return fixture;
+    }
+
+    /// <summary>
+    /// Adds a fixture under a matchday.
+    /// </summary>
+    /// <param name="matchdayId">The matchday identity.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    /// <param name="slotAKey">Optional bracket slot A.</param>
+    /// <param name="slotBKey">Optional bracket slot B.</param>
+    /// <param name="bracketPairKey">Optional structural bracket pair key.</param>
+    /// <returns>The created fixture.</returns>
+    public Fixture AddFixture(
+        MatchdayId matchdayId,
+        IClock clock,
+        string? slotAKey = null,
+        string? slotBKey = null,
+        string? bracketPairKey = null) =>
+        AddFixtureOnMatchdayInternal(matchdayId, clock, slotAKey, slotBKey, bracketPairKey, forMatchProduction: false);
+
+    /// <inheritdoc cref="AddFixture(MatchdayId, IClock, string?, string?, string?)"/>
+    public Fixture AddFixtureForMatchProduction(
+        MatchdayId matchdayId,
+        IClock clock,
+        string? slotAKey = null,
+        string? slotBKey = null,
+        string? bracketPairKey = null) =>
+        AddFixtureOnMatchdayInternal(matchdayId, clock, slotAKey, slotBKey, bracketPairKey, forMatchProduction: true);
+
+    private Fixture AddFixtureOnMatchdayInternal(
+        MatchdayId matchdayId,
+        IClock clock,
+        string? slotAKey,
+        string? slotBKey,
+        string? bracketPairKey,
+        bool forMatchProduction)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        if (forMatchProduction)
+        {
+            EnsureMatchProductionMutable();
+        }
+        else
+        {
+            EnsureStructureMutable();
+        }
+
+        var matchday = _matchdays.FirstOrDefault(m => m.Id.Equals(matchdayId))
+                       ?? throw new DomainException(
+                           $"Matchday '{matchdayId}' was not found.",
+                           StageErrorCodes.MatchdayNotFound);
+
+        EnsureSlotKeysExist(slotAKey, slotBKey);
+        EnsureFixtureBracketPairBinding(slotAKey, slotBKey, bracketPairKey);
+        var fixture = new Fixture(FixtureId.New(), slotAKey, slotBKey, bracketPairKey);
+        matchday.AddFixture(fixture);
+        Raise(new StageFixtureAdded(Id, fixture.Id, clock));
+        return fixture;
+    }
+
+    /// <summary>
+    /// Binds or clears bracket slot keys on a fixture.
+    /// </summary>
+    /// <param name="fixtureId">The fixture identity.</param>
+    /// <param name="slotAKey">Optional bracket slot A.</param>
+    /// <param name="slotBKey">Optional bracket slot B.</param>
+    public void ReplaceFixtureSlots(FixtureId fixtureId, string? slotAKey, string? slotBKey)
+    {
+        EnsureStructureMutable();
+
+        var fixture = GetFixture(fixtureId);
+        EnsureSlotKeysExist(slotAKey, slotBKey);
+        fixture.BindSlots(slotAKey, slotBKey);
+    }
+
+    /// <summary>
+    /// Removes a fixture from the stage.
+    /// </summary>
+    /// <param name="fixtureId">The fixture identity.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void RemoveFixture(FixtureId fixtureId, IClock clock) =>
+        RemoveFixtureInternal(fixtureId, clock, forMatchProduction: false);
+
+    /// <summary>
+    /// Removes a fixture while dematerializing matches (Ready or Draft).
+    /// </summary>
+    public void RemoveFixtureForMatchProduction(FixtureId fixtureId, IClock clock) =>
+        RemoveFixtureInternal(fixtureId, clock, forMatchProduction: true);
+
+    private void RemoveFixtureInternal(FixtureId fixtureId, IClock clock, bool forMatchProduction)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        if (forMatchProduction)
+        {
+            EnsureMatchProductionMutable();
+        }
+        else
+        {
+            EnsureStructureMutable();
+        }
+
+        var fixture = GetFixture(fixtureId);
+        var matchIds = fixture.MatchIds.ToArray();
+
+        if (_rounds.Any(round => round.RemoveFixture(fixtureId)))
+        {
+            ClearMatchPlacements(matchIds);
+            Raise(new StageFixtureRemoved(Id, fixtureId, clock));
+            return;
+        }
+
+        if (!_matchdays.Any(matchday => matchday.RemoveFixture(fixtureId))) return;
+        ClearMatchPlacements(matchIds);
+        Raise(new StageFixtureRemoved(Id, fixtureId, clock));
+    }
+
+    /// <summary>
+    /// Attaches a match identity to a fixture with an explicit leg index.
+    /// No-op when already on that fixture.
+    /// Application validates that the match belongs to this stage (<c>Match.StageId</c>).
+    /// </summary>
+    /// <param name="fixtureId">The fixture identity.</param>
+    /// <param name="matchId">The match identity.</param>
+    /// <param name="legIndex">1-based confrontation leg index.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void AttachMatch(FixtureId fixtureId, MatchId matchId, int legIndex, IClock clock) =>
+        AttachMatchInternal(fixtureId, matchId, legIndex, clock, forMatchProduction: false);
+
+    /// <summary>
+    /// Attaches a match while materializing (Ready or Draft).
+    /// </summary>
+    public void AttachMatchForMatchProduction(
+        FixtureId fixtureId,
+        MatchId matchId,
+        int legIndex,
+        IClock clock) =>
+        AttachMatchInternal(fixtureId, matchId, legIndex, clock, forMatchProduction: true);
+
+    private void AttachMatchInternal(
+        FixtureId fixtureId,
+        MatchId matchId,
+        int legIndex,
+        IClock clock,
+        bool forMatchProduction)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        if (forMatchProduction)
+        {
+            EnsureMatchProductionMutable();
+        }
+        else
+        {
+            EnsureStructureMutable();
+        }
+
+        var fixture = GetFixture(fixtureId);
+        if (fixture.Contains(matchId))
+        {
+            return;
+        }
+
+        if (HasMatch(matchId))
+        {
+            throw new DomainException(
+                $"Match '{matchId}' is already attached to another fixture.",
+                StageErrorCodes.MatchAlreadyAttached);
+        }
+
+        fixture.AttachMatch(matchId, legIndex);
+        Raise(new StageMatchAttached(Id, fixtureId, matchId, legIndex, clock));
+    }
+
+    /// <summary>
+    /// Detaches a match identity from a fixture.
+    /// </summary>
+    /// <param name="fixtureId">The fixture identity.</param>
+    /// <param name="matchId">The match identity.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void DetachMatch(FixtureId fixtureId, MatchId matchId, IClock clock) =>
+        DetachMatchInternal(fixtureId, matchId, clock, forMatchProduction: false);
+
+    /// <summary>
+    /// Detaches a match while adjusting materialization (Ready or Draft).
+    /// </summary>
+    public void DetachMatchForMatchProduction(FixtureId fixtureId, MatchId matchId, IClock clock) =>
+        DetachMatchInternal(fixtureId, matchId, clock, forMatchProduction: true);
+
+    private void DetachMatchInternal(
+        FixtureId fixtureId,
+        MatchId matchId,
+        IClock clock,
+        bool forMatchProduction)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        if (forMatchProduction)
+        {
+            EnsureMatchProductionMutable();
+        }
+        else
+        {
+            EnsureStructureMutable();
+        }
+
+        var fixture = GetFixture(fixtureId);
+        if (!fixture.Contains(matchId))
+        {
+            throw new DomainException(
+                $"Match '{matchId}' is not attached to fixture '{fixtureId}'.",
+                StageErrorCodes.MatchNotAttached);
+        }
+
+        fixture.DetachMatch(matchId);
+        ClearMatchPlacement(matchId);
+        Raise(new StageMatchDetached(Id, fixtureId, matchId, clock));
+    }
+
+    /// <summary>
+    /// Materializes calendar placements from a successful schedule resolution.
+    /// Prefights all invariants, then upserts <paramref name="targets"/> atomically.
+    /// Placements outside <paramref name="targets"/> (Fixed) are left unchanged;
+    /// if present in <paramref name="placements"/> they must match the current Stage state.
+    /// Idempotent when the same target placements are reapplied.
+    /// Does not re-run scheduling constraints (authority remains <c>ScheduleGenerator</c>).
+    /// </summary>
+    /// <param name="placements">Assignments from a Success schedule (typically Fixed ∪ Targets).</param>
+    /// <param name="targets">Match identities authorized for write/replace.</param>
+    public void ApplyMatchPlacements(
+        IReadOnlyList<MatchPlacement> placements,
+        IReadOnlyList<MatchId> targets)
+    {
+        ArgumentNullException.ThrowIfNull(placements);
+        ArgumentNullException.ThrowIfNull(targets);
+
+        if (targets.Distinct().Count() != targets.Count)
+        {
+            throw new DomainException(
+                "Target match identities cannot contain duplicates.",
+                StageErrorCodes.MatchPlacementInvalid);
+        }
+
+        if (placements.Select(p => p.MatchId).Distinct().Count() != placements.Count)
+        {
+            throw new DomainException(
+                "Schedule placements must have unique match identities.",
+                StageErrorCodes.MatchPlacementInvalid);
+        }
+
+        var byMatchId = placements.ToDictionary(p => p.MatchId);
+        var targetSet = targets.ToHashSet();
+
+        foreach (var targetId in targets)
+        {
+            if (!byMatchId.ContainsKey(targetId))
+            {
+                throw new DomainException(
+                    $"Target match '{targetId}' is missing from the schedule placements.",
+                    StageErrorCodes.MatchPlacementInvalid);
+            }
+
+            if (!HasMatch(targetId))
+            {
+                throw new DomainException(
+                    $"Match '{targetId}' is not attached to this stage.",
+                    StageErrorCodes.MatchPlacementInvalid);
+            }
+        }
+
+        foreach (var placement in placements)
+        {
+            if (targetSet.Contains(placement.MatchId))
+            {
+                continue;
+            }
+
+            // Fixed claim inside the schedule payload.
+            if (!HasMatch(placement.MatchId))
+            {
+                throw new DomainException(
+                    $"Fixed match '{placement.MatchId}' is not attached to this stage.",
+                    StageErrorCodes.MatchPlacementInvalid);
+            }
+
+            var current = FindMatchPlacement(placement.MatchId);
+            if (current is null
+                || current.Start != placement.Start
+                || !current.ResourceId.Equals(placement.ResourceId))
+            {
+                throw new DomainException(
+                    $"Fixed placement for match '{placement.MatchId}' diverges from the stage.",
+                    StageErrorCodes.MatchPlacementInvalid);
+            }
+        }
+
+        foreach (var targetId in targets)
+        {
+            UpsertMatchPlacement(byMatchId[targetId]);
+        }
+    }
+
+    /// <summary>
+    /// Tries to get the materialized placement for a match.
+    /// </summary>
+    public bool TryGetMatchPlacement(MatchId matchId, out MatchPlacement placement)
+    {
+        var found = FindMatchPlacement(matchId);
+        if (found is null)
+        {
+            placement = null!;
+            return false;
+        }
+
+        placement = found;
+        return true;
+    }
+
+    private MatchPlacement? FindMatchPlacement(MatchId matchId) =>
+        _matchPlacements.Find(p => p.MatchId.Equals(matchId));
+
+    private void UpsertMatchPlacement(MatchPlacement placement)
+    {
+        var index = _matchPlacements.FindIndex(p => p.MatchId.Equals(placement.MatchId));
+        if (index < 0)
+        {
+            _matchPlacements.Add(placement);
+        }
+        else
+        {
+            _matchPlacements[index] = placement;
+        }
+    }
+
+    private void ClearMatchPlacement(MatchId matchId)
+    {
+        var index = _matchPlacements.FindIndex(p => p.MatchId.Equals(matchId));
+        if (index >= 0)
+        {
+            _matchPlacements.RemoveAt(index);
+        }
+    }
+
+    private void ClearMatchPlacements(IEnumerable<MatchId> matchIds)
+    {
+        foreach (var matchId in matchIds)
+        {
+            ClearMatchPlacement(matchId);
+        }
+    }
+
+    /// <summary>
+    /// Prepares the stage for its current abstraction level (Draft to Ready).
+    /// </summary>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void Prepare(IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStatus(StageStatus.Draft, "Stage can only be prepared from Draft.");
+
+        if (!HasStructure && !IsSwiss)
+        {
+            throw new DomainException(
+                "Stage requires structure before Prepare.",
+                StageErrorCodes.NotReady);
+        }
+
+        if (IsSwiss && SwissSettings is null)
+        {
+            throw new DomainException(
+                "Swiss stage requires SwissSettings before Prepare.",
+                StageErrorCodes.NotReady);
+        }
+
+        // Elimination: ≥1 Round is enough; fixtures optional for Prepare.
+        // Championship: Matchdays only. Groups format: Groups + Matchdays + ≥1 entry.
+        // Swiss: SwissSettings is enough — Matchdays are created by GenerateNextRound.
+        if (_rounds.Count == 0 && _groups.Count > 0)
+        {
+            if (_matchdays.Count == 0)
+            {
+                throw new DomainException(
+                    "Poule stage requires at least one matchday before Prepare.",
+                    StageErrorCodes.InvalidConfiguration);
+            }
+        }
+
+        EnsureLocalSlotConfigurationForPrepare();
+
+        Status = StageStatus.Ready;
+        Raise(new StagePrepared(Id, clock));
+    }
+
+    /// <summary>
+    /// Starts the stage (Ready to Running).
+    /// </summary>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void Start(IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStatus(StageStatus.Ready, "Stage can only be started from Ready.");
+        EnsureInitialRoundPlayableWhenPositional();
+        Status = StageStatus.Running;
+        Raise(new StageStarted(Id, clock));
+    }
+
+    /// <summary>
+    /// Suspends a running stage.
+    /// </summary>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void Suspend(IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStatus(StageStatus.Running, "Stage can only be suspended from Running.");
+        Status = StageStatus.Suspended;
+        Raise(new StageSuspended(Id, clock));
+    }
+
+    /// <summary>
+    /// Resumes a suspended stage.
+    /// </summary>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void Resume(IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStatus(StageStatus.Suspended, "Stage can only be resumed from Suspended.");
+        Status = StageStatus.Running;
+        Raise(new StageResumed(Id, clock));
+    }
+
+    /// <summary>
+    /// Completes the stage.
+    /// </summary>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void Complete(IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        if (Status is not (StageStatus.Running or StageStatus.Suspended))
+        {
+            throw new DomainException(
+                $"Stage cannot be completed from '{Status}'.",
+                StageErrorCodes.InvalidTransition);
+        }
+
+        Status = StageStatus.Completed;
+        Raise(new StageCompleted(Id, clock));
+    }
+
+    /// <summary>
+    /// Reverts the stage from Ready to Draft (structure authoring).
+    /// </summary>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void RevertToDraft(IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        EnsureStatus(StageStatus.Ready, "Stage can only revert to Draft from Ready.");
+        Status = StageStatus.Draft;
+        Raise(new StageRevertedToDraft(Id, clock));
+    }
+
+    /// <summary>
+    /// Reverts the stage from Running or Suspended to Ready (pause exploitation).
+    /// </summary>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void RevertToReady(IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        if (Status is not (StageStatus.Running or StageStatus.Suspended))
+        {
+            throw new DomainException(
+                $"Stage cannot revert to Ready from '{Status}'.",
+                StageErrorCodes.InvalidTransition);
+        }
+
+        Status = StageStatus.Ready;
+        Raise(new StageRevertedToReady(Id, clock));
+    }
+
+    private static void EnsurePermutation<TId>(IReadOnlyList<TId> ordered, IReadOnlyList<TId> current)
+        where TId : notnull
+    {
+        if (ordered.Count != current.Count
+            || ordered.Distinct().Count() != ordered.Count
+            || ordered.Any(id => !current.Contains(id)))
+        {
+            throw new DomainException(
+                "Order must be a permutation of the current identities.",
+                StageErrorCodes.InvalidOrder);
+        }
+    }
+
+    private static MatchDuration CloneMatchDuration(MatchDuration source) =>
+        new(source.DurationPerPeriod, source.NumberOfPeriods, source.HalfTimeDuration);
+
+    private static AdministrativeResultPolicy CloneAdministrative(AdministrativeResultPolicy source) =>
+        new(source.ForfeitWinnerGoals, source.ForfeitLoserGoals);
+
+    private static ExtraTimePolicy? CloneExtraTime(ExtraTimePolicy? source) =>
+        source is null ? null : new ExtraTimePolicy(source.DurationPerPeriod, source.NumberOfPeriods);
+
+    private static PenaltyShootoutPolicy? CloneShootout(PenaltyShootoutPolicy? source) =>
+        source is null ? null : new PenaltyShootoutPolicy(source.InitialKicksPerTeam);
+
+    private static PointsPolicy ClonePoints(PointsPolicy source) =>
+        new(source.WinPoints, source.DrawPoints, source.LossPoints);
+
+    private void UnbindChangedMatchParts(MatchRules before, MatchRules after)
+    {
+        if (!before.Duration.Equals(after.Duration))
+        {
+            DefaultsBinding = DefaultsBinding.Unbind(HeritableRegulationPart.MatchDuration);
+        }
+
+        if (!Equals(before.ExtraTimePolicy, after.ExtraTimePolicy))
+        {
+            DefaultsBinding = DefaultsBinding.Unbind(HeritableRegulationPart.ExtraTime);
+        }
+
+        if (!Equals(before.PenaltyShootoutPolicy, after.PenaltyShootoutPolicy))
+        {
+            DefaultsBinding = DefaultsBinding.Unbind(HeritableRegulationPart.PenaltyShootout);
+        }
+
+        if (!before.AdministrativeResultPolicy.Equals(after.AdministrativeResultPolicy))
+        {
+            DefaultsBinding = DefaultsBinding.Unbind(HeritableRegulationPart.AdministrativeResult);
+        }
+    }
+
+    private void UnbindChangedStandingParts(StandingRules? before, StandingRules? after)
+    {
+        if (before is null && after is null)
+        {
+            return;
+        }
+
+        if (before is null || after is null)
+        {
+            DefaultsBinding = DefaultsBinding
+                .Unbind(HeritableRegulationPart.Points)
+                .Unbind(HeritableRegulationPart.RankingCriteria);
+            return;
+        }
+
+        if (!before.Points.Equals(after.Points))
+        {
+            DefaultsBinding = DefaultsBinding.Unbind(HeritableRegulationPart.Points);
+        }
+
+        if (!before.RankingCriteria.SequenceEqual(after.RankingCriteria))
+        {
+            DefaultsBinding = DefaultsBinding.Unbind(HeritableRegulationPart.RankingCriteria);
+        }
+    }
+
+    private void EnsureStandingPresentForBind()
+    {
+        if (Regulation.StandingRules is null)
+        {
+            throw new DomainException(
+                "Standing rules cannot be bound on a stage without StandingRules.",
+                StageErrorCodes.StandingRulesInvariant);
+        }
+    }
+
+    private void EnsureStandingRulesMutable()
+    {
+        switch (Status)
+        {
+            case StageStatus.Ready:
+                throw new DomainException(
+                    "Standing rules cannot be replaced while the stage is ready.",
+                    StageErrorCodes.StandingRulesLocked);
+            case StageStatus.Completed:
+                throw new DomainException(
+                    $"Standing rules cannot be modified when status is '{Status}'.",
+                    StageErrorCodes.InvalidTransition);
+        }
+    }
+
+    /// <summary>
+    /// Enforces A5 against current topology: classifying ⇒ Standing present; knockout ⇒ Standing absent.
+    /// Unstructured stages impose no presence constraint (seed may exist before ConfigureStructure).
+    /// </summary>
+    private void EnsureStandingRulesInvariant()
+    {
+        if (StageClassification.IsClassifyingPhase(this) && Regulation.StandingRules is null)
+        {
+            throw new DomainException(
+                "A classifying stage must have StandingRules.",
+                StageErrorCodes.StandingRulesInvariant);
+        }
+
+        if (StageClassification.IsNonClassifyingPhase(this) && Regulation.StandingRules is not null)
+        {
+            throw new DomainException(
+                "A non-classifying (knockout) stage must not have StandingRules.",
+                StageErrorCodes.StandingRulesInvariant);
+        }
+    }
+
+    private void EnsurePenaltiesMutable()
+    {
+        if (Status is StageStatus.Completed)
+        {
+            throw new DomainException(
+                $"Penalties cannot be modified when status is '{Status}'.",
+                StageErrorCodes.InvalidTransition);
+        }
+    }
+
+    private void EnsureResolutionMutable()
+    {
+        if (Status is StageStatus.Completed)
+        {
+            throw new DomainException(
+                $"Slot occupant cannot be resolved when status is '{Status}'.",
+                StageErrorCodes.InvalidTransition);
+        }
+    }
+
+    private void EnsureDisplayNameMutable()
+    {
+        if (!CanRenameDisplayName())
+        {
+            throw new DomainException(
+                $"Display name cannot be renamed when status is '{Status}'.",
+                StageErrorCodes.DisplayNameLocked);
+        }
+    }
+
+    private void EnsureStructureMutable()
+    {
+        if (Status is not StageStatus.Draft)
+        {
+            throw new DomainException(
+                $"Structure cannot be modified when status is '{Status}'.",
+                StageErrorCodes.StructureLocked);
+        }
+    }
+
+    private void EnsureOperationalExitRulesMutable()
+    {
+        if (Status is not (StageStatus.Draft or StageStatus.Ready))
+        {
+            throw new DomainException(
+                $"Operational structure authoring cannot be modified when status is '{Status}'.",
+                StageErrorCodes.StructureLocked);
+        }
+    }
+
+    private void EnsureMatchProductionMutable()
+    {
+        if (Status is not (StageStatus.Draft or StageStatus.Ready))
+        {
+            throw new DomainException(
+                $"Match production cannot be modified when status is '{Status}'.",
+                StageErrorCodes.StructureLocked);
+        }
+    }
+
+    private void EnsureCanAddGroup()
+    {
+        EnsureNotSwiss("Groups");
+        if (_rounds.Count > 0)
+        {
+            throw new DomainException(
+                "Groups cannot be combined with rounds.",
+                StageErrorCodes.InvalidComposition);
+        }
+    }
+
+    private void EnsureCanAddRound()
+    {
+        EnsureNotSwiss("Rounds");
+        if (_groups.Count > 0)
+        {
+            throw new DomainException(
+                "Rounds cannot be combined with groups.",
+                StageErrorCodes.InvalidComposition);
+        }
+
+        if (_matchdays.Count > 0)
+        {
+            throw new DomainException(
+                "Rounds cannot be combined with matchdays.",
+                StageErrorCodes.InvalidComposition);
+        }
+    }
+
+    private void EnsureCanAddMatchday()
+    {
+        if (_rounds.Count > 0)
+        {
+            throw new DomainException(
+                "Matchdays cannot be combined with rounds.",
+                StageErrorCodes.InvalidComposition);
+        }
+    }
+
+    private void EnsureSwissCompositionAllowed()
+    {
+        if (_groups.Count > 0 || _rounds.Count > 0 || _slots.Count > 0)
+        {
+            throw new DomainException(
+                "Swiss settings require Matchdays-only composition (no Groups, Rounds, or Slots).",
+                StageErrorCodes.InvalidComposition);
+        }
+    }
+
+    private void EnsureNotSwiss(string composition)
+    {
+        if (!IsSwiss)
+        {
+            return;
+        }
+
+        throw new DomainException(
+            $"{composition} cannot be combined with Swiss settings.",
+            StageErrorCodes.InvalidComposition);
+    }
+
+    /// <summary>
+    /// MatchGenerationFormat applies only to RR topology (no Swiss, no knockout rounds).
+    /// </summary>
+    private void EnsureMatchGenerationFormatApplicable()
+    {
+        if (IsSwiss)
+        {
+            throw new DomainException(
+                "Match generation format cannot be set when Swiss settings are present.",
+                StageErrorCodes.MatchGenerationFormatNotApplicable);
+        }
+
+        if (_rounds.Count > 0)
+        {
+            throw new DomainException(
+                "Match generation format cannot be set when knockout rounds are present.",
+                StageErrorCodes.MatchGenerationFormatNotApplicable);
+        }
+    }
+
+    private void EnsureSwissByeMutable()
+    {
+        if (Status is StageStatus.Completed)
+        {
+            throw new DomainException(
+                $"Swiss bye cannot be recorded when status is '{Status}'.",
+                StageErrorCodes.InvalidTransition);
+        }
+    }
+
+    private void RemoveSwissRoundFixture(FixtureId fixtureId, IClock clock)
+    {
+        EnsureSwissProgressiveMutable();
+
+        var fixture = GetFixture(fixtureId);
+        var matchIds = fixture.MatchIds.ToArray();
+        ClearMatchPlacements(matchIds);
+
+        if (!_matchdays.Any(matchday => matchday.RemoveFixture(fixtureId)))
+        {
+            throw new DomainException(
+                $"Fixture '{fixtureId}' was not found on a matchday.",
+                StageErrorCodes.FixtureNotFound);
+        }
+
+        Raise(new StageFixtureRemoved(Id, fixtureId, clock));
+    }
+
+    private void RemoveSwissByeForRound(int roundNumber)
+    {
+        EnsureSwissProgressiveMutable();
+        var index = _swissByeHistory.FindIndex(bye => bye.RoundIndex == roundNumber);
+        if (index >= 0)
+        {
+            _swissByeHistory.RemoveAt(index);
+        }
+    }
+
+    /// <summary>
+    /// Swiss progressive round materialization: Draft/Ready/Running, not Suspended/Completed.
+    /// Does not call <see cref="EnsureStructureMutable"/> (StructureLocked stays for non-Swiss ops).
+    /// </summary>
+    private void EnsureSwissProgressiveMutable()
+    {
+        if (!IsSwiss)
+        {
+            throw new DomainException(
+                "Swiss progressive round APIs require Swiss settings.",
+                StageErrorCodes.SwissSettingsInvalid);
+        }
+
+        if (Status is StageStatus.Suspended or StageStatus.Completed)
+        {
+            throw new DomainException(
+                $"Swiss round cannot be materialized when status is '{Status}'.",
+                StageErrorCodes.InvalidTransition);
+        }
+    }
+
+    private void EnsureStatus(StageStatus expected, string message)
+    {
+        if (Status != expected)
+        {
+            throw new DomainException(message, StageErrorCodes.InvalidTransition);
+        }
+    }
+
+    private bool IsSlotFedByLocalProgression(string slotKey) =>
+        Regulation.ProgressionRules?.Paths.Any(p =>
+            p.Destination.StageId.Equals(Id)
+            && string.Equals(p.Destination.SlotKey, slotKey, StringComparison.Ordinal))
+        == true;
+
+    private bool IsSlotReferencedByLocalProgression(string slotKey) =>
+        IsSlotFedByLocalProgression(slotKey);
+
+    private bool IsSlotReferencedByFixture(string slotKey) =>
+        EnumerateFixtures().Any(f =>
+            string.Equals(f.SlotAKey, slotKey, StringComparison.Ordinal)
+            || string.Equals(f.SlotBKey, slotKey, StringComparison.Ordinal));
+
+    private bool IsSlotReferencedByBracketPair(string slotKey) =>
+        _bracketPairs.Any(p =>
+            string.Equals(p.SlotAKey, slotKey, StringComparison.Ordinal)
+            || string.Equals(p.SlotBKey, slotKey, StringComparison.Ordinal));
+
+    private IEnumerable<Fixture> EnumerateFixtures() =>
+        _rounds.SelectMany(r => r.Fixtures).Concat(_matchdays.SelectMany(m => m.Fixtures));
+
+    private void EnsureSlotKeysExist(string? slotAKey, string? slotBKey)
+    {
+        if (slotAKey is not null && FindSlot(slotAKey) is null)
+        {
+            throw new DomainException(
+                $"Slot '{Slot.NormalizeKey(slotAKey)}' was not found.",
+                StageErrorCodes.SlotNotFound);
+        }
+
+        if (slotBKey is not null && FindSlot(slotBKey) is null)
+        {
+            throw new DomainException(
+                $"Slot '{Slot.NormalizeKey(slotBKey)}' was not found.",
+                StageErrorCodes.SlotNotFound);
+        }
+    }
+
+    private void EnsureStructuralConfrontationSource(
+        string sourcePairKey,
+        string errorCode = RulesErrorCodes.ProgressionRulesInvalid)
+    {
+        // Cup: structural identity is BracketPair.PairKey only (not FixtureId).
+        if (FindBracketPair(sourcePairKey) is not null)
+        {
+            return;
+        }
+
+        // After materialize, a fixture may still expose the same PairKey.
+        if (FindFixtureByBracketPairKey(sourcePairKey) is not null)
+        {
+            return;
+        }
+
+        throw new DomainException(
+            $"Confrontation source '{sourcePairKey}' was not found on the stage form.",
+            errorCode);
+    }
+
+    /// <summary>
+    /// Winner Sorties must exit the championship-path terminal round (not an intermediate KO round).
+    /// </summary>
+    private void EnsureWinnerPathOnChampionshipTerminal(ProgressionPath path)
+    {
+        if (path.Outcome != ProgressionOutcome.Winner)
+        {
+            return;
+        }
+
+        if (ProgressionChampionshipPath.TerminalRound(Rounds) is null)
+        {
+            throw new DomainException(
+                "Progression Winner path requires a championship-path terminal round.",
+                RulesErrorCodes.ProgressionRulesInvalid);
+        }
+
+        var owningRound = FindRoundForProgressionSource(path.SourcePairKey);
+        if (owningRound is not null
+            && !ProgressionChampionshipPath.IsChampionshipTerminal(Rounds, owningRound.Id))
+        {
+            throw new DomainException(
+                "Progression Winner path must use a source on the championship-path terminal round.",
+                RulesErrorCodes.ProgressionRulesInvalid);
+        }
+    }
+
+    /// <summary>
+    /// Resolves the round that owns a path source PairKey (fixture bound to BracketPairKey,
+    /// or sole round when only a structural BracketPair exists — Cup mono-round).
+    /// </summary>
+    private Round? FindRoundForProgressionSource(string sourcePairKey)
+    {
+        var byPairKey = _rounds.FirstOrDefault(r =>
+            r.Fixtures.Any(f =>
+                string.Equals(f.BracketPairKey, sourcePairKey, StringComparison.Ordinal)));
+        return byPairKey
+               ?? (FindBracketPair(sourcePairKey) is not null && _rounds.Count == 1
+                   ? _rounds[0]
+                   : null);
+    }
+
+    private void EnsureBracketPairSlotExists(string slotKey)
+    {
+        if (FindSlot(slotKey) is null)
+        {
+            throw new DomainException(
+                $"Slot '{slotKey}' was not found.",
+                StageErrorCodes.SlotNotFound);
+        }
+    }
+
+    /// <summary>
+    /// Ensures Fixture ↔ BracketPair binding when pairs are defined on the stage.
+    /// </summary>
+    private void EnsureFixtureBracketPairBinding(string? slotAKey, string? slotBKey, string? bracketPairKey)
+    {
+        if (string.IsNullOrWhiteSpace(bracketPairKey))
+        {
+            if (_bracketPairs.Count > 0)
+            {
+                throw new DomainException(
+                    "A BracketPair key is required when the stage defines BracketPairs.",
+                    StageErrorCodes.InvalidConfiguration);
+            }
+
+            return;
+        }
+
+        var pair = FindBracketPair(bracketPairKey)
+                   ?? throw new DomainException(
+                       $"BracketPair '{BracketPair.NormalizePairKey(bracketPairKey)}' was not found.",
+                       StageErrorCodes.InvalidConfiguration);
+
+        if (!pair.MatchesSlots(slotAKey, slotBKey))
+        {
+            throw new DomainException(
+                $"Fixture slots do not match BracketPair '{pair.PairKey}' ({pair.SlotAKey}/{pair.SlotBKey}).",
+                StageErrorCodes.InvalidConfiguration);
+        }
+
+        if (FindFixtureByBracketPairKey(pair.PairKey) is not null)
+        {
+            throw new DomainException(
+                $"BracketPair '{pair.PairKey}' already has a Fixture.",
+                StageErrorCodes.InvalidConfiguration);
+        }
+    }
+
+    /// <summary>
+    /// Rejects removing any BracketPair still referenced by a Fixture.
+    /// </summary>
+    private void EnsureNoReferencedBracketPairRemoved(HashSet<string> remainingPairKeys)
+    {
+        foreach (var fixture in EnumerateFixtures())
+        {
+            if (fixture.BracketPairKey is null)
+            {
+                continue;
+            }
+
+            if (!remainingPairKeys.Contains(fixture.BracketPairKey))
+            {
+                throw new DomainException(
+                    $"Cannot remove BracketPair '{fixture.BracketPairKey}' while Fixture '{fixture.Id}' references it.",
+                    StageErrorCodes.InvalidConfiguration);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Validates Place destination on this form-owning stage.
+    /// </summary>
+    private void EnsureLocalPathDestination(string slotKey)
+    {
+        if (FindSlot(slotKey) is null)
+        {
+            throw new DomainException(
+                $"Slot '{slotKey}' was not found.",
+                StageErrorCodes.SlotNotFound);
+        }
+
+        if (_directAssignments.Any(a => string.Equals(a.SlotKey, slotKey, StringComparison.Ordinal)))
+        {
+            throw new DomainException(
+                $"Slot '{slotKey}' already has a direct assignment feed.",
+                StageErrorCodes.SlotFeedConflict);
+        }
+    }
+
+    /// <summary>
+    /// Validates Groups Place destination on this form-owning stage.
+    /// </summary>
+    private void EnsureLocalGroupDestination(GroupId groupId)
+    {
+        if (FindGroup(groupId) is null)
+        {
+            throw new DomainException(
+                $"Group '{groupId}' was not found.",
+                StageErrorCodes.GroupNotFound);
+        }
+    }
+
+    /// <summary>
+    /// Validates local slot/fixture/direct/progression/qualification consistency for Prepare.
+    /// Does not require a global feed (inbound Qualification may exist outside this aggregate).
+    /// Rejects multiple local feeds on the same slot.
+    /// </summary>
+    private void EnsureLocalSlotConfigurationForPrepare()
+    {
+        if (Regulation.ProgressionRules is { } progression)
+        {
+            foreach (var path in progression.Paths)
+            {
+                EnsureStructuralConfrontationSource(path.SourcePairKey);
+
+                if (path.Destination.TargetsPopulation)
+                {
+                    continue;
+                }
+
+                if (!path.Destination.StageId.Equals(Id))
+                {
+                    continue;
+                }
+
+                if (path.Destination.TargetsGroup)
+                {
+                    if (FindGroup(path.Destination.GroupId!.Value) is null)
+                    {
+                        throw new DomainException(
+                            $"Group '{path.Destination.GroupId}' was not found.",
+                            StageErrorCodes.GroupNotFound);
+                    }
+                }
+                else if (FindSlot(path.Destination.SlotKey) is null)
+                {
+                    throw new DomainException(
+                        $"Slot '{path.Destination.SlotKey}' was not found.",
+                        StageErrorCodes.SlotNotFound);
+                }
+            }
+        }
+
+        if (Regulation.QualificationRules is { } qualification)
+        {
+            if (qualification.Paths.Any(path => path.Destination.StageId.Equals(Id)))
+            {
+                throw new DomainException(
+                    "Qualification destination cannot target the source stage.",
+                    RulesErrorCodes.QualificationRulesInvalid);
+            }
+        }
+
+        if (_slots.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var assignment in _directAssignments
+                     .Select(assignment => new
+                     {
+                         assignment,
+                         slot = FindSlot(assignment.SlotKey) ??
+                                throw new DomainException($"Slot '{assignment.SlotKey}' was not found.",
+                                    StageErrorCodes.SlotNotFound)
+                     })
+                     .Where(t => t.slot.EntryId?.Equals(t.assignment.EntryId) != true)
+                     .Select(t => t.assignment))
+        {
+            throw new DomainException(
+                $"Direct assignment for slot '{assignment.SlotKey}' is out of sync with slot entry.",
+                StageErrorCodes.InvalidConfiguration);
+        }
+
+        foreach (var fixture in EnumerateFixtures())
+        {
+            if (fixture.SlotAKey is not null && FindSlot(fixture.SlotAKey) is null)
+            {
+                throw new DomainException(
+                    $"Slot '{fixture.SlotAKey}' was not found.",
+                    StageErrorCodes.SlotNotFound);
+            }
+
+            if (fixture.SlotBKey is not null && FindSlot(fixture.SlotBKey) is null)
+            {
+                throw new DomainException(
+                    $"Slot '{fixture.SlotBKey}' was not found.",
+                    StageErrorCodes.SlotNotFound);
+            }
+        }
+
+        foreach (var slot in _slots)
+        {
+            var localFeedCount = 0;
+            if (_directAssignments.Any(a => string.Equals(a.SlotKey, slot.SlotKey, StringComparison.Ordinal)))
+            {
+                localFeedCount++;
+            }
+
+            if (IsSlotFedByLocalProgression(slot.SlotKey))
+            {
+                localFeedCount++;
+            }
+
+            if (localFeedCount > 1)
+            {
+                throw new DomainException(
+                    $"Slot '{slot.SlotKey}' has multiple local feeds.",
+                    StageErrorCodes.MultipleFeeds);
+            }
+        }
+    }
+
+    private void EnsureInitialRoundPlayableWhenPositional()
+    {
+        if (_rounds.Count == 0)
+        {
+            return;
+        }
+
+        var hasSlottedFixtures = EnumerateFixtures().Any(f => f.SlotAKey is not null || f.SlotBKey is not null);
+        if (!hasSlottedFixtures)
+        {
+            return;
+        }
+
+        var initialRound = _rounds[0];
+        var playable = initialRound.Fixtures.Any(IsFixturePlayable);
+        if (!playable)
+        {
+            throw new DomainException(
+                "Positional knockout requires at least one playable fixture in the initial round before Start.",
+                StageErrorCodes.NotReady);
+        }
+    }
+
+    private bool IsFixturePlayable(Fixture fixture)
+    {
+        if (fixture.SlotAKey is null || fixture.SlotBKey is null)
+        {
+            return false;
+        }
+
+        var slotA = FindSlot(fixture.SlotAKey);
+        var slotB = FindSlot(fixture.SlotBKey);
+        return slotA?.EntryId is not null && slotB?.EntryId is not null;
+    }
+}

@@ -1,0 +1,30 @@
+<Project>
+  <!--
+    SDK CopyToOutputDirectory for NuGet package files outside the project is unreliable.
+    Testhost only discovers *TestAdapter.dll next to the test assembly, so copy the xUnit
+    VSTest adapter on Build and via VSTestDependsOn.
+  -->
+  <PropertyGroup Condition="'$(IsTestProject)' == 'True'">
+    <VSTestDependsOn>CopyXunitVisualStudioTestAdapter;$(VSTestDependsOn)</VSTestDependsOn>
+  </PropertyGroup>
+
+  <Target Name="CopyXunitVisualStudioTestAdapter"
+          AfterTargets="Build"
+          Condition="'$(IsTestProject)' == 'True'">
+    <PropertyGroup>
+      <_XunitPkgRoot>$(Pkgxunit_runner_visualstudio)</_XunitPkgRoot>
+      <_XunitPkgRoot Condition="'$(_XunitPkgRoot)' == '' And '$(NuGetPackageRoot)' != ''">$(NuGetPackageRoot)xunit.runner.visualstudio\3.1.5</_XunitPkgRoot>
+      <_XunitAdapterOut Condition="'$(TargetDir)' != ''">$(TargetDir)</_XunitAdapterOut>
+      <_XunitAdapterOut Condition="'$(_XunitAdapterOut)' == '' And '$(MSBuildProjectDirectory)' != '' And '$(OutputPath)' != ''">$([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', '$(OutputPath)'))</_XunitAdapterOut>
+      <_XunitAdapterDir Condition="'$(_XunitPkgRoot)' != '' And Exists('$(_XunitPkgRoot)\build\net8.0\xunit.runner.visualstudio.testadapter.dll')">$(_XunitPkgRoot)\build\net8.0</_XunitAdapterDir>
+      <_XunitAdapterDir Condition="'$(_XunitAdapterDir)' == '' And '$(_XunitPkgRoot)' != '' And Exists('$(_XunitPkgRoot)\build\net6.0\xunit.runner.visualstudio.testadapter.dll')">$(_XunitPkgRoot)\build\net6.0</_XunitAdapterDir>
+    </PropertyGroup>
+    <ItemGroup Condition="'$(_XunitAdapterDir)' != '' And '$(_XunitAdapterOut)' != ''">
+      <_XunitAdapterFiles Include="$(_XunitAdapterDir)\*.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_XunitAdapterFiles)"
+          DestinationFolder="$(_XunitAdapterOut)"
+          SkipUnchangedFiles="true"
+          Condition="'@(_XunitAdapterFiles)' != ''" />
+  </Target>
+</Project>

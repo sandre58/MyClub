@@ -1,0 +1,126 @@
+{
+  "competitionStatus": {
+    "Draft": "Brouillon",
+    "Ready": "Prêt",
+    "Running": "En cours",
+    "Suspended": "Suspendu",
+    "Completed": "Terminé",
+    "Archived": "Archivé"
+  },
+  "stageStatus": {
+    "Draft": "Brouillon",
+    "Ready": "Prêt",
+    "Running": "En cours",
+    "Suspended": "Suspendu",
+    "Completed": "Terminé"
+  },
+  "matchStatus": {
+    "Scheduled": "Planifié",
+    "Live": "En direct",
+    "Finished": "Terminé",
+    "Postponed": "Reporté",
+    "Cancelled": "Annulé"
+  },
+  "entryStatus": {
+    "Active": "Actif",
+    "Withdrawn": "Forfait"
+  },
+  "drawStatus": {
+    "Draft": "Brouillon",
+    "Published": "Publié",
+    "Cancelled": "Annulé"
+  },
+  "drawResolutionState": {
+    "NotResolved": "Non résolu",
+    "Resolved": "Résolu",
+    "NoSolution": "Aucune solution"
+  },
+  "drawResolutionKind": {
+    "Slot": "Emplacement",
+    "Group": "Groupe"
+  },
+  "structureFormatKind": {
+    "Championship": "Championnat",
+    "Groups": "Groupes",
+    "Cup": "Coupe",
+    "Swiss": "Swiss"
+  },
+  "matchGenerationFormat": {
+    "SingleRoundRobin": "Aller simple",
+    "DoubleRoundRobin": "Aller-retour"
+  },
+  "resultType": {
+    "Played": "Joué",
+    "Forfeit": "Forfait",
+    "WalkOver": "Walk-over",
+    "Administrative": "Administratif"
+  },
+  "completionMode": {
+    "Normal": "Normal",
+    "Administrative": "Administratif",
+    "Abandoned": "Abandonné"
+  },
+  "attentionSource": {
+    "DrawNoSolution": "Tirage sans solution",
+    "QualificationPending": "Qualification en attente",
+    "QualificationConflict": "Conflit de qualification",
+    "ProgressionPending": "Progression en attente",
+    "ProgressionConflict": "Conflit de progression",
+    "DrawPending": "Tirage en attente",
+    "StageReady": "Phase prête",
+    "InsufficientParticipants": "Équipes insuffisantes",
+    "InsufficientOccupiedSlots": "Places occupées insuffisantes pour des confrontations",
+    "MissingStage": "Phase manquante",
+    "MissingStructure": "Organisation de phase manquante",
+    "MissingPotRules": "Pots de tirage manquants",
+    "CupBracketInvalid": "Tableau de coupe invalide",
+    "StructureGraphInvalid": "Liaisons entre phases à corriger",
+    "ConfrontationUndecidable": "Confrontation qui ne peut pas toujours départager",
+    "OverCapacityEdge": "Plus d’équipes que de places",
+    "OverExtraction": "Plus d’équipes extraites que disponibles",
+    "SlotFeedMissing": "Place non alimentée",
+    "SlotFeedInvalid": "Alimentation de place invalide",
+    "SlotFeedMultiple": "Alimentations de place en conflit",
+    "CycleDetected": "Liaison circulaire entre phases",
+    "RoutingNondeterminism": "Routage non déterministe",
+    "DanglingQualificationTarget": "Destination qualification introuvable",
+    "DanglingProgressionTarget": "Destination progression introuvable",
+    "MissingQualificationDestinationSlot": "Place qualification manquante",
+    "MissingQualificationDestinationGroup": "Groupe qualification manquant",
+    "MissingProgressionDestinationSlot": "Place progression manquante",
+    "MissingProgressionDestinationGroup": "Groupe progression manquant",
+    "NonRootUnfed": "Phase sans alimentation amont",
+    "PopulationShortfall": "Population promise insuffisante",
+    "SourcePopulationShortfall": "Population source insuffisante",
+    "AuthoredAwardUnreachable": "Attribution source introuvable",
+    "ExpectedRankUnreachable": "Rang de classement inaccessible",
+    "SwissStageNotRunning": "Phase Swiss pas encore démarrée",
+    "SwissAwaitingRoundResults": "En attente des résultats du tour Swiss en cours",
+    "SwissRoundsComplete": "Tous les tours planifiés sont générés",
+    "SwissInsufficientParticipants": "Participants insuffisants pour un tour Swiss",
+    "CompetitionSuspended": "Compétition suspendue"
+  },
+  "attentionDescription": {
+    "InsufficientParticipants_one": "Il manque {{count}} équipe pour démarrer ({{activeCount}} / {{minimumTeams}}).",
+    "InsufficientParticipants_other": "Il manque {{count}} équipes pour démarrer ({{activeCount}} / {{minimumTeams}})."
+  },
+  "attentionSeverity": {
+    "Blocking": "Bloquant",
+    "Warning": "Avertissement",
+    "Info": "Information"
+  },
+  "completionBlocker": {
+    "ScheduledMatches": "Des matchs sont encore planifiés",
+    "LiveMatches": "Des matchs sont encore en cours",
+    "PostponedMatches": "Des matchs sont encore reportés"
+  },
+  "attentionTargetType": {
+    "Stage": "Phase",
+    "Slot": "Emplacement",
+    "Fixture": "Confrontation",
+    "Match": "Match",
+    "Competition": "Compétition",
+    "Structure": "Structure",
+    "Draw": "Tirage"
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "eyebrow": "Stage",
+  "titleFallback": "Stage",
+  "backNamed": "Back to {{name}}",
+  "back": "Back to competition",
+  "operations": {
+    "heading": "Stage operations",
+    "prepare": "Mark as ready",
+    "preparing": "Preparing…",
+    "start": "Start stage",
+    "starting": "Starting…",
+    "viewMatches": "View matches"
+  },
+  "rounds": {
+    "heading": "Rounds ({{count}})",
+    "subtitle_one": "{{count}} fixture in total · the match list is a separate view",
+    "subtitle_other": "{{count}} fixtures in total · the match list is a separate view",
+    "emptyTitle": "No rounds defined",
+    "emptyBody": "Preparing the stage creates its rounds and fixtures.",
+    "fixtureCount_one": "{{count}} fixture",
+    "fixtureCount_other": "{{count}} fixtures",
+    "leg": "leg {{index}}"
+  },
+  "slots": {
+    "heading": "Slots ({{count}})",
+    "emptyTitle": "No slots on this stage",
+    "emptyBody": "Slots appear once the structure defines the positions.",
+    "empty": "empty"
+  },
+  "draws": {
+    "heading": "Draws ({{count}})",
+    "emptyTitle": "No draws",
+    "emptyBody": "A draw appears when the stage structure requires one."
+  },
+  "confrontations": {
+    "heading": "Fixtures",
+    "intro": "Generate fixtures from bracket pairs whose both slots are occupied.",
+    "occupiedHint": "{{count}} occupied slot(s).",
+    "coveredHint": "{{count}} pair(s) already generated.",
+    "allCovered": "All possible fixtures are already generated for the occupied slots.",
+    "loadingPairs": "Loading bracket pairs…",
+    "noBracketPairs": "No bracket pairs on this stage.",
+    "pairsHeading": "Bracket pairs",
+    "pairLabel": "{{slotA}} ↔ {{slotB}}",
+    "pairMaterialized": "already generated",
+    "pairWaitingSlots": "slots incomplete",
+    "submitAll": "Generate fixtures ({{count}})",
+    "submitSelected": "Generate selection ({{count}})",
+    "submitting": "Generating…",
+    "successCreated": "{{count}} match(es) created.",
+    "successAlreadyComplete": "These fixtures were already generated."
+  }
+}

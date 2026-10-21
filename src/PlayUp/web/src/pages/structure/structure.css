@@ -1,0 +1,11 @@
+/*
+ * Structure styles entry — import order = cascade order.
+ * @import must precede rules; do not add rules here.
+ */
+@import './structure-core.css';
+@import './structure-hub.css';
+@import './structure-fiche.css';
+@import './structure-operational.css';
+@import './structure-dialogs.css';
+@import './structure-composition.css';
+@import './structure-phase-layout.css';

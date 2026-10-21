@@ -1,0 +1,38 @@
+---
+description: MyClub modular monolith — product boundaries, Host flow, tooling, anti-patterns
+alwaysApply: true
+---
+
+# Architecture
+
+Default for product apps: **Modular Monolith** — Domain / Application / Infrastructure / Host.
+Shared NuGet-style libraries need a clear API, not invented D/A/I/Host layers.
+Do not introduce microservices, kitchen-sink shared libs, or a Platform layer without a real trigger.
+
+## Product boundaries
+
+- **Domain** → nothing else in the product.
+- **Application** → Domain only.
+- **Infrastructure** → Application + Domain.
+- **Host** → Domain + Application + Infrastructure; may reference **Media.Infrastructure**. Host must **not** reference Development, DevRunner, or TestKit (enforced by tests + CI publish).
+- **Media** has Domain / Application / Infrastructure only (no Media Host); Play’Up Host composes it.
+
+## Application / Host flow
+
+- Play’Up HTTP product surface: named methods on **`UseCaseExecutor`** (load via ports → static use case → one `SaveChanges` for commands; reads never save). Not a CQRS mediator / handler bus.
+- Static use cases hold orchestration over Domain; they do not call `SaveChanges`.
+- **Media** HTTP surface uses **`MediaService`** — do not force it through `UseCaseExecutor`.
+
+## Tooling boundaries
+
+- **TestKit** → Domain + Application only (situations for tests and Development). Never Infra/Host/Media/Development.
+- **Development** → Domain + Application + TestKit (+ Media.Application). Never Infra/Host. May persist via `IUnitOfWork` outside the executor (seed scenarios).
+- **Development.Tests** → may reference **Infrastructure** (and Media.Infrastructure) as the Postgres integration composition root for executable recette protocols; must **not** reference Host or DevRunner. The **Development** library itself stays Infra-free (enforced by `DevelopmentArchitectureIsolationTests`).
+- **DevRunner** → Development + Infrastructure (CLI composition root). Must not ship with Host. Contributor flow: `docs/guides/local-persistence.md`.
+- **Media** (transverse module) → no separate Host; HTTP via Play’Up Host. Contributor contract: `docs/guides/media.md`.
+
+## Anti-patterns
+
+- Business logic in Host, Infrastructure, or tooling that belongs in Domain / Application use cases.
+- New global “application service” or MediatR-style dispatch without a demonstrated need.
+- TestKit depending on Infrastructure or Development; Host depending on Development/TestKit.
