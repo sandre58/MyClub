@@ -71,6 +71,8 @@ try
 
     var app = builder.Build();
 
+    HostListenExposureWarnings.LogNonLoopbackListenUrlsIfDevelopment(app);
+
     Log.Information("Play'Up Host starting");
 
     // Request logging wraps ExceptionHandler so completed status (incl. mapped 4xx/5xx) is logged once

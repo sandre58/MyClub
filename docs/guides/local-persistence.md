@@ -24,7 +24,7 @@ Docker is also required for **Testcontainers** integration tests (including Deve
 
 | Layer | Responsibility |
 | :---- | :------------- |
-| **Host** | Product HTTP only. PostgreSQL via `ConnectionStrings:PlayUp`. No Development reference, no seed, no InMemory mode. |
+| **Host** | Product HTTP only. PostgreSQL via `ConnectionStrings:PlayUp`. No Development reference, no seed, no InMemory mode. Default listen URL and exposure risks: [host-exposure.md](host-exposure.md). |
 | **Development** | Scenario/template catalog, JSON datasets, generators, orchestration (library; not shipped with Host). |
 | **DevRunner** | CLI: reset (`*_dev` DB only), `--templates`, `--scenarios`, progress `prepared\|running\|finished`. |
 | **Infrastructure** | EF Core + Npgsql. |

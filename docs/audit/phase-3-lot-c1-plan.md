@@ -1,8 +1,8 @@
 # Phase 3 — Lot C1 plan (AUD-0008)
 
-**Mode:** Ask/Plan — **no implementation authorized** until a distinct « Autorisation lot C1 » record exists (same pattern as C2).
+**Status:** Implemented per Notion authorization 2026-10-21 (Tier **A1–A4** + **B1** + **B3**; B4 and Tier C excluded).
 
-**Prerequisite:** CI green on commit `589705be` (or successor) — jobs `web` (stub E2E) and `e2e-integration` (Host E2E).
+**Prerequisite:** CI green on `802d077f` — jobs `web` and `e2e-integration` (met before C1 implementation).
 
 **Decision SoT:** Notion — [Play'Up Host — exposition locale (dette auth)](https://app.notion.com/p/40075fb92d10818390f6dcceef89a75d) (A + trajectoire C). Git evidence: `docs/audit/phase-1-wave-5.md` §1.
 
@@ -129,12 +129,12 @@ Estimated size: **small** (mostly docs); **≤30 lines** Host code if B3 only.
 
 ## 6. Acceptance criteria (lot closure)
 
-- [ ] Exposure model **A + trajectoire C** is explicit in Git contributor docs (with Notion link).
-- [ ] Untrusted-client scenarios **S3–S4** documented with concrete misuse examples (`--urls`, Docker, port forward).
-- [ ] Proposed guardrails (Tier A + agreed Tier B) implemented or explicitly deferred with reason in Notion task.
-- [ ] Media and API behaviour **unchanged** unless listed and arbitrated.
-- [ ] Auth / TLS / Media policy tracked as **future decisions**, not smuggled into C1.
-- [ ] AUD-0008 register row updated: C1 technical closure vs remaining trajectoire C work.
+- [x] Exposure model **A + trajectoire C** is explicit in Git contributor docs (with Notion link).
+- [x] Untrusted-client scenarios **S3–S4** documented with concrete misuse examples (`--urls`, Docker, port forward).
+- [x] Proposed guardrails (Tier A + agreed Tier B) implemented or explicitly deferred with reason in Notion task.
+- [x] Media and API behaviour **unchanged** unless listed and arbitrated.
+- [x] Auth / TLS / Media policy tracked as **future decisions**, not smuggled into C1.
+- [ ] AUD-0008 register row updated: C1 technical closure vs remaining trajectoire C work (Notion — post-merge).
 
 ---
 

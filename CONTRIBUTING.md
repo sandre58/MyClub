@@ -16,7 +16,7 @@ dotnet build
 dotnet test --filter Category!=Integration
 ```
 
-**Local Host database:** copy `.env.example` → `.env`, run `docker compose up -d`, set Host User Secrets `ConnectionStrings:PlayUp`, apply migrations. Step-by-step: [docs/guides/local-persistence.md](docs/guides/local-persistence.md).
+**Local Host database:** copy `.env.example` → `.env`, run `docker compose up -d`, set Host User Secrets `ConnectionStrings:PlayUp`, apply migrations. Step-by-step: [docs/guides/local-persistence.md](docs/guides/local-persistence.md). **Listen URLs / exposure:** [docs/guides/host-exposure.md](docs/guides/host-exposure.md).
 
 Full suite, including Testcontainers PostgreSQL tests (ephemeral; not the Compose volume):
 

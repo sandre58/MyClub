@@ -114,6 +114,7 @@ Directory.Build.local.props
 .env
 secrets.json
 appsettings.Development.json
+!src/PlayUp/MyClub.PlayUp.Host/appsettings.Development.json
 
 ## =========================
 ## Local Media storage (dev)

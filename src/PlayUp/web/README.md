@@ -5,7 +5,7 @@ Independent Vite + React + TypeScript app under `src/PlayUp/web/`. **Not** a .NE
 ## Prerequisites
 
 1. PostgreSQL with Play’Up schema (local compose).
-2. Host running on `http://localhost:5287` (`Properties/launchSettings.json`).
+2. Host running on `http://localhost:5287` (`Properties/launchSettings.json`). See [Host exposure](../../../docs/guides/host-exposure.md) before changing `--urls` or binding to LAN addresses.
 3. Host reachable (create competitions from the Accueil hub on `/` — Phase 19.1 / Accueil hub). DevRunner remains optional for seeded UX demos.
 
 ### Seed competitions (optional, local)
@@ -38,7 +38,7 @@ Shared Run Configurations live in the repo under [`.run/`](../../../.run/) (not 
 
 | Configuration         | Role                                                                                       |
 | --------------------- | ------------------------------------------------------------------------------------------ |
-| **PlayUp Host**       | ASP.NET Host (`launchSettings` → `http://localhost:5287`)                                  |
+| **PlayUp Host**       | ASP.NET Host (`launchSettings` → `http://localhost:5287`; custom `--urls` → [host-exposure.md](../../../docs/guides/host-exposure.md)) |
 | **PlayUp Web**        | `npm run dev` in this folder (Vite → `http://127.0.0.1:5173/`)                             |
 | **PlayUp Host + Web** | Compound — starts Host + Vite in parallel                                                  |
 | **PlayUp DevRunner**  | One-shot CLI reset/seed (run when you need workspace data; not part of the daily compound) |
