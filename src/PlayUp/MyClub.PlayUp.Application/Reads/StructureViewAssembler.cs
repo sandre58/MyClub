@@ -624,15 +624,7 @@ public static class StructureViewAssembler
             break;
         }
 
-        return active is null
-            ? StructureDrawExecutionBadge.ToLaunch
-            : active.Status == DrawStatus.Draft
-            ? StructureDrawExecutionBadge.InProgress
-            : active.Status == DrawStatus.Published
-            ? DrawAppliedState.IsApplied(active, stage)
-                ? StructureDrawExecutionBadge.Applied
-                : StructureDrawExecutionBadge.ToApply
-            : StructureDrawExecutionBadge.ToLaunch;
+        return active is null ? StructureDrawExecutionBadge.ToLaunch : active.Status == DrawStatus.Draft ? StructureDrawExecutionBadge.InProgress : active.Status == DrawStatus.Published ? DrawAppliedState.IsApplied(active, stage) ? StructureDrawExecutionBadge.Applied : StructureDrawExecutionBadge.ToApply : StructureDrawExecutionBadge.ToLaunch;
     }
 
     private static StructureTieFormatSummaryDto? MapDefaultTieFormat(TieFormat? tie) =>

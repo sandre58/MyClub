@@ -58,6 +58,6 @@
 - [x] D1 — arbitrage AUD-0005-C (decision 2026-10-21, `phase-4-lot-d1-plan.md`).
 - [x] D1 — garde-fou CI + baseline JSON (`verify-dotnet-warnings-baseline.sh`).
 - [x] D1 — SA1137 corrigé ; baseline **82** warnings (SA1143 seul).
-- [ ] D1 — passe SA1143 (réduction progressive ; pas de `NoWarn` global).
+- [x] D1-B — SA1143 solution-wide ; baseline **0** (garde-fou CI inchangé).
 - [ ] D2 — investigation AUD-0012.
 - [ ] D3 — arbitrage produit AUD-0004 (réserve).

@@ -1,16 +1,14 @@
 {
   "version": 1,
   "recordedAt": "2026-10-21",
-  "gitSha": "2bf4f490d584013111e5269ec307272c8849da45",
+  "gitSha": "075fe3be33f7dea0f36ce9ee3d17f3b6650ff8dd",
   "configuration": "Release",
   "buildFlags": ["--no-incremental"],
   "policyRef": "docs/audit/phase-4-lot-d1-plan.md",
-  "notes": "SA1137 remediated in DevelopmentTestsArchitectureIsolationTests (collection expression indentation). Baseline total lowered from 83 to 82; SA1143 backlog unchanged.",
+  "notes": "D1-B complete: SA1143 remediated solution-wide (Rider pass + OverviewAssembler placement projection fix).",
   "totals": {
-    "warnings": 82,
+    "warnings": 0,
     "errors": 0
   },
-  "byCode": {
-    "SA1143": 82
-  }
+  "byCode": {}
 }

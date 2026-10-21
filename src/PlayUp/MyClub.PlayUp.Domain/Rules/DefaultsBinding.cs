@@ -29,14 +29,7 @@ public sealed class DefaultsBinding : IEquatable<DefaultsBinding>
             HeritableRegulationPart.AdministrativeResult
         ];
 
-        return !isClassifyingPhase
-            ? new DefaultsBinding(match)
-            : new DefaultsBinding(
-        [
-            ..match,
-            HeritableRegulationPart.Points,
-            HeritableRegulationPart.RankingCriteria
-        ]);
+        return !isClassifyingPhase ? new DefaultsBinding(match) : new DefaultsBinding([.. match, HeritableRegulationPart.Points, HeritableRegulationPart.RankingCriteria]);
     }
 
     /// <summary>

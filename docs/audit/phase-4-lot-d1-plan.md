@@ -20,9 +20,9 @@ Avoid permanent tolerance (83+ warnings drift) and avoid premature global hard-f
 
 | Code | Count | Notes |
 | --- | ---: | --- |
-| SA1143 | 82 | Nested conditional formatting (StyleCop) |
+| SA1143 | 0 | Cleared D1-B (2026-10-21) — solution Release build |
 | SA1137 | 0 | Fixed 2026-10-21 (`DevelopmentTestsArchitectureIsolationTests.cs` — collection expression indentation) |
-| **Total** | **82** | See `docs/audit/dotnet-warnings-baseline.json` (was 83 @ wave-1) |
+| **Total** | **0** | See `docs/audit/dotnet-warnings-baseline.json` (was 78 after Host lot) |
 
 **SA1143:** rule enforces consistent parenthesis/line breaks for nested conditional expressions. `dotnet format analyzers` was tried and **rejected** (warning count increased); fixes will be intentional per site.
 
@@ -30,7 +30,7 @@ Avoid permanent tolerance (83+ warnings drift) and avoid premature global hard-f
 
 - [x] Decision recorded (this file + Notion phase 4 fiche).
 - [x] Baseline JSON + CI verification script.
-- [ ] SA1143 remediation pass (reduce count; update baseline when merged).
+- [x] SA1143 remediation pass (baseline **0** @ D1-B close).
 - [x] SA1137 fix (single site).
 - [ ] Registre / Notion: AUD-0005-C row or phase-4 note when policy fully operational.
 

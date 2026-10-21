@@ -137,17 +137,7 @@ public static class ReplaceStageProgressionRules
         var hasSlot = !string.IsNullOrWhiteSpace(slotKey);
         var hasGroup = destinationGroupId is not null;
         var modes = (destinationForm ? 1 : 0) + (hasSlot ? 1 : 0) + (hasGroup ? 1 : 0);
-        return modes > 1
-            ? throw new ApplicationFailureException(
-                "Progression path destination must be exactly one of: population, form, slot, or group.",
-                ApplicationErrorCodes.InvalidStructureIntent)
-            : destinationForm
-            ? ProgressionDestination.ForForm(stageId)
-            : hasGroup
-            ? ProgressionDestination.ForGroup(stageId, destinationGroupId!.Value)
-            : hasSlot
-            ? ProgressionDestination.ForSlot(stageId, slotKey!)
-            : ProgressionDestination.ForPopulation(stageId);
+        return modes > 1 ? throw new ApplicationFailureException("Progression path destination must be exactly one of: population, form, slot, or group.", ApplicationErrorCodes.InvalidStructureIntent) : destinationForm ? ProgressionDestination.ForForm(stageId) : hasGroup ? ProgressionDestination.ForGroup(stageId, destinationGroupId!.Value) : hasSlot ? ProgressionDestination.ForSlot(stageId, slotKey!) : ProgressionDestination.ForPopulation(stageId);
     }
 
     private static ProgressionIntent ToDomainIntent(Stage stage, ProgressionIntentSpec spec)
