@@ -59,12 +59,7 @@ public sealed class GeneratedTeamNameLexicon
         var document = JsonSerializer.Deserialize<GeneratedTeamNameDocument>(reader.ReadToEnd(), JsonOptions)
             ?? throw new InvalidOperationException($"Invalid generator JSON '{resourceName}'.");
 
-        return document.Prefixes.Count == 0
-            || document.Places.Count == 0
-            || document.Palette.Count == 0
-            ? throw new InvalidOperationException(
-                "generated-team-names.json must define non-empty prefixes, places, and palette.")
-            : new GeneratedTeamNameLexicon(document.Prefixes, document.Places, document.Palette);
+        return document.Prefixes.Count == 0 || document.Places.Count == 0 || document.Palette.Count == 0 ? throw new InvalidOperationException("generated-team-names.json must define non-empty prefixes, places, and palette.") : new GeneratedTeamNameLexicon(document.Prefixes, document.Places, document.Palette);
     }
 
     private sealed class GeneratedTeamNameDocument

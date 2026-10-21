@@ -333,18 +333,7 @@ internal static class StructureMaterializeAssembler
             _ => false
         };
 
-        return !mutable
-            ? StructureMaterializeDisabledReasons.StructureNotMutable
-            : format switch
-            {
-                StructureFormatKind.Championship when !phaseRosterComplete => StructureMaterializeDisabledReasons
-                    .PhaseRosterIncomplete,
-                StructureFormatKind.Groups when !deferGroupsNotReady
-                    && GroupsPlacementReadiness.BlocksProduction(stage) =>
-                    StructureMaterializeDisabledReasons.GroupsNotReady,
-                _ => determined == 0 ? StructureMaterializeDisabledReasons.NoDeterminedConfrontations :
-                    eligible == 0 ? StructureMaterializeDisabledReasons.NoEligibleConfrontations : null
-            };
+        return !mutable ? StructureMaterializeDisabledReasons.StructureNotMutable : format switch { StructureFormatKind.Championship when !phaseRosterComplete => StructureMaterializeDisabledReasons.PhaseRosterIncomplete, StructureFormatKind.Groups when !deferGroupsNotReady && GroupsPlacementReadiness.BlocksProduction(stage) => StructureMaterializeDisabledReasons.GroupsNotReady, _ => determined == 0 ? StructureMaterializeDisabledReasons.NoDeterminedConfrontations : eligible == 0 ? StructureMaterializeDisabledReasons.NoEligibleConfrontations : null };
     }
 
     private static string LabelVariant(int determined, int eligible, int materialized) =>

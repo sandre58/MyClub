@@ -288,12 +288,7 @@ public static class OverviewAssembler
         CompetitionStatus status,
         StructureFormatKind? formatKind,
         int matchTotal) =>
-        cycleReadingCode == CycleConstruction
-        && status == CompetitionStatus.Ready
-        && formatKind == StructureFormatKind.Championship
-        && matchTotal > 0
-            ? PreparationFocusGeneratedCalendar
-            : PreparationFocusSetup;
+        cycleReadingCode == CycleConstruction && status == CompetitionStatus.Ready && formatKind == StructureFormatKind.Championship && matchTotal > 0 ? PreparationFocusGeneratedCalendar : PreparationFocusSetup;
 
     /// <summary>
     /// Calendar overview synthesis for GeneratedCalendar — primary Championship stage (may still be Draft/Ready).
@@ -430,22 +425,9 @@ public static class OverviewAssembler
         var running = competition.Status is CompetitionStatus.Running or CompetitionStatus.Suspended;
         var hasStructureBlockers = structureView.Readiness.Blockers.Count > 0;
 
-        var teamsProminence = inConstruction
-            ? hasStructureBlockers &&
-              structureView.Readiness.Blockers.Contains(StructureViewAssembler.BlockerInsufficientParticipants)
-                ? ProminenceDominant
-                : ProminencePresent
-            : ProminenceCondensed;
+        var teamsProminence = inConstruction ? hasStructureBlockers && structureView.Readiness.Blockers.Contains(StructureViewAssembler.BlockerInsufficientParticipants) ? ProminenceDominant : ProminencePresent : ProminenceCondensed;
 
-        var structureProminence = inConstruction
-            ? structureView.Readiness.Blockers.Any(blocker =>
-                blocker is StructureViewAssembler.BlockerMissingStage
-                    or StructureViewAssembler.BlockerMissingStructure
-                    or StructureViewAssembler.BlockerMissingPotRules
-                    or StructureViewAssembler.BlockerCupBracketInvalid)
-                ? ProminenceDominant
-                : ProminencePresent
-            : ProminenceCondensed;
+        var structureProminence = inConstruction ? structureView.Readiness.Blockers.Any(blocker => blocker is StructureViewAssembler.BlockerMissingStage or StructureViewAssembler.BlockerMissingStructure or StructureViewAssembler.BlockerMissingPotRules or StructureViewAssembler.BlockerCupBracketInvalid) ? ProminenceDominant : ProminencePresent : ProminenceCondensed;
 
         var regulationProminence = inConstruction ? ProminencePresent : ProminenceCondensed;
         var matchesProminence = matchCounts.Total == 0
@@ -1033,20 +1015,19 @@ public static class OverviewAssembler
         IReadOnlyDictionary<EntryId, string> names)
     {
         var instructions = ResolvePlacementAwards.Execute(stages, matchesByStage);
-        return instructions.Count == 0
-            ? []
-            :
-            [
-                .. instructions.Select(instruction =>
-                {
-                    var displayName = EntryDisplayNames.Resolve(names, instruction.EntryId)
-                                      ?? instruction.EntryId.Value.ToString();
-                    return new FinalPlacementDto(
-                        instruction.Rank,
-                        instruction.EntryId.Value,
-                        displayName);
-                })
-            ];
+        if (instructions.Count == 0)
+        {
+            return [];
+        }
+
+        return [
+            .. instructions.Select(instruction =>
+            {
+                var displayName = EntryDisplayNames.Resolve(names, instruction.EntryId)
+                    ?? instruction.EntryId.Value.ToString();
+                return new FinalPlacementDto(instruction.Rank, instruction.EntryId.Value, displayName);
+            })
+        ];
     }
 
     private static IReadOnlyList<FinalPlacementDto>? ProjectStandingOutcomePlaces(
@@ -1069,15 +1050,7 @@ public static class OverviewAssembler
 
         var overall = section.Tables.FirstOrDefault(table =>
             string.Equals(table.Scope, ConsultationAssembler.ScopeOverall, StringComparison.Ordinal));
-        return overall is null || overall.Rows.Count == 0
-            ? null
-            :
-            [
-                .. overall.Rows.Select(row => new FinalPlacementDto(
-                    row.Position,
-                    row.EntryId,
-                    row.DisplayName))
-            ];
+        return overall is null || overall.Rows.Count == 0 ? null : [.. overall.Rows.Select(row => new FinalPlacementDto(row.Position, row.EntryId, row.DisplayName))];
     }
 
     private static OverviewStandingCompactDto? BuildStandingCompact(
@@ -1588,10 +1561,7 @@ public static class OverviewAssembler
                     or NeedsAttentionAssembler.SourceProgressionConflict:
                     {
                         var fixtureId = ResolveMaterializedFixtureIdForAttentionItem(item, stages);
-                        Guid? matchId = fixtureId is not null &&
-                                        fixtureToMatch.TryGetValue(fixtureId.Value, out var mid)
-                            ? mid
-                            : null;
+                        Guid? matchId = fixtureId is not null && fixtureToMatch.TryGetValue(fixtureId.Value, out var mid) ? mid : null;
                         var stageId = ResolveStageIdFromAttention(item, stages);
                         actions.Add(new OverviewActionDto(
                             ActionApplyProgression,

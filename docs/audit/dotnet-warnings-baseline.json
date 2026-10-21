@@ -1,16 +1,14 @@
 {
   "version": 1,
   "recordedAt": "2026-10-21",
-  "gitSha": "0cc12ad647de2a1ae554e9ca4bd3edea268e1755",
+  "gitSha": "075fe3be33f7dea0f36ce9ee3d17f3b6650ff8dd",
   "configuration": "Release",
   "buildFlags": ["--no-incremental"],
   "policyRef": "docs/audit/phase-4-lot-d1-plan.md",
-  "notes": "D1-B: Host SA1143 cleared (EndpointHttpHelpers, StructureRequestMapper). 82→78 warnings.",
+  "notes": "D1-B complete: SA1143 remediated solution-wide (Rider pass + OverviewAssembler placement projection fix).",
   "totals": {
-    "warnings": 78,
+    "warnings": 0,
     "errors": 0
   },
-  "byCode": {
-    "SA1143": 78
-  }
+  "byCode": {}
 }

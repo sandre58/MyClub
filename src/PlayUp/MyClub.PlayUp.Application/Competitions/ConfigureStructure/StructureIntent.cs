@@ -98,26 +98,7 @@ public sealed class StructureIntent
         int participantsPerGroup,
         string? stageName = null,
         MatchGenerationFormat matchGenerationFormat = MatchGenerationFormat.SingleRoundRobin) =>
-        groupCount < 2
-            ? throw new ApplicationFailureException(
-                "Groups format requires at least two groups.",
-                ApplicationErrorCodes.InvalidStructureIntent)
-            : participantsPerGroup < 2
-                ? throw new ApplicationFailureException(
-                    "Groups format requires at least two places per group.",
-                    ApplicationErrorCodes.InvalidStructureIntent)
-                : !Enum.IsDefined(matchGenerationFormat)
-                ? throw new ApplicationFailureException(
-                    $"Unknown match generation format '{matchGenerationFormat}'.",
-                    ApplicationErrorCodes.InvalidStructureIntent)
-                : new StructureIntent(
-                    StructureFormatKind.Groups,
-                    NormalizeStageName(stageName, "Phase de groupes"),
-                    groupCount,
-                    participantsPerGroup,
-                    bracketSize: 0,
-                    matchGenerationFormat,
-                    swissRoundCount: 0);
+        groupCount < 2 ? throw new ApplicationFailureException("Groups format requires at least two groups.", ApplicationErrorCodes.InvalidStructureIntent) : participantsPerGroup < 2 ? throw new ApplicationFailureException("Groups format requires at least two places per group.", ApplicationErrorCodes.InvalidStructureIntent) : !Enum.IsDefined(matchGenerationFormat) ? throw new ApplicationFailureException($"Unknown match generation format '{matchGenerationFormat}'.", ApplicationErrorCodes.InvalidStructureIntent) : new StructureIntent(StructureFormatKind.Groups, NormalizeStageName(stageName, "Phase de groupes"), groupCount, participantsPerGroup, bracketSize: 0, matchGenerationFormat, swissRoundCount: 0);
 
     /// <summary>
     /// Builds a cup intent. Bracket size must be a power of two (no bye matrix).

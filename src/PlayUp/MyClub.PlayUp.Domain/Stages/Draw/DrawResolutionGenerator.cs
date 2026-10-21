@@ -417,20 +417,7 @@ public static class DrawResolutionGenerator
             [.. request.Entries.Where(e => !usedEntries.Contains(e))],
             request.RandomSource);
 
-        return !TryAssignGroups(
-                remaining,
-                placements,
-                occupiedPots,
-                counts,
-                associationCounts,
-                pots,
-                associationMap,
-                maxSameAssociation,
-                capacity,
-                request.GroupTargets,
-                request.RandomSource)
-            ? DrawGenerationResult.NoSolution()
-            : DrawGenerationResult.Resolved(DrawResolution.ResolvedGroups(placements));
+        return !TryAssignGroups(remaining, placements, occupiedPots, counts, associationCounts, pots, associationMap, maxSameAssociation, capacity, request.GroupTargets, request.RandomSource) ? DrawGenerationResult.NoSolution() : DrawGenerationResult.Resolved(DrawResolution.ResolvedGroups(placements));
     }
 
     private static bool TryAssignGroups(

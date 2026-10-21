@@ -64,6 +64,8 @@ public sealed class CupC2ImpasseRecetteProtocolTests(DevelopmentPostgresFixture 
         var (competition, stage, hub, matches) = scope;
         EnsureRecetteCupReady(competition, stage);
 
+        hub.Should().NotBeNull();
+
         var materializeSecond = MaterializeCupFromOccupiedSlots.Execute(competition, stage, null, matches, _clock);
         materializeSecond.CreatedMatches.Should().HaveCount(1);
         foreach (var created in materializeSecond.CreatedMatches)

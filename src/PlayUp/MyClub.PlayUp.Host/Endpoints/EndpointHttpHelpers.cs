@@ -39,58 +39,12 @@ internal static class EndpointHttpHelpers
         return Results.Ok(new ConfigureStructureResponse(result.StageCreated, impact, view));
     }
 
-    internal static CompletionMode ParseCompletionMode(string mode)
-    {
-        if (mode.Equals("Normal", StringComparison.OrdinalIgnoreCase))
-        {
-            return CompletionMode.Normal;
-        }
+    internal static CompletionMode ParseCompletionMode(string mode) => mode.Equals("Normal", StringComparison.OrdinalIgnoreCase) ? CompletionMode.Normal : mode.Equals("Administrative", StringComparison.OrdinalIgnoreCase) ? CompletionMode.Administrative : mode.Equals("Abandoned", StringComparison.OrdinalIgnoreCase) ? CompletionMode.Abandoned : throw new ApplicationFailureException($"Unknown completion mode '{mode}'. Expected Normal, Administrative, or Abandoned.", ApplicationErrorCodes.InvalidCompletionMode);
 
-        if (mode.Equals("Administrative", StringComparison.OrdinalIgnoreCase))
-        {
-            return CompletionMode.Administrative;
-        }
+    internal static DrawResolutionKind ParseDrawKind(string kind) => kind.Equals("Slot", StringComparison.OrdinalIgnoreCase) ? DrawResolutionKind.Slot : kind.Equals("Group", StringComparison.OrdinalIgnoreCase) || kind.Equals("Groups", StringComparison.OrdinalIgnoreCase) ? DrawResolutionKind.Group : throw new ApplicationFailureException($"Unknown draw kind '{kind}'. Expected Slot or Group.", ApplicationErrorCodes.DrawKindNotSupported);
 
-        if (mode.Equals("Abandoned", StringComparison.OrdinalIgnoreCase))
-        {
-            return CompletionMode.Abandoned;
-        }
-
-        throw new ApplicationFailureException(
-            $"Unknown completion mode '{mode}'. Expected Normal, Administrative, or Abandoned.",
-            ApplicationErrorCodes.InvalidCompletionMode);
-    }
-
-    internal static DrawResolutionKind ParseDrawKind(string kind)
-    {
-        if (kind.Equals("Slot", StringComparison.OrdinalIgnoreCase))
-        {
-            return DrawResolutionKind.Slot;
-        }
-
-        if (kind.Equals("Group", StringComparison.OrdinalIgnoreCase)
-            || kind.Equals("Groups", StringComparison.OrdinalIgnoreCase))
-        {
-            return DrawResolutionKind.Group;
-        }
-
-        throw new ApplicationFailureException(
-            $"Unknown draw kind '{kind}'. Expected Slot or Group.",
-            ApplicationErrorCodes.DrawKindNotSupported);
-    }
-
-    internal static DrawInputsIntent ParseDrawInputsIntent(string? intent)
-    {
-        if (string.IsNullOrWhiteSpace(intent) || intent.Equals("Default", StringComparison.OrdinalIgnoreCase))
-        {
-            return DrawInputsIntent.Default;
-        }
-
-        if (intent.Equals("Rerun", StringComparison.OrdinalIgnoreCase))
-        {
-            return DrawInputsIntent.Rerun;
-        }
-
-        throw new BadHttpRequestException($"Unknown draw inputs intent '{intent}'. Expected Default or Rerun.");
-    }
+    internal static DrawInputsIntent ParseDrawInputsIntent(string? intent) =>
+        string.IsNullOrWhiteSpace(intent) || intent.Equals("Default", StringComparison.OrdinalIgnoreCase)
+            ? DrawInputsIntent.Default
+            : intent.Equals("Rerun", StringComparison.OrdinalIgnoreCase) ? DrawInputsIntent.Rerun : throw new BadHttpRequestException($"Unknown draw inputs intent '{intent}'. Expected Default or Rerun.");
 }

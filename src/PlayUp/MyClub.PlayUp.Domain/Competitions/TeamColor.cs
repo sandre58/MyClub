@@ -34,13 +34,7 @@ public sealed partial record TeamColor
         }
 
         var trimmed = value.Trim();
-        return trimmed.Length == 0
-            ? null
-            : !HexColorRegex().IsMatch(trimmed)
-            ? throw new DomainException(
-                "Team color must be a #RRGGBB hex value.",
-                CompetitionErrorCodes.InvalidTeamColor)
-            : new TeamColor(trimmed.ToUpperInvariant());
+        return trimmed.Length == 0 ? null : !HexColorRegex().IsMatch(trimmed) ? throw new DomainException("Team color must be a #RRGGBB hex value.", CompetitionErrorCodes.InvalidTeamColor) : new TeamColor(trimmed.ToUpperInvariant());
     }
 
     /// <inheritdoc />
