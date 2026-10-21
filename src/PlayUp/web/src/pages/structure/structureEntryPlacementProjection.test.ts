@@ -61,9 +61,7 @@ describe('structureEntryPlacementProjection', () => {
 
   it('returns not placed when schematic is not ready', () => {
     const placed = new Set(['e1']);
-    expect(
-      isEntryPlacedInPhase('e1', placed, 'Cup', false),
-    ).toBe(false);
+    expect(isEntryPlacedInPhase('e1', placed, 'Cup', false)).toBe(false);
     expect(isEntryPlacedInPhase('e1', placed, 'Cup', true)).toBe(true);
   });
 

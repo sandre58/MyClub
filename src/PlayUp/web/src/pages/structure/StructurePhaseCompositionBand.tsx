@@ -58,8 +58,12 @@ export type StructurePhaseCompositionBandProps = {
   showPopulationColumn: boolean;
   showPlaceAssignmentSection: boolean;
   showCompositionDrawSection: boolean;
-  entryProvenanceByEntryId: ReadonlyMap<string, import('./compositionTeamsInboundRows').CompositionTeamProvenance>;
-  compositionTeamRows: import('./compositionTeamsInboundRows').CompositionTeamRow[] | null;
+  entryProvenanceByEntryId: ReadonlyMap<
+    string,
+    import('./compositionTeamsInboundRows').CompositionTeamProvenance
+  >;
+  compositionTeamRows:
+    import('./compositionTeamsInboundRows').CompositionTeamRow[] | null;
   canCompose: boolean;
   teamsComposeActionLabel: string;
   compactIcon: string;

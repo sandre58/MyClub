@@ -5,9 +5,14 @@ import { GradientSeparator } from './GradientSeparator';
 
 describe('GradientSeparator', () => {
   it('renders horizontal orientation with aria-hidden', () => {
-    const { container } = render(<GradientSeparator orientation="horizontal" />);
+    const { container } = render(
+      <GradientSeparator orientation="horizontal" />,
+    );
     const el = container.firstElementChild;
-    expect(el).toHaveClass('ds-gradient-separator', 'ds-gradient-separator--horizontal');
+    expect(el).toHaveClass(
+      'ds-gradient-separator',
+      'ds-gradient-separator--horizontal',
+    );
     expect(el).toHaveAttribute('aria-hidden', 'true');
   });
 

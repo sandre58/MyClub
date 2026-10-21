@@ -26,12 +26,7 @@ import {
 
 /** Ambient kinds on a topology tile (unified pastille). Not structureIssues. */
 export type StageAmbientKind =
-  | 'graph'
-  | 'feed'
-  | 'capacity'
-  | 'execution'
-  | 'result'
-  | 'drawPots';
+  'graph' | 'feed' | 'capacity' | 'execution' | 'result' | 'drawPots';
 
 /**
  * Header synthesis tone — visual gravity only (vocabulary stays family-based).
@@ -229,8 +224,7 @@ export function computeStructureReadinessSummary(
     }
     const diagnosticContext = structureDiagnosticContextFromStage(data, stage);
     const presented = stagePresentedIssueCodes(data, stage).filter(
-      (code) =>
-        structureDiagnosticTone(code, diagnosticContext) !== 'progress',
+      (code) => structureDiagnosticTone(code, diagnosticContext) !== 'progress',
     );
     if (presented.length > 0) {
       firstAttentionStageId ??= stage.stageId;
@@ -243,16 +237,15 @@ export function computeStructureReadinessSummary(
   }
 
   const byFamily = countStructureIssuesByFamily(presentedCodes);
-  const familyCounts: StructureFamilyCount[] = STRUCTURE_DIAGNOSTIC_FAMILIES.filter(
-    (family) => byFamily[family] > 0,
-  ).map((family) => ({ family, count: byFamily[family] }));
+  const familyCounts: StructureFamilyCount[] =
+    STRUCTURE_DIAGNOSTIC_FAMILIES.filter((family) => byFamily[family] > 0).map(
+      (family) => ({ family, count: byFamily[family] }),
+    );
 
   const shapeInvalid = readinessHasBlockerCode(data, 'CupBracketInvalid');
 
   const presentedProblemCount =
-    presentedCodes.length +
-    missingPotsPhaseCount +
-    (shapeInvalid ? 1 : 0);
+    presentedCodes.length + missingPotsPhaseCount + (shapeInvalid ? 1 : 0);
 
   const hasAny = presentedProblemCount > 0;
 

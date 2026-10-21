@@ -40,8 +40,7 @@ export function resolveCompositionBandResolvedGaugeStats(
     return null;
   }
 
-  const cappedResolved =
-    capacity > 0 ? Math.min(resolved, capacity) : resolved;
+  const cappedResolved = capacity > 0 ? Math.min(resolved, capacity) : resolved;
 
   return { resolved: cappedResolved, total: capacity };
 }
@@ -49,7 +48,9 @@ export function resolveCompositionBandResolvedGaugeStats(
 export function resolveCompositionResolvedSeatCount(
   stage: Pick<
     StructureStageHubSummary,
-    'compositionBandResolvedCount' | 'inboundComposition' | 'compositionEntryCount'
+    | 'compositionBandResolvedCount'
+    | 'inboundComposition'
+    | 'compositionEntryCount'
   >,
   inboundFallbackResolved?: number,
 ): number {

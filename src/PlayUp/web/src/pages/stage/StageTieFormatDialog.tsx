@@ -213,9 +213,9 @@ export function TieFormatDialog({
     {},
   );
   /** Session-only: single-round historical drift realigned to phase default. */
-  const [sessionRealigned, setSessionRealigned] = useState<Record<string, true>>(
-    {},
-  );
+  const [sessionRealigned, setSessionRealigned] = useState<
+    Record<string, true>
+  >({});
   const [nav, setNav] = useState<NavTarget>('phase');
 
   const sessionFlags = useMemo(
@@ -237,17 +237,10 @@ export function TieFormatDialog({
         roundForms,
         baselineRounds,
       ),
-    [
-      roundIds,
-      sessionFlags,
-      phaseForm,
-      roundForms,
-      baselineRounds,
-    ],
+    [roundIds, sessionFlags, phaseForm, roundForms, baselineRounds],
   );
   const roundUpdateIds = Object.keys(roundUpdates);
-  const isDirty =
-    phaseDirty || (canEditRounds && roundUpdateIds.length > 0);
+  const isDirty = phaseDirty || (canEditRounds && roundUpdateIds.length > 0);
   const canSave = isDirty && (canEditDefault || canEditRounds);
 
   const {
@@ -271,9 +264,7 @@ export function TieFormatDialog({
     setBaselinePhase(nextPhase);
     setRoundForms(nextRounds);
     setBaselineRounds(nextRounds);
-    setInheritsAtLoad(
-      buildInheritsAtLoad(nextRoundIds, nextRounds, nextPhase),
-    );
+    setInheritsAtLoad(buildInheritsAtLoad(nextRoundIds, nextRounds, nextPhase));
     setOverrideEditing({});
     setSessionRealigned({});
     const canDefault = (stage.actions ?? []).includes(
@@ -333,12 +324,7 @@ export function TieFormatDialog({
   function updatePhaseForm(next: TieFormState) {
     setPhaseForm(next);
     setRoundForms((current) =>
-      applyPhaseFormToInheritedRounds(
-        roundIds,
-        sessionFlags,
-        next,
-        current,
-      ),
+      applyPhaseFormToInheritedRounds(roundIds, sessionFlags, next, current),
     );
   }
 

@@ -30,9 +30,13 @@ function RatioAside({
       data-pool-tone={poolTone}
     >
       <span className="structure-operational-strip__ratio">
-        <span className="structure-operational-strip__ratio-filled">{current}</span>
+        <span className="structure-operational-strip__ratio-filled">
+          {current}
+        </span>
         <span className="structure-operational-strip__ratio-sep">/</span>
-        <span className="structure-operational-strip__ratio-cap">{capacity}</span>
+        <span className="structure-operational-strip__ratio-cap">
+          {capacity}
+        </span>
       </span>
       <span className="structure-operational-strip__ratio-label">{label}</span>
     </div>

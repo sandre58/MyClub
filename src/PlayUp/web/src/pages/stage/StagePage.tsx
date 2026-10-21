@@ -224,10 +224,7 @@ function StageOverviewView({
         )}
       </section>
 
-      <CupConfrontationsPanel
-        data={data}
-        structureStages={structureStages}
-      />
+      <CupConfrontationsPanel data={data} structureStages={structureStages} />
 
       <section className="ds-panel" aria-labelledby="rounds-heading">
         <div className="ds-panel-head">

@@ -65,9 +65,7 @@ function hubFromObservation(
   };
 }
 
-function viewFromObservation(
-  obs: PopulationRecetteObservation,
-): StructureView {
+function viewFromObservation(obs: PopulationRecetteObservation): StructureView {
   const hub = hubFromObservation(obs);
   return {
     competitionId: 'recette-competition',
@@ -114,14 +112,10 @@ function titleKeysForCodes(
   hub: StructureStageHubSummary,
 ): string[] {
   return codes.map((code) =>
-    resolveStructureDiagnosticIssueTitleKey(
-      code,
-      stageStatus,
-      {
-        compositionEntryCount: hub.compositionEntryCount,
-        compositionCapacity: hub.compositionCapacity,
-      },
-    ),
+    resolveStructureDiagnosticIssueTitleKey(code, stageStatus, {
+      compositionEntryCount: hub.compositionEntryCount,
+      compositionCapacity: hub.compositionCapacity,
+    }),
   );
 }
 
@@ -161,14 +155,10 @@ function assertDiagnosticLayers(
     obs.structureIssues.map((code) => structureDiagnosticTitleKey(code)),
   );
   const expectedPresentedTitleKeys = obs.presentedIssueCodes.map((code) =>
-    resolveStructureDiagnosticIssueTitleKey(
-      code,
-      stageStatus,
-      {
-        compositionEntryCount: hub.compositionEntryCount,
-        compositionCapacity: hub.compositionCapacity,
-      },
-    ),
+    resolveStructureDiagnosticIssueTitleKey(code, stageStatus, {
+      compositionEntryCount: hub.compositionEntryCount,
+      compositionCapacity: hub.compositionCapacity,
+    }),
   );
   expect(titleKeysForCodes(obs.presentedIssueCodes, stageStatus, hub)).toEqual(
     expectedPresentedTitleKeys,
@@ -220,14 +210,10 @@ describe('population recette fixtures (B/C observation)', () => {
       ),
     ).toBe('graph.issues.PhaseRosterIncomplete');
     expect(
-      resolveStructureDiagnosticIssueTitleKey(
-        'PopulationShortfall',
-        'Ready',
-        {
-          compositionEntryCount: hub.compositionEntryCount,
-          compositionCapacity: hub.compositionCapacity,
-        },
-      ),
+      resolveStructureDiagnosticIssueTitleKey('PopulationShortfall', 'Ready', {
+        compositionEntryCount: hub.compositionEntryCount,
+        compositionCapacity: hub.compositionCapacity,
+      }),
     ).toBe('graph.issues.PopulationShortfall');
   });
 

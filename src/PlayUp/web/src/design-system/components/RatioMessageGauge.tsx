@@ -8,17 +8,9 @@ import {
 
 export type RatioMessageGaugeSize = 'default' | 'compact';
 export type RatioMessageGaugeMessageKind =
-  | 'info'
-  | 'success'
-  | 'attention'
-  | 'danger';
+  'info' | 'success' | 'attention' | 'danger';
 export type RatioMessageGaugeRatioTone =
-  | 'neutral'
-  | 'brand'
-  | 'attention'
-  | 'danger'
-  | 'complete'
-  | 'partial';
+  'neutral' | 'brand' | 'attention' | 'danger' | 'complete' | 'partial';
 
 function messageIcon(kind: RatioMessageGaugeMessageKind) {
   switch (kind) {
@@ -107,10 +99,7 @@ export function RatioMessageGauge({
 
   return (
     <div className={classes} role="status" aria-label={ariaLabel}>
-      <div
-        className="ds-ratio-message-gauge__aside"
-        data-pool-tone={ratioTone}
-      >
+      <div className="ds-ratio-message-gauge__aside" data-pool-tone={ratioTone}>
         {loading ? (
           <span className="ds-ratio-message-gauge__ratio ds-ratio-message-gauge__ratio--loading">
             …
@@ -160,10 +149,7 @@ export function RatioMessageGauge({
           data-tone={trackTone}
           aria-hidden="true"
         >
-          <span
-            className="ds-meter__fill"
-            style={{ width: `${width}%` }}
-          />
+          <span className="ds-meter__fill" style={{ width: `${width}%` }} />
         </div>
       </div>
     </div>

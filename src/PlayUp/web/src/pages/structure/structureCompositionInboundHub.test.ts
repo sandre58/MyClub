@@ -46,9 +46,7 @@ describe('structureCompositionInboundHub', () => {
   it('parses qual path order when stage id casing differs in feed key', () => {
     const upper = '550E8400-E29B-41D4-A716-446655440000';
     const lower = upper.toLowerCase();
-    expect(
-      qualPathOrderFromFeedKey(`q-${upper}-3`, lower),
-    ).toBe(3);
+    expect(qualPathOrderFromFeedKey(`q-${upper}-3`, lower)).toBe(3);
     expect(qualPathOrderFromFeedKeyLoose(`q-${upper}-3`)).toBe(3);
   });
 

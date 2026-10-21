@@ -2,11 +2,7 @@ import type { ReactNode } from 'react';
 
 import { Chip } from './Chip';
 import { Tooltip } from './Tooltip';
-import {
-  HourglassIcon,
-  LocateIcon,
-  WithdrawIcon,
-} from '../icons/contentIcons';
+import { HourglassIcon, LocateIcon, WithdrawIcon } from '../icons/contentIcons';
 import { TeamCrest } from '../TeamCrest';
 
 export type EntryCellVariant = 'list-row' | 'chip';
@@ -42,11 +38,7 @@ export function EntryCellWithdrawnMarker({
 }) {
   return (
     <Tooltip content={tooltip}>
-      <span
-        className={className}
-        role="img"
-        aria-label={tooltip}
-      >
+      <span className={className} role="img" aria-label={tooltip}>
         <WithdrawIcon size="sm" aria-hidden="true" />
       </span>
     </Tooltip>
@@ -90,9 +82,9 @@ export function EntryCell({
   trailing,
 }: EntryCellProps) {
   const ineligibleSlot =
-    ineligible && ineligibleTooltip
-      ? <EntryCellWithdrawnMarker tooltip={ineligibleTooltip} />
-      : null;
+    ineligible && ineligibleTooltip ? (
+      <EntryCellWithdrawnMarker tooltip={ineligibleTooltip} />
+    ) : null;
 
   const placedSlot =
     trailing ??
@@ -158,14 +150,14 @@ export function EntryCell({
   if (pending) {
     return (
       <>
-        <span className="structure-entries__team-pending-icon" aria-hidden="true">
+        <span
+          className="structure-entries__team-pending-icon"
+          aria-hidden="true"
+        >
           <HourglassIcon size="sm" />
         </span>
         <span
-          className={[
-            nameClassName,
-            'structure-entries__team-name--pending',
-          ]
+          className={[nameClassName, 'structure-entries__team-name--pending']
             .filter(Boolean)
             .join(' ')}
         >

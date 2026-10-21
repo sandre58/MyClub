@@ -85,21 +85,15 @@ export function StructurePhaseFicheHeader({
 
   const resolvedFormatLabel =
     formatLabel ??
-    (stage.formatKind
-      ? structureFormatKindLabel(stage.formatKind)
-      : null);
+    (stage.formatKind ? structureFormatKindLabel(stage.formatKind) : null);
 
   const showLifecycleRow = !editingName && shouldShowMatchsLifecycle(stage);
   const showCompletedBadgeOnIdentity =
     !editingName && !showLifecycleRow && stage.status === 'Completed';
 
   return (
-    <header
-      className="structure-fiche__header structure-fiche__header--two-rows"
-    >
-      <div
-        className="structure-fiche__header-row structure-fiche__header-row--identity"
-      >
+    <header className="structure-fiche__header structure-fiche__header--two-rows">
+      <div className="structure-fiche__header-row structure-fiche__header-row--identity">
         <div className="structure-fiche__header-identity">
           {resolvedFormatLabel ? (
             <Tooltip content={resolvedFormatLabel}>
@@ -182,7 +176,10 @@ export function StructurePhaseFicheHeader({
             </form>
           ) : (
             <>
-              <h2 id="phase-overview-heading" className="structure-fiche__title">
+              <h2
+                id="phase-overview-heading"
+                className="structure-fiche__title"
+              >
                 {stage.name}
               </h2>
               {canRename ? (
@@ -223,9 +220,7 @@ export function StructurePhaseFicheHeader({
         ) : null}
       </div>
       {showLifecycleRow ? (
-        <div
-          className="structure-fiche__header-row structure-fiche__header-row--lifecycle"
-        >
+        <div className="structure-fiche__header-row structure-fiche__header-row--lifecycle">
           <StageStatusBadge status={stage.status} />
           <div className="structure-fiche__header-lifecycle-cluster">
             <StructurePhaseHeaderLifecycle

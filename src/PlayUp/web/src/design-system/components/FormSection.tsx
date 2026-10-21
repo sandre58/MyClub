@@ -60,10 +60,7 @@ export function FormSection({
           </h3>
           {description ? (
             <p
-              className={[
-                'ds-form-section__description',
-                descriptionClassName,
-              ]
+              className={['ds-form-section__description', descriptionClassName]
                 .filter(Boolean)
                 .join(' ')}
             >

@@ -18,7 +18,10 @@ const INVALIDATE_OPTIONS = {
 
 type InvalidateDescriptor =
   | { kind: 'key'; queryKey: QueryKey }
-  | { kind: 'predicate'; predicate: (query: { queryKey: QueryKey }) => boolean };
+  | {
+      kind: 'predicate';
+      predicate: (query: { queryKey: QueryKey }) => boolean;
+    };
 
 function keySignature(descriptor: InvalidateDescriptor): string {
   if (descriptor.kind === 'key') {
@@ -189,7 +192,10 @@ export function scheduleStructureRefresh(
   scopes: StructureInvalidationScope[],
   options?: { stageId?: string },
 ): void {
-  void invalidateStructureQueries(queryClient, competitionId, scopes, options).catch(
-    logStructureRefreshError,
-  );
+  void invalidateStructureQueries(
+    queryClient,
+    competitionId,
+    scopes,
+    options,
+  ).catch(logStructureRefreshError);
 }

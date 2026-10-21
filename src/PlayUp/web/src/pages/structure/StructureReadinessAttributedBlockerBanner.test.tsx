@@ -45,9 +45,7 @@ function viewWithCupBlocker(
       readyForSchedulePath: false,
       attachedMatchCount: 0,
       blockers: ['CupBracketInvalid'],
-      blockerDetails: [
-        { code: 'CupBracketInvalid', stageId: ownerStageId },
-      ],
+      blockerDetails: [{ code: 'CupBracketInvalid', stageId: ownerStageId }],
     },
     actions: [],
     stages: [],
@@ -70,10 +68,15 @@ describe('StructureReadinessAttributedBlockerBanner', () => {
     expect(ownerBanner?.textContent?.length).toBeGreaterThan(0);
 
     const { container: otherMount } = render(
-      <StructureReadinessAttributedBlockerBanner data={data} stageId={groups} />,
+      <StructureReadinessAttributedBlockerBanner
+        data={data}
+        stageId={groups}
+      />,
     );
     expect(
-      otherMount.querySelector('[data-testid="structure-readiness-attributed-blockers"]'),
+      otherMount.querySelector(
+        '[data-testid="structure-readiness-attributed-blockers"]',
+      ),
     ).toBeNull();
   });
 });

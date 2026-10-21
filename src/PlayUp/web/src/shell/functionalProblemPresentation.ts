@@ -29,7 +29,9 @@ import { resolveStructureDiagnosticIssueTitleKey } from '../pages/structure/stru
 /** Orthogonal signal tone (DS Alert / Status / toast mapping — design §6.3). */
 export type FunctionalProblemTone = 'danger' | 'warning' | 'info' | 'attention';
 
-function mapStructureTone(tone: StructureDiagnosticTone): FunctionalProblemTone {
+function mapStructureTone(
+  tone: StructureDiagnosticTone,
+): FunctionalProblemTone {
   if (tone === 'progress') return 'info';
   return tone;
 }
@@ -178,8 +180,7 @@ export function functionalProblemPresentation(
     : undefined;
 
   const stageFromTarget =
-    stageId ??
-    (targetType === 'Stage' && targetId ? targetId : null);
+    stageId ?? (targetType === 'Stage' && targetId ? targetId : null);
 
   if (!structureIssueCode && structureDiagnosticMeta(source)) {
     return functionalProblemPresentation({
@@ -329,7 +330,10 @@ export function functionalProblemPresentation(
     };
   }
 
-  if (source.startsWith('QualIncomplete') || source.startsWith('ProgIncomplete')) {
+  if (
+    source.startsWith('QualIncomplete') ||
+    source.startsWith('ProgIncomplete')
+  ) {
     return {
       tone: 'warning',
       titleKey: source,
@@ -401,7 +405,9 @@ export function situationPresentation(
   const stageIdFromParams =
     situation.params?.stageId?.trim() ||
     situation.params?.destinationStageId?.trim() ||
-    (situation.targetType === 'Stage' ? situation.targetId?.trim() : undefined) ||
+    (situation.targetType === 'Stage'
+      ? situation.targetId?.trim()
+      : undefined) ||
     null;
   return functionalProblemPresentation({
     source: situation.source,

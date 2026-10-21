@@ -94,9 +94,7 @@ describe('attentionPartition', () => {
         params: { stageId: 's1' },
       },
     ];
-    const stages = [
-      { stageId: 's1', name: 'Phase', status: 'Draft' as const },
-    ];
+    const stages = [{ stageId: 's1', name: 'Phase', status: 'Draft' as const }];
     const { blocking, attention } = partitionPresentableAttention(wire, {
       stages,
     });
@@ -114,9 +112,7 @@ describe('attentionPartition', () => {
         params: { stageId: 's1' },
       },
     ];
-    const stages = [
-      { stageId: 's1', name: 'Phase', status: 'Draft' as const },
-    ];
+    const stages = [{ stageId: 's1', name: 'Phase', status: 'Draft' as const }];
     const { blocking, attention } = partitionPresentableAttention(wire, {
       stages,
     });

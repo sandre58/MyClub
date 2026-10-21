@@ -7,9 +7,7 @@ import {
 type IssueTitleVariant = 'long' | 'short';
 
 export type PhaseRosterIncompleteCopyVariant =
-  | 'bandIncomplete'
-  | 'eligibilityGap'
-  | 'neutral';
+  'bandIncomplete' | 'eligibilityGap' | 'neutral';
 
 const CODE = 'PhaseRosterIncomplete';
 

@@ -80,18 +80,12 @@ describe('tieFormatEditorState', () => {
   });
 
   it('session override marks customized until cleared by realign flow', () => {
-    const session = flags(
-      { r1: true },
-      { sessionOverride: { r1: true } },
-    );
+    const session = flags({ r1: true }, { sessionOverride: { r1: true } });
     expect(isRoundCustomized('r1', session)).toBe(true);
   });
 
   it('realign session flag restores inherit semantics', () => {
-    const session = flags(
-      { r1: false },
-      { sessionRealigned: { r1: true } },
-    );
+    const session = flags({ r1: false }, { sessionRealigned: { r1: true } });
     expect(isRoundCustomized('r1', session)).toBe(false);
   });
 

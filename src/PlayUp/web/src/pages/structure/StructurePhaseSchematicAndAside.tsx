@@ -7,7 +7,8 @@ import { Tooltip } from '../../design-system/components/Tooltip';
 import {
   ArrowRightIcon,
   AttributionIcon,
-  EmptySelectionIcon, SettingsIcon
+  EmptySelectionIcon,
+  SettingsIcon,
 } from '../../design-system/icons/contentIcons';
 import type {
   CompetitionStatus,
@@ -119,7 +120,10 @@ export function StructurePhaseSchematicAndAside({
                   aria-label={t('fiche.statsAria')}
                 >
                   {heroFacts.map((fact) => (
-                    <li key={fact.statKey} className="structure-phase-hero__stat">
+                    <li
+                      key={fact.statKey}
+                      className="structure-phase-hero__stat"
+                    >
                       <span
                         className="structure-phase-hero__stat-icon"
                         aria-hidden="true"
@@ -231,7 +235,9 @@ export function StructurePhaseSchematicAndAside({
                       iconSize="lg"
                       icon={<EmptySelectionIcon />}
                       title={t('fiche.flux.sortiesEmptyTitle')}
-                    >{t('fiche.flux.sortiesEmptyHint')}</EmptyState>
+                    >
+                      {t('fiche.flux.sortiesEmptyHint')}
+                    </EmptyState>
                   }
                   attentionBanner={exitsBanners}
                 >
@@ -264,7 +270,9 @@ export function StructurePhaseSchematicAndAside({
                       iconSize="lg"
                       icon={<EmptySelectionIcon />}
                       title={t('fiche.flux.attributionEmptyTitle')}
-                    >{t('fiche.flux.attributionEmptyHint')}</EmptyState>
+                    >
+                      {t('fiche.flux.attributionEmptyHint')}
+                    </EmptyState>
                   }
                   attentionBanner={attributionBanners}
                 >

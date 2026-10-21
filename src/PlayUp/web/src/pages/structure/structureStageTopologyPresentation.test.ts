@@ -26,7 +26,8 @@ function view(stages: StructureStageHubSummary[]): StructureView {
 }
 
 function stage(
-  partial: Partial<StructureStageHubSummary> & Pick<StructureStageHubSummary, 'stageId'>,
+  partial: Partial<StructureStageHubSummary> &
+    Pick<StructureStageHubSummary, 'stageId'>,
 ): StructureStageHubSummary {
   return {
     name: 'Poules',
@@ -68,7 +69,9 @@ describe('stageWorstPresentedDiagnosticTone', () => {
       structureIssues: ['DanglingQualificationTarget'],
     });
     const data = view([s]);
-    expect(stageWorstPresentedDiagnosticTone(data, data.stages[0]!)).toBe('danger');
+    expect(stageWorstPresentedDiagnosticTone(data, data.stages[0]!)).toBe(
+      'danger',
+    );
   });
 
   it('returns attention for Draft population shortfall', () => {

@@ -36,7 +36,9 @@ for (const cls of unique.sort()) {
   dead.push(cls);
 }
 
-console.log(`structure-fiche.css: ${dead.length} unused / ${unique.length} unique tokens`);
+console.log(
+  `structure-fiche.css: ${dead.length} unused / ${unique.length} unique tokens`,
+);
 for (const cls of dead) {
   console.log(`  ${cls}`);
 }

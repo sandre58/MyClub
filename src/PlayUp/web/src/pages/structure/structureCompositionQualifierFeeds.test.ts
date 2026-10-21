@@ -46,7 +46,12 @@ describe('compositionQualifierFeedGroups', () => {
       participants: { entries: [] },
       stages: [
         { stageId: sourceId, name: 'Phase de groupes', status: 'Ready' },
-        { stageId: 'final', name: 'Finale', status: 'Draft', inboundComposition: inbound },
+        {
+          stageId: 'final',
+          name: 'Finale',
+          status: 'Draft',
+          inboundComposition: inbound,
+        },
       ],
     } as unknown as StructureView;
 
@@ -54,9 +59,7 @@ describe('compositionQualifierFeedGroups', () => {
       data,
       inbound,
       t: (key, opts) =>
-        key === 'fiche.rule.contextGroup'
-          ? `Poule ${opts?.group}`
-          : key,
+        key === 'fiche.rule.contextGroup' ? `Poule ${opts?.group}` : key,
       intentFallbackGroups: [],
     });
 
@@ -78,9 +81,7 @@ describe('compositionQualifierFeedGroups', () => {
       data,
       inbound: inboundWithEntry,
       t: (key, opts) =>
-        key === 'fiche.rule.contextGroup'
-          ? `Poule ${opts?.group}`
-          : key,
+        key === 'fiche.rule.contextGroup' ? `Poule ${opts?.group}` : key,
       intentFallbackGroups: [],
     });
     const provenance = inboundEntryProvenanceByEntryId(groupsWithEntry);

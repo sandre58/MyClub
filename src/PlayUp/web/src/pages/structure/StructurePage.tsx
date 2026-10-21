@@ -225,7 +225,12 @@ function StructureHub({ data }: { data: StructureView }) {
       <PageHead
         title={t('title')}
         actions={stages.length === 0 ? undefined : addPhaseAction}
-        note={readinessStatusNote(data, stages, readinessSummary, attentionQuery)}
+        note={readinessStatusNote(
+          data,
+          stages,
+          readinessSummary,
+          attentionQuery,
+        )}
       />
 
       {bootstrapEmpty ?? (

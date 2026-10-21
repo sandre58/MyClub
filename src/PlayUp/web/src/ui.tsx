@@ -348,11 +348,7 @@ export function EmptyState({
           {icon}
         </span>
       ) : null}
-      {size === 'compact' ? (
-        <div className="ds-empty__copy">{copy}</div>
-      ) : (
-        copy
-      )}
+      {size === 'compact' ? <div className="ds-empty__copy">{copy}</div> : copy}
     </div>
   );
 }

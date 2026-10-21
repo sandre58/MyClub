@@ -1,11 +1,6 @@
 /** Ratio color = pool resolution only — never Draw readiness. */
 export type DrawCtaPoolTone =
-  | 'neutral'
-  | 'partial'
-  | 'complete'
-  | 'brand'
-  | 'attention'
-  | 'danger';
+  'neutral' | 'partial' | 'complete' | 'brand' | 'attention' | 'danger';
 
 export function resolveDrawCtaPoolTone(
   filled: number,

@@ -1,15 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import {
-  occupancyMeterRatio,
-  occupancyMeterState,
-} from './OccupancyMeter';
+import { occupancyMeterRatio, occupancyMeterState } from './OccupancyMeter';
 import { expandOccurrences } from './structureQualificationDraft';
 import { expectedPopulationWithQualDraft } from './structurePopulationVolume';
 import { resolveDestinationMeterCapacity } from './structurePlaces';
-import type {
-  StructureStageHubSummary,
-  StructureView,
-} from '../../types';
+import type { StructureStageHubSummary, StructureView } from '../../types';
 
 describe('OccupancyMeter', () => {
   it('maps current vs capacity to exact | short | over', () => {

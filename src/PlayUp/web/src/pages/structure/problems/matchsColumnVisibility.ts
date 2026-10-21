@@ -83,7 +83,7 @@ export function shouldShowLifecycleRemediationLink(
   }
   return Boolean(
     remediationLabelKey &&
-      LIFECYCLE_REMEDIATION_LABEL_KEYS.has(remediationLabelKey),
+    LIFECYCLE_REMEDIATION_LABEL_KEYS.has(remediationLabelKey),
   );
 }
 

@@ -40,10 +40,7 @@ export function CupEntryRoundPlacementGauge({
     complete ? 'complete' : resolveDrawCtaPoolTone(filled, capacity),
   );
 
-  const rootClass = [
-    'structure-phase-match-tile__entry-round-gauge',
-    className,
-  ]
+  const rootClass = ['structure-phase-match-tile__entry-round-gauge', className]
     .filter(Boolean)
     .join(' ');
 

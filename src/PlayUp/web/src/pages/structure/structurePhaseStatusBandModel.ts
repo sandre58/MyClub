@@ -17,9 +17,7 @@ export function isLifecycleActionCode(
   code: string | null | undefined,
 ): code is StructureStageLifecycleTransitionCode {
   return (
-    code === 'PrepareStage' ||
-    code === 'StartStage' ||
-    code === 'CompleteStage'
+    code === 'PrepareStage' || code === 'StartStage' || code === 'CompleteStage'
   );
 }
 
@@ -40,12 +38,19 @@ export function isLifecycleMutationCode(
   return isLifecycleActionCode(code) || isLifecycleRevertCode(code);
 }
 
-export function matchProgressRemaining(total: number, finished: number, cancelled: number): number {
+export function matchProgressRemaining(
+  total: number,
+  finished: number,
+  cancelled: number,
+): number {
   return Math.max(0, total - finished - cancelled);
 }
 
 /** Exploitation gauge: finished + cancelled (matches no longer open). */
-export function matchProgressClosed(finished: number, cancelled: number): number {
+export function matchProgressClosed(
+  finished: number,
+  cancelled: number,
+): number {
   return finished + cancelled;
 }
 
@@ -55,5 +60,7 @@ export function matchProgressAllClosed(
   cancelled: number,
   open: number,
 ): boolean {
-  return total > 0 && open === 0 && matchProgressClosed(finished, cancelled) >= total;
+  return (
+    total > 0 && open === 0 && matchProgressClosed(finished, cancelled) >= total
+  );
 }

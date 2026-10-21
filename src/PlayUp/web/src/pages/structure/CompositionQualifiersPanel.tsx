@@ -122,7 +122,9 @@ export function CompositionQualifiersPanel({
                             variant="chip"
                             displayName=""
                             pending
-                            pendingLabel={t('composition.qualifiers.unresolved')}
+                            pendingLabel={t(
+                              'composition.qualifiers.unresolved',
+                            )}
                           />
                         )}
                         {placedInPhase ? (

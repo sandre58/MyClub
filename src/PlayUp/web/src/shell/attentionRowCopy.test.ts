@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { attentionSituationMeta, attentionSituationTitle } from './attentionRowCopy';
+import {
+  attentionSituationMeta,
+  attentionSituationTitle,
+} from './attentionRowCopy';
 import type { OverviewSituation } from '../types';
 
 describe('attentionRowCopy', () => {

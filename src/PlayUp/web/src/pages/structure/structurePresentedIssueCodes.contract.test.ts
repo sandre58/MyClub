@@ -66,9 +66,9 @@ describe('presentedIssueCodes contract (Championship Ready)', () => {
 
   it('treats omitted presentedIssueCodes as empty (no SPA inference)', () => {
     const { presentedIssueCodes: _omit, ...withoutField } = hub;
-    expect(stagePresentedIssueCodes(data, withoutField as StructureStageHubSummary)).toEqual(
-      [],
-    );
+    expect(
+      stagePresentedIssueCodes(data, withoutField as StructureStageHubSummary),
+    ).toEqual([]);
   });
 
   it('does not infer Unmaterialized from lifecycle when presentedIssueCodes is empty', () => {

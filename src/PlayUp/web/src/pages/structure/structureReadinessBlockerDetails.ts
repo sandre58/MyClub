@@ -35,6 +35,8 @@ export function readinessBlockerCodesForStage(
   data: StructureView,
   stageId: string,
 ): string[] {
-  const codes = blockerDetailsForStage(data, stageId).map((entry) => entry.code);
+  const codes = blockerDetailsForStage(data, stageId).map(
+    (entry) => entry.code,
+  );
   return [...new Set(codes)];
 }

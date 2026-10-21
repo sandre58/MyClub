@@ -364,7 +364,10 @@ function SheetSideColumn({
                       });
                     }}
                   >
-                    <Field label={t('sheet.jersey')} htmlFor={jerseyEditFieldId}>
+                    <Field
+                      label={t('sheet.jersey')}
+                      htmlFor={jerseyEditFieldId}
+                    >
                       <input
                         id={jerseyEditFieldId}
                         inputMode="numeric"

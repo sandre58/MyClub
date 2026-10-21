@@ -8,9 +8,15 @@ import type {
   StructureStageHubSummary,
 } from '../../types';
 
-export type QualificationEdge = { kind: 'intent'; intent: StructureQualificationIntent };
+export type QualificationEdge = {
+  kind: 'intent';
+  intent: StructureQualificationIntent;
+};
 
-export type ProgressionEdge = { kind: 'intent'; intent: StructureProgressionIntent };
+export type ProgressionEdge = {
+  kind: 'intent';
+  intent: StructureProgressionIntent;
+};
 
 export function qualificationEdges(
   stage: StructureStageHubSummary,

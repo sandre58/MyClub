@@ -306,7 +306,8 @@ export function countBracketPlacesBlockingDraw(
     if (formKind) {
       return schematicCases.filter(
         (place) =>
-          place.formPosition.kind === formKind && schematicCaseBlocksDraw(place),
+          place.formPosition.kind === formKind &&
+          schematicCaseBlocksDraw(place),
       ).length;
     }
   }
@@ -422,8 +423,7 @@ export function resolveDrawReadinessChecklist(input: {
     ? configured === places
     : places > 0 && pool === places;
   const teamsFillPlacesCurrent = useInboundPlacesFill ? configured : pool;
-  const teamsFillPlacesCapacity =
-    places > 0 ? places : undefined;
+  const teamsFillPlacesCapacity = places > 0 ? places : undefined;
 
   const showInboundKnown = configured > 0;
   const teamsAllKnown = !showInboundKnown || resolved >= configured;
@@ -944,7 +944,10 @@ export function countAlignedDrawPlacements(
     let count = 0;
     for (const placement of draw.slotPlacements) {
       const slot = byKey.get(placement.slotKey);
-      if (slot?.entryId != null && entityIdsEqual(slot.entryId, placement.entryId)) {
+      if (
+        slot?.entryId != null &&
+        entityIdsEqual(slot.entryId, placement.entryId)
+      ) {
         count += 1;
       }
     }

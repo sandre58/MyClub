@@ -13,18 +13,13 @@
   "participantsOccupyingCount": 8,
   "withdrawnEntryCount": 0,
   "isRosterComplete": false,
-  "structureIssues": [
-    "SlotFeedMissing"
-  ],
+  "structureIssues": ["SlotFeedMissing"],
   "presentedIssueCodes": [
     "SlotFeedMissing",
     "PopulationShortfall",
     "PhaseRosterIncomplete"
   ],
-  "presentedOnlyIssueCodes": [
-    "PopulationShortfall",
-    "PhaseRosterIncomplete"
-  ],
+  "presentedOnlyIssueCodes": ["PopulationShortfall", "PhaseRosterIncomplete"],
   "materializeDisabledReason": "PhaseRosterIncomplete",
   "lifecycleTransitionDisabledReasonCode": "PhaseRosterIncomplete"
 }

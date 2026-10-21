@@ -97,7 +97,11 @@ function structureView(
   };
 }
 
-function groupCase(groupId: string, name: string, index: number): SchematicCase {
+function groupCase(
+  groupId: string,
+  name: string,
+  index: number,
+): SchematicCase {
   return {
     formPosition: {
       kind: 'GroupPlace',
@@ -177,7 +181,9 @@ describe('StructureQualificationDialog hydrate / groups (2b)', () => {
   });
 
   it('does not publish sessionReady when source schematic fails (no EachGroup → 0)', async () => {
-    vi.mocked(fetchStageSchematic).mockRejectedValue(new Error('schematic down'));
+    vi.mocked(fetchStageSchematic).mockRejectedValue(
+      new Error('schematic down'),
+    );
 
     renderDialog(overExtractionSource());
 

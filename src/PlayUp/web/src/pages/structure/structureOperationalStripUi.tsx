@@ -2,7 +2,8 @@ import type { ReactNode } from 'react';
 
 import {
   CheckCircleIcon,
-  DrawPendingIcon, InfoIcon,
+  DrawPendingIcon,
+  InfoIcon,
   OverviewAttentionIcon,
   StructureIssueIcon,
 } from '../../design-system/icons/contentIcons';
@@ -10,7 +11,8 @@ import type { IconSize } from '../../design-system/icons/Icon';
 import type { StructureDiagnosticTone } from './structureDiagnosticPresentation';
 import { StructureDiagnosticIssueIcon } from './StructureDiagnosticIssueIcon';
 
-export type StripOperationalMessageKind = 'info' | 'success' | 'attention' | 'danger';
+export type StripOperationalMessageKind =
+  'info' | 'success' | 'attention' | 'danger';
 
 export function diagnosticToneToStripMessageKind(
   tone: StructureDiagnosticTone,
@@ -25,7 +27,10 @@ export function diagnosticToneToStripMessageKind(
   }
 }
 
-function defaultMessageIcon(kind: StripOperationalMessageKind, size: IconSize = 'sm') {
+function defaultMessageIcon(
+  kind: StripOperationalMessageKind,
+  size: IconSize = 'sm',
+) {
   switch (kind) {
     case 'success':
       return <CheckCircleIcon size={size} aria-hidden="true" />;
@@ -55,10 +60,15 @@ export function StripOperationalMessage({
       data-kind={kind}
       role={role}
     >
-      <span className="structure-operational-strip__message-icon" aria-hidden="true">
+      <span
+        className="structure-operational-strip__message-icon"
+        aria-hidden="true"
+      >
         {icon ?? defaultMessageIcon(kind)}
       </span>
-      <span className="structure-operational-strip__message-text">{children}</span>
+      <span className="structure-operational-strip__message-text">
+        {children}
+      </span>
     </div>
   );
 }
@@ -90,7 +100,10 @@ export function StripDrawAppliedPanel({
 }) {
   return (
     <div className="structure-operational-strip__applied-row">
-      <div className="structure-operational-strip__applied-mark" aria-hidden="true">
+      <div
+        className="structure-operational-strip__applied-mark"
+        aria-hidden="true"
+      >
         <DrawPendingIcon size="lg" />
       </div>
       <div className="structure-operational-strip__applied-content">

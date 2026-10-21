@@ -23,7 +23,8 @@ function countCupEntryRoundOccupied(cases: readonly SchematicCase[]): number {
     ...cupCases.map((c) => c.formPosition.roundOrder ?? 0),
   );
   return cupCases.filter(
-    (c) => (c.formPosition.roundOrder ?? 0) === entryRound && casePlaceIsOccupied(c),
+    (c) =>
+      (c.formPosition.roundOrder ?? 0) === entryRound && casePlaceIsOccupied(c),
   ).length;
 }
 

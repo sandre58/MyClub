@@ -143,8 +143,7 @@ export function MatchRulesStripPanel(props: MatchRulesPanelProps) {
     periodLabel: (n) => periodLabel(n, t),
     breakLabel: t('matchTimeline.break'),
   });
-  const hasExtra =
-    hasExtraTime && (extraTimeNumberOfPeriods ?? 0) > 0;
+  const hasExtra = hasExtraTime && (extraTimeNumberOfPeriods ?? 0) > 0;
   const extraPieces = hasExtra
     ? buildPlayClockPieces({
         periodCount: extraTimeNumberOfPeriods ?? 0,
@@ -247,7 +246,9 @@ export function StandingRulesStripPanel({
       aria-label={t('points.aria')}
     >
       <li className="regulation-match-strip__row">
-        <span className="regulation-match-strip__label">{t('points.heading')}</span>
+        <span className="regulation-match-strip__label">
+          {t('points.heading')}
+        </span>
         <div className="regulation-match-strip__value">
           <div className="regulation-rule-col__chips">
             <Tooltip content={t('tokens.standingWinTip', { value: win })}>
@@ -268,7 +269,10 @@ export function StandingRulesStripPanel({
             {t('criteria.heading')}
           </span>
           <div className="regulation-match-strip__value">
-            <ul className="regulation-rule-list" aria-label={t('criteria.aria')}>
+            <ul
+              className="regulation-rule-list"
+              aria-label={t('criteria.aria')}
+            >
               {criteria.map((criterion, index) => (
                 <li key={criterion} className="regulation-rule-list__item">
                   <span className="regulation-rule-list__hit">
@@ -373,7 +377,10 @@ export function StandingRulesPanel({
             <ol className="regulation-criteria" aria-label={t('criteria.aria')}>
               {criteria.map((criterion, index) => (
                 <li key={criterion} className="regulation-criteria__item">
-                  <span className="ds-chip ds-chip--rounded ds-chip--soft" aria-hidden="true">
+                  <span
+                    className="ds-chip ds-chip--rounded ds-chip--soft"
+                    aria-hidden="true"
+                  >
                     {index + 1}
                   </span>
                   <span>{criterionLabel(criterion, t)}</span>

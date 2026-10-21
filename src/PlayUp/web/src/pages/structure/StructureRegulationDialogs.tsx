@@ -128,9 +128,14 @@ export function DrawRulesDialog({
           normalizedPots,
         );
       } else {
-        scheduleStructureRefresh(queryClient, competitionId, ['hubStageShell'], {
-          stageId: stage.stageId,
-        });
+        scheduleStructureRefresh(
+          queryClient,
+          competitionId,
+          ['hubStageShell'],
+          {
+            stageId: stage.stageId,
+          },
+        );
       }
     },
   });

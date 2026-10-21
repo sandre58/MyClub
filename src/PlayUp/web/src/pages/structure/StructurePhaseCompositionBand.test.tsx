@@ -156,9 +156,9 @@ describe('StructurePhaseCompositionBand', () => {
         selector: '.ds-empty__title',
       }),
     ).toBeInTheDocument();
-    expect(
-      screen.queryAllByText('Aucune équipe dans la phase'),
-    ).toHaveLength(1);
+    expect(screen.queryAllByText('Aucune équipe dans la phase')).toHaveLength(
+      1,
+    );
   });
 
   it('renders a PanelHead-aligned draw title in the standalone draw column', () => {
@@ -170,9 +170,7 @@ describe('StructurePhaseCompositionBand', () => {
       placementOperationalProps: basePlacement,
     });
 
-    expect(
-      screen.getByRole('heading', { name: 'Tirage' }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Tirage' })).toBeInTheDocument();
   });
 
   it('renders the place-assignment section and operational strip when affectation is shown', () => {
@@ -186,6 +184,8 @@ describe('StructurePhaseCompositionBand', () => {
     expect(
       screen.getByRole('heading', { name: 'Affectation des places' }),
     ).toBeInTheDocument();
-    expect(screen.getByTestId('composition-operational-strip')).toBeInTheDocument();
+    expect(
+      screen.getByTestId('composition-operational-strip'),
+    ).toBeInTheDocument();
   });
 });

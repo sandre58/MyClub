@@ -8,7 +8,7 @@ import {
   PencilIcon,
   PlusIcon,
   LossIcon,
-  WinIcon
+  WinIcon,
 } from '../../design-system/icons/contentIcons';
 import { StructureDiagnosticIssueIcon } from './StructureDiagnosticIssueIcon';
 import {
@@ -149,10 +149,8 @@ export function CompositionMeter({
         : null;
   const shortfallTone = gap < 0 ? gapDiagnosticTone : null;
   const showDeficitChrome = gap < 0 && shortfallTone === 'danger';
-  const draftIncomplete =
-    gap < 0 && isDraftLikeStageStatus(stage?.status);
-  const pausedPopulationGap =
-    gap < 0 && isSuspendedStageStatus(stage?.status);
+  const draftIncomplete = gap < 0 && isDraftLikeStageStatus(stage?.status);
+  const pausedPopulationGap = gap < 0 && isSuspendedStageStatus(stage?.status);
   const pausedPopulationSurplus =
     gap > 0 && isSuspendedStageStatus(stage?.status);
   const assemblyClass = [
@@ -284,7 +282,9 @@ export function RootEntriesRail({
   );
   const engagedPoolUndetermined =
     runtimeMode && resolveEngagedPoolResolution(stage).kind === 'undetermined';
-  const perEntryPlacement = showPerEntryPlacement(formatKind ?? stage.formatKind);
+  const perEntryPlacement = showPerEntryPlacement(
+    formatKind ?? stage.formatKind,
+  );
   const placedIds = placedEntryIds ?? new Set<string>();
 
   let state: 'E0' | 'E1' | 'E2' | 'E3' | 'E4';
@@ -408,7 +408,15 @@ export function RootEntriesRail({
   };
 
   if (variant === 'composition-band') {
-    const bandStateClass = runtimeMode ? null : danger ? 'structure-entries--danger' : warn ? 'structure-entries--warn' : soft ? 'structure-entries--soft' : null;
+    const bandStateClass = runtimeMode
+      ? null
+      : danger
+        ? 'structure-entries--danger'
+        : warn
+          ? 'structure-entries--warn'
+          : soft
+            ? 'structure-entries--soft'
+            : null;
     return (
       <div
         className={[
@@ -461,10 +469,7 @@ export function RootEntriesRail({
             {t('entries.ineligibleOverlay', { count: ineligible })}
           </p>
         ) : suppressRuntimeEmptyPresentation && runtimeMode ? null : (
-          <EmptyState
-            variant="idle"
-            icon={<EmptySelectionIcon size="lg" />}
-          >
+          <EmptyState variant="idle" icon={<EmptySelectionIcon size="lg" />}>
             {runtimeMode
               ? t('composition.tile.engagedPoolEmpty')
               : t('entries.emptyCompositionExtra')}
@@ -541,7 +546,12 @@ export function RootEntriesRail({
         ) : null}
       </div>
       <div className="structure-entries__footer">
-        <CompositionMeter entries={meterEntries} places={n} t={t} stage={stage} />
+        <CompositionMeter
+          entries={meterEntries}
+          places={n}
+          t={t}
+          stage={stage}
+        />
       </div>
     </div>
   );

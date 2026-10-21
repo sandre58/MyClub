@@ -25,18 +25,26 @@ const base: StructureMaterialize = {
 
 describe('structureMaterializeCopy', () => {
   it('offers view matches link only when the stage has attached matches', () => {
-    expect(showViewMaterializedMatchesLink({ matchCount: 0 }, base)).toBe(false);
+    expect(showViewMaterializedMatchesLink({ matchCount: 0 }, base)).toBe(
+      false,
+    );
     expect(
-      showViewMaterializedMatchesLink({ matchCount: 0 }, {
-        ...base,
-        materializedCount: 3,
-      }),
+      showViewMaterializedMatchesLink(
+        { matchCount: 0 },
+        {
+          ...base,
+          materializedCount: 3,
+        },
+      ),
     ).toBe(false);
     expect(
-      showViewMaterializedMatchesLink({ matchCount: 4 }, {
-        ...base,
-        materializedCount: 2,
-      }),
+      showViewMaterializedMatchesLink(
+        { matchCount: 4 },
+        {
+          ...base,
+          materializedCount: 2,
+        },
+      ),
     ).toBe(true);
     expect(showViewMaterializedMatchesLink({ matchCount: 2 })).toBe(true);
     expect(showViewMaterializedMatchesLink({ matchCount: 0 })).toBe(false);
@@ -49,9 +57,9 @@ describe('structureMaterializeCopy', () => {
   });
 
   it('classifies actionable when command is enabled', () => {
-    expect(
-      classifyMaterializePresentation(base, 'Draft', 'Draft'),
-    ).toBe('actionable');
+    expect(classifyMaterializePresentation(base, 'Draft', 'Draft')).toBe(
+      'actionable',
+    );
   });
 
   it('classifies terminal when every determined confrontation is materialized', () => {
@@ -126,12 +134,17 @@ describe('structureMaterializeCopy', () => {
 
   it('materializeDisabledCaption uses roster variant when stage context is provided', () => {
     const t = (key: string) =>
-      key === 'fiche.materialize.disabledReason.PhaseRosterIncompleteBandIncomplete'
+      key ===
+      'fiche.materialize.disabledReason.PhaseRosterIncompleteBandIncomplete'
         ? 'Band incomplete caption'
         : key;
     expect(
       materializeDisabledCaption(
-        { ...base, disabledReason: 'PhaseRosterIncomplete', commandEnabled: false },
+        {
+          ...base,
+          disabledReason: 'PhaseRosterIncomplete',
+          commandEnabled: false,
+        },
         t,
         { compositionEntryCount: 7, compositionCapacity: 8 },
       ),

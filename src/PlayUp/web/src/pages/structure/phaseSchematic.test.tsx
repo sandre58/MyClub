@@ -640,10 +640,14 @@ describe('PhaseSchematic', () => {
     expect(pendingPrimaries).toHaveLength(2);
     expect(pendingPrimaries[0]?.textContent).toMatch(/1er du groupe A/i);
     expect(
-      screen.getByText('Alpha').classList.contains('schematic-slot__primary--pending'),
+      screen
+        .getByText('Alpha')
+        .classList.contains('schematic-slot__primary--pending'),
     ).toBe(false);
     expect(
-      root!.querySelector('.schematic-slot--empty .schematic-slot__primary--pending'),
+      root!.querySelector(
+        '.schematic-slot--empty .schematic-slot__primary--pending',
+      ),
     ).toBeNull();
   });
 

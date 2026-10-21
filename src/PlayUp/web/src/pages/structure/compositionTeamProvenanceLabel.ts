@@ -61,7 +61,9 @@ export function fullInterPhaseProvenanceLabel(
   const context = rule.context?.trim() ?? '';
   const extra = rule.extra?.trim() ?? '';
   if (rule.family === 'result') {
-    return [rule.badge.trim(), peer, context, extra].filter(Boolean).join(' · ');
+    return [rule.badge.trim(), peer, context, extra]
+      .filter(Boolean)
+      .join(' · ');
   }
   const pathParts = [rule.badge, rule.context, rule.extra].filter(Boolean);
   const pathLabel = pathParts.join(' · ');
@@ -69,7 +71,10 @@ export function fullInterPhaseProvenanceLabel(
 }
 
 export function progressionOutcomeFromRule(
-  rule: Pick<CompositionQualifierRule, 'badge' | 'progressionOutcome' | 'family'>,
+  rule: Pick<
+    CompositionQualifierRule,
+    'badge' | 'progressionOutcome' | 'family'
+  >,
 ): 'Winner' | 'Loser' | null {
   if (rule.family !== 'result') {
     return null;

@@ -113,7 +113,10 @@ describe('functionalProblemPresentation', () => {
       code: 'AuthoredAwardUnreachable',
       competitionId: 'comp-1',
       stageId: 'stage-9',
-      structureDiagnosticContext: { formatKind: 'Groups', stageStatus: 'Draft' },
+      structureDiagnosticContext: {
+        formatKind: 'Groups',
+        stageStatus: 'Draft',
+      },
     });
     expect(presentation.tone).toBe('attention');
     expect(presentation.titleKey).toBe('graph.issues.AuthoredAwardUnreachable');

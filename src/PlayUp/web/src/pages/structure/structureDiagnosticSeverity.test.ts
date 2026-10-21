@@ -4,12 +4,12 @@ import { structureDiagnosticTone } from './structureDiagnosticPresentation';
 
 describe('structureDiagnosticSeverity (D5)', () => {
   it('classifies blocking vs warning codes in Draft', () => {
-    expect(structureProductSeverity('OverCapacityEdge', { stageStatus: 'Draft' })).toBe(
-      'warning',
-    );
-    expect(structureProductSeverity('SlotFeedMissing', { stageStatus: 'Draft' })).toBe(
-      'warning',
-    );
+    expect(
+      structureProductSeverity('OverCapacityEdge', { stageStatus: 'Draft' }),
+    ).toBe('warning');
+    expect(
+      structureProductSeverity('SlotFeedMissing', { stageStatus: 'Draft' }),
+    ).toBe('warning');
     expect(
       structureProductSeverity('SlotFeedMissing', { stageStatus: 'Ready' }),
     ).toBe('blocking');
@@ -19,9 +19,9 @@ describe('structureDiagnosticSeverity (D5)', () => {
     expect(
       structureProductSeverity('PopulationShortfall', { stageStatus: 'Ready' }),
     ).toBe('blocking');
-    expect(structureProductSeverity('NonRootUnfed', { stageStatus: 'Ready' })).toBe(
-      'warning',
-    );
+    expect(
+      structureProductSeverity('NonRootUnfed', { stageStatus: 'Ready' }),
+    ).toBe('warning');
   });
 
   it('AuthoredAwardUnreachable is blocking on Cup only (G-UI1)', () => {
@@ -35,7 +35,9 @@ describe('structureDiagnosticSeverity (D5)', () => {
         formatKind: 'Championship',
       }),
     ).toBe('warning');
-    expect(structureProductSeverity('AuthoredAwardUnreachable')).toBe('blocking');
+    expect(structureProductSeverity('AuthoredAwardUnreachable')).toBe(
+      'blocking',
+    );
   });
 
   it('maps severity to diagnostic tone', () => {

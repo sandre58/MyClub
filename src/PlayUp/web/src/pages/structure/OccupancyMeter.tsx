@@ -16,10 +16,7 @@ export function occupancyMeterState(
   return 'over';
 }
 
-export function occupancyMeterRatio(
-  current: number,
-  capacity: number,
-): number {
+export function occupancyMeterRatio(current: number, capacity: number): number {
   if (capacity > 0) return Math.min(1, Math.max(0, current / capacity));
   return current > 0 ? 1 : 0;
 }

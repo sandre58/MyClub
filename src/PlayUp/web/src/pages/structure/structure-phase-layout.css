@@ -8,8 +8,7 @@
 .structure-fiche--flat .structure-phase-tile:not(.structure-phase-tile--schematic) {
   padding: var(--space-12);
   background: color-mix(in srgb, var(--color-surface-secondary) 65%, var(--color-surface));
-  border: var(--border-width) solid
-    color-mix(in srgb, var(--color-border) 42%, transparent);
+  border: var(--border-width) solid color-mix(in srgb, var(--color-border) 42%, transparent);
   border-radius: var(--radius-control);
   box-shadow: none;
 }
@@ -280,7 +279,9 @@
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
   }
 
-  .structure-phase-composition__grid:not(.structure-phase-composition__grid--with-affectation).structure-phase-composition__grid--two-cols {
+  .structure-phase-composition__grid:not(
+      .structure-phase-composition__grid--with-affectation
+    ).structure-phase-composition__grid--two-cols {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 
@@ -304,13 +305,15 @@
 
   .structure-phase-composition__grid--shared-population-gauge.structure-phase-composition__grid--with-affectation:not(
       .structure-phase-composition__grid--without-teams
-    ) .structure-phase-composition__section--affectation {
+    )
+    .structure-phase-composition__section--affectation {
     grid-row: 1 / span 2;
   }
 
   .structure-phase-composition__grid--shared-population-gauge.structure-phase-composition__grid--with-affectation:not(
       .structure-phase-composition__grid--without-teams
-    ) .structure-phase-composition__sep--before-affectation {
+    )
+    .structure-phase-composition__sep--before-affectation {
     grid-row: 1 / span 2;
   }
 
@@ -320,9 +323,8 @@
     margin-top: 0;
   }
 
-  .structure-phase-composition__grid--shared-population-gauge:not(
-      .structure-phase-composition__grid--with-affectation
-    ) .structure-phase-composition__population-gauge--span-sources {
+  .structure-phase-composition__grid--shared-population-gauge:not(.structure-phase-composition__grid--with-affectation)
+    .structure-phase-composition__population-gauge--span-sources {
     grid-column: 1 / -1;
   }
 
@@ -466,10 +468,7 @@
   line-height: 1.2;
 }
 
-.structure-entries__teams--band
-  .structure-entries__team-provenance-badge:not(.ds-chip--win):not(
-    .ds-chip--loss
-  ) {
+.structure-entries__teams--band .structure-entries__team-provenance-badge:not(.ds-chip--win):not(.ds-chip--loss) {
   color: var(--color-text-secondary);
 }
 
@@ -884,9 +883,7 @@
   min-width: 0;
 }
 
-.structure-operational-strip__section-body:has(
-    .structure-phase-match-tile__entry-round-gauge
-  ) {
+.structure-operational-strip__section-body:has(.structure-phase-match-tile__entry-round-gauge) {
   display: flex;
   flex-direction: column;
   gap: var(--space-8);
@@ -910,8 +907,7 @@
   margin-top: var(--space-4);
 }
 
-.structure-operational-strip__production-actions--tile
-  > .structure-operational-strip__materialize-action-wrap,
+.structure-operational-strip__production-actions--tile > .structure-operational-strip__materialize-action-wrap,
 .structure-operational-strip__production-actions--tile > .ds-tooltip-trigger {
   flex: 1 1 auto;
   min-width: 0;
@@ -919,16 +915,14 @@
   width: 100%;
 }
 
-.structure-operational-strip__production-actions--tile
-  .structure-operational-strip__materialize-action-wrap {
+.structure-operational-strip__production-actions--tile .structure-operational-strip__materialize-action-wrap {
   display: flex;
   flex: 1 1 auto;
   min-width: 0;
   width: 100%;
 }
 
-.structure-operational-strip__production-actions--tile
-  .structure-operational-strip__materialize-action-wrap > .ds-btn {
+.structure-operational-strip__production-actions--tile .structure-operational-strip__materialize-action-wrap > .ds-btn {
   flex: 1 1 auto;
   width: 100%;
   justify-content: center;
@@ -941,8 +935,7 @@
   gap: var(--space-8);
 }
 
-.structure-operational-strip__production-actions--tile-dual
-  > .structure-operational-strip__materialize-action-wrap,
+.structure-operational-strip__production-actions--tile-dual > .structure-operational-strip__materialize-action-wrap,
 .structure-operational-strip__production-actions--tile-dual
   > .ds-tooltip-trigger:has(.structure-operational-strip__materialize-action-wrap) {
   flex: 1 1 auto;
@@ -950,32 +943,27 @@
   display: flex;
 }
 
+.structure-operational-strip__production-actions--tile-dual .structure-operational-strip__materialize-action-wrap,
 .structure-operational-strip__production-actions--tile-dual
-  .structure-operational-strip__materialize-action-wrap,
-.structure-operational-strip__production-actions--tile-dual
-  .structure-operational-strip__materialize-action-wrap .ds-btn {
+  .structure-operational-strip__materialize-action-wrap
+  .ds-btn {
   width: 100%;
 }
 
 .structure-operational-strip__production-actions--tile-dual
   > .ds-tooltip-trigger:has(.ds-btn--primary)
   .structure-operational-tile__action-wrap,
-.structure-operational-strip__production-actions--tile-dual
-  > .ds-tooltip-trigger:has(.ds-btn--primary)
-  .ds-btn {
+.structure-operational-strip__production-actions--tile-dual > .ds-tooltip-trigger:has(.ds-btn--primary) .ds-btn {
   width: 100%;
 }
 
-.structure-operational-strip__production-actions--tile
-  > .structure-operational-strip__dematerialize-full-wrap,
-.structure-operational-strip__production-actions--tile
-  > .structure-operational-strip__dematerialize-btn--full {
+.structure-operational-strip__production-actions--tile > .structure-operational-strip__dematerialize-full-wrap,
+.structure-operational-strip__production-actions--tile > .structure-operational-strip__dematerialize-btn--full {
   flex: 1 1 auto;
   width: 100%;
 }
 
-.structure-operational-strip__production-actions--tile-dual
-  > .structure-operational-strip__dematerialize-icon-wrap,
+.structure-operational-strip__production-actions--tile-dual > .structure-operational-strip__dematerialize-icon-wrap,
 .structure-operational-strip__production-actions--tile-dual
   > .ds-tooltip-trigger:has(.structure-operational-strip__dematerialize-btn--icon) {
   flex: none;

@@ -37,7 +37,9 @@ describe('PhaseRosterIncomplete presentation (arbitrage C)', () => {
     ).toBe('problems.lifecycle.PhaseRosterIncompleteBandIncomplete');
     expect(
       resolvePhaseRosterIncompleteMaterializeMessageKey(bandIncomplete),
-    ).toBe('fiche.materialize.disabledReason.PhaseRosterIncompleteBandIncomplete');
+    ).toBe(
+      'fiche.materialize.disabledReason.PhaseRosterIncompleteBandIncomplete',
+    );
   });
 
   it('full band hub selects eligibility gap variant', () => {

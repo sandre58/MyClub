@@ -65,9 +65,7 @@ describe('StructurePhaseDraftMatchsPrepare', () => {
       },
     });
 
-    expect(
-      screen.getByText(/complétez la structure/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/complétez la structure/i)).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /marquer comme prête/i }),
     ).toBeDisabled();

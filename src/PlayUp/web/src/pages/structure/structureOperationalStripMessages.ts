@@ -253,7 +253,9 @@ export function resolveGroupsPlacementMeterCopy(input: {
     };
   }
   return {
-    text: t('fiche.operational.production.stateMessage.groupsPlacementIncomplete'),
+    text: t(
+      'fiche.operational.production.stateMessage.groupsPlacementIncomplete',
+    ),
     kind: 'attention',
   };
 }
@@ -280,14 +282,19 @@ export function resolveEntryRoundPlacementMeterCopy(input: {
         : entryRoundPlacementMessageKind(blocksPhaseStart);
   if (kind === 'info') {
     return {
-      text: t('fiche.operational.production.stateMessage.entryRoundAwaitingDraw'),
+      text: t(
+        'fiche.operational.production.stateMessage.entryRoundAwaitingDraw',
+      ),
       kind: 'info',
     };
   }
   return {
-    text: t('fiche.operational.production.stateMessage.entryRoundRemainingBeforeStart', {
-      count: remaining,
-    }),
+    text: t(
+      'fiche.operational.production.stateMessage.entryRoundRemainingBeforeStart',
+      {
+        count: remaining,
+      },
+    ),
     kind,
   };
 }

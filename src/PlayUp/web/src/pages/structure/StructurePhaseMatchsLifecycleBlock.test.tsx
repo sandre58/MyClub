@@ -114,7 +114,9 @@ describe('StructurePhaseMatchsLifecycleBlock', () => {
       },
     });
 
-    await user.click(screen.getByRole('button', { name: /démarrer la phase/i }));
+    await user.click(
+      screen.getByRole('button', { name: /démarrer la phase/i }),
+    );
     expect(startStage).toHaveBeenCalledWith(baseStage.stageId);
   });
 
@@ -151,9 +153,14 @@ describe('StructurePhaseMatchsLifecycleBlock', () => {
       },
     });
 
-    const cancel = screen.getByRole('button', { name: /annuler le démarrage/i });
+    const cancel = screen.getByRole('button', {
+      name: /annuler le démarrage/i,
+    });
     const suspend = screen.getByRole('button', { name: /suspendre la phase/i });
-    expect(suspend.compareDocumentPosition(cancel) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(
+      suspend.compareDocumentPosition(cancel) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
 
     await user.click(cancel);
     expect(revertStageToReady).toHaveBeenCalledWith(baseStage.stageId);
@@ -191,7 +198,9 @@ describe('StructurePhaseMatchsLifecycleBlock', () => {
       },
     });
 
-    await user.click(screen.getByRole('button', { name: /reprendre la phase/i }));
+    await user.click(
+      screen.getByRole('button', { name: /reprendre la phase/i }),
+    );
     expect(resumeStage).toHaveBeenCalledWith(baseStage.stageId);
   });
 
@@ -208,7 +217,9 @@ describe('StructurePhaseMatchsLifecycleBlock', () => {
       },
     });
 
-    await user.click(screen.getByRole('button', { name: /suspendre la phase/i }));
+    await user.click(
+      screen.getByRole('button', { name: /suspendre la phase/i }),
+    );
     expect(suspendStage).toHaveBeenCalledWith(baseStage.stageId);
   });
 

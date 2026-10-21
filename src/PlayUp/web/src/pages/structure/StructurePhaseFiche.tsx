@@ -1,4 +1,9 @@
-import { useIsFetching, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  useIsFetching,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -29,10 +34,7 @@ import {
   patchDrawRulesDeactivatedOptimistic,
   patchStageNameOptimistic,
 } from './structureQueryCache';
-import type {
-  StructureStageHubSummary,
-  StructureView,
-} from '../../types';
+import type { StructureStageHubSummary, StructureView } from '../../types';
 import {
   EditSkeletonDialog,
   QualificationRulesDialog,
@@ -79,9 +81,7 @@ import {
   structureIssuesForTile,
 } from './structureDiagnosticPresentation';
 import { structureDiagnosticContextFromStage } from './structureDiagnosticContext';
-import {
-  stageHasPopulationShortfall,
-} from './structureReadinessSummary';
+import { stageHasPopulationShortfall } from './structureReadinessSummary';
 import { outboundSortiesFeeds } from './structureSortiesIntentFeed';
 import {
   expectedPopulationOccupancy,
@@ -123,7 +123,10 @@ import {
   resolveCompositionResolvedSeatCount,
   resolveCompositionTeamsGaugeVariant,
 } from './compositionBandGauge';
-import { ExitKindMenu, listComposedAffectationEntries } from './StructurePhaseRails';
+import {
+  ExitKindMenu,
+  listComposedAffectationEntries,
+} from './StructurePhaseRails';
 import {
   hasEngagedTeamsSectionContent,
   resolveCompositionPopulationGaugeCurrent,
@@ -251,9 +254,14 @@ export function StructurePhaseFiche({
     onSuccess: (result) => {
       setReleaseConfirmOpen(false);
       notify.success(tDraw('toastReleased', { count: result.releasedCount }));
-      scheduleStructureRefresh(queryClient, data.competitionId, ['hubStageShell'], {
-        stageId: stage!.stageId,
-      });
+      scheduleStructureRefresh(
+        queryClient,
+        data.competitionId,
+        ['hubStageShell'],
+        {
+          stageId: stage!.stageId,
+        },
+      );
     },
   });
 
@@ -328,7 +336,12 @@ export function StructurePhaseFiche({
         behavior: 'smooth',
         block: 'nearest',
       });
-      if (!initialEdit && !initialCompose && !initialManual && !initialDrawWorkflow) {
+      if (
+        !initialEdit &&
+        !initialCompose &&
+        !initialManual &&
+        !initialDrawWorkflow
+      ) {
         onInitialEditConsumed?.();
       }
     });
@@ -533,9 +546,7 @@ export function StructurePhaseFiche({
     feedGroups.reduce((sum, group) => sum + group.volume, 0);
   const qualifiersResolvedCount = resolveCompositionResolvedSeatCount(stage);
   const drawReadinessChecklist =
-    !isCompletedStage &&
-    drawGateReady &&
-    (showDrawCta || showActivateDrawCta)
+    !isCompletedStage && drawGateReady && (showDrawCta || showActivateDrawCta)
       ? resolveDrawReadinessChecklist({
           compositionEntryCount: poolFilled,
           placesN,
@@ -568,8 +579,7 @@ export function StructurePhaseFiche({
   });
   const releasableDraw = releasablePick?.draw ?? null;
   const releasableAlignedCount = releasablePick?.aligned ?? 0;
-  const showReleaseCta =
-    releasableDraw != null && releasableAlignedCount > 0;
+  const showReleaseCta = releasableDraw != null && releasableAlignedCount > 0;
   /** Nouveau path blocked with nothing to manage in the dialog → disable primary CTA. */
   const blockPerformDrawCta =
     createBlockedShort != null && !activeDraw && overviewDraws.length === 0;
@@ -711,11 +721,7 @@ export function StructurePhaseFiche({
 
   const railIssueBanner = (codes: readonly string[]) =>
     codes.length === 0 ? undefined : (
-      <StructurePhaseRailIssueBanner
-        codes={codes}
-        data={data}
-        stage={stage}
-      />
+      <StructurePhaseRailIssueBanner codes={codes} data={data} stage={stage} />
     );
 
   const openCompose = (focusSearch = false) => {
@@ -864,9 +870,8 @@ export function StructurePhaseFiche({
   );
   const compositionTileMode = resolveCompositionTileMode(stage);
   const placesStripLayout = resolvePlacesStripLayout(compositionTileMode);
-  const compositionPrepActions = shouldShowCompositionPrepActions(
-    compositionTileMode,
-  );
+  const compositionPrepActions =
+    shouldShowCompositionPrepActions(compositionTileMode);
   const canComposeTeams =
     canCompose && compositionPrepActions && !stageHasAppliedDraw;
   const hasCompositionOperationalSignals =
@@ -890,8 +895,9 @@ export function StructurePhaseFiche({
         stage.inboundComposition,
       )
     : null;
-  const entryProvenanceByEntryId =
-    inboundEntryProvenanceByEntryId(qualifiersPanelGroups);
+  const entryProvenanceByEntryId = inboundEntryProvenanceByEntryId(
+    qualifiersPanelGroups,
+  );
   const showQualifiersSection =
     compositionPrepActions && qualifiersPanelGroups.length > 0;
   const teamsHasListContent = hasEngagedTeamsSectionContent(
@@ -913,13 +919,10 @@ export function StructurePhaseFiche({
     compositionTeamRows,
   );
   const showCompositionContentEmpty =
-    !showQualifiersSection &&
-    !teamsHasListContent &&
-    canComposeTeams;
+    !showQualifiersSection && !teamsHasListContent && canComposeTeams;
   const showCompositionBandEmpty =
     showCompositionContentEmpty && !showAffectationSection;
-  const showPopulationColumn =
-    showTeamsSection || showCompositionContentEmpty;
+  const showPopulationColumn = showTeamsSection || showCompositionContentEmpty;
   const populationMeterCurrent = resolveCompositionPopulationGaugeCurrent(
     compositionTileMode,
     stage,
@@ -955,25 +958,24 @@ export function StructurePhaseFiche({
     gaugeSectionVisible &&
     !(isCompletedStage && showPlacementBlock && compositionPrepActions);
   const sharedCompositionPopulationGauge =
-    showCompositionPopulationGauge &&
-    showQualifiersSection &&
-    showTeamsSection;
-  const stageDiagnosticContext = structureDiagnosticContextFromStage(data, stage);
+    showCompositionPopulationGauge && showQualifiersSection && showTeamsSection;
+  const stageDiagnosticContext = structureDiagnosticContextFromStage(
+    data,
+    stage,
+  );
   const compositionTeamsGaugeVariant = resolveCompositionTeamsGaugeVariant(
     compositionTileMode,
     compositionResolvedGaugeStats,
   );
   const compositionInboundResolvedGaugeFooter =
     showCompositionInboundResolvedGauge &&
-    compositionTeamsGaugeVariant === 'resolved'
-      ? (
-          <CompositionInboundResolvedGauge
-            resolved={compositionResolvedGaugeStats!.resolved}
-            total={compositionResolvedGaugeStats!.total}
-            mode={compositionTileMode}
-          />
-        )
-      : null;
+    compositionTeamsGaugeVariant === 'resolved' ? (
+      <CompositionInboundResolvedGauge
+        resolved={compositionResolvedGaugeStats!.resolved}
+        total={compositionResolvedGaugeStats!.total}
+        mode={compositionTileMode}
+      />
+    ) : null;
   const compositionPopulationGaugeFooter = showCompositionPopulationGauge ? (
     <CompositionPopulationGauge
       current={populationMeterCurrent}
@@ -1005,80 +1007,78 @@ export function StructurePhaseFiche({
     (stage.affectationIneligibleCount ?? 0) > 0
       ? t('entries.editComposition')
       : t('entries.addAffectation');
-  const placementOperationalProps =
-    showAffectationSection
-      ? {
-          competitionId: data.competitionId,
-          placesN,
-          poolFilled,
-          occupiedPlacesCount,
-          occupancyReady:
+  const placementOperationalProps = showAffectationSection
+    ? {
+        competitionId: data.competitionId,
+        placesN,
+        poolFilled,
+        occupiedPlacesCount,
+        occupancyReady:
+          stage.formatKind === 'Championship' ||
+          stage.formatKind === 'Swiss' ||
+          schematicQuery.isSuccess,
+        showDrawCta,
+        showActivateDrawCta: isCompletedStage ? false : showActivateDrawCta,
+        showResolvedPoolGauge: compositionPrepActions
+          ? showDrawCta ||
+            showActivateDrawCta ||
             stage.formatKind === 'Championship' ||
-            stage.formatKind === 'Swiss' ||
-            schematicQuery.isSuccess,
-          showDrawCta,
-          showActivateDrawCta: isCompletedStage ? false : showActivateDrawCta,
-          showResolvedPoolGauge: compositionPrepActions
-            ? showDrawCta ||
-              showActivateDrawCta ||
-              stage.formatKind === 'Championship' ||
-              stage.formatKind === 'Swiss'
-            : false,
-          compositionTileMode,
-          canManualPlace: isCompletedStage ? false : canManualPlace,
-          canEditDraw: canAuthorDrawRulesP1,
-          showReleaseCta: isCompletedStage ? false : showReleaseCta,
-          hasNonCancelledDraw,
-          activeDraw: Boolean(activeDraw),
-          blockPerformDrawCta,
-          createBlockedShort,
-          createBlockedReason,
-          showCreateBlockedCaption,
-          showPoolHint,
-          releasableAlignedCount,
-          releasableTotal:
-            releasableDraw != null
-              ? drawResolutionPlacementCount(releasableDraw)
-              : 0,
-          releasePending: releaseMutation.isPending,
-          deactivateDrawPending: deactivateDrawMutation.isPending,
-          onOpenDrawWorkflow: () => setDrawWorkflowOpen(true),
-          onActivateDraw: () => {
-            if (canAuthorDrawRulesP1) {
-              setEdit('tirage-activate');
-            }
-          },
-          onEditDrawParams: () => {
-            if (canAuthorDrawRulesP1) {
-              setEdit('tirage-params');
-            }
-          },
-          onManualPlace: () => {
-            setManualSlotKey(null);
-            setManualOpen(true);
-          },
-          onReleasePlacements: () => setReleaseConfirmOpen(true),
-          onDeactivateDraw: () => setDeactivateDrawOpen(true),
-          slotFeedMissingActive,
-          drawLaunchable:
-            showDrawCta && drawGateReady && createGate?.ok === true,
-          drawExecutionBadge: stage.drawExecutionBadge ?? null,
-          stageStatus: stage.status,
-          slotFeedPresentationContext: {
-            formatKind: stageDiagnosticContext.formatKind,
-            stageStatus: stageDiagnosticContext.stageStatus,
-          },
-          drawOperationalReady: drawGateReady,
-          drawReadinessChecklist,
-          placesDiagnostics:
-            placesBannersForStrip.length > 0 ? (
-              <StructureOperationalIssueBanner
-                codes={placesBannersForStrip}
-                diagnosticContext={stageDiagnosticContext}
-              />
-            ) : undefined,
-        }
-      : null;
+            stage.formatKind === 'Swiss'
+          : false,
+        compositionTileMode,
+        canManualPlace: isCompletedStage ? false : canManualPlace,
+        canEditDraw: canAuthorDrawRulesP1,
+        showReleaseCta: isCompletedStage ? false : showReleaseCta,
+        hasNonCancelledDraw,
+        activeDraw: Boolean(activeDraw),
+        blockPerformDrawCta,
+        createBlockedShort,
+        createBlockedReason,
+        showCreateBlockedCaption,
+        showPoolHint,
+        releasableAlignedCount,
+        releasableTotal:
+          releasableDraw != null
+            ? drawResolutionPlacementCount(releasableDraw)
+            : 0,
+        releasePending: releaseMutation.isPending,
+        deactivateDrawPending: deactivateDrawMutation.isPending,
+        onOpenDrawWorkflow: () => setDrawWorkflowOpen(true),
+        onActivateDraw: () => {
+          if (canAuthorDrawRulesP1) {
+            setEdit('tirage-activate');
+          }
+        },
+        onEditDrawParams: () => {
+          if (canAuthorDrawRulesP1) {
+            setEdit('tirage-params');
+          }
+        },
+        onManualPlace: () => {
+          setManualSlotKey(null);
+          setManualOpen(true);
+        },
+        onReleasePlacements: () => setReleaseConfirmOpen(true),
+        onDeactivateDraw: () => setDeactivateDrawOpen(true),
+        slotFeedMissingActive,
+        drawLaunchable: showDrawCta && drawGateReady && createGate?.ok === true,
+        drawExecutionBadge: stage.drawExecutionBadge ?? null,
+        stageStatus: stage.status,
+        slotFeedPresentationContext: {
+          formatKind: stageDiagnosticContext.formatKind,
+          stageStatus: stageDiagnosticContext.stageStatus,
+        },
+        drawOperationalReady: drawGateReady,
+        drawReadinessChecklist,
+        placesDiagnostics:
+          placesBannersForStrip.length > 0 ? (
+            <StructureOperationalIssueBanner
+              codes={placesBannersForStrip}
+              diagnosticContext={stageDiagnosticContext}
+            />
+          ) : undefined,
+      }
+    : null;
   const compositionVisibleSectionCount = [
     showQualifiersSection,
     showTeamsSection,
@@ -1091,7 +1091,9 @@ export function StructurePhaseFiche({
     compositionVisibleSectionCount === 1
       ? 'structure-phase-composition__grid--single-section'
       : null,
-    !showQualifiersSection ? 'structure-phase-composition__grid--two-cols' : null,
+    !showQualifiersSection
+      ? 'structure-phase-composition__grid--two-cols'
+      : null,
     showQualifiersSection
       ? 'structure-phase-composition__grid--with-qualifiers'
       : null,
@@ -1108,8 +1110,7 @@ export function StructurePhaseFiche({
     .filter(Boolean)
     .join(' ');
 
-  const compositionEmptyAction =
-    canComposeTeams ? (
+  const compositionEmptyAction = canComposeTeams ? (
     <button
       type="button"
       className="ds-btn ds-btn--primary"
@@ -1120,23 +1121,22 @@ export function StructurePhaseFiche({
     </button>
   ) : null;
 
-  const compositionComposeToolbar =
-    canComposeTeams ? (
-      <Tooltip content={teamsComposeActionLabel}>
-        <button
-          type="button"
-          className={compactIcon}
-          aria-label={teamsComposeActionLabel}
-          onClick={() => openCompose(false)}
-        >
-          {teamsHasListContent ? (
-            <PencilIcon size="sm" />
-          ) : (
-            <PlusIcon size="sm" />
-          )}
-        </button>
-      </Tooltip>
-    ) : null;
+  const compositionComposeToolbar = canComposeTeams ? (
+    <Tooltip content={teamsComposeActionLabel}>
+      <button
+        type="button"
+        className={compactIcon}
+        aria-label={teamsComposeActionLabel}
+        onClick={() => openCompose(false)}
+      >
+        {teamsHasListContent ? (
+          <PencilIcon size="sm" />
+        ) : (
+          <PlusIcon size="sm" />
+        )}
+      </button>
+    </Tooltip>
+  ) : null;
   // Overflow removed — Edit/Delete live in the header toolbar.
 
   const sortiesEditControl = (() => {
@@ -1357,9 +1357,7 @@ export function StructurePhaseFiche({
         canRebind={canRebind}
         canEditStanding={canEditStanding}
         canEditTie={canEditTie}
-        onEditMatch={() =>
-          setEdit(canEditMatch ? 'matchs' : 'rebind-match')
-        }
+        onEditMatch={() => setEdit(canEditMatch ? 'matchs' : 'rebind-match')}
         onEditStanding={() =>
           setEdit(canEditStanding ? 'classement' : 'rebind-standing')
         }

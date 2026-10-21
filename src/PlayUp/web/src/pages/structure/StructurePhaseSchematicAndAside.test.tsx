@@ -62,7 +62,12 @@ function renderSchematic(
       heroFacts={heroFacts}
       canRebuild={overrides.canRebuild ?? false}
       onOpenSkeleton={onOpenSkeleton}
-      schematicQuery={{ data: undefined, isError: false, isFetching: false, isSuccess: false }}
+      schematicQuery={{
+        data: undefined,
+        isError: false,
+        isFetching: false,
+        isSuccess: false,
+      }}
       stage={stage}
       hasExits={false}
       canManualPlace={false}

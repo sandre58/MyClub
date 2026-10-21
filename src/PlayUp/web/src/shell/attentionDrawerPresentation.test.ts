@@ -98,9 +98,9 @@ describe('shouldUseNeutralAttentionDrawerLede', () => {
       impactCode: null,
       params: { stageId: 'stage-sus' },
     };
-    expect(
-      shouldUseNeutralAttentionDrawerLede([row], [suspendedStage]),
-    ).toBe(true);
+    expect(shouldUseNeutralAttentionDrawerLede([row], [suspendedStage])).toBe(
+      true,
+    );
   });
 
   it('CupBracketInvalid without params.stageId keeps action lede', () => {
@@ -115,9 +115,9 @@ describe('shouldUseNeutralAttentionDrawerLede', () => {
       impactCode: null,
       params: {},
     };
-    expect(
-      shouldUseNeutralAttentionDrawerLede([row], [suspendedStage]),
-    ).toBe(false);
+    expect(shouldUseNeutralAttentionDrawerLede([row], [suspendedStage])).toBe(
+      false,
+    );
   });
 
   it('CupBracketInvalid with unknown stageId keeps action lede', () => {
@@ -132,9 +132,9 @@ describe('shouldUseNeutralAttentionDrawerLede', () => {
       impactCode: null,
       params: { stageId: 'missing' },
     };
-    expect(
-      shouldUseNeutralAttentionDrawerLede([row], [suspendedStage]),
-    ).toBe(false);
+    expect(shouldUseNeutralAttentionDrawerLede([row], [suspendedStage])).toBe(
+      false,
+    );
   });
 });
 

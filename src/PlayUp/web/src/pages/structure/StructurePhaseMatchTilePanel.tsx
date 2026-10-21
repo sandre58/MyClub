@@ -19,13 +19,11 @@ export function StructurePhaseMatchTilePanel({
   const viewMatchesLink = showViewMaterializedMatchesLink(
     stage,
     materialize ?? undefined,
-  )
-    ? (
-      <TextLink to={`/stages/${stage.stageId}/matches`}>
-        {t('fiche.materialize.viewPhaseMatches')}
-      </TextLink>
-    )
-    : null;
+  ) ? (
+    <TextLink to={`/stages/${stage.stageId}/matches`}>
+      {t('fiche.materialize.viewPhaseMatches')}
+    </TextLink>
+  ) : null;
 
   return (
     <PanelHead

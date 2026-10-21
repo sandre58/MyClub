@@ -87,9 +87,9 @@ describe('structureDiagnosticPresentation', () => {
         stage,
       ),
     ).toEqual(['PopulationShortfall', 'SlotFeedMissing']);
-    expect(
-      projectPresentedStageIssueCodes(['NonRootUnfed'], stage),
-    ).toEqual(['NonRootUnfed']);
+    expect(projectPresentedStageIssueCodes(['NonRootUnfed'], stage)).toEqual([
+      'NonRootUnfed',
+    ]);
   });
 
   it('silences GroupsNotReady until draw is applied', () => {
@@ -134,9 +134,7 @@ describe('structureDiagnosticPresentation', () => {
         'ExpectedRankUnreachable',
       ]),
     ).toEqual(['AuthoredAwardUnreachable']);
-    expect(
-      countStructureIssuesByFamily(['AuthoredAwardUnreachable']),
-    ).toEqual({
+    expect(countStructureIssuesByFamily(['AuthoredAwardUnreachable'])).toEqual({
       graph: 0,
       feed: 0,
       capacity: 0,
@@ -167,13 +165,13 @@ describe('structureDiagnosticPresentation', () => {
     expect(structureIssuesForTile(codes, 'capacity')).toEqual([
       'OverCapacityEdge',
     ]);
-    expect(structureIssuesForTile(codes, 'places')).toEqual(['SlotFeedMissing']);
+    expect(structureIssuesForTile(codes, 'places')).toEqual([
+      'SlotFeedMissing',
+    ]);
   });
 
   it('surfaces OverExtraction on Sorties (capacity family, exits tile)', () => {
     expect(structureDiagnosticTile('OverExtraction')).toBe('exits');
-    expect(
-      countStructureIssuesByFamily(['OverExtraction']).capacity,
-    ).toBe(1);
+    expect(countStructureIssuesByFamily(['OverExtraction']).capacity).toBe(1);
   });
 });

@@ -26,7 +26,8 @@ describe('match production assembler fixtures (hub contract)', () => {
   });
 
   it('cup exhausted mono-round: no followUp on Ready projection', () => {
-    const presentation = cupExhaustedFixture as StructureMatchProductionPresentation;
+    const presentation =
+      cupExhaustedFixture as StructureMatchProductionPresentation;
 
     expect(presentation.showPrimaryGauge).toBe(true);
     expect(presentation.followUp).toBeNull();

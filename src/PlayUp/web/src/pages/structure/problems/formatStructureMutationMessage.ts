@@ -35,7 +35,10 @@ export function formatStructureMutationMessage(
   }
 
   const labels = resolveConsumerStageLabels(ids, stages);
-  return `${base} ${tStructure('problems.lifecycle.ReadyConsumerWouldBreakConsumers', {
-    phases: labels.join(', '),
-  })}`;
+  return `${base} ${tStructure(
+    'problems.lifecycle.ReadyConsumerWouldBreakConsumers',
+    {
+      phases: labels.join(', '),
+    },
+  )}`;
 }

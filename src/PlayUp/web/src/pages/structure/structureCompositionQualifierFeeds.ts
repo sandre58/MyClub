@@ -80,7 +80,9 @@ export function compositionQualifierFeedGroups(input: {
   }
   groups.sort((a, b) => {
     if (a.peerOrder !== b.peerOrder) return a.peerOrder - b.peerOrder;
-    return a.peerName.localeCompare(b.peerName, undefined, { sensitivity: 'base' });
+    return a.peerName.localeCompare(b.peerName, undefined, {
+      sensitivity: 'base',
+    });
   });
   return groups;
 }
@@ -237,4 +239,3 @@ function stagePeerOrder(data: StructureView, stageId: string): number {
   const index = data.stages.findIndex((s) => s.stageId === stageId);
   return index >= 0 ? index : Number.MAX_SAFE_INTEGER;
 }
-

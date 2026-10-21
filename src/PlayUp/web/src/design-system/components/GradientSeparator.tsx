@@ -1,9 +1,7 @@
 import type { HTMLAttributes } from 'react';
 
 export type GradientSeparatorOrientation =
-  | 'vertical'
-  | 'horizontal'
-  | 'responsive';
+  'vertical' | 'horizontal' | 'responsive';
 
 /**
  * Hairline gradient divider — vertical between columns, horizontal when stacked.

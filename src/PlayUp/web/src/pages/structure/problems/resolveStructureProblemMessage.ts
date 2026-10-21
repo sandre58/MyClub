@@ -19,9 +19,8 @@ export function resolveLifecycleAnticipatedMessage(
   rosterCopyContext?: StructureDiagnosticIssueCopyContext,
 ): string {
   if (isPhaseRosterIncompleteCode(wireCode)) {
-    const key = resolvePhaseRosterIncompleteOperationalMessageKey(
-      rosterCopyContext,
-    );
+    const key =
+      resolvePhaseRosterIncompleteOperationalMessageKey(rosterCopyContext);
     const specific = t(key, { defaultValue: '' });
     if (specific.length > 0) {
       return specific;

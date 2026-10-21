@@ -353,9 +353,9 @@ describe('AttentionDrawer', () => {
       'inert',
     );
     expect(
-      document.querySelector('.shell__workspace')?.getAttribute(
-        'data-attention-drawer-open',
-      ),
+      document
+        .querySelector('.shell__workspace')
+        ?.getAttribute('data-attention-drawer-open'),
     ).toBe('true');
     expect(document.body.style.overflow).toBe('');
   });

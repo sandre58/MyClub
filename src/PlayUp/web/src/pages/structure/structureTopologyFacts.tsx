@@ -9,7 +9,10 @@ import {
 } from '../../design-system/icons/contentIcons';
 import type { StructureStageHubSummary } from '../../types';
 import { resolvePlacesN, resolvePlacesPerGroup } from './structurePlaces';
-import { formatSwissRoundsProgress, swissRoundCounts } from './swissRoundCounts';
+import {
+  formatSwissRoundsProgress,
+  swissRoundCounts,
+} from './swissRoundCounts';
 
 export type TopologyCardFact = {
   id: string;

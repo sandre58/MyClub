@@ -474,7 +474,10 @@ export function FoundationsPlayground() {
           </div>
         </section>
 
-        <section className="ds-section" aria-labelledby="section-separators-entry">
+        <section
+          className="ds-section"
+          aria-labelledby="section-separators-entry"
+        >
           <p className="ds-section__kicker">C2 — Structure primitives</p>
           <h2 id="section-separators-entry" className="ds-heading">
             GradientSeparator & EntryCell
@@ -503,9 +506,7 @@ export function FoundationsPlayground() {
                   placedTooltip="Place 1"
                 />
               </li>
-              <li
-                className="structure-entries__team structure-entries__team--ineligible"
-              >
+              <li className="structure-entries__team structure-entries__team--ineligible">
                 <EntryCell
                   displayName="Équipe retirée"
                   ineligible

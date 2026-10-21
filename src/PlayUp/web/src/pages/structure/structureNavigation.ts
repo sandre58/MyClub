@@ -11,10 +11,7 @@ export const STRUCTURE_DRAW_PARAM = 'draw';
 
 /** Scroll target on the phase fiche after navigation (element id). */
 export type StructureFocusId =
-  | 'operational-placement'
-  | 'rail-exits'
-  | 'rail-attribution'
-  | 'rail-entries';
+  'operational-placement' | 'rail-exits' | 'rail-attribution' | 'rail-entries';
 
 const STRUCTURE_FOCUS_IDS: StructureFocusId[] = [
   'operational-placement',
@@ -97,8 +94,7 @@ export function parseStructureDeepLink(search: string): {
     sectionRaw && isStructureSectionId(sectionRaw) ? sectionRaw : null;
   const composeRaw = params.get(STRUCTURE_COMPOSE_PARAM);
   const focusRaw = params.get(STRUCTURE_FOCUS_PARAM);
-  const focus =
-    focusRaw && isStructureFocusId(focusRaw) ? focusRaw : null;
+  const focus = focusRaw && isStructureFocusId(focusRaw) ? focusRaw : null;
   const manualRaw = params.get(STRUCTURE_MANUAL_PARAM);
   const drawRaw = params.get(STRUCTURE_DRAW_PARAM);
   return {

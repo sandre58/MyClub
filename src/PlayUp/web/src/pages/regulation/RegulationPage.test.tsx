@@ -306,7 +306,9 @@ describe('RegulationPage', () => {
     expect(
       await screen.findByRole('heading', { name: 'Règlement' }),
     ).toBeInTheDocument();
-    expect(screen.getByText('Aucune phase pour l’instant.')).toBeInTheDocument();
+    expect(
+      screen.getByText('Aucune phase pour l’instant.'),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole('link', { name: 'Ouvrir la Structure' }),
     ).toHaveAttribute('href', `/competitions/${competitionId}/structure`);
@@ -753,12 +755,16 @@ describe('RegulationPage', () => {
       within(confirmDialog! as HTMLElement).getByText(/Prolongations/),
     ).toBeInTheDocument();
     expect(
-      within(confirmDialog! as HTMLElement).getByText(/1 phase sera mise à jour/),
+      within(confirmDialog! as HTMLElement).getByText(
+        /1 phase sera mise à jour/,
+      ),
     ).toBeInTheDocument();
     expect(replaceCompetitionRegulation).not.toHaveBeenCalled();
 
     await user.click(
-      within(confirmDialog! as HTMLElement).getByRole('button', { name: 'Enregistrer' }),
+      within(confirmDialog! as HTMLElement).getByRole('button', {
+        name: 'Enregistrer',
+      }),
     );
 
     await waitFor(() => {
@@ -814,7 +820,9 @@ describe('RegulationPage', () => {
     ).not.toBeInTheDocument();
 
     await user.click(
-      within(confirmDialog! as HTMLElement).getByRole('button', { name: 'Enregistrer' }),
+      within(confirmDialog! as HTMLElement).getByRole('button', {
+        name: 'Enregistrer',
+      }),
     );
     await waitFor(() => {
       expect(replaceCompetitionRegulation).toHaveBeenCalled();
@@ -898,7 +906,9 @@ describe('RegulationPage', () => {
     const confirmDialog = confirmHeading.closest('[role="dialog"]');
     expect(confirmDialog).not.toBeNull();
     expect(
-      within(confirmDialog! as HTMLElement).getByText('Cadre de la compétition'),
+      within(confirmDialog! as HTMLElement).getByText(
+        'Cadre de la compétition',
+      ),
     ).toBeInTheDocument();
     expect(
       within(confirmDialog! as HTMLElement).getByText(
@@ -990,7 +1000,9 @@ describe('RegulationPage', () => {
     const confirmDialog = confirmHeading.closest('[role="dialog"]');
     expect(confirmDialog).not.toBeNull();
     await user.click(
-      within(confirmDialog! as HTMLElement).getByRole('button', { name: 'Enregistrer' }),
+      within(confirmDialog! as HTMLElement).getByRole('button', {
+        name: 'Enregistrer',
+      }),
     );
 
     await waitFor(() => {

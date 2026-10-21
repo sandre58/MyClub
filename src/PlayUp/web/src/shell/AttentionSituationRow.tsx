@@ -1,7 +1,10 @@
 import { Link } from 'react-router-dom';
 import { ChevronRightIcon } from '../design-system/icons/shellIcons';
 import { situationPresentation } from './functionalProblemPresentation';
-import { attentionSituationMeta, attentionSituationTitle } from './attentionRowCopy';
+import {
+  attentionSituationMeta,
+  attentionSituationTitle,
+} from './attentionRowCopy';
 import { organizerProblemPresentationCode } from './organizerProblemRead';
 import type { CompetitionStageSummary, OverviewSituation } from '../types';
 

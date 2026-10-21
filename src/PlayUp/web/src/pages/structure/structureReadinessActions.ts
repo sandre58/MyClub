@@ -44,7 +44,6 @@ const TONE_RANK: Record<StructureDiagnosticTone, number> = {
   progress: 2,
 };
 
-
 function ctaToSection(cta: StructureDiagnosticCta): StructureSectionId | null {
   switch (cta) {
     case 'qualification':
@@ -270,4 +269,3 @@ export function collectAllStructureReadinessActionItems(
 
   return items;
 }
-

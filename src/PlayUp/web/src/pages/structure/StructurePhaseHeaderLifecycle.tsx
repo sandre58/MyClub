@@ -7,11 +7,7 @@ import {
   StructurePhaseMatchsLifecycleBlock,
 } from './StructurePhaseMatchsLifecycleBlock';
 
-function HeaderLifecycleChrome({
-  children,
-}: {
-  children: ReactNode;
-}) {
+function HeaderLifecycleChrome({ children }: { children: ReactNode }) {
   return <div className="structure-fiche__header-lifecycle">{children}</div>;
 }
 

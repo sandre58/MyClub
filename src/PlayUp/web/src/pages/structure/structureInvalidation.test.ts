@@ -29,9 +29,14 @@ describe('structureInvalidation', () => {
     const queryClient = new QueryClient();
     const spy = vi.spyOn(queryClient, 'invalidateQueries');
 
-    await invalidateStructureQueries(queryClient, competitionId, ['stageOverview'], {
-      stageId,
-    });
+    await invalidateStructureQueries(
+      queryClient,
+      competitionId,
+      ['stageOverview'],
+      {
+        stageId,
+      },
+    );
 
     expect(spy).toHaveBeenCalledTimes(1);
     expect(spy).toHaveBeenCalledWith({

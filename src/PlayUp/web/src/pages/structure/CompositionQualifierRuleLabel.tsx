@@ -2,7 +2,11 @@ import type { FeedGroup } from './structurePhaseFeeds';
 
 type QualifierRule = FeedGroup['rules'][number];
 
-export function CompositionQualifierRuleLabel({ rule }: { rule: QualifierRule }) {
+export function CompositionQualifierRuleLabel({
+  rule,
+}: {
+  rule: QualifierRule;
+}) {
   const leadClass = [
     'structure-feed-group__rule-lead',
     rule.badgeTone === 'win'

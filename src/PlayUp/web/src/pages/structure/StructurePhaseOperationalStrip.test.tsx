@@ -10,7 +10,10 @@ import {
   materializeCupFromOccupiedSlots,
   materializeMatches,
 } from '../../api';
-import type { StructureMaterialize, StructureStageHubSummary } from '../../types';
+import type {
+  StructureMaterialize,
+  StructureStageHubSummary,
+} from '../../types';
 import { classifyMaterializePresentation } from './structureMaterializeCopy';
 import { readyMatchProductionHub } from './structureMatchProductionPresentation.testPayloads';
 import { StructurePhaseOperationalStrip } from './StructurePhaseOperationalStrip';
@@ -131,7 +134,11 @@ function renderStrip(
   const presentation =
     materialize == null
       ? null
-      : classifyMaterializePresentation(materialize, competitionStatus, stage.status);
+      : classifyMaterializePresentation(
+          materialize,
+          competitionStatus,
+          stage.status,
+        );
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
@@ -141,7 +148,8 @@ function renderStrip(
     showPlaces: overrides.showPlaces ?? true,
     showDraw: overrides.showDraw ?? true,
     drawApplied: overrides.drawApplied ?? false,
-    structureHubBackgroundRefresh: overrides.structureHubBackgroundRefresh ?? false,
+    structureHubBackgroundRefresh:
+      overrides.structureHubBackgroundRefresh ?? false,
     layoutVariant: overrides.layoutVariant,
     placesStripLayout: overrides.placesStripLayout,
     competitionId,
@@ -196,7 +204,9 @@ describe('StructurePhaseOperationalStrip', () => {
     expect(
       screen.queryByRole('heading', { name: /Places/i }),
     ).not.toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /Tirage/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /Tirage/i }),
+    ).toBeInTheDocument();
   });
 
   it('aside-matchs layout variant omits placement and draw columns', () => {
@@ -250,7 +260,8 @@ describe('StructurePhaseOperationalStrip', () => {
       /Avancement de la production des matchs/i,
     );
     expect(
-      gauge.compareDocumentPosition(actions!) & Node.DOCUMENT_POSITION_FOLLOWING,
+      gauge.compareDocumentPosition(actions!) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     const primaryBtn = within(actions as HTMLElement).getByRole('button', {
       name: /Créer les matchs/i,
@@ -295,7 +306,12 @@ describe('StructurePhaseOperationalStrip', () => {
         canManualPlace: false,
         canEditDraw: false,
         drawReadinessChecklist: [
-          { id: 'teamsFillPlaces' as const, met: false, current: 4, capacity: 8 },
+          {
+            id: 'teamsFillPlaces' as const,
+            met: false,
+            current: 4,
+            capacity: 8,
+          },
         ],
       },
     });
@@ -563,7 +579,9 @@ describe('StructurePhaseOperationalStrip', () => {
       expect(
         screen.queryByRole('link', { name: /Voir les matchs/i }),
       ).not.toBeInTheDocument();
-      await user.click(screen.getByRole('button', { name: /Créer les matchs/i }));
+      await user.click(
+        screen.getByRole('button', { name: /Créer les matchs/i }),
+      );
       expect(materializeMatches).toHaveBeenCalledWith(leagueStageBase.stageId);
     });
 
@@ -624,7 +642,9 @@ describe('StructurePhaseOperationalStrip', () => {
         ),
       ).toBeInTheDocument();
       expect(
-        within(matchesSection).getByRole('button', { name: /Créer les matchs/i }),
+        within(matchesSection).getByRole('button', {
+          name: /Créer les matchs/i,
+        }),
       ).toBeDisabled();
       expect(
         matchesSection.querySelector(
@@ -782,9 +802,7 @@ describe('StructurePhaseOperationalStrip', () => {
       );
 
       const matchesSection = document.getElementById('operational-matchs')!;
-      expect(
-        within(matchesSection).getByText(/^créé$/i),
-      ).toBeInTheDocument();
+      expect(within(matchesSection).getByText(/^créé$/i)).toBeInTheDocument();
       const ratio = matchesSection.querySelector(
         '.structure-operational-strip__ratio',
       );
@@ -846,7 +864,9 @@ describe('StructurePhaseOperationalStrip', () => {
       expect(mainRatio?.textContent).toContain('0');
       expect(mainRatio?.textContent).toContain('2');
       expect(
-        within(matchesSection).getByRole('button', { name: /Créer les matchs/i }),
+        within(matchesSection).getByRole('button', {
+          name: /Créer les matchs/i,
+        }),
       ).toBeDisabled();
       expect(
         matchesSection.querySelector(
@@ -910,7 +930,9 @@ describe('StructurePhaseOperationalStrip', () => {
 
       const matchesSection = document.getElementById('operational-matchs')!;
       expect(
-        within(matchesSection).getByLabelText(/Avancement de la production des matchs/i),
+        within(matchesSection).getByLabelText(
+          /Avancement de la production des matchs/i,
+        ),
       ).toBeInTheDocument();
       expect(
         within(matchesSection).getByLabelText(/Avancement des matchs/i),
@@ -1001,7 +1023,9 @@ describe('StructurePhaseOperationalStrip', () => {
       expect(
         within(matchesSection).getByText(/Tous les matchs sont terminés/i),
       ).toBeInTheDocument();
-      expect(within(matchesSection).getByText(/^Terminés$/i)).toBeInTheDocument();
+      expect(
+        within(matchesSection).getByText(/^Terminés$/i),
+      ).toBeInTheDocument();
     });
 
     it('shows in-progress copy instead of match stat summary', () => {
@@ -1081,7 +1105,9 @@ describe('StructurePhaseOperationalStrip', () => {
       ).toBeNull();
 
       await user.click(
-        within(matchesSection).getByRole('button', { name: /Créer les matchs/i }),
+        within(matchesSection).getByRole('button', {
+          name: /Créer les matchs/i,
+        }),
       );
       const dialog = screen.getByRole('dialog');
       await user.click(
@@ -1166,11 +1192,15 @@ describe('StructurePhaseOperationalStrip', () => {
         materialize,
       });
 
-      await user.click(screen.getByRole('button', { name: /Créer les matchs/i }));
+      await user.click(
+        screen.getByRole('button', { name: /Créer les matchs/i }),
+      );
 
       const matchesSection = document.getElementById('operational-matchs')!;
       expect(
-        within(matchesSection).getByLabelText(/Avancement de la production des matchs/i),
+        within(matchesSection).getByLabelText(
+          /Avancement de la production des matchs/i,
+        ),
       ).toBeInTheDocument();
       expect(
         container.querySelector('.structure-operational-strip__section-sync'),
@@ -1227,7 +1257,9 @@ describe('StructurePhaseOperationalStrip', () => {
         container.querySelector('.structure-operational-strip__section-sync'),
       ).toBeNull();
       expect(
-        container.querySelectorAll('.structure-operational-strip__section-chip-spinner'),
+        container.querySelectorAll(
+          '.structure-operational-strip__section-chip-spinner',
+        ),
       ).toHaveLength(1);
     });
 
@@ -1389,7 +1421,9 @@ describe('StructurePhaseOperationalStrip', () => {
           ),
         ).toBeInTheDocument();
         expect(
-          within(matchesSection).getByRole('button', { name: /Créer les matchs/i }),
+          within(matchesSection).getByRole('button', {
+            name: /Créer les matchs/i,
+          }),
         ).toBeDisabled();
       });
 

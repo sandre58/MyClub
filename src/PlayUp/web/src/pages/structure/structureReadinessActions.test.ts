@@ -203,8 +203,6 @@ describe('structureReadinessActions', () => {
         code: 'MissingPotRules',
         cta: 'qualification',
       }),
-    ).toBe(
-      `/competitions/${competitionId}/structure?stage=s1&section=tirage`,
-    );
+    ).toBe(`/competitions/${competitionId}/structure?stage=s1&section=tirage`);
   });
 });

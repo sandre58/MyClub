@@ -57,44 +57,51 @@ export function StripSection({
       aria-label={hideHead ? title : undefined}
     >
       {hideHead ? null : (
-      <header className="structure-operational-strip__section-head">
-        <h4
-          id={titleId}
-          className={[
-            'structure-operational-strip__section-title',
-            titlePresentation === 'subtitle'
-              ? 'structure-operational-strip__section-title--subtitle'
-              : null,
-          ]
-            .filter(Boolean)
-            .join(' ')}
-        >
-          {titlePresentation === 'subtitle' ? (
-            <>
-              {titleLeadingSlot}
-              <span>{title}</span>
-            </>
-          ) : titleChipRefreshing ? (
-            titleLeadingSlot
-          ) : titleIcon ? (
-            titleLeadingSlot
-          ) : (
-            <span className="ds-chip ds-chip--rounded ds-chip--soft" aria-hidden="true">
-              {index}
-            </span>
-          )}
-          {titlePresentation === 'subtitle' ? null : <span>{title}</span>}
-        </h4>
-        {toolbar ? (
-          <div className="structure-operational-strip__section-toolbar ds-icon-toolbar">
-            {toolbar}
-          </div>
-        ) : null}
-      </header>
+        <header className="structure-operational-strip__section-head">
+          <h4
+            id={titleId}
+            className={[
+              'structure-operational-strip__section-title',
+              titlePresentation === 'subtitle'
+                ? 'structure-operational-strip__section-title--subtitle'
+                : null,
+            ]
+              .filter(Boolean)
+              .join(' ')}
+          >
+            {titlePresentation === 'subtitle' ? (
+              <>
+                {titleLeadingSlot}
+                <span>{title}</span>
+              </>
+            ) : titleChipRefreshing ? (
+              titleLeadingSlot
+            ) : titleIcon ? (
+              titleLeadingSlot
+            ) : (
+              <span
+                className="ds-chip ds-chip--rounded ds-chip--soft"
+                aria-hidden="true"
+              >
+                {index}
+              </span>
+            )}
+            {titlePresentation === 'subtitle' ? null : <span>{title}</span>}
+          </h4>
+          {toolbar ? (
+            <div className="structure-operational-strip__section-toolbar ds-icon-toolbar">
+              {toolbar}
+            </div>
+          ) : null}
+        </header>
       )}
-      <div className="structure-operational-strip__section-body">{children}</div>
+      <div className="structure-operational-strip__section-body">
+        {children}
+      </div>
       {footer ? (
-        <div className="structure-operational-strip__section-footer">{footer}</div>
+        <div className="structure-operational-strip__section-footer">
+          {footer}
+        </div>
       ) : null}
     </section>
   );

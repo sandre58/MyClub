@@ -32,7 +32,10 @@ export function patchStructureViewStage(
       stage.stageId === stageId ? { ...stage, ...patch } : stage,
     ),
   };
-  queryClient.setQueryData(queryKeys.competitions.structure(competitionId), next);
+  queryClient.setQueryData(
+    queryKeys.competitions.structure(competitionId),
+    next,
+  );
   return next;
 }
 
@@ -118,7 +121,12 @@ export function patchStageNameOptimistic(
   stageId: string,
   name: string,
 ): StructureHubPatchSession {
-  const session = beginStructureHubPatch(queryClient, competitionId, ['hub'], stageId);
+  const session = beginStructureHubPatch(
+    queryClient,
+    competitionId,
+    ['hub'],
+    stageId,
+  );
   patchStructureViewStage(queryClient, competitionId, stageId, { name });
   commitStructureHubPatch(queryClient, session);
   void reconcileStructureHubPatch(queryClient, session);

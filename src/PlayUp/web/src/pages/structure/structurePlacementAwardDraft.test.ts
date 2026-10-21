@@ -27,8 +27,10 @@ describe('structurePlacementAwardDraft', () => {
     );
     expect(options.map((o) => o.id)).toEqual(['BRONZE', 'FINAL']);
     expect(
-      listPlacementSourceOptions([], [{ id: 'r1', name: 'F', fixtures: [] }], (n) =>
-        `M${n}`,
+      listPlacementSourceOptions(
+        [],
+        [{ id: 'r1', name: 'F', fixtures: [] }],
+        (n) => `M${n}`,
       ),
     ).toEqual([]);
   });

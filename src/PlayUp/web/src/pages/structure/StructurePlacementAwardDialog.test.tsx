@@ -2,10 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  fetchStageOverview,
-  replaceStagePlacementAwardRules,
-} from '../../api';
+import { fetchStageOverview, replaceStagePlacementAwardRules } from '../../api';
 import { structureReadiness } from '../../test/structureTestFixtures';
 import type {
   StageOverview,
@@ -145,7 +142,9 @@ describe('StructurePlacementAwardDialog orphan remediation', () => {
 
   it('shows orphan awards when catalogue is empty and allows clear save', async () => {
     const user = userEvent.setup();
-    vi.mocked(fetchStageOverview).mockResolvedValue(overview({ bracketPairs: [] }));
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview({ bracketPairs: [] }),
+    );
 
     renderDialog(
       cupStage({
@@ -227,7 +226,9 @@ describe('StructurePlacementAwardDialog orphan remediation', () => {
   });
 
   it('keeps empty-no-pair only when there are no awards', async () => {
-    vi.mocked(fetchStageOverview).mockResolvedValue(overview({ bracketPairs: [] }));
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview({ bracketPairs: [] }),
+    );
 
     renderDialog(cupStage({ placementAwards: [], placementAwardCount: 0 }));
 

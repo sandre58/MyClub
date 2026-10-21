@@ -23,13 +23,14 @@ export function CompositionInboundResolvedGauge({
     ? t('composition.gauge.inboundAllResolved')
     : t('composition.gauge.inboundUnresolved', { count: unresolved });
 
-  const messageKind = complete ? 'success' : mode === 'historical' ? 'info' : 'info';
+  const messageKind = complete
+    ? 'success'
+    : mode === 'historical'
+      ? 'info'
+      : 'info';
   const ratioTone: RatioMessageGaugeRatioTone = complete ? 'complete' : 'brand';
 
-  const rootClass = [
-    'structure-phase-composition__population-gauge',
-    className,
-  ]
+  const rootClass = ['structure-phase-composition__population-gauge', className]
     .filter(Boolean)
     .join(' ');
 

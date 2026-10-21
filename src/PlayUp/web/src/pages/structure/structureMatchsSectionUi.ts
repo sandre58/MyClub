@@ -116,7 +116,9 @@ export function shouldShowAsideMatchsTile(
 }
 
 /** When the operational strip should include the Matchs column. */
-export function shouldShowMatchsSection(stage: StructureStageHubSummary): boolean {
+export function shouldShowMatchsSection(
+  stage: StructureStageHubSummary,
+): boolean {
   if (stage.status !== 'Completed') {
     return (
       shouldShowMatchsLifecycle(stage) ||

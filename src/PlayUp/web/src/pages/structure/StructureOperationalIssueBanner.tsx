@@ -45,9 +45,7 @@ export function StructureOperationalIssueBanner({
             <span className="structure-operational-strip__diagnostic-copy">
               <span>{t(titleKey, { defaultValue: code })}</span>
               {descriptionKey ? (
-                <span
-                  className="structure-operational-strip__diagnostic-description"
-                >
+                <span className="structure-operational-strip__diagnostic-description">
                   {t(descriptionKey)}
                 </span>
               ) : null}

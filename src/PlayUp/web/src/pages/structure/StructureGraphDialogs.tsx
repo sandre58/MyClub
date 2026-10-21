@@ -554,10 +554,7 @@ export function RemovePhaseDialog({
       }
       footerStatus={
         mutation.isError ? (
-          <MutationError
-            error={mutation.error}
-            structureStages={data.stages}
-          />
+          <MutationError error={mutation.error} structureStages={data.stages} />
         ) : null
       }
     >

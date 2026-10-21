@@ -65,9 +65,7 @@ describe('StructurePhaseRailIssueBanner', () => {
       />,
     );
     expect(screen.getByText(/écart de population attendue/i)).toBeTruthy();
-    expect(
-      screen.getByText(/composition est complète/i),
-    ).toBeTruthy();
+    expect(screen.getByText(/composition est complète/i)).toBeTruthy();
   });
 
   it('requests paused issue copy when stage is Suspended', () => {
@@ -79,8 +77,6 @@ describe('StructurePhaseRailIssueBanner', () => {
         stage={suspendedStage}
       />,
     );
-    expect(
-      screen.getByText(/constat en pause/i),
-    ).toBeTruthy();
+    expect(screen.getByText(/constat en pause/i)).toBeTruthy();
   });
 });

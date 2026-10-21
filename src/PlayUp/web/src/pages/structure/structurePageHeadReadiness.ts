@@ -37,11 +37,7 @@ export function isStructureHubOperationalSlicePending(
 }
 
 export type StructurePageHeadNoteKind =
-  | 'none'
-  | 'negative'
-  | 'warning'
-  | 'positiveNextStep'
-  | 'positiveCalm';
+  'none' | 'negative' | 'warning' | 'positiveNextStep' | 'positiveCalm';
 
 function pageHeadHasErrors(input: StructurePageHeadReadinessInput): boolean {
   return (
@@ -62,7 +58,9 @@ function pageHeadHasWarnings(input: StructurePageHeadReadinessInput): boolean {
 }
 
 /** Hub calm (success pill) — independent from resolver null (see product matrix). */
-export function isStructureHubCalm(input: StructurePageHeadReadinessInput): boolean {
+export function isStructureHubCalm(
+  input: StructurePageHeadReadinessInput,
+): boolean {
   if (input.lifecycleClosed || input.stagesEmpty) {
     return false;
   }
@@ -92,7 +90,10 @@ export function isStructureHubCalm(input: StructurePageHeadReadinessInput): bool
     return false;
   }
 
-  if (statuses.length > 0 && statuses.every((status) => status === 'Completed')) {
+  if (
+    statuses.length > 0 &&
+    statuses.every((status) => status === 'Completed')
+  ) {
     return false;
   }
 

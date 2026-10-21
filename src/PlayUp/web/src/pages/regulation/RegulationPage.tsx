@@ -528,7 +528,10 @@ function PhaseRuleItemList({ items }: { items: PhaseRuleItem[] }) {
         const body = (
           <>
             {item.index != null ? (
-              <span className="ds-chip ds-chip--rounded ds-chip--soft" aria-hidden="true">
+              <span
+                className="ds-chip ds-chip--rounded ds-chip--soft"
+                aria-hidden="true"
+              >
                 {item.index}
               </span>
             ) : item.icon ? (

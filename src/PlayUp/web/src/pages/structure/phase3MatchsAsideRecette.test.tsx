@@ -10,12 +10,19 @@
  *
  * O-MAT-IMPL-1: tile visibility follows `resolveAsideMatchsStripContent` (cases 3, 5, 6).
  */
-import { QueryClient, QueryClientProvider, type UseMutationResult } from '@tanstack/react-query';
+import {
+  QueryClient,
+  QueryClientProvider,
+  type UseMutationResult,
+} from '@tanstack/react-query';
 import { cleanup, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import type { StructureMaterialize, StructureStageHubSummary } from '../../types';
+import type {
+  StructureMaterialize,
+  StructureStageHubSummary,
+} from '../../types';
 import { classifyMaterializePresentation } from './structureMaterializeCopy';
 import { attachMatchProductionPresentation } from './structureMatchProductionPresentation.testFixtures';
 import { readyMatchProductionHub } from './structureMatchProductionPresentation.testPayloads';
@@ -98,7 +105,9 @@ function matchsSection() {
 function stripHasUsefulProductionBody(section: HTMLElement): boolean {
   const text = section.textContent?.trim() ?? '';
   const hasPrimaryMaterialize = Boolean(
-    within(section).queryByRole('button', { name: /Créer les matchs|Matérialiser/i }),
+    within(section).queryByRole('button', {
+      name: /Créer les matchs|Matérialiser/i,
+    }),
   );
   const hasDemat = Boolean(
     within(section).queryByRole('button', { name: /Dématérialiser|Retirer/i }),
@@ -109,9 +118,13 @@ function stripHasUsefulProductionBody(section: HTMLElement): boolean {
   const hasProductionEmpty = Boolean(
     section.querySelector('.structure-operational-strip__empty'),
   );
-  const hasGauge = Boolean(section.querySelector('.structure-operational-ratio-gauge'));
+  const hasGauge = Boolean(
+    section.querySelector('.structure-operational-ratio-gauge'),
+  );
   const hasRosterResolutionGauge = Boolean(
-    section.querySelector('.structure-phase-match-tile__roster-resolution-gauge'),
+    section.querySelector(
+      '.structure-phase-match-tile__roster-resolution-gauge',
+    ),
   );
   return (
     hasPrimaryMaterialize ||
@@ -226,7 +239,9 @@ describe('Phase 3 recette — Matchs aside (O-MAT-VIS-1)', () => {
     renderAsideStrip(stageWithHub, 'Ready');
     const section = matchsSection()!;
     expect(
-      section.querySelector('.structure-phase-match-tile__roster-resolution-gauge'),
+      section.querySelector(
+        '.structure-phase-match-tile__roster-resolution-gauge',
+      ),
     ).not.toBeNull();
     expect(
       within(section).getByLabelText(/Avancement de la production des matchs/i),

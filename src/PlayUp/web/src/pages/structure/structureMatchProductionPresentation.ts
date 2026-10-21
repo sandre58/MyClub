@@ -76,7 +76,10 @@ export function resolveMatchProductionGaugeView(
   stage: StructureStageHubSummary,
 ): MatchProductionGaugeView | null {
   const presentation = stageMatchProductionPresentation(stage);
-  if (!presentation?.productionVisible || !matchProductionShowsPrimaryGauge(stage)) {
+  if (
+    !presentation?.productionVisible ||
+    !matchProductionShowsPrimaryGauge(stage)
+  ) {
     return null;
   }
 
@@ -145,7 +148,11 @@ export function resolveMatchProductionMeterText(
 
   const stateKey = `fiche.operational.production.stateMessage.${codeToStateSuffix(code, mode)}`;
   const remaining = Math.max(0, gauge.capacity - gauge.current);
-  const msg = t(stateKey, { count: remaining, filled: gauge.current, capacity: gauge.capacity });
+  const msg = t(stateKey, {
+    count: remaining,
+    filled: gauge.current,
+    capacity: gauge.capacity,
+  });
   if (msg !== stateKey) {
     return msg;
   }
@@ -197,7 +204,8 @@ function codeToStateSuffix(
 }
 
 export function mapMessageKind(
-  kind: StructureMatchProductionGauge['messageKind'] | StripOperationalMessageKind,
+  kind:
+    StructureMatchProductionGauge['messageKind'] | StripOperationalMessageKind,
 ): StripOperationalMessageKind {
   switch (kind) {
     case 'success':
@@ -273,7 +281,8 @@ export function matchProductionMaterializeActionLabel(
   const materialize = stage.materialize;
   const commandCode =
     action?.commandCode ?? materialize?.commandCode ?? 'MaterializeMatches';
-  const labelVariant = action?.labelVariant ?? materialize?.labelVariant ?? 'create';
+  const labelVariant =
+    action?.labelVariant ?? materialize?.labelVariant ?? 'create';
   const complete = labelVariant === 'complete';
   if (commandCode === 'MaterializeFromOccupiedSlots') {
     return complete

@@ -10,7 +10,10 @@ function OperationalGaugeReadiness({
   children: ReactNode;
 }) {
   return (
-    <span className="structure-operational-gauge__readiness" data-pool-tone={poolTone}>
+    <span
+      className="structure-operational-gauge__readiness"
+      data-pool-tone={poolTone}
+    >
       {children}
     </span>
   );
@@ -53,9 +56,13 @@ export function StructureOperationalRatioGauge({
       >
         <OperationalGaugeReadiness poolTone="neutral">
           <span className="structure-operational-gauge__ratio">
-            <span className="structure-operational-gauge__ratio-filled">{current}</span>
+            <span className="structure-operational-gauge__ratio-filled">
+              {current}
+            </span>
           </span>
-          <span className="structure-operational-gauge__caption">{caption}</span>
+          <span className="structure-operational-gauge__caption">
+            {caption}
+          </span>
         </OperationalGaugeReadiness>
       </div>
     );
@@ -76,16 +83,26 @@ export function StructureOperationalRatioGauge({
             : fillVariant
       }
       ariaLabel={ariaLabel}
-      className={layout === 'trackOnly' ? 'structure-operational-gauge__meter' : gaugeClass}
+      className={
+        layout === 'trackOnly'
+          ? 'structure-operational-gauge__meter'
+          : gaugeClass
+      }
       header={
         layout === 'trackOnly' ? undefined : (
           <OperationalGaugeReadiness poolTone={poolTone}>
             <span className="structure-operational-gauge__ratio">
-              <span className="structure-operational-gauge__ratio-filled">{current}</span>
+              <span className="structure-operational-gauge__ratio-filled">
+                {current}
+              </span>
               <span className="structure-operational-gauge__ratio-sep">/</span>
-              <span className="structure-operational-gauge__ratio-cap">{capacity}</span>
+              <span className="structure-operational-gauge__ratio-cap">
+                {capacity}
+              </span>
             </span>
-            <span className="structure-operational-gauge__caption">{caption}</span>
+            <span className="structure-operational-gauge__caption">
+              {caption}
+            </span>
           </OperationalGaugeReadiness>
         )
       }

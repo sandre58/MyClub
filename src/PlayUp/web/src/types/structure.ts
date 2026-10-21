@@ -113,11 +113,7 @@ export interface StructureTopologySummary {
 }
 
 export type StructureNextConstructionStepHint =
-  | 'None'
-  | 'RunDraw'
-  | 'ApplyDraw'
-  | 'BuildSchedule'
-  | 'RunSwissRounds';
+  'None' | 'RunDraw' | 'ApplyDraw' | 'BuildSchedule' | 'RunSwissRounds';
 
 export interface StructureReadinessBlocker {
   code: string;
@@ -306,19 +302,13 @@ export interface StructureStageLifecycle {
 }
 
 export type StructureStageLifecycleTransitionCode =
-  | 'PrepareStage'
-  | 'StartStage'
-  | 'CompleteStage';
+  'PrepareStage' | 'StartStage' | 'CompleteStage';
 
 export type StructureStageLifecycleRevertCode =
-  | 'RevertToDraftStage'
-  | 'RevertToReadyStage'
-  | 'SuspendStage'
-  | 'ResumeStage';
+  'RevertToDraftStage' | 'RevertToReadyStage' | 'SuspendStage' | 'ResumeStage';
 
 export type StructureStageLifecycleMutationCode =
-  | StructureStageLifecycleTransitionCode
-  | StructureStageLifecycleRevertCode;
+  StructureStageLifecycleTransitionCode | StructureStageLifecycleRevertCode;
 
 import type { OrganizerProblemRead } from './organizerProblem';
 
@@ -624,10 +614,7 @@ export interface StructureDematerialize {
 }
 
 export type MatchProductionMessageKind =
-  | 'info'
-  | 'success'
-  | 'attention'
-  | 'danger';
+  'info' | 'success' | 'attention' | 'danger';
 
 export interface StructureMatchProductionGauge {
   current: number;
@@ -667,7 +654,10 @@ export interface StructureMatchProductionPresentation {
   primaryGaugeMode: 'materialized' | 'determined';
   prerequisiteGauge?: StructureMatchProductionGauge | null;
   frozenPartial?: StructureMatchProductionFrozenPartial | null;
-  followUp?: { messageCode: string; messageKind: MatchProductionMessageKind } | null;
+  followUp?: {
+    messageCode: string;
+    messageKind: MatchProductionMessageKind;
+  } | null;
   materialize: StructureMatchProductionMaterializeAction;
   dematerialize: StructureMatchProductionDematerializeAction;
 }

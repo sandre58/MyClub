@@ -34,8 +34,7 @@ const READINESS_COPY_EN = {
   materializeNamed: 'Matches to create · League',
   runDrawNamed: 'Draw to run · Quarter-finals',
   calm: 'Structure ready',
-  drawLong:
-    'Draw to run · International open qualification preliminary round',
+  drawLong: 'Draw to run · International open qualification preliminary round',
   materializeLong:
     'Matches to create · Championship preliminary round group stage',
 } as const;
@@ -105,7 +104,9 @@ export function LabStructurePageHead() {
     <div className="dlab-structure-pagehead">
       <header className="dlab-structure-pagehead__intro">
         <p className="ds-eyebrow">Compétition · Structure N1</p>
-        <h1 className="dlab-structure-pagehead__title">PageHead — statut global</h1>
+        <h1 className="dlab-structure-pagehead__title">
+          PageHead — statut global
+        </h1>
         <p className="ds-label">
           <code>Status</code> · <code>context</code> · <code>outline</code> ·{' '}
           <code>pill</code> · libellés nominaux (nom de phase si plusieurs
@@ -117,7 +118,9 @@ export function LabStructurePageHead() {
         className="dlab-structure-pagehead__section"
         aria-labelledby="dlab-structure-ph-fr"
       >
-        <h2 id="dlab-structure-ph-fr" className="ds-heading">Français</h2>
+        <h2 id="dlab-structure-ph-fr" className="ds-heading">
+          Français
+        </h2>
         <div className="dlab-structure-pagehead__stack">
           <PageHeadSpecimen
             localeLabel="error"
@@ -175,7 +178,9 @@ export function LabStructurePageHead() {
         className="dlab-structure-pagehead__section"
         aria-labelledby="dlab-structure-ph-en"
       >
-        <h2 id="dlab-structure-ph-en" className="ds-heading">English</h2>
+        <h2 id="dlab-structure-ph-en" className="ds-heading">
+          English
+        </h2>
         <div className="dlab-structure-pagehead__stack">
           <PageHeadSpecimen
             localeLabel="error"
@@ -230,8 +235,8 @@ export function LabStructurePageHead() {
           Responsive · long labels (EN)
         </h2>
         <p className="ds-label">
-          Narrow viewport: pill should wrap or truncate per DS <code>Status</code>{' '}
-          — no Structure product CSS on the note.
+          Narrow viewport: pill should wrap or truncate per DS{' '}
+          <code>Status</code> — no Structure product CSS on the note.
         </p>
         <div className="dlab-structure-pagehead__shape-grid">
           <PageHeadSpecimen
@@ -265,13 +270,21 @@ export function LabStructurePageHead() {
         <div className="dlab-structure-pagehead__shape-grid">
           <div className="structure-phase-hero__chrome">
             <div className="structure-phase-hero__chrome-inner">
-              <ul className="structure-phase-hero__stats" aria-label="Statistiques">
+              <ul
+                className="structure-phase-hero__stats"
+                aria-label="Statistiques"
+              >
                 <li className="structure-phase-hero__stat">
-                  <span className="structure-phase-hero__stat-icon" aria-hidden="true">
+                  <span
+                    className="structure-phase-hero__stat-icon"
+                    aria-hidden="true"
+                  >
                     <RoundsStatIcon size="sm" />
                   </span>
                   <span className="structure-phase-hero__stat-value">3</span>
-                  <span className="structure-phase-hero__stat-label">tours</span>
+                  <span className="structure-phase-hero__stat-label">
+                    tours
+                  </span>
                 </li>
               </ul>
               <button

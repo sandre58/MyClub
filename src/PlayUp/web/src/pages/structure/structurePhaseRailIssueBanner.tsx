@@ -1,9 +1,6 @@
 import { useTranslation } from 'react-i18next';
 
-import type {
-  StructureStageHubSummary,
-  StructureView,
-} from '../../types';
+import type { StructureStageHubSummary, StructureView } from '../../types';
 import { StructureDiagnosticIssueIcon } from './StructureDiagnosticIssueIcon';
 import { structureDiagnosticContextFromStage } from './structureDiagnosticContext';
 import { structureDiagnosticTone } from './structureDiagnosticPresentation';

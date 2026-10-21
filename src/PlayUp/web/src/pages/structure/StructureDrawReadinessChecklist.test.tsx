@@ -22,9 +22,7 @@ describe('StructureDrawReadinessChecklist', () => {
   it('renders neutral French factual labels', () => {
     renderWithI18n(<StructureDrawReadinessChecklist items={sampleItems} />);
 
-    expect(
-      screen.getByText('Équipes dans la phase : 4/8'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('Équipes dans la phase : 4/8')).toBeInTheDocument();
     expect(
       screen.getByText('Équipes connues depuis l’amont : 4/4'),
     ).toBeInTheDocument();

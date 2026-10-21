@@ -26,7 +26,11 @@ export function SelectableTile<T extends ElementType = 'button'>({
   const classes = ['ds-selectable-tile', className].filter(Boolean).join(' ');
 
   return (
-    <Tag className={classes} data-selected={selected ? 'true' : 'false'} {...rest}>
+    <Tag
+      className={classes}
+      data-selected={selected ? 'true' : 'false'}
+      {...rest}
+    >
       {children}
     </Tag>
   );

@@ -1,9 +1,13 @@
 import type { ReactNode } from 'react';
 import {
   AggregateIcon,
-  ArrowRightIcon, ExtraTimeIcon, ForfeitIcon,
+  ArrowRightIcon,
+  ExtraTimeIcon,
+  ForfeitIcon,
   LegsStatIcon,
-  PenaltiesIcon, PointsRulesIcon, SortingRulesIcon,
+  PenaltiesIcon,
+  PointsRulesIcon,
+  SortingRulesIcon,
   TimerIcon,
 } from '../../design-system/icons/contentIcons';
 import { PinIcon } from '../../design-system/icons/metaIcons';
@@ -72,7 +76,9 @@ export function buildMatchDigestTokens(
       icon: <PenaltiesIcon size="sm" aria-hidden="true" />,
       content: (
         <span>
-          {kicks != null ? `${t('matchTimeline.tabAria', { count: kicks })}` : null}
+          {kicks != null
+            ? `${t('matchTimeline.tabAria', { count: kicks })}`
+            : null}
         </span>
       ),
     });
@@ -231,7 +237,9 @@ export function buildConfrontationDigestTokens(
     tokens.push({
       key: `seg-${index}-title`,
       icon: <ArrowRightIcon size="sm" aria-hidden="true" />,
-      content: <span className="structure-regulation-digest__segment">{title}</span>,
+      content: (
+        <span className="structure-regulation-digest__segment">{title}</span>
+      ),
     });
     tokens.push(...confrontationItems(seg, `seg-${index}`, t));
   });
@@ -250,13 +258,13 @@ export function RegulationDigestFacts({
   }
 
   return (
-    <ul
-      className="structure-regulation-digest__facts"
-      aria-label={ariaLabel}
-    >
+    <ul className="structure-regulation-digest__facts" aria-label={ariaLabel}>
       {tokens.map((token) => (
         <li key={token.key} className="structure-regulation-digest__fact">
-          <span className="structure-regulation-digest__fact-icon" aria-hidden="true">
+          <span
+            className="structure-regulation-digest__fact-icon"
+            aria-hidden="true"
+          >
             {token.icon}
           </span>
           <span className="structure-regulation-digest__fact-content">

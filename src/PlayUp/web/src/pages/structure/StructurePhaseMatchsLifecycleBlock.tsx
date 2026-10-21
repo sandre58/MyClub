@@ -40,8 +40,7 @@ import { useStructureStageLifecycleMutation } from './useStructureStageLifecycle
 
 const primaryBtn = 'ds-btn ds-btn--primary ds-btn--sm';
 const secondaryBtn = 'ds-btn ds-btn--secondary ds-btn--sm';
-const suspendIconBtn =
-  'ds-btn ds-btn--attention ds-btn--sm ds-icon-button';
+const suspendIconBtn = 'ds-btn ds-btn--attention ds-btn--sm ds-icon-button';
 const resumeIconBtn = 'ds-btn ds-btn--secondary ds-btn--sm ds-icon-button';
 
 function revertActionIcon(code: StructureStageLifecycleRevertCode) {
@@ -72,7 +71,9 @@ function revertButtonClass(code: StructureStageLifecycleRevertCode): string {
   }
 }
 
-function revertShowsLabelOnlyInTooltip(code: StructureStageLifecycleRevertCode): boolean {
+function revertShowsLabelOnlyInTooltip(
+  code: StructureStageLifecycleRevertCode,
+): boolean {
   return (
     code === 'SuspendStage' ||
     code === 'ResumeStage' ||
@@ -119,9 +120,9 @@ function LifecycleRevertIconButton({
           ) : (
             <>
               {revertActionIcon(code)}
-              {revertShowsLabelOnlyInTooltip(code) ? null : (
-                revertActionLabel(t, code)
-              )}
+              {revertShowsLabelOnlyInTooltip(code)
+                ? null
+                : revertActionLabel(t, code)}
             </>
           )}
         </button>
@@ -130,7 +131,9 @@ function LifecycleRevertIconButton({
   );
 }
 
-function transitionActionIcon(code: 'PrepareStage' | 'StartStage' | 'CompleteStage') {
+function transitionActionIcon(
+  code: 'PrepareStage' | 'StartStage' | 'CompleteStage',
+) {
   switch (code) {
     case 'PrepareStage':
       return <CheckIcon size="sm" aria-hidden="true" />;
@@ -144,11 +147,7 @@ function transitionActionIcon(code: 'PrepareStage' | 'StartStage' | 'CompleteSta
 }
 
 type LifecycleChromePart =
-  | 'full'
-  | 'actions'
-  | 'messages'
-  | 'header'
-  | 'headerAlerts';
+  'full' | 'actions' | 'messages' | 'header' | 'headerAlerts';
 
 function LifecycleMutationAlert({
   error,
@@ -326,11 +325,7 @@ export function StructurePhaseMatchsLifecycleBlock({
   part?: LifecycleChromePart;
 }) {
   const status = stage.status;
-  if (
-    status === 'Draft' ||
-    status === 'Completed' ||
-    status === undefined
-  ) {
+  if (status === 'Draft' || status === 'Completed' || status === undefined) {
     return null;
   }
 
@@ -450,10 +445,7 @@ function StructurePhaseMatchsLifecycleBlockBody({
     transitionMutation.isError;
 
   const primaryDisabledTooltip =
-    showPrimaryButton &&
-    projectedAction &&
-    !actionEnabled &&
-    disabledReason
+    showPrimaryButton && projectedAction && !actionEnabled && disabledReason
       ? resolveLifecycleAnticipatedMessage(
           t,
           disabledReason,
@@ -480,23 +472,23 @@ function StructurePhaseMatchsLifecycleBlockBody({
             lifecycleProblem,
             rosterCopyContext,
           )}
-          {showRemediationLink && remediationTarget ? (
-            (() => {
-              const label = resolveLifecycleRemediationLabel(
-                t,
-                disabledReason,
-                remediationLabelKey,
-              );
-              return label ? (
-                <>
-                  {' '}
-                  <Link className="ds-text-link" to={remediationTarget}>
-                    {label}
-                  </Link>
-                </>
-              ) : null;
-            })()
-          ) : null}
+          {showRemediationLink && remediationTarget
+            ? (() => {
+                const label = resolveLifecycleRemediationLabel(
+                  t,
+                  disabledReason,
+                  remediationLabelKey,
+                );
+                return label ? (
+                  <>
+                    {' '}
+                    <Link className="ds-text-link" to={remediationTarget}>
+                      {label}
+                    </Link>
+                  </>
+                ) : null;
+              })()
+            : null}
         </p>
       ) : null}
       {showRevertParagraph && revertDisabledReason ? (
@@ -517,39 +509,40 @@ function StructurePhaseMatchsLifecycleBlockBody({
 
   const lifecycleActionsEnd = hasLifecycleActionsEnd ? (
     <div className="structure-operational-strip__section-actions-end">
-      {showPrimaryButton && projectedAction ? (
-        (() => {
-          const primaryInner = (
-            <button
-              type="button"
-              className={primaryBtn}
-              disabled={busy || !actionEnabled}
-              aria-label={transitionActionLabel(t, projectedAction)}
-              onClick={() => transitionMutation.mutate(projectedAction)}
-            >
-              {transitionMutation.isPending && pendingCode === projectedAction ? (
-                <PendingLabel>
-                  {mutationPendingLabel(t, projectedAction)}
-                </PendingLabel>
-              ) : (
-                <>
-                  {transitionActionIcon(projectedAction)}
-                  <span>{transitionActionLabel(t, projectedAction)}</span>
-                </>
-              )}
-            </button>
-          );
-          return primaryDisabledTooltip && !actionEnabled ? (
-            <Tooltip content={primaryDisabledTooltip}>
-              <span className="structure-operational-tile__action-wrap">
-                {primaryInner}
-              </span>
-            </Tooltip>
-          ) : (
-            primaryInner
-          );
-        })()
-      ) : null}
+      {showPrimaryButton && projectedAction
+        ? (() => {
+            const primaryInner = (
+              <button
+                type="button"
+                className={primaryBtn}
+                disabled={busy || !actionEnabled}
+                aria-label={transitionActionLabel(t, projectedAction)}
+                onClick={() => transitionMutation.mutate(projectedAction)}
+              >
+                {transitionMutation.isPending &&
+                pendingCode === projectedAction ? (
+                  <PendingLabel>
+                    {mutationPendingLabel(t, projectedAction)}
+                  </PendingLabel>
+                ) : (
+                  <>
+                    {transitionActionIcon(projectedAction)}
+                    <span>{transitionActionLabel(t, projectedAction)}</span>
+                  </>
+                )}
+              </button>
+            );
+            return primaryDisabledTooltip && !actionEnabled ? (
+              <Tooltip content={primaryDisabledTooltip}>
+                <span className="structure-operational-tile__action-wrap">
+                  {primaryInner}
+                </span>
+              </Tooltip>
+            ) : (
+              primaryInner
+            );
+          })()
+        : null}
       {showPauseResumeControl && pauseResumeCode ? (
         <LifecycleRevertIconButton
           code={pauseResumeCode}

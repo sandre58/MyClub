@@ -75,8 +75,7 @@ export function isEngagedPoolSignalReliable(
 }
 
 export type EngagedPoolResolution =
-  | { kind: 'list'; entryIds: readonly string[] }
-  | { kind: 'undetermined' };
+  { kind: 'list'; entryIds: readonly string[] } | { kind: 'undetermined' };
 
 export function resolveEngagedPoolResolution(
   stage: Pick<
@@ -152,9 +151,7 @@ export function shouldShowCompositionTeamsSection(
 }
 
 export type TeamsSectionRuntimePresentation =
-  | { kind: 'list' }
-  | { kind: 'empty' }
-  | { kind: 'undetermined' };
+  { kind: 'list' } | { kind: 'empty' } | { kind: 'undetermined' };
 
 export function resolveTeamsSectionRuntimePresentation(
   mode: CompositionTileMode,
@@ -167,7 +164,8 @@ export function resolveTeamsSectionRuntimePresentation(
     | 'formatKind'
   >,
   entries: readonly StructureEntry[],
-  compositionTeamRows: import('./compositionTeamsInboundRows').CompositionTeamRow[] | null,
+  compositionTeamRows:
+    import('./compositionTeamsInboundRows').CompositionTeamRow[] | null,
 ): TeamsSectionRuntimePresentation {
   if (mode === 'prep') {
     return { kind: 'list' };
@@ -231,4 +229,3 @@ export function hasEngagedTeamsSectionContent(
     (stage.compositionEntryCount ?? 0) > 0
   );
 }
-

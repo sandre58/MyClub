@@ -41,9 +41,7 @@ export function PanelHead({
 }) {
   const lead = leading ?? icon;
   const densityClass =
-    density === 'default'
-      ? null
-      : `ds-panel-head--${density}`;
+    density === 'default' ? null : `ds-panel-head--${density}`;
 
   const metaClass =
     metaVariant === 'count' ? 'ds-panel-head__meta--count' : 'ds-eyebrow';
@@ -90,7 +88,9 @@ export function PanelHead({
             )
           ) : null}
           {actions ? (
-            <div className="ds-panel-head__actions ds-icon-toolbar">{actions}</div>
+            <div className="ds-panel-head__actions ds-icon-toolbar">
+              {actions}
+            </div>
           ) : null}
         </div>
       ) : null}

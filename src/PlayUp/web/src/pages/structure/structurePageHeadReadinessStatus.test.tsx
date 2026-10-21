@@ -7,7 +7,10 @@ import { InfoIcon } from '../../design-system/icons/contentIcons';
 describe('StructurePageHeadReadinessStatus', () => {
   it('renders outline pill Status without multiline modifiers', () => {
     const { container } = render(
-      <StructurePageHeadReadinessStatus tone="info" icon={<InfoIcon size="sm" />}>
+      <StructurePageHeadReadinessStatus
+        tone="info"
+        icon={<InfoIcon size="sm" />}
+      >
         Structure prête
       </StructurePageHeadReadinessStatus>,
     );

@@ -602,8 +602,18 @@ describe('resolveDrawCreateGate', () => {
         },
       ],
       slots: [
-        { slotKey: 'A', entryId: 'e1', displayName: 'T', coveredByCompleteFixture: false },
-        { slotKey: 'B', entryId: 'e2', displayName: 'T', coveredByCompleteFixture: false },
+        {
+          slotKey: 'A',
+          entryId: 'e1',
+          displayName: 'T',
+          coveredByCompleteFixture: false,
+        },
+        {
+          slotKey: 'B',
+          entryId: 'e2',
+          displayName: 'T',
+          coveredByCompleteFixture: false,
+        },
       ],
       groups: [],
       competitionStatus: 'Draft',
@@ -627,10 +637,14 @@ describe('resolveDrawCreateGate', () => {
       ],
     };
     expect(
-      countAlignedDrawPlacements(draw, [], [
-        { id: 'ga', name: 'A', entryIds: ['e1', 'e3'] },
-        { id: 'gb', name: 'B', entryIds: [] },
-      ]),
+      countAlignedDrawPlacements(
+        draw,
+        [],
+        [
+          { id: 'ga', name: 'A', entryIds: ['e1', 'e3'] },
+          { id: 'gb', name: 'B', entryIds: [] },
+        ],
+      ),
     ).toBe(1);
   });
 

@@ -129,8 +129,7 @@
   gap: var(--space-4);
 }
 
-.structure-fiche__header-lifecycle-toolbar
-  .structure-operational-strip__section-actions-end {
+.structure-fiche__header-lifecycle-toolbar .structure-operational-strip__section-actions-end {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;

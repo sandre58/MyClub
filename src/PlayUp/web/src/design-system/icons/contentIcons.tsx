@@ -53,7 +53,7 @@ import {
   Check,
   Pause,
   Play,
-  LocateFixed
+  LocateFixed,
 } from 'lucide-react';
 import type { SVGProps } from 'react';
 import { Icon, LucideIcon, type IconSize } from './Icon';

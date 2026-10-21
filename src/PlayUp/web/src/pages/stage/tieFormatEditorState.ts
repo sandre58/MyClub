@@ -42,7 +42,9 @@ export function roundEffectivelyInherits(
   if (flags.sessionOverride[roundId]) {
     return false;
   }
-  return Boolean(flags.inheritsAtLoad[roundId] || flags.sessionRealigned[roundId]);
+  return Boolean(
+    flags.inheritsAtLoad[roundId] || flags.sessionRealigned[roundId],
+  );
 }
 
 export function isRoundCustomized(

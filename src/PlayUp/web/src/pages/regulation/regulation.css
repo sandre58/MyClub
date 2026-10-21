@@ -182,7 +182,6 @@
   color: var(--color-text-secondary);
 }
 
-
 /* Align with viewportBreakpoints.ts: DS composition ~56rem, page grid ~52rem, phone ~48rem. */
 
 /* -- Phases -- */
@@ -451,4 +450,3 @@
     min-width: 5.5rem;
   }
 }
-

@@ -1,7 +1,4 @@
-import type {
-  OrganizerProblemRead,
-  StructureStageHubSummary,
-} from '../types';
+import type { OrganizerProblemRead, StructureStageHubSummary } from '../types';
 
 /** i18n / presentation fact code (O1: canon when Application sent `problem`). */
 export function organizerProblemPresentationCode(
@@ -22,7 +19,6 @@ export function findStructureIssueProblem(
   }
   return list.find(
     (entry) =>
-      entry.canonCode === issueCode ||
-      entry.transportCode === issueCode,
+      entry.canonCode === issueCode || entry.transportCode === issueCode,
   );
 }

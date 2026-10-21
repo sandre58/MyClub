@@ -76,7 +76,9 @@ describe('structureNavigation', () => {
         stageId: 'stage-1',
         focus: 'rail-attribution',
       }),
-    ).toBe('/competitions/comp-1/structure?stage=stage-1&focus=rail-attribution');
+    ).toBe(
+      '/competitions/comp-1/structure?stage=stage-1&focus=rail-attribution',
+    );
   });
 
   it('parses manual and draw workflow deep-links', () => {

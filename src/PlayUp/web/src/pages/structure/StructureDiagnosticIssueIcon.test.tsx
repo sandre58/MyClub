@@ -16,7 +16,9 @@ describe('StructureDiagnosticIssueIcon', () => {
     );
 
     expect(danger.querySelector('.lucide-circle-alert')).toBeInTheDocument();
-    expect(attention.querySelector('.lucide-triangle-alert')).toBeInTheDocument();
+    expect(
+      attention.querySelector('.lucide-triangle-alert'),
+    ).toBeInTheDocument();
     expect(progress.querySelector('.lucide-package-open')).toBeInTheDocument();
   });
 });

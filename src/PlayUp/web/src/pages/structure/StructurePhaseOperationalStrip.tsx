@@ -34,7 +34,12 @@ import type {
   StructureMatchProductionGauge,
   StructureStageHubSummary,
 } from '../../types';
-import { EmptyState, LoadingState, MutationError, PendingLabel } from '../../ui';
+import {
+  EmptyState,
+  LoadingState,
+  MutationError,
+  PendingLabel,
+} from '../../ui';
 import { StructureDrawReadinessChecklist } from './StructureDrawReadinessChecklist';
 import { StructureOperationalRatioGauge } from './StructureOperationalGauge';
 import type { DrawCtaPoolTone } from './structureDrawCtaPool';
@@ -138,7 +143,8 @@ type DematerializeMutationResult = UseMutationResult<
 
 type StripSectionKind = 'places' | 'draw' | 'matches';
 
-export type StructureOperationalStripLayoutVariant = 'composition' | 'aside-matchs';
+export type StructureOperationalStripLayoutVariant =
+  'composition' | 'aside-matchs';
 
 function RatioAside({
   current,
@@ -174,9 +180,13 @@ function RatioAside({
         </span>
       ) : (
         <span className="structure-operational-strip__ratio">
-          <span className="structure-operational-strip__ratio-filled">{current}</span>
+          <span className="structure-operational-strip__ratio-filled">
+            {current}
+          </span>
           <span className="structure-operational-strip__ratio-sep">/</span>
-          <span className="structure-operational-strip__ratio-cap">{capacity}</span>
+          <span className="structure-operational-strip__ratio-cap">
+            {capacity}
+          </span>
         </span>
       )}
       <span className="structure-operational-strip__ratio-label">{label}</span>
@@ -184,13 +194,7 @@ function RatioAside({
   );
 }
 
-function MetricRow({
-  aside,
-  meter,
-}: {
-  aside: ReactNode;
-  meter: ReactNode;
-}) {
+function MetricRow({ aside, meter }: { aside: ReactNode; meter: ReactNode }) {
   return (
     <div className="structure-operational-strip__metric-row">
       {aside}
@@ -212,7 +216,9 @@ function MetricGaugeBlock({
 }) {
   const messageNode =
     typeof message === 'string' ? (
-      <StripOperationalMessage kind={messageKind}>{message}</StripOperationalMessage>
+      <StripOperationalMessage kind={messageKind}>
+        {message}
+      </StripOperationalMessage>
     ) : (
       message
     );
@@ -283,7 +289,8 @@ export function StructurePhaseOperationalStrip({
   const { t: tActions } = useTranslation('actions');
   const { t: tCommon } = useTranslation('common');
   const queryClient = useQueryClient();
-  const [dematerializeConfirmOpen, setDematerializeConfirmOpen] = useState(false);
+  const [dematerializeConfirmOpen, setDematerializeConfirmOpen] =
+    useState(false);
   const [materializeConfirmOpen, setMaterializeConfirmOpen] = useState(false);
 
   const materialize = stage.materialize;
@@ -304,7 +311,9 @@ export function StructurePhaseOperationalStrip({
       notify.success(
         result.alreadyComplete
           ? t('fiche.materialize.successAlreadyComplete')
-          : t('fiche.materialize.successCreated', { count: result.createdCount }),
+          : t('fiche.materialize.successCreated', {
+              count: result.createdCount,
+            }),
       );
       scheduleStructureRefresh(queryClient, competitionId, ['hubStageShell'], {
         stageId: stage.stageId,
@@ -337,7 +346,9 @@ export function StructurePhaseOperationalStrip({
         );
       } else {
         notify.success(
-          t('fiche.dematerialize.successRemoved', { count: result.removedMatchCount }),
+          t('fiche.dematerialize.successRemoved', {
+            count: result.removedMatchCount,
+          }),
         );
       }
       setDematerializeConfirmOpen(false);
@@ -385,15 +396,16 @@ export function StructurePhaseOperationalStrip({
   const sectionIndex = (kind: StripSectionKind) =>
     visibleSections.indexOf(kind) + 1;
 
-  const placesColumn = showPlaces && placement ? (
-    <PlacesColumn
-      index={sectionIndex('places')}
-      titleChipRefreshing={structureHubBackgroundRefresh}
-      titlePresentation={placesTitlePresentation}
-      structureHubBackgroundRefresh={structureHubBackgroundRefresh}
-      {...placement}
-    />
-  ) : null;
+  const placesColumn =
+    showPlaces && placement ? (
+      <PlacesColumn
+        index={sectionIndex('places')}
+        titleChipRefreshing={structureHubBackgroundRefresh}
+        titlePresentation={placesTitlePresentation}
+        structureHubBackgroundRefresh={structureHubBackgroundRefresh}
+        {...placement}
+      />
+    ) : null;
 
   const drawColumn =
     showDraw && placement ? (
@@ -451,7 +463,9 @@ export function StructurePhaseOperationalStrip({
       <div
         className="structure-operational-strip"
         data-layout-variant={layoutVariant}
-        data-places-strip-layout={compositionStack ? placesStripLayout : undefined}
+        data-places-strip-layout={
+          compositionStack ? placesStripLayout : undefined
+        }
         data-section-count={visibleSections.length}
         aria-busy={structureHubBackgroundRefresh || undefined}
         style={
@@ -466,12 +480,15 @@ export function StructurePhaseOperationalStrip({
       >
         {stripSections}
       </div>
-      {materialize && shouldConfirmCupMaterializeWithIncompleteEntryRound(materialize) ? (
+      {materialize &&
+      shouldConfirmCupMaterializeWithIncompleteEntryRound(materialize) ? (
         <ConfirmDialog
           open={materializeConfirmOpen}
           title={t('fiche.materialize.confirmIncompleteEntryRound.title')}
           message={t('fiche.materialize.confirmIncompleteEntryRound.message')}
-          confirmLabel={t('fiche.materialize.confirmIncompleteEntryRound.confirm')}
+          confirmLabel={t(
+            'fiche.materialize.confirmIncompleteEntryRound.confirm',
+          )}
           cancelLabel={tCommon('cancel')}
           closeLabel={tCommon('close')}
           confirmPending={materializeMutation.isPending}
@@ -553,9 +570,7 @@ function PlacesColumn(
     props.occupiedPlacesCount === 0 &&
     (drawLaunchable || props.drawExecutionBadge === 'ToLaunch');
   const occupancyTone =
-    !unknownCapacity &&
-    capacity != null &&
-    props.occupiedPlacesCount != null
+    !unknownCapacity && capacity != null && props.occupiedPlacesCount != null
       ? resolvePlaceOccupancyTone(props.occupiedPlacesCount, capacity, {
           drawRulesEngaged,
           drawLaunchable,
@@ -648,7 +663,11 @@ function PlacesColumn(
           />
           {props.canManualPlace ? (
             <div className="structure-operational-strip__section-actions">
-              <button type="button" className={secondaryBtn} onClick={props.onManualPlace}>
+              <button
+                type="button"
+                className={secondaryBtn}
+                onClick={props.onManualPlace}
+              >
                 <PersonIcon size="sm" />
                 {t('fiche.manualPlacementCta')}
               </button>
@@ -720,7 +739,10 @@ function DrawColumn(
               onClick={props.onDeactivateDraw}
             >
               {props.deactivateDrawPending ? (
-                <span className="ds-spinner ds-spinner--sm" aria-hidden="true" />
+                <span
+                  className="ds-spinner ds-spinner--sm"
+                  aria-hidden="true"
+                />
               ) : (
                 <TrashIcon size="sm" />
               )}
@@ -748,7 +770,8 @@ function DrawColumn(
       </StripOperationalMessage>
     ) : null;
 
-  const drawInitialLoading = props.showDrawCta && props.drawOperationalReady === false;
+  const drawInitialLoading =
+    props.showDrawCta && props.drawOperationalReady === false;
   const drawUpdatingLabel = t('fiche.operational.draw.loading');
 
   const compositionDrawDeactivate = (
@@ -1313,8 +1336,10 @@ function MatchesColumn({
     materialize != null &&
     shouldConfirmCupMaterializeWithIncompleteEntryRound(materialize);
 
-  const materializeDisabledTitle =
-    matchProductionMaterializeDisabledCaption(stage, t);
+  const materializeDisabledTitle = matchProductionMaterializeDisabledCaption(
+    stage,
+    t,
+  );
   const dematerializeDisabledTitle =
     matchProductionDematerializeDisabledCaption(stage, t);
 
@@ -1338,10 +1363,9 @@ function MatchesColumn({
 
   let productionGauge: ReactNode = null;
 
-  const swissGuidanceOnly =
-    asideStripContent.showSwissGuidanceOnly
-      ? resolveSwissMatchsGuidance(stage)
-      : null;
+  const swissGuidanceOnly = asideStripContent.showSwissGuidanceOnly
+    ? resolveSwissMatchsGuidance(stage)
+    : null;
 
   if (showAsideProductionBody) {
     if (frozenPartial != null) {
@@ -1370,7 +1394,9 @@ function MatchesColumn({
                 <StructureOperationalRatioGauge
                   current={frozenPartial.current}
                   capacity={frozenPartial.capacity}
-                  caption={t('fiche.operational.production.meterCaptionMatches')}
+                  caption={t(
+                    'fiche.operational.production.meterCaptionMatches',
+                  )}
                   ariaLabel={t('fiche.operational.production.meterAria')}
                   poolTone={frozenPartialPoolTone}
                   layout="trackOnly"
@@ -1439,20 +1465,18 @@ function MatchesColumn({
   }
 
   const followUpMessage =
-    hubProduction?.followUp != null
-      ? (
-        <div className="structure-operational-strip__production-follow-up">
-          <StripOperationalMessage
-            kind={mapMessageKind(hubProduction.followUp.messageKind)}
-          >
-            {resolveMatchProductionFollowUpText(
-              t,
-              hubProduction.followUp.messageCode,
-            )}
-          </StripOperationalMessage>
-        </div>
-      )
-      : null;
+    hubProduction?.followUp != null ? (
+      <div className="structure-operational-strip__production-follow-up">
+        <StripOperationalMessage
+          kind={mapMessageKind(hubProduction.followUp.messageKind)}
+        >
+          {resolveMatchProductionFollowUpText(
+            t,
+            hubProduction.followUp.messageCode,
+          )}
+        </StripOperationalMessage>
+      </div>
+    ) : null;
 
   const prerequisiteGaugeSection =
     prerequisiteGauge != null
@@ -1471,33 +1495,27 @@ function MatchesColumn({
     frozenPartial == null &&
     materialize &&
     gaugeRatio == null &&
-    prerequisiteGauge == null
-      ? (
-        <StripOperationalMessage kind="attention">
-          {presentation === 'blocked'
-            ? materializeDisabledCaption(materialize, t, stage)
-            : t('fiche.operational.production.emptyStructuralTitle')}
-        </StripOperationalMessage>
-      )
-      : null;
+    prerequisiteGauge == null ? (
+      <StripOperationalMessage kind="attention">
+        {presentation === 'blocked'
+          ? materializeDisabledCaption(materialize, t, stage)
+          : t('fiche.operational.production.emptyStructuralTitle')}
+      </StripOperationalMessage>
+    ) : null;
 
   const asideCompactProblemSlot =
-    asideMatchsTile && asideBlockedCompactMessage
-      ? (
-        <div className="structure-operational-strip__aside-problem">
-          {asideBlockedCompactMessage}
-        </div>
-      )
-      : null;
+    asideMatchsTile && asideBlockedCompactMessage ? (
+      <div className="structure-operational-strip__aside-problem">
+        {asideBlockedCompactMessage}
+      </div>
+    ) : null;
 
   const asidePrerequisiteSlot =
-    asideMatchsTile && prerequisiteGaugeSection
-      ? (
-        <div className="structure-operational-strip__aside-problem">
-          {prerequisiteGaugeSection}
-        </div>
-      )
-      : null;
+    asideMatchsTile && prerequisiteGaugeSection ? (
+      <div className="structure-operational-strip__aside-problem">
+        {prerequisiteGaugeSection}
+      </div>
+    ) : null;
 
   const stripPrerequisiteSlot =
     !asideMatchsTile && prerequisiteGaugeSection != null
@@ -1505,90 +1523,92 @@ function MatchesColumn({
       : null;
 
   const productionLeadingActions =
-    asideStripContent.showProductionLeadingActions
-      ? (
+    asideStripContent.showProductionLeadingActions ? (
       <>
-        {showMaterializeCta ? (
-          (() => {
-            const label = matchProductionMaterializeActionLabel(stage, tActions);
-            const disabled =
-              !matchProductionMaterializeEnabled(stage) ||
-              materializeMutation.isPending;
-            const button = (
-              <button
-                type="button"
-                className={materializeBtnClass}
-                disabled={disabled}
-                onClick={requestMaterialize}
-              >
-                {materializeMutation.isPending ? (
-                  <PendingLabel>{label}</PendingLabel>
-                ) : (
-                  <>
-                    <CreateMatchesIcon size="sm" />
-                    {label}
-                  </>
-                )}
-              </button>
-            );
-            const wrapClass =
-              'structure-operational-tile__action-wrap structure-operational-strip__materialize-action-wrap';
-            return disabled && materializeDisabledTitle ? (
-              <Tooltip content={materializeDisabledTitle}>
+        {showMaterializeCta
+          ? (() => {
+              const label = matchProductionMaterializeActionLabel(
+                stage,
+                tActions,
+              );
+              const disabled =
+                !matchProductionMaterializeEnabled(stage) ||
+                materializeMutation.isPending;
+              const button = (
+                <button
+                  type="button"
+                  className={materializeBtnClass}
+                  disabled={disabled}
+                  onClick={requestMaterialize}
+                >
+                  {materializeMutation.isPending ? (
+                    <PendingLabel>{label}</PendingLabel>
+                  ) : (
+                    <>
+                      <CreateMatchesIcon size="sm" />
+                      {label}
+                    </>
+                  )}
+                </button>
+              );
+              const wrapClass =
+                'structure-operational-tile__action-wrap structure-operational-strip__materialize-action-wrap';
+              return disabled && materializeDisabledTitle ? (
+                <Tooltip content={materializeDisabledTitle}>
+                  <span className={wrapClass}>{button}</span>
+                </Tooltip>
+              ) : (
                 <span className={wrapClass}>{button}</span>
-              </Tooltip>
-            ) : (
-              <span className={wrapClass}>{button}</span>
-            );
-          })()
-        ) : null}
-        {showDematerializeCta ? (
-          (() => {
-            const disabled =
-              !matchProductionDematerializeEnabled(stage) ||
-              dematerializeMutation.isPending;
-            const iconOnly = showMaterializeCta;
-            const button = (
-              <button
-                type="button"
-                className={
-                  iconOnly
-                    ? 'ds-btn ds-btn--destructive ds-btn--sm structure-operational-strip__dematerialize-btn structure-operational-strip__dematerialize-btn--icon'
-                    : 'ds-btn ds-btn--destructive ds-btn--sm structure-operational-strip__dematerialize-btn structure-operational-strip__dematerialize-btn--full'
-                }
-                disabled={disabled}
-                aria-label={dematerializeTitle}
-                onClick={() => setDematerializeConfirmOpen(true)}
-              >
-                {dematerializeMutation.isPending ? (
-                  <PendingLabel>{dematerializeTitle}</PendingLabel>
-                ) : iconOnly ? (
-                  <TrashIcon size="sm" aria-hidden="true" />
-                ) : (
-                  <>
-                    <TrashIcon size="sm" aria-hidden="true" />
-                    {dematerializeTitle}
-                  </>
-                )}
-              </button>
-            );
-            return disabled && dematerializeDisabledTitle ? (
-              <Tooltip content={dematerializeDisabledTitle}>
-                <span
+              );
+            })()
+          : null}
+        {showDematerializeCta
+          ? (() => {
+              const disabled =
+                !matchProductionDematerializeEnabled(stage) ||
+                dematerializeMutation.isPending;
+              const iconOnly = showMaterializeCta;
+              const button = (
+                <button
+                  type="button"
                   className={
                     iconOnly
-                      ? 'structure-operational-tile__action-wrap structure-operational-strip__dematerialize-icon-wrap'
-                      : 'structure-operational-tile__action-wrap structure-operational-strip__dematerialize-full-wrap'
+                      ? 'ds-btn ds-btn--destructive ds-btn--sm structure-operational-strip__dematerialize-btn structure-operational-strip__dematerialize-btn--icon'
+                      : 'ds-btn ds-btn--destructive ds-btn--sm structure-operational-strip__dematerialize-btn structure-operational-strip__dematerialize-btn--full'
                   }
+                  disabled={disabled}
+                  aria-label={dematerializeTitle}
+                  onClick={() => setDematerializeConfirmOpen(true)}
                 >
-                  {button}
-                </span>
-              </Tooltip>
-            ) : (
-              button
-            );
-          })()
-        ) : null}
+                  {dematerializeMutation.isPending ? (
+                    <PendingLabel>{dematerializeTitle}</PendingLabel>
+                  ) : iconOnly ? (
+                    <TrashIcon size="sm" aria-hidden="true" />
+                  ) : (
+                    <>
+                      <TrashIcon size="sm" aria-hidden="true" />
+                      {dematerializeTitle}
+                    </>
+                  )}
+                </button>
+              );
+              return disabled && dematerializeDisabledTitle ? (
+                <Tooltip content={dematerializeDisabledTitle}>
+                  <span
+                    className={
+                      iconOnly
+                        ? 'structure-operational-tile__action-wrap structure-operational-strip__dematerialize-icon-wrap'
+                        : 'structure-operational-tile__action-wrap structure-operational-strip__dematerialize-full-wrap'
+                    }
+                  >
+                    {button}
+                  </span>
+                </Tooltip>
+              ) : (
+                button
+              );
+            })()
+          : null}
       </>
     ) : null;
 
@@ -1614,14 +1634,12 @@ function MatchesColumn({
   let matchesContent: ReactNode;
 
   if (stage.status === 'Draft') {
-    matchesContent = omitLifecycle
-      ? null
-      : (
-        <StructurePhaseDraftMatchsPrepare
-          competitionId={competitionId}
-          stage={stage}
-        />
-      );
+    matchesContent = omitLifecycle ? null : (
+      <StructurePhaseDraftMatchsPrepare
+        competitionId={competitionId}
+        stage={stage}
+      />
+    );
   } else if (stage.status === 'Completed') {
     const progress = stage.lifecycle?.matchProgress;
     matchesContent =
@@ -1682,9 +1700,7 @@ function MatchesColumn({
           {productionErrors}
           {exploitationGauge}
           {omitLifecycle && productionLeadingActions ? (
-            <div
-              className="structure-operational-strip__production-actions structure-operational-strip__production-actions--tile"
-            >
+            <div className="structure-operational-strip__production-actions structure-operational-strip__production-actions--tile">
               {productionLeadingActions}
             </div>
           ) : null}

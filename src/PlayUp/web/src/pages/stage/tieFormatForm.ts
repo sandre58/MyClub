@@ -43,7 +43,9 @@ export function cloneTie(form: TieFormState): TieFormState {
   return { ...stableTie(form) };
 }
 
-export function toRequest(form: TieFormState): ReplaceStageDefaultTieFormatRequest {
+export function toRequest(
+  form: TieFormState,
+): ReplaceStageDefaultTieFormatRequest {
   const stable = stableTie(form);
   return {
     clear: false,

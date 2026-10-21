@@ -102,7 +102,9 @@ describe('matchsColumnVisibility', () => {
   });
 
   it('hides construction frozen and unmaterialized inline copy', () => {
-    expect(shouldShowPrimaryBlockMessage('Draft', 'ConstructionFrozen')).toBe(false);
+    expect(shouldShowPrimaryBlockMessage('Draft', 'ConstructionFrozen')).toBe(
+      false,
+    );
     expect(
       shouldShowPrimaryBlockMessage('Ready', 'UnmaterializedConfrontations'),
     ).toBe(false);
@@ -160,32 +162,42 @@ describe('matchsColumnVisibility', () => {
 
 describe('resolveLifecycleAnticipatedMessage', () => {
   it('resolves Attribution prepare gate copy', () => {
-    expect(resolveLifecycleAnticipatedMessage(tStructure, 'Attribution')).toContain(
-      'attribution',
-    );
+    expect(
+      resolveLifecycleAnticipatedMessage(tStructure, 'Attribution'),
+    ).toContain('attribution');
   });
 
   it('resolves known wire codes from problems.lifecycle', () => {
-    expect(resolveLifecycleAnticipatedMessage(tStructure, 'Places')).toMatch(/composition|pool/i);
-    expect(resolveLifecycleAnticipatedMessage(tStructure, 'NotInInventory')).toContain(
-      'unavailable',
+    expect(resolveLifecycleAnticipatedMessage(tStructure, 'Places')).toMatch(
+      /composition|pool/i,
     );
+    expect(
+      resolveLifecycleAnticipatedMessage(tStructure, 'NotInInventory'),
+    ).toContain('unavailable');
   });
 
   it('uses problem canon when lifecycle transport is an aggregate', () => {
-    const msg = resolveLifecycleAnticipatedMessage(tStructure, 'StructureGraphInvalid', {
-      canonCode: 'CycleDetected',
-      semanticLevel: 'Gate',
-      blockedActions: ['PrepareStage'],
-      transportCode: 'StructureGraphInvalid',
-    });
+    const msg = resolveLifecycleAnticipatedMessage(
+      tStructure,
+      'StructureGraphInvalid',
+      {
+        canonCode: 'CycleDetected',
+        semanticLevel: 'Gate',
+        blockedActions: ['PrepareStage'],
+        transportCode: 'StructureGraphInvalid',
+      },
+    );
     expect(msg).toBe(enStructure.problems.lifecycle.CycleDetected);
   });
 });
 
 describe('resolveDraftPrepareBodyMessage', () => {
   it('uses draft detail for StageNotReady block', () => {
-    const msg = resolveDraftPrepareBodyMessage(tStructure, true, 'StageNotReady');
+    const msg = resolveDraftPrepareBodyMessage(
+      tStructure,
+      true,
+      'StageNotReady',
+    );
     expect(msg).toBe(enStructure.lifecycle.state.Draft.detail);
   });
 
@@ -209,7 +221,9 @@ describe('normalizeLifecycleMutationError', () => {
       new ApiError(400, 'x', undefined, 'Application.SomeFutureCode'),
     );
     expect(normalized.wireCode).toBe('Application.SomeFutureCode');
-    expect(normalized.messageKey).toBe('problems.mutation.Application.SomeFutureCode');
+    expect(normalized.messageKey).toBe(
+      'problems.mutation.Application.SomeFutureCode',
+    );
   });
 
   it('maps prepare gate Application codes to problems.lifecycle copy', () => {
@@ -227,41 +241,61 @@ describe('normalizeLifecycleMutationError', () => {
 
 describe('resolveLifecycleMutationMessageKey', () => {
   it('maps known lifecycle Application failures to lifecycle keys', () => {
-    expect(resolveLifecycleMutationMessageKey('Application.StartBlockedUnmaterialized')).toBe(
-      'problems.lifecycle.UnmaterializedConfrontations',
-    );
-    expect(resolveLifecycleMutationMessageKey('Application.StageExploitationClosed')).toBe(
-      'problems.lifecycle.CompetitionClosed',
-    );
+    expect(
+      resolveLifecycleMutationMessageKey(
+        'Application.StartBlockedUnmaterialized',
+      ),
+    ).toBe('problems.lifecycle.UnmaterializedConfrontations');
+    expect(
+      resolveLifecycleMutationMessageKey('Application.StageExploitationClosed'),
+    ).toBe('problems.lifecycle.CompetitionClosed');
     expect(resolveLifecycleMutationMessageKey('Application.Attribution')).toBe(
       'problems.lifecycle.Attribution',
     );
-    expect(resolveLifecycleMutationMessageKey('Application.ReadyConsumerWouldBreak')).toBe(
-      'problems.lifecycle.ReadyConsumerWouldBreak',
-    );
-    expect(resolveLifecycleMutationMessageKey('Application.AppliedDrawPoolChangeBlocked')).toBe(
-      'problems.lifecycle.AppliedDrawPoolChangeBlocked',
-    );
-    expect(resolveLifecycleMutationMessageKey('Application.AppliedDrawSlotPlacementProtected')).toBe(
-      'problems.lifecycle.AppliedDrawSlotPlacementProtected',
-    );
+    expect(
+      resolveLifecycleMutationMessageKey('Application.ReadyConsumerWouldBreak'),
+    ).toBe('problems.lifecycle.ReadyConsumerWouldBreak');
+    expect(
+      resolveLifecycleMutationMessageKey(
+        'Application.AppliedDrawPoolChangeBlocked',
+      ),
+    ).toBe('problems.lifecycle.AppliedDrawPoolChangeBlocked');
+    expect(
+      resolveLifecycleMutationMessageKey(
+        'Application.AppliedDrawSlotPlacementProtected',
+      ),
+    ).toBe('problems.lifecycle.AppliedDrawSlotPlacementProtected');
   });
 
   it('resolves G-B-3 pool change refusal without mutation unknown', () => {
     const msg = resolveLifecycleMutationMessage(
       tStructure,
-      new ApiError(409, 'blocked', undefined, 'Application.AppliedDrawPoolChangeBlocked'),
+      new ApiError(
+        409,
+        'blocked',
+        undefined,
+        'Application.AppliedDrawPoolChangeBlocked',
+      ),
     );
-    expect(msg).toBe(enStructure.problems.lifecycle.AppliedDrawPoolChangeBlocked);
+    expect(msg).toBe(
+      enStructure.problems.lifecycle.AppliedDrawPoolChangeBlocked,
+    );
     expect(msg).not.toBe(enStructure.problems.mutation._unknown);
   });
 
   it('resolves B1 slot placement refusal without mutation unknown', () => {
     const msg = resolveLifecycleMutationMessage(
       tStructure,
-      new ApiError(409, 'blocked', undefined, 'Application.AppliedDrawSlotPlacementProtected'),
+      new ApiError(
+        409,
+        'blocked',
+        undefined,
+        'Application.AppliedDrawSlotPlacementProtected',
+      ),
     );
-    expect(msg).toBe(enStructure.problems.lifecycle.AppliedDrawSlotPlacementProtected);
+    expect(msg).toBe(
+      enStructure.problems.lifecycle.AppliedDrawSlotPlacementProtected,
+    );
     expect(msg).not.toBe(enStructure.problems.mutation._unknown);
   });
 
@@ -312,7 +346,12 @@ describe('resolveLifecycleMutationMessage', () => {
   it('uses lifecycle copy for mapped prepare POST failures', () => {
     const msg = resolveLifecycleMutationMessage(
       tStructure,
-      new ApiError(400, 'cycle', undefined, 'Application.StructureCycleDetected'),
+      new ApiError(
+        400,
+        'cycle',
+        undefined,
+        'Application.StructureCycleDetected',
+      ),
     );
     expect(msg).toBe(enStructure.problems.lifecycle.CycleDetected);
   });
@@ -327,7 +366,9 @@ describe('resolveLifecycleMutationMessage', () => {
   });
 
   it('returns client Error message for non-ApiError', () => {
-    expect(resolveLifecycleMutationMessage(tStructure, new Error('network'))).toBe('network');
+    expect(
+      resolveLifecycleMutationMessage(tStructure, new Error('network')),
+    ).toBe('network');
   });
 });
 
@@ -341,8 +382,16 @@ describe('problems i18n parity', () => {
     for (const code of longKeys) {
       expect(enStructure.graph.issuesShort).toHaveProperty(code);
       expect(frStructure.graph.issuesShort).toHaveProperty(code);
-      expect(enStructure.graph.issuesShort[code as keyof typeof enStructure.graph.issuesShort]).toBeTruthy();
-      expect(frStructure.graph.issuesShort[code as keyof typeof frStructure.graph.issuesShort]).toBeTruthy();
+      expect(
+        enStructure.graph.issuesShort[
+          code as keyof typeof enStructure.graph.issuesShort
+        ],
+      ).toBeTruthy();
+      expect(
+        frStructure.graph.issuesShort[
+          code as keyof typeof frStructure.graph.issuesShort
+        ],
+      ).toBeTruthy();
     }
   });
 

@@ -316,7 +316,10 @@ export function StructureCompositionDialog({
                   }
                   footer={
                     statusLabel ? (
-                      <p className="structure-composition__status" role="status">
+                      <p
+                        className="structure-composition__status"
+                        role="status"
+                      >
                         {statusLabel}
                       </p>
                     ) : null

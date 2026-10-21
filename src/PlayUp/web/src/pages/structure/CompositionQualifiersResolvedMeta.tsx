@@ -15,7 +15,9 @@ export function CompositionQualifiersResolvedMeta({
   const { t } = useTranslation('structure');
 
   if (!ready) {
-    return <span className="structure-phase-composition__qual-resolved-meta">…</span>;
+    return (
+      <span className="structure-phase-composition__qual-resolved-meta">…</span>
+    );
   }
 
   const resolutionLabel = t('composition.gauge.resolvedQualifiedCaption');

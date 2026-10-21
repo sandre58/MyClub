@@ -47,8 +47,11 @@ export function AttentionDrawer({
   const [mounted, setMounted] = useState(open);
   const [visible, setVisible] = useState(open);
 
-  const { competitionId, stages, state: contextState } =
-    useShellCompetitionContext();
+  const {
+    competitionId,
+    stages,
+    state: contextState,
+  } = useShellCompetitionContext();
 
   const {
     data: attentionData,

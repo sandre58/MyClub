@@ -84,7 +84,10 @@ export function StructureDrawReadinessChecklist({
                 <StructureIssueIcon size="sm" />
               )}
             </span>
-            <span className="structure-draw-readiness__label" aria-hidden="true">
+            <span
+              className="structure-draw-readiness__label"
+              aria-hidden="true"
+            >
               {factualLabel}
             </span>
           </li>

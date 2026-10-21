@@ -72,7 +72,9 @@ describe('match production strip (assembler fixtures)', () => {
       section.querySelector('.structure-operational-strip__ratio-filled'),
     ).toHaveTextContent('1');
     expect(
-      within(section).getByText(/production figée tant que la phase est en cours/i),
+      within(section).getByText(
+        /production figée tant que la phase est en cours/i,
+      ),
     ).toBeInTheDocument();
     expect(
       within(section).queryByRole('button', { name: /Créer les matchs/i }),

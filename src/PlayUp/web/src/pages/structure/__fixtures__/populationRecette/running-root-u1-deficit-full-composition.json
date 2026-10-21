@@ -14,12 +14,8 @@
   "withdrawnEntryCount": 0,
   "isRosterComplete": true,
   "structureIssues": [],
-  "presentedIssueCodes": [
-    "PopulationShortfall"
-  ],
-  "presentedOnlyIssueCodes": [
-    "PopulationShortfall"
-  ],
+  "presentedIssueCodes": ["PopulationShortfall"],
+  "presentedOnlyIssueCodes": ["PopulationShortfall"],
   "materializeDisabledReason": "StructureNotMutable",
   "lifecycleTransitionDisabledReasonCode": null
 }

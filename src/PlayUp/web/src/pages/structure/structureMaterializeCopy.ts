@@ -67,10 +67,7 @@ export function isMaterializeStructureMutable(
 }
 
 export type MaterializePresentation =
-  | 'actionable'
-  | 'terminal'
-  | 'frozen'
-  | 'blocked';
+  'actionable' | 'terminal' | 'frozen' | 'blocked';
 
 /**
  * Presentation branch from read counts + lifecycle status.
@@ -139,7 +136,10 @@ export function showMaterializeActionBlock(
 export function materializeFrozenRemainingCount(
   materialize: StructureMaterialize,
 ): number {
-  return Math.max(0, materialize.determinedCount - materialize.materializedCount);
+  return Math.max(
+    0,
+    materialize.determinedCount - materialize.materializedCount,
+  );
 }
 
 export function showMaterializeFrozenRemainingBanner(
@@ -147,7 +147,8 @@ export function showMaterializeFrozenRemainingBanner(
   materialize: StructureMaterialize,
 ): boolean {
   return (
-    presentation === 'frozen' && materializeFrozenRemainingCount(materialize) > 0
+    presentation === 'frozen' &&
+    materializeFrozenRemainingCount(materialize) > 0
   );
 }
 
@@ -185,7 +186,9 @@ export function cupEntryRoundBlocksPhaseStart(
   stage: Pick<StructureStageHubSummary, 'status'>,
   materialize: StructureMaterialize | null | undefined,
 ): boolean {
-  return stage.status === 'Ready' && cupCanonicalEntryRoundIncomplete(materialize);
+  return (
+    stage.status === 'Ready' && cupCanonicalEntryRoundIncomplete(materialize)
+  );
 }
 
 export function shouldConfirmCupMaterializeWithIncompleteEntryRound(

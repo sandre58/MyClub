@@ -343,7 +343,9 @@ describe('StructurePage Structure hub', () => {
       await screen.findByRole('heading', { name: 'Structure' }),
     ).toBeInTheDocument();
     // Birth (0 phase): empty state owns UX — no readiness banner.
-    expect(screen.queryByText(/Structure à finaliser/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Structure à finaliser/i),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Voir les problèmes/i }),
     ).not.toBeInTheDocument();
@@ -1007,14 +1009,14 @@ describe('StructurePage Structure hub', () => {
 
     renderStructurePage();
 
-    expect(
-      await screen.findByText(/Anomalies à traiter/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/Anomalies à traiter/i)).toBeInTheDocument();
     expect(screen.queryByText(/1 problème identifié/i)).not.toBeInTheDocument();
     expect(
       screen.queryByRole('link', { name: /Corriger la qualification/i }),
     ).not.toBeInTheDocument();
-    expect(screen.queryByText(/Pots de tirage manquants/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Pots de tirage manquants/i),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Voir les problèmes/i }),
     ).not.toBeInTheDocument();
@@ -1170,7 +1172,9 @@ describe('StructurePage Structure hub', () => {
       screen.getByRole('button', { name: /Ajouter une phase/i }),
     ).toBeDisabled();
     // Teams shortfall is not a Structure banner signal (Équipes owns correction).
-    expect(screen.queryByText(/Structure à finaliser/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Structure à finaliser/i),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText(/équipes à compléter/i)).not.toBeInTheDocument();
   });
 
@@ -1332,9 +1336,7 @@ describe('StructurePage Structure hub', () => {
 
     renderStructurePage();
 
-    expect(
-      await screen.findByText(/^Matchs à créer$/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/^Matchs à créer$/i)).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /Créer les matchs/i }),
     ).toBeInTheDocument();
@@ -1381,9 +1383,7 @@ describe('StructurePage Structure hub', () => {
 
     renderStructurePage();
 
-    expect(
-      await screen.findByText(/À préparer · Finale/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/À préparer · Finale/i)).toBeInTheDocument();
   });
 
   it('shows phase lifecycle in fiche header without Matchs tile in Draft', async () => {
@@ -1521,9 +1521,7 @@ describe('StructurePage Structure hub', () => {
 
     renderStructurePage();
 
-    expect(
-      await screen.findByText(/Structure prête/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/Structure prête/i)).toBeInTheDocument();
   });
 
   it('does not show calm PageHead when hubNextStep is null but a phase is still Draft', async () => {
@@ -1543,7 +1541,9 @@ describe('StructurePage Structure hub', () => {
 
     renderStructurePage();
 
-    expect(await screen.findByRole('heading', { name: 'League' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'League' }),
+    ).toBeInTheDocument();
     expect(screen.queryByText(/Structure prête/i)).not.toBeInTheDocument();
   });
 
@@ -1586,9 +1586,7 @@ describe('StructurePage Structure hub', () => {
 
     renderStructurePage();
 
-    expect(
-      await screen.findByText(/Anomalies à traiter/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/Anomalies à traiter/i)).toBeInTheDocument();
     expect(
       screen.queryByText(/Prête pour les matchs/i),
     ).not.toBeInTheDocument();
@@ -1680,10 +1678,10 @@ describe('StructurePage Structure hub', () => {
 
     renderStructurePage();
 
-    expect(await screen.findByRole('heading', { name: 'Groupes' })).toBeInTheDocument();
     expect(
-      screen.queryByText(/Structure prête/i),
-    ).not.toBeInTheDocument();
+      await screen.findByRole('heading', { name: 'Groupes' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Structure prête/i)).not.toBeInTheDocument();
   });
 
   it('keeps birth empty state when Host reports MissingStructure', async () => {
@@ -1706,7 +1704,9 @@ describe('StructurePage Structure hub', () => {
     renderStructurePage();
 
     expect(await screen.findByText('Aucune phase')).toBeInTheDocument();
-    expect(screen.queryByText(/Structure à finaliser/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Structure à finaliser/i),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Créer la structure/i }),
     ).not.toBeInTheDocument();

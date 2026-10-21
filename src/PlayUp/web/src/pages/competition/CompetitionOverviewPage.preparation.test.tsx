@@ -138,7 +138,9 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
     ).toBeInTheDocument();
     const structure = screen.getByTestId('overview-structure-construction');
     expect(
-      within(structure).queryByRole('button', { name: /Marquer la phase.*comme prête/i }),
+      within(structure).queryByRole('button', {
+        name: /Marquer la phase.*comme prête/i,
+      }),
     ).not.toBeInTheDocument();
     expect(
       screen.getByRole('link', { name: /Ajouter une équipe/i }),
@@ -624,7 +626,9 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
     renderOverviewPage();
 
     await user.click(
-      await screen.findByRole('button', { name: /Marquer la phase.*comme prête/i }),
+      await screen.findByRole('button', {
+        name: /Marquer la phase.*comme prête/i,
+      }),
     );
 
     await waitFor(() => {
@@ -741,7 +745,9 @@ describe('CompetitionOverviewPage — Construction / Préparation', () => {
       within(structure).getByRole('link', { name: /Configurer la structure/i }),
     ).toBeInTheDocument();
     expect(
-      within(structure).queryByRole('button', { name: /Marquer la phase.*comme prête/i }),
+      within(structure).queryByRole('button', {
+        name: /Marquer la phase.*comme prête/i,
+      }),
     ).not.toBeInTheDocument();
     expect(
       within(structure).queryByText(/matchs? à créer/i),

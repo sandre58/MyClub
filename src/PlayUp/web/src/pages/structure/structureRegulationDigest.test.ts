@@ -7,9 +7,9 @@ describe('confrontationFormatScopeHintKey', () => {
     expect(
       confrontationFormatScopeHintKey({ confrontationSegments: null }),
     ).toBe('fiche.confrontationFormatHint.uniform');
-    expect(
-      confrontationFormatScopeHintKey({ confrontationSegments: [] }),
-    ).toBe('fiche.confrontationFormatHint.uniform');
+    expect(confrontationFormatScopeHintKey({ confrontationSegments: [] })).toBe(
+      'fiche.confrontationFormatHint.uniform',
+    );
     expect(
       confrontationFormatScopeHintKey({
         confrontationSegments: [

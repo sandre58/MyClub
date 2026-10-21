@@ -1,4 +1,5 @@
-export type StructureProblemSource = 'lifecycle.anticipated' | 'lifecycle.mutation.api';
+export type StructureProblemSource =
+  'lifecycle.anticipated' | 'lifecycle.mutation.api';
 
 export type NormalizedLifecycleAnticipated = {
   source: 'lifecycle.anticipated';

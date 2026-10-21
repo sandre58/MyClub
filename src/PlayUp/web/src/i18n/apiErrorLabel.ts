@@ -17,6 +17,8 @@ export function apiErrorLabel(error: ApiError): string | undefined {
   if (error.code.includes('.')) {
     return undefined;
   }
-  const stageScoped = i18n.t(`errors:Stage.${error.code}`, { defaultValue: '' });
+  const stageScoped = i18n.t(`errors:Stage.${error.code}`, {
+    defaultValue: '',
+  });
   return stageScoped.length > 0 ? stageScoped : undefined;
 }

@@ -47,10 +47,7 @@ export function CompositionPopulationGauge({
     : ratioTone;
   const poolTone = operationalStripPoolTone(meter.kind, ratioToneForPool);
 
-  const rootClass = [
-    'structure-phase-composition__population-gauge',
-    className,
-  ]
+  const rootClass = ['structure-phase-composition__population-gauge', className]
     .filter(Boolean)
     .join(' ');
 

@@ -98,9 +98,11 @@ function RegulationDigestSection({
         description={bindingHint}
         descriptionClassName={bindingHint ? bindingHintClass : undefined}
         icon={icon}
-        toolbar={onEdit ? (
-          <RegulationEditButton editLabel={editLabel} onEdit={onEdit} />
-        ) : undefined}
+        toolbar={
+          onEdit ? (
+            <RegulationEditButton editLabel={editLabel} onEdit={onEdit} />
+          ) : undefined
+        }
       >
         <RegulationDigestFacts tokens={tokens} ariaLabel={factsAriaLabel} />
         {issues}
@@ -110,7 +112,9 @@ function RegulationDigestSection({
 }
 
 function RegulationDigestStrip({ children }: { children: ReactNode }) {
-  const sections = Children.toArray(children).filter(isValidElement) as ReactElement[];
+  const sections = Children.toArray(children).filter(
+    isValidElement,
+  ) as ReactElement[];
   return (
     <div className="structure-regulation-digest">
       {sections.map((child, index) => (
@@ -195,9 +199,7 @@ export function StructurePhaseRegulationStrip({
         title={t('fiche.tiles.standing')}
         icon={<StandingRulesIcon size="lg" />}
         editLabel={t('fiche.editStanding')}
-        onEdit={
-          canEditStanding || canRebind ? onEditStanding : undefined
-        }
+        onEdit={canEditStanding || canRebind ? onEditStanding : undefined}
         bindingHint={standingHint}
         bindingPhaseSpecific={standingBound === false}
         tokens={buildStandingDigestTokens(stage, tReg)}

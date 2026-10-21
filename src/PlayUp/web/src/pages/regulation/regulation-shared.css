@@ -626,7 +626,6 @@
   font-size: var(--text-body);
 }
 
-
 /* -- Regulation editor dialog (F3) -- */
 .regulation-editor {
   display: flex;
@@ -1049,4 +1048,3 @@
   font-weight: var(--font-weight-bold);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-attention) 80%, transparent);
 }
-

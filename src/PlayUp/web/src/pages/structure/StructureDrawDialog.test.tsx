@@ -885,7 +885,10 @@ describe('StructureDrawDialog', () => {
     );
 
     const queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
     });
     const onClose = vi.fn();
     const { rerender } = render(

@@ -135,7 +135,9 @@ export function listCompositionTeamRows(
         continue;
       }
       seenEntryIds.add(entry.entryId);
-      const fromMap = inboundEntryProvenanceByEntryId(groups).get(entry.entryId);
+      const fromMap = inboundEntryProvenanceByEntryId(groups).get(
+        entry.entryId,
+      );
       rows.push({
         key: entry.entryId,
         kind: 'resolved',
@@ -178,10 +180,7 @@ export function resolveCompositionResolvedGaugeStats(
   if (fromInbound != null && fromInbound.total > 0) {
     return fromInbound;
   }
-  if (
-    engagedPoolFallback != null &&
-    engagedPoolFallback.capacity > 0
-  ) {
+  if (engagedPoolFallback != null && engagedPoolFallback.capacity > 0) {
     return {
       resolved: Math.min(
         engagedPoolFallback.resolved,

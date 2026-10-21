@@ -33,7 +33,9 @@ export function CompositionGaugeRatioLine({
       >
         {current}
       </span>
-      <span className="structure-phase-composition__qual-resolved-meta__sep">/</span>
+      <span className="structure-phase-composition__qual-resolved-meta__sep">
+        /
+      </span>
       <span className="structure-phase-composition__qual-resolved-meta__cap">
         {capacity}
       </span>

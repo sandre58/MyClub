@@ -18,7 +18,10 @@ import {
   structureProgressionSourceContext,
 } from './structureConfrontationDisplay';
 import { qualificationPathVolume } from './structurePopulationVolume';
-import { intentFromApi, summarizeIntentWhoParts } from './structureQualificationDraft';
+import {
+  intentFromApi,
+  summarizeIntentWhoParts,
+} from './structureQualificationDraft';
 import {
   progressionEdgeKeyParts,
   progressionEdgeDestination,

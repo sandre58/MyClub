@@ -2,11 +2,7 @@ import type { StructureStageHubSummary } from '../../types';
 import { swissRoundCounts } from './swissRoundCounts';
 
 export type StructurePhaseHeroStatKey =
-  | 'groups'
-  | 'rounds'
-  | 'matchdays'
-  | 'swiss-rounds'
-  | 'places';
+  'groups' | 'rounds' | 'matchdays' | 'swiss-rounds' | 'places';
 
 export type StructurePhaseHeroStatWire = {
   statKey: StructurePhaseHeroStatKey;
@@ -44,12 +40,11 @@ export function resolveStructurePhaseHeroFacts(
       const isCompleted = stage.status === 'Completed';
       facts.push({
         statKey: 'swiss-rounds',
-        value:
-          isCompleted
-            ? generated
-            : planned != null && planned > 0
-              ? `${generated}/${planned}`
-              : generated,
+        value: isCompleted
+          ? generated
+          : planned != null && planned > 0
+            ? `${generated}/${planned}`
+            : generated,
       });
     }
   }

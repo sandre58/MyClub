@@ -16,7 +16,10 @@ const withActions = (actions: string[]) => ({ actions });
 describe('compositionTilePresentation', () => {
   it('resolves prep for Draft and Ready with affectation edit', () => {
     expect(
-      resolveCompositionTileMode({ status: 'Draft', actions: ['ReplaceAffectationAuthoring'] }),
+      resolveCompositionTileMode({
+        status: 'Draft',
+        actions: ['ReplaceAffectationAuthoring'],
+      }),
     ).toBe('prep');
     expect(
       resolveCompositionTileMode({
@@ -30,23 +33,25 @@ describe('compositionTilePresentation', () => {
     expect(resolveCompositionTileMode({ status: 'Running', actions: [] })).toBe(
       'exploitation',
     );
-    expect(resolveCompositionTileMode({ status: 'Suspended', actions: [] })).toBe(
-      'exploitation',
-    );
-    expect(resolveCompositionTileMode({ status: 'Ready', actions: ['RenameStage'] })).toBe(
-      'exploitation',
-    );
+    expect(
+      resolveCompositionTileMode({ status: 'Suspended', actions: [] }),
+    ).toBe('exploitation');
+    expect(
+      resolveCompositionTileMode({ status: 'Ready', actions: ['RenameStage'] }),
+    ).toBe('exploitation');
   });
 
   it('resolves historical for Completed', () => {
-    expect(resolveCompositionTileMode({ status: 'Completed', actions: [] })).toBe(
-      'historical',
-    );
+    expect(
+      resolveCompositionTileMode({ status: 'Completed', actions: [] }),
+    ).toBe('historical');
   });
 
   it('maps mode to teams source and strip layout', () => {
     expect(resolveTeamsPoolSource('prep')).toBe('authoring');
-    expect(resolveTeamsPoolSource('exploitation')).toBe('runtimeOrUndetermined');
+    expect(resolveTeamsPoolSource('exploitation')).toBe(
+      'runtimeOrUndetermined',
+    );
     expect(resolvePlacesStripLayout('prep')).toBe('full');
     expect(resolvePlacesStripLayout('exploitation')).toBe('compactSummary');
     expect(resolvePlacesStripLayout('historical')).toBe('historical');
@@ -112,15 +117,15 @@ describe('compositionTilePresentation', () => {
   });
 
   it('shouldShowCompositionTeamsSection keeps prep visibility rules', () => {
-    expect(
-      shouldShowCompositionTeamsSection('prep', false, false, false),
-    ).toBe(false);
-    expect(
-      shouldShowCompositionTeamsSection('prep', true, false, false),
-    ).toBe(true);
-    expect(
-      shouldShowCompositionTeamsSection('prep', false, true, false),
-    ).toBe(true);
+    expect(shouldShowCompositionTeamsSection('prep', false, false, false)).toBe(
+      false,
+    );
+    expect(shouldShowCompositionTeamsSection('prep', true, false, false)).toBe(
+      true,
+    );
+    expect(shouldShowCompositionTeamsSection('prep', false, true, false)).toBe(
+      true,
+    );
   });
 
   it('resolveTeamsSectionRuntimePresentation classifies empty and undetermined pools', () => {
@@ -132,7 +137,12 @@ describe('compositionTilePresentation', () => {
       formatKind: 'Groups' as const,
     };
     expect(
-      resolveTeamsSectionRuntimePresentation('exploitation', stageBase, [], null),
+      resolveTeamsSectionRuntimePresentation(
+        'exploitation',
+        stageBase,
+        [],
+        null,
+      ),
     ).toEqual({ kind: 'empty' });
     expect(
       resolveTeamsSectionRuntimePresentation(

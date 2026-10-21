@@ -18,8 +18,8 @@ describe('attentionSeverityTone', () => {
     expect(attentionSeverityToneFromItems([{ severity: 'Warning' }])).toBe(
       'warning',
     );
-    expect(
-      attentionSeverityToneFromSituations([{ nature: 'Warning' }]),
-    ).toBe('warning');
+    expect(attentionSeverityToneFromSituations([{ nature: 'Warning' }])).toBe(
+      'warning',
+    );
   });
 });

@@ -4,14 +4,12 @@ import type { StageStatus, StructureFormatKind } from '../../types';
 import { isNonClassifyingStructurePhase } from './structureStageClassification';
 
 export type StructurePresentationPhaseBucket =
-  | 'Draft'
-  | 'Ready'
-  | 'Running'
-  | 'hidden';
+  'Draft' | 'Ready' | 'Running' | 'hidden';
 
 export type StructurePresentationSeverity = 'hidden' | 'warning' | 'blocking';
 
-export type StructurePresentationTone = 'progress' | 'attention' | 'danger' | null;
+export type StructurePresentationTone =
+  'progress' | 'attention' | 'danger' | null;
 
 export type OperationalImpact = 'unknown' | 'absent' | 'established';
 
@@ -97,11 +95,11 @@ function resolveMatrixCell(
   }
 
   if (
-    code === 'IncompleteEntryRound'
-    || code === 'NoDeterminedConfrontations'
-    || code === 'UnmaterializedConfrontations'
-    || code === 'NoExploitableInitialConfrontations'
-    || code === 'GroupsNotReady'
+    code === 'IncompleteEntryRound' ||
+    code === 'NoDeterminedConfrontations' ||
+    code === 'UnmaterializedConfrontations' ||
+    code === 'NoExploitableInitialConfrontations' ||
+    code === 'GroupsNotReady'
   ) {
     return 'danger';
   }

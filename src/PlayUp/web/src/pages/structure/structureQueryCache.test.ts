@@ -51,9 +51,18 @@ describe('structureQueryCache', () => {
       queryKeys.competitions.structure(competitionId),
       view,
     );
-    const session = beginStructureHubPatch(queryClient, competitionId, ['hub'], stageId);
-    patchStructureViewStage(queryClient, competitionId, stageId, { name: 'Patched' });
-    vi.spyOn(queryClient, 'invalidateQueries').mockRejectedValue(new Error('fail'));
+    const session = beginStructureHubPatch(
+      queryClient,
+      competitionId,
+      ['hub'],
+      stageId,
+    );
+    patchStructureViewStage(queryClient, competitionId, stageId, {
+      name: 'Patched',
+    });
+    vi.spyOn(queryClient, 'invalidateQueries').mockRejectedValue(
+      new Error('fail'),
+    );
 
     const ok = await reconcileStructureHubPatch(queryClient, session);
 

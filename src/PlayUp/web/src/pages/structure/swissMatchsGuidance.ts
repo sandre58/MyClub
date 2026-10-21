@@ -45,7 +45,8 @@ export function resolveSwissMatchsGuidance(
       kind: 'A',
       messageKey: 'fiche.swissGuidance.readyNoRounds',
       messageParams: K > 0 ? { planned: K } : undefined,
-      plannedHintKey: K > 0 ? 'fiche.swissGuidance.plannedRoundsHint' : undefined,
+      plannedHintKey:
+        K > 0 ? 'fiche.swissGuidance.plannedRoundsHint' : undefined,
     };
   }
 

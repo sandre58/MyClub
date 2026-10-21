@@ -11,11 +11,7 @@ import {
 
 /** Business family for Structure header synthesis. */
 export type StructureDiagnosticFamily =
-  | 'graph'
-  | 'feed'
-  | 'capacity'
-  | 'execution'
-  | 'result';
+  'graph' | 'feed' | 'capacity' | 'execution' | 'result';
 
 /** Canonical fiche tile that owns the diagnostic detail. */
 export type StructureDiagnosticTile =
@@ -357,7 +353,8 @@ export function projectPresentedStageIssueCodes(
   codes: readonly string[],
   stage: {
     hasDrawRules: boolean;
-    drawExecutionBadge?: 'ToLaunch' | 'InProgress' | 'ToApply' | 'Applied' | null;
+    drawExecutionBadge?:
+      'ToLaunch' | 'InProgress' | 'ToApply' | 'Applied' | null;
   },
 ): string[] {
   let filtered = [...codes];
@@ -377,9 +374,7 @@ export function projectPresentedStageIssueCodes(
  * Project Analyzer codes to user-facing problem units (Header ↔ fiche same count).
  * AuthoredAward absorbs ExpectedRank when both present.
  */
-export function projectPresentedIssueCodes(
-  codes: readonly string[],
-): string[] {
+export function projectPresentedIssueCodes(codes: readonly string[]): string[] {
   if (codes.includes('AuthoredAwardUnreachable')) {
     return codes.filter((code) => code !== 'ExpectedRankUnreachable');
   }
@@ -410,8 +405,7 @@ export function structureIssueBannersForTile(
 
   if (tile === 'capacity') {
     forTile = forTile.filter(
-      (code) =>
-        code !== 'PopulationShortfall' && code !== 'OverCapacityEdge',
+      (code) => code !== 'PopulationShortfall' && code !== 'OverCapacityEdge',
     );
     if (options?.meterExpressesPopulationAbsence) {
       forTile = forTile.filter((code) => code !== 'NonRootUnfed');

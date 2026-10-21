@@ -31,9 +31,9 @@ const baseStage = (
 
 describe('structureMatchsSectionUi', () => {
   it('hides aside Matchs tile in Draft even when lifecycle applies', () => {
-    expect(shouldShowAsideMatchsTile(baseStage({ status: 'Draft' }), null)).toBe(
-      false,
-    );
+    expect(
+      shouldShowAsideMatchsTile(baseStage({ status: 'Draft' }), null),
+    ).toBe(false);
     expect(shouldShowMatchsSection(baseStage({ status: 'Draft' }))).toBe(true);
   });
 
