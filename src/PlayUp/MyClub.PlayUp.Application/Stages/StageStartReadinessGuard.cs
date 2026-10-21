@@ -49,7 +49,8 @@ internal static class StageStartReadinessGuard
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(matchSummaries);
 
-        if (CupCanonicalEntryRoundStartGate.BlocksStart(stage, competition, competitionStages ?? [stage]))
+        var stages = competitionStages ?? [stage];
+        if (CupEntryRoundPairPlacementGauge.HasIncompleteStartedPairPlacement(competition, stage, stages))
         {
             throw new ApplicationFailureException(
                 "Start is blocked because canonical Cup entry-round pairs are not all placement-complete.",
@@ -59,6 +60,13 @@ internal static class StageStartReadinessGuard
         if (TryGetProductionStartGap(competition, stage, matchSummaries, competitionStages) is { } productionGap)
         {
             ThrowStartBlockedForProductionGap(productionGap);
+        }
+
+        if (CupEntryRoundPairPlacementGauge.HasRemainingCanonicalEntryRoundPairs(competition, stage, stages))
+        {
+            throw new ApplicationFailureException(
+                "Start is blocked because canonical Cup entry-round pairs are not all placement-complete.",
+                ApplicationErrorCodes.StartBlockedIncompleteEntryRound);
         }
 
         if (StageConfrontationMaterializationState.LacksExploitableInitialConfrontations(
@@ -91,7 +99,8 @@ internal static class StageStartReadinessGuard
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(matchSummaries);
 
-        if (CupCanonicalEntryRoundStartGate.BlocksStart(stage, competition, competitionStages ?? [stage]))
+        var stages = competitionStages ?? [stage];
+        if (CupEntryRoundPairPlacementGauge.HasIncompleteStartedPairPlacement(competition, stage, stages))
         {
             return DisabledIncompleteEntryRound;
         }
@@ -99,6 +108,11 @@ internal static class StageStartReadinessGuard
         if (TryGetProductionStartGap(competition, stage, matchSummaries, competitionStages) is { } productionGap)
         {
             return productionGap;
+        }
+
+        if (CupEntryRoundPairPlacementGauge.HasRemainingCanonicalEntryRoundPairs(competition, stage, stages))
+        {
+            return DisabledIncompleteEntryRound;
         }
 
         if (StageConfrontationMaterializationState.LacksExploitableInitialConfrontations(
@@ -191,6 +205,13 @@ internal static class StageStartReadinessGuard
             };
     }
 
+    private static bool BracketPairPlacementStarted(Stage stage, BracketPair pair)
+    {
+        var slotA = stage.FindSlot(pair.SlotAKey)?.EntryId;
+        var slotB = stage.FindSlot(pair.SlotBKey)?.EntryId;
+        return slotA is not null || slotB is not null;
+    }
+
     private static bool CupReadyEntryRoundMatchProductionIncomplete(Stage stage)
     {
         if (StructureSkeleton.InferFormat(stage) != StructureFormatKind.Cup
@@ -206,7 +227,13 @@ internal static class StageStartReadinessGuard
             legs = 1;
         }
 
-        var targetMatchSlots = stage.BracketPairs.Count * legs;
+        var startedPairCount = stage.BracketPairs.Count(pair => BracketPairPlacementStarted(stage, pair));
+        if (startedPairCount == 0)
+        {
+            return false;
+        }
+
+        var targetMatchSlots = startedPairCount * legs;
         return StructureSkeleton.CountAttachedMatches(stage) < targetMatchSlots;
     }
 

@@ -4,7 +4,6 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Domain.Common;
 
 namespace MyClub.PlayUp.Application.Reads;
@@ -49,16 +48,9 @@ public static class StructurePresentedAttentionCollector
     private static bool ShouldEmitAttention(
         string code,
         StructureStageHubSummaryDto stage,
-        StructureViewDto view)
-    {
-        if (code == StructurePresentedStageDiagnostics.PresentedAwaitingInboundQualification)
-        {
-            return false;
-        }
-
-        return StructureDiagnosticPresentation.ResolveSeverity(code, stage, view)
-            != StructureDiagnosticPresentation.PresentationSeverity.Hidden;
-    }
+        StructureViewDto view) =>
+        code != StructurePresentedStageDiagnostics.PresentedAwaitingInboundQualification && StructureDiagnosticPresentation.ResolveSeverity(code, stage, view)
+        != StructureDiagnosticPresentation.PresentationSeverity.Hidden;
 
     private static bool IsExcludedSource(string code) =>
         code is StructureViewAssembler.BlockerMissingStage

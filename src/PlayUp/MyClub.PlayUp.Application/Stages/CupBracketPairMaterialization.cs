@@ -24,24 +24,14 @@ internal static class CupBracketPairMaterialization
     internal static EntryId? ResolveSlotEntry(
         Stage stage,
         string slotKey,
-        ResolutionContext? context = null)
-    {
-        if (stage.FindSlot(slotKey)?.EntryId is { } occupant)
-        {
-            return occupant;
-        }
-
-        if (context is null)
-        {
-            return null;
-        }
-
-        return CupInboundSlotEntryResolver.TryResolve(
-            stage,
-            slotKey,
-            context.Value.CompetitionStages,
-            context.Value.MatchSummariesByStage);
-    }
+        ResolutionContext? context = null) =>
+        stage.FindSlot(slotKey)?.EntryId ?? (context is null
+            ? null
+            : CupInboundSlotEntryResolver.TryResolve(
+                stage,
+                slotKey,
+                context.Value.CompetitionStages,
+                context.Value.MatchSummariesByStage));
 
     internal static bool TryResolvePairEntries(
         Stage stage,
@@ -70,12 +60,9 @@ internal static class CupBracketPairMaterialization
     internal static int ExpectedLegs(Stage stage, BracketPair pair)
     {
         var fixture = stage.FindFixtureByBracketPairKey(pair.PairKey);
-        if (fixture is not null)
-        {
-            return CupConfrontationMaterializer.ExpectedLegsForFixture(stage, fixture);
-        }
-
-        return stage.Rounds.Count > 0
+        return fixture is not null
+            ? CupConfrontationMaterializer.ExpectedLegsForFixture(stage, fixture)
+            : stage.Rounds.Count > 0
             ? CupConfrontationMaterializer.ExpectedLegsForRound(stage.Rounds[0])
             : 1;
     }

@@ -946,7 +946,7 @@ public sealed partial class UseCaseExecutor
         var existing = await matches.ListByStageForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false);
         var competitionStages = await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken)
             .ConfigureAwait(false);
-        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>> matchSummariesByStage =
+        var matchSummariesByStage =
             competition.StageIds.Count == 0
                 ? new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>()
                 : await matches

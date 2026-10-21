@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Application.Competitions;
+using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Stages;
@@ -24,8 +25,8 @@ internal static class CupPrepareBracketReadiness
         var regime = CupPrepareBracketRegimeResolver.Resolve(stage);
         return regime switch
         {
-            CupPrepareBracketRegime.R2_Canonical => RejectsCanonicalPowerOfTwo(stage, regime),
-            CupPrepareBracketRegime.R3_InvalidCanonical => true,
+            CupPrepareBracketRegime.R2Canonical => RejectsCanonicalPowerOfTwo(stage, regime),
+            CupPrepareBracketRegime.R3InvalidCanonical => true,
             CupPrepareBracketRegime.NotApplicable => RejectsLegacyCupEntryPlaces(stage),
             _ => false
         };
@@ -35,7 +36,7 @@ internal static class CupPrepareBracketReadiness
     {
         ArgumentNullException.ThrowIfNull(stage);
 
-        if (regime != CupPrepareBracketRegime.R2_Canonical)
+        if (regime != CupPrepareBracketRegime.R2Canonical)
         {
             return false;
         }

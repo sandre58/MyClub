@@ -190,7 +190,7 @@ internal static class StructureMaterializeAssembler
         var rows = new List<StructureMaterializeConfrontationDto>(stage.BracketPairs.Count);
         foreach (var pair in stage.BracketPairs.OrderBy(item => item.PairKey, StringComparer.Ordinal))
         {
-            var evaluation = CupPairEvaluation.Evaluate(
+            var (determined, _, materialized, eligible, _, _, _, _) = CupPairEvaluation.Evaluate(
                 new CupPairEvaluationInput(
                     competition,
                     stage,
@@ -198,9 +198,6 @@ internal static class StructureMaterializeAssembler
                     competitionStages,
                     matchSummariesByStage,
                     mutable));
-            var determined = evaluation.DeterminedForDisplay;
-            var materialized = evaluation.Materialized;
-            var eligible = evaluation.EligibleForMaterialize;
             rows.Add(
                 new StructureMaterializeConfrontationDto(
                     pair.PairKey,
@@ -318,12 +315,7 @@ internal static class StructureMaterializeAssembler
 
         if (determined > 0 && materialized >= determined)
         {
-            if (totalConfrontationCount > materialized)
-            {
-                return StructureMaterializeDisabledReasons.NoEligibleConfrontations;
-            }
-
-            return null;
+            return totalConfrontationCount > materialized ? StructureMaterializeDisabledReasons.NoEligibleConfrontations : null;
         }
 
         if (MatchProductionInboundFeedDeferral.IsAwaitingResolution(inboundComposition, determined))

@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Application.Competitions;
-using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Stages;
@@ -55,28 +54,25 @@ internal static class StructureMatchProductionCapacity
         var determined = materialize.DeterminedCount;
         if (determined > 0 && !IsGroupsPoolPlacementIncomplete(materialize))
         {
-            if (materialize.CommandCode == OverviewAssembler.ActionMaterializeFromOccupiedSlots)
+            if (materialize.CommandCode != OverviewAssembler.ActionMaterializeFromOccupiedSlots)
+                return ConfrontationsToMatchSlots(determined, legsPerConfrontation);
+            if (formatKind == StructureFormatKind.Cup)
             {
-                if (formatKind == StructureFormatKind.Cup)
+                var canonical = materialize.CanonicalEntryPairCount;
+                if (canonical > 0)
                 {
-                    var canonical = materialize.CanonicalEntryPairCount;
-                    if (canonical > 0)
-                    {
-                        return ConfrontationsToMatchSlots(canonical, legsPerConfrontation);
-                    }
-
-                    var rows = materialize.Confrontations.Count;
-                    if (rows > 0)
-                    {
-                        return ConfrontationsToMatchSlots(rows, legsPerConfrontation);
-                    }
+                    return ConfrontationsToMatchSlots(canonical, legsPerConfrontation);
                 }
 
-                var capacityConfrontations = Math.Max(determined, materialize.MaterializedCount);
-                return ConfrontationsToMatchSlots(capacityConfrontations, legsPerConfrontation);
+                var rows = materialize.Confrontations.Count;
+                if (rows > 0)
+                {
+                    return ConfrontationsToMatchSlots(rows, legsPerConfrontation);
+                }
             }
 
-            return ConfrontationsToMatchSlots(determined, legsPerConfrontation);
+            var capacityConfrontations = Math.Max(determined, materialize.MaterializedCount);
+            return ConfrontationsToMatchSlots(capacityConfrontations, legsPerConfrontation);
         }
 
         if (formatKind == StructureFormatKind.Cup
@@ -92,24 +88,21 @@ internal static class StructureMatchProductionCapacity
             return rows > 0 ? ConfrontationsToMatchSlots(rows, legsPerConfrontation) : 0;
         }
 
-        if (IsGroupsPoolPlacementIncomplete(materialize))
+        if (!IsGroupsPoolPlacementIncomplete(materialize))
         {
-            var prospective = materialize.ProspectiveConfrontationCount;
-            return prospective > 0
-                ? ConfrontationsToMatchSlots(prospective, legsPerConfrontation)
+            return formatKind is StructureFormatKind.Championship
+                ? ResolveProspectiveChampionshipMatchSlots(
+                    competition,
+                    stage,
+                    competitionStages,
+                    legsPerConfrontation)
                 : 0;
         }
 
-        if (formatKind is StructureFormatKind.Championship)
-        {
-            return ResolveProspectiveChampionshipMatchSlots(
-                competition,
-                stage,
-                competitionStages,
-                legsPerConfrontation);
-        }
-
-        return 0;
+        var prospective = materialize.ProspectiveConfrontationCount;
+        return prospective > 0
+            ? ConfrontationsToMatchSlots(prospective, legsPerConfrontation)
+            : 0;
     }
 
     internal static bool IsGroupsPoolPlacementIncomplete(StructureMaterializeDto materialize)
@@ -128,22 +121,9 @@ internal static class StructureMatchProductionCapacity
         StructureMaterializeDto? materialize,
         StructureFormatKind? formatKind,
         PhaseRosterPresentationKind? phaseRosterPresentation,
-        StageStatus status)
-    {
-        if (materialize?.DisabledReason == StructureMaterializeDisabledReasons.PhaseRosterIncomplete)
-        {
-            return true;
-        }
-
-        if (status != StageStatus.Ready
-            || formatKind is not (StructureFormatKind.Championship or StructureFormatKind.Swiss))
-        {
-            return false;
-        }
-
-        return phaseRosterPresentation is PhaseRosterPresentationKind.AwaitingInboundQualification
-               or PhaseRosterPresentationKind.CompositionIncomplete;
-    }
+        StageStatus status) => materialize?.DisabledReason == StructureMaterializeDisabledReasons.PhaseRosterIncomplete || (status == StageStatus.Ready
+        && formatKind is StructureFormatKind.Championship or StructureFormatKind.Swiss && phaseRosterPresentation is PhaseRosterPresentationKind.AwaitingInboundQualification
+            or PhaseRosterPresentationKind.CompositionIncomplete);
 
     internal static (int Filled, int Capacity)? ResolveDeterminedConfrontationGauge(
         StructureMaterializeDto materialize)

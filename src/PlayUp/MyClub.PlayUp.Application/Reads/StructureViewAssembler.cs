@@ -1540,51 +1540,8 @@ public static class StructureViewAssembler
         IReadOnlyList<StructureReadinessBlockerDto> blockerDetails)
     {
         var seen = new HashSet<string>(StringComparer.Ordinal);
-        var blockers = new List<string>();
-        foreach (var detail in blockerDetails)
-        {
-            if (seen.Add(detail.Code))
-            {
-                blockers.Add(detail.Code);
-            }
-        }
 
-        return blockers;
-    }
-
-    private static int? ResolveCupEntryPlacesFromHub(StructureStageHubSummaryDto hub)
-    {
-        var slotCount = hub.SlotCount;
-        if (slotCount == 0)
-        {
-            return null;
-        }
-
-        var roundCount = hub.RoundCount;
-        if (roundCount <= 1)
-        {
-            return slotCount;
-        }
-
-        var fullTreeSlots = (1 << (roundCount + 1)) - 2;
-        if (slotCount == fullTreeSlots)
-        {
-            return 1 << roundCount;
-        }
-
-        var firstRoundSlots = 1 << roundCount;
-        if (slotCount == firstRoundSlots)
-        {
-            return firstRoundSlots;
-        }
-
-        if (slotCount < 2 || (slotCount + 2) % 2 != 0)
-        {
-            return null;
-        }
-
-        var entryPlaces = (slotCount + 2) / 2;
-        return IsPowerOfTwo(entryPlaces) && entryPlaces >= 2 ? entryPlaces : null;
+        return [.. from detail in blockerDetails where seen.Add(detail.Code) select detail.Code];
     }
 
     private static IReadOnlyList<string> BuildActions(Competition competition) =>

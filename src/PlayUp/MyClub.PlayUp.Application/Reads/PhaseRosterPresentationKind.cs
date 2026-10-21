@@ -13,5 +13,5 @@ public enum PhaseRosterPresentationKind
 {
     Complete,
     AwaitingInboundQualification,
-    CompositionIncomplete,
+    CompositionIncomplete
 }

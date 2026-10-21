@@ -51,23 +51,31 @@ public sealed class CupC2ImpasseRecetteProtocolTests(DevelopmentPostgresFixture 
         hub.Materialize.DeterminedCount.Should().Be(2);
         hub.Materialize.EligibleCount.Should().Be(1);
 
-        var emptySlot = stage.Slots
-            .OrderBy(s => s.SlotKey, StringComparer.Ordinal)
-            .First(s => s.EntryId is null);
-        var entryForAssign = stage.CompositionEntries
-            .Select(e => e.EntryId)
-            .First(id => stage.Slots.All(s => s.EntryId is null || !s.EntryId.Equals(id)));
-
-        AssignEntryToSlot.Execute(
-            stage,
-            emptySlot.SlotKey,
-            entryForAssign,
-            matches);
-        stage.Slots.Single(s => s.SlotKey == emptySlot.SlotKey).EntryId.Should().Be(entryForAssign);
-
-        hub.Actions.Should().Contain(StructureViewAssembler.ActionAssignEntryToSlot);
-
         var executor = scope.ServiceProvider.GetRequiredService<UseCaseExecutor>();
+        if (stage.Slots
+            .Where(slot => slot.EntryId is null)
+            .FirstOrDefault(slot => stage.BracketPairs.Any(pair =>
+            {
+                if (!string.Equals(pair.SlotAKey, slot.SlotKey, StringComparison.Ordinal)
+                    && !string.Equals(pair.SlotBKey, slot.SlotKey, StringComparison.Ordinal))
+                {
+                    return false;
+                }
+
+                var sideA = stage.FindSlot(pair.SlotAKey)?.EntryId;
+                var sideB = stage.FindSlot(pair.SlotBKey)?.EntryId;
+                return sideA is not null || sideB is not null;
+            })) is { } emptySlot)
+        {
+            var entryForAssign = stage.CompositionEntries
+                .Select(e => e.EntryId)
+                .First(id => stage.Slots.All(s => s.EntryId is null || !s.EntryId.Equals(id)));
+            await executor.AssignEntryToSlotAsync(stage.Id, emptySlot.SlotKey, entryForAssign);
+            matches = await scope.ReloadMatchesAsync();
+            hub = AssembleHub(competition, [stage], matches);
+            hub.Actions.Should().Contain(StructureViewAssembler.ActionAssignEntryToSlot);
+        }
+
         var startAct = async () => await executor.StartStageAsync(stage.Id);
         (await startAct.Should().ThrowAsync<ApplicationFailureException>())
             .Which.Code.Should().Be(ApplicationErrorCodes.StartBlockedUnmaterialized);

@@ -782,20 +782,10 @@ public static class StageSchematicAssembler
 
     private static SchematicEntryRefDto? MapEntry(
         EntryId? entryId,
-        IReadOnlyDictionary<EntryId, CompetitionEntry> entries)
-    {
-        if (entryId is not { } id)
-        {
-            return null;
-        }
-
-        if (!entries.TryGetValue(id, out var entry))
-        {
-            return new SchematicEntryRefDto(id.Value, null);
-        }
-
-        return new SchematicEntryRefDto(id.Value, entry.DisplayName, entry.Status);
-    }
+        IReadOnlyDictionary<EntryId, CompetitionEntry> entries) =>
+        entryId is not { } id
+            ? null
+            : !entries.TryGetValue(id, out var entry) ? new SchematicEntryRefDto(id.Value, null) : new SchematicEntryRefDto(id.Value, entry.DisplayName, entry.Status);
 
     private static SchematicParticipantRefDto? MapAssignment(
         EntryId? entryId,

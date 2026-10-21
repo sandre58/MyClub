@@ -5,10 +5,8 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
-using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
-using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
@@ -129,13 +127,11 @@ public sealed class StructureViewAssemblerConfiguredMatchdayCountTests
 
     private static void EnsureConfiguredMatchdayCount(Stage stage, int target, IClock clock)
     {
-        var nextNumber = stage.Matchdays.Count == 0
+        for (var nextNumber = stage.Matchdays.Count == 0
             ? 1
-            : stage.Matchdays.Max(m => m.Number) + 1;
-        while (stage.Matchdays.Count < target)
+            : stage.Matchdays.Max(m => m.Number) + 1; stage.Matchdays.Count < target; nextNumber++)
         {
             stage.AddMatchday(nextNumber, clock);
-            nextNumber++;
         }
     }
 

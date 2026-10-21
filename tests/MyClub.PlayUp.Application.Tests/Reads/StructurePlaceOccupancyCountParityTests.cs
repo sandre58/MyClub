@@ -35,7 +35,7 @@ public sealed class StructurePlaceOccupancyCountParityTests
             [
                 CupCase("S1", 0, EntryE1),
                 CupCase("S2", 0),
-                CupCase("S3", 1, EntryE3),
+                CupCase("S3", 1, EntryE3)
             ],
             []);
 
@@ -72,7 +72,7 @@ public sealed class StructurePlaceOccupancyCountParityTests
                         Index: 2),
                     null,
                     null,
-                    null),
+                    null)
             ],
             []);
 
@@ -108,7 +108,7 @@ public sealed class StructurePlaceOccupancyCountParityTests
                     new SchematicFormPositionDto(StageSchematicAssembler.FormKindRosterPlace, Index: 3),
                     null,
                     null,
-                    null),
+                    null)
             ],
             []);
 

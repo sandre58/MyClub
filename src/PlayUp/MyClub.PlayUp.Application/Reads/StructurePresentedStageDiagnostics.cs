@@ -274,12 +274,7 @@ public static class StructurePresentedStageDiagnostics
 
         var canonical = materialize.CanonicalEntryPairCount;
         var placementIncomplete = materialize.UndeterminedCanonicalEntryPairCount;
-        if (canonical > 0)
-        {
-            return placementIncomplete > 0;
-        }
-
-        return materialize.Confrontations.Any(row => !row.Determined);
+        return canonical > 0 ? placementIncomplete > 0 : materialize.Confrontations.Any(row => !row.Determined);
     }
 
     private static bool ReportsUnmaterializedConfrontationsStartGap(
@@ -306,21 +301,11 @@ public static class StructurePresentedStageDiagnostics
         }
 
         var materialize = stage.Materialize;
-        if (materialize is null)
-        {
-            return false;
-        }
-
-        if (materialize.CommandCode == OverviewAssembler.ActionMaterializeFromOccupiedSlots
-            && stage.MatchProductionPresentation?.PrimaryGauge is { } primary
-            && primary.Capacity > primary.Current)
-        {
-            return true;
-        }
-
-        return (materialize.EligibleCount != 0
+        return materialize is not null && ((materialize.CommandCode == OverviewAssembler.ActionMaterializeFromOccupiedSlots
+                                            && stage.MatchProductionPresentation?.PrimaryGauge is { } primary
+                                            && primary.Capacity > primary.Current) || ((materialize.EligibleCount != 0
                 || materialize.MaterializedCount < materialize.DeterminedCount)
-               && (materialize.EligibleCount > 0
-                   || materialize.DeterminedCount > materialize.MaterializedCount);
+            && (materialize.EligibleCount > 0
+                || materialize.DeterminedCount > materialize.MaterializedCount)));
     }
 }

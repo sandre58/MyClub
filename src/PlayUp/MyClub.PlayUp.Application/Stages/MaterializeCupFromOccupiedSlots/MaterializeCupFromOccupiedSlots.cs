@@ -33,6 +33,8 @@ public static class MaterializeCupFromOccupiedSlots
     /// </param>
     /// <param name="existingMatches">Matches already known for the stage.</param>
     /// <param name="clock">Clock for domain events.</param>
+    /// <param name="competitionStages">Stages of competition.</param>
+    /// <param name="matchSummariesByStage">Summaries match by stage.</param>
     public static MaterializeCupFromOccupiedSlotsResult Execute(
         Competition competition,
         Stage stage,
@@ -295,6 +297,7 @@ public static class MaterializeCupFromOccupiedSlots
         {
             context = new CupBracketPairMaterialization.ResolutionContext(competitionStages, matchSummariesByStage);
         }
+
         return
         [
             .. stage.BracketPairs

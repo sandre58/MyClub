@@ -31,8 +31,74 @@ internal static class CupEntryRoundPairPlacementGauge
         }
 
         var schematic = StageSchematicAssembler.Assemble(stage, competition, competitionStages);
-        var filled = pairs.Count(pair => IsPairPlacementComplete(schematic, pair));
-        return (filled, pairs.Count);
+        var startedPairs = pairs.Where(pair => PairPlacementStarted(schematic, pair)).ToArray();
+        if (startedPairs.Length == 0)
+        {
+            return null;
+        }
+
+        var filled = startedPairs.Count(pair => IsPairPlacementComplete(schematic, pair));
+        return (filled, startedPairs.Length);
+    }
+
+    /// <summary>
+    /// Canonical entry-round progress for hub gauges (all expected pairs; unscaffolded pairs count as incomplete).
+    /// </summary>
+    internal static bool TryGetCanonicalEntryRoundDisplayProgress(
+        Competition competition,
+        Stage stage,
+        IReadOnlyList<Stage> competitionStages,
+        out int canonicalPairCount,
+        out int placementIncompletePairCount)
+    {
+        ArgumentNullException.ThrowIfNull(competition);
+        ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(competitionStages);
+
+        var pairs = ResolveCanonicalPairsForPlacement(stage);
+        if (pairs.Count == 0)
+        {
+            canonicalPairCount = 0;
+            placementIncompletePairCount = 0;
+            return false;
+        }
+
+        var schematic = StageSchematicAssembler.Assemble(stage, competition, competitionStages);
+        canonicalPairCount = pairs.Count;
+        placementIncompletePairCount = pairs.Count(pair => !IsPairPlacementComplete(schematic, pair));
+        return true;
+    }
+
+    internal static bool HasIncompleteStartedPairPlacement(
+        Competition competition,
+        Stage stage,
+        IReadOnlyList<Stage> competitionStages) =>
+        TryGetCanonicalEntryRoundProgress(
+            competition,
+            stage,
+            competitionStages,
+            out _,
+            out var incomplete)
+        && incomplete > 0;
+
+    internal static bool HasRemainingCanonicalEntryRoundPairs(
+        Competition competition,
+        Stage stage,
+        IReadOnlyList<Stage> competitionStages)
+    {
+        ArgumentNullException.ThrowIfNull(competition);
+        ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(competitionStages);
+
+        var pairs = CupBracketTopologyClassifier.ExpectedCanonicalPairs(stage);
+        if (pairs.Count == 0)
+        {
+            return false;
+        }
+
+        var schematic = StageSchematicAssembler.Assemble(stage, competition, competitionStages);
+        var startedPairs = pairs.Where(pair => PairPlacementStarted(schematic, pair)).ToArray();
+        return startedPairs.Length != 0 && startedPairs.All(pair => IsPairPlacementComplete(schematic, pair)) && pairs.Count > startedPairs.Length;
     }
 
     /// <summary>
@@ -49,7 +115,7 @@ internal static class CupEntryRoundPairPlacementGauge
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(competitionStages);
 
-        var pairs = CupBracketTopologyClassifier.ExpectedCanonicalPairs(stage);
+        var pairs = ResolveCanonicalPairsForPlacement(stage);
         if (pairs.Count == 0)
         {
             canonicalPairCount = 0;
@@ -58,11 +124,23 @@ internal static class CupEntryRoundPairPlacementGauge
         }
 
         var schematic = StageSchematicAssembler.Assemble(stage, competition, competitionStages);
-        var filled = pairs.Count(pair => IsPairPlacementComplete(schematic, pair));
-        canonicalPairCount = pairs.Count;
-        placementIncompletePairCount = pairs.Count - filled;
+        var startedPairs = pairs.Where(pair => PairPlacementStarted(schematic, pair)).ToArray();
+        if (startedPairs.Length == 0)
+        {
+            canonicalPairCount = 0;
+            placementIncompletePairCount = 0;
+            return false;
+        }
+
+        var filled = startedPairs.Count(pair => IsPairPlacementComplete(schematic, pair));
+        canonicalPairCount = startedPairs.Length;
+        placementIncompletePairCount = startedPairs.Length - filled;
         return true;
     }
+
+    private static bool PairPlacementStarted(StageSchematicDto schematic, BracketPair pair) =>
+        IsCupSlotPlacementFilled(schematic, pair.SlotAKey)
+        || IsCupSlotPlacementFilled(schematic, pair.SlotBKey);
 
     private static bool IsPairPlacementComplete(StageSchematicDto schematic, BracketPair pair) =>
         IsCupSlotPlacementFilled(schematic, pair.SlotAKey)
@@ -70,28 +148,26 @@ internal static class CupEntryRoundPairPlacementGauge
 
     private static IReadOnlyList<BracketPair> ResolveEntryRoundPairs(Stage stage)
     {
-        var canonical = CupBracketTopologyClassifier.ExpectedCanonicalPairs(stage);
-        if (canonical.Count > 0)
-        {
-            return canonical;
-        }
-
-        return stage.BracketPairs.Count > 0 ? stage.BracketPairs : [];
+        var canonical = ResolveCanonicalPairsForPlacement(stage);
+        return canonical.Count > 0 ? canonical : stage.BracketPairs.Count > 0 ? stage.BracketPairs : [];
     }
 
-    private static bool IsCupSlotPlacementFilled(StageSchematicDto schematic, string slotKey)
+    /// <summary>
+    /// Canonical entry-round pairs for placement gauges; when topology is incomplete, only pairs already on the stage count.
+    /// </summary>
+    private static IReadOnlyList<BracketPair> ResolveCanonicalPairsForPlacement(Stage stage)
     {
-        foreach (var place in schematic.Cases)
+        var expected = CupBracketTopologyClassifier.ExpectedCanonicalPairs(stage);
+        if (expected.Count == 0 || CupBracketTopologyClassifier.Classify(stage) is not CupBracketTopologyKind.CanonicalIncomplete)
         {
-            if (place.FormPosition.Kind != StageSchematicAssembler.FormKindCupSlot
-                || !string.Equals(place.FormPosition.SlotKey, slotKey, StringComparison.Ordinal))
-            {
-                continue;
-            }
-
-            return StructurePlaceOccupancyIssues.IsSchematicCaseOccupied(place);
+            return expected;
         }
 
-        return false;
+        var presentKeys = stage.BracketPairs
+            .Select(pair => pair.PairKey)
+            .ToHashSet(StringComparer.Ordinal);
+        return [.. expected.Where(pair => presentKeys.Contains(pair.PairKey))];
     }
+
+    private static bool IsCupSlotPlacementFilled(StageSchematicDto schematic, string slotKey) => (from place in schematic.Cases where place.FormPosition.Kind == StageSchematicAssembler.FormKindCupSlot && string.Equals(place.FormPosition.SlotKey, slotKey, StringComparison.Ordinal) select StructurePlaceOccupancyIssues.IsSchematicCaseOccupied(place)).FirstOrDefault();
 }

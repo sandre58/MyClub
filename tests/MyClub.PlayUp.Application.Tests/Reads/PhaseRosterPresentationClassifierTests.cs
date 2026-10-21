@@ -132,6 +132,21 @@ public sealed class PhaseRosterPresentationClassifierTests
             .Be(PhaseRosterPresentationKind.CompositionIncomplete);
     }
 
+    private static Standing ManualStanding(IReadOnlyList<(EntryId EntryId, int Position, int Points)> rows) =>
+        new(
+        [
+            .. rows.Select(r => new StandingRow(
+                r.EntryId,
+                r.Position,
+                played: 0,
+                wins: 0,
+                draws: 0,
+                losses: 0,
+                goalsFor: 0,
+                goalsAgainst: 0,
+                points: r.Points))
+        ]);
+
     private (Competition Competition, Stage Groups, Stage Champ, List<Stage> Stages) BuildQualFormChampReadyPartial(
         int directCount = 2)
     {
@@ -228,21 +243,6 @@ public sealed class PhaseRosterPresentationClassifierTests
         var stages = new List<Stage> { groups, champ };
         return (competition, groups, champ, stages, (groupA.Id, groupB.Id, standings));
     }
-
-    private static Standing ManualStanding(IReadOnlyList<(EntryId EntryId, int Position, int Points)> rows) =>
-        new(
-        [
-            .. rows.Select(r => new StandingRow(
-                r.EntryId,
-                r.Position,
-                played: 0,
-                wins: 0,
-                draws: 0,
-                losses: 0,
-                goalsFor: 0,
-                goalsAgainst: 0,
-                points: r.Points))
-        ]);
 
     private void ReplaceEachGroupTop1Form(
         Stage source,

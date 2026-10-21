@@ -192,21 +192,7 @@ internal static class StageConfrontationMaterializationState
             .GroupBy(row => row.StageId)
             .ToDictionary(group => group.Key, group => (IReadOnlyList<MatchSummaryRow>)[.. group]);
 
-        var eligible = 0;
-        foreach (var pair in stage.BracketPairs)
-        {
-            if (CupBracketPairMaterialization.IsEligibleForMaterialization(
-                    stage,
-                    pair,
-                    new CupBracketPairMaterialization.ResolutionContext(competitionStages, summariesByStage),
-                    competition,
-                    competitionStages))
-            {
-                eligible++;
-            }
-        }
-
-        return eligible;
+        return stage.BracketPairs.Count(pair => CupBracketPairMaterialization.IsEligibleForMaterialization(stage, pair, new CupBracketPairMaterialization.ResolutionContext(competitionStages, summariesByStage), competition, competitionStages));
     }
 
     private static HashSet<(EntryId Home, EntryId Away)> CoveredDirectedPairs(

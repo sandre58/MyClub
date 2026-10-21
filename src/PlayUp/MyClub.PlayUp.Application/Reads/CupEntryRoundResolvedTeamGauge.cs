@@ -23,7 +23,7 @@ internal static class CupEntryRoundResolvedTeamGauge
         ArgumentNullException.ThrowIfNull(input);
 
         if (input.FormatKind != StructureFormatKind.Cup
-            || input.CompositionCapacity is not int capacity
+            || input.CompositionCapacity is not { } capacity
             || capacity <= 0)
         {
             return null;
@@ -82,18 +82,8 @@ internal static class CupEntryRoundResolvedTeamGauge
         }
 
         var slotKey = place.FormPosition.SlotKey;
-        if (!string.IsNullOrEmpty(slotKey) && stage.FindSlot(slotKey)?.EntryId is not null)
-        {
-            return true;
-        }
-
-        if (place.FeedOrigin is { Kind: FeedKind.Direct, ConfiguredEntryId: { } directId }
-            && directId != Guid.Empty)
-        {
-            return true;
-        }
-
-        return false;
+        return (!string.IsNullOrEmpty(slotKey) && stage.FindSlot(slotKey)?.EntryId is not null) || (place.FeedOrigin is { Kind: FeedKind.Direct, ConfiguredEntryId: { } directId }
+            && directId != Guid.Empty);
     }
 
     private static int ResolveResolvedTeamCount(StructureMatchProductionPresentationAssembler.Input input)

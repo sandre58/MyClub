@@ -11,7 +11,6 @@ using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.TestKit;
 using Xunit;
 
@@ -26,7 +25,7 @@ public sealed class StructurePopulationRecetteTests
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = true,
+        WriteIndented = true
     };
 
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 10, 20, 10, 0, 0, TimeSpan.Zero));
@@ -96,7 +95,7 @@ public sealed class StructurePopulationRecetteTests
         CodesOnlyInPresentation(hub).Should().Contain(CompetitionFlowAnalyzer.PopulationShortfall);
 
         hub.Materialize.Should().NotBeNull();
-        hub.Materialize!.DisabledReason.Should().Be(
+        hub.Materialize.DisabledReason.Should().Be(
             StructureMaterializeDisabledReasons.PhaseRosterIncomplete);
 
         ChampionshipSwissPhasePlaces.IsRosterComplete(
@@ -136,7 +135,7 @@ public sealed class StructurePopulationRecetteTests
 
         hub.StructureIssues.Should().NotContain(CompetitionFlowAnalyzer.PopulationShortfall);
         hub.PresentedIssueCodes.Should().Contain(CompetitionFlowAnalyzer.PopulationShortfall);
-        CodesOnlyInPresentation(hub).Should().Equal([CompetitionFlowAnalyzer.PopulationShortfall]);
+        CodesOnlyInPresentation(hub).Should().Equal(CompetitionFlowAnalyzer.PopulationShortfall);
         StructurePopulationVolume.ShouldSynthesizePopulationShortfall(
             view,
             hub,
@@ -157,56 +156,6 @@ public sealed class StructurePopulationRecetteTests
                     situation.Stages)));
     }
 
-    private TestCompetition BuildRunningRootEightCompositionOneWithdrawn()
-    {
-        var situation = TestCompetition.Create("Recette Running 8+1W", _clock)
-            .WithTeams(8)
-            .WithStructure(StructureIntent.Championship());
-        var stage = situation.RequirePrimaryStage();
-        var ids = situation.Competition.Entries.Select(entry => entry.Id).ToArray();
-        stage.ReplaceAffectationAuthoring(ids, _clock);
-        situation.PreparePrimaryStage();
-        situation.PrepareCompetition();
-        situation.StartCompetition();
-        situation.StartPrimaryStage();
-
-        var withdrawn = ids.OrderBy(id => id.Value).First();
-        WithdrawEntry.Execute(situation.Competition, withdrawn, situation.Stages, [], _clock);
-        return situation;
-    }
-
-    private TestCompetition BuildReadyRootEightPlacesSevenAffectationSeats()
-    {
-        var situation = TestCompetition.Create("Recette Ready 7 seats", _clock)
-            .WithTeams(8)
-            .WithStructure(StructureIntent.Championship());
-        var stage = situation.RequirePrimaryStage();
-        var ids = situation.Competition.Entries.Select(entry => entry.Id).ToArray();
-        stage.ReplaceAffectationAuthoring(ids.Take(7).ToArray(), _clock);
-        PrepareStage.Execute(stage, situation.Stages, _clock);
-        return situation;
-    }
-
-    private TestCompetition BuildRunningRootU1DeficitFullComposition()
-    {
-        var situation = TestCompetition.Create("Recette U1 deficit", _clock)
-            .WithTeams(8)
-            .WithStructure(StructureIntent.Championship());
-        var stage = situation.RequirePrimaryStage();
-        var ids = situation.Competition.Entries.Select(entry => entry.Id).ToArray();
-        stage.ReplaceAffectationAuthoring(ids.Take(7).ToArray(), _clock);
-        ChampionshipSwissPhasePlaces.FillCompositionToPlacesCapacity(
-            situation.Competition,
-            stage,
-            situation.Stages,
-            _clock);
-        PrepareStage.Execute(stage, situation.Stages, _clock);
-        situation.PrepareCompetition();
-        situation.StartCompetition();
-        situation.StartPrimaryStage();
-        return situation;
-    }
-
     private static void AssertOccupationEligibilityWitness(
         StructureViewDto view,
         StructureStageHubSummaryDto hub,
@@ -217,7 +166,7 @@ public sealed class StructurePopulationRecetteTests
         var u1 = StructurePopulationVolume.ExpectedOccupancy(view, hub);
         places.Should().Be(8);
         u1.Should().Be(places);
-        view.Participants.OccupyingCount.Should().Be(places!.Value);
+        view.Participants.OccupyingCount.Should().Be(places.Value);
         view.Participants.ActiveCount.Should().Be(7);
         (view.Participants.OccupyingCount - view.Participants.ActiveCount).Should().Be(1);
         hub.CompositionEntryCount.Should().Be(places);
@@ -284,27 +233,6 @@ public sealed class StructurePopulationRecetteTests
             hub.Lifecycle?.Transition.DisabledReasonCode);
     }
 
-    private void AssertCommittedFixture(
-        string fileName,
-        PopulationRecetteObservationDto observed)
-    {
-        var path = FixturePath(fileName);
-        if (Environment.GetEnvironmentVariable("UPDATE_POPULATION_RECETTE_FIXTURES") == "1")
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-            File.WriteAllText(path, JsonSerializer.Serialize(observed, JsonOptions));
-            return;
-        }
-
-        File.Exists(path).Should().BeTrue($"fixture missing: {path}");
-        var expected = JsonSerializer.Deserialize<PopulationRecetteObservationDto>(
-            File.ReadAllText(path),
-            JsonOptions);
-        observed.Should().BeEquivalentTo(
-            expected,
-            options => options.Excluding(dto => dto.StageId));
-    }
-
     private static string FixturePath(string fileName) =>
         Path.GetFullPath(
             Path.Combine(
@@ -323,6 +251,77 @@ public sealed class StructurePopulationRecetteTests
                 "__fixtures__",
                 "populationRecette",
                 fileName));
+
+    private static void AssertCommittedFixture(
+        string fileName,
+        PopulationRecetteObservationDto observed)
+    {
+        var path = FixturePath(fileName);
+        if (Environment.GetEnvironmentVariable("UPDATE_POPULATION_RECETTE_FIXTURES") == "1")
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            File.WriteAllText(path, JsonSerializer.Serialize(observed, JsonOptions));
+            return;
+        }
+
+        File.Exists(path).Should().BeTrue($"fixture missing: {path}");
+        var expected = JsonSerializer.Deserialize<PopulationRecetteObservationDto>(
+            File.ReadAllText(path),
+            JsonOptions);
+        observed.Should().BeEquivalentTo(
+            expected,
+            options => options.Excluding(dto => dto!.StageId));
+    }
+
+    private TestCompetition BuildRunningRootEightCompositionOneWithdrawn()
+    {
+        var situation = TestCompetition.Create("Recette Running 8+1W", _clock)
+            .WithTeams(8)
+            .WithStructure(StructureIntent.Championship());
+        var stage = situation.RequirePrimaryStage();
+        var ids = situation.Competition.Entries.Select(entry => entry.Id).ToArray();
+        stage.ReplaceAffectationAuthoring(ids, _clock);
+        situation.PreparePrimaryStage();
+        situation.PrepareCompetition();
+        situation.StartCompetition();
+        situation.StartPrimaryStage();
+
+        var withdrawn = ids.OrderBy(id => id.Value).First();
+        WithdrawEntry.Execute(situation.Competition, withdrawn, situation.Stages, [], _clock);
+        return situation;
+    }
+
+    private TestCompetition BuildReadyRootEightPlacesSevenAffectationSeats()
+    {
+        var situation = TestCompetition.Create("Recette Ready 7 seats", _clock)
+            .WithTeams(8)
+            .WithStructure(StructureIntent.Championship());
+        var stage = situation.RequirePrimaryStage();
+        var ids = situation.Competition.Entries.Select(entry => entry.Id).ToArray();
+        stage.ReplaceAffectationAuthoring([.. ids.Take(7)], _clock);
+        PrepareStage.Execute(stage, situation.Stages, _clock);
+        return situation;
+    }
+
+    private TestCompetition BuildRunningRootU1DeficitFullComposition()
+    {
+        var situation = TestCompetition.Create("Recette U1 deficit", _clock)
+            .WithTeams(8)
+            .WithStructure(StructureIntent.Championship());
+        var stage = situation.RequirePrimaryStage();
+        var ids = situation.Competition.Entries.Select(entry => entry.Id).ToArray();
+        stage.ReplaceAffectationAuthoring([.. ids.Take(7)], _clock);
+        ChampionshipSwissPhasePlaces.FillCompositionToPlacesCapacity(
+            situation.Competition,
+            stage,
+            situation.Stages,
+            _clock);
+        PrepareStage.Execute(stage, situation.Stages, _clock);
+        situation.PrepareCompetition();
+        situation.StartCompetition();
+        situation.StartPrimaryStage();
+        return situation;
+    }
 
     private sealed record PopulationRecetteObservationDto(
         Guid StageId,

@@ -26,57 +26,38 @@ internal static class CupCanonicalEntryRoundStartGate
     {
         ArgumentNullException.ThrowIfNull(stage);
 
-        if (competition is not null && competitionStages is not null)
+        if (competition is null || competitionStages is null)
         {
-            if (CupEntryRoundPairPlacementGauge.TryGetCanonicalEntryRoundProgress(
-                    competition,
-                    stage,
-                    competitionStages,
-                    out var canonicalPairCount,
-                    out var incompleteCanonicalPairs)
-                && canonicalPairCount > 0)
-            {
-                return incompleteCanonicalPairs > 0;
-            }
+            return TryGetCanonicalEntryRoundProgress(stage, out var canonical, out var placementIncomplete)
+                   && canonical > 0
+                ? placementIncomplete > 0
+                : StructureSkeleton.InferFormat(stage) == StructureFormatKind.Cup
+                  && stage.Status == StageStatus.Ready
+                  && HasUndeterminedBracketPairs(stage);
+        }
 
-            var explicitMeasure = CupEntryRoundPairPlacementGauge.TryMeasure(
+        if (CupEntryRoundPairPlacementGauge.TryGetCanonicalEntryRoundProgress(
                 competition,
                 stage,
-                competitionStages);
-            if (explicitMeasure is { Capacity: > 0 })
-            {
-                return explicitMeasure.Value.Filled < explicitMeasure.Value.Capacity;
-            }
-        }
-
-        if (TryGetCanonicalEntryRoundProgress(stage, out var canonical, out var placementIncomplete)
-            && canonical > 0)
+                competitionStages,
+                out var canonicalPairCount,
+                out var incompleteCanonicalPairs)
+            && canonicalPairCount > 0)
         {
-            return placementIncomplete > 0;
+            return incompleteCanonicalPairs > 0;
         }
 
-        return StructureSkeleton.InferFormat(stage) == StructureFormatKind.Cup
-               && stage.Status == StageStatus.Ready
-               && HasUndeterminedBracketPairs(stage);
+        var explicitMeasure = CupEntryRoundPairPlacementGauge.TryMeasure(
+            competition,
+            stage,
+            competitionStages);
+        return explicitMeasure is { Capacity: > 0 } && explicitMeasure.Value.Filled < explicitMeasure.Value.Capacity;
     }
 
     internal static bool HasUndeterminedBracketPairs(Stage stage)
     {
         ArgumentNullException.ThrowIfNull(stage);
-        if (stage.BracketPairs.Count == 0)
-        {
-            return false;
-        }
-
-        foreach (var pair in stage.BracketPairs)
-        {
-            if (!IsPairDetermined(stage, pair))
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return stage.BracketPairs.Count != 0 && stage.BracketPairs.Any(pair => !IsPairDetermined(stage, pair));
     }
 
     /// <summary>
@@ -118,21 +99,11 @@ internal static class CupCanonicalEntryRoundStartGate
         return true;
     }
 
-    private static bool IsPairPlacementComplete(Stage stage, BracketPair pair)
-    {
-        return IsSlotPlacementFilled(stage, pair.SlotAKey)
-               && IsSlotPlacementFilled(stage, pair.SlotBKey);
-    }
+    private static bool IsPairPlacementComplete(Stage stage, BracketPair pair) =>
+        IsSlotPlacementFilled(stage, pair.SlotAKey)
+        && IsSlotPlacementFilled(stage, pair.SlotBKey);
 
-    private static bool IsSlotPlacementFilled(Stage stage, string slotKey)
-    {
-        if (stage.FindSlot(slotKey)?.EntryId is not null)
-        {
-            return true;
-        }
-
-        return stage.DirectAssignments.Any(a => string.Equals(a.SlotKey, slotKey, StringComparison.Ordinal));
-    }
+    private static bool IsSlotPlacementFilled(Stage stage, string slotKey) => stage.FindSlot(slotKey)?.EntryId is not null || stage.DirectAssignments.Any(a => string.Equals(a.SlotKey, slotKey, StringComparison.Ordinal));
 
     private static bool IsPairDetermined(Stage stage, BracketPair pair)
     {

@@ -13,7 +13,6 @@ using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
-using MyClub.PlayUp.Domain.Qualification;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.TestKit;
@@ -23,6 +22,7 @@ namespace MyClub.PlayUp.Application.Tests.Reads;
 
 public sealed class StructureMatchProductionPresentationAssemblerTests
 {
+    private static readonly JsonSerializerOptions Options = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 16, 12, 0, 0, TimeSpan.Zero));
 
     [Fact]
@@ -93,7 +93,7 @@ public sealed class StructureMatchProductionPresentationAssemblerTests
         presentation.PrimaryGauge.MessageKind.Should().Be(
             StructureMatchProductionPresentationAssembler.MessageKindInfo);
         presentation.PrerequisiteGauge.Should().NotBeNull();
-        presentation.PrerequisiteGauge!.MessageCode.Should().Be(
+        presentation.PrerequisiteGauge.MessageCode.Should().Be(
             StructureMatchProductionMessageCodes.PrerequisiteComposition);
         presentation.PrerequisiteGauge.MessageKind.Should().Be(
             StructureMatchProductionPresentationAssembler.MessageKindAttention);
@@ -139,8 +139,8 @@ public sealed class StructureMatchProductionPresentationAssemblerTests
             .MatchProductionPresentation;
 
         presentation.Should().NotBeNull();
-        presentation!.PrerequisiteGauge.Should().NotBeNull();
-        presentation.PrerequisiteGauge!.MessageCode.Should().Be(
+        presentation.PrerequisiteGauge.Should().NotBeNull();
+        presentation.PrerequisiteGauge.MessageCode.Should().Be(
             StructureMatchProductionMessageCodes.PrerequisiteGroupsPlacement);
         presentation.PrerequisiteGauge.MessageKind.Should().Be(
             StructureMatchProductionPresentationAssembler.MessageKindInfo);
@@ -167,14 +167,14 @@ public sealed class StructureMatchProductionPresentationAssemblerTests
             .MatchProductionPresentation;
 
         presentation.Should().NotBeNull();
-        presentation!.PrimaryGauge.Current.Should().Be(0);
+        presentation.PrimaryGauge.Current.Should().Be(0);
         presentation.PrimaryGauge.Capacity.Should().Be(2);
         presentation.PrimaryGauge.MessageCode.Should().Be(
             StructureMatchProductionMessageCodes.MatchesBlockedByGroupsPools);
         presentation.PrimaryGauge.MessageKind.Should().Be(
             StructureMatchProductionPresentationAssembler.MessageKindAttention);
         presentation.PrerequisiteGauge.Should().NotBeNull();
-        presentation.PrerequisiteGauge!.MessageCode.Should().Be(
+        presentation.PrerequisiteGauge.MessageCode.Should().Be(
             StructureMatchProductionMessageCodes.PrerequisiteGroupsPlacement);
         presentation.PrerequisiteGauge.Current.Should().Be(1);
         presentation.PrerequisiteGauge.Capacity.Should().Be(4);
@@ -218,7 +218,7 @@ public sealed class StructureMatchProductionPresentationAssemblerTests
         var presentation = hub.MatchProductionPresentation;
 
         presentation.Should().NotBeNull();
-        presentation!.PrimaryGauge.Current.Should().Be(1);
+        presentation.PrimaryGauge.Current.Should().Be(1);
         presentation.PrimaryGauge.Capacity.Should().Be(2);
         presentation.PrimaryGauge.MessageKind.Should().Be(
             StructureMatchProductionPresentationAssembler.MessageKindAttention);
@@ -245,7 +245,7 @@ public sealed class StructureMatchProductionPresentationAssemblerTests
             .MatchProductionPresentation;
 
         presentation.Should().NotBeNull();
-        presentation!.PrimaryGauge.Capacity.Should().Be(2);
+        presentation.PrimaryGauge.Capacity.Should().Be(2);
         presentation.PrimaryGauge.Current.Should().Be(0);
         presentation.Materialize.Enabled.Should().BeTrue();
     }
@@ -272,7 +272,7 @@ public sealed class StructureMatchProductionPresentationAssemblerTests
         var presentation = hub.MatchProductionPresentation;
 
         presentation.Should().NotBeNull();
-        presentation!.PrimaryGauge.Current.Should().Be(hub.MatchCount);
+        presentation.PrimaryGauge.Current.Should().Be(hub.MatchCount);
         presentation.PrimaryGauge.Capacity.Should().Be(hub.MatchCount);
         presentation.PrimaryGauge.MessageKind.Should().Be(
             StructureMatchProductionPresentationAssembler.MessageKindSuccess);
@@ -288,7 +288,7 @@ public sealed class StructureMatchProductionPresentationAssemblerTests
             .WithTeams("A", "B", "C", "D")
             .WithStructure(StructureIntent.Cup(4));
         var stage = situation.RequirePrimaryStage();
-        stage.ApplyResolvedEntry("S1", situation.Competition.Entries.First().Id, _clock);
+        stage.ApplyResolvedEntry("S1", situation.Competition.Entries[0].Id, _clock);
         situation.PreparePrimaryStage();
 
         var hub = StructureViewAssembler.Assemble(situation.Competition, [stage]).Stages[0];
@@ -297,7 +297,7 @@ public sealed class StructureMatchProductionPresentationAssemblerTests
         presentation.Should().NotBeNull();
         hub.Materialize!.DisabledReason.Should()
             .Be(StructureMaterializeDisabledReasons.NoDeterminedConfrontations);
-        presentation!.PrerequisiteGauge.Should().NotBeNull();
+        presentation.PrerequisiteGauge.Should().NotBeNull();
         presentation.PrerequisiteGauge!.MessageCode.Should().Be(
             StructureMatchProductionMessageCodes.PrerequisiteCupEntryRound);
         presentation.PrerequisiteGauge.Current.Should().Be(0);
@@ -323,7 +323,7 @@ public sealed class StructureMatchProductionPresentationAssemblerTests
         presentation.Should().NotBeNull();
         materialize.UndeterminedCanonicalEntryPairCount.Should().BeGreaterThan(0);
 
-        presentation!.PrerequisiteGauge.Should().NotBeNull();
+        presentation.PrerequisiteGauge.Should().NotBeNull();
         presentation.PrerequisiteGauge!.MessageCode.Should().Be(
             StructureMatchProductionMessageCodes.PrerequisiteCupEntryRound);
         presentation.PrerequisiteGauge.MessageKind.Should().Be(
@@ -366,7 +366,7 @@ public sealed class StructureMatchProductionPresentationAssemblerTests
         presentation.Should().NotBeNull();
         hub.Materialize!.CommandEnabled.Should().BeFalse();
         hub.Lifecycle!.Transition.Enabled.Should().BeFalse();
-        presentation!.PrimaryGauge.Capacity.Should().BeGreaterThan(presentation.PrimaryGauge.Current);
+        presentation.PrimaryGauge.Capacity.Should().BeGreaterThan(presentation.PrimaryGauge.Current);
         presentation.PrimaryGauge.MessageCode.Should().Be(StructureMatchProductionMessageCodes.Partial);
         presentation.PrimaryGauge.MessageKind.Should().Be(
             StructureMatchProductionPresentationAssembler.MessageKindDanger);
@@ -391,7 +391,7 @@ public sealed class StructureMatchProductionPresentationAssemblerTests
         presentation.Should().NotBeNull();
         materialize.DeterminedCount.Should().BeGreaterThan(0);
         materialize.CommandEnabled.Should().BeTrue();
-        presentation!.PrimaryGauge.Current.Should().Be(0);
+        presentation.PrimaryGauge.Current.Should().Be(0);
         presentation.PrimaryGauge.Capacity.Should().Be(8);
         presentation.PrimaryGauge.MessageCode.Should().Be(StructureMatchProductionMessageCodes.Partial);
         presentation.PrimaryGauge.MessageKind.Should().Be(
@@ -424,7 +424,7 @@ public sealed class StructureMatchProductionPresentationAssemblerTests
 
         presentation.Should().NotBeNull();
         hub.Materialize!.CommandEnabled.Should().BeTrue();
-        presentation!.PrimaryGauge.Current.Should().Be(0);
+        presentation.PrimaryGauge.Current.Should().Be(0);
         presentation.PrimaryGauge.Capacity.Should().Be(2);
         presentation.PrimaryGauge.MessageCode.Should().Be(StructureMatchProductionMessageCodes.Partial);
         presentation.PrerequisiteGauge.Should().BeNull();
@@ -482,7 +482,7 @@ public sealed class StructureMatchProductionPresentationAssemblerTests
         hub.Materialize!.MaterializedCount.Should().Be(0);
         hub.Materialize.EligibleCount.Should().Be(2);
         hub.Materialize.CommandEnabled.Should().BeTrue();
-        presentation!.PrimaryGauge.Current.Should().Be(0);
+        presentation.PrimaryGauge.Current.Should().Be(0);
         presentation.PrimaryGauge.Capacity.Should().Be(2);
         presentation.Materialize.Visible.Should().BeTrue();
         presentation.Materialize.Enabled.Should().BeTrue();
@@ -569,7 +569,7 @@ public sealed class StructureMatchProductionPresentationAssemblerTests
         stage.ReplaceBracketPairs(
         [
             new BracketPair("P1", "SF-A", "SF-B"),
-            new BracketPair("P2", "SF-C", "SF-D"),
+            new BracketPair("P2", "SF-C", "SF-D")
         ]);
         competition.AddStage(stage.Id, _clock);
         _ = stage.AddFixture(stage.Rounds[0].Id, _clock, "SF-A", "SF-B", "P1");
@@ -584,7 +584,7 @@ public sealed class StructureMatchProductionPresentationAssemblerTests
 
         presentation.Should().NotBeNull();
         hub.Materialize!.CanonicalEntryPairCount.Should().Be(0);
-        presentation!.PrerequisiteGauge.Should().NotBeNull();
+        presentation.PrerequisiteGauge.Should().NotBeNull();
         presentation.PrerequisiteGauge!.MessageCode.Should().Be(
             StructureMatchProductionMessageCodes.PrerequisiteCupEntryRound);
         presentation.PrerequisiteGauge.Current.Should().Be(1);
@@ -669,7 +669,7 @@ public sealed class StructureMatchProductionPresentationAssemblerTests
         var presentation = hub.MatchProductionPresentation;
 
         presentation.Should().NotBeNull();
-        presentation!.PrimaryGauge.Current.Should().Be(1);
+        presentation.PrimaryGauge.Current.Should().Be(1);
         presentation.PrimaryGauge.Capacity.Should().Be(3);
         presentation.Materialize.LabelVariant.Should().Be(OverviewAssembler.LabelVariantComplete);
     }
@@ -710,10 +710,10 @@ public sealed class StructureMatchProductionPresentationAssemblerTests
         var presentation = hub.MatchProductionPresentation;
 
         presentation.Should().NotBeNull();
-        presentation!.ProductionVisible.Should().BeTrue();
+        presentation.ProductionVisible.Should().BeTrue();
         presentation.ShowPrimaryGauge.Should().BeFalse();
         presentation.FrozenPartial.Should().NotBeNull();
-        presentation.FrozenPartial!.Current.Should().Be(1);
+        presentation.FrozenPartial.Current.Should().Be(1);
         presentation.FrozenPartial.Capacity.Should().Be(2);
         presentation.FrozenPartial.MessageCode.Should().Be(
             StructureMatchProductionMessageCodes.FrozenPartial);
@@ -765,9 +765,9 @@ public sealed class StructureMatchProductionPresentationAssemblerTests
             }).Stages[0].MatchProductionPresentation;
 
         presentation.Should().NotBeNull();
-        presentation!.ShowPrimaryGauge.Should().BeFalse();
+        presentation.ShowPrimaryGauge.Should().BeFalse();
         presentation.FrozenPartial.Should().NotBeNull();
-        presentation.FrozenPartial!.Current.Should().Be(1);
+        presentation.FrozenPartial.Current.Should().Be(1);
         presentation.Materialize.Visible.Should().BeFalse();
         presentation.Dematerialize.Visible.Should().BeFalse();
     }
@@ -786,7 +786,7 @@ public sealed class StructureMatchProductionPresentationAssemblerTests
             .MatchProductionPresentation;
 
         presentation.Should().NotBeNull();
-        presentation!.FollowUp.Should().BeNull();
+        presentation.FollowUp.Should().BeNull();
         presentation.PrimaryGauge.MessageKind.Should().Be(
             StructureMatchProductionPresentationAssembler.MessageKindSuccess);
     }
@@ -870,7 +870,7 @@ public sealed class StructureMatchProductionPresentationAssemblerTests
         var hub = StructureViewAssembler.Assemble(situation.Competition, [stage]).Stages[0];
         var json = JsonSerializer.Serialize(
             hub,
-            new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+            Options);
 
         json.Should().Contain("matchProductionPresentation");
         json.Should().Contain("productionVisible");
@@ -902,12 +902,15 @@ public sealed class StructureMatchProductionPresentationAssemblerTests
         var presentation = hub.MatchProductionPresentation;
 
         presentation.Should().NotBeNull();
-        presentation!.ProductionVisible.Should().BeTrue();
+        presentation.ProductionVisible.Should().BeTrue();
         presentation.ShowPrimaryGauge.Should().BeFalse();
         presentation.FrozenPartial.Should().BeNull();
         presentation.Dematerialize.Visible.Should().BeFalse();
         presentation.Dematerialize.Enabled.Should().BeFalse();
     }
+
+    private static MatchSummaryRow Summary(Match match) =>
+        new(match.Id, match.StageId, match.Status, match.HomeEntryId, match.AwayEntryId, match.Result);
 
     private static StructureStageLifecycleDto CreateStartBlockedLifecycle(string disabledReason) =>
         new(
@@ -1043,7 +1046,4 @@ public sealed class StructureMatchProductionPresentationAssemblerTests
                 null,
                 null))!;
     }
-
-    private static MatchSummaryRow Summary(Match match) =>
-        new(match.Id, match.StageId, match.Status, match.HomeEntryId, match.AwayEntryId, match.Result);
 }

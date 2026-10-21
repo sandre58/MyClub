@@ -113,7 +113,7 @@ public sealed class StructureReadinessBlockerAttributionTests
             new StructureReadinessBlockerDto("A", Guid.NewGuid()),
             new StructureReadinessBlockerDto("B", null),
             new StructureReadinessBlockerDto("A", Guid.NewGuid()),
-            new StructureReadinessBlockerDto("C", null),
+            new StructureReadinessBlockerDto("C", null)
         };
 
         StructureViewAssembler.DeriveLegacyBlockerCodes(details).Should().Equal("A", "B", "C");

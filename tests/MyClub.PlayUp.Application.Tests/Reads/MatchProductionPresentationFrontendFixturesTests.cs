@@ -13,7 +13,6 @@ using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
-using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.TestKit;
 using Xunit;
 
@@ -28,7 +27,7 @@ public sealed class MatchProductionPresentationFrontendFixturesTests
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = true,
+        WriteIndented = true
     };
 
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 16, 12, 0, 0, TimeSpan.Zero));
@@ -46,6 +45,55 @@ public sealed class MatchProductionPresentationFrontendFixturesTests
         var presentation = BuildCupExhaustedPresentation();
         AssertMatchesFixture("cup-exhausted.json", presentation);
     }
+
+    private static void AssertMatchesFixture(
+        string fileName,
+        StructureMatchProductionPresentationDto presentation)
+    {
+        MaybeWriteFixture(fileName, presentation);
+        var path = FixturePath(fileName);
+        File.Exists(path).Should().BeTrue($"fixture missing: {path}");
+        var expected = JsonSerializer.Deserialize<StructureMatchProductionPresentationDto>(
+            File.ReadAllText(path),
+            JsonOptions);
+        presentation.Should().BeEquivalentTo(expected);
+    }
+
+    private static void MaybeWriteFixture(
+        string fileName,
+        StructureMatchProductionPresentationDto presentation)
+    {
+        if (Environment.GetEnvironmentVariable("UPDATE_MATCH_PRODUCTION_FIXTURES") != "1")
+        {
+            return;
+        }
+
+        var path = FixturePath(fileName);
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        File.WriteAllText(path, JsonSerializer.Serialize(presentation, JsonOptions));
+    }
+
+    private static string FixturePath(string fileName) =>
+        Path.GetFullPath(
+            Path.Combine(
+                AppContext.BaseDirectory,
+                "..",
+                "..",
+                "..",
+                "..",
+                "..",
+                "src",
+                "PlayUp",
+                "web",
+                "src",
+                "pages",
+                "structure",
+                "__fixtures__",
+                "matchProduction",
+                fileName));
+
+    private static MatchSummaryRow Summary(Match match) =>
+        new(match.Id, match.StageId, match.Status, match.HomeEntryId, match.AwayEntryId, match.Result);
 
     private StructureMatchProductionPresentationDto BuildRunningGroupsPartialPresentation()
     {
@@ -105,53 +153,4 @@ public sealed class MatchProductionPresentationFrontendFixturesTests
         return hub.MatchProductionPresentation
                ?? throw new InvalidOperationException("Expected match production presentation.");
     }
-
-    private void AssertMatchesFixture(
-        string fileName,
-        StructureMatchProductionPresentationDto presentation)
-    {
-        MaybeWriteFixture(fileName, presentation);
-        var path = FixturePath(fileName);
-        File.Exists(path).Should().BeTrue($"fixture missing: {path}");
-        var expected = JsonSerializer.Deserialize<StructureMatchProductionPresentationDto>(
-            File.ReadAllText(path),
-            JsonOptions);
-        presentation.Should().BeEquivalentTo(expected);
-    }
-
-    private static void MaybeWriteFixture(
-        string fileName,
-        StructureMatchProductionPresentationDto presentation)
-    {
-        if (Environment.GetEnvironmentVariable("UPDATE_MATCH_PRODUCTION_FIXTURES") != "1")
-        {
-            return;
-        }
-
-        var path = FixturePath(fileName);
-        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        File.WriteAllText(path, JsonSerializer.Serialize(presentation, JsonOptions));
-    }
-
-    private static string FixturePath(string fileName) =>
-        Path.GetFullPath(
-            Path.Combine(
-                AppContext.BaseDirectory,
-                "..",
-                "..",
-                "..",
-                "..",
-                "..",
-                "src",
-                "PlayUp",
-                "web",
-                "src",
-                "pages",
-                "structure",
-                "__fixtures__",
-                "matchProduction",
-                fileName));
-
-    private static MatchSummaryRow Summary(Match match) =>
-        new(match.Id, match.StageId, match.Status, match.HomeEntryId, match.AwayEntryId, match.Result);
 }

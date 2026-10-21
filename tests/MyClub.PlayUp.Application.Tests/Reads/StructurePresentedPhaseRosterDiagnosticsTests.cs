@@ -5,14 +5,12 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
-using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
-using MyClub.PlayUp.Domain.Qualification;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Domain.Standings;
@@ -27,7 +25,7 @@ public sealed class StructurePresentedPhaseRosterDiagnosticsTests
     [Fact]
     public void Qual_form_champ_ready_partial_presents_awaiting_qual_not_phase_roster_incomplete()
     {
-        var (competition, groups, champ, stages) = BuildQualFormChampReadyPartial();
+        var (competition, champ, stages) = BuildQualFormChampReadyPartial();
         var view = StructureViewAssembler.Assemble(competition, stages);
         var hub = view.Stages.Single(stage => stage.StageId == champ.Id.Value);
 
@@ -115,7 +113,7 @@ public sealed class StructurePresentedPhaseRosterDiagnosticsTests
                 points: r.Points))
         ]);
 
-    private (Competition Competition, Stage Groups, Stage Champ, List<Stage> Stages) BuildQualFormChampReadyPartial()
+    private (Competition Competition, Stage Champ, List<Stage> Stages) BuildQualFormChampReadyPartial()
     {
         var competition = CreateCompetition.Execute("qual-form-champ-ready-partial-presented", _clock);
         var groups = Stage.Create(
@@ -163,6 +161,6 @@ public sealed class StructurePresentedPhaseRosterDiagnosticsTests
 
         var stages = new List<Stage> { groups, champ };
         PrepareStage.Execute(champ, stages, _clock);
-        return (competition, groups, champ, stages);
+        return (competition, champ, stages);
     }
 }

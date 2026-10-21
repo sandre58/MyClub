@@ -42,16 +42,17 @@ internal static class InboundFeedSeatResolver
             return null;
         }
 
-        if (!string.IsNullOrWhiteSpace(path.Destination.SlotKey))
+        if (string.IsNullOrWhiteSpace(path.Destination.SlotKey))
         {
-            var occupant = destination.FindSlot(path.Destination.SlotKey)?.EntryId;
-            if (occupant is not null)
-            {
-                return occupant;
-            }
+            return InboundQualificationSeatProjection.TryResolveSeat(
+                path,
+                sourceStage,
+                destination,
+                matchSummariesByStage);
         }
 
-        return InboundQualificationSeatProjection.TryResolveSeat(
+        var occupant = destination.FindSlot(path.Destination.SlotKey)?.EntryId;
+        return occupant ?? InboundQualificationSeatProjection.TryResolveSeat(
             path,
             sourceStage,
             destination,

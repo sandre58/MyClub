@@ -37,12 +37,7 @@ internal static class StructureSkeleton
     /// </summary>
     internal static int ResolveConfiguredMatchdayCount(Stage stage, StructureFormatKind? format)
     {
-        if (format is not (StructureFormatKind.Championship or StructureFormatKind.Groups))
-        {
-            return stage.Matchdays.Count;
-        }
-
-        if (stage.Matchdays.Count != 1)
+        if (format is not (StructureFormatKind.Championship or StructureFormatKind.Groups) || stage.Matchdays.Count != 1)
         {
             return stage.Matchdays.Count;
         }

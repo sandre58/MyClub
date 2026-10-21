@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using System.Globalization;
+using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
@@ -246,7 +247,7 @@ public static class OverviewAssembler
         var dimensions = BuildDimensions(competition, structureView, stages, matchCounts, matchesByStage);
         var actions = BuildActions(competition, stages, matchesByStage, structureView, attention, completion, fixtureToMatch);
         var fromSlotsOpportunities = stages
-            .Where(stage => TryDescribeFromSlotsOpportunity(competition, stage, stages, out _))
+            .Where(stage => TryDescribeFromSlotsOpportunity(competition, stage, stages, matchesByStage, out _))
             .Select(stage => stage.Id)
             .ToArray();
         var progression = ResolveNaturalProgression(
@@ -556,7 +557,7 @@ public static class OverviewAssembler
         var readiness = inConstruction
             ? BuildRegulationTransitionReadiness(structureView)
             : [];
-        AppendFromSlotsTransitionReadiness(competition, stages, readiness);
+        AppendFromSlotsTransitionReadiness(competition, stages, matchesByStage, readiness);
         AppendSwissGenerateNextRoundReadiness(competition, structureView, stages, matchesByStage, readiness);
 
         return new OverviewRegulationDimensionDto(
@@ -673,6 +674,7 @@ public static class OverviewAssembler
     private static void AppendFromSlotsTransitionReadiness(
         Competition competition,
         IReadOnlyList<Stage> stages,
+        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage,
         List<OverviewTransitionReadinessDto> readiness)
     {
         if (competition.Status is not (CompetitionStatus.Draft or CompetitionStatus.Ready or CompetitionStatus.Running))
@@ -680,7 +682,11 @@ public static class OverviewAssembler
             return;
         }
 
-        if (!stages.Any(stage => TryDescribeFromSlotsOpportunity(competition, stage, stages, out _))) return;
+        if (!stages.Any(stage => TryDescribeFromSlotsOpportunity(competition, stage, stages, matchesByStage, out _)))
+        {
+            return;
+        }
+
         readiness.Add(
             new OverviewTransitionReadinessDto(
                 TransitionMaterializeFromOccupiedSlots,
@@ -1516,7 +1522,7 @@ public static class OverviewAssembler
 
         foreach (var stage in stages)
         {
-            if (!TryDescribeFromSlotsOpportunity(competition, stage, stages, out var occupiedSlotCount))
+            if (!TryDescribeFromSlotsOpportunity(competition, stage, stages, matchesByStage, out var occupiedSlotCount))
             {
                 continue;
             }
@@ -1871,6 +1877,7 @@ public static class OverviewAssembler
         Competition competition,
         Stage stage,
         IReadOnlyList<Stage> competitionStages,
+        IReadOnlyDictionary<StageId, IReadOnlyList<Match>>? matchesByStage,
         out int occupiedSlotCount)
     {
         occupiedSlotCount = 0;
@@ -1890,8 +1897,19 @@ public static class OverviewAssembler
         }
 
         occupiedSlotCount = stage.Slots.Count(slot => slot.EntryId is not null);
-        return MaterializeCupFromOccupiedSlots.CountEligiblePairs(stage, competition, competitionStages) > 0;
+        var matchSummariesByStage = ToMatchSummariesByStage(matchesByStage);
+        return MaterializeCupFromOccupiedSlots.CountEligiblePairs(
+            stage,
+            competition,
+            competitionStages,
+            matchSummariesByStage) > 0;
     }
+
+    private static Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>? ToMatchSummariesByStage(
+        IReadOnlyDictionary<StageId, IReadOnlyList<Match>>? matchesByStage) =>
+        matchesByStage?.ToDictionary(
+            kvp => kvp.Key,
+            kvp => StageStartReadinessGuard.ToSummaryRows(kvp.Value));
 
     private static Dictionary<string, string> MaterializeCommandParams(
         Stage stage,
