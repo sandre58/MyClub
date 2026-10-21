@@ -286,6 +286,14 @@ public static class StructurePresentedStageDiagnostics
             return false;
         }
 
+        if (primaryDisabledReasonCode
+            == StructureStageLifecycleAssembler.DisabledIncompleteEntryRound)
+        {
+            // Cup Start is already explained by entry-round placement; do not duplicate as a parallel
+            // Start attention item while eligible confrontations may still be materialized in Matchs.
+            return false;
+        }
+
         switch (primaryDisabledReasonCode)
         {
             case StructureStageLifecycleAssembler.DisabledPhaseRosterIncomplete
