@@ -57,14 +57,16 @@ Pour **chaque** question (Q1–Q3), la fiche Notion doit figer avant tout code :
 | `tests/.../CupC2ImpasseRecetteProtocolTests.cs` | Preuves A3 / A5 |
 | `docs/audit/phase-3-lot-c3-plan.md` | Périmètre C3 |
 
-**Notion :** [Arbitrage 3 — AUD-0004](https://www.notion.com/p/40075fb92d1081cdb0f8d655d2e93c68) · [Décision Cup C2 scinder](https://www.notion.com/p/40075fb92d108156a85df51720fefbbe).
+**Notion :** [Arbitrage 3 — AUD-0004](https://www.notion.com/p/40075fb92d1081cdb0f8d655d2e93c68) · **[Contrat produit Q1–Q3 (proposition)](https://www.notion.com/p/40075fb92d1081979ed7c15846a62c0b)** · [Décision Cup C2 scinder](https://www.notion.com/p/40075fb92d108156a85df51720fefbbe).
 
 ---
 
 ## 5. Livrables D3
 
 - [x] Plan d’arbitrage + recommandation Q1–Q3 (this file).
-- [ ] Contrat figé par question sur fiche Notion (prérequis D3-B).
+- [x] Proposition de contrat Notion (5 champs × Q1–Q3) — [fiche](https://www.notion.com/p/40075fb92d1081979ed7c15846a62c0b).
+- [ ] Validation décideur Q1–Q2 + **tranche Q3** (supporté vs hors contrat).
+- [ ] Contrat figé = prérequis D3-B.
 - [ ] **Autorisation explicite D3-B** (décideur).
 - [ ] D3-B : lot correctif borné (read-model / UX / docs / tests — **pas** guard/domaine sauf nouveau arbitrage).
 
