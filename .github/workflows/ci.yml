@@ -101,7 +101,6 @@ jobs:
       ConnectionStrings__PlayUpDev: Host=localhost;Port=5432;Database=myclub_dev;Username=postgres;Password=postgres
       ConnectionStrings__PlayUp: Host=localhost;Port=5432;Database=myclub_dev;Username=postgres;Password=postgres
       ConnectionStrings__Media: Host=localhost;Port=5432;Database=myclub_dev;Username=postgres;Password=postgres
-      Media__StorageRoot: ${{ runner.temp }}/playup-e2e-media
     services:
       postgres:
         image: postgres:18
@@ -151,6 +150,7 @@ jobs:
       - name: E2E business (Host + PostgreSQL)
         working-directory: src/PlayUp/web
         run: |
+          export Media__StorageRoot="${RUNNER_TEMP}/playup-e2e-media"
           mkdir -p "${Media__StorageRoot}"
           dotnet run --project ../MyClub.PlayUp.Host/MyClub.PlayUp.Host.csproj \
             --configuration Release --no-build \
