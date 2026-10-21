@@ -49,8 +49,8 @@ import {
   LoadingState,
   MutationError,
   PendingLabel,
-  persistentStructureMutationSotHref,
 } from '../../ui';
+import { persistentStructureMutationSotHref } from '../../persistentStructureMutationSot';
 import { StructureQualificationIntentEditor } from './StructureQualificationIntentEditor';
 import { scheduleStructureRefresh } from './structureInvalidation';
 import { sortiesAvalPeerStages } from './structureSortiesDestinations';
@@ -369,7 +369,7 @@ export function StructureQualificationDialog({
         { defaultValue: code },
       ),
     );
-  }, [data.competitionId, stage.stageId, stage.structureIssues, t]);
+  }, [data.competitionId, stage, t]);
 
   const intentsComplete =
     sessionReady &&

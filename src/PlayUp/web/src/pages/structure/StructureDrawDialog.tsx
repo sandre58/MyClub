@@ -82,8 +82,8 @@ import {
   EmptyState,
   MutationError,
   PendingLabel,
-  persistentStructureMutationSotHref,
 } from '../../ui';
+import { persistentStructureMutationSotHref } from '../../persistentStructureMutationSot';
 import './phase-schematic.css';
 
 function pairingSideLabels(

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { occupancyMeterRatio, occupancyMeterState } from './OccupancyMeter';
+import { occupancyMeterRatio, occupancyMeterState } from './occupancyMeterMath';
 import { expandOccurrences } from './structureQualificationDraft';
 import { expectedPopulationWithQualDraft } from './structurePopulationVolume';
 import { resolveDestinationMeterCapacity } from './structurePlaces';

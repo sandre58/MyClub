@@ -24,7 +24,8 @@ import { useDiscardConfirm } from '../../design-system/useDiscardConfirm';
 import type { StructureEntry, StructureStageHubSummary } from '../../types';
 import { MutationError, PendingLabel } from '../../ui';
 import { scheduleStructureRefresh } from './structureInvalidation';
-import { OccupancyMeter, occupancyMeterState } from './OccupancyMeter';
+import { OccupancyMeter } from './OccupancyMeter';
+import { occupancyMeterState } from './occupancyMeterMath';
 import { resolvePlacesN } from './structurePlaces';
 
 type StructureCompositionDialogProps = {

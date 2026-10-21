@@ -11,10 +11,8 @@ import {
   WinIcon,
 } from '../../design-system/icons/contentIcons';
 import { StructureDiagnosticIssueIcon } from './StructureDiagnosticIssueIcon';
-import {
-  EntryCell,
-  entryCellListItemClassName,
-} from '../../design-system/components/EntryCell';
+import { EntryCell } from '../../design-system/components/EntryCell';
+import { entryCellListItemClassName } from '../../design-system/components/entryCellListItemClassName';
 import { EmptyState } from '../../ui';
 import type {
   StructureEntry,
@@ -29,7 +27,9 @@ import {
 } from './structureEntryPlacementProjection';
 import { resolvePlacesN } from './structurePlaces';
 import { structureDiagnosticPresentation } from './structureDiagnosticPresentationPolicy';
-import { OccupancyMeter, occupancyMeterState } from './OccupancyMeter';
+import { OccupancyMeter } from './OccupancyMeter';
+import { listComposedAffectationEntries } from './composedAffectationEntries';
+import { occupancyMeterState } from './occupancyMeterMath';
 import {
   isDraftLikeStageStatus,
   isSuspendedStageStatus,
@@ -46,8 +46,6 @@ import type {
 
 const compactIcon =
   'ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact';
-
-const EMPTY_ENTRY_IDS: string[] = [];
 
 function compositionTeamProvenanceBadge(
   provenance: CompositionTeamProvenance,
@@ -87,22 +85,6 @@ function compositionTeamProvenanceBadge(
       </Chip>
     </Tooltip>
   );
-}
-
-export function listComposedAffectationEntries(
-  stage: StructureStageHubSummary,
-  entries: readonly StructureEntry[],
-): StructureEntry[] {
-  const composedIds = stage.affectationEntryIds ?? EMPTY_ENTRY_IDS;
-  const byId = new Map(entries.map((entry) => [entry.entryId, entry]));
-  return composedIds
-    .map((id) => byId.get(id))
-    .filter((entry): entry is StructureEntry => entry != null)
-    .sort((a, b) =>
-      a.displayName.localeCompare(b.displayName, undefined, {
-        sensitivity: 'base',
-      }),
-    );
 }
 
 /** Cardinality gauge — expected Population vs Places N (D5 phase-aware chrome). */

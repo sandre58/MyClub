@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { OccupancyMeter, occupancyMeterState } from './OccupancyMeter';
+import { OccupancyMeter } from './OccupancyMeter';
+import { occupancyMeterState } from './occupancyMeterMath';
 import type { DrawCtaPoolTone } from './structureDrawCtaPool';
 
 function OperationalGaugeReadiness({

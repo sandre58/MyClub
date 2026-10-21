@@ -123,10 +123,8 @@ import {
   resolveCompositionResolvedSeatCount,
   resolveCompositionTeamsGaugeVariant,
 } from './compositionBandGauge';
-import {
-  ExitKindMenu,
-  listComposedAffectationEntries,
-} from './StructurePhaseRails';
+import { ExitKindMenu } from './StructurePhaseRails';
+import { listComposedAffectationEntries } from './composedAffectationEntries';
 import {
   hasEngagedTeamsSectionContent,
   resolveCompositionPopulationGaugeCurrent,
@@ -347,7 +345,7 @@ export function StructurePhaseFiche({
     });
     return () => cancelAnimationFrame(frame);
   }, [
-    stage?.stageId,
+    stage,
     initialFocus,
     initialEdit,
     initialCompose,

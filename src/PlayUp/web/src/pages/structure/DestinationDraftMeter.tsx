@@ -2,7 +2,8 @@
 // Destination occupancy meter — Qual / Prog authoring tiles (shared chrome).
 // -----------------------------------------------------------------------
 
-import { OccupancyMeter, occupancyMeterState } from './OccupancyMeter';
+import { OccupancyMeter } from './OccupancyMeter';
+import { occupancyMeterState } from './occupancyMeterMath';
 
 /** Expected destination occupancy (X) vs Places N (Y); +Z = current intent only. */
 export function DestinationDraftMeter({

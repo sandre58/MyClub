@@ -234,13 +234,6 @@
   max-width: 100%;
 }
 
-.structure-fiche__header-lifecycle-toolbar {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-4);
-}
-
 .structure-fiche__header-lifecycle-messages {
   width: 100%;
   min-width: 0;

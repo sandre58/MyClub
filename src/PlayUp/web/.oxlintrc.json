@@ -11,6 +11,12 @@
       "rules": {
         "react/only-export-components": "off"
       }
+    },
+    {
+      "files": ["src/pages/structure/structureRegulationDigest.build.tsx"],
+      "rules": {
+        "react/only-export-components": "off"
+      }
     }
   ]
 }

@@ -11,8 +11,6 @@ import {
   hasEngagedTeamsSectionContent,
 } from './compositionTilePresentation';
 
-const withActions = (actions: string[]) => ({ actions });
-
 describe('compositionTilePresentation', () => {
   it('resolves prep for Draft and Ready with affectation edit', () => {
     expect(

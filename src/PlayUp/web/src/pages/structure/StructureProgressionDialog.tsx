@@ -51,8 +51,8 @@ import {
   LoadingState,
   MutationError,
   PendingLabel,
-  persistentStructureMutationSotHref,
 } from '../../ui';
+import { persistentStructureMutationSotHref } from '../../persistentStructureMutationSot';
 import {
   StructureProgressionIntentEditor,
   type ProgRoundOption,
@@ -310,7 +310,7 @@ export function StructureProgressionDialog({
         { defaultValue: code },
       ),
     );
-  }, [data.competitionId, stage.stageId, stage.structureIssues, t]);
+  }, [data.competitionId, stage, t]);
 
   const draftEntriesByDestination = useMemo(() => {
     const map = new Map<string, number>();

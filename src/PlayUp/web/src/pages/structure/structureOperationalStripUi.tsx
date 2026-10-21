@@ -14,7 +14,7 @@ import { StructureDiagnosticIssueIcon } from './StructureDiagnosticIssueIcon';
 export type StripOperationalMessageKind =
   'info' | 'success' | 'attention' | 'danger';
 
-export function diagnosticToneToStripMessageKind(
+function diagnosticToneToStripMessageKind(
   tone: StructureDiagnosticTone,
 ): StripOperationalMessageKind {
   switch (tone) {

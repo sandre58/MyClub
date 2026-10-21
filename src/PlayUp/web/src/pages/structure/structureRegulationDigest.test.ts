@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { confrontationFormatScopeHintKey } from './structureRegulationDigest';
+import { confrontationFormatScopeHintKey } from './structureRegulationDigest.build';
 
 describe('confrontationFormatScopeHintKey', () => {
   it('returns uniform hint when at most one segment', () => {

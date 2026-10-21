@@ -24,8 +24,8 @@ import {
   buildMatchDigestTokens,
   buildStandingDigestTokens,
   confrontationFormatScopeHintKey,
-  RegulationDigestFacts,
-} from './structureRegulationDigest';
+} from './structureRegulationDigest.build';
+import { RegulationDigestFacts } from './structureRegulationDigest';
 
 const compactIcon =
   'ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact';
