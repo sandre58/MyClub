@@ -18,7 +18,20 @@
 | **Q2** | Règle impasse @ 2/2 mat. eligible **indépendante** des runs ; backend A5 puis SPA A4–A5. |
 | **Q3** | **Option A** — assign @ 1/2 **hors contrat D3-B** (pas guard/domaine ; futur = contrat distinct). |
 
-**Vérification backend (2026-10-22) :** `dotnet test … --filter CupC2Impasse` → **2/2** (A3 + A5). **SPA A3 / A4–A5 :** à rejouer avant go D3-B.
+**Vérification backend (2026-10-22) :** `dotnet test … --filter CupC2Impasse` → **2/2** (A3 + A5).
+
+**Rejouage SPA (2026-10-22, investigation seule)** — seed `structure-materialize-recette`, **RECETTE C2** `96c09c7c-e531-5e0e-9423-6221e46b2f7d`, Host `:5287` + Vite `:5173`, phase **Ready** (seed). Aucun changement code.
+
+| Étape | Attendu (contrat figé) | Observé | Preuve |
+| --- | --- | --- | --- |
+| **A3** @ 1/2 | Start **disabled** ; motif normatif **`IncompleteEntryRound`** (pas `UnmaterializedConfrontations` comme raison lifecycle) | `lifecycle.transition.enabled=false`, `disabledReasonCode=IncompleteEntryRound` ; bouton **Démarrer la phase** disabled (rôle) ; jauge mat. **1/2** ; CTA **Compléter les matchs** | `GET …/structure` (hub) ; `GET …/attention` liste **3** items dont `IncompleteEntryRound` **et** `UnmaterializedConfrontations` |
+| **A4–A5** @ 2/2 mat., 2/4 paires tableau | Start **reste disabled** (`IncompleteEntryRound`) ; pas de passage Running | Après `POST …/materialize-from-slots` → **2/2**, `eligible=0` ; Start disabled (SPA + hub) ; `POST …/start` → **400** `Application.StartBlockedIncompleteEntryRound` | Hub A5 ; snapshot accessibilité `Démarrer la phase` `[disabled]` |
+
+**Écart Q1 (partiel, reproductible) :** le read-model / attention expose encore **`UnmaterializedConfrontations`** en parallèle de **`IncompleteEntryRound`** (`presentedIssueCodes`, drawer « À traiter »). La **transition lifecycle** est conforme ; le risque documenté le 17/10 (motif `Unmaterialized` seul) **ne se reproduit pas** sur la transition actuelle.
+
+**Écart Q2 (17/10) :** run historique « Start enabled @ 2/2 » → **non reproductible** sur build courant (Start reste disabled). Traiter comme observation isolée, pas comme correctif présumé.
+
+**Suite arbitrage :** candidat D3-B **borné Q1** (alignement présentation SPA / attention vs motif lifecycle) **si** le décideur valide ; **pas** de D3-B Q2 sur cette base.
 
 **Interdit dans D3-B :** modifier `StageStartReadinessGuard`, règles Cup domaine, ou couvrir **cas assign** (Q3-A).
 
@@ -69,7 +82,7 @@ Pour **chaque** question (Q1–Q3), la fiche Notion doit figer avant tout code :
 - [x] Proposition de contrat Notion (5 champs × Q1–Q3) — [fiche](https://www.notion.com/p/40075fb92d1081979ed7c15846a62c0b).
 - [x] Validation décideur Q1–Q2 + **Q3-A** (Notion).
 - [x] Tests backend référence A3 + A5 (2026-10-22).
-- [ ] Rejouage SPA RECETTE C2 A3 + A4–A5 ; écarts listés.
+- [x] Rejouage SPA RECETTE C2 A3 + A4–A5 (2026-10-22) ; écarts listés §1.
 - [ ] **Go explicite D3-B** (décideur).
 - [ ] D3-B : lot correctif borné (read-model / UX / docs / tests — **pas** guard/domaine sauf nouveau arbitrage).
 
