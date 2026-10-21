@@ -61,6 +61,7 @@
   "detail": {
     "titleVs": "{{home}} vs {{away}}",
     "backToMatches": "Matchs",
+    "leg": "Manche {{index}}",
     "scoreAria": "Score {{home}} {{homeGoals}} à {{away}} {{awayGoals}}",
     "scoreCaptionOfficial": "Résultat officiel",
     "scoreCaptionLive": "Compteur observé",

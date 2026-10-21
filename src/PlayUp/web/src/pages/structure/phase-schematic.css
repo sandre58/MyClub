@@ -539,6 +539,12 @@
   font-weight: 600;
 }
 
+.schematic-cup__pair-ordinal[data-production-state='materialized'] {
+  fill: color-mix(in srgb, var(--color-success) 75%, var(--color-ink));
+  font-weight: 600;
+  opacity: 1;
+}
+
 .schematic-cup__pair-ordinal {
   fill: var(--color-text-secondary);
   font-size: 10px;

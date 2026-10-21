@@ -4,7 +4,6 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 
@@ -42,7 +41,7 @@ internal static class StructureInboundFeedPathProjection
         ProgressionPath path,
         Stage sourceStage)
     {
-        var sourceLabel = StructureInboundProgressionSourceLabel.Resolve(sourceStage, path.SourcePairKey);
+        var matchNumberInContainer = ResolveProgressionMatchNumber(sourceStage, path.SourcePairKey);
         return new StructureInboundProgressionPathDto(
             path.SourcePairKey,
             path.Outcome,
@@ -50,41 +49,15 @@ internal static class StructureInboundFeedPathProjection
             path.Destination.SlotKey,
             path.Destination.GroupId?.Value,
             path.Destination.Form,
-            sourceLabel);
+            path.SourcePairKey,
+            matchNumberInContainer);
     }
-}
 
-/// <summary>Progression source label for inbound feed rows (PairKey or materialized fixture).</summary>
-internal static class StructureInboundProgressionSourceLabel
-{
-    internal static string Resolve(Stage sourceStage, string sourcePairKey)
+    private static int? ResolveProgressionMatchNumber(Stage sourceStage, string sourcePairKey)
     {
         var fixture = sourceStage.FindFixtureByBracketPairKey(sourcePairKey);
-        if (fixture is null)
-        {
-            return sourcePairKey;
-        }
-
-        var order = ResolveFixtureOrder(sourceStage, fixture.Id);
-        return order is { } n
-            ? $"#{n}"
-            : sourcePairKey;
-    }
-
-    private static int? ResolveFixtureOrder(Stage stage, FixtureId fixtureId)
-    {
-        foreach (var round in stage.Rounds)
-        {
-            var fixtures = round.Fixtures.OrderBy(fixture => fixture.Id.Value).ToArray();
-            for (var i = 0; i < fixtures.Length; i++)
-            {
-                if (fixtures[i].Id.Equals(fixtureId))
-                {
-                    return i + 1;
-                }
-            }
-        }
-
-        return null;
+        return fixture is not null
+            ? ConfrontationDisplayOrdinal.TryGetForFixture(sourceStage, fixture.Id)
+            : ConfrontationDisplayOrdinal.TryGetForPairKey(sourceStage, sourcePairKey);
     }
 }

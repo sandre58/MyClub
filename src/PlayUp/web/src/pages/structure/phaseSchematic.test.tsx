@@ -49,7 +49,7 @@ describe('PhaseSchematic', () => {
     expect(container.querySelector('.schematic-cup__pair-ordinal')).toBeNull();
   });
 
-  it('shows Match # from real connection', () => {
+  it('shows PairKey on wire when connection is materialized (no redundant Match #)', () => {
     render(
       <PhaseSchematic
         schematic={cupSchematic({
@@ -66,7 +66,13 @@ describe('PhaseSchematic', () => {
         })}
       />,
     );
-    expect(screen.getByText('#7')).toBeInTheDocument();
+    expect(screen.getByText('P1')).toBeInTheDocument();
+    expect(screen.queryByText('#7')).toBeNull();
+    expect(
+      document.querySelector(
+        '.schematic-cup__pair-ordinal[data-production-state="materialized"]',
+      ),
+    ).not.toBeNull();
   });
 
   it('shows Domain pairKey when connection has no fixture', () => {
@@ -113,12 +119,14 @@ describe('PhaseSchematic', () => {
               slotAKey: null,
               slotBKey: null,
               matchNumber: 3,
+              pairKey: 'P1',
             },
           ],
         })}
       />,
     );
-    expect(screen.getByText('#3')).toBeInTheDocument();
+    expect(screen.getByText('P1')).toBeInTheDocument();
+    expect(screen.queryByText(/#3/)).toBeNull();
     expect(screen.getByText('Alpha')).toBeInTheDocument();
     expect(screen.getByText('Beta')).toBeInTheDocument();
   });
@@ -235,7 +243,8 @@ describe('PhaseSchematic', () => {
         })}
       />,
     );
-    expect(screen.getByText(/Vainqueur de P1 · Match #4/)).toBeInTheDocument();
+    expect(screen.getByText(/^Vainqueur de P1$/)).toBeInTheDocument();
+    expect(screen.queryByText(/Match #4/)).toBeNull();
   });
 
   it('cup slot shows Winner de P1 before fixtures exist', () => {

@@ -464,7 +464,34 @@
   font-size: 0.6875rem;
   font-weight: 500;
   line-height: 1.2;
+}
+
+.structure-entries__teams--band
+  .structure-entries__team-provenance-badge:not(.ds-chip--win):not(
+    .ds-chip--loss
+  ) {
   color: var(--color-text-secondary);
+}
+
+.structure-entries__team-provenance-badge-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+  max-width: 100%;
+  line-height: var(--leading-tight);
+}
+
+.structure-entries__team-provenance-badge-inner > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.structure-entries__team-provenance-outcome-icon {
+  flex-shrink: 0;
+  width: 0.75rem;
+  height: 0.75rem;
 }
 
 .structure-entries__teams--band .structure-entries__team-pending-icon {

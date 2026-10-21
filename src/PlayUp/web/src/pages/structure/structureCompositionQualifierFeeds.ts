@@ -229,6 +229,7 @@ function inboundProgressionPath(
     destinationGroupId: path.destinationGroupId ?? null,
     destinationForm: path.destinationForm ?? null,
     sourceLabel: path.sourceLabel ?? null,
+    matchNumberInContainer: path.matchNumberInContainer ?? null,
   };
 }
 

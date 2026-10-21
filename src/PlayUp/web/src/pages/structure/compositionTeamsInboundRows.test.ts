@@ -34,9 +34,8 @@ describe('compositionTeamsInboundRows', () => {
       ],
     };
     const labels = provenanceLabelsForQualifierRule(group, group.rules[0]);
-    expect(labels.full).toContain('Phase poules');
-    expect(labels.full).toContain('Poule A');
-    expect(labels.badge).toBe('1er·A');
+    expect(labels.full).toBe('Phase poules · 1er · Poule A');
+    expect(labels.badge).toBe('1er · Gr. A');
 
     const stage = {
       status: 'Running',

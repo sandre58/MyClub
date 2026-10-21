@@ -1,12 +1,14 @@
 // Population (Équipes) rail — affectation list + cardinality meter.
 import { useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Chip } from '../../design-system/components/Chip';
+import { Chip, type ChipTone } from '../../design-system/components/Chip';
 import { Tooltip } from '../../design-system/components/Tooltip';
 import {
   EmptySelectionIcon,
   PencilIcon,
   PlusIcon,
+  LossIcon,
+  WinIcon
 } from '../../design-system/icons/contentIcons';
 import { StructureDiagnosticIssueIcon } from './StructureDiagnosticIssueIcon';
 import {
@@ -50,10 +52,38 @@ const EMPTY_ENTRY_IDS: string[] = [];
 function compositionTeamProvenanceBadge(
   provenance: CompositionTeamProvenance,
 ): ReactNode {
+  const tone: ChipTone = provenance.chipTone ?? 'soft';
+  const outcome = provenance.progressionOutcome;
   return (
     <Tooltip content={provenance.full}>
-      <Chip tone="soft" className="structure-entries__team-provenance-badge">
-        {provenance.badge}
+      <Chip
+        tone={tone}
+        className="structure-entries__team-provenance-badge"
+        aria-label={provenance.full}
+      >
+        {outcome ? (
+          <span
+            className="structure-entries__team-provenance-badge-inner"
+            aria-hidden={false}
+          >
+            {outcome === 'Loser' ? (
+              <LossIcon
+                size="sm"
+                className="structure-entries__team-provenance-outcome-icon"
+                aria-hidden
+              />
+            ) : (
+              <WinIcon
+                size="sm"
+                className="structure-entries__team-provenance-outcome-icon"
+                aria-hidden
+              />
+            )}
+            <span>{provenance.badge}</span>
+          </span>
+        ) : (
+          provenance.badge
+        )}
       </Chip>
     </Tooltip>
   );

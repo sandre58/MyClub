@@ -27,11 +27,16 @@ import { compareGroupLabels } from './drawUi';
 type Translate = (key: string, opts?: Record<string, unknown>) => string;
 type SchematicDensity = 'full' | 'crest' | 'compact';
 
-type PairLabel =
-  { kind: 'fixture'; matchNumber: number } | { kind: 'pair'; pairKey: string };
+type PairLabel = {
+  pairKey: string;
+  matchNumber?: number;
+};
 
 /** Overlay from Structure materialize read (Cup only). */
 export type CupPairProductionState = 'eligible' | 'incomplete';
+
+/** Wire ordinal styling — materialized from schematic connection overlay. */
+export type CupPairOrdinalState = CupPairProductionState | 'materialized';
 
 function nextPowerOfTwo(n: number): number {
   let p = 1;
@@ -823,11 +828,8 @@ function labelFromConnection(
   if (!conn) {
     return null;
   }
-  if (conn.fixtureId && conn.matchNumber > 0) {
-    return { kind: 'fixture', matchNumber: conn.matchNumber };
-  }
-  if (conn.pairKey) {
-    return { kind: 'pair', pairKey: conn.pairKey };
+  if (conn.pairKey?.trim()) {
+    return { pairKey: conn.pairKey.trim() };
   }
   return null;
 }
@@ -868,21 +870,8 @@ function PairOrdinalText({
   label: PairLabel;
   x: number;
   y: number;
-  productionState?: CupPairProductionState;
+  productionState?: CupPairOrdinalState;
 }) {
-  if (label.kind === 'fixture') {
-    return (
-      <text
-        x={x}
-        y={y}
-        textAnchor="start"
-        className="schematic-cup__match-n"
-        data-production-state="materialized"
-      >
-        {`#${label.matchNumber}`}
-      </text>
-    );
-  }
   return (
     <text
       x={x}
@@ -900,10 +889,21 @@ function pairProductionState(
   label: PairLabel,
   states?: Readonly<Record<string, CupPairProductionState>>,
 ): CupPairProductionState | undefined {
-  if (label.kind !== 'pair' || !states) {
+  if (!states) {
     return undefined;
   }
   return states[label.pairKey];
+}
+
+function resolvePairOrdinalState(
+  conn: SchematicConnection | undefined,
+  label: PairLabel,
+  states?: Readonly<Record<string, CupPairProductionState>>,
+): CupPairOrdinalState | undefined {
+  if (conn?.fixtureId) {
+    return 'materialized';
+  }
+  return pairProductionState(label, states);
 }
 
 function CupMultiRoundSchematic({
@@ -1047,7 +1047,8 @@ function CupMultiRoundSchematic({
                           label={label}
                           x={xMid + 6}
                           y={mid - 5}
-                          productionState={pairProductionState(
+                          productionState={resolvePairOrdinalState(
+                            conn,
                             label,
                             cupPairProductionStates,
                           )}
@@ -1216,7 +1217,8 @@ function CupSingleRoundSchematic({
                     label={label}
                     x={xMid + 8}
                     y={mid - 5}
-                    productionState={pairProductionState(
+                    productionState={resolvePairOrdinalState(
+                      conn,
                       label,
                       cupPairProductionStates,
                     )}
@@ -1359,14 +1361,15 @@ function feedOriginLabel(origin: SchematicFeedOrigin, t: Translate): string {
           ? t('structure:fiche.rule.loser', { count: 1 })
           : t('structure:fiche.rule.winner', { count: 1 });
       const pair = origin.sourcePairKey?.trim();
-      const base = pair
-        ? t('structure:fiche.rule.outcomeOfPair', { outcome, pair })
-        : outcome;
-      return origin.sourceFixtureNumber != null
-        ? `${base} · ${t('structure:fiche.rule.matchNumber', {
-            n: origin.sourceFixtureNumber,
-          })}`
-        : base;
+      if (pair) {
+        return t('structure:fiche.rule.outcomeOfPair', { outcome, pair });
+      }
+      if (origin.sourceFixtureNumber != null) {
+        return `${outcome} · ${t('structure:fiche.rule.matchNumber', {
+          n: origin.sourceFixtureNumber,
+        })}`;
+      }
+      return outcome;
     }
     case 'Direct':
       return t('structure:entries.originAffectation');

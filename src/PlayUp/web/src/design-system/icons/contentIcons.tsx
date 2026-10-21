@@ -40,6 +40,8 @@ import {
   Timer,
   Trash2,
   Trophy,
+  ThumbsUp,
+  ThumbsDown,
   Undo2,
   Unlock,
   UsersRound,
@@ -160,6 +162,14 @@ export function SortingRulesIcon({ size, ...props }: ContentIconProps) {
 /** Confrontations */
 export function ConfrontationIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Handshake} size={size} {...props} />;
+}
+
+export function WinIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={ThumbsUp} size={size} {...props} />;
+}
+
+export function LossIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={ThumbsDown} size={size} {...props} />;
 }
 
 /** Two legs / legs. */

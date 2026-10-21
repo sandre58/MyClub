@@ -669,7 +669,7 @@ public static class StageSchematicAssembler
     }
 
     private static IReadOnlyList<Fixture> OrderedFixtures(Round round) =>
-        [.. round.Fixtures.OrderBy(fixture => fixture.Id.Value)];
+        ConfrontationDisplayOrdinal.FixturesInRoundDisplayOrder(round);
 
     private static SchematicFeedOriginDto? MapFeedOrigin(
         SlotFeedResolution? resolution,

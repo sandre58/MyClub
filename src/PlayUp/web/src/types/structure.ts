@@ -449,8 +449,10 @@ export interface StructureProgressionPath {
   destinationGroupId?: string | null;
   /** Champ/Swiss Form Placement when true. */
   destinationForm?: boolean | null;
-  /** Resolved confrontation label (PairKey or bound fixture) when available. */
+  /** Human label (includes PairKey when materialized). */
   sourceLabel?: string | null;
+  /** Secondary Match #n within round or matchday when known. */
+  matchNumberInContainer?: number | null;
 }
 
 /** DELETE /competitions/{id}/stages/{stageId} */
@@ -717,6 +719,8 @@ export interface StructurePlacementAward {
   sourceLabel?: string | null;
   /** Optional execution fixture when the PairKey is materialized (read overlay). */
   boundFixtureId?: string | null;
+  /** Secondary Match #n within round or matchday when known. */
+  matchNumberInContainer?: number | null;
 }
 
 export interface StructureDrawConstraint {

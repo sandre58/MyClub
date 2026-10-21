@@ -269,6 +269,11 @@ function MatchDetailView({
                 {stageName}
               </MatchHeroMetaItem>
             ) : null}
+            {data.legIndex != null && data.legIndex > 1 ? (
+              <MatchHeroMetaItem icon={<CalendarIcon size="sm" />}>
+                {t('detail.leg', { index: data.legIndex })}
+              </MatchHeroMetaItem>
+            ) : null}
           </>
         }
       />

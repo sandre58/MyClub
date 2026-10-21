@@ -13,6 +13,10 @@ import type {
   StructureStageHubSummary,
   StructureView,
 } from '../../types';
+import {
+  structureProgressionSortKey,
+  structureProgressionSourceContext,
+} from './structureConfrontationDisplay';
 import { qualificationPathVolume } from './structurePopulationVolume';
 import { intentFromApi, summarizeIntentWhoParts } from './structureQualificationDraft';
 import {
@@ -247,60 +251,24 @@ export function qualificationRuleParts(
   };
 }
 
-/** Structural PairKey primary; Match # is an optional post-materialize overlay. */
 function progressionSourceContext(
   sourcePairKey: string | null | undefined,
-  sourceLabel: string | null | undefined,
+  matchNumberInContainer: number | null | undefined,
   t: (key: string, opts?: Record<string, unknown>) => string,
 ): string {
-  const pair = sourcePairKey?.trim();
-  const fromLabel = sourceLabel?.match(/#(\d+)/);
-  if (pair && fromLabel?.[1]) {
-    return `${pair} · ${t('fiche.rule.matchNumber', { n: fromLabel[1] })}`;
-  }
-  if (pair) {
-    return pair;
-  }
-  return matchNumberContext(sourceLabel, sourcePairKey, t);
+  return structureProgressionSourceContext(
+    sourcePairKey,
+    matchNumberInContainer,
+    (n) => t('fiche.rule.matchNumber', { n }),
+    () => t('fiche.rule.matchUnknown'),
+  );
 }
 
 function progressionSortKey(
   sourcePairKey: string | null | undefined,
-  sourceLabel: string | null | undefined,
+  matchNumberInContainer: number | null | undefined,
 ): string {
-  const pair = sourcePairKey?.trim();
-  if (pair) {
-    const fromLabel = sourceLabel?.match(/#(\d+)/);
-    return fromLabel?.[1] ? `${pair}-${fromLabel[1].padStart(8, '0')}` : pair;
-  }
-  return matchSortKey(sourceLabel, sourcePairKey);
-}
-
-/** M2: always Match #n — phase name already shown by flux grouping. */
-function matchNumberContext(
-  sourceLabel: string | null | undefined,
-  fixtureId: string | null | undefined,
-  t: (key: string, opts?: Record<string, unknown>) => string,
-): string {
-  const fromLabel = sourceLabel?.match(/#(\d+)/);
-  if (fromLabel?.[1]) {
-    return t('fiche.rule.matchNumber', { n: fromLabel[1] });
-  }
-  if (fixtureId) {
-    return t('fiche.rule.matchFallback', { id: fixtureId.slice(0, 8) });
-  }
-  return t('fiche.rule.matchUnknown');
-}
-
-function matchSortKey(
-  sourceLabel: string | null | undefined,
-  fixtureId: string | null | undefined,
-): string {
-  const fromLabel = sourceLabel?.match(/#(\d+)/);
-  if (fromLabel?.[1]) {
-    return fromLabel[1].padStart(8, '0');
-  }
-  return fixtureId ?? '';
+  return structureProgressionSortKey(sourcePairKey, matchNumberInContainer);
 }
 
 function qualificationIntentRuleParts(
@@ -422,10 +390,17 @@ export function progressionRuleParts(
       ? t('fiche.rule.winner', { count: 1 })
       : t('fiche.rule.loser', { count: 1 }),
     badgeTone: isWinner ? 'win' : 'loss',
-    context: progressionSourceContext(path.sourcePairKey, path.sourceLabel, t),
+    context: progressionSourceContext(
+      path.sourcePairKey,
+      path.matchNumberInContainer,
+      t,
+    ),
     family: 'result',
     sortPrimary: isWinner ? 0 : 1,
-    sortSecondary: progressionSortKey(path.sourcePairKey, path.sourceLabel),
+    sortSecondary: progressionSortKey(
+      path.sourcePairKey,
+      path.matchNumberInContainer,
+    ),
   };
 }
 
@@ -456,7 +431,7 @@ export function placementRuleParts(
     badgeTone: isWinner ? 'win' : 'loss',
     context: progressionSourceContext(
       award.sourcePairKey ?? undefined,
-      award.sourceLabel,
+      award.matchNumberInContainer,
       t,
     ),
   };

@@ -374,12 +374,16 @@ public static class StructureViewAssembler
             .Select(path =>
             {
                 var fixture = stage.FindFixtureByBracketPairKey(path.SourcePairKey);
+                var matchNumber = fixture is not null
+                    ? ConfrontationDisplayOrdinal.TryGetForFixture(stage, fixture.Id)
+                    : ConfrontationDisplayOrdinal.TryGetForPairKey(stage, path.SourcePairKey);
                 return new StructurePlacementAwardDto(
                     path.Rank,
                     path.Outcome,
                     path.SourcePairKey,
-                    ResolveProgressionSourceLabel(stage, path.SourcePairKey),
-                    fixture?.Id.Value);
+                    path.SourcePairKey,
+                    fixture?.Id.Value,
+                    matchNumber);
             })
             .ToArray();
         IReadOnlyList<StructureDrawConstraintDto>? drawConstraints = draw?.Constraints
@@ -739,74 +743,6 @@ public static class StructureViewAssembler
 
         var perGroup = stage.PlacesPerGroup;
         return perGroup is null or < 1 ? null : stage.Groups.Count * perGroup.Value;
-    }
-
-    /// <summary>
-    /// Human source label: PairKey, or bound fixture label when materialized.
-    /// </summary>
-    private static string ResolveProgressionSourceLabel(Stage stage, string sourcePairKey)
-    {
-        var fixture = stage.FindFixtureByBracketPairKey(sourcePairKey);
-        return fixture is not null
-            ? ResolveFixtureSourceLabel(stage, fixture.Id) ?? sourcePairKey
-            : sourcePairKey;
-    }
-
-    /// <summary>
-    /// Human fixture label: round/matchday · #order, optionally · slotA vs slotB when keys exist.
-    /// Match #order is stable (fixtures ordered by id) so labels match StageSchematic.
-    /// </summary>
-    private static string? ResolveFixtureSourceLabel(Stage stage, FixtureId fixtureId)
-    {
-        foreach (var round in stage.Rounds)
-        {
-            var fixtures = round.Fixtures.OrderBy(fixture => fixture.Id.Value).ToArray();
-            for (var i = 0; i < fixtures.Length; i++)
-            {
-                var fixture = fixtures[i];
-                if (!fixture.Id.Equals(fixtureId))
-                {
-                    continue;
-                }
-
-                return FormatFixtureSourceLabel(round.Name, i + 1, fixture);
-            }
-        }
-
-        foreach (var matchday in stage.Matchdays)
-        {
-            var fixtures = matchday.Fixtures.OrderBy(fixture => fixture.Id.Value).ToArray();
-            for (var i = 0; i < fixtures.Length; i++)
-            {
-                var fixture = fixtures[i];
-                if (!fixture.Id.Equals(fixtureId))
-                {
-                    continue;
-                }
-
-                return FormatFixtureSourceLabel(
-                    $"J{matchday.Number.ToString(CultureInfo.InvariantCulture)}",
-                    i + 1,
-                    fixture);
-            }
-        }
-
-        return null;
-    }
-
-    private static string FormatFixtureSourceLabel(string containerName, int order, Fixture fixture)
-    {
-        var a = fixture.SlotAKey?.Trim();
-        var b = fixture.SlotBKey?.Trim();
-        var hasSlots = !string.IsNullOrEmpty(a) || !string.IsNullOrEmpty(b);
-        if (!hasSlots)
-        {
-            return $"{containerName} · #{order.ToString(CultureInfo.InvariantCulture)}";
-        }
-
-        var left = string.IsNullOrEmpty(a) ? "—" : a;
-        var right = string.IsNullOrEmpty(b) ? "—" : b;
-        return $"{containerName} · #{order.ToString(CultureInfo.InvariantCulture)} · {left} vs {right}";
     }
 
     private static List<string> BuildStageActions(

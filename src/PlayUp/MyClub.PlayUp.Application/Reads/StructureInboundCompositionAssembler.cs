@@ -274,7 +274,8 @@ public sealed record StructureInboundProgressionPathDto(
     string? DestinationSlotKey = null,
     Guid? DestinationGroupId = null,
     bool DestinationForm = false,
-    string? SourceLabel = null);
+    string? SourceLabel = null,
+    int? MatchNumberInContainer = null);
 
 /// <summary>One inbound feed rule and its seat resolutions.</summary>
 public sealed record StructureInboundFeedRuleDto(
