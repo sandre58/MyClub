@@ -33,7 +33,6 @@
   <Folder Name="/build/">
     <File Path=".editorconfig" />
     <File Path=".runsettings" />
-    <File Path="Directory.Build.local.props" />
     <File Path="Directory.Build.props" />
     <File Path="Directory.Build.targets" />
     <File Path="Directory.Packages.props" />

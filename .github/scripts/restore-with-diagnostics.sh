@@ -35,5 +35,18 @@ tail -n 500 "$diag_dir/restore-diag.log"
 echo "=== grep errors / NuGet codes ==="
 grep -E '(^|\s)(error|warning) [A-Z]+[0-9]+|NU[0-9]{4}|MSB[0-9]{4}' "$diag_dir/restore-diag.log" | tail -n 100 || true
 
+echo "=== project.nuget.cache (failed restores) ==="
+find . -path '*/obj/project.nuget.cache' -print0 2>/dev/null | while IFS= read -r -d '' cache; do
+  if grep -q '"success": false' "$cache" 2>/dev/null; then
+    echo "--- $cache ---"
+    cat "$cache"
+  fi
+done
+
+echo "=== slnx build files present (case-sensitive) ==="
+for f in Directory.Build.props Directory.Build.targets Directory.Packages.props; do
+  if [[ -f "$f" ]]; then echo "OK $f"; else echo "MISSING $f"; fi
+done
+
 echo "Diagnostic files written under: $diag_dir"
 exit "$restore_exit"
