@@ -55,6 +55,9 @@
 
 - [x] Lancement phase 4 + plan Git (this file).
 - [x] Vague 1 baseline (`phase-4-wave-1-backend-baseline.md`).
-- [ ] D1 — arbitrage AUD-0005-C.
+- [x] D1 — arbitrage AUD-0005-C (decision 2026-10-21, `phase-4-lot-d1-plan.md`).
+- [x] D1 — garde-fou CI + baseline JSON (`verify-dotnet-warnings-baseline.sh`).
+- [x] D1 — SA1137 corrigé ; baseline **82** warnings (SA1143 seul).
+- [ ] D1 — passe SA1143 (réduction progressive ; pas de `NoWarn` global).
 - [ ] D2 — investigation AUD-0012.
 - [ ] D3 — arbitrage produit AUD-0004 (réserve).

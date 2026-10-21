@@ -41,6 +41,6 @@ Run full `dotnet test -c Release` before closing wave 1 on the integration machi
 
 ## Next
 
-1. Arbitrage **AUD-0005-C** (zero-warning policy vs baseline SA1143 vs NoWarn ciblé vs report).
+1. **AUD-0005-C** arbitrated — see `phase-4-lot-d1-plan.md` + `dotnet-warnings-baseline.json` + CI script.
 2. D2 — document `StageRepository` hot paths + measurement protocol (no Include change without data).
 3. D3 — product call on Cup C2 A3 / cas assign (see `phase-3-lot-c3-plan.md` reserves).

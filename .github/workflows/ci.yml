@@ -37,7 +37,10 @@ jobs:
         run: dotnet list MyClub.slnx package --vulnerable --include-transitive
 
       - name: Build
-        run: dotnet build MyClub.slnx --no-restore --configuration Release
+        run: dotnet build MyClub.slnx --no-restore --configuration Release 2>&1 | tee "${RUNNER_TEMP}/dotnet-build.log"
+
+      - name: Verify .NET warnings baseline
+        run: bash .github/scripts/verify-dotnet-warnings-baseline.sh "${RUNNER_TEMP}/dotnet-build.log"
 
       - name: Test
         run: dotnet test --no-build --configuration Release --verbosity normal
