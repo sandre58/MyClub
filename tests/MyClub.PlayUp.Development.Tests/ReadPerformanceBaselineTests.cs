@@ -113,6 +113,7 @@ public sealed class ReadPerformanceBaselineTests(
             });
 
         matchesSql.Should().BeGreaterThan(3, "list endpoint loads stage + competition + matches");
+        matchesSql.Should().BeLessThanOrEqualTo(18, "D2-B batch attachment hydration (baseline was 20 SQL)");
     }
 
     [Fact]
@@ -141,6 +142,7 @@ public sealed class ReadPerformanceBaselineTests(
             });
 
         matchesSql.Should().BeGreaterThan(10, "heavy match list should issue many SQL commands today");
+        matchesSql.Should().BeLessThanOrEqualTo(18, "D2-B batch attachment hydration (baseline was 20 SQL)");
     }
 
     private async Task<CompetitionId> SeedAsync(string seedSpec)
