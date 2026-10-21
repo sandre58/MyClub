@@ -62,4 +62,5 @@
 - [x] D2 — investigation + D2-B lot 1 mergés @ `9faf3f16` (AUD-0012 **dette acceptée** maintenue).
 - [ ] D2 — clôture registre AUD-0012 (optionnel : accepter mitigation documentée).
 - [x] D3 — lancement arbitrage (`phase-4-lot-d3-plan.md`).
-- [ ] D3 — décision Q1–Q3 + lot D3-B si autorisé.
+- [x] D3 — recommandation Q1–Q3 (2026-10-22, traitement groupé ; **pas** d’implémentation).
+- [ ] D3 — contrat figé Notion + autorisation **D3-B**.
