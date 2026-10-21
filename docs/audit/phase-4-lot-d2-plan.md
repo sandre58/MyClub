@@ -33,6 +33,28 @@ dotnet test tests/MyClub.PlayUp.Development.Tests/MyClub.PlayUp.Development.Test
 
 Requires Docker (Testcontainers PostgreSQL 18). Copy SQL counts from test output into the investigation doc when refreshing baselines.
 
+## Pilotage (decision maker, 2026-10-22)
+
+| Stream | Statut phase 4 | Registre AUD-0012 |
+| --- | --- | --- |
+| **D2 investigation** | **Livré** (`0c0657c0` on `feature/audit-d2-stage-repository`) | Finding **not** closed — remains **dette acceptée** until optimization is arbitrated and closure criteria met |
+| **D2-B** | Not authorized | Would require explicit go + before/after on same scenarios |
+
+**D1** (warnings / AUD-0005-C policy) is **closed on `main`** (baseline 0, CI gate). **D3** (AUD-0004) stays **pending**.
+
+Gap **Summary → Full** (e.g. cup-qf-sf: 8 → 17 SQL commands in Testcontainers) signals **cost to investigate**, not proof that `Full` is wrong for command paths.
+
+## D2-B preparation (not started)
+
+Authorize only after review of D2 deliverables and reproducible baseline run (`Category=PerformanceBaseline`).
+
+| Prerequisite | Content |
+| --- | --- |
+| Scenarios | Same seeds as D2 (`cup-qf-sf`, `groups:running`, `champions-league:running`) + isolated `StageRepository` profiles |
+| Before/after | One hypothesis per PR; re-run full PerformanceBaseline filter |
+| Acceptance criteria (define per hypothesis) | SQL command count, optional wall-clock / allocations, hydration-specific cost when relevant — not SQL count alone |
+| Out of scope until arbitrated | `ApplyProfile` / `Include` changes, profile narrowing on command paths without product sign-off |
+
 ## Next (only if arbitrated)
 
-**D2-B** — targeted optimization with before/after SQL counts on the same scenarios; one change per PR.
+**D2-B** — targeted optimization with before/after measurements; one change per PR.

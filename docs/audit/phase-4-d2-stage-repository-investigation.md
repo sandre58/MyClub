@@ -10,6 +10,10 @@ EF uses **`AsSplitQuery()`** on graph loads to avoid cartesian explosion. **`Hyd
 
 **D2 conclusion (investigation):** no Include refactor is justified without a **D2-B** before/after on the baselines below. Highest leverage for future work is likely **hydration follow-up queries** and **call-site profile choice**, not deleting Includes blindly.
 
+**Registre:** delivering this investigation **does not** close AUD-0012. The finding stays **dette acceptée** until an optimization decision is taken and documented (or explicitly deferred with updated registre status).
+
+**Interpreting SQL counts:** a higher command count on `Full` vs `Summary` (e.g. 8 → 17 on cup-qf-sf) shows **load-shape cost**, not incorrectness of `Full` for tracked command paths. Latency, allocations, and hydration work may dominate; D2-B must define acceptance criteria per hypothesis.
+
 ## 2. Entry points
 
 | API | Tracking | Shape | Notes |
