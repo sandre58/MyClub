@@ -760,10 +760,6 @@
       "confrontation": "Format de confrontation",
       "attribution": "Attribution des places"
     },
-    "binding": {
-      "general": "Général",
-      "personalized": "Personnalisé"
-    },
     "confrontationFormatHint": {
       "uniform": "Même format sur tous les tours.",
       "perRound": "Certains tours ont leur propre format."
@@ -905,13 +901,7 @@
       "engagedPoolUndeterminedTitle": "Pool indéterminé",
       "engagedPoolUndeterminedBody": "Le hub structure n’expose pas de pool engagé fiable pour cette phase.",
       "engagedPoolEmpty": "Aucune équipe dans la phase",
-      "authoringPoolContrast": "Affectation auteur : {{count}}",
-      "strip": {
-        "drawNotApplied": "Tirage non appliqué.",
-        "drawHistoricalApplied": "Tirage appliqué (état final).",
-        "drawHistoricalNotApplied": "Tirage non appliqué (état final).",
-        "drawHistoricalUnavailable": "Pas de tirage pour cette phase (état final)."
-      }
+      "authoringPoolContrast": "Affectation auteur : {{count}}"
     }
   },
   "progression": {

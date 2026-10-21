@@ -25,8 +25,7 @@
 
 | Item | Reason |
 | --- | --- |
-| **AUD-0013** (unused Structure fiche CSS) | **IC** — `css:audit` reports candidates; no class removal without browser proof |
-| **AUD-0014** (suspect i18n keys) | **IC** — `i18n:audit` reports; no key deletion without product confirmation |
+| **AUD-0013** / **AUD-0014** | Closed in follow-up IC lot — orphan CSS + i18n keys removed after audit script + repo grep (see `phase-3-lot-ic13-14-plan.md`). |
 | **AUD-0004 / C3** | Cup C2 protocol backend tests — separate lot |
 | **C8** | Cursor rule rewrite, optional arch tests |
 | **npm dev advisories** (stylelint/braces, etc.) | Noted on C6 fiche; no `npm audit fix --force` |
@@ -63,7 +62,7 @@ npm run tile:check
 - [x] AUD-0006 — `lint` passes with `--deny-warnings`.
 - [x] AUD-0007 — `format:check` passes.
 - [ ] Registre Notion — AUD-0001, 0003, 0006, 0007 → correction / vérifié (post-merge).
-- [ ] AUD-0013 / 0014 remain **open IC** until dedicated decision.
+- [x] AUD-0013 / 0014 — follow-up IC lot (orphan removal).
 
 ---
 

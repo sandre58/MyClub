@@ -760,10 +760,6 @@
       "confrontation": "Confrontation format",
       "attribution": "Place awards"
     },
-    "binding": {
-      "general": "General",
-      "personalized": "Personalized"
-    },
     "confrontationFormatHint": {
       "uniform": "Same format for every round.",
       "perRound": "Some rounds use their own format."
@@ -905,13 +901,7 @@
       "engagedPoolUndeterminedTitle": "Pool undetermined",
       "engagedPoolUndeterminedBody": "The structure hub does not expose a reliable engaged pool for this stage.",
       "engagedPoolEmpty": "No teams in this stage",
-      "authoringPoolContrast": "Authoring affectation: {{count}}",
-      "strip": {
-        "drawNotApplied": "Draw not applied.",
-        "drawHistoricalApplied": "Draw was applied (final state).",
-        "drawHistoricalNotApplied": "Draw was not applied (final state).",
-        "drawHistoricalUnavailable": "No draw for this phase (final state)."
-      }
+      "authoringPoolContrast": "Authoring affectation: {{count}}"
     }
   },
   "progression": {
