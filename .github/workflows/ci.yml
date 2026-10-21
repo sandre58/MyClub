@@ -90,7 +90,86 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: E2E smoke
+      - name: E2E smoke (stub API)
         run: npx playwright test
         env:
           CI: true
+
+  e2e-integration:
+    runs-on: ubuntu-latest
+    env:
+      ConnectionStrings__PlayUpDev: Host=localhost;Port=5432;Database=myclub_dev;Username=postgres;Password=postgres
+      ConnectionStrings__PlayUp: Host=localhost;Port=5432;Database=myclub_dev;Username=postgres;Password=postgres
+      ConnectionStrings__Media: Host=localhost;Port=5432;Database=myclub_dev;Username=postgres;Password=postgres
+      Media__StorageRoot: ${{ runner.temp }}/playup-e2e-media
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: myclub_dev
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Build .NET (Release)
+        run: dotnet build --configuration Release
+
+      - name: Seed championship-ready
+        run: >
+          dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner
+          --configuration Release --no-build
+          -- --reset --scenarios championship-ready
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: src/PlayUp/web/package-lock.json
+
+      - name: Install web dependencies
+        working-directory: src/PlayUp/web
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        working-directory: src/PlayUp/web
+        run: npx playwright install --with-deps chromium
+
+      - name: E2E business (Host + PostgreSQL)
+        working-directory: src/PlayUp/web
+        run: |
+          mkdir -p "${Media__StorageRoot}"
+          dotnet run --project ../MyClub.PlayUp.Host/MyClub.PlayUp.Host.csproj \
+            --configuration Release --no-build \
+            --urls http://127.0.0.1:5287 &
+          HOST_PID=$!
+          for i in $(seq 1 60); do
+            if curl -sf http://127.0.0.1:5287/competitions > /dev/null; then
+              echo "Host ready"
+              break
+            fi
+            if [ "$i" -eq 60 ]; then
+              echo "Host failed to become ready" >&2
+              kill "$HOST_PID" 2>/dev/null || true
+              exit 1
+            fi
+            sleep 2
+          done
+          npx playwright test -c playwright.host.config.ts
+          kill "$HOST_PID" 2>/dev/null || true
+        env:
+          CI: true
+          VITE_API_PROXY_TARGET: http://127.0.0.1:5287

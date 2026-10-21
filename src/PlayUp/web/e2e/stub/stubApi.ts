@@ -15,6 +15,13 @@ const STAGE_NAME = 'League';
 
 type MatchStatus = 'Scheduled' | 'Live' | 'Finished';
 
+export type StubPlayUpApiOptions = {
+  /** Shell attention drawer — ProgressionPending item (path 6). */
+  withAttentionItem?: boolean;
+  /** Overview Prochaine action — PrepareStage tip (path 5 / 8). */
+  withOverviewProgression?: boolean;
+};
+
 function json(route: Route, body: unknown, status = 200) {
   return route.fulfill({
     status,
@@ -67,12 +74,42 @@ function competitionDetail() {
   };
 }
 
-function needsAttention() {
-  return { competitionId: IDS.competitionId, items: [], count: 0 };
+function needsAttention(options: StubPlayUpApiOptions) {
+  if (!options.withAttentionItem) {
+    return { competitionId: IDS.competitionId, items: [], count: 0 };
+  }
+
+  return {
+    competitionId: IDS.competitionId,
+    count: 1,
+    items: [
+      {
+        source: 'ProgressionPending',
+        severity: 'Blocking',
+        targetType: 'Stage',
+        targetId: IDS.stageId,
+        params: null,
+      },
+    ],
+  };
 }
 
 /** Minimal OverviewView — enough for shell + Overview region smoke. */
-function overviewView() {
+function overviewView(options: StubPlayUpApiOptions) {
+  const naturalProgression = options.withOverviewProgression
+    ? { code: 'PrepareStage' }
+    : null;
+  const availableActions = options.withOverviewProgression
+    ? [
+        {
+          code: 'PrepareStage',
+          guaranteed: false,
+          stageId: IDS.stageId,
+          params: { stageName: STAGE_NAME },
+        },
+      ]
+    : [];
+
   return {
     competitionId: IDS.competitionId,
     name: COMPETITION_NAME,
@@ -146,8 +183,8 @@ function overviewView() {
     },
     situations: [],
     attentionSummary: { count: 0, items: [] },
-    availableActions: [],
-    naturalProgression: null,
+    availableActions,
+    naturalProgression,
     closureHint: { canCompleteNormally: false, blockerCodes: [] },
     navigationHints: [],
   };
@@ -301,7 +338,10 @@ function matchDetail(status: MatchStatus) {
  * Postgres / DevRunner. Playwright runs handlers in reverse registration
  * order — register general routes first, specific last.
  */
-export async function stubPlayUpApi(page: Page) {
+export async function stubPlayUpApi(
+  page: Page,
+  options: StubPlayUpApiOptions = {},
+) {
   let matchStatus: MatchStatus = 'Scheduled';
 
   await page.route('**/competitions', (route) =>
@@ -342,13 +382,13 @@ export async function stubPlayUpApi(page: Page) {
 
   // Specific paths — registered last so they win over the general ones above.
   await page.route('**/competitions/*/overview', (route) =>
-    fulfillApi(route, (r) => json(r, overviewView())),
+    fulfillApi(route, (r) => json(r, overviewView(options))),
   );
   await page.route('**/competitions/*/structure', (route) =>
     fulfillApi(route, (r) => json(r, structureView())),
   );
   await page.route('**/competitions/*/attention', (route) =>
-    fulfillApi(route, (r) => json(r, needsAttention())),
+    fulfillApi(route, (r) => json(r, needsAttention(options))),
   );
   await page.route('**/competitions/*/matches-hub', (route) =>
     fulfillApi(route, (r) =>

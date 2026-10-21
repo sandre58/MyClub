@@ -1,23 +1,33 @@
-# Critical paths — coverage snapshot (phase 0)
+# Critical paths — coverage snapshot (phase 3 / C5)
 
-Execution SHA `93b09f161739f47b768caad63aed90d0d3c1469f`.  
 Purpose: validate the 8 agreed scenarios and where regression signal exists today.
 
-| # | Scenario | Backend / integration signal | Frontend signal | E2E smoke (`e2e/smoke.spec.ts`) |
-| --- | --- | --- | --- | --- |
-| 1 | Structure hub / fiche | `CompetitionStructureEndpointTests`, structure reads in Host.Tests | `StructurePage.test.tsx` (large), operational strip tests | **Yes** — open Structure / League fiche |
-| 2 | Prepare / materialize | `DematerializeEndpointTests`, materialize guards in Application.Tests | `StructurePage.test.tsx` (materialize flows), lifecycle blocks | **Partial** — hub only |
-| 3 | Draw (publish/apply) | `PublishDrawEndpointTests`, `ApplyDrawEndpointTests`, `CancelDrawEndpointTests` | Structure draw UI tests, `resolveStageDrawCreateGate` tests | **No** |
-| 4 | Match lifecycle | `StartMatch` / finish flows in Host.Tests, `CEnfMatStartEndpointTests` | `MatchPage.test.tsx`, panels | **Yes** — start + finish (stub API) |
-| 5 | Progression / assignment | `ReplaceStageProgressionRulesGOps3EndpointTests`, cup slot tests | `StructureProgressionDialog`, progression presentation tests | **No** |
-| 6 | Shell / attention | Needs-attention reads (Host + Application collectors) | `AttentionDrawer.test.tsx`, `ShellHeader.test.tsx`, presentation tests | **No** |
-| 7 | Accueil | Competition bootstrap/list endpoints | Home / competition list tests | **Yes** |
-| 8 | Competition overview | Overview read endpoints | `CompetitionOverviewPage*.test.tsx` | **Yes** — shell reachability only |
+## E2E layers (AUD-0015 hybrid)
 
-## Phase 0 assessment
+| Layer | Config / location | Infra | Role |
+| --- | --- | --- | --- |
+| **Stub shell** | `playwright.config.ts` → `e2e/stub/*.spec.ts` | `npm run preview` only | Fast CI smokes; API intercepted (`stubApi.ts`) |
+| **Host métier** | `playwright.host.config.ts` → `e2e/business/*.spec.ts` | PostgreSQL + DevRunner seed + Host + Vite dev | Real Read/Command on at least one vertical slice |
 
-- **E2E:** Single smoke file, API stubbed — covers 4/8 paths lightly; no draw, progression, or attention drawer.
-- **Vitest:** Broad Structure/Match coverage; many fixtures **out of sync** with `StructureReadiness.blockerDetails` (blocks `npm run build`, not `npm run test:run`).
-- **.NET:** Strong Domain/Application/Host coverage; one **Development.Tests** recette protocol failure (C2 cup impasse).
+CI: `web` job runs stub E2E after build; `e2e-integration` job runs Host E2E (no silent skip if Postgres/seed/Host fail).
 
-No change to the 8-scenario list in phase 0; gaps feed phase 1 findings, not scope expansion.
+## Path matrix
+
+| # | Scenario | Backend / integration signal | Frontend signal | Stub E2E | Host E2E |
+| --- | --- | --- | --- | --- | --- |
+| 1 | Structure hub / fiche | `CompetitionStructureEndpointTests`, structure reads in Host.Tests | `StructurePage.test.tsx`, operational strip tests | **Yes** — Structure / League fiche | — |
+| 2 | Prepare / materialize | `DematerializeEndpointTests`, materialize guards in Application.Tests | `StructurePage.test.tsx` (materialize flows) | **Partial** — hub only | — |
+| 3 | Draw (publish/apply) | `PublishDrawEndpointTests`, `ApplyDrawEndpointTests`, `CancelDrawEndpointTests` | Structure draw UI tests | **No** | **No** (future: `cup-draw-pending` seed) |
+| 4 | Match lifecycle | `MatchLifecycleEndpointTests`, Host match flows | `MatchPage.test.tsx` | **Yes** — start + finish (stub) | **Yes** — `championship-ready` scheduled match |
+| 5 | Progression / assignment | `ReplaceStageProgressionRulesGOps3EndpointTests`, cup slot tests | `StructureProgressionDialog`, presentation tests | **Partial** — overview PrepareStage tip (stub) | — |
+| 6 | Shell / attention | Needs-attention reads (Host + Application collectors) | `AttentionDrawer.test.tsx`, `ShellHeader.test.tsx` | **Yes** — drawer + ProgressionPending row (stub) | — |
+| 7 | Accueil | Competition bootstrap/list endpoints | Home / competition list tests | **Yes** | — |
+| 8 | Competition overview | Overview read endpoints | `CompetitionOverviewPage*.test.tsx` | **Yes** — shell + Prochaine action (stub progression) | — |
+
+## Assessment
+
+- **Stub:** Six paths touched lightly (1, 4, 5–8); materialize and draw remain Vitest / .NET heavy.
+- **Host:** One business spec (match lifecycle on seeded championship) — complements, does not replace, Domain/Host tests.
+- **Vitest:** Primary frontend regression surface for Structure/Match/Overview depth.
+
+Gaps that need product or a later lot: draw E2E (path 3), materialize E2E (path 2), progression assignment beyond attention/overview stubs (path 5).

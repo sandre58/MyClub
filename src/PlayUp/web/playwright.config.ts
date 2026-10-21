@@ -6,7 +6,7 @@ import { defineConfig, devices } from '@playwright/test';
  * Preview serves the production bundle built by `npm run build`.
  */
 export default defineConfig({
-  testDir: './e2e',
+  testDir: './e2e/stub',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,

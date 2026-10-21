@@ -2,10 +2,10 @@ import { expect, test } from '@playwright/test';
 import { IDS, stubPlayUpApi } from './stubApi';
 
 /**
- * Phase F — minimal smoke suite (FR labels / roles).
- * API stubbed — see stubApi.ts. Host optional for local product smoke only.
+ * Stub E2E — FR labels / roles; API intercepted (no Host / Postgres).
+ * Host-backed business paths: see e2e/business/ + playwright.host.config.ts.
  */
-test.describe('Play’Up smoke', () => {
+test.describe('Play’Up smoke (stub API)', () => {
   test.beforeEach(async ({ page }) => {
     await stubPlayUpApi(page);
   });
@@ -42,7 +42,6 @@ test.describe('Play’Up smoke', () => {
     await expect(
       page.getByRole('link', { name: /Vue d'ensemble/i }),
     ).toBeVisible();
-    // Region present — Overview UX stays pre-refonte; assert shell reachability only.
     await expect(page.locator('.overview')).toBeVisible();
   });
 
@@ -53,7 +52,6 @@ test.describe('Play’Up smoke', () => {
       page.getByRole('heading', { name: 'Structure' }),
     ).toBeVisible();
 
-    // Single-phase hub: topology rail is hidden; fiche opens on the only stage.
     await expect(page.getByRole('heading', { name: 'League' })).toBeVisible();
     await expect(page.getByRole('heading', { name: /^Match$/i })).toBeVisible();
   });

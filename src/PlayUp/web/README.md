@@ -109,17 +109,21 @@ Re-seed after pulling DevRunner / Development scenario changes (`Winner` → slo
 | `npm run test`          | Vitest watch                                     |
 | `npm run test:run`      | Vitest single run (CI)                           |
 | `npm run test:coverage` | Vitest + V8 coverage report (local / optional)   |
-| `npm run test:e2e`      | Build + Playwright smoke (Chromium)              |
-| `npm run test:e2e:ui`   | Same with Playwright UI                          |
+| `npm run test:e2e`      | Build + stub Playwright smokes (Chromium)        |
+| `npm run test:e2e:stub` | Same as `test:e2e` (`e2e/stub/`, preview server) |
+| `npm run test:e2e:host` | Host-backed spec (`e2e/business/`, Vite dev)     |
+| `npm run test:e2e:ui`   | Stub suite with Playwright UI                    |
 | `npm run preview`       | Serve the production bundle                      |
 
 First-time Playwright browser install (local): `npx playwright install chromium`.
 
-E2E smokes stub Host JSON via Playwright routes (no Postgres / DevRunner required). For a Host-backed manual smoke: start Postgres + Host (`localhost:5287`) + `npm run dev`, then exercise Accueil → Overview → Structure → Match with DevRunner seed.
+**Stub E2E** (`npm run test:e2e`) intercept Host JSON via Playwright routes — no Postgres / DevRunner (CI `web` job).
+
+**Host E2E** (`npm run test:e2e:host`) expects Postgres seeded (`dotnet run --project ../MyClub.PlayUp.DevRunner -- --reset --scenarios championship-ready`), Host on `http://127.0.0.1:5287`, then runs Vite + `e2e/business/` (CI `e2e-integration` job). Matrix: [critical-paths.md](../../../docs/audit/critical-paths.md).
 
 ### Quality gates (CI `web` job)
 
-Order: `format:check` → `lint` → `lint:css` → `typecheck` → `test:run` → `build` → Playwright smoke.  
+Order: `format:check` → `lint` → `lint:css` → `typecheck` → `test:run` → `build` → stub Playwright. Separate job: Host E2E (`e2e-integration`).  
 **Errors and Oxlint warnings fail CI** (`oxlint --deny-warnings`). Stylelint covers **design-system**, **pages récentes** (`structure` / `teams` / `regulation` / `match`), and **shell**. Legacy pages CSS (`competition` / `classements` / `stage`) stays hors CI volontairement (pré-refonte ; scan local actuellement 0 finding). Coverage (`test:coverage`) is available locally — **no** CI threshold.
 
 Config: `.prettierrc.json`, `.oxlintrc.json`, `.stylelintrc.json`. Format on save is an optional editor setting (Prettier); this package does **not** ship a committed `.vscode/` folder.
@@ -148,7 +152,7 @@ When reworking a business page, follow [docs/page-migration.md](./docs/page-migr
 | ------------------------------ | --------------------------------------------- |
 | `features/`                    | Domain collision / ownership pain in `pages/` |
 | OpenAPI / generated types      | Frequent DTO drift or a second HTTP consumer  |
-| Playwright E2E (large suite)   | Beyond the 3–5 smoke scenarios already wired  |
+| Playwright E2E (large suite)   | Beyond stub + championship-ready Host slice   |
 | Storybook                      | Reused DS components across many screens      |
 | Sass / Tailwind / UI libraries | Notion decision to reopen styling stack       |
 | Auth / Host CORS / deploy prod | Product/platform need                         |
