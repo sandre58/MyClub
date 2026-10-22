@@ -77,6 +77,25 @@ Surfaces: Canvas / Groupe / Panneau (`.ds-panel`) / Overlay — no fifth “card
 - Structure file splits → Phase 5 (`structureFluxRails` / `structure-fiche.css`, `npm run` scripts under `scripts/split-structure-*.mjs`).
 - Large CSS cleanup → Phase 6 (done: drop global `.field`; match `.form-row` / `.fieldset` in `matches.css`; dead Structure operational + fiche CSS; `npm run css:audit` → `scripts/audit-structure-fiche-css.mjs`).
 
+## CSS tooling and audits
+
+| Goal | Command |
+| --- | --- |
+| **CI / normative CSS** | `npm run lint:css` (Stylelint, `src/**/*.css`) |
+| **Repo-wide hygiene report** | `npm run frontend:audit` (orphan classes, import graph, duplicate decl blocks — heuristic) |
+| **Repo-wide i18n keys** | `npm run i18n:audit:repo` |
+| **Structure fiche only** | `npm run css:audit`, `npm run i18n:audit` |
+| **Rider selector / unknown `var(--*)` scan** | `npm run css:audit:rider` (report); `npm run css:audit:rider -- --fix` joins broken selector lines only — **never** merges comment lines with rules |
+
+### JetBrains Rider
+
+Rider shows **built-in CSS inspections** (duplicate properties, unknown properties, etc.) in addition to Stylelint. Those warnings are **not** identical to `npm run lint:css`. To align the editor with CI:
+
+1. **Settings → Languages & Frameworks → Style Sheets → Stylelint** — enable and use the project `node_modules` (`.stylelintrc.json` at web root).
+2. Treat **`npm run lint:css`** as the merge gate; triage Rider-only highlights separately (often duplicate declarations across selectors or DS modifier classes that Stylelint allows).
+
+Hygiene scripts (`frontend:audit`, …) are **report-only** — verify before deleting CSS or keys.
+
 ## HTTP contract modules (Phase 7)
 
 - Callers keep importing from barrels `src/api.ts` and `src/types.ts`.

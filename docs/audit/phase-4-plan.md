@@ -66,4 +66,6 @@
 - [x] D3 — preuve backend A3/A5 (`CupC2Impasse`).
 - [x] D3 — rejouage SPA A3 / A4–A5 (`phase-4-lot-d3-plan.md` §1, 2026-10-22).
 - [x] D3 — **go D3-B** + lot présentation Q1 (2026-10-22).
-- [ ] D3 — merge PR(s) + clôture phase après revue.
+- [x] D3 — merge PR #71 @ `d14391dd` (2026-10-22).
+- [x] Phase 4 — streams livrés ; **phase 5** lancée (`phase-5-plan.md`, go 2026-10-22).
+- [ ] Phase 4 — clôture formelle optionnelle (note registre AUD-0012).
