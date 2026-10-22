@@ -7,7 +7,7 @@
 | Field | Value |
 | --- | --- |
 | **Baseline vague 1** | [`phase-7-wave-1-security-perf-ops-baseline.md`](phase-7-wave-1-security-perf-ops-baseline.md) @ `a6764084` |
-| **Livrables (closure SHA)** | `main` @ `e096b386` (pilotage + lots livrés ; code technique jusqu’à `59506db2`) |
+| **Livrables (closure SHA)** | `main` @ `47f2b014` (doc clôture ; code technique cumulé jusqu’à `59506db2`) |
 | **Plan** | [`phase-7-plan.md`](phase-7-plan.md) |
 | **Notion** | [Phase 7 — Sécurité, perf & exploitation](https://www.notion.com/p/40175fb92d1081509b4fdd89b6490867) |
 

@@ -1,6 +1,6 @@
 # Phase 7 — Sécurité, performance & exploitation (cadrage)
 
-**Status:** **phase 7 clôturée** (pilotage) — 2026-10-22 · [`phase-7-closure.md`](phase-7-closure.md) @ `e096b386`  
+**Status:** **phase 7 clôturée** (pilotage) — 2026-10-22 · [`phase-7-closure.md`](phase-7-closure.md) @ `47f2b014`  
 **Contrat phase 7:** validé (périmètre + exclusions, décideur 2026-10-22)  
 **Roadmap (plan directeur):** sécurité · performance · exploitation (distinct de l’assainissement statique phase 6).
 

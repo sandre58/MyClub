@@ -2,7 +2,7 @@
 
 **Usage:** alimenter le **cadrage phase 7** — distinguer **confirmé** (preuve / registre / décision) vs **signal** (heuristique, warning, gap de couverture).  
 **Registre Notion:** [Registre des findings](https://app.notion.com/p/ec992f0e07134ac2a11a837e5539e45c).  
-**Dernière mise à jour:** 2026-10-22 (post **clôture phase 7** @ `e096b386`).
+**Dernière mise à jour:** 2026-10-22 (post **clôture phase 7** @ `47f2b014`).
 
 ---
 
