@@ -9,7 +9,7 @@
 | Field | Value |
 | --- | --- |
 | **Plan** | [`phase-8-plan.md`](phase-8-plan.md) |
-| **Closure SHA** | `main` @ `67476be0` (doc clôture ; technique cumulée jusqu’à `36c9f5b2`) |
+| **Closure SHA** | `main` @ `030f402b` (doc clôture ; commit clôture `67476be0` ; technique jusqu’à `36c9f5b2`) |
 | **Notion phase 8** | [Phase 8 — Verrouillage et clôture](https://www.notion.com/p/40175fb92d10819d9f19ff1952bff0e6) |
 | **Notion chantier** | [MyClub — Audit technique global et assainissement](https://www.notion.com/p/3fd75fb92d1081b2b076efd33da8d03f) → **Terminé** (pilotage) |
 
@@ -29,7 +29,7 @@
 
 ---
 
-## Critères clôture plan directeur — statut @ `67476be0`
+## Critères clôture plan directeur — statut @ `030f402b`
 
 | Critère | Statut |
 | --- | --- |
@@ -41,7 +41,7 @@
 | Garde-fous CI | ✅ publish isolation, warnings script, arch tests (inchangés) |
 | Dette résiduelle documentée | ✅ [`phase-7-debts-consolidated.md`](phase-7-debts-consolidated.md) + registre Notion |
 | Règles Cursor | ✅ inventaire + réconciliation P8 |
-| CI distante sur SHA clôture | ⚠️ **À confirmer** sur GitHub Actions (`67476be0`) |
+| CI distante sur SHA clôture | ⚠️ **À confirmer** sur GitHub Actions (`030f402b`) |
 
 ---
 

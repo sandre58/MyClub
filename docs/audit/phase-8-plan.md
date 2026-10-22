@@ -1,6 +1,6 @@
 # Phase 8 — Verrouillage et clôture chantier (cadrage)
 
-**Status:** **phase 8 clôturée** (pilotage) — 2026-10-22 · [`phase-8-closure.md`](phase-8-closure.md) @ `67476be0`  
+**Status:** **phase 8 clôturée** (pilotage) — 2026-10-22 · [`phase-8-closure.md`](phase-8-closure.md) @ `030f402b`  
 **Roadmap (plan directeur):** contrôles finaux · rejeu assainissement · cohérence règles Cursor vs décisions SoT · non-régression · garde-fous CI · documentation · bilan dettes · **clôture tâche Notion**.
 
 **Reprise technique:** `main` @ `e6b3b63b` (cadrage phase 8 ; post clôture phase 7 @ `d0548ad2`).  
