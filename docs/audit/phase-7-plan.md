@@ -1,6 +1,6 @@
 # Phase 7 — Sécurité, performance & exploitation (cadrage)
 
-**Status:** vague 1 en cours — **go investigation** (2026-10-22) · **pas** de lot correctif  
+**Status:** vague 1 **exécutée** (2026-10-22) @ `a6764084` — en attente arbitrage **un** premier lot · **pas** de code produit  
 **Contrat phase 7:** validé (périmètre + exclusions, décideur 2026-10-22)  
 **Roadmap (plan directeur):** sécurité · performance · exploitation (distinct de l’assainissement statique phase 6).
 
@@ -75,7 +75,7 @@ Pour chaque candidat retenu en vague 1, noter : **risque**, **impact utilisateur
 | --- | --- | --- |
 | Bilan dettes | `phase-7-debts-consolidated.md` | ✅ |
 | Plan cadrage | `phase-7-plan.md` (this file) | ✅ |
-| Vague 1 | `phase-7-wave-1-security-perf-ops-baseline.md` | ⏳ post go |
+| Vague 1 | `phase-7-wave-1-security-perf-ops-baseline.md` | ✅ mesures @ `a6764084` |
 | Lots | `phase-7-lot-*.md` | ⏳ post arbitrage |
 
 **Branche suggérée** au go phase 7 : `feature/audit-phase-7-launch` (docs + vague 1 uniquement jusqu’à arbitrage lot).
@@ -100,14 +100,14 @@ Pour chaque candidat retenu en vague 1, noter : **risque**, **impact utilisateur
 - [x] Contrat Notion validé (périmètre P7-Sec/Perf/Ops + exclusions CSS/orga/F5/i18n).
 - [x] **Go vague 1** (investigation seule — 2026-10-22).
 - [x] Trame vague 1 — [`phase-7-wave-1-security-perf-ops-baseline.md`](phase-7-wave-1-security-perf-ops-baseline.md).
-- [ ] Compléter mesures wave 1 (preuves comparatives, dont AUD-0012 si rejoué).
-- [ ] Arbitrage **un** premier lot (après wave 1 — pas de choix Sec/Perf/Ops avant preuves).
+- [x] Compléter mesures wave 1 (AUD-0012 rejoué, bundle, Sec/Ops inventaires — §5 baseline).
+- [ ] Arbitrage **un** premier lot (voir synthèse [`phase-7-wave-1-security-perf-ops-baseline.md`](phase-7-wave-1-security-perf-ops-baseline.md) §5).
 - [ ] Clôture phase 7.
 
 ---
 
 ## 7. Prochaine action recommandée
 
-1. Arbitrer sur Notion : périmètre P7-Sec / Perf / Ops et **exclusions** ci-dessus.  
-2. **Go phase 7** = autoriser **vague 1** investigation uniquement.  
-3. Après vague 1 : soumettre **un** lot prioritaire (ex. AUD-0008 périmètre A, ou protocole AUD-0012, ou baseline bundle) — pas de lot parallèle sans décision.
+1. **Arbitrer un premier lot** à partir de la synthèse wave 1 (§5 baseline) — candidat Sec le mieux cadré ; Perf/Ops en file.  
+2. Documenter le lot choisi dans `phase-7-lot-*.md` + go explicite avant code.  
+3. Ne pas ouvrir de lots parallèles sans décision.
