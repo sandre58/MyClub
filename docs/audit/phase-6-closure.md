@@ -7,7 +7,7 @@
 | Field | Value |
 | --- | --- |
 | **Baseline** | Vague 1 @ `4b6b3fe7` (main post PR #72) |
-| **Livrables** | `main` @ `fb73d8c8` (post S4 ; incl. S5/S6 docs au merge de clôture) |
+| **Livrables** | `main` @ `6df21d3d` |
 | **Notion** | [Phase 6 — Qualité statique](https://www.notion.com/p/40175fb92d108127a553e39280cb77ab) |
 
 ---
