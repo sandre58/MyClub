@@ -107,12 +107,13 @@ Pour chaque candidat retenu en vague 1, noter : **risque**, **impact utilisateur
 - [x] **Go lot P7-Perf** — [`phase-7-lot-perf-aud-0012.md`](phase-7-lot-perf-aud-0012.md) (D2-B lot 2, hydratation multi-stage).
 - [x] **Go lot P7-Ops** — [`phase-7-lot-ops.md`](phase-7-lot-ops.md) (health + draw Host E2E).
 - [x] **Go lot bundle Vite** — [`phase-7-lot-perf-vite-bundle.md`](phase-7-lot-perf-vite-bundle.md) (lazy routes produit).
+- [x] **Go materialize E2E** — [`phase-7-lot-ops-materialize-e2e.md`](phase-7-lot-ops-materialize-e2e.md).
 - [ ] Clôture phase 7.
 
 ---
 
 ## 7. Prochaine action recommandée
 
-1. Lots résiduels avant clôture : **materialize E2E** (path #2), **trajectoire C AUD-0008** restante ; puis clôture phase 7.  
+1. Lot résiduel avant clôture : **trajectoire C AUD-0008** restante ; puis clôture phase 7.  
 2. Trajectoire C **restante** : auth/TLS/S6 / `AllowedHosts` définitif — **hors** lot P7-Sec clos.  
 3. Pas de lot parallèle sans décision explicite.

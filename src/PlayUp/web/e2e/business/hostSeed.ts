@@ -20,10 +20,18 @@ type MatchHubView = {
 };
 
 const CUP_COMPOSITION_COMPLETE_NAME = 'Coupe — composition complète';
+const RECETTE_G1_GROUPS_NAME = 'RECETTE G1 — Groups 0/6 actionable';
 
 type StructureView = {
   format: { primaryStageId?: string | null };
+  readiness: { attachedMatchCount: number };
   stages: { stageId: string; drawExecutionBadge?: string | null }[];
+};
+
+type MaterializeMatchesResponse = {
+  createdCount: number;
+  alreadyComplete: boolean;
+  attachedMatchIds: string[];
 };
 
 type DrawSummary = {
@@ -49,6 +57,26 @@ export async function findChampionshipReadyCompetition(
   if (!hit) {
     throw new Error(
       'Competition "Championnat Ready" not found. Seed with DevRunner: --reset --scenarios championship-ready',
+    );
+  }
+  return hit;
+}
+
+export async function findRecetteG1GroupsCompetition(
+  request: APIRequestContext,
+): Promise<CompetitionListItem> {
+  const response = await request.get(`${playUpApiBase()}/competitions`);
+  if (!response.ok()) {
+    throw new Error(
+      `GET /competitions failed (${response.status()}). Is Host running at ${playUpApiBase()}?`,
+    );
+  }
+
+  const list = (await response.json()) as CompetitionListItem[];
+  const hit = list.find((c) => c.name === RECETTE_G1_GROUPS_NAME);
+  if (!hit) {
+    throw new Error(
+      `Competition "${RECETTE_G1_GROUPS_NAME}" not found. Seed with DevRunner: --reset --scenarios structure-materialize-recette`,
     );
   }
   return hit;
@@ -96,6 +124,51 @@ export async function getPrimaryStageId(
     );
   }
   return stageId;
+}
+
+export async function getStructureMaterializationState(
+  request: APIRequestContext,
+  competitionId: string,
+): Promise<{ stageId: string; attachedMatchCount: number }> {
+  const response = await request.get(
+    `${playUpApiBase()}/competitions/${competitionId}/structure`,
+  );
+  if (!response.ok()) {
+    const body = await response.text();
+    throw new Error(
+      `GET /competitions/${competitionId}/structure failed (${response.status()}): ${body}`,
+    );
+  }
+
+  const view = (await response.json()) as StructureView;
+  const stageId = view.format.primaryStageId?.trim();
+  if (!stageId) {
+    throw new Error(
+      `Structure view has no primaryStageId for competition ${competitionId}`,
+    );
+  }
+
+  return {
+    stageId,
+    attachedMatchCount: view.readiness.attachedMatchCount,
+  };
+}
+
+export async function runGroupsMaterializeMatches(
+  request: APIRequestContext,
+  stageId: string,
+): Promise<MaterializeMatchesResponse> {
+  const response = await request.post(
+    `${playUpApiBase()}/stages/${stageId}/matches/materialize`,
+  );
+  if (!response.ok()) {
+    const body = await response.text();
+    throw new Error(
+      `POST /stages/${stageId}/matches/materialize failed (${response.status()}): ${body}`,
+    );
+  }
+
+  return (await response.json()) as MaterializeMatchesResponse;
 }
 
 export async function runCupSlotDrawPublishAndApply(

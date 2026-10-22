@@ -169,7 +169,7 @@ jobs:
         run: >
           dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner
           --configuration Release --no-build
-          -- --reset --scenarios championship-ready,cup-composition-complete
+          -- --reset --scenarios championship-ready,cup-composition-complete,structure-materialize-recette
 
       - name: Setup Node
         uses: actions/setup-node@v4

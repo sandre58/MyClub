@@ -16,7 +16,7 @@ CI: `web` job runs stub E2E after build; `e2e-integration` job runs Host E2E (no
 | # | Scenario | Backend / integration signal | Frontend signal | Stub E2E | Host E2E |
 | --- | --- | --- | --- | --- | --- |
 | 1 | Structure hub / fiche | `CompetitionStructureEndpointTests`, structure reads in Host.Tests | `StructurePage.test.tsx`, operational strip tests | **Yes** — Structure / League fiche | — |
-| 2 | Prepare / materialize | `DematerializeEndpointTests`, materialize guards in Application.Tests | `StructurePage.test.tsx` (materialize flows) | **Partial** — hub only | — |
+| 2 | Prepare / materialize | `DematerializeEndpointTests`, materialize guards in Application.Tests | `StructurePage.test.tsx` (materialize flows) | **Partial** — hub only | **Yes** — `structure-materialize-recette` G1 + `groups-materialize.spec.ts` (API) |
 | 3 | Draw (publish/apply) | `PublishDrawEndpointTests`, `ApplyDrawEndpointTests`, `CancelDrawEndpointTests` | Structure draw UI tests | **No** | **Yes** — `cup-composition-complete` + Host API slice (`cup-draw.spec.ts`) |
 | 4 | Match lifecycle | `MatchLifecycleEndpointTests`, Host match flows | `MatchPage.test.tsx` | **Yes** — start + finish (stub) | **Yes** — `championship-ready` + stage/competition start, then match |
 | 5 | Progression / assignment | `ReplaceStageProgressionRulesGOps3EndpointTests`, cup slot tests | `StructureProgressionDialog`, presentation tests | **Partial** — overview PrepareStage tip (stub) | — |
@@ -30,4 +30,4 @@ CI: `web` job runs stub E2E after build; `e2e-integration` job runs Host E2E (no
 - **Host:** Business specs on seeded data (match lifecycle `championship-ready`; draw publish/apply `cup-composition-complete`) — complement Domain/Host tests; draw slice is API-driven, not full Structure UI.
 - **Vitest:** Primary frontend regression surface for Structure/Match/Overview depth.
 
-Gaps that need product or a later lot: materialize E2E (path 2), draw **UI** E2E (path 3 depth), progression assignment beyond attention/overview stubs (path 5).
+Gaps that need product or a later lot: materialize **UI** E2E (path 2 depth), draw **UI** E2E (path 3 depth), progression assignment beyond attention/overview stubs (path 5).
