@@ -14,7 +14,7 @@ alwaysApply: false
 | Lint | **Oxlint** | `--deny-warnings`; do **not** add ESLint in parallel |
 | Types | `tsc -b` (`npm run typecheck`) | Strict via `tsconfig` |
 | CSS lint | **Stylelint** | `lint:css` — `src/**/*.css` (CI); README notes some legacy page CSS intentionally out of scope for DS-only rules |
-| Hygiene audits | `css:audit`, `i18n:audit`, `tile:check` | Structure-scoped scripts under `scripts/`; not CI gates (lot C7 / AUD-0001) |
+| Hygiene audits | `frontend:audit`, `i18n:audit:repo`, `css:audit`, `i18n:audit`, `tile:check` | Global + structure-scoped `scripts/`; not CI gates (F1 / F1bis / AUD-0001) |
 | Coverage | Vitest V8 | `test:coverage` — measurement only, no CI threshold |
 
 ```bash

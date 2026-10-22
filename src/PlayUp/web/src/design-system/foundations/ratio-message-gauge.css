@@ -79,16 +79,12 @@
   color: var(--color-brand);
 }
 
-.ds-ratio-message-gauge__aside[data-pool-tone='brand']
-  + .ds-ratio-message-gauge__main
-  .ds-ratio-message-gauge__message-text {
+.ds-ratio-message-gauge__aside[data-pool-tone='brand'] + .ds-ratio-message-gauge__main .ds-ratio-message-gauge__message-text {
   color: var(--color-brand);
   font-weight: var(--font-weight-semibold);
 }
 
-.ds-ratio-message-gauge__aside[data-pool-tone='brand']
-  + .ds-ratio-message-gauge__main
-  .ds-ratio-message-gauge__message-icon {
+.ds-ratio-message-gauge__aside[data-pool-tone='brand'] + .ds-ratio-message-gauge__main .ds-ratio-message-gauge__message-icon {
   color: var(--color-brand);
 }
 

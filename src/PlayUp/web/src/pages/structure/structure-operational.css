@@ -199,14 +199,8 @@
 }
 
 .structure-operational-strip[data-layout-variant='composition'] .structure-operational-strip__section-actions > .ds-btn,
-.structure-operational-strip[data-layout-variant='composition']
-  .structure-operational-strip__section-actions
-  .structure-operational-tile__action-wrap
-  > .ds-btn,
-.structure-operational-strip[data-layout-variant='composition']
-  .structure-operational-strip__empty
-  .ds-empty__actions
-  .ds-btn,
+.structure-operational-strip[data-layout-variant='composition'] .structure-operational-strip__section-actions .structure-operational-tile__action-wrap > .ds-btn,
+.structure-operational-strip[data-layout-variant='composition'] .structure-operational-strip__empty .ds-empty__actions .ds-btn,
 .structure-operational-strip[data-layout-variant='composition'] .structure-operational-strip__applied-content .ds-btn {
   width: 100%;
   max-width: none;
@@ -631,15 +625,13 @@
     column-gap: 0;
   }
 
-  .structure-operational-strip:not([data-layout-variant='composition'])
-    .structure-operational-strip__section:not(:first-of-type) {
+  .structure-operational-strip:not([data-layout-variant='composition']) .structure-operational-strip__section:not(:first-of-type) {
     position: relative;
     padding-top: var(--space-16);
     border-top: none;
   }
 
-  .structure-operational-strip:not([data-layout-variant='composition'])
-    .structure-operational-strip__section:not(:first-of-type)::before {
+  .structure-operational-strip:not([data-layout-variant='composition']) .structure-operational-strip__section:not(:first-of-type)::before {
     content: '';
     position: absolute;
     top: 0;
@@ -656,13 +648,11 @@
     );
   }
 
-  .structure-operational-strip[data-layout-variant='composition']
-    .structure-operational-strip__section:not(:first-of-type) {
+  .structure-operational-strip[data-layout-variant='composition'] .structure-operational-strip__section:not(:first-of-type) {
     padding-top: 0;
   }
 
-  .structure-operational-strip[data-layout-variant='composition']
-    .structure-operational-strip__section:not(:first-of-type)::before {
+  .structure-operational-strip[data-layout-variant='composition'] .structure-operational-strip__section:not(:first-of-type)::before {
     display: none;
   }
 }
@@ -765,8 +755,7 @@
 }
 
 .structure-operational-gauge[data-pool-tone='danger'] .structure-occupancy-meter__fill,
-.structure-operational-gauge:has(.structure-operational-gauge__readiness[data-pool-tone='danger'])
-  .structure-occupancy-meter__fill {
+.structure-operational-gauge:has(.structure-operational-gauge__readiness[data-pool-tone='danger']) .structure-occupancy-meter__fill {
   background: var(--color-error);
 }
 

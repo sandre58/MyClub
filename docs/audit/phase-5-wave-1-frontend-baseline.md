@@ -67,7 +67,7 @@ All commands from `src/PlayUp/web`.
 | --- | --- |
 | `css:audit` / `i18n:audit` / `tile:check` pointed at **missing** files | **Resolved** on tree — npm entries target existing `scripts/*.mjs` |
 | Contributor docs referenced `frontend-audit.mjs` | **Web docs** (`src/PlayUp/web/docs/*`) no longer grep-match `frontend-audit` @ this SHA |
-| `docs/audit/baseline.md`, `phase-1-wave-3.md` still describe scripts as **broken** | **Documentation drift** (Git audit docs stale vs repo) — not re-measured product behaviour |
+| `docs/audit/baseline.md`, `phase-1-wave-3.md` still describe scripts as **broken** | **Resolved (F1-doc 2026-10-22)** — historical wave 3 text preserved; current policy in `baseline.md` § AUD-0001 |
 
 **CI:** `.github/workflows` does **not** invoke `css:audit`, `i18n:audit`, or `tile:check` (unchanged from wave 3).
 
@@ -77,7 +77,7 @@ All commands from `src/PlayUp/web`.
 
 | ID | Wave 3 snapshot (SHA `93b09f16…`) | Wave 1 @ `d14391dd` | Notes for F-lots |
 | --- | --- | --- | --- |
-| **AUD-0001** | Broken npm → missing global scripts | Scripts **executable**; global audit **still absent** | F1 → arbitrage: close as “repointed + scoped”, update audit Git docs, and/or restore global tool |
+| **AUD-0001** | Broken npm → missing global scripts | Scripts **executable**; global audit **still absent** | **F1 clos** — repoint + scoped; global non restauré (`phase-5-reconciliation-f1-f4.md`) |
 | **AUD-0003** | `lint:css` duplicate `.structure-fiche__header-lifecycle-toolbar` | **`lint:css` clean** | F2 — re-verify finding still exists before any lot |
 | **AUD-0013** | Heuristic orphans on `structure-fiche.css` | Heuristic reports **0 unused** / 118 tokens | F3 — finding may be obsolete or heuristic changed; do not assume deletion lot without diff vs wave 3 |
 | **AUD-0014** | Suspect leaf keys in `structure.json` | **0 suspect** / 983 leaves | F4 — same caution as F3 |
@@ -116,4 +116,4 @@ Local logs (this run): `.local/phase5-wave1/*.log` (gitignored).
 
 On **`d14391dd`**, mandatory frontend gates (**build**, **i18n:check**, **lint:css**) pass. AUD-0001 **npm scripts execute** against structure-scoped tools; the **global** audit tooling remains absent. Several phase 1 register items (**AUD-0003**, **AUD-0013**, **AUD-0014**) **do not reproduce** on this SHA with current commands — F2–F4 require **re-arbitration** (confirm obsolete vs re-measure with wave 3 protocol) before any corrective lot.
 
-**F1–F4 remain unauthorized** until explicit Notion lot go.
+**F1** closed (go 2026-10-22). **F2–F4** remain without corrective lot until explicit go on the reconciliation matrix.

@@ -8,6 +8,8 @@
 
 No code, CSS, i18n, script, or Cursor-rule changes in this wave — proof-based audit only.
 
+> **Post-wave note (AUD-0001):** Findings in §1 reflect **`93b09f16…` only**. On `main` (C7 `2bd16efc`, measured @ `d14391dd`), npm scripts were **repointed** to structure-scoped tools; web contributor docs were updated. **Global** `frontend-audit.mjs` was **not** restored. Authoritative closure: Phase 5 **F1** (2026-10-22) — [`phase-5-reconciliation-f1-f4.md`](./phase-5-reconciliation-f1-f4.md), [`baseline.md`](./baseline.md#aud-0001--current-policy-phase-5-f1-2026-10-22), [`phase-3-lot-c7-plan.md`](./phase-3-lot-c7-plan.md).
+
 ## Scope
 
 | Area | Method | Register |
@@ -60,7 +62,9 @@ git show 0e60554a --stat -- src/PlayUp/web/scripts/
 **Confidence:** High for “scripts removed, npm entries and docs not updated”.  
 **False positives:** None for missing files; scoped `audit-structure-*` scripts are intentional partial substitutes, not drop-in replacements for global audits.
 
-**Treatment options (no choice made):** restore global scripts; repoint npm scripts to scoped tools + document limits; remove npm entries and rewrite docs; add CI only after scope is agreed.
+**Treatment options (no choice made at wave 3 close):** restore global scripts; repoint npm scripts to scoped tools + document limits; remove npm entries and rewrite docs; add CI only after scope is agreed.
+
+**Resolution (arbitrated F1, 2026-10-22):** **repoint + scoped** — implemented on `main` via lot C7; Git audit docs synced in F1-doc. No global audit restoration.
 
 ---
 
