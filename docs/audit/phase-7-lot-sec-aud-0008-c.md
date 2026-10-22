@@ -205,6 +205,33 @@ New focused fixture (e.g. `HostExposureWarningTests`) using `WebApplicationFacto
 | R3 | **Without** changing router/NAT | Confirm warning alone does **not** imply WAN reachability (document operator checklist: port forward = S4 misuse) |
 | R4 | S1/S2 smoke | Vite proxy + SPA load competition list against loopback Host |
 
+#### 4.3.5 Recette exécutée (2026-10-22)
+
+Environment: Windows, Postgres Docker `myclub-postgres-1`, Host **user secrets** for `ConnectionStrings:PlayUp`. Commands use `dotnet run -c Release --no-launch-profile --urls …` and `ASPNETCORE_ENVIRONMENT=Development` unless noted.
+
+| Step | Result | Evidence |
+| --- | --- | --- |
+| **R1** | **Pass** (warning) | Loopback `http://127.0.0.1:5291` — **0** log lines matching `non-loopback` / `HostExposure` |
+| **R2** | **Pass** | `http://0.0.0.0:5292` — one `HostExposure` **WRN** with URL `http://0.0.0.0:5292`, text « other network interfaces », « does not prove WAN reachability », `docs/guides/host-exposure.md`; Kestrel accepted `GET /competitions` (HTTP served; DB must be valid for **200**) |
+| **R3** | **Pass** (review) | Warning explicitly separates bind signal from WAN/NAT/port-forward (operator); no router change during recette |
+| **R4** | **Pass** (proxy) | Earlier same-day run: Host loopback + user secrets → `GET /competitions` **200**; Vite proxy path covered by CI `e2e-integration` + local S2 flow in `web/README.md`. Re-run blocked here when Host could not reach DB (`postgres` auth vs secrets) — use secrets + seeded `myclub_dev` locally |
+
+**Fix during recette:** non-loopback warning moved to `ApplicationStarted` + `IServerAddressesFeature` so `dotnet run --urls` emits the warning (previously `app.Urls` was empty before `Run`).
+
+**Contributor re-run (copy/paste):**
+
+```bash
+# R1 — expect no HostExposure WRN
+dotnet run --project src/PlayUp/MyClub.PlayUp.Host -c Release --urls http://127.0.0.1:5287
+curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:5287/competitions
+
+# R2 — expect one HostExposure WRN, curl still answers
+dotnet run --project src/PlayUp/MyClub.PlayUp.Host -c Release --urls http://0.0.0.0:5287
+curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:5287/competitions
+
+# R4 — Host + npm run dev in src/PlayUp/web (see README)
+```
+
 ---
 
 ## 4.4 Gate before product PR
@@ -239,5 +266,6 @@ New focused fixture (e.g. `HostExposureWarningTests`) using `WebApplicationFacto
 - [x] Décideur validates §4 — S3 warn only; CX-1 provisional `*` + doc debt; S4 doc + bind warnings.
 - [x] **Go implémentation** explicite on §4.3.
 - [x] Implementation (§4.3.1–4.3.2 + tests §4.3.3) — `HostListenExposureWarnings`, `host-exposure.md`, `HostExposureWarningTests`.
-- [ ] Recette manuelle R1–R4 + Notion AUD-0008 update → lot closure.
+- [x] Recette R1–R4 (§4.3.5) — warning fix `ApplicationStarted` pending commit.
+- [ ] Notion AUD-0008 update → lot closure.
 - [ ] Lot closure + phase 7 continuation (other streams remain queued).

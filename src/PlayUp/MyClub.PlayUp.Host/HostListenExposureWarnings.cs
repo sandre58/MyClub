@@ -5,6 +5,8 @@
 // -----------------------------------------------------------------------
 
 using System.Net;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Hosting.Server.Features;
 
 namespace MyClub.PlayUp.Host;
 
@@ -12,15 +14,20 @@ internal static partial class HostListenExposureWarnings
 {
     internal const string ExposureGuidePath = "docs/guides/host-exposure.md";
 
-    public static void LogNonLoopbackListenUrlsIfDevelopment(WebApplication app)
+    public static void RegisterNonLoopbackListenUrlWarningsIfDevelopment(WebApplication app)
     {
         if (!app.Environment.IsDevelopment())
         {
             return;
         }
 
-        var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("HostExposure");
-        LogNonLoopbackListenUrls(logger, app.Urls);
+        app.Lifetime.ApplicationStarted.Register(() =>
+        {
+            var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("HostExposure");
+            var serverAddresses = app.Services.GetService<IServer>()?.Features.Get<IServerAddressesFeature>()?.Addresses;
+            var listenUrls = serverAddresses is { Count: > 0 } ? serverAddresses : app.Urls;
+            LogNonLoopbackListenUrls(logger, listenUrls);
+        });
     }
 
     internal static void LogNonLoopbackListenUrls(ILogger logger, IEnumerable<string> listenUrls)

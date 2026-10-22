@@ -83,7 +83,7 @@ These reduce accidental misconfiguration; they **do not** replace network isolat
 | Measure | Effect |
 | --- | --- |
 | `appsettings.Development.json` → `AllowedHosts` | Restricts acceptable HTTP `Host` headers to `localhost` and `127.0.0.1` when `ASPNETCORE_ENVIRONMENT=Development`. Use a local override (same file, gitignored elsewhere) if you deliberately use another dev hostname. |
-| Startup warning (Development) | **Warning** when listen URLs use a **non-loopback** host (e.g. `0.0.0.0`): includes the URL, notes other interfaces may reach the API, points here and to `--urls` / `launchSettings`. Does **not** stop startup and does **not** claim WAN exposure. |
+| Startup warning (Development) | After the server starts, **Warning** when listen URLs use a **non-loopback** host (e.g. `0.0.0.0`): includes the URL, notes other interfaces may reach the API, points here and to `--urls` / `launchSettings`. Does **not** stop startup and does **not** claim WAN exposure. |
 
 Production / non-Development configurations still use `AllowedHosts: *` in base `appsettings.json` until a separate hosting decision exists.
 
