@@ -1,6 +1,6 @@
 # Phase 7 — Sécurité, performance & exploitation (cadrage)
 
-**Status:** vague 1 **exécutée** (2026-10-22) @ `a6764084` — en attente arbitrage **un** premier lot · **pas** de code produit  
+**Status:** premier lot **arbitré** — P7-Sec / AUD-0008 trajectoire C (2026-10-22) · implémentation **après** inventaire §4 du lot doc · pas de code produit tant que périmètre non figé  
 **Contrat phase 7:** validé (périmètre + exclusions, décideur 2026-10-22)  
 **Roadmap (plan directeur):** sécurité · performance · exploitation (distinct de l’assainissement statique phase 6).
 
@@ -76,7 +76,7 @@ Pour chaque candidat retenu en vague 1, noter : **risque**, **impact utilisateur
 | Bilan dettes | `phase-7-debts-consolidated.md` | ✅ |
 | Plan cadrage | `phase-7-plan.md` (this file) | ✅ |
 | Vague 1 | `phase-7-wave-1-security-perf-ops-baseline.md` | ✅ mesures @ `a6764084` |
-| Lots | `phase-7-lot-*.md` | ⏳ post arbitrage |
+| Lot P7-Sec | `phase-7-lot-sec-aud-0008-c.md` | ✅ arbitrage · ⏳ inventaire + impl |
 
 **Branche suggérée** au go phase 7 : `feature/audit-phase-7-launch` (docs + vague 1 uniquement jusqu’à arbitrage lot).
 
@@ -101,13 +101,14 @@ Pour chaque candidat retenu en vague 1, noter : **risque**, **impact utilisateur
 - [x] **Go vague 1** (investigation seule — 2026-10-22).
 - [x] Trame vague 1 — [`phase-7-wave-1-security-perf-ops-baseline.md`](phase-7-wave-1-security-perf-ops-baseline.md).
 - [x] Compléter mesures wave 1 (AUD-0012 rejoué, bundle, Sec/Ops inventaires — §5 baseline).
-- [ ] Arbitrage **un** premier lot (voir synthèse [`phase-7-wave-1-security-perf-ops-baseline.md`](phase-7-wave-1-security-perf-ops-baseline.md) §5).
+- [x] Arbitrage **un** premier lot — [`phase-7-lot-sec-aud-0008-c.md`](phase-7-lot-sec-aud-0008-c.md) (AUD-0008 trajectoire C, périmètre Internet strict).
+- [ ] Exécuter lot P7-Sec (inventaire §4 puis impl bornée).
 - [ ] Clôture phase 7.
 
 ---
 
 ## 7. Prochaine action recommandée
 
-1. **Arbitrer un premier lot** à partir de la synthèse wave 1 (§5 baseline) — candidat Sec le mieux cadré ; Perf/Ops en file.  
-2. Documenter le lot choisi dans `phase-7-lot-*.md` + go explicite avant code.  
-3. Ne pas ouvrir de lots parallèles sans décision.
+1. **Inventaire step 1** — compléter §4 de [`phase-7-lot-sec-aud-0008-c.md`](phase-7-lot-sec-aud-0008-c.md) avant toute PR produit.  
+2. Implémenter **uniquement** le périmètre §4 validé (pas d’auth/TLS/CORS généralisés).  
+3. AUD-0012 et Ops (health, E2E draw) restent en file — pas de lot parallèle.
