@@ -34,13 +34,13 @@
 | ID | Finding historique (wave 3) | Fichier / comportement | Protocole historique | Résultat @ `d14391dd` | Statut proposé | Preuve de décision |
 | --- | --- | --- | --- | --- | --- | --- |
 | **AUD-0003** | Duplicate selector `.structure-fiche__header-lifecycle-toolbar` → `lint:css` fail | `structure-fiche.css` ~L124 vs ~L238 | `npm run lint:css` | **Pass** (0 violations) | **Clos (go F2, 2026-10-22)** — corrigé depuis C7 | Lot **C7** `2bd16efc` ; pas de lot phase 5 |
-| **AUD-0013** | 4 classes orphelines structure-fiche (4/122 tokens) | `structure-fiche.css` | `npm run css:audit` (heuristique grep `src/`) | **0 unused / 118** tokens | **Corrigé depuis** | Commit `f6ab500f` — suppression 4 tokens ; `phase-3-lot-ic13-14-plan.md` ; ancêtre de `d14391dd` |
-| **AUD-0014** | 6 clés feuilles suspectes (6/989) | `locales/en/structure.json` | `npm run i18n:audit` | **0 suspect / 983** leaves | **Corrigé depuis** | Même commit `f6ab500f` ; `i18n:check` 16/16 wave 1 |
+| **AUD-0013** | 4 classes orphelines structure-fiche (4/122 tokens) | `structure-fiche.css` | `npm run css:audit` (heuristique grep `src/`) | **0 unused / 118** tokens | **Clos (go F3, 2026-10-22)** | Commit `f6ab500f` ; pas de lot phase 5 |
+| **AUD-0014** | 6 clés feuilles suspectes (6/989) | `locales/en/structure.json` | `npm run i18n:audit` | **0 suspect / 983** leaves | **Clos (go F4, 2026-10-22)** | Même commit `f6ab500f` ; pas de lot phase 5 |
 | **F5** (optionnel) | Présentation BE/FE post D3-B | `presentedIssueCodes` / attention | Recette C2 + protocole impasse | D3-B livré PR #71 | **Hors F2–F4** | `phase-4-lot-d3-plan.md` — pas de finding wave 3 ouvert |
 
 **Lecture:** la non-reproduction sur `d14391dd` s’explique principalement par **correctifs déjà mergés** (C7, IC13–14), pas par un protocole incompatible seul. Les heuristiques wave 1 utilisent les **mêmes scripts** que wave 3 ; le dénominateur (118 vs 122 classes, 983 vs 989 clés) reflète les suppressions `f6ab500f`.
 
-**Lots F2–F4 correctifs:** **non recommandés** — registre à requalifier **Vérifié / clos** sur périmètre structure-fiche, sauf nouvelle preuve d’écart.
+**Lots F2–F4 correctifs:** **non retenus** — F2–F4 clos par go décideur (2026-10-22). Registre Notion à aligner (AUD-0003, 0013, 0014).
 
 ---
 
@@ -59,8 +59,8 @@
 | 1 | Décision **F1** (repoint + scoped) | ✅ **Go 2026-10-22** |
 | 2 | Lot **F1-doc** (baseline + wave 3) | ✅ **2026-10-22** |
 | 3 | **F2** — AUD-0003 clos sans lot | ✅ **Go 2026-10-22** |
-| 4 | Valider **F3–F4** (corrigé depuis) | Décideur |
-| 5 | Registre Notion AUD-0003 (+ 0013/0014 si F3–F4 validés) | Post go |
+| 4 | **F3–F4** — AUD-0013/0014 clos sans lot | ✅ **Go 2026-10-22** |
+| 5 | Registre Notion AUD-0003, 0013, 0014 | À aligner (décideur / registre) |
 
 **Interdit sans go:** implémentation frontend, restauration `frontend-audit.mjs`, lots F2–F4 « nettoyage » sur findings déjà corrigés.
 
