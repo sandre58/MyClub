@@ -6,6 +6,7 @@
 
 using System.Globalization;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using MyClub.Media.Infrastructure.DependencyInjection;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Pipeline;
@@ -68,6 +69,11 @@ try
             context.ProblemDetails.Extensions["correlationId"] = context.HttpContext.GetCorrelationId());
     builder.Services.AddExceptionHandler<MediaExceptionHandler>();
     builder.Services.AddExceptionHandler<PlayUpExceptionHandler>();
+    builder.Services.AddHealthChecks()
+        .AddCheck<PlayUpDatabaseHealthCheck>(
+            name: "playup-database",
+            failureStatus: HealthStatus.Unhealthy,
+            tags: ["ready"]);
 
     var app = builder.Build();
 
@@ -86,6 +92,8 @@ try
             "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
     });
     app.UseExceptionHandler();
+
+    app.MapHealthChecks("/health");
 
     app.MapMediaEndpoints();
     app.MapCompetitionEndpoints();

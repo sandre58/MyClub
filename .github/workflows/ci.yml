@@ -163,13 +163,13 @@ jobs:
       - name: Build .NET (Release)
         run: dotnet build MyClub.slnx --no-restore --configuration Release
 
-      - name: Seed championship-ready
+      - name: Seed Host E2E scenarios
         env:
           ConnectionStrings__PlayUpDev: "Host=localhost;Port=5432;Database=myclub_dev;Username=postgres;Password=postgres"
         run: >
           dotnet run --project src/PlayUp/MyClub.PlayUp.DevRunner
           --configuration Release --no-build
-          -- --reset --scenarios championship-ready
+          -- --reset --scenarios championship-ready,cup-composition-complete
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -196,7 +196,7 @@ jobs:
             --urls http://127.0.0.1:5287 &
           HOST_PID=$!
           for i in $(seq 1 60); do
-            if curl -sf http://127.0.0.1:5287/competitions > /dev/null; then
+            if curl -sf http://127.0.0.1:5287/health > /dev/null; then
               echo "Host ready"
               break
             fi
