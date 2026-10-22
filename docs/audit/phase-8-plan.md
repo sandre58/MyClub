@@ -3,7 +3,7 @@
 **Status:** **cadrage** (pilotage) — 2026-10-22 · pas de go implémentation sans validation vague 1  
 **Roadmap (plan directeur):** contrôles finaux · rejeu assainissement · cohérence règles Cursor vs décisions SoT · non-régression · garde-fous CI · documentation · bilan dettes · **clôture tâche Notion**.
 
-**Reprise technique:** `main` @ `d0548ad2` (post clôture phase 7).  
+**Reprise technique:** `main` @ `e6b3b63b` (cadrage phase 8 ; post clôture phase 7 @ `d0548ad2`).  
 **Bilan dettes entrée:** [`phase-7-debts-consolidated.md`](phase-7-debts-consolidated.md).  
 **Phase 7 close:** [`phase-7-closure.md`](phase-7-closure.md).  
 **Baseline historique (phase 0):** [`baseline.md`](baseline.md) — mesures @ `93b09f16` (référence, pas SHA cible).  
