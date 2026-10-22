@@ -1,6 +1,6 @@
 # Phase 7 — Sécurité, performance & exploitation (cadrage)
 
-**Status:** P7-Sec / AUD-0008-C — §4 **figé** (S3 warn, CX-1 `*` provisoire, S4 doc+bind) · **go implémentation** explicite requis avant PR produit  
+**Status:** P7-Sec / AUD-0008-C — impl §4.3 livrée · recette R1–R4 + clôture lot en attente  
 **Contrat phase 7:** validé (périmètre + exclusions, décideur 2026-10-22)  
 **Roadmap (plan directeur):** sécurité · performance · exploitation (distinct de l’assainissement statique phase 6).
 

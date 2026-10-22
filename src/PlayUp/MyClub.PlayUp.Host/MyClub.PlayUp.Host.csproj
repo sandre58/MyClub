@@ -28,6 +28,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <InternalsVisibleTo Include="MyClub.PlayUp.Host.Tests" />
+    </ItemGroup>
+
+    <ItemGroup>
         <Content Update="appsettings.Development.json">
             <DependentUpon>appsettings.json</DependentUpon>
         </Content>

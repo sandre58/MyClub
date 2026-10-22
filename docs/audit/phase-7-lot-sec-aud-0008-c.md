@@ -1,6 +1,6 @@
 # Phase 7 — Lot P7-Sec — AUD-0008 trajectoire C (Internet exposure)
 
-**Status:** §4 arbitrage **figé** (décideur 2026-10-22) — §4.3 perimeter + tests **defined**. **No product PR** until explicit **go implémentation** on this frozen §4.3 (separate from arbitrage commit).
+**Status:** §4.3 **implemented** on `main` (go implémentation 2026-10-22) — pending lot closure (Notion register, décideur recette R1–R4).
 
 **Priority:** P0 (first phase 7 corrective lot).
 
@@ -214,7 +214,7 @@ New focused fixture (e.g. `HostExposureWarningTests`) using `WebApplicationFacto
 | S3 / CX-1 / S4 arbitrage | **Done** (§4.1–4.2, §4.3 table) |
 | §4.3 tests + recette defined | **Done** (§4.3.3–4.4) |
 | Out-of-scope scenarios unchanged | **Confirmed** (§4.3 explicit list) |
-| **Explicit go implémentation** | **Pending** — décideur authorizes PR against frozen §4.3 only |
+| **Explicit go implémentation** | **Done** (2026-10-22) |
 | S6 hosting model | **Still non arbitré** — remains out of lot |
 
 ---
@@ -237,6 +237,7 @@ New focused fixture (e.g. `HostExposureWarningTests`) using `WebApplicationFacto
 - [x] First lot arbitrated: P7-Sec / AUD-0008-C (this document).
 - [x] Step 1 inventory (read-only) → §4 draft matrix + §4.4 stop check.
 - [x] Décideur validates §4 — S3 warn only; CX-1 provisional `*` + doc debt; S4 doc + bind warnings.
-- [ ] **Go implémentation** explicite on §4.3.
-- [ ] Implementation PR (§4.3.1–4.3.2 + tests §4.3.3 only).
+- [x] **Go implémentation** explicite on §4.3.
+- [x] Implementation (§4.3.1–4.3.2 + tests §4.3.3) — `HostListenExposureWarnings`, `host-exposure.md`, `HostExposureWarningTests`.
+- [ ] Recette manuelle R1–R4 + Notion AUD-0008 update → lot closure.
 - [ ] Lot closure + phase 7 continuation (other streams remain queued).
