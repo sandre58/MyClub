@@ -83,6 +83,7 @@ Surfaces: Canvas / Groupe / Panneau (`.ds-panel`) / Overlay — no fifth “card
 | --- | --- |
 | **CI / normative CSS** | `npm run lint:css` (Stylelint, `src/**/*.css`) |
 | **Repo-wide hygiene report** | `npm run frontend:audit` (orphan classes, import graph, duplicate decl blocks — heuristic) |
+| **FE module graph (dead-code audit)** | `npm run frontend:module-graph` (static reachability from `main.tsx` + test-only support — report-only) |
 | **Repo-wide i18n keys** | `npm run i18n:audit:repo` |
 | **Structure fiche only** | `npm run css:audit`, `npm run i18n:audit` |
 | **Rider selector / unknown `var(--*)` scan** | `npm run css:audit:rider` (report); `npm run css:audit:rider -- --fix` joins broken selector lines only — **never** merges comment lines with rules |
