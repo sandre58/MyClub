@@ -49,7 +49,8 @@
 | **T1** | Test Application rouge (hors stream S2–S6) | [`phase-6-t1-application-test-findings.md`](phase-6-t1-application-test-findings.md) |
 | **S2** | Dead code FE (qualification) | [`phase-6-s2-dead-code-fe.md`](phase-6-s2-dead-code-fe.md) |
 | **S3** | i18n repo (qualification) | [`phase-6-s3-i18n-qualification.md`](phase-6-s3-i18n-qualification.md) |
-| **S4+** | CSS repo, autres streams | TBD |
+| **S4** | CSS repo (qualification) | [`phase-6-s4-css-qualification.md`](phase-6-s4-css-qualification.md) |
+| **S5+** | Organisation dépôt, tests, clôture | TBD |
 
 ---
 
@@ -72,7 +73,8 @@
 - [x] **S2** — qualification dead code FE ; **S2-001** retiré (module + test).
 - [x] **S3** — qualification i18n repo (buckets, pas de suppression).
 - [x] **S3-INV** — 5 clés `regulation` supprimées ([`phase-6-s3-inv-arbitration.md`](phase-6-s3-inv-arbitration.md)).
-- [ ] Streams S4–S6.
+- [x] **S4** — qualification CSS (100 classes textuelles, 80 groupes doublons — audit).
+- [ ] Arbitrage S4-INV-01…04 / streams S5–S6.
 
 ---
 

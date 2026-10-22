@@ -17,6 +17,7 @@
     "css:audit": "node scripts/audit-structure-fiche-css.mjs",
     "frontend:audit": "node scripts/frontend-audit.mjs",
     "frontend:module-graph": "node scripts/frontend-module-graph-audit.mjs",
+    "frontend:css:qualify": "node scripts/frontend-css-audit-qualify.mjs",
     "css:audit:rider": "node scripts/css-audit-rider.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

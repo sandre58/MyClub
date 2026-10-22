@@ -84,6 +84,7 @@ Surfaces: Canvas / Groupe / Panneau (`.ds-panel`) / Overlay — no fifth “card
 | **CI / normative CSS** | `npm run lint:css` (Stylelint, `src/**/*.css`) |
 | **Repo-wide hygiene report** | `npm run frontend:audit` (orphan classes, import graph, duplicate decl blocks — heuristic) |
 | **FE module graph (dead-code audit)** | `npm run frontend:module-graph` (static reachability from `main.tsx` + test-only support — report-only) |
+| **CSS class buckets (S4)** | `npm run frontend:css:qualify` (companion to `frontend:audit` — dynamic `className` false positives) |
 | **Repo-wide i18n keys** | `npm run i18n:audit:repo` |
 | **i18n suspicious buckets (S3)** | `npm run i18n:audit:qualify` (report-only; pluriels `_one`/`_other` ≠ défauts) |
 | **Structure fiche only** | `npm run css:audit`, `npm run i18n:audit` |
