@@ -1,6 +1,7 @@
 # Phase 7 — Sécurité, performance & exploitation (cadrage)
 
-**Status:** preparation — **pas de go implémentation** (2026-10-22)  
+**Status:** vague 1 en cours — **go investigation** (2026-10-22) · **pas** de lot correctif  
+**Contrat phase 7:** validé (périmètre + exclusions, décideur 2026-10-22)  
 **Roadmap (plan directeur):** sécurité · performance · exploitation (distinct de l’assainissement statique phase 6).
 
 **Reprise technique:** `main` @ `940935b0` (post clôture phase 6).  
@@ -96,10 +97,11 @@ Pour chaque candidat retenu en vague 1, noter : **risque**, **impact utilisateur
 
 - [x] Bilan consolidé dettes phases 1–6.
 - [x] Plan Git cadrage (sans code produit).
-- [ ] Fiche Notion phase 7 validée (périmètre + exclusions).
-- [ ] **Go décideur phase 7** (cadrage → vague 1).
-- [ ] Arbitrage premier lot borné.
-- [ ] Vague 1 baseline.
+- [x] Contrat Notion validé (périmètre P7-Sec/Perf/Ops + exclusions CSS/orga/F5/i18n).
+- [x] **Go vague 1** (investigation seule — 2026-10-22).
+- [x] Trame vague 1 — [`phase-7-wave-1-security-perf-ops-baseline.md`](phase-7-wave-1-security-perf-ops-baseline.md).
+- [ ] Compléter mesures wave 1 (preuves comparatives, dont AUD-0012 si rejoué).
+- [ ] Arbitrage **un** premier lot (après wave 1 — pas de choix Sec/Perf/Ops avant preuves).
 - [ ] Clôture phase 7.
 
 ---
