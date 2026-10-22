@@ -202,3 +202,26 @@ jobs:
           VITE_API_PROXY_TARGET: http://127.0.0.1:5287
           ConnectionStrings__PlayUp: "Host=localhost;Port=5432;Database=myclub_dev;Username=postgres;Password=postgres"
           ConnectionStrings__Media: "Host=localhost;Port=5432;Database=myclub_dev;Username=postgres;Password=postgres"
+
+  report:
+    name: Summary — Three pillars
+    runs-on: ubuntu-24.04
+    needs:
+      - build
+      - web
+      - e2e-integration
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Write run summary
+        env:
+          BUILD_RESULT: ${{ needs.build.result }}
+          WEB_RESULT: ${{ needs.web.result }}
+          E2E_RESULT: ${{ needs.e2e-integration.result }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_API_URL: ${{ github.api_url }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+        run: bash .github/scripts/write-ci-run-summary.sh
