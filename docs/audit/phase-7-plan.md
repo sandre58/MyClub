@@ -104,12 +104,13 @@ Pour chaque candidat retenu en vague 1, noter : **risque**, **impact utilisateur
 - [x] Arbitrage **un** premier lot — [`phase-7-lot-sec-aud-0008-c.md`](phase-7-lot-sec-aud-0008-c.md) (AUD-0008 trajectoire C, périmètre Internet strict).
 - [x] Inventaire step 1 + §4 figé (S3/CX-1/S4).
 - [x] Lot P7-Sec livré + recette locale (§4.3.5).
+- [x] **Go lot P7-Perf** — [`phase-7-lot-perf-aud-0012.md`](phase-7-lot-perf-aud-0012.md) (D2-B lot 2, hydratation multi-stage).
 - [ ] Clôture phase 7.
 
 ---
 
 ## 7. Prochaine action recommandée
 
-1. Arbitrer le **prochain lot** phase 7 (AUD-0012, Ops health/E2E, ou pause).  
+1. Arbitrer le **prochain lot** phase 7 (Ops health/E2E, bundle Vite, autre D2-B, ou pause).  
 2. Trajectoire C **restante** : auth/TLS/S6 / `AllowedHosts` définitif — **hors** lot P7-Sec clos.  
 3. Pas de lot parallèle sans décision explicite.

@@ -60,10 +60,7 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
             var loaded = await query.ToListAsync(cancellationToken).ConfigureAwait(false);
             if (RequiresStructureHydration(capabilities))
             {
-                foreach (var stage in loaded)
-                {
-                    await HydrateOrderedCollectionsAsync(stage, cancellationToken).ConfigureAwait(false);
-                }
+                await HydrateOrderedCollectionsAsync(loaded, cancellationToken).ConfigureAwait(false);
             }
 
             foreach (var stage in loaded)
@@ -115,10 +112,7 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
         var loaded = await query.ToListAsync(cancellationToken).ConfigureAwait(false);
         if (RequiresStructureHydration(capabilities))
         {
-            foreach (var stage in loaded)
-            {
-                await HydrateOrderedCollectionsAsync(stage, cancellationToken).ConfigureAwait(false);
-            }
+            await HydrateOrderedCollectionsAsync(loaded, cancellationToken).ConfigureAwait(false);
         }
 
         var byId = loaded.ToDictionary(stage => stage.Id);
@@ -298,89 +292,114 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
 
         if (RequiresStructureHydration(StageReadCapabilities.FromProfile(profile)))
         {
-            await HydrateOrderedCollectionsAsync(stage, cancellationToken).ConfigureAwait(false);
+            await HydrateOrderedCollectionsAsync([stage], cancellationToken).ConfigureAwait(false);
         }
 
         return stage;
     }
 
     [SuppressMessage("ReSharper", "EntityFramework.ClientSideDbFunctionCall", Justification = "It's for test")]
-    private async Task HydrateOrderedCollectionsAsync(Stage stage, CancellationToken cancellationToken)
-    {
-        var groups = StageOrderedCollectionsAccessor.GetGroups(stage)
-            .OrderBy(group => context.Entry(group).Property<int>("SortOrder").CurrentValue)
-            .ToList();
-        StageOrderedCollectionsAccessor.ReorderGroups(stage, groups);
+    private Task HydrateOrderedCollectionsAsync(Stage stage, CancellationToken cancellationToken) =>
+        HydrateOrderedCollectionsAsync([stage], cancellationToken);
 
-        var groupIds = groups.Select(group => group.Id).ToArray();
-        var entryRows = groupIds.Length == 0
+    [SuppressMessage("ReSharper", "EntityFramework.ClientSideDbFunctionCall", Justification = "It's for test")]
+    private async Task HydrateOrderedCollectionsAsync(IReadOnlyList<Stage> stages, CancellationToken cancellationToken)
+    {
+        if (stages.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var stage in stages)
+        {
+            var groups = StageOrderedCollectionsAccessor.GetGroups(stage)
+                .OrderBy(group => context.Entry(group).Property<int>("SortOrder").CurrentValue)
+                .ToList();
+            StageOrderedCollectionsAccessor.ReorderGroups(stage, groups);
+        }
+
+        var allGroupIds = stages
+            .SelectMany(StageOrderedCollectionsAccessor.GetGroups)
+            .Select(group => group.Id)
+            .Distinct()
+            .ToArray();
+        var entryRows = allGroupIds.Length == 0
             ? []
             : await context.Set<GroupEntryRef>()
                 .AsNoTracking()
-                .Where(row => groupIds.AsEnumerable().Contains(row.GroupId))
+                .Where(row => allGroupIds.AsEnumerable().Contains(row.GroupId))
                 .OrderBy(row => row.SortOrder)
                 .ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
 
-        foreach (var group in groups)
+        foreach (var stage in stages)
         {
-            var orderedEntryIds = entryRows
-                .Where(row => row.GroupId == group.Id)
-                .OrderBy(row => row.SortOrder)
-                .Select(row => row.EntryId);
-            StageOrderedCollectionsAccessor.ReorderEntryIds(group, orderedEntryIds);
+            foreach (var group in StageOrderedCollectionsAccessor.GetGroups(stage))
+            {
+                var orderedEntryIds = entryRows
+                    .Where(row => row.GroupId == group.Id)
+                    .OrderBy(row => row.SortOrder)
+                    .Select(row => row.EntryId);
+                StageOrderedCollectionsAccessor.ReorderEntryIds(group, orderedEntryIds);
+            }
         }
 
         // Read sort_order from SQL — Entry().Property is unreliable for AsNoTracking graphs
         // and can leave rounds in PK/heap order (Finale appearing before Quarts).
+        var stageIds = stages.Select(stage => stage.Id).ToArray();
         var roundSortOrders = await context.Set<Round>()
             .AsNoTracking()
-            .Where(round => EF.Property<StageId>(round, "stage_id") == stage.Id)
+            .Where(round => stageIds.AsEnumerable().Contains(EF.Property<StageId>(round, "stage_id")))
             .Select(round => new { round.Id, SortOrder = EF.Property<int>(round, "SortOrder") })
             .ToDictionaryAsync(row => row.Id, row => row.SortOrder, cancellationToken)
             .ConfigureAwait(false);
-        var rounds = StageOrderedCollectionsAccessor.GetRounds(stage)
-            .OrderBy(round => roundSortOrders.GetValueOrDefault(round.Id, int.MaxValue))
-            .ToList();
-        StageOrderedCollectionsAccessor.ReorderRounds(stage, rounds);
 
         var fixturesForAttachments = new List<Fixture>();
 
-        foreach (var round in rounds)
+        foreach (var stage in stages)
         {
-            var fixtures = StageOrderedCollectionsAccessor.GetRoundFixtures(round)
-                .OrderBy(fixture => context.Entry(fixture).Property<int>("SortOrder").CurrentValue)
+            var rounds = StageOrderedCollectionsAccessor.GetRounds(stage)
+                .OrderBy(round => roundSortOrders.GetValueOrDefault(round.Id, int.MaxValue))
                 .ToList();
-            StageOrderedCollectionsAccessor.ReorderRoundFixtures(round, fixtures);
-            fixturesForAttachments.AddRange(fixtures);
-        }
+            StageOrderedCollectionsAccessor.ReorderRounds(stage, rounds);
 
-        var matchdays = StageOrderedCollectionsAccessor.GetMatchdays(stage)
-            .OrderBy(matchday => context.Entry(matchday).Property<int>("SortOrder").CurrentValue)
-            .ToList();
-        StageOrderedCollectionsAccessor.ReorderMatchdays(stage, matchdays);
+            foreach (var round in rounds)
+            {
+                var fixtures = StageOrderedCollectionsAccessor.GetRoundFixtures(round)
+                    .OrderBy(fixture => context.Entry(fixture).Property<int>("SortOrder").CurrentValue)
+                    .ToList();
+                StageOrderedCollectionsAccessor.ReorderRoundFixtures(round, fixtures);
+                fixturesForAttachments.AddRange(fixtures);
+            }
 
-        foreach (var matchday in matchdays)
-        {
-            var fixtures = StageOrderedCollectionsAccessor.GetMatchdayFixtures(matchday)
-                .OrderBy(fixture => context.Entry(fixture).Property<int>("SortOrder").CurrentValue)
+            var matchdays = StageOrderedCollectionsAccessor.GetMatchdays(stage)
+                .OrderBy(matchday => context.Entry(matchday).Property<int>("SortOrder").CurrentValue)
                 .ToList();
-            StageOrderedCollectionsAccessor.ReorderMatchdayFixtures(matchday, fixtures);
-            fixturesForAttachments.AddRange(fixtures);
+            StageOrderedCollectionsAccessor.ReorderMatchdays(stage, matchdays);
+
+            foreach (var matchday in matchdays)
+            {
+                var fixtures = StageOrderedCollectionsAccessor.GetMatchdayFixtures(matchday)
+                    .OrderBy(fixture => context.Entry(fixture).Property<int>("SortOrder").CurrentValue)
+                    .ToList();
+                StageOrderedCollectionsAccessor.ReorderMatchdayFixtures(matchday, fixtures);
+                fixturesForAttachments.AddRange(fixtures);
+            }
         }
 
         await HydrateAttachmentsAsync(fixturesForAttachments, cancellationToken).ConfigureAwait(false);
 
-        if (StageOrderedCollectionsAccessor.GetDraws(stage).Count > 0)
+        foreach (var stage in stages)
         {
-            var draws = StageOrderedCollectionsAccessor.GetDraws(stage)
-                .OrderBy(draw => context.Entry(draw).Property<int>("SortOrder").CurrentValue)
-                .ToList();
-            StageOrderedCollectionsAccessor.ReorderDraws(stage, draws);
-        }
+            if (StageOrderedCollectionsAccessor.GetDraws(stage).Count > 0)
+            {
+                var draws = StageOrderedCollectionsAccessor.GetDraws(stage)
+                    .OrderBy(draw => context.Entry(draw).Property<int>("SortOrder").CurrentValue)
+                    .ToList();
+                StageOrderedCollectionsAccessor.ReorderDraws(stage, draws);
+            }
 
-        if (StageOrderedCollectionsAccessor.GetPenalties(stage).Count > 0)
-        {
+            if (StageOrderedCollectionsAccessor.GetPenalties(stage).Count <= 0) continue;
             var penalties = StageOrderedCollectionsAccessor.GetPenalties(stage)
                 .OrderBy(penalty => context.Entry(penalty).Property<int>("SortOrder").CurrentValue)
                 .ToList();

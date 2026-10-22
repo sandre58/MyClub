@@ -71,6 +71,7 @@ public sealed class StageRepositoryLoadBaselineTests(
             });
 
         multiSql.Should().BeGreaterThan(5);
+        multiSql.Should().BeLessThanOrEqualTo(17, "D2-B lot 2 batches hydration across stages (baseline was 18 SQL)");
     }
 
     [Fact]
