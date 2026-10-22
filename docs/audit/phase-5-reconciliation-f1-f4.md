@@ -33,7 +33,7 @@
 
 | ID | Finding historique (wave 3) | Fichier / comportement | Protocole historique | Résultat @ `d14391dd` | Statut proposé | Preuve de décision |
 | --- | --- | --- | --- | --- | --- | --- |
-| **AUD-0003** | Duplicate selector `.structure-fiche__header-lifecycle-toolbar` → `lint:css` fail | `structure-fiche.css` ~L124 vs ~L238 | `npm run lint:css` | **Pass** (0 violations) | **Corrigé depuis** (sur `main`) | Lot **C7** `2bd16efc` — merge cascade CSS ; `phase-3-lot-c7-plan.md` ; ancêtre de `d14391dd` |
+| **AUD-0003** | Duplicate selector `.structure-fiche__header-lifecycle-toolbar` → `lint:css` fail | `structure-fiche.css` ~L124 vs ~L238 | `npm run lint:css` | **Pass** (0 violations) | **Clos (go F2, 2026-10-22)** — corrigé depuis C7 | Lot **C7** `2bd16efc` ; pas de lot phase 5 |
 | **AUD-0013** | 4 classes orphelines structure-fiche (4/122 tokens) | `structure-fiche.css` | `npm run css:audit` (heuristique grep `src/`) | **0 unused / 118** tokens | **Corrigé depuis** | Commit `f6ab500f` — suppression 4 tokens ; `phase-3-lot-ic13-14-plan.md` ; ancêtre de `d14391dd` |
 | **AUD-0014** | 6 clés feuilles suspectes (6/989) | `locales/en/structure.json` | `npm run i18n:audit` | **0 suspect / 983** leaves | **Corrigé depuis** | Même commit `f6ab500f` ; `i18n:check` 16/16 wave 1 |
 | **F5** (optionnel) | Présentation BE/FE post D3-B | `presentedIssueCodes` / attention | Recette C2 + protocole impasse | D3-B livré PR #71 | **Hors F2–F4** | `phase-4-lot-d3-plan.md` — pas de finding wave 3 ouvert |
@@ -58,8 +58,9 @@
 | --- | --- | --- |
 | 1 | Décision **F1** (repoint + scoped) | ✅ **Go 2026-10-22** |
 | 2 | Lot **F1-doc** (baseline + wave 3) | ✅ **2026-10-22** |
-| 3 | Valider matrice F2–F4 (**corrigé depuis**, pas de lot CSS/i18n**) | Décideur |
-| 4 | Mettre à jour registre Notion AUD-0001 (+ 0003/0013/0014 si F2–F4 validés) | Post arbitrage registre |
+| 3 | **F2** — AUD-0003 clos sans lot | ✅ **Go 2026-10-22** |
+| 4 | Valider **F3–F4** (corrigé depuis) | Décideur |
+| 5 | Registre Notion AUD-0003 (+ 0013/0014 si F3–F4 validés) | Post go |
 
 **Interdit sans go:** implémentation frontend, restauration `frontend-audit.mjs`, lots F2–F4 « nettoyage » sur findings déjà corrigés.
 

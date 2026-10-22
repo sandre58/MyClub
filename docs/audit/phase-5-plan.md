@@ -21,7 +21,7 @@
 | **Vague 1** | Baseline web post–phase 4 (`npm run build`, `i18n:check`, lint, état scripts audit) | Investigation — **no app code** |
 | **F1** | AUD-0001 — scripts scoped (`css:audit` / `i18n:audit` / `tile:check`) | **Clos** (repoint + scoped, 2026-10-22) |
 | **F1bis** | AUD-0001 — audits repo-wide (`frontend:audit`, `i18n:audit:repo`) | **Livré** (2026-10-22) — voir `phase-5-lot-f1bis-plan.md` |
-| **F2** | AUD-0003 — sélecteur CSS dupliqué `structure-fiche` | Lot correctif ciblé si validé |
+| **F2** | AUD-0003 — sélecteur CSS dupliqué `structure-fiche` | **Clos** — corrigé depuis C7 ; pas de lot (go 2026-10-22) |
 | **F3** | AUD-0013 — classes orphelines `structure-fiche.css` (heuristique) | Investigation **puis** suppression validée par preuve |
 | **F4** | AUD-0014 — clés feuilles orphelines `structure.json` | Investigation **puis** suppression validée par preuve |
 | **F5** | Frontière BE/FE / `presentedIssueCodes` (suites post–D3-B) | Investigation seulement tant que non arbitré |
@@ -45,7 +45,7 @@
 | --- | --- | --- |
 | **Vague 1** | Go phase 5 | `phase-5-wave-1-frontend-baseline.md` |
 | **F1** | Vague 1 + arbitrage AUD-0001 | Scripts npm alignés + docs + éventuel CI |
-| **F2** | Preuve AUD-0003 toujours valide sur `main` | Correctif CSS minimal |
+| **F2** | AUD-0003 @ `d14391dd` — `lint:css` propre | **Aucun lot** — déjà corrigé (C7 `2bd16efc`) |
 | **F3** | Revue manuelle échantillon AUD-0013 | PR suppressions CSS prouvées |
 | **F4** | Revue manuelle échantillon AUD-0014 | PR clés i18n prouvées |
 | **F5** | Arbitrage produit si écart | Doc / tests contrat SPA |
@@ -73,8 +73,9 @@
 - [x] **Go décideur F1** — repoint + scoped (2026-10-22).
 - [x] F1-doc — sync docs audit Git (`baseline.md`, `phase-1-wave-3.md` renvois).
 - [x] **Go F1bis** — `frontend:audit` + `i18n:audit:repo` restaurés (`phase-5-lot-f1bis-plan.md`).
-- [ ] **Go décideur** — clôture F2–F4 « corrigé depuis » (voir réconciliation).
-- [ ] F2–F4 — lots correctifs : **non recommandés** (voir réconciliation) ; registre Notion si validé.
+- [x] **Go F2** — AUD-0003 clos « corrigé depuis » (pas de lot CSS) — 2026-10-22.
+- [ ] **Go décideur** — F3–F4 (voir réconciliation).
+- [ ] F3–F4 — lots correctifs : **non recommandés** si matrice validée ; registre Notion AUD-0013/0014.
 - [ ] F5 — si déclenché.
 - [ ] Clôture phase 5 (pilotage Notion + registre).
 
