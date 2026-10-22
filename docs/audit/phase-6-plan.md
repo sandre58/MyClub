@@ -48,7 +48,8 @@
 | **S1** | Arbitrage lint CI | [`phase-6-s1-lint-ci-arbitration.md`](phase-6-s1-lint-ci-arbitration.md) |
 | **T1** | Test Application rouge (hors stream S2–S6) | [`phase-6-t1-application-test-findings.md`](phase-6-t1-application-test-findings.md) |
 | **S2** | Dead code FE (qualification) | [`phase-6-s2-dead-code-fe.md`](phase-6-s2-dead-code-fe.md) |
-| **S3+** | i18n repo, CSS, autres streams | TBD |
+| **S3** | i18n repo (qualification) | [`phase-6-s3-i18n-qualification.md`](phase-6-s3-i18n-qualification.md) |
+| **S4+** | CSS repo, autres streams | TBD |
 
 ---
 
@@ -68,8 +69,9 @@
 - [x] Vague 1 — [`phase-6-wave-1-static-baseline.md`](phase-6-wave-1-static-baseline.md) @ `4b6b3fe7`.
 - [x] **S1** — arbitrage lint CI + fix oxlint on `css-audit-rider.mjs`.
 - [x] **T1** — test collector aligné D3-B (`6aa23992`), pas de changement produit.
-- [x] **S2** — qualification dead code FE (audit, liste + arbitrage S2-001).
-- [ ] Arbitrage S2-001 / streams S3–S6.
+- [x] **S2** — qualification dead code FE ; **S2-001** retiré (module + test).
+- [x] **S3** — qualification i18n repo (buckets, pas de suppression).
+- [ ] Arbitrage S3-INV (5 clés regulation) / streams S4–S6.
 
 ---
 

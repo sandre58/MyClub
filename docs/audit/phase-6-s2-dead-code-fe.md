@@ -41,11 +41,11 @@ npm run frontend:audit   # DS components + CSS graph only for S2 cross-check
 
 ## Liste qualifiée (3 catégories)
 
-### Confirmé inutilisé (produit)
+### Confirmé inutilisé (produit) — traité
 
-| Id | Artefact | Preuve | Action proposée (arbitrage) |
-| --- | --- | --- | --- |
-| **S2-001** | `pages/structure/structureOperationalStripRatioTone.ts` (`ratioToneForOperationalMeter`) | Graphe produit : **aucun** import ; seul importeur = `structureOperationalStripRatioTone.test.ts`. UI strip utilise `drawPoolToneToRatioGaugeTone` / `operationalStripPoolTone` dans `StructurePhaseOperationalStrip.tsx` et jauges associées. | **Lot optionnel** : (a) brancher la fonction si elle formalise une règle produit manquante, ou (b) retirer module + test si redondant avec le pipeline pool-tone existant — **décision produit/UX**, pas nettoyage aveugle. |
+| Id | Artefact | Résolution |
+| --- | --- | --- |
+| **S2-001** | `structureOperationalStripRatioTone.ts` + test | **Retiré 2026-10-22** (option 2). Garde-fou : `operationalStripPoolTone('attention', 'neutral')` → `attention` (l’ancien helper isolé renvoyait `partial`) ; assertion dans `structureOperationalCopy.test.ts`. |
 
 ### Faux positif / usage indirect (conservé)
 
@@ -64,7 +64,7 @@ npm run frontend:audit   # DS components + CSS graph only for S2 cross-check
 
 | Id | Sujet | Pourquoi |
 | --- | --- | --- |
-| **S2-INV-01** | **S2-001** (voir ci-dessus) | Un test unitaire documente un comportement (`attention` + `filled=0` → `partial`) non branché en prod — risque soit **spec en avance**, soit **code mort** ; comparer sémantique avec `structureOperationalCopy.ts` / `operationalStripPoolTone` avant toute suppression. |
+| ~~**S2-INV-01**~~ | — | Résolu par clôture S2-001. |
 | **S2-INV-02** | Exports nommés peu référencés | Pas de scan exhaustif export-level dans S2 ; `typecheck` ne couvre pas « export jamais importé ailleurs ». Lot ultérieur seulement si douleur mesurée. |
 | **S2-INV-03** | `frontend:audit` — 100 classes CSS sans match texte | **Reporté S4** — peut être DS modifiers, classes dynamiques, design-lab. |
 
@@ -72,9 +72,9 @@ npm run frontend:audit   # DS components + CSS graph only for S2 cross-check
 
 ## Arbitrage demandé (fin de stream S2)
 
-1. **S2-001** — choisir **brancher** vs **retirer** vs **conserver** (spec isolée) ; si retrait, lot dédié avec relecture UX strip.
-2. **Organisation fixtures** (hors S2 correctif) — option S5 : déplacer `*TestHelpers*` / `*.fixture.ts` sous `src/test/` pour clarifier le graphe — **pas** obligatoire.
-3. **S3** ensuite — i18n repo (`i18n:audit:repo`) sans supprimer sur heuristique.
+1. ~~**S2-001**~~ — **retiré** (voir ci-dessus).
+2. **Organisation fixtures** (hors S2 correctif) — option S5 : déplacer `*TestHelpers*` / `*.fixture.ts` sous `src/test/` — **pas** obligatoire.
+3. **S3** — voir [`phase-6-s3-i18n-qualification.md`](phase-6-s3-i18n-qualification.md).
 4. **S4** ensuite — classes CSS et blocs dupliqués.
 
 **Critère de fin S2 (atteint pour l’audit):** liste qualifiée + actions proposées ci-dessus — **pas** de nettoyage global.
