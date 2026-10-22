@@ -1,4 +1,4 @@
-name: CI - Build and Test
+name: "Play'Up — CI"
 
 on:
   push:
@@ -9,6 +9,7 @@ on:
 
 jobs:
   build:
+    name: .NET — Build and tests
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -62,6 +63,7 @@ jobs:
           fi
 
   web:
+    name: Web — Quality and unit tests
     runs-on: ubuntu-24.04
     defaults:
       run:
@@ -109,6 +111,7 @@ jobs:
           CI: true
 
   e2e-integration:
+    name: E2E — Host and PostgreSQL
     runs-on: ubuntu-24.04
     services:
       postgres:
