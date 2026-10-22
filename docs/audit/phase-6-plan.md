@@ -71,7 +71,8 @@
 - [x] **T1** — test collector aligné D3-B (`6aa23992`), pas de changement produit.
 - [x] **S2** — qualification dead code FE ; **S2-001** retiré (module + test).
 - [x] **S3** — qualification i18n repo (buckets, pas de suppression).
-- [ ] Arbitrage S3-INV (5 clés regulation) / streams S4–S6.
+- [x] **S3-INV** — 5 clés `regulation` supprimées ([`phase-6-s3-inv-arbitration.md`](phase-6-s3-inv-arbitration.md)).
+- [ ] Streams S4–S6.
 
 ---
 

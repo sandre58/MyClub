@@ -52,7 +52,7 @@ Aucune clé classée **confirmé inutilisé** en S3 (preuve suppression insuffis
 
 - [x] Buckets documentés et reproductibles.
 - [x] Pluriels et chemins relatifs **hors** périmètre suppression.
-- [ ] Arbitrage sur S3-INV (5 clés) ou dette acceptée explicite.
+- [x] Arbitrage S3-INV — [`phase-6-s3-inv-arbitration.md`](phase-6-s3-inv-arbitration.md) (suppression ciblée 5 clés).
 - [ ] Pas de lot « 686 suppressions ».
 
 ---
