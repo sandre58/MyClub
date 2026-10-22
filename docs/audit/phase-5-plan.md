@@ -65,7 +65,7 @@
 
 - [x] Go phase 5 (décideur, 2026-10-22).
 - [x] Plan Git (this file).
-- [ ] Vague 1 — baseline frontend @ `d14391dd`.
+- [x] Vague 1 — baseline frontend @ `d14391dd` (`phase-5-wave-1-frontend-baseline.md`, 2026-10-22).
 - [ ] F1 — AUD-0001.
 - [ ] F2 — AUD-0003.
 - [ ] F3 — AUD-0013.
