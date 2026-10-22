@@ -1,6 +1,6 @@
 # Phase 7 — Lot P7-Sec — AUD-0008 trajectoire C (Internet exposure)
 
-**Status:** §4.3 **implemented** on `main` (go implémentation 2026-10-22) — pending lot closure (Notion register, décideur recette R1–R4).
+**Status:** **Lot clos** (2026-10-22) @ `ffd6365c` — recette locale R1–R3 + R4 (Host direct) OK ; trajectoire C **partielle** (bind/doc) ; auth/TLS/S6 hors lot.
 
 **Priority:** P0 (first phase 7 corrective lot).
 
@@ -205,18 +205,19 @@ New focused fixture (e.g. `HostExposureWarningTests`) using `WebApplicationFacto
 | R3 | **Without** changing router/NAT | Confirm warning alone does **not** imply WAN reachability (document operator checklist: port forward = S4 misuse) |
 | R4 | S1/S2 smoke | Vite proxy + SPA load competition list against loopback Host |
 
-#### 4.3.5 Recette exécutée (2026-10-22)
+#### 4.3.5 Recette locale exécutée (2026-10-22)
 
-Environment: Windows, Postgres Docker `myclub-postgres-1`, Host **user secrets** for `ConnectionStrings:PlayUp`. Commands use `dotnet run -c Release --no-launch-profile --urls …` and `ASPNETCORE_ENVIRONMENT=Development` unless noted.
+**SHA:** `ffd6365c` · **OS:** Windows · **DB:** Docker Postgres + user secrets `ConnectionStrings:PlayUp` (`myclub` / `myclub_dev`).  
+**Prérequis:** vider `ConnectionStrings__PlayUp` / `ConnectionStrings__Media` en env si définis (sinon écrasent les user secrets). `ASPNETCORE_ENVIRONMENT=Development`.
 
 | Step | Result | Evidence |
 | --- | --- | --- |
-| **R1** | **Pass** (warning) | Loopback `http://127.0.0.1:5291` — **0** log lines matching `non-loopback` / `HostExposure` |
-| **R2** | **Pass** | `http://0.0.0.0:5292` — one `HostExposure` **WRN** with URL `http://0.0.0.0:5292`, text « other network interfaces », « does not prove WAN reachability », `docs/guides/host-exposure.md`; Kestrel accepted `GET /competitions` (HTTP served; DB must be valid for **200**) |
-| **R3** | **Pass** (review) | Warning explicitly separates bind signal from WAN/NAT/port-forward (operator); no router change during recette |
-| **R4** | **Pass** (proxy) | Earlier same-day run: Host loopback + user secrets → `GET /competitions` **200**; Vite proxy path covered by CI `e2e-integration` + local S2 flow in `web/README.md`. Re-run blocked here when Host could not reach DB (`postgres` auth vs secrets) — use secrets + seeded `myclub_dev` locally |
+| **R1** | **Pass** | `--urls http://127.0.0.1:5301` — **0** ligne `listening on a non-loopback` ; `GET /competitions` → **200** (log Serilog) |
+| **R2** | **Pass** | `--urls http://0.0.0.0:5302` — **1** `HostExposure` WRN (`http://0.0.0.0:5302`, WAN non prouvé, guide) ; `GET /competitions` → **200** |
+| **R3** | **Pass** | Texte warning ≠ exposition Internet ; pas de modification routeur/NAT |
+| **R4** | **Pass** (S2 partiel) | Host `--urls http://127.0.0.1:5303` → **200** sur `/competitions`. Proxy Vite non rejoué ici (`vite` indisponible sans `npm ci` local) — **substitut** : CI `e2e-integration` + `web/README.md` ; rejeu manuel : Host + `npm run dev` puis `http://localhost:5173/competitions` |
 
-**Fix during recette:** non-loopback warning moved to `ApplicationStarted` + `IServerAddressesFeature` so `dotnet run --urls` emits the warning (previously `app.Urls` was empty before `Run`).
+**Note technique (corrigée @ `3470deeb`):** warning bind émis sur `ApplicationStarted` via `IServerAddressesFeature`.
 
 **Contributor re-run (copy/paste):**
 
@@ -249,12 +250,12 @@ curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:5287/competitions
 ## 5. Acceptance criteria (lot closure)
 
 - [x] §4 perimeter filled and aligned with Notion trajectoire C (no scope creep).
-- [ ] Internet exposure refusal **demonstrated** (code, config, and/or documented operator contract — as agreed in §4).
-- [ ] **No** generalized auth on all 97 routes unless explicitly added to §4 and re-arbitrated.
-- [ ] **No** CI workflow changes unless separately arbitrated.
-- [ ] Targeted automated tests green; existing Host / Development integration paths unchanged for supported S1/S2 local dev.
-- [ ] Contributor docs updated (`host-exposure.md` or linked guide) — English, link Notion only in docs not code comments.
-- [ ] AUD-0008 register / Notion status updated post-merge.
+- [x] Internet exposure refusal **demonstrated** — doc opérateur (bind / NAT / `AllowedHosts` debt) + warning Development non-loopback ; pas d’auth Internet.
+- [x] **No** generalized auth on all 97 routes (§4.3 exclusions respectées).
+- [x] **No** CI workflow changes in lot commits.
+- [x] Tests T1–T5 verts ; recette R1–R2 HTTP 200 loopback.
+- [x] Contributor docs — `host-exposure.md`, `SECURITY.md`.
+- [x] Notion AUD-0008 + phase 7 (2026-10-22).
 
 ---
 
@@ -266,6 +267,6 @@ curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:5287/competitions
 - [x] Décideur validates §4 — S3 warn only; CX-1 provisional `*` + doc debt; S4 doc + bind warnings.
 - [x] **Go implémentation** explicite on §4.3.
 - [x] Implementation (§4.3.1–4.3.2 + tests §4.3.3) — `HostListenExposureWarnings`, `host-exposure.md`, `HostExposureWarningTests`.
-- [x] Recette R1–R4 (§4.3.5) — warning fix `ApplicationStarted` pending commit.
-- [ ] Notion AUD-0008 update → lot closure.
-- [ ] Lot closure + phase 7 continuation (other streams remain queued).
+- [x] Recette locale R1–R4 (§4.3.5) @ `ffd6365c`.
+- [x] Notion AUD-0008 + phase 7 mis à jour.
+- [x] **Lot clos** — phase 7 : streams Perf/Ops en file.
