@@ -24,9 +24,10 @@ npm run lint
 npm run lint:css
 npm run typecheck
 npm run test:run
+npm run build
 ```
 
-CI `web` fails on **errors and Oxlint warnings** from those steps (plus `build` and Playwright smoke).
+CI `web` runs the same gates (then Playwright stub smoke). `npm run build` runs `tsc -b` and catches test-project type errors — do not rely on `typecheck` alone. PR prep: `.cursor/commands/audit-before-pr.md`.
 
 ## Data path
 

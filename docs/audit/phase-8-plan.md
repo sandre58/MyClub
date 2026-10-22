@@ -89,7 +89,7 @@ Checklist **à remplir en vague 1** (preuves Git / CI, pas supposition) :
 | Plan cadrage | `phase-8-plan.md` (this file) | ✅ |
 | Vague 1 rejeu | `phase-8-wave-1-global-replay-baseline.md` | ✅ @ `422aba33` |
 | Revue registre | `phase-8-register-reconciliation.md` | ✅ (wave 1) |
-| Revue Cursor | `phase-8-cursor-rules-reconciliation.md` | ⬜ post go |
+| Revue Cursor | `phase-8-cursor-rules-reconciliation.md` | ✅ @ `8d4a8dfa` + micro-align `playup-web-quality.mdc` |
 | Clôture chantier | `phase-8-closure.md` | ⬜ fin phase 8 |
 
 ---
@@ -108,6 +108,6 @@ Checklist **à remplir en vague 1** (preuves Git / CI, pas supposition) :
 ## 6. Prochaines étapes
 
 1. **Décideur:** go **lot P8-W1** (CA1859 + Prettier e2e) — voir [`phase-8-wave-1-global-replay-baseline.md`](phase-8-wave-1-global-replay-baseline.md) §6.
-2. Exécuter `phase-8-cursor-rules-reconciliation.md` puis clôture.
+2. **Clôture phase 8** — `phase-8-closure.md` + Notion parent **Terminé** (go décideur).
 3. Arbitrer si un **lot correctif** est requis avant clôture (ex. doc README, ligne registre) ou si dettes acceptées suffisent.
 4. Clôturer tâche [MyClub — Audit technique global et assainissement](https://www.notion.com/p/3fd75fb92d1081b2b076efd33da8d03f) après `phase-8-closure.md`.
