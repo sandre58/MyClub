@@ -1,19 +1,60 @@
 import { useTranslation } from 'react-i18next';
-import { lazy, Suspense } from 'react';
+import { type ComponentType, lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { AppLayout } from './AppLayout';
 import { WaitMark } from './design-system/components/WaitMark';
-import { CompetitionOverviewPage } from './pages/competition/CompetitionOverviewPage';
-import { ClassementsPage } from './pages/classements/ClassementsPage';
 import { HomePage } from './pages/HomePage';
-import { MatchHubPage } from './pages/match/MatchHubPage';
-import { MatchPage } from './pages/match/MatchPage';
-import { NotFoundPage } from './pages/NotFoundPage';
-import { StructurePage } from './pages/structure/StructurePage';
-import { StageMatchesPage } from './pages/stage/StageMatchesPage';
-import { StagePage } from './pages/stage/StagePage';
-import { RegulationPage } from './pages/regulation/RegulationPage';
-import { TeamsPage } from './pages/teams/TeamsPage';
+
+function lazyNamedPage<
+  Module extends Record<string, ComponentType>,
+  Key extends keyof Module & string,
+>(loader: () => Promise<Module>, exportName: Key) {
+  return lazy(async () => {
+    const module = await loader();
+    return { default: module[exportName] };
+  });
+}
+
+const ClassementsPage = lazyNamedPage(
+  () => import('./pages/classements/ClassementsPage'),
+  'ClassementsPage',
+);
+const CompetitionOverviewPage = lazyNamedPage(
+  () => import('./pages/competition/CompetitionOverviewPage'),
+  'CompetitionOverviewPage',
+);
+const MatchHubPage = lazyNamedPage(
+  () => import('./pages/match/MatchHubPage'),
+  'MatchHubPage',
+);
+const MatchPage = lazyNamedPage(
+  () => import('./pages/match/MatchPage'),
+  'MatchPage',
+);
+const NotFoundPage = lazyNamedPage(
+  () => import('./pages/NotFoundPage'),
+  'NotFoundPage',
+);
+const RegulationPage = lazyNamedPage(
+  () => import('./pages/regulation/RegulationPage'),
+  'RegulationPage',
+);
+const StageMatchesPage = lazyNamedPage(
+  () => import('./pages/stage/StageMatchesPage'),
+  'StageMatchesPage',
+);
+const StagePage = lazyNamedPage(
+  () => import('./pages/stage/StagePage'),
+  'StagePage',
+);
+const StructurePage = lazyNamedPage(
+  () => import('./pages/structure/StructurePage'),
+  'StructurePage',
+);
+const TeamsPage = lazyNamedPage(
+  () => import('./pages/teams/TeamsPage'),
+  'TeamsPage',
+);
 
 const FoundationsPlayground = lazy(async () => {
   const module = await import('./dev/FoundationsPlayground');
@@ -38,6 +79,7 @@ const DesignLabPage = lazy(async () => {
  * with static data, own shell, no product surface touched.
  *
  * Nested under AppLayout so Outlet swaps page content while the shell stays.
+ * Product pages are lazy-loaded; AppShell wraps Outlet in Suspense.
  * Params (:competitionId, :stageId, :matchId, :entryId) are opaque ids — not business fields.
  */
 function RouteFallback() {
