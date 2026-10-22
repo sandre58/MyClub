@@ -79,4 +79,4 @@ Contributor : `src/PlayUp/web/docs/conventions.md`.
 
 ## Suite chantier
 
-**Phase 7** (roadmap plan directeur) — hors périmètre de cette clôture.
+**Phase 7** — cadrage (préparation, sans go impl) : [`phase-7-plan.md`](phase-7-plan.md) · [`phase-7-debts-consolidated.md`](phase-7-debts-consolidated.md) · [Notion](https://www.notion.com/p/40175fb92d1081509b4fdd89b6490867).
