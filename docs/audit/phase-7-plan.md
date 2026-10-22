@@ -1,6 +1,6 @@
 # Phase 7 — Sécurité, performance & exploitation (cadrage)
 
-**Status:** premier lot **arbitré** — P7-Sec / AUD-0008 trajectoire C (2026-10-22) · implémentation **après** inventaire §4 du lot doc · pas de code produit tant que périmètre non figé  
+**Status:** P7-Sec / AUD-0008-C — §4 **figé** (S3 warn, CX-1 `*` provisoire, S4 doc+bind) · **go implémentation** explicite requis avant PR produit  
 **Contrat phase 7:** validé (périmètre + exclusions, décideur 2026-10-22)  
 **Roadmap (plan directeur):** sécurité · performance · exploitation (distinct de l’assainissement statique phase 6).
 
@@ -76,7 +76,7 @@ Pour chaque candidat retenu en vague 1, noter : **risque**, **impact utilisateur
 | Bilan dettes | `phase-7-debts-consolidated.md` | ✅ |
 | Plan cadrage | `phase-7-plan.md` (this file) | ✅ |
 | Vague 1 | `phase-7-wave-1-security-perf-ops-baseline.md` | ✅ mesures @ `a6764084` |
-| Lot P7-Sec | `phase-7-lot-sec-aud-0008-c.md` | ✅ arbitrage · ⏳ inventaire + impl |
+| Lot P7-Sec | `phase-7-lot-sec-aud-0008-c.md` | ✅ §4 figé · ⏳ go impl + PR bornée |
 
 **Branche suggérée** au go phase 7 : `feature/audit-phase-7-launch` (docs + vague 1 uniquement jusqu’à arbitrage lot).
 
@@ -102,13 +102,14 @@ Pour chaque candidat retenu en vague 1, noter : **risque**, **impact utilisateur
 - [x] Trame vague 1 — [`phase-7-wave-1-security-perf-ops-baseline.md`](phase-7-wave-1-security-perf-ops-baseline.md).
 - [x] Compléter mesures wave 1 (AUD-0012 rejoué, bundle, Sec/Ops inventaires — §5 baseline).
 - [x] Arbitrage **un** premier lot — [`phase-7-lot-sec-aud-0008-c.md`](phase-7-lot-sec-aud-0008-c.md) (AUD-0008 trajectoire C, périmètre Internet strict).
-- [ ] Exécuter lot P7-Sec (inventaire §4 puis impl bornée).
+- [x] Inventaire step 1 + §4 figé (S3/CX-1/S4).
+- [ ] Go implémentation explicite → PR lot P7-Sec (§4.3).
 - [ ] Clôture phase 7.
 
 ---
 
 ## 7. Prochaine action recommandée
 
-1. **Inventaire step 1** — compléter §4 de [`phase-7-lot-sec-aud-0008-c.md`](phase-7-lot-sec-aud-0008-c.md) avant toute PR produit.  
-2. Implémenter **uniquement** le périmètre §4 validé (pas d’auth/TLS/CORS généralisés).  
+1. **Go implémentation** explicite sur §4.3 figé dans [`phase-7-lot-sec-aud-0008-c.md`](phase-7-lot-sec-aud-0008-c.md).  
+2. PR produit : doc D1–D3, warning H1, tests T1–T5 (pas de changement CI).  
 3. AUD-0012 et Ops (health, E2E draw) restent en file — pas de lot parallèle.
