@@ -23,8 +23,8 @@ function isCommentLine(line) {
   if (!t) return true;
   if (t.startsWith('/*')) return true;
   if (t.startsWith('*') && !t.startsWith('*/')) return true;
-  if (t.endsWith('*/')) return true;
-  return false;
+  return !!t.endsWith('*/');
+  
 }
 
 function looksLikeSelectorContinuation(prev, next) {
@@ -35,12 +35,14 @@ function looksLikeSelectorContinuation(prev, next) {
   if (p.endsWith('{') || p.endsWith(',') || p.endsWith(';')) return false;
   if (/^@(import|charset|keyframes|media|container)/i.test(p)) return false;
   const combinatorContinuation = /^[+~>]/.test(n);
-  if (!/^[.#\[>:]/.test(n) && !combinatorContinuation) return false;
+  const startsLikeSelector =
+    /^[.#>:]/.test(n) || n.startsWith('[');
+  if (!startsLikeSelector && !combinatorContinuation) return false;
   if (p.includes('{')) return false;
   if (combinatorContinuation) {
-    return p.endsWith(']') || p.endsWith(')') || /[.#\[:[]/.test(p);
+    return p.endsWith(']') || p.endsWith(')') || /[.#:]/.test(p) || p.includes('[');
   }
-  return /[.#\[:[]/.test(p) || p.endsWith(')') || p.endsWith(']');
+  return /[.#:]/.test(p) || p.includes('[') || p.endsWith(')') || p.endsWith(']');
 }
 
 /** Join Rider-invalid selector wraps (does not touch comments or declaration blocks). */

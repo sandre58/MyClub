@@ -51,7 +51,7 @@ Commands from `src/PlayUp/web`.
 | `npm run lint:css` | **0** | Stylelint — no violations |
 | `npm run lint` | **1** | Oxlint `--deny-warnings`: **3×** `no-useless-escape` in `scripts/css-audit-rider.mjs` (lines 38, 41, 43) |
 
-**CI alignment:** Web job runs `format:check`, `lint`, `lint:css`, `typecheck`, `test:run`, `build` — **`npm run lint` is expected to fail** on this SHA until `css-audit-rider.mjs` escapes are fixed or script is excluded (arbitrage S1).
+**CI alignment:** Web job runs `format:check`, `lint`, `lint:css`, `typecheck`, `test:run`, `build`. **S1 (post–wave 1):** lint fixed per [`phase-6-s1-lint-ci-arbitration.md`](phase-6-s1-lint-ci-arbitration.md).
 
 `format:check` — **not run** in this wave (optional follow-up).
 
