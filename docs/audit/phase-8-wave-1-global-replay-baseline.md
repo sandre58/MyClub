@@ -130,6 +130,8 @@ Source: [`critical-paths.md`](critical-paths.md) (post P7).
 
 **Recommandation:** go **lot unique P8-W1** (A+B) avant clôture phase 8 / statut Notion **Terminé**, sans rouvrir P7.
 
+**P8-W1 livré** (2026-10-22) : signature `List<Stage>` sur `HydrateOrderedCollectionsAsync` (CA1859) + Prettier e2e — build **0** warnings, `format:check` OK.
+
 ---
 
 ## 7. Prochaines étapes

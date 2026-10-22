@@ -299,7 +299,7 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
     }
 
     [SuppressMessage("ReSharper", "EntityFramework.ClientSideDbFunctionCall", Justification = "It's for test")]
-    private async Task HydrateOrderedCollectionsAsync(IReadOnlyList<Stage> stages, CancellationToken cancellationToken)
+    private async Task HydrateOrderedCollectionsAsync(List<Stage> stages, CancellationToken cancellationToken)
     {
         if (stages.Count == 0)
         {

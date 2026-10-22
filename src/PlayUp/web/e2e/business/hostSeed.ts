@@ -175,9 +175,12 @@ export async function runCupSlotDrawPublishAndApply(
   request: APIRequestContext,
   stageId: string,
 ): Promise<void> {
-  const create = await request.post(`${playUpApiBase()}/stages/${stageId}/draws`, {
-    data: { kind: 'Slot' },
-  });
+  const create = await request.post(
+    `${playUpApiBase()}/stages/${stageId}/draws`,
+    {
+      data: { kind: 'Slot' },
+    },
+  );
   if (!create.ok()) {
     const body = await create.text();
     throw new Error(
@@ -191,9 +194,7 @@ export async function runCupSlotDrawPublishAndApply(
   );
   if (!inputs.ok()) {
     const body = await inputs.text();
-    throw new Error(
-      `POST .../inputs failed (${inputs.status()}): ${body}`,
-    );
+    throw new Error(`POST .../inputs failed (${inputs.status()}): ${body}`);
   }
 
   const generate = await request.post(
@@ -201,9 +202,7 @@ export async function runCupSlotDrawPublishAndApply(
   );
   if (!generate.ok()) {
     const body = await generate.text();
-    throw new Error(
-      `POST .../generate failed (${generate.status()}): ${body}`,
-    );
+    throw new Error(`POST .../generate failed (${generate.status()}): ${body}`);
   }
   const generation = (await generate.json()) as DrawGeneration;
   if (!generation.isResolved) {
@@ -230,9 +229,7 @@ export async function expectCupDrawAppliedOnStructure(
   );
   if (!response.ok()) {
     const body = await response.text();
-    throw new Error(
-      `GET structure failed (${response.status()}): ${body}`,
-    );
+    throw new Error(`GET structure failed (${response.status()}): ${body}`);
   }
 
   const view = (await response.json()) as StructureView;

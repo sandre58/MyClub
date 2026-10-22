@@ -10,7 +10,9 @@ import {
  * Seed: structure-materialize-recette (RECETTE G1 — 0/6 matches attached).
  */
 test.describe('Play’Up business (Host + PostgreSQL)', () => {
-  test('Materialize — groupes RECETTE G1 (0 → 6 matchs)', async ({ request }) => {
+  test('Materialize — groupes RECETTE G1 (0 → 6 matchs)', async ({
+    request,
+  }) => {
     const competition = await findRecetteG1GroupsCompetition(request);
     const before = await getStructureMaterializationState(
       request,
