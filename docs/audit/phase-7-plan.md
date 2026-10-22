@@ -108,12 +108,13 @@ Pour chaque candidat retenu en vague 1, noter : **risque**, **impact utilisateur
 - [x] **Go lot P7-Ops** — [`phase-7-lot-ops.md`](phase-7-lot-ops.md) (health + draw Host E2E).
 - [x] **Go lot bundle Vite** — [`phase-7-lot-perf-vite-bundle.md`](phase-7-lot-perf-vite-bundle.md) (lazy routes produit).
 - [x] **Go materialize E2E** — [`phase-7-lot-ops-materialize-e2e.md`](phase-7-lot-ops-materialize-e2e.md).
+- [x] **Go AUD-0008-C2** — [`phase-7-lot-sec-aud-0008-c2.md`](phase-7-lot-sec-aud-0008-c2.md) (Production AllowedHosts + bind guard).
 - [ ] Clôture phase 7.
 
 ---
 
 ## 7. Prochaine action recommandée
 
-1. Lot résiduel avant clôture : **trajectoire C AUD-0008** restante ; puis clôture phase 7.  
+1. **Clôture phase 7** — auth/TLS/S6 restent hors périmètre produit actuel (décision AUD-0008 inchangée).  
 2. Trajectoire C **restante** : auth/TLS/S6 / `AllowedHosts` définitif — **hors** lot P7-Sec clos.  
 3. Pas de lot parallèle sans décision explicite.

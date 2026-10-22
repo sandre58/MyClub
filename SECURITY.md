@@ -35,7 +35,7 @@ Include:
 
 The Play'Up Host is intended as a **local organizer tool** (loopback bind, anonymous API if reachable). Deliberate LAN, tunnel, or Internet exposure without authentication is a **misconfiguration**, not a supported deployment model.
 
-See [docs/guides/host-exposure.md](docs/guides/host-exposure.md) for listen URLs, risk scenarios, bind vs `AllowedHosts` vs NAT/tunnel, and development guardrails. Base `AllowedHosts: *` is **provisional** until hosting hostnames are defined (see guide). Product decision: Notion — Play'Up Host local exposure (AUD-0008).
+See [docs/guides/host-exposure.md](docs/guides/host-exposure.md) for listen URLs, risk scenarios, bind vs `AllowedHosts` vs NAT/tunnel, and exposure guards. Production defaults restrict `AllowedHosts` to loopback and refuse non-loopback binds unless explicitly opted in. **Authentication and TLS** remain mandatory before any supported Internet or multi-tenant hosting (trajectoire C). Product decision: Notion — Play'Up Host local exposure (AUD-0008).
 
 ## Out of Scope
 

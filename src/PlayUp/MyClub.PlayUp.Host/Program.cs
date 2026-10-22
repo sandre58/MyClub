@@ -77,7 +77,7 @@ try
 
     var app = builder.Build();
 
-    HostListenExposureWarnings.RegisterNonLoopbackListenUrlWarningsIfDevelopment(app);
+    HostListenExposureGuard.Register(app);
 
     Log.Information("Play'Up Host starting");
 

@@ -38,7 +38,7 @@ public sealed class HostExposureWarningIntegrationTests(HostPostgresFixture fixt
     }
 
     [IntegrationFact]
-    public async Task T5_production_keeps_allowed_hosts_wildcardAsync()
+    public async Task T5_production_rejects_disallowed_host_headerAsync()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString, environment: "Production");
         using var client = factory.CreateClient();
@@ -47,6 +47,6 @@ public sealed class HostExposureWarningIntegrationTests(HostPostgresFixture fixt
         request.Headers.TryAddWithoutValidation("Host", "arbitrary.example");
 
         using var response = await client.SendAsync(request);
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 }
