@@ -78,7 +78,8 @@ Les **15** autres entrées `page_modifier_investigate` suivent la même logique 
 
 - [x] Buckets documentés + script `frontend:css:qualify`.
 - [x] Doublons quantifiés, non convertis en gate.
-- [ ] Arbitrages S4-INV-01…04 (ou dette acceptée) — **pas** de nettoyage des 100 classes.
+- [x] **S4-INV-01…04 différés** (clôture phase 6) — dette qualifiée, **aucune** suppression ni refactor CSS en phase 6.
+- [x] Pas de nettoyage des 100 classes ni des 80 groupes doublons.
 
 ---
 

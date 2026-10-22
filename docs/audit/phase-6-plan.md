@@ -1,4 +1,6 @@
-# Phase 6 — Qualité statique et organisation du dépôt (launch)
+# Phase 6 — Qualité statique et organisation du dépôt (closed)
+
+**Clôture:** 2026-10-22 — [`phase-6-closure.md`](phase-6-closure.md).
 
 **Roadmap (plan directeur):** warnings et contrôles retenus · **code mort** backend/frontend · références périmées · **contrôles automatisables** (dead code, i18n, CSS) · arborescence · commentaires · tests.
 
@@ -50,7 +52,8 @@
 | **S2** | Dead code FE (qualification) | [`phase-6-s2-dead-code-fe.md`](phase-6-s2-dead-code-fe.md) |
 | **S3** | i18n repo (qualification) | [`phase-6-s3-i18n-qualification.md`](phase-6-s3-i18n-qualification.md) |
 | **S4** | CSS repo (qualification) | [`phase-6-s4-css-qualification.md`](phase-6-s4-css-qualification.md) |
-| **S5+** | Organisation dépôt, tests, clôture | TBD |
+| **S5** | Organisation dépôt (audit) | [`phase-6-s5-organization-audit.md`](phase-6-s5-organization-audit.md) |
+| **S6** | Garde-fous tests | Dette acceptée (voir S5 §6, closure) |
 
 ---
 
@@ -73,8 +76,10 @@
 - [x] **S2** — qualification dead code FE ; **S2-001** retiré (module + test).
 - [x] **S3** — qualification i18n repo (buckets, pas de suppression).
 - [x] **S3-INV** — 5 clés `regulation` supprimées ([`phase-6-s3-inv-arbitration.md`](phase-6-s3-inv-arbitration.md)).
-- [x] **S4** — qualification CSS (100 classes textuelles, 80 groupes doublons — audit).
-- [ ] Arbitrage S4-INV-01…04 / streams S5–S6.
+- [x] **S4** — qualification CSS ; **S4-INV** différés (dette acceptée).
+- [x] **S5** — audit organisation (pas de déplacement fichiers).
+- [x] **S6** — inchangé / dette acceptée.
+- [x] **Clôture phase 6** — [`phase-6-closure.md`](phase-6-closure.md).
 
 ---
 
