@@ -7,7 +7,7 @@
 **Reprise technique:** `main` @ `940935b0` (post clôture phase 6).  
 **Bilan dettes:** [`phase-7-debts-consolidated.md`](phase-7-debts-consolidated.md).  
 **Phase 6 close:** [`phase-6-closure.md`](phase-6-closure.md).  
-**Pilotage Notion:** [Phase 7 — Sécurité, perf & exploitation (préparation)](https://www.notion.com/p/40175fb92d1081509b4fdd89b6490867).
+**Pilotage Notion:** [Phase 7 — Sécurité, perf & exploitation (clôturée)](https://www.notion.com/p/40175fb92d1081509b4fdd89b6490867).
 
 ---
 
@@ -115,6 +115,6 @@ Pour chaque candidat retenu en vague 1, noter : **risque**, **impact utilisateur
 
 ## 7. Prochaine action recommandée
 
-1. Arbitrer **phase 8** ou prochain chantier (rejeu global vs produit).  
+1. **Phase 8 cadrage** — [`phase-8-plan.md`](phase-8-plan.md) ; go **vague 1** (rejeu contrôles + registre).  
 2. **AUD-0008** auth/TLS/S6 : lot futur **après** arbitrage hébergement / identité.  
 3. **AUD-0012** : D2-B additionnel seulement avec hypothèse mesurée.
