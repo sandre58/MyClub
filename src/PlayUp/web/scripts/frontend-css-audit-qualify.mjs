@@ -59,7 +59,9 @@ function extractClasses(css) {
 
 let allClasses = new Set();
 const classToFiles = new Map();
-for (const f of cssFiles.filter((f) => reachableCssSet.has(path.normalize(f)))) {
+for (const f of cssFiles.filter((f) =>
+  reachableCssSet.has(path.normalize(f)),
+)) {
   for (const cls of extractClasses(fs.readFileSync(f, 'utf8'))) {
     allClasses.add(cls);
     if (!classToFiles.has(cls)) classToFiles.set(cls, []);
@@ -82,9 +84,9 @@ function bucket(cls) {
   const dsMod = /^ds-[\w-]+--/.test(cls);
   if (dsMod) {
     const base = cls.replace(/--[^-]+.*$/, '');
-    const dynamic = new RegExp(`${base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}--\\$\\{`).test(
-      sourceText,
-    );
+    const dynamic = new RegExp(
+      `${base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}--\\$\\{`,
+    ).test(sourceText);
     if (dynamic) return 'ds_dynamic_modifier';
   }
   if (/--\$\{/.test(sourceText) && sourceText.includes(cls.split('--')[0])) {
@@ -95,7 +97,11 @@ function bucket(cls) {
     `${prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}--\\$\\{`,
   ).test(sourceText);
   if (templated) return 'dynamic_prefix';
-  if (cls.startsWith('structure-') || cls.startsWith('schematic-') || cls.startsWith('regulation-')) {
+  if (
+    cls.startsWith('structure-') ||
+    cls.startsWith('schematic-') ||
+    cls.startsWith('regulation-')
+  ) {
     return 'page_modifier_investigate';
   }
   if (cls.startsWith('shell-')) return 'shell_modifier_investigate';
@@ -136,7 +142,9 @@ function findDuplicateBlocks(cssPath) {
 
 let dupGroups = 0;
 let dupFiles = 0;
-for (const f of cssFiles.filter((f) => reachableCssSet.has(path.normalize(f)))) {
+for (const f of cssFiles.filter((f) =>
+  reachableCssSet.has(path.normalize(f)),
+)) {
   const dups = findDuplicateBlocks(f);
   if (dups.length) {
     dupFiles++;
@@ -149,7 +157,9 @@ console.log('Reachable CSS files:', reachableCssSet.size);
 console.log('Unique classes:', allClasses.size);
 console.log('No literal \\bclass\\b in TS/HTML:', unusedClasses.length);
 
-for (const [name, items] of [...buckets.entries()].sort((a, b) => b[1].length - a[1].length)) {
+for (const [name, items] of [...buckets.entries()].sort(
+  (a, b) => b[1].length - a[1].length,
+)) {
   console.log(`\n--- ${name}: ${items.length} ---`);
   for (const cls of items.slice(0, 15)) {
     console.log(`  .${cls}  (${(classToFiles.get(cls) ?? []).join(', ')})`);
@@ -157,7 +167,11 @@ for (const [name, items] of [...buckets.entries()].sort((a, b) => b[1].length - 
   if (items.length > 15) console.log(`  ... +${items.length - 15} more`);
 }
 
-console.log('\n=== Duplicate declaration blocks (same body, multiple selectors) ===');
+console.log(
+  '\n=== Duplicate declaration blocks (same body, multiple selectors) ===',
+);
 console.log('Files with ≥1 duplicate group:', dupFiles);
 console.log('Duplicate groups (total):', dupGroups);
-console.log('Note: shared DS modifiers / state variants often intentional — not auto-debt.');
+console.log(
+  'Note: shared DS modifiers / state variants often intentional — not auto-debt.',
+);

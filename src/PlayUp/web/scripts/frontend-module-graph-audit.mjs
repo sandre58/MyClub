@@ -115,13 +115,17 @@ function exportNames(file) {
   const c = fs.readFileSync(file, 'utf8');
   const names = [];
   if (/export\s+default\b/.test(c)) names.push('default');
-  for (const m of c.matchAll(/export\s+(?:async\s+)?function\s+(\w+)/g)) names.push(m[1]);
+  for (const m of c.matchAll(/export\s+(?:async\s+)?function\s+(\w+)/g))
+    names.push(m[1]);
   for (const m of c.matchAll(/export\s+const\s+(\w+)/g)) names.push(m[1]);
   for (const m of c.matchAll(/export\s+class\s+(\w+)/g)) names.push(m[1]);
   for (const m of c.matchAll(/export\s+type\s+(\w+)/g)) names.push(m[1]);
   for (const m of c.matchAll(/export\s+\{\s*([^}]+)\}/g)) {
     for (const part of m[1].split(',')) {
-      const n = part.trim().split(/\s+as\s+/)[0].trim();
+      const n = part
+        .trim()
+        .split(/\s+as\s+/)[0]
+        .trim();
       if (n) names.push(n);
     }
   }
@@ -145,7 +149,11 @@ for (const f of productionModules) {
     const inProduct = new RegExp(`\\b${esc}\\b`).test(productSource);
     const inTests = allModules
       .filter((m) => m.includes('.test.'))
-      .some((m) => m !== f && new RegExp(`\\b${esc}\\b`).test(fs.readFileSync(m, 'utf8')));
+      .some(
+        (m) =>
+          m !== f &&
+          new RegExp(`\\b${esc}\\b`).test(fs.readFileSync(m, 'utf8')),
+      );
     if (!inProduct && inTests) {
       exportOnlyInTests.push({ rel, name });
     }
@@ -156,10 +164,14 @@ console.log('=== MODULE GRAPH (from main.tsx) ===');
 console.log('Production modules:', productionModules.length);
 console.log(
   'Reachable from product:',
-  productionModules.filter((f) => reachableProduct.has(path.normalize(f))).length,
+  productionModules.filter((f) => reachableProduct.has(path.normalize(f)))
+    .length,
 );
 console.log('Unreachable from product:', unreachableFromProduct.length);
-console.log('  Test-only support (reachable from *.test.* only):', testOnlySupport.length);
+console.log(
+  '  Test-only support (reachable from *.test.* only):',
+  testOnlySupport.length,
+);
 for (const f of testOnlySupport.sort()) {
   console.log('   ', path.relative(srcRoot, f));
 }
@@ -170,7 +182,9 @@ for (const f of productOrphanCandidates.sort()) {
   if (importers.length) console.log(`      importers: ${importers.join(', ')}`);
 }
 
-console.log('\n=== EXPORTS REFERENCED IN TESTS ONLY (not in product graph text) ===');
+console.log(
+  '\n=== EXPORTS REFERENCED IN TESTS ONLY (not in product graph text) ===',
+);
 console.log('Count:', exportOnlyInTests.length);
 for (const { rel, name } of exportOnlyInTests.slice(0, 30)) {
   console.log(`  ${name} @ ${rel}`);

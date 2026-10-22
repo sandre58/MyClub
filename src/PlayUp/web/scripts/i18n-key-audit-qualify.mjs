@@ -50,7 +50,9 @@ for (const locale of ['fr', 'en']) {
   const dir = path.join(localesRoot, locale);
   for (const file of fs.readdirSync(dir).filter((n) => n.endsWith('.json'))) {
     const ns = file.replace('.json', '');
-    const keys = leafKeys(JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8')));
+    const keys = leafKeys(
+      JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8')),
+    );
     for (const key of keys) {
       const full = `${ns}:${key}`;
       if (DYNAMIC_KEY_PREFIXES.some((p) => full.startsWith(p))) continue;
@@ -73,8 +75,10 @@ function bucket(entry) {
   const leaf = entry.key.split('.').pop() ?? entry.key;
   if (PLURAL_LEAF.test(leaf)) return 'plural_suffix';
   if (entry.ns === 'enums') return 'enums_dynamic_or_catalog';
-  if (sourceText.includes(`t('${entry.key.split('.')[0]}`)) return 'namespace_root_only';
-  if (entry.key.includes('{{') || entry.key.includes('count')) return 'plural_or_icu_path';
+  if (sourceText.includes(`t('${entry.key.split('.')[0]}`))
+    return 'namespace_root_only';
+  if (entry.key.includes('{{') || entry.key.includes('count'))
+    return 'plural_or_icu_path';
   return 'investigate';
 }
 
@@ -87,9 +91,14 @@ for (const s of suspicious) {
 
 console.log('=== S3 i18n qualification (heuristic buckets) ===');
 console.log('Suspicious rows (fr+en):', suspicious.length);
-console.log('Unique logical keys (ns:key, any locale):', new Set(suspicious.map((s) => `${s.ns}:${s.key}`)).size);
+console.log(
+  'Unique logical keys (ns:key, any locale):',
+  new Set(suspicious.map((s) => `${s.ns}:${s.key}`)).size,
+);
 
-for (const [name, items] of [...buckets.entries()].sort((a, b) => b[1].length - a[1].length)) {
+for (const [name, items] of [...buckets.entries()].sort(
+  (a, b) => b[1].length - a[1].length,
+)) {
   console.log(`\n--- ${name}: ${items.length} ---`);
   const sample = items.slice(0, 12).map((i) => i.full);
   for (const line of sample) console.log(`  ${line}`);
@@ -97,4 +106,6 @@ for (const [name, items] of [...buckets.entries()].sort((a, b) => b[1].length - 
 }
 
 console.log('\n=== Parity note ===');
-console.log('i18n:check (localeParity) is independent — green does not imply zero suspicious keys.');
+console.log(
+  'i18n:check (localeParity) is independent — green does not imply zero suspicious keys.',
+);

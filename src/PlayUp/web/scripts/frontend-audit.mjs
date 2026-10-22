@@ -48,14 +48,18 @@ const reachableCssSet = new Set(
   [...cssImported].filter((f) => f.endsWith('.css') && fs.existsSync(f)),
 );
 
-const orphanCss = cssFiles.filter((f) => !reachableCssSet.has(path.normalize(f)));
+const orphanCss = cssFiles.filter(
+  (f) => !reachableCssSet.has(path.normalize(f)),
+);
 
 console.log('=== CSS IMPORT GRAPH ===');
 console.log('Total CSS files:', cssFiles.length);
 console.log('Reachable from product entry:', reachableCssSet.size);
 console.log(
   'Orphan:',
-  orphanCss.length ? orphanCss.map((f) => path.relative(srcRoot, f)).join(', ') : 'none',
+  orphanCss.length
+    ? orphanCss.map((f) => path.relative(srcRoot, f)).join(', ')
+    : 'none',
 );
 
 function extractClasses(css) {
@@ -67,7 +71,9 @@ function extractClasses(css) {
 
 let allClasses = new Set();
 const classToFiles = new Map();
-for (const f of cssFiles.filter((f) => reachableCssSet.has(path.normalize(f)))) {
+for (const f of cssFiles.filter((f) =>
+  reachableCssSet.has(path.normalize(f)),
+)) {
   for (const cls of extractClasses(fs.readFileSync(f, 'utf8'))) {
     allClasses.add(cls);
     if (!classToFiles.has(cls)) classToFiles.set(cls, []);
@@ -103,9 +109,9 @@ if (unusedClasses.length) {
 
 const dsDir = path.join(srcRoot, 'design-system/components');
 const unusedComponents = [];
-for (const comp of fs.readdirSync(dsDir).filter(
-  (f) => f.endsWith('.tsx') && !f.includes('.test.'),
-)) {
+for (const comp of fs
+  .readdirSync(dsDir)
+  .filter((f) => f.endsWith('.tsx') && !f.includes('.test.'))) {
   const name = comp.replace('.tsx', '');
   let used = false;
   for (const f of allTsFiles) {
@@ -134,7 +140,8 @@ function flattenKeys(obj, prefix = '') {
   const keys = [];
   for (const [k, v] of Object.entries(obj)) {
     const p = prefix ? `${prefix}.${k}` : k;
-    if (v && typeof v === 'object' && !Array.isArray(v)) keys.push(...flattenKeys(v, p));
+    if (v && typeof v === 'object' && !Array.isArray(v))
+      keys.push(...flattenKeys(v, p));
     else keys.push(p);
   }
   return keys;
@@ -144,9 +151,13 @@ let totalKeys = 0;
 const unusedI18n = [];
 const maybeUsedI18n = [];
 
-for (const nsFile of fs.readdirSync(localeDir).filter((f) => f.endsWith('.json'))) {
+for (const nsFile of fs
+  .readdirSync(localeDir)
+  .filter((f) => f.endsWith('.json'))) {
   const nsName = nsFile.replace('.json', '');
-  const keys = flattenKeys(JSON.parse(fs.readFileSync(path.join(localeDir, nsFile), 'utf8')));
+  const keys = flattenKeys(
+    JSON.parse(fs.readFileSync(path.join(localeDir, nsFile), 'utf8')),
+  );
   totalKeys += keys.length;
   for (const key of keys) {
     const full = `${nsName}:${key}`;
@@ -164,10 +175,13 @@ for (const nsFile of fs.readdirSync(localeDir).filter((f) => f.endsWith('.json')
   }
 }
 
-console.log('\n=== I18N FR KEYS (string absent from src — false positives possible) ===');
+console.log(
+  '\n=== I18N FR KEYS (string absent from src — false positives possible) ===',
+);
 console.log(`Flagged unused: ${unusedI18n.length} / ${totalKeys}`);
 for (const k of unusedI18n.slice(0, 50)) console.log(`  ${k}`);
-if (unusedI18n.length > 50) console.log(`  ... +${unusedI18n.length - 50} more`);
+if (unusedI18n.length > 50)
+  console.log(`  ... +${unusedI18n.length - 50} more`);
 
 // Duplicate CSS property blocks (rough)
 function findDuplicateBlocks(cssPath) {
@@ -197,9 +211,13 @@ function findDuplicateBlocks(cssPath) {
   return dups;
 }
 
-console.log('\n=== CSS DUPLICATE DECL BLOCKS (same declarations, multiple selectors) ===');
+console.log(
+  '\n=== CSS DUPLICATE DECL BLOCKS (same declarations, multiple selectors) ===',
+);
 let dupCount = 0;
-for (const f of cssFiles.filter((f) => reachableCssSet.has(path.normalize(f)))) {
+for (const f of cssFiles.filter((f) =>
+  reachableCssSet.has(path.normalize(f)),
+)) {
   const dups = findDuplicateBlocks(f);
   if (dups.length) {
     console.log(`\n${path.relative(srcRoot, f)}:`);
@@ -219,7 +237,8 @@ console.log('\n=== STRUCTURE MODULE ===');
 console.log('Files:', structureFiles.length);
 console.log(
   'TSX:',
-  structureFiles.filter((f) => f.endsWith('.tsx') && !f.includes('.test.')).length,
+  structureFiles.filter((f) => f.endsWith('.tsx') && !f.includes('.test.'))
+    .length,
 );
 console.log(
   'Tests:',
@@ -234,7 +253,8 @@ console.log(
 
 let cssLines = 0;
 let tsLines = 0;
-for (const f of cssFiles) cssLines += fs.readFileSync(f, 'utf8').split('\n').length;
+for (const f of cssFiles)
+  cssLines += fs.readFileSync(f, 'utf8').split('\n').length;
 for (const f of allTsFiles.filter((f) => !f.includes('.test.')))
   tsLines += fs.readFileSync(f, 'utf8').split('\n').length;
 

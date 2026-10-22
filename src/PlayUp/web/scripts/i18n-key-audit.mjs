@@ -48,7 +48,9 @@ for (const locale of ['fr', 'en']) {
   const dir = path.join(localesRoot, locale);
   for (const file of fs.readdirSync(dir).filter((n) => n.endsWith('.json'))) {
     const ns = file.replace('.json', '');
-    const keys = leafKeys(JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8')));
+    const keys = leafKeys(
+      JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8')),
+    );
     for (const key of keys) {
       const full = `${ns}:${key}`;
       if (DYNAMIC_KEY_PREFIXES.some((p) => full.startsWith(p))) continue;
@@ -67,4 +69,5 @@ for (const locale of ['fr', 'en']) {
 
 console.log(`Suspicious unused keys (heuristic): ${suspicious.length}`);
 for (const k of suspicious.slice(0, 80)) console.log(`  ${k}`);
-if (suspicious.length > 80) console.log(`  ... +${suspicious.length - 80} more`);
+if (suspicious.length > 80)
+  console.log(`  ... +${suspicious.length - 80} more`);

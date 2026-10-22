@@ -24,7 +24,6 @@ function isCommentLine(line) {
   if (t.startsWith('/*')) return true;
   if (t.startsWith('*') && !t.startsWith('*/')) return true;
   return !!t.endsWith('*/');
-  
 }
 
 function looksLikeSelectorContinuation(prev, next) {
@@ -35,14 +34,17 @@ function looksLikeSelectorContinuation(prev, next) {
   if (p.endsWith('{') || p.endsWith(',') || p.endsWith(';')) return false;
   if (/^@(import|charset|keyframes|media|container)/i.test(p)) return false;
   const combinatorContinuation = /^[+~>]/.test(n);
-  const startsLikeSelector =
-    /^[.#>:]/.test(n) || n.startsWith('[');
+  const startsLikeSelector = /^[.#>:]/.test(n) || n.startsWith('[');
   if (!startsLikeSelector && !combinatorContinuation) return false;
   if (p.includes('{')) return false;
   if (combinatorContinuation) {
-    return p.endsWith(']') || p.endsWith(')') || /[.#:]/.test(p) || p.includes('[');
+    return (
+      p.endsWith(']') || p.endsWith(')') || /[.#:]/.test(p) || p.includes('[')
+    );
   }
-  return /[.#:]/.test(p) || p.includes('[') || p.endsWith(')') || p.endsWith(']');
+  return (
+    /[.#:]/.test(p) || p.includes('[') || p.endsWith(')') || p.endsWith(']')
+  );
 }
 
 /** Join Rider-invalid selector wraps (does not touch comments or declaration blocks). */
@@ -51,7 +53,10 @@ function joinBrokenSelectorLines(content) {
   const out = [];
   for (let i = 0; i < lines.length; i++) {
     let line = lines[i];
-    while (i + 1 < lines.length && looksLikeSelectorContinuation(line, lines[i + 1])) {
+    while (
+      i + 1 < lines.length &&
+      looksLikeSelectorContinuation(line, lines[i + 1])
+    ) {
       line = `${line.trimEnd()} ${lines[i + 1].trimStart()}`;
       i++;
     }
@@ -68,7 +73,8 @@ const files = walk(srcRoot);
 function report() {
   const defined = new Set();
   for (const f of files) {
-    for (const m of fs.readFileSync(f, 'utf8').matchAll(DEF_RE)) defined.add(m[1]);
+    for (const m of fs.readFileSync(f, 'utf8').matchAll(DEF_RE))
+      defined.add(m[1]);
   }
 
   const unknownVars = new Map();
