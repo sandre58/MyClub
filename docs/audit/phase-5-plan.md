@@ -1,4 +1,6 @@
-# Phase 5 — Frontend et cohérence produit (launch)
+# Phase 5 — Frontend et cohérence produit (closed)
+
+**Clôture:** 2026-10-22 — [`phase-5-closure.md`](phase-5-closure.md) · **Phase 6:** [`phase-6-plan.md`](phase-6-plan.md).
 
 **Roadmap (plan directeur):** composants / hooks / services inutilisés · frontière BE/FE · contrats API et typage · **i18n** · glossaire · **CSS** orphelin et assainissement styles · cohérence Design System.
 
@@ -75,9 +77,9 @@
 - [x] **Go F1bis** — `frontend:audit` + `i18n:audit:repo` restaurés (`phase-5-lot-f1bis-plan.md`).
 - [x] **Go F2** — AUD-0003 clos « corrigé depuis » (pas de lot CSS) — 2026-10-22.
 - [x] **Go F3–F4** — AUD-0013/0014 clos « corrigé depuis » (pas de lot) — 2026-10-22.
-- [ ] Registre Notion — AUD-0003, 0013, 0014 → vérifié/clos (alignement décideur).
-- [ ] F5 — si déclenché.
-- [ ] Clôture phase 5 (pilotage Notion + registre).
+- [x] Registre Notion — AUD-0001, 0003, 0013, 0014 (phase 5 re-vérification).
+- [x] F5 — reporté (hors clôture phase 5).
+- [x] Clôture phase 5 (2026-10-22) — `phase-5-closure.md`.
 
 ---
 
