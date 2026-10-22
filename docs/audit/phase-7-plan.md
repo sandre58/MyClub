@@ -1,6 +1,6 @@
 # Phase 7 — Sécurité, performance & exploitation (cadrage)
 
-**Status:** lot P7-Sec / AUD-0008-C **clos** @ `ffd6365c` (2026-10-22) · phase 7 ouverte — Perf/Ops en file  
+**Status:** **phase 7 clôturée** (pilotage) — 2026-10-22 · [`phase-7-closure.md`](phase-7-closure.md) @ `e096b386`  
 **Contrat phase 7:** validé (périmètre + exclusions, décideur 2026-10-22)  
 **Roadmap (plan directeur):** sécurité · performance · exploitation (distinct de l’assainissement statique phase 6).
 
@@ -77,8 +77,8 @@ Pour chaque candidat retenu en vague 1, noter : **risque**, **impact utilisateur
 | Plan cadrage | `phase-7-plan.md` (this file) | ✅ |
 | Vague 1 | `phase-7-wave-1-security-perf-ops-baseline.md` | ✅ mesures @ `a6764084` |
 | Lot P7-Sec | `phase-7-lot-sec-aud-0008-c.md` | ✅ clos @ `ffd6365c` |
-
-**Branche suggérée** au go phase 7 : `feature/audit-phase-7-launch` (docs + vague 1 uniquement jusqu’à arbitrage lot).
+| Lots Perf / Ops / C2 | voir [`phase-7-closure.md`](phase-7-closure.md) | ✅ |
+| Clôture | `phase-7-closure.md` | ✅ 2026-10-22 |
 
 ---
 
@@ -109,12 +109,12 @@ Pour chaque candidat retenu en vague 1, noter : **risque**, **impact utilisateur
 - [x] **Go lot bundle Vite** — [`phase-7-lot-perf-vite-bundle.md`](phase-7-lot-perf-vite-bundle.md) (lazy routes produit).
 - [x] **Go materialize E2E** — [`phase-7-lot-ops-materialize-e2e.md`](phase-7-lot-ops-materialize-e2e.md).
 - [x] **Go AUD-0008-C2** — [`phase-7-lot-sec-aud-0008-c2.md`](phase-7-lot-sec-aud-0008-c2.md) (Production AllowedHosts + bind guard).
-- [ ] Clôture phase 7.
+- [x] Clôture phase 7 — [`phase-7-closure.md`](phase-7-closure.md).
 
 ---
 
 ## 7. Prochaine action recommandée
 
-1. **Clôture phase 7** — auth/TLS/S6 restent hors périmètre produit actuel (décision AUD-0008 inchangée).  
-2. Trajectoire C **restante** : auth/TLS/S6 / `AllowedHosts` définitif — **hors** lot P7-Sec clos.  
-3. Pas de lot parallèle sans décision explicite.
+1. Arbitrer **phase 8** ou prochain chantier (rejeu global vs produit).  
+2. **AUD-0008** auth/TLS/S6 : lot futur **après** arbitrage hébergement / identité.  
+3. **AUD-0012** : D2-B additionnel seulement avec hypothèse mesurée.
