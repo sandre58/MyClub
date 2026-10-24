@@ -1,5 +1,6 @@
 import { type UseQueryResult, useQuery } from '@tanstack/react-query';
-import { type ReactNode, useEffect, useMemo, useState } from 'react';
+import { type ReactNode, useMemo, useState } from 'react';
+import { useSyncWhen } from '../../design-system/useRenderSync';
 import { useTranslation } from 'react-i18next';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { fetchNeedsAttention, fetchStructureView } from '../../api';
@@ -119,7 +120,8 @@ function StructureHub({ data }: { data: StructureView }) {
     () => deepLink.openDrawWorkflow,
   );
 
-  useEffect(() => {
+  const structureLinkKey = `${searchParams.toString()}:${stages.map((s) => s.stageId).join(',')}`;
+  useSyncWhen(true, structureLinkKey, () => {
     const parsed = parseStructureDeepLink(searchParams.toString());
     if (stages.length === 0) {
       setSelectedStageId(null);
@@ -148,7 +150,7 @@ function StructureHub({ data }: { data: StructureView }) {
       }
       return stages[0]!.stageId;
     });
-  }, [searchParams, stages]);
+  });
 
   const selectedStage =
     stages.find((stage) => stage.stageId === selectedStageId) ?? null;

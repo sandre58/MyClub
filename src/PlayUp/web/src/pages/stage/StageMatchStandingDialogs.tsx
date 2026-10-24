@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useId, useMemo, useState, type FormEvent } from 'react';
+import { useId, useMemo, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   bindStageRegulation,
@@ -22,6 +22,7 @@ import { Select } from '../../design-system/components/Select';
 import { SwitchPanel } from '../../design-system/components/SwitchPanel';
 import { notify } from '../../design-system/toastStore';
 import { useClearMutationsOnOpen } from '../../design-system/useClearMutationsOnOpen';
+import { useSyncWhen } from '../../design-system/useRenderSync';
 import { useDiscardConfirm } from '../../design-system/useDiscardConfirm';
 import {
   CheckIcon,
@@ -210,17 +211,14 @@ export function MatchRulesDialog({
     resetDiscard,
   } = useDiscardConfirm(isDirty, onClose);
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
+  useSyncWhen(open, stage.stageId, () => {
     const bound = isMatchFrameBound(stage.defaultsBinding);
     const next = matchFormFromStage(stage);
     setFollowFrame(bound);
     setForm(next);
     setBaselineForm(next);
     resetDiscard();
-  }, [open, stage, resetDiscard]);
+  });
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -569,10 +567,7 @@ export function StandingRulesDialog({
     resetDiscard,
   } = useDiscardConfirm(isDirty, onClose);
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
+  useSyncWhen(open, stage.stageId, () => {
     const bound = isStandingFrameBound(stage.defaultsBinding) !== false;
     const next = standingFormFromStage(stage);
     setFollowFrame(bound);
@@ -580,7 +575,7 @@ export function StandingRulesDialog({
     setBaselineForm(next);
     setAddCriterion(null);
     resetDiscard();
-  }, [open, stage, resetDiscard]);
+  });
 
   const mutation = useMutation({
     mutationFn: async () => {

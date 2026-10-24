@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useId, useRef, useState, type RefObject } from 'react';
+import { useEffect, useId, useRef, type RefObject } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { fetchNeedsAttention } from '../api';
@@ -8,6 +8,7 @@ import { EmptyState } from '../ui';
 import { Tooltip } from '../design-system/components/Tooltip';
 import { useDismissLayer } from '../design-system/useDismissLayer';
 import { useFocusTrap } from '../design-system/useFocusTrap';
+import { usePresence } from '../design-system/usePresence';
 import { queryKeys } from '../queryKeys';
 import type { NeedsAttentionItem, OverviewSituation } from '../types';
 import { AttentionSituationRow } from './AttentionSituationRow';
@@ -44,8 +45,11 @@ export function AttentionDrawer({
   const panelRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const hadOpenedRef = useRef(false);
-  const [mounted, setMounted] = useState(open);
-  const [visible, setVisible] = useState(open);
+  const { present: mounted, state: presenceState } = usePresence(
+    open,
+    SHELL_MOTION_EXIT_MS,
+  );
+  const visible = presenceState === 'open';
 
   const {
     competitionId,
@@ -85,23 +89,6 @@ export function AttentionDrawer({
   );
   const ledeKey = attentionDrawerLedeKey(presentableSituations, stages);
   const showCount = !attentionPending && count > 0;
-
-  useEffect(() => {
-    if (open) {
-      setMounted(true);
-      const frame = requestAnimationFrame(() => {
-        requestAnimationFrame(() => setVisible(true));
-      });
-      return () => cancelAnimationFrame(frame);
-    }
-
-    setVisible(false);
-    const timeout = window.setTimeout(
-      () => setMounted(false),
-      SHELL_MOTION_EXIT_MS,
-    );
-    return () => window.clearTimeout(timeout);
-  }, [open]);
 
   useEffect(() => {
     if (!open || !visible) {
