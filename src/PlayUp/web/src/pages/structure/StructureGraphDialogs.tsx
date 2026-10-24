@@ -323,7 +323,10 @@ export function EditSkeletonDialog({
     open,
     `${stage.stageId}:${data.structure.matchGenerationFormat}`,
     () => {
-      const next = skeletonFromStage(stage, data.structure.matchGenerationFormat);
+      const next = skeletonFromStage(
+        stage,
+        data.structure.matchGenerationFormat,
+      );
       setBaseline(next);
       setSkeleton(next);
       resetDiscard();

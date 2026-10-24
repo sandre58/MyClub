@@ -4,12 +4,7 @@ import {
   useQueryClient,
   type QueryClient,
 } from '@tanstack/react-query';
-import {
-  useId,
-  useState,
-  type SubmitEvent,
-  type ReactNode,
-} from 'react';
+import { useId, useState, type SubmitEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSyncWhen } from '../../design-system/useRenderSync';

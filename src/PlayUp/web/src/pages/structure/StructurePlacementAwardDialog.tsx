@@ -139,7 +139,10 @@ export function StructurePlacementAwardDialog({
   ].join('|');
 
   useSyncWhen(
-    open && !overviewQuery.isLoading && !mutation.isPending && !mutation.isSuccess,
+    open &&
+      !overviewQuery.isLoading &&
+      !mutation.isPending &&
+      !mutation.isSuccess,
     placementHydrateKey,
     () => {
       const existing = stage.placementAwards ?? [];

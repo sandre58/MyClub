@@ -23,7 +23,11 @@ export function useOpenEdge(open: boolean, handlers: OpenEdgeHandlers): void {
  * When `active` is true and `key` changes, run `sync` during render.
  * Clears the remembered key when `active` is false.
  */
-export function useSyncWhen(active: boolean, key: string, sync: () => void): void {
+export function useSyncWhen(
+  active: boolean,
+  key: string,
+  sync: () => void,
+): void {
   const [lastKey, setLastKey] = useState<string | null>(null);
 
   if (!active) {
