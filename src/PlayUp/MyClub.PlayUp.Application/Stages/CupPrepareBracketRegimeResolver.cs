@@ -27,19 +27,7 @@ internal static class CupPrepareBracketRegimeResolver
     {
         ArgumentNullException.ThrowIfNull(stage);
 
-        return StructureSkeleton.InferFormat(stage) != StructureFormatKind.Cup
-               || !IsMonoRoundKnockout(stage)
-            ? CupPrepareBracketRegime.NotApplicable
-            : stage.Slots.Count == 0
-                ? CupPrepareBracketRegime.R0Unconfigured
-                : CupBracketTopologyClassifier.Classify(stage) switch
-                {
-                    CupBracketTopologyKind.InvalidCanonicalShape => CupPrepareBracketRegime.R3InvalidCanonical,
-                    CupBracketTopologyKind.CanonicalComplete or CupBracketTopologyKind.CanonicalIncomplete =>
-                        CupPrepareBracketRegime.R2Canonical,
-                    CupBracketTopologyKind.ExplicitTopology => CupPrepareBracketRegime.R1ExplicitTopology,
-                    _ => CupPrepareBracketRegime.R1ExplicitTopology
-                };
+        return StructureSkeleton.InferFormat(stage) != StructureFormatKind.Cup || !IsMonoRoundKnockout(stage) ? CupPrepareBracketRegime.NotApplicable : stage.Slots.Count == 0 ? CupPrepareBracketRegime.R0Unconfigured : CupBracketTopologyClassifier.Classify(stage) switch { CupBracketTopologyKind.InvalidCanonicalShape => CupPrepareBracketRegime.R3InvalidCanonical, CupBracketTopologyKind.CanonicalComplete or CupBracketTopologyKind.CanonicalIncomplete => CupPrepareBracketRegime.R2Canonical, CupBracketTopologyKind.ExplicitTopology => CupPrepareBracketRegime.R1ExplicitTopology, _ => CupPrepareBracketRegime.R1ExplicitTopology };
     }
 
     private static bool IsMonoRoundKnockout(Stage stage) =>

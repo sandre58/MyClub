@@ -135,60 +135,13 @@ public static class PhaseRosterPresentationClassifier
     {
         if (path.Destination is { TargetsForm: false, TargetsPopulation: false })
         {
-            return InboundQualificationSeatProjection.TryResolveSeat(
-                    path,
-                    sourceStage,
-                    destination,
-                    matchSummariesByStage)
-                is not null
-                ? InboundQualSeatProductState.ProducibleButNotConsumed
-                : sourceStage.Status is not (StageStatus.Running or StageStatus.Completed)
-                  || !TryResolveQualificationInstruction(
-                      sourceStage,
-                      path,
-                      matchSummariesByStage,
-                      out var instruction)
-                  || instruction is null
-                    ? InboundQualSeatProductState.NotYetProducible
-                    : MapSatisfaction(
-                        DestinationSatisfaction.EvaluateQualification(
-                            destination,
-                            sourceStage.Id,
-                            path,
-                            instruction.EntryId));
+            return InboundQualificationSeatProjection.TryResolveSeat(path, sourceStage, destination, matchSummariesByStage) is not null ? InboundQualSeatProductState.ProducibleButNotConsumed : sourceStage.Status is not (StageStatus.Running or StageStatus.Completed) || !TryResolveQualificationInstruction(sourceStage, path, matchSummariesByStage, out var instruction) || instruction is null ? InboundQualSeatProductState.NotYetProducible : MapSatisfaction(DestinationSatisfaction.EvaluateQualification(destination, sourceStage.Id, path, instruction.EntryId));
         }
 
         var fingerprint = FormPathResolutionKey.FromQualification(sourceStage.Id, path);
         var witness = destination.FormPathResolutions
             .FirstOrDefault(resolution => resolution.PathFingerprint == fingerprint);
-        return witness is not null
-            ? MapSatisfaction(
-                DestinationSatisfaction.EvaluateQualification(
-                    destination,
-                    sourceStage.Id,
-                    path,
-                    witness.EntryId))
-            : InboundQualificationSeatProjection.TryResolveSeat(
-                path,
-                sourceStage,
-                destination,
-                matchSummariesByStage)
-            is not null
-            ? InboundQualSeatProductState.ProducibleButNotConsumed
-            : sourceStage.Status is not (StageStatus.Running or StageStatus.Completed)
-            || !TryResolveQualificationInstruction(
-                sourceStage,
-                path,
-                matchSummariesByStage,
-                out var instruction1)
-            || instruction1 is null
-            ? InboundQualSeatProductState.NotYetProducible
-            : MapSatisfaction(
-            DestinationSatisfaction.EvaluateQualification(
-                destination,
-                sourceStage.Id,
-                path,
-                instruction1.EntryId));
+        return witness is not null ? MapSatisfaction(DestinationSatisfaction.EvaluateQualification(destination, sourceStage.Id, path, witness.EntryId)) : InboundQualificationSeatProjection.TryResolveSeat(path, sourceStage, destination, matchSummariesByStage) is not null ? InboundQualSeatProductState.ProducibleButNotConsumed : sourceStage.Status is not (StageStatus.Running or StageStatus.Completed) || !TryResolveQualificationInstruction(sourceStage, path, matchSummariesByStage, out var instruction1) || instruction1 is null ? InboundQualSeatProductState.NotYetProducible : MapSatisfaction(DestinationSatisfaction.EvaluateQualification(destination, sourceStage.Id, path, instruction1.EntryId));
     }
 
     private static InboundQualSeatProductState ClassifyUnresolvedProgressionSeat(

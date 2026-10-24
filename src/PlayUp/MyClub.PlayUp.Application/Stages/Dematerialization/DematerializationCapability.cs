@@ -83,29 +83,10 @@ public static class DematerializationCapability
         Competition competition,
         Stage stage,
         StructureFormatKind format) =>
-        format is StructureFormatKind.Cup
-            ? stage.Rounds.Count == 0 || stage.Matchdays.Count > 0 || stage.Groups.Count > 0
-                ? DematerializeDisabledReasons.FormatNotSupported
-                : competition.Status is CompetitionStatus.Suspended
-                    or CompetitionStatus.Completed
-                    or CompetitionStatus.Archived || stage.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed
-                    ? DematerializeDisabledReasons.StageLifecycleNotSupported
-                    : null
-            : format is not (StructureFormatKind.Championship or StructureFormatKind.Groups)
-                ? DematerializeDisabledReasons.FormatNotSupported
-                : competition.Status is CompetitionStatus.Running
-                    or CompetitionStatus.Suspended
-                    or CompetitionStatus.Completed
-                    or CompetitionStatus.Archived || stage.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed
-                    ? DematerializeDisabledReasons.StageLifecycleNotSupported
-                    : null;
+        format is StructureFormatKind.Cup ? stage.Rounds.Count == 0 || stage.Matchdays.Count > 0 || stage.Groups.Count > 0 ? DematerializeDisabledReasons.FormatNotSupported : competition.Status is CompetitionStatus.Suspended or CompetitionStatus.Completed or CompetitionStatus.Archived || stage.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed ? DematerializeDisabledReasons.StageLifecycleNotSupported : null : format is not (StructureFormatKind.Championship or StructureFormatKind.Groups) ? DematerializeDisabledReasons.FormatNotSupported : competition.Status is CompetitionStatus.Running or CompetitionStatus.Suspended or CompetitionStatus.Completed or CompetitionStatus.Archived || stage.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed ? DematerializeDisabledReasons.StageLifecycleNotSupported : null;
 
     internal static string? TrySwissLifecycleReason(Competition competition, Stage stage) =>
-        competition.Status is CompetitionStatus.Suspended
-            or CompetitionStatus.Completed
-            or CompetitionStatus.Archived || stage.Status is not StageStatus.Running
-            ? DematerializeDisabledReasons.StageLifecycleNotSupported
-            : null;
+        competition.Status is CompetitionStatus.Suspended or CompetitionStatus.Completed or CompetitionStatus.Archived || stage.Status is not StageStatus.Running ? DematerializeDisabledReasons.StageLifecycleNotSupported : null;
 
     internal static void ThrowForDisabledReason(string reason) =>
         throw reason switch

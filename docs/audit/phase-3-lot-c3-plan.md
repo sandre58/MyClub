@@ -46,7 +46,7 @@ Expect **2** passing tests.
 - [x] `CupC2Impasse` integration tests green on branch.
 - [x] Protocol docs describe A3/A5 without obsolete single-chain / `StartBlockedUnmaterialized` @ 1/2.
 - [x] Cas assign explicitly deferred.
-- [ ] Registre Notion **AUD-0004** → vérifié / clôture lot (post-merge).
+- [x] Registre Notion **AUD-0004** → vérifié / clôture lot (post-merge @ `bbb76630`).
 
 ---
 

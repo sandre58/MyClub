@@ -187,22 +187,7 @@ internal static class StageStartReadinessGuard
 
         var stages = competitionStages ?? [stage];
         var format = StructureSkeleton.InferFormat(stage);
-        return (format == StructureFormatKind.Groups
-                && GroupsPlacementReadiness.BlocksProduction(stage))
-               || StageConfrontationMaterializationState.CountEligibleUnmaterialized(
-                   competition,
-                   stage,
-                   matchSummaries,
-                   competitionStages) > 0
-               || CupReadyEntryRoundMatchProductionIncomplete(stage)
-            ? DisabledUnmaterializedConfrontations
-            : format switch
-            {
-                StructureFormatKind.Championship
-                    when !ChampionshipSwissPhasePlaces.IsRosterComplete(competition, stage, stages)
-                    => DisabledPhaseRosterIncomplete,
-                _ => null
-            };
+        return (format == StructureFormatKind.Groups && GroupsPlacementReadiness.BlocksProduction(stage)) || StageConfrontationMaterializationState.CountEligibleUnmaterialized(competition, stage, matchSummaries, competitionStages) > 0 || CupReadyEntryRoundMatchProductionIncomplete(stage) ? DisabledUnmaterializedConfrontations : format switch { StructureFormatKind.Championship when !ChampionshipSwissPhasePlaces.IsRosterComplete(competition, stage, stages) => DisabledPhaseRosterIncomplete, _ => null };
     }
 
     private static bool BracketPairPlacementStarted(Stage stage, BracketPair pair)

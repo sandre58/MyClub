@@ -20,16 +20,7 @@ internal static class StructureSkeleton
     /// Single source of truth: infers format from stage topology (null when unstructured).
     /// Use for read projections and command routing — do not duplicate this predicate elsewhere.
     /// </summary>
-    public static StructureFormatKind? InferFormat(Stage stage) =>
-        stage.IsSwiss
-            ? StructureFormatKind.Swiss
-            : stage.Rounds.Count > 0
-            ? StructureFormatKind.Cup
-            : stage.Groups.Count > 0
-            ? StructureFormatKind.Groups
-            : stage.Matchdays.Count > 0
-            ? StructureFormatKind.Championship
-            : null;
+    public static StructureFormatKind? InferFormat(Stage stage) => stage.IsSwiss ? StructureFormatKind.Swiss : stage.Rounds.Count > 0 ? StructureFormatKind.Cup : stage.Groups.Count > 0 ? StructureFormatKind.Groups : stage.Matchdays.Count > 0 ? StructureFormatKind.Championship : null;
 
     /// <summary>
     /// Organizer-facing configured matchdays for Championship / Groups hero and topology.

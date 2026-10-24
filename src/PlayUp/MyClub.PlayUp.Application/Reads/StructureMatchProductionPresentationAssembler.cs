@@ -142,17 +142,7 @@ internal static class StructureMatchProductionPresentationAssembler
         MaterializePresentationKind presentation,
         StructureMaterializeDto? materialize,
         StructureMatchProductionGaugeDto primary) =>
-        materialize is null
-        || presentation != MaterializePresentationKind.Frozen
-        || materialize.DisabledReason != StructureMaterializeDisabledReasons.StructureNotMutable
-        || primary.Capacity <= 0
-        || primary.Current >= primary.Capacity
-            ? null
-            : new StructureMatchProductionFrozenPartialDto(
-                primary.Current,
-                primary.Capacity,
-                StructureMatchProductionMessageCodes.FrozenPartial,
-                MessageKindAttention);
+        materialize is null || presentation != MaterializePresentationKind.Frozen || materialize.DisabledReason != StructureMaterializeDisabledReasons.StructureNotMutable || primary.Capacity <= 0 || primary.Current >= primary.Capacity ? null : new StructureMatchProductionFrozenPartialDto(primary.Current, primary.Capacity, StructureMatchProductionMessageCodes.FrozenPartial, MessageKindAttention);
 
     private static bool ResolveProductionVisible(Input input, MaterializePresentationKind presentation)
     {
@@ -283,11 +273,7 @@ internal static class StructureMatchProductionPresentationAssembler
             && !IsAwaitingInboundFeedResolution(input, materialize))
         {
             var groupsBlockedKind =
-                StructurePlaceOccupancyIssues.DeferGroupsNotReadyForDraw(
-                    input.HasDrawRules,
-                    input.DrawExecutionBadge)
-                    ? MessageKindInfo
-                    : MessageKindAttention;
+                StructurePlaceOccupancyIssues.DeferGroupsNotReadyForDraw(input.HasDrawRules, input.DrawExecutionBadge) ? MessageKindInfo : MessageKindAttention;
             return (
                 StructureMatchProductionMessageCodes.MatchesBlockedByGroupsPools,
                 groupsBlockedKind);
@@ -347,41 +333,11 @@ internal static class StructureMatchProductionPresentationAssembler
         }
 
         materialize ??= input.Materialize;
-        return StructurePlaceOccupancyIssues.IsSlotFeedAwaitingDraw(
-                input.HasDrawRules,
-                input.DrawExecutionBadge)
-            && input.FormatKind == StructureFormatKind.Cup
-            ? MessageKindInfo
-            : input is { FormatKind: StructureFormatKind.Cup, Stage.Status: StageStatus.Ready }
-            && materialize?.CommandCode == OverviewAssembler.ActionMaterializeFromOccupiedSlots
-            && capacity > current
-            ? MessageKindDanger
-            : current == 0 ? MessageKindInfo : MessageKindAttention;
+        return StructurePlaceOccupancyIssues.IsSlotFeedAwaitingDraw(input.HasDrawRules, input.DrawExecutionBadge) && input.FormatKind == StructureFormatKind.Cup ? MessageKindInfo : input is { FormatKind: StructureFormatKind.Cup, Stage.Status: StageStatus.Ready } && materialize?.CommandCode == OverviewAssembler.ActionMaterializeFromOccupiedSlots && capacity > current ? MessageKindDanger : current == 0 ? MessageKindInfo : MessageKindAttention;
     }
 
     private static string ResolveNoDeterminedConfrontationsMessageKind(Input input) =>
-        input is
-        {
-            HasDrawRules: true, DrawExecutionBadge: StructureDrawExecutionBadge.ToLaunch
-            or StructureDrawExecutionBadge.InProgress
-            or StructureDrawExecutionBadge.ToApply
-        }
-        || (input.FormatKind == StructureFormatKind.Groups
-        && StructurePlaceOccupancyIssues.DeferGroupsNotReadyForDraw(
-            input.HasDrawRules,
-            input.DrawExecutionBadge))
-            ? MessageKindInfo
-            : input is
-            {
-                FormatKind: StructureFormatKind.Cup, Stage.Status: StageStatus.Ready, Lifecycle.Transition:
-                {
-                    Enabled: false,
-                    DisabledReasonCode: StructureMaterializeDisabledReasons.NoDeterminedConfrontations
-                }
-            }
-
-                ? MessageKindDanger
-                : IsAwaitingInboundFeedResolution(input, input.Materialize) ? MessageKindInfo : MessageKindAttention;
+        input is { HasDrawRules: true, DrawExecutionBadge: StructureDrawExecutionBadge.ToLaunch or StructureDrawExecutionBadge.InProgress or StructureDrawExecutionBadge.ToApply } || (input.FormatKind == StructureFormatKind.Groups && StructurePlaceOccupancyIssues.DeferGroupsNotReadyForDraw(input.HasDrawRules, input.DrawExecutionBadge)) ? MessageKindInfo : input is { FormatKind: StructureFormatKind.Cup, Stage.Status: StageStatus.Ready, Lifecycle.Transition: { Enabled: false, DisabledReasonCode: StructureMaterializeDisabledReasons.NoDeterminedConfrontations } } ? MessageKindDanger : IsAwaitingInboundFeedResolution(input, input.Materialize) ? MessageKindInfo : MessageKindAttention;
 
     private static bool IsAwaitingInboundFeedResolution(
         Input input,
@@ -483,14 +439,7 @@ internal static class StructureMatchProductionPresentationAssembler
 
     private static StructureMatchProductionGaugeDto? TryResolveCupFormResolvedTeamsPrerequisite(
         Input input) =>
-        CupEntryRoundResolvedTeamGauge.TryMeasure(input) is not { Resolved: var resolved, Capacity: var capacity }
-        || resolved >= capacity
-            ? null
-            : new StructureMatchProductionGaugeDto(
-                resolved,
-                capacity,
-                StructureMatchProductionMessageCodes.PrerequisiteComposition,
-                MessageKindInfo);
+        CupEntryRoundResolvedTeamGauge.TryMeasure(input) is not { Resolved: var resolved, Capacity: var capacity } || resolved >= capacity ? null : new StructureMatchProductionGaugeDto(resolved, capacity, StructureMatchProductionMessageCodes.PrerequisiteComposition, MessageKindInfo);
 
     private static bool CupReadyEntryRoundMatchesFullyMaterialized(
         Input input,
@@ -565,19 +514,7 @@ internal static class StructureMatchProductionPresentationAssembler
         Stage stage,
         StructureMaterializeDto? materialize,
         MaterializePresentationKind presentation) =>
-        formatKind != StructureFormatKind.Cup
-        || materialize is null
-        || presentation != MaterializePresentationKind.Terminal
-            ? null
-            : stage.Rounds.Count <= 1
-                ? null
-                : materialize.LabelVariant != StructureMaterializeAssembler.LabelVariantExhausted
-                    ? null
-                    : materialize.EligibleCount > 0
-                        ? null
-                        : new StructureMatchProductionFollowUpDto(
-                            StructureMatchProductionMessageCodes.FollowUpExhausted,
-                            MessageKindInfo);
+        formatKind != StructureFormatKind.Cup || materialize is null || presentation != MaterializePresentationKind.Terminal ? null : stage.Rounds.Count <= 1 ? null : materialize.LabelVariant != StructureMaterializeAssembler.LabelVariantExhausted ? null : materialize.EligibleCount > 0 ? null : new StructureMatchProductionFollowUpDto(StructureMatchProductionMessageCodes.FollowUpExhausted, MessageKindInfo);
 
     private static StructureMatchProductionMaterializeActionDto ResolveMaterializeAction(
         Input input,
@@ -626,15 +563,7 @@ internal static class StructureMatchProductionPresentationAssembler
     private static StructureMatchProductionDematerializeActionDto ResolveDematerializeAction(Input input)
     {
         var dematerialize = input.Dematerialize;
-        return !IsDematerializePresentationVisible(input)
-            ? new StructureMatchProductionDematerializeActionDto(false, false, null, null)
-            : dematerialize is null
-            ? new StructureMatchProductionDematerializeActionDto(true, false, null, null)
-            : new StructureMatchProductionDematerializeActionDto(
-            true,
-            dematerialize.Enabled,
-            dematerialize.DisabledReason,
-            dematerialize.Scope);
+        return !IsDematerializePresentationVisible(input) ? new StructureMatchProductionDematerializeActionDto(false, false, null, null) : dematerialize is null ? new StructureMatchProductionDematerializeActionDto(true, false, null, null) : new StructureMatchProductionDematerializeActionDto(true, dematerialize.Enabled, dematerialize.DisabledReason, dematerialize.Scope);
     }
 
     private enum MaterializePresentationKind
@@ -662,13 +591,7 @@ internal static class StructureMatchProductionPresentationAssembler
 
         var target = materialize.DeterminedCount;
         var materialized = materialize.MaterializedCount;
-        return target > 0 && materialized >= target
-            ? MaterializePresentationKind.Terminal
-            : target > 0
-            && materialized < target
-            && !IsMaterializeStructureMutable(materialize.CommandCode, competitionStatus, stageStatus)
-            ? MaterializePresentationKind.Frozen
-            : MaterializePresentationKind.Blocked;
+        return target > 0 && materialized >= target ? MaterializePresentationKind.Terminal : target > 0 && materialized < target && !IsMaterializeStructureMutable(materialize.CommandCode, competitionStatus, stageStatus) ? MaterializePresentationKind.Frozen : MaterializePresentationKind.Blocked;
     }
 
     private static int ResolveConfrontationCapacityForCta(
