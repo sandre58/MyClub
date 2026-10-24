@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useOpenEdge, useSyncWhen } from '../../design-system/useRenderSync';
 import {
-  useEffect,
   useMemo,
   useRef,
   useState,
@@ -235,15 +235,19 @@ export function StructureDrawDialog({
   /** After "Nouveau tirage" (new draw), prefer this id once it appears in overview. */
   const pendingSelectIdRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    if (!open) {
+  const drawListKey = draws?.map((draw) => draw.id).join(',') ?? 'empty';
+
+  useOpenEdge(open, {
+    onClose: () => {
       pendingSelectIdRef.current = null;
       setSelectedId(null);
       setApplyConfirmOpen(false);
       setCancelConfirmOpen(false);
       setReleaseConfirmOpen(false);
-      return;
-    }
+    },
+  });
+
+  useSyncWhen(open, drawListKey, () => {
     if (!draws || draws.length === 0) {
       setSelectedId(null);
       return;
@@ -262,7 +266,7 @@ export function StructureDrawDialog({
       }
       return pickDefaultDrawId(draws);
     });
-  }, [open, draws]);
+  });
 
   const selected = useMemo(
     () => drawList.find((d) => d.id === selectedId) ?? null,

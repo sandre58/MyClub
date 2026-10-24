@@ -10,7 +10,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   fetchStageOverview,
@@ -38,6 +38,7 @@ import {
 } from '../../design-system/icons/shellIcons';
 import { notify } from '../../design-system/toastStore';
 import { useClearMutationsOnOpen } from '../../design-system/useClearMutationsOnOpen';
+import { useOpenEdge, useSyncWhen } from '../../design-system/useRenderSync';
 import { useDiscardConfirm } from '../../design-system/useDiscardConfirm';
 import { queryKeys } from '../../queryKeys';
 import type {
@@ -234,50 +235,38 @@ export function StructureProgressionDialog({
     },
   });
 
-  useEffect(() => {
-    if (!open) {
-      // Keep last paint (intents + sessionReady) during Dialog exit animation.
-      return;
-    }
-
-    setSessionReady(false);
-  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps -- open edge only
+  useOpenEdge(open, { onOpen: () => setSessionReady(false) });
 
   useClearMutationsOnOpen(open, mutation);
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    if (sourceSchematicQuery.isLoading) {
-      return;
-    }
-    // Do not rehydrate from invalidate while saving / closing.
-    if (mutation.isPending || mutation.isSuccess) {
-      return;
-    }
-
-    const fromIntents = stage.progressionIntents ?? [];
-    const next = fromIntents.map((intent) => {
-      const synced = syncPlaceSlotKeys(intentFromApi(intent, stage.stageId));
-      const peer = stageById.get(synced.destinationStageId.trim());
-      return normalizeFormOnlyDestinationDraft(synced, peer?.formatKind);
-    });
-    setIntents(next);
-    setBaselineSerialized(serializeIntents(next));
-    setExpandedId(null);
-    setSessionReady(true);
-    resetDiscard();
-  }, [
-    open,
+  const progressionHydrateKey = [
     stage.stageId,
-    stage.progressionIntents,
-    sourceSchematicQuery.isLoading,
-    mutation.isPending,
-    mutation.isSuccess,
-    resetDiscard,
-    stageById,
-  ]);
+    sourceSchematicQuery.isLoading ? 'loading' : 'ready',
+    mutation.isPending ? 'p' : '',
+    mutation.isSuccess ? 's' : '',
+    JSON.stringify(stage.progressionIntents ?? []),
+  ].join('|');
+
+  useSyncWhen(
+    open &&
+      !sourceSchematicQuery.isLoading &&
+      !mutation.isPending &&
+      !mutation.isSuccess,
+    progressionHydrateKey,
+    () => {
+      const fromIntents = stage.progressionIntents ?? [];
+      const next = fromIntents.map((intent) => {
+        const synced = syncPlaceSlotKeys(intentFromApi(intent, stage.stageId));
+        const peer = stageById.get(synced.destinationStageId.trim());
+        return normalizeFormOnlyDestinationDraft(synced, peer?.formatKind);
+      });
+      setIntents(next);
+      setBaselineSerialized(serializeIntents(next));
+      setExpandedId(null);
+      setSessionReady(true);
+      resetDiscard();
+    },
+  );
 
   const pathTotal = useMemo(
     () => intents.reduce((sum, intent) => sum + expandContribution(intent), 0),

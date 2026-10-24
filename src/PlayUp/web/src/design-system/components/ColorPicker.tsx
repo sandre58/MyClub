@@ -1,10 +1,10 @@
 import {
-  useEffect,
   useId,
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
+import { useSyncWhen } from '../useRenderSync';
 import { CloseIcon } from '../icons/shellIcons';
 import { PipetteIcon } from '../icons/contentIcons';
 import { TextInput } from './TextInput';
@@ -76,31 +76,24 @@ export function ColorPicker({
   const rootRef = useRef<HTMLDivElement>(null);
   const svRef = useRef<HTMLDivElement>(null);
   const hueRef = useRef<HTMLDivElement>(null);
-  const hsvRef = useRef<Hsv>(defaultHsv());
+  const initialHsv = hexToHsv(value, defaultHsv().h) ?? defaultHsv();
+  const hsvRef = useRef<Hsv>(initialHsv);
   const pickingRef = useRef(false);
 
   const [open, setOpen] = useState(false);
   const [format, setFormat] = useState<ColorFormat>('hex');
   const [hexDraft, setHexDraft] = useState(value);
-  const [hsv, setHsv] = useState<Hsv>(() => {
-    const initial = hexToHsv(value, defaultHsv().h) ?? defaultHsv();
-    hsvRef.current = initial;
-    return initial;
-  });
-  const [eyedropperSupported, setEyedropperSupported] = useState(false);
+  const [hsv, setHsv] = useState<Hsv>(initialHsv);
+  const eyedropperSupported = getEyeDropper() !== null;
 
-  useEffect(() => {
-    setEyedropperSupported(getEyeDropper() !== null);
-  }, []);
-
-  useEffect(() => {
+  useSyncWhen(true, value, () => {
     setHexDraft(value);
     const next = hexToHsv(value.trim(), hsvRef.current.h);
     if (next) {
       hsvRef.current = next;
       setHsv(next);
     }
-  }, [value]);
+  });
 
   const normalized = value.trim();
   const valid = HEX6.test(normalized);
