@@ -74,16 +74,7 @@ public sealed record DrawResolution
     public static DrawResolution ResolvedSlots(IReadOnlyList<SlotDrawPlacement> results)
     {
         ArgumentNullException.ThrowIfNull(results);
-        return results.Count == 0
-            ? throw new DomainException(
-                "Resolved slot results cannot be empty.",
-                StageErrorCodes.DrawResolutionInvalid)
-            : results.Select(r => r.EntryId).Distinct().Count() != results.Count
-            || results.Select(r => r.SlotKey).Distinct(StringComparer.Ordinal).Count() != results.Count
-            ? throw new DomainException(
-                "Slot resolution results must have unique entries and unique slot keys.",
-                StageErrorCodes.DrawResolutionInvalid)
-            : new DrawResolution(DrawResolutionState.Resolved, DrawResolutionKind.Slot, results, null);
+        return results.Count == 0 ? throw new DomainException("Resolved slot results cannot be empty.", StageErrorCodes.DrawResolutionInvalid) : results.Select(r => r.EntryId).Distinct().Count() != results.Count || results.Select(r => r.SlotKey).Distinct(StringComparer.Ordinal).Count() != results.Count ? throw new DomainException("Slot resolution results must have unique entries and unique slot keys.", StageErrorCodes.DrawResolutionInvalid) : new DrawResolution(DrawResolutionState.Resolved, DrawResolutionKind.Slot, results, null);
     }
 
     /// <summary>
@@ -92,15 +83,7 @@ public sealed record DrawResolution
     public static DrawResolution ResolvedGroups(IReadOnlyList<GroupDrawPlacement> results)
     {
         ArgumentNullException.ThrowIfNull(results);
-        return results.Count == 0
-            ? throw new DomainException(
-                "Resolved group results cannot be empty.",
-                StageErrorCodes.DrawResolutionInvalid)
-            : results.Select(r => r.EntryId).Distinct().Count() != results.Count
-            ? throw new DomainException(
-                "Group resolution results must have unique entries.",
-                StageErrorCodes.DrawResolutionInvalid)
-            : new DrawResolution(DrawResolutionState.Resolved, DrawResolutionKind.Group, null, results);
+        return results.Count == 0 ? throw new DomainException("Resolved group results cannot be empty.", StageErrorCodes.DrawResolutionInvalid) : results.Select(r => r.EntryId).Distinct().Count() != results.Count ? throw new DomainException("Group resolution results must have unique entries.", StageErrorCodes.DrawResolutionInvalid) : new DrawResolution(DrawResolutionState.Resolved, DrawResolutionKind.Group, null, results);
     }
 
     /// <summary>

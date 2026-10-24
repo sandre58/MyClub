@@ -31,11 +31,7 @@ internal sealed class ProgressionPathJsonConverter : JsonConverter<ProgressionPa
             options)
             ?? throw new JsonException("ProgressionPath.Destination is required.");
 
-        return !root.TryGetProperty("SourcePairKey", out var pairElement)
-            || pairElement.ValueKind != JsonValueKind.String
-            || string.IsNullOrWhiteSpace(pairElement.GetString())
-            ? throw new JsonException("ProgressionPath requires SourcePairKey.")
-            : new ProgressionPath(pairElement.GetString()!, outcome, destination);
+        return !root.TryGetProperty("SourcePairKey", out var pairElement) || pairElement.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(pairElement.GetString()) ? throw new JsonException("ProgressionPath requires SourcePairKey.") : new ProgressionPath(pairElement.GetString()!, outcome, destination);
     }
 
     public override void Write(
