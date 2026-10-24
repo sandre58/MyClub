@@ -48,7 +48,7 @@ Manual: read `AGENTS.md`, run suggested web command block from `audit-before-pr.
 - [x] `audit-before-pr` no longer suggests web checks that skip `build` / `lint:css`.
 - [x] Development.Tests boundary documented and guarded by test.
 - [x] `AGENTS.md` + inventory updated.
-- [ ] Notion governance / registre rows (post-merge) if tracked separately from AUD-0011.
+- [x] Notion governance / registre rows (post-merge @ `bbb76630`; AUD-0011).
 
 ---
 

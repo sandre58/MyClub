@@ -81,14 +81,7 @@ public static class MaterializeCupFromOccupiedSlots
             stages);
         if (targets.Count == 0)
         {
-            return requestEmpty
-                   && stage.BracketPairs.Count > 0
-                   && stage.BracketPairs.All(pair =>
-                       CupBracketPairMaterialization.IsConfrontationMaterialized(stage, pair, pairContext))
-                ? new MaterializeCupFromOccupiedSlotsResult([], [], AlreadyComplete: true)
-                : throw new ApplicationFailureException(
-                    "No eligible bracket pairs to materialize.",
-                    ApplicationErrorCodes.MaterializationFailure);
+            return requestEmpty && stage.BracketPairs.Count > 0 && stage.BracketPairs.All(pair => CupBracketPairMaterialization.IsConfrontationMaterialized(stage, pair, pairContext)) ? new MaterializeCupFromOccupiedSlotsResult([], [], AlreadyComplete: true) : throw new ApplicationFailureException("No eligible bracket pairs to materialize.", ApplicationErrorCodes.MaterializationFailure);
         }
 
         var round = stage.Rounds[0];

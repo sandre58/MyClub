@@ -120,15 +120,6 @@ public static class StageDrawBracketLaunchClassifier
         int vacant)
     {
         var blocking = occupiedByEntry + reservedByStructuralFeed + feedInvalid;
-        return blocking + vacant != entryPlaceCount
-            ? throw new InvalidOperationException(
-                "Bracket launch facts must partition entry places (blocking + vacant = entryPlaceCount).")
-            : new StageDrawBracketLaunchFactsDto(
-            entryPlaceCount,
-            occupiedByEntry,
-            reservedByStructuralFeed,
-            feedInvalid,
-            blocking,
-            vacant);
+        return blocking + vacant != entryPlaceCount ? throw new InvalidOperationException("Bracket launch facts must partition entry places (blocking + vacant = entryPlaceCount).") : new StageDrawBracketLaunchFactsDto(entryPlaceCount, occupiedByEntry, reservedByStructuralFeed, feedInvalid, blocking, vacant);
     }
 }

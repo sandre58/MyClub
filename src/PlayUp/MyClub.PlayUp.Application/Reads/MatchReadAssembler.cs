@@ -173,11 +173,7 @@ public static class MatchReadAssembler
     {
         ArgumentNullException.ThrowIfNull(summary);
 
-        return summary.RoundName is { Length: > 0 }
-            ? summary.RoundName
-            : summary.MatchdayNumber is { } number
-            ? $"Journée {number}"
-            : null;
+        return summary.RoundName is { Length: > 0 } ? summary.RoundName : summary.MatchdayNumber is { } number ? $"Journée {number}" : null;
     }
 
     private static void ResolveCalendarPlacement(
@@ -307,12 +303,7 @@ public static class MatchReadAssembler
         MemberId memberId)
     {
         var participation = match.DeclaredParticipations.FirstOrDefault(p => p.Id.Equals(memberId));
-        return participation is null
-            ? null
-            : EntryDisplayNames.ResolveMemberDisplayName(
-            entries,
-            EntryIdForSide(match, participation.Side),
-            memberId);
+        return participation is null ? null : EntryDisplayNames.ResolveMemberDisplayName(entries, EntryIdForSide(match, participation.Side), memberId);
     }
 
     private static MatchResultDto? MapResult(MatchResult? result)

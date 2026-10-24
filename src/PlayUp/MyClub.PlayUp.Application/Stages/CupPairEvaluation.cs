@@ -135,15 +135,7 @@ internal static class CupPairEvaluation
     }
 
     private static string PreferError(string? current, string candidate) =>
-        current is null
-            ? candidate
-            : candidate == ApplicationErrorCodes.MaterializationOccupantConflict
-              || current == ApplicationErrorCodes.MaterializationOccupantConflict
-                ? ApplicationErrorCodes.MaterializationOccupantConflict
-                : candidate == ApplicationErrorCodes.ProgressionNotAppliedForMaterialization
-                  && current == ApplicationErrorCodes.MaterializationFailure
-                    ? ApplicationErrorCodes.ProgressionNotAppliedForMaterialization
-                    : current;
+        current is null ? candidate : candidate == ApplicationErrorCodes.MaterializationOccupantConflict || current == ApplicationErrorCodes.MaterializationOccupantConflict ? ApplicationErrorCodes.MaterializationOccupantConflict : candidate == ApplicationErrorCodes.ProgressionNotAppliedForMaterialization && current == ApplicationErrorCodes.MaterializationFailure ? ApplicationErrorCodes.ProgressionNotAppliedForMaterialization : current;
 
     private readonly record struct SlotSideEvaluation(
         CupOccupationChannel Channel,
@@ -203,19 +195,7 @@ internal static class CupPairEvaluation
     private static SlotSideEvaluation EvaluateDirectChannel(SlotFeedResolution resolution, EntryId? occupant)
     {
         var expected = resolution.Source!.Direct!.ConfiguredEntryId;
-        return occupant is null
-            ? new SlotSideEvaluation(
-                CupOccupationChannel.Direct,
-                false,
-                CupPairBlockReason.SlotEmpty,
-                ApplicationErrorCodes.MaterializationFailure)
-            : !occupant.Value.Equals(expected)
-            ? new SlotSideEvaluation(
-                CupOccupationChannel.Direct,
-                false,
-                CupPairBlockReason.OccupantConflict,
-                ApplicationErrorCodes.MaterializationOccupantConflict)
-            : new SlotSideEvaluation(CupOccupationChannel.Direct, true, null, null);
+        return occupant is null ? new SlotSideEvaluation(CupOccupationChannel.Direct, false, CupPairBlockReason.SlotEmpty, ApplicationErrorCodes.MaterializationFailure) : !occupant.Value.Equals(expected) ? new SlotSideEvaluation(CupOccupationChannel.Direct, false, CupPairBlockReason.OccupantConflict, ApplicationErrorCodes.MaterializationOccupantConflict) : new SlotSideEvaluation(CupOccupationChannel.Direct, true, null, null);
     }
 
     private static SlotSideEvaluation EvaluateDrawChannel(
@@ -226,25 +206,7 @@ internal static class CupPairEvaluation
     {
         var drawId = resolution.Source!.Draw!.DrawId;
         var placement = TryGetDrawPlacementEntry(stage, drawId, slotKey);
-        return placement is null
-            ? new SlotSideEvaluation(
-                CupOccupationChannel.Draw,
-                false,
-                CupPairBlockReason.ResolutionAmbiguous,
-                ApplicationErrorCodes.InboundResolutionAmbiguous)
-            : occupant is null
-            ? new SlotSideEvaluation(
-                CupOccupationChannel.Draw,
-                false,
-                CupPairBlockReason.SlotEmpty,
-                ApplicationErrorCodes.MaterializationFailure)
-            : !occupant.Value.Equals(placement.Value)
-            ? new SlotSideEvaluation(
-                CupOccupationChannel.Draw,
-                false,
-                CupPairBlockReason.OccupantConflict,
-                ApplicationErrorCodes.MaterializationOccupantConflict)
-            : new SlotSideEvaluation(CupOccupationChannel.Draw, true, null, null);
+        return placement is null ? new SlotSideEvaluation(CupOccupationChannel.Draw, false, CupPairBlockReason.ResolutionAmbiguous, ApplicationErrorCodes.InboundResolutionAmbiguous) : occupant is null ? new SlotSideEvaluation(CupOccupationChannel.Draw, false, CupPairBlockReason.SlotEmpty, ApplicationErrorCodes.MaterializationFailure) : !occupant.Value.Equals(placement.Value) ? new SlotSideEvaluation(CupOccupationChannel.Draw, false, CupPairBlockReason.OccupantConflict, ApplicationErrorCodes.MaterializationOccupantConflict) : new SlotSideEvaluation(CupOccupationChannel.Draw, true, null, null);
     }
 
     private static SlotSideEvaluation EvaluateProgressionChannel(
@@ -288,19 +250,7 @@ internal static class CupPairEvaluation
             sourceStage!.Id,
             path!,
             replay.Value);
-        return satisfaction != DestinationSatisfaction.Kind.Satisfied
-            ? new SlotSideEvaluation(
-                CupOccupationChannel.Progression,
-                false,
-                CupPairBlockReason.DestinationNotSatisfied,
-                ApplicationErrorCodes.InboundDestinationNotSatisfied)
-            : !occupant.Value.Equals(replay.Value)
-            ? new SlotSideEvaluation(
-                CupOccupationChannel.Progression,
-                false,
-                CupPairBlockReason.OccupantConflict,
-                ApplicationErrorCodes.MaterializationOccupantConflict)
-            : new SlotSideEvaluation(CupOccupationChannel.Progression, true, null, null);
+        return satisfaction != DestinationSatisfaction.Kind.Satisfied ? new SlotSideEvaluation(CupOccupationChannel.Progression, false, CupPairBlockReason.DestinationNotSatisfied, ApplicationErrorCodes.InboundDestinationNotSatisfied) : !occupant.Value.Equals(replay.Value) ? new SlotSideEvaluation(CupOccupationChannel.Progression, false, CupPairBlockReason.OccupantConflict, ApplicationErrorCodes.MaterializationOccupantConflict) : new SlotSideEvaluation(CupOccupationChannel.Progression, true, null, null);
     }
 
     private static SlotSideEvaluation EvaluateQualificationChannel(
@@ -345,19 +295,7 @@ internal static class CupPairEvaluation
             sourceStage!.Id,
             path!,
             replay.Value);
-        return satisfaction != DestinationSatisfaction.Kind.Satisfied
-            ? new SlotSideEvaluation(
-                CupOccupationChannel.Qualification,
-                false,
-                CupPairBlockReason.DestinationNotSatisfied,
-                ApplicationErrorCodes.InboundDestinationNotSatisfied)
-            : !occupant.Value.Equals(replay.Value)
-            ? new SlotSideEvaluation(
-                CupOccupationChannel.Qualification,
-                false,
-                CupPairBlockReason.OccupantConflict,
-                ApplicationErrorCodes.MaterializationOccupantConflict)
-            : new SlotSideEvaluation(CupOccupationChannel.Qualification, true, null, null);
+        return satisfaction != DestinationSatisfaction.Kind.Satisfied ? new SlotSideEvaluation(CupOccupationChannel.Qualification, false, CupPairBlockReason.DestinationNotSatisfied, ApplicationErrorCodes.InboundDestinationNotSatisfied) : !occupant.Value.Equals(replay.Value) ? new SlotSideEvaluation(CupOccupationChannel.Qualification, false, CupPairBlockReason.OccupantConflict, ApplicationErrorCodes.MaterializationOccupantConflict) : new SlotSideEvaluation(CupOccupationChannel.Qualification, true, null, null);
     }
 
     private static bool TryResolveProgressionPath(

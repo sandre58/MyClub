@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Outlet, useLocation } from 'react-router-dom';
 import '../design-system/fonts';
@@ -13,6 +13,7 @@ import { ShellSidebar } from './ShellSidebar';
 import { SHELL_ATTENTION_DRAWER_PANEL_ID } from './shellIds';
 import { useThemeRoot } from '../theme/useThemeRoot';
 import { useShellViewport } from './useShellViewport';
+import { WaitMark } from '../design-system/components/WaitMark';
 
 const sidebarCollapsedStorageKey = 'playup:shell:sidebar-collapsed';
 
@@ -220,7 +221,9 @@ export function AppShell() {
           >
             <ShellMain>
               <PageErrorBoundary>
-                <Outlet />
+                <Suspense fallback={<WaitMark>{t('loading')}</WaitMark>}>
+                  <Outlet />
+                </Suspense>
               </PageErrorBoundary>
             </ShellMain>
             <AttentionDrawer

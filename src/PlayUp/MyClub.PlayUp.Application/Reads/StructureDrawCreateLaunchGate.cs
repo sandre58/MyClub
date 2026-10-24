@@ -116,11 +116,7 @@ public static class StructureDrawCreateLaunchGate
         }
 
         var facts = StageDrawBracketLaunchClassifier.ClassifyForDrawKind(stage, competitionStages, kind);
-        return facts.BlockingPlaceCount > 0
-            ? Deny(BlockBracketPlacesOccupied)
-            : StructureDrawConsumptionGate.StageHasObsoleteDrawForConsumption(stage)
-            ? Deny(BlockDrawObsoleteForConsumption)
-            : !TryAllowOperationalDrawEdit(stage) ? Deny(BlockOperationalExitEdit) : Allow();
+        return facts.BlockingPlaceCount > 0 ? Deny(BlockBracketPlacesOccupied) : StructureDrawConsumptionGate.StageHasObsoleteDrawForConsumption(stage) ? Deny(BlockDrawObsoleteForConsumption) : !TryAllowOperationalDrawEdit(stage) ? Deny(BlockOperationalExitEdit) : Allow();
     }
 
     private static bool BlocksUpstreamCompositionPool(StructureStageHubSummaryDto hub) => !hub.IsRootComposition && (hub.CompositionEntryCount <= 0 || (hub.InboundComposition is { ConfiguredVolume: > 0 } inbound

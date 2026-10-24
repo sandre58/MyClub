@@ -31,19 +31,7 @@ public static class ProgressionPathExpander
         ArgumentNullException.ThrowIfNull(rounds);
         ArgumentNullException.ThrowIfNull(bracketPairs);
 
-        return intents.Count == 0
-            ? throw new DomainException(
-                "Progression intents require at least one intent.",
-                RulesErrorCodes.ProgressionRulesInvalid)
-            : intents.Select(i => i.Order).Distinct().Count() != intents.Count
-            ? throw new DomainException(
-                "Progression intent orders must be unique.",
-                RulesErrorCodes.ProgressionRulesInvalid)
-            : bracketPairs.Count == 0
-            ? throw new DomainException(
-                "Progression Expand requires BracketPairs (Cup V1 PairKey identity).",
-                RulesErrorCodes.ProgressionRulesInvalid)
-            : (IReadOnlyList<ProgressionPath>)MaterializeFromPairs(intents, rounds, bracketPairs);
+        return intents.Count == 0 ? throw new DomainException("Progression intents require at least one intent.", RulesErrorCodes.ProgressionRulesInvalid) : intents.Select(i => i.Order).Distinct().Count() != intents.Count ? throw new DomainException("Progression intent orders must be unique.", RulesErrorCodes.ProgressionRulesInvalid) : bracketPairs.Count == 0 ? throw new DomainException("Progression Expand requires BracketPairs (Cup V1 PairKey identity).", RulesErrorCodes.ProgressionRulesInvalid) : (IReadOnlyList<ProgressionPath>)MaterializeFromPairs(intents, rounds, bracketPairs);
     }
 
     /// <summary>

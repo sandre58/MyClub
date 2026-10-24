@@ -131,13 +131,7 @@ internal static class StageConfrontationMaterializationState
     private static (EntryId Home, EntryId Away)[] ChampionshipDeterminedPairs(
         IReadOnlyList<EntryId> entries,
         MatchGenerationFormat format) =>
-        entries.Count < 2
-            ? []
-            :
-            [
-                .. MaterializeMatches.BuildRoundRobinRounds(entries, format)
-                    .SelectMany(round => round)
-            ];
+        entries.Count < 2 ? [] : [.. MaterializeMatches.BuildRoundRobinRounds(entries, format).SelectMany(round => round)];
 
     private static int CountGroupsEligible(
         Competition competition,
