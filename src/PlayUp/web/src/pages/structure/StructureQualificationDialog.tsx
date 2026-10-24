@@ -9,7 +9,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { fetchStageSchematic, replaceStageQualificationRules } from '../../api';
 import { Alert } from '../../design-system/components/Alert';
@@ -35,6 +35,7 @@ import {
 } from '../../design-system/icons/shellIcons';
 import { notify } from '../../design-system/toastStore';
 import { useClearMutationsOnOpen } from '../../design-system/useClearMutationsOnOpen';
+import { useOpenEdge, useSyncWhen } from '../../design-system/useRenderSync';
 import { useDiscardConfirm } from '../../design-system/useDiscardConfirm';
 import { queryKeys } from '../../queryKeys';
 import type {
@@ -236,54 +237,39 @@ export function StructureQualificationDialog({
     },
   });
 
-  useEffect(() => {
-    if (!open) {
-      // Keep last paint (intents + sessionReady) during Dialog exit animation.
-      return;
-    }
-
-    setSessionReady(false);
-  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps -- open edge only
+  useOpenEdge(open, { onOpen: () => setSessionReady(false) });
 
   useClearMutationsOnOpen(open, mutation);
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    // Schematic must succeed before Expand/sync. `isLoading` alone is insufficient:
-    // on error (and disabled-idle pending) it is false while `groups` stays [] —
-    // EachGroup would publish sessionReady with expandOccurrences = 0.
-    if (!sourceSchematicQuery.isSuccess) {
-      return;
-    }
-    // Do not rehydrate from invalidate while saving / closing.
-    if (mutation.isPending || mutation.isSuccess) {
-      return;
-    }
-
-    const apiIntents = stage.qualificationIntents ?? [];
-    const next = apiIntents.map(intentFromApi).map((intent) => {
-      const synced = syncPlaceSlotKeys(intent, groups);
-      const peer = stageById.get(synced.destinationStageId.trim());
-      return normalizeFormOnlyDestinationDraft(synced, peer?.formatKind);
-    });
-    setIntents(next);
-    setBaselineSerialized(serializeIntents(next, groups));
-    setExpandedId(null);
-    setSessionReady(true);
-    resetDiscard();
-  }, [
-    open,
+  const qualificationHydrateKey = [
     stage.stageId,
-    stage.qualificationIntents,
-    groups,
-    sourceSchematicQuery.isSuccess,
-    mutation.isPending,
-    mutation.isSuccess,
-    resetDiscard,
-    stageById,
-  ]);
+    sourceSchematicQuery.isSuccess ? '1' : '0',
+    mutation.isPending ? 'p' : '',
+    mutation.isSuccess ? 's' : '',
+    JSON.stringify(stage.qualificationIntents ?? []),
+    groups.length,
+  ].join('|');
+
+  useSyncWhen(
+    open &&
+      sourceSchematicQuery.isSuccess &&
+      !mutation.isPending &&
+      !mutation.isSuccess,
+    qualificationHydrateKey,
+    () => {
+      const apiIntents = stage.qualificationIntents ?? [];
+      const next = apiIntents.map(intentFromApi).map((intent) => {
+        const synced = syncPlaceSlotKeys(intent, groups);
+        const peer = stageById.get(synced.destinationStageId.trim());
+        return normalizeFormOnlyDestinationDraft(synced, peer?.formatKind);
+      });
+      setIntents(next);
+      setBaselineSerialized(serializeIntents(next, groups));
+      setExpandedId(null);
+      setSessionReady(true);
+      resetDiscard();
+    },
+  );
 
   const entryTotal = useMemo(() => {
     return intents.reduce(

@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useId, useMemo, useState, type FormEvent } from 'react';
+import { useId, useMemo, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { replaceRoundTieFormat, replaceStageDefaultTieFormat } from '../../api';
 import { Alert } from '../../design-system/components/Alert';
@@ -20,6 +20,7 @@ import {
 } from '../../design-system/icons/shellIcons';
 import { notify } from '../../design-system/toastStore';
 import { useClearMutationsOnOpen } from '../../design-system/useClearMutationsOnOpen';
+import { useSyncWhen } from '../../design-system/useRenderSync';
 import { useDiscardConfirm } from '../../design-system/useDiscardConfirm';
 import { MutationError, PendingLabel } from '../../ui';
 import type {
@@ -251,10 +252,7 @@ export function TieFormatDialog({
     resetDiscard,
   } = useDiscardConfirm(isDirty, onClose);
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
+  useSyncWhen(open, stage.stageId, () => {
     const nextPhase = tieFormFromSummary(stage.defaultTieFormat);
     const nextRounds = roundFormsFromStage(stage);
     const nextRoundIds = flattenRounds(stage.confrontationSegments).map(
@@ -272,7 +270,7 @@ export function TieFormatDialog({
     );
     setNav(canDefault ? 'phase' : (nextRoundIds[0] ?? 'phase'));
     resetDiscard();
-  }, [open, stage, resetDiscard]);
+  });
 
   const mutation = useMutation({
     mutationFn: async () => {

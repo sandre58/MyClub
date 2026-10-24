@@ -5,6 +5,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useSyncWhen } from '../../design-system/useRenderSync';
 import { useTranslation } from 'react-i18next';
 import {
   fetchStageOverview,
@@ -205,7 +206,7 @@ export function StructurePhaseFiche({
   const [manualOpen, setManualOpen] = useState(false);
   const [manualSlotKey, setManualSlotKey] = useState<string | null>(null);
 
-  useEffect(() => {
+  useSyncWhen(true, stage?.stageId ?? '', () => {
     setEdit(null);
     setRulesEditStage(null);
     setRemoveOpen(false);
@@ -219,7 +220,7 @@ export function StructurePhaseFiche({
     setComposeFocusSearch(false);
     setManualOpen(false);
     setManualSlotKey(null);
-  }, [stage?.stageId]);
+  });
 
   const deactivateDrawMutation = useMutation({
     mutationFn: () => replaceStageDrawRules(stage!.stageId, { clear: true }),
@@ -266,8 +267,20 @@ export function StructurePhaseFiche({
   useClearMutationsOnOpen(deactivateDrawOpen, deactivateDrawMutation);
   useClearMutationsOnOpen(releaseConfirmOpen, releaseMutation);
 
-  useEffect(() => {
-    if (!stage) return;
+  const initialNavigationKey = [
+    stage?.stageId ?? '',
+    initialEdit ?? '',
+    initialCompose ? '1' : '0',
+    initialManual ? '1' : '0',
+    initialDrawWorkflow ? '1' : '0',
+    stage?.hasDrawRules ? '1' : '0',
+    stage?.status ?? '',
+  ].join('|');
+
+  useSyncWhen(Boolean(stage), initialNavigationKey, () => {
+    if (!stage) {
+      return;
+    }
     if (initialManual) {
       setManualOpen(true);
       onInitialEditConsumed?.();
@@ -284,7 +297,9 @@ export function StructurePhaseFiche({
       onInitialEditConsumed?.();
       return;
     }
-    if (!initialEdit) return;
+    if (!initialEdit) {
+      return;
+    }
     const map: Partial<Record<StructureSectionId, EditTarget>> = {
       qualification: 'qualification',
       progression: 'progression',
@@ -315,14 +330,7 @@ export function StructurePhaseFiche({
       }
     }
     onInitialEditConsumed?.();
-  }, [
-    initialEdit,
-    initialCompose,
-    initialManual,
-    initialDrawWorkflow,
-    stage,
-    onInitialEditConsumed,
-  ]);
+  });
 
   useEffect(() => {
     if (!stage || !initialFocus) {
