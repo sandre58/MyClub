@@ -101,9 +101,30 @@ See [`critical-paths.md`](./critical-paths.md) (8 scenarios + test coverage snap
 
 Journals: `docs/audit/phase-1-wave-1.md` · `phase-1-wave-2.md` · Notion `AUD-0001`…
 
+## AUD-0001 — current policy (Phase 5 F1 + F1bis, 2026-10-22)
+
+**F1:** repoint + **structure-scoped** scripts (lot C7). **F1bis (go décideur):** restaurer les audits **repo-wide** pour l’investigation locale — **pas** en gate CI.
+
+| npm script | Script | Scope |
+| --- | --- | --- |
+| `frontend:audit` | `frontend-audit.mjs` | CSS graph, orphan classes (heuristic), DS components, i18n sample, duplicate decl blocks |
+| `i18n:audit:repo` | `i18n-key-audit.mjs` | All locale JSON leaf keys (fr+en), heuristic |
+| `css:audit` | `audit-structure-fiche-css.mjs` | `structure-fiche.css` only |
+| `i18n:audit` | `audit-structure-i18n.mjs` | `locales/en/structure.json` only |
+| `tile:check` | `tile-family-check.mjs` | Tile family B |
+
+**Normative CSS (CI):** `npm run lint:css` (Stylelint). Rider IDE inspections may differ — see web `conventions.md`.
+
+**Records:** [`phase-5-lot-f1bis-plan.md`](./phase-5-lot-f1bis-plan.md) · [`phase-5-reconciliation-f1-f4.md`](./phase-5-reconciliation-f1-f4.md) · C7 [`phase-3-lot-c7-plan.md`](./phase-3-lot-c7-plan.md).
+
+The controls matrix and dead-code table **above** describe the **phase 0 execution SHA** (`93b09f16…`) only — not current `main`.
+
+---
+
 ## Gaps for phase 2 (policy, not findings)
 
-- Decide **Retenu** column and whether missing scripts are restored or package.json/docs are corrected.
+- ~~Decide whether missing scripts are restored or package.json/docs are corrected.~~ **Resolved (F1):** repoint + scoped; see AUD-0001 section above.
+- Decide **Retenu** column (other controls).
 - NU1608 / Npgsql–EF alignment.
 - Prettier drift (447 files) — intentional backlog vs CI failure.
 - Whether baseline execution SHA should track `main` after merge or stay branch-based during active development.

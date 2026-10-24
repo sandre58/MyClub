@@ -4,7 +4,7 @@ This guide explains **who can reach the Play'Up HTTP API** when you run `MyClub.
 
 **Product decision (SoT):** [Play'Up Host — exposition locale (dette auth)](https://app.notion.com/p/40075fb92d10818390f6dcceef89a75d) — model **A** (local organizer) with **trajectoire C** (authentication and TLS required before any Internet or multi-tenant hosting).
 
-Git audit context: `docs/audit/phase-1-wave-5.md` §1, lot **C1** (`docs/audit/phase-3-lot-c1-plan.md`).
+Git audit context: `docs/audit/phase-1-wave-5.md` §1, lot **C1** (`docs/audit/phase-3-lot-c1-plan.md`), lot **P7-Sec** (`docs/audit/phase-7-lot-sec-aud-0008-c.md`).
 
 ## What the Host exposes
 
@@ -27,6 +27,30 @@ Treating the Host as “safe because it is dev” is only valid when **only trus
 Overrides: `dotnet run --urls …`, `ASPNETCORE_URLS`, or IDE **applicationUrl** edits.
 
 **Canonical local bind for day-to-day work:** loopback (`localhost` or `127.0.0.1`). The Vite dev server proxies to the Host; see [Play'Up Web README](../../src/PlayUp/web/README.md).
+
+## Bind address vs `AllowedHosts` vs NAT / tunnel
+
+These layers are **independent**. None of them replaces authentication or a firewall.
+
+| Layer | What it controls | In this repository |
+| --- | --- | --- |
+| **Kestrel bind** (`--urls`, `ASPNETCORE_URLS`, `launchSettings` `applicationUrl`) | Which **network interfaces** accept TCP connections to the Host process | Default loopback; operator can bind `0.0.0.0` or `+` (scenario S3) |
+| **`AllowedHosts`** (`appsettings*.json`) | Which HTTP **`Host` header** values the app accepts | Base `appsettings.json` → `"*"`; Development override → `localhost;127.0.0.1` only |
+| **NAT / port forward / tunnel** (S4) | Whether clients **outside the LAN** can reach a listening port | **Not configured or detected by Host** — operator and network equipment |
+
+A **Development startup warning** for non-loopback bind addresses signals that other interfaces *may* reach the anonymous API. It does **not** prove WAN or “Internet” exposure; that also depends on firewall rules, routing, and port forwarding.
+
+## `AllowedHosts` by environment (AUD-0008-C / C2)
+
+| File | Value | When it applies |
+| --- | --- | --- |
+| `appsettings.json` | `"AllowedHosts": "*"` | Base layer; overridden when an environment-specific file exists |
+| `appsettings.Development.json` | `localhost;127.0.0.1` | `ASPNETCORE_ENVIRONMENT=Development` (typical IDE / `launchSettings`) |
+| `appsettings.Production.json` | `127.0.0.1;localhost` | `ASPNETCORE_ENVIRONMENT=Production` (CI Host E2E, `dotnet run` without Development) |
+
+**Future S6 (reverse proxy):** legitimate public hostnames must be added via configuration (environment-specific file or `AllowedHosts` env var) when a hosting model is arbitrated. Until then, Production defaults assume **loopback-only** Host access.
+
+`AllowedHosts` filters HTTP `Host` headers; it does **not** stop anonymous API access when TCP is open, and it is **not** a substitute for TLS or authentication.
 
 ## Exposure scenarios
 
@@ -60,9 +84,17 @@ These reduce accidental misconfiguration; they **do not** replace network isolat
 | Measure | Effect |
 | --- | --- |
 | `appsettings.Development.json` → `AllowedHosts` | Restricts acceptable HTTP `Host` headers to `localhost` and `127.0.0.1` when `ASPNETCORE_ENVIRONMENT=Development`. Use a local override (same file, gitignored elsewhere) if you deliberately use another dev hostname. |
-| Startup warning (Development) | Serilog **Warning** when Kestrel listen URLs use a **non-loopback** host (e.g. `0.0.0.0`). Does **not** stop startup. |
+| Startup guard (`HostListenExposureGuard`) | **Development:** **Warning** on non-loopback listen URLs. **Production:** **Critical** + shutdown unless `PlayUp:Host:AllowNonLoopbackBind` is `true`. Does **not** claim WAN exposure without operator network context. |
 
-Production / non-Development configurations still use `AllowedHosts: *` in base `appsettings.json` until a separate hosting decision exists.
+### Production non-loopback bind (AUD-0008-C2)
+
+When `ASPNETCORE_ENVIRONMENT` is **not** Development, the Host **stops** after startup if Kestrel listens on a **non-loopback** address, unless the operator explicitly opts in:
+
+| Setting | Purpose |
+| --- | --- |
+| `PlayUp:Host:AllowNonLoopbackBind` (`false` in `appsettings.Production.json`) | Set to `true` only when accepting LAN bind without auth/TLS (interim misuse — not Internet-ready) |
+
+Development keeps **warn-only** behaviour (no startup block).
 
 ## Related tooling
 

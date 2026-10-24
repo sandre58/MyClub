@@ -136,15 +136,7 @@ public static class FixtureOutcomeResolver
             .Distinct()
             .ToArray();
 
-        return entries.Length != 2
-            ? throw new DomainException(
-                "Fixture confrontation requires exactly two distinct entries across all legs.",
-                StageErrorCodes.FixtureOutcomeInvalid)
-            : legs.Select(leg => new HashSet<EntryId> { leg.HomeEntryId, leg.AwayEntryId }).Any(pair => !pair.SetEquals(entries))
-            ? throw new DomainException(
-                "All confrontation legs must share the same two entries.",
-                StageErrorCodes.FixtureOutcomeInvalid)
-            : ((EntryId EntryA, EntryId EntryB))(entries[0], entries[1]);
+        return entries.Length != 2 ? throw new DomainException("Fixture confrontation requires exactly two distinct entries across all legs.", StageErrorCodes.FixtureOutcomeInvalid) : legs.Select(leg => new HashSet<EntryId> { leg.HomeEntryId, leg.AwayEntryId }).Any(pair => !pair.SetEquals(entries)) ? throw new DomainException("All confrontation legs must share the same two entries.", StageErrorCodes.FixtureOutcomeInvalid) : ((EntryId EntryA, EntryId EntryB))(entries[0], entries[1]);
     }
 
     private static FixtureOutcome ResolveSingleLeg(TieFormat tieFormat, FixtureLegSnapshot leg)

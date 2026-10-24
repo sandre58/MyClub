@@ -30,11 +30,6 @@ internal static class StructureDematerializeAssembler
 
         var gates = matchSummaries.Select(DematerializationMatchGate.FromSummary).ToArray();
         var capability = DematerializationCapability.Evaluate(competition, stage, gates);
-        return !capability.IsExposed || capability.Scope is null
-            ? null
-            : new StructureDematerializeDto(
-            capability.Enabled,
-            capability.DisabledReason,
-            capability.Scope);
+        return !capability.IsExposed || capability.Scope is null ? null : new StructureDematerializeDto(capability.Enabled, capability.DisabledReason, capability.Scope);
     }
 }
