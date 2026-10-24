@@ -1,4 +1,5 @@
 .team-crest {
+  --team-crest-fill: currentColor;
   position: relative;
   display: inline-flex;
   flex: none;

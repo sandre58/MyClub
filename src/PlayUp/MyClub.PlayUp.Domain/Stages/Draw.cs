@@ -126,7 +126,7 @@ public sealed class Draw : Entity<DrawId>
     }
 
     /// <summary>
-    /// Cancels the draw (Draft or Published). Cancelled draws cannot be published.
+    /// Cancels the draw (Draft or Published). Canceled draws cannot be published.
     /// </summary>
     internal void Cancel()
     {
@@ -148,17 +148,7 @@ public sealed class Draw : Entity<DrawId>
     /// <summary>
     /// Builds slot assignment instructions from a published Slot draw (no Stage mutation).
     /// </summary>
-    public IReadOnlyList<SlotAssignmentInstruction> ToSlotAssignmentInstructions(StageId stageId) =>
-        Status != DrawStatus.Published
-        || Kind != DrawResolutionKind.Slot
-        || Resolution.State != DrawResolutionState.Resolved
-            ? throw new DomainException(
-                "Slot assignment instructions require a published Slot draw with a resolved result.",
-                StageErrorCodes.DrawInvalidTransition)
-            : [
-                ..Resolution.SlotResults.Select(r =>
-                    new SlotAssignmentInstruction(stageId, r.SlotKey, r.EntryId))
-            ];
+    public IReadOnlyList<SlotAssignmentInstruction> ToSlotAssignmentInstructions(StageId stageId) => Status != DrawStatus.Published || Kind != DrawResolutionKind.Slot || Resolution.State != DrawResolutionState.Resolved ? throw new DomainException("Slot assignment instructions require a published Slot draw with a resolved result.", StageErrorCodes.DrawInvalidTransition) : [.. Resolution.SlotResults.Select(r => new SlotAssignmentInstruction(stageId, r.SlotKey, r.EntryId))];
 
     private void EnsureDraftMutable()
     {

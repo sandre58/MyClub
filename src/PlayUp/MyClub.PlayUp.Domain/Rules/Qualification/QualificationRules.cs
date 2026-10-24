@@ -67,19 +67,7 @@ public sealed record QualificationRules
 
         return intents.Count == 0
             ? new QualificationRules(paths)
-            : paths.Count == 0
-            ? throw new DomainException(
-                "Persisted qualification intents require a path projection.",
-                RulesErrorCodes.QualificationRulesInvalid)
-            : intents.Select(i => i.Order).Distinct().Count() != intents.Count
-            ? throw new DomainException(
-                "Qualification intent orders must be unique.",
-                RulesErrorCodes.QualificationRulesInvalid)
-            : paths.Select(p => p.Order).Distinct().Count() != paths.Count
-            ? throw new DomainException(
-                "Qualification path orders must be unique.",
-                RulesErrorCodes.QualificationRulesInvalid)
-            : new QualificationRules(intents, paths);
+            : paths.Count == 0 ? throw new DomainException("Persisted qualification intents require a path projection.", RulesErrorCodes.QualificationRulesInvalid) : intents.Select(i => i.Order).Distinct().Count() != intents.Count ? throw new DomainException("Qualification intent orders must be unique.", RulesErrorCodes.QualificationRulesInvalid) : paths.Select(p => p.Order).Distinct().Count() != paths.Count ? throw new DomainException("Qualification path orders must be unique.", RulesErrorCodes.QualificationRulesInvalid) : new QualificationRules(intents, paths);
     }
 
     /// <summary>

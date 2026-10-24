@@ -49,6 +49,10 @@ public sealed class CupC2ImpasseRecetteProtocolTests(DevelopmentPostgresFixture 
         // No manual assign before Start (checklist A2/A3). Guard 1a runs before production-gap Unmaterialized on this seed.
         hub.Lifecycle!.Transition.DisabledReasonCode.Should()
             .Be(StructureStageLifecycleAssembler.DisabledIncompleteEntryRound);
+        hub.PresentedIssueCodes.Should().Contain(
+            StructureStageLifecycleAssembler.DisabledIncompleteEntryRound);
+        hub.PresentedIssueCodes.Should().NotContain(
+            StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations);
 
         var executor = scope.ServiceProvider.GetRequiredService<UseCaseExecutor>();
         var startAct = async () => await executor.StartStageAsync(stage.Id);
@@ -63,6 +67,8 @@ public sealed class CupC2ImpasseRecetteProtocolTests(DevelopmentPostgresFixture 
         await using var _ = scope;
         var (competition, stage, hub, matches) = scope;
         EnsureRecetteCupReady(competition, stage);
+
+        hub.Should().NotBeNull();
 
         var materializeSecond = MaterializeCupFromOccupiedSlots.Execute(competition, stage, null, matches, _clock);
         materializeSecond.CreatedMatches.Should().HaveCount(1);
@@ -84,6 +90,10 @@ public sealed class CupC2ImpasseRecetteProtocolTests(DevelopmentPostgresFixture 
         hub.Lifecycle!.Transition.Enabled.Should().BeFalse();
         hub.Lifecycle.Transition.DisabledReasonCode.Should()
             .Be(StructureStageLifecycleAssembler.DisabledIncompleteEntryRound);
+        hub.PresentedIssueCodes.Should().Contain(
+            StructureStageLifecycleAssembler.DisabledIncompleteEntryRound);
+        hub.PresentedIssueCodes.Should().NotContain(
+            StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations);
 
         var executor = scope.ServiceProvider.GetRequiredService<UseCaseExecutor>();
         var startAct = async () => await executor.StartStageAsync(stage.Id);

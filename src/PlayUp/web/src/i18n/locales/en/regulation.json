@@ -37,7 +37,6 @@
     "inheritedFromFrame": "Rules inherited from the general regulations",
     "specificToPhase": "Rules adapted for this stage"
   },
-  "personalized": "Personalized",
   "editRegulation": "Edit regulations",
   "editRegulationDisabledHint": "Regulations cannot be edited in this state.",
   "editor": {
@@ -124,7 +123,6 @@
     "aria": "Administrative score on forfeit: {{winner}}–{{loser}}"
   },
   "frameHeading": "Competition frame",
-  "loadError": "Unable to load regulations.",
   "matchTimeline": {
     "aria": "Match timeline",
     "regulationHeading": "Regulation time",
@@ -144,7 +142,6 @@
   },
   "openInStructure": "Go to phase",
   "phaseRegulationAria": "Stage regulations",
-  "phaseStructureAria": "Stage structure",
   "phasesHeading": "Stages",
   "points": {
     "aria": "Points scale",
@@ -160,9 +157,7 @@
     "groups": "{{count}} groups",
     "championship": "League · {{teams}} teams",
     "swiss": "Swiss system · {{rounds}} rounds",
-    "swissGeneric": "Swiss system",
-    "swissRound": "Round {{n}}",
-    "alimentation": "Feeds"
+    "swissGeneric": "Swiss system"
   },
   "title": "Regulations",
   "tokens": {

@@ -79,7 +79,8 @@ public sealed class ReadPerformanceBaselineTests(
         detailSql.Should().BeLessThan(10, "GetCompetitionDetail should use projection, not full stage graphs");
         matchHubSql.Should().BeLessThan(matchHubFanOutTotalSql, "unified Match Hub should beat 1+N fan-out");
         attentionSql.Should().BeLessThanOrEqualTo(overviewSql, "attention bundle must not exceed overview load");
-        attentionSql.Should().BeLessThanOrEqualTo(21, "attention path should stay near shell overview cost (includes CompositionEntries)");
+        attentionSql.Should().BeLessThanOrEqualTo(20, "D2-B lot 2 multi-stage hydration batch (baseline was 21 SQL)");
+        overviewSql.Should().BeLessThanOrEqualTo(20, "overview bundle uses batched GetByIds hydration (baseline was 21 SQL)");
         consultationSql.Should().BeLessThanOrEqualTo(overviewSql, "consultation bundle must not exceed overview load");
         structureSql.Should().BeLessThanOrEqualTo(
             overviewSql,
@@ -113,6 +114,7 @@ public sealed class ReadPerformanceBaselineTests(
             });
 
         matchesSql.Should().BeGreaterThan(3, "list endpoint loads stage + competition + matches");
+        matchesSql.Should().BeLessThanOrEqualTo(18, "D2-B batch attachment hydration (baseline was 20 SQL)");
     }
 
     [Fact]
@@ -141,6 +143,7 @@ public sealed class ReadPerformanceBaselineTests(
             });
 
         matchesSql.Should().BeGreaterThan(10, "heavy match list should issue many SQL commands today");
+        matchesSql.Should().BeLessThanOrEqualTo(18, "D2-B batch attachment hydration (baseline was 20 SQL)");
     }
 
     private async Task<CompetitionId> SeedAsync(string seedSpec)

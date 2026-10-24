@@ -145,22 +145,7 @@ public static class GenerateDrawResolution
             .ToArray()
             ?? [];
 
-        return draw.Kind == DrawResolutionKind.Group && drawRules?.PotRules is null
-            ? throw new ApplicationFailureException(
-                $"Draw '{draw.Id}' requires PotRules on Stage regulation for Group generation.",
-                ApplicationErrorCodes.DrawGenerationFailure)
-            : new DrawGenerationRequest(
-            draw.Kind,
-            inputs.Entries,
-            constraints,
-            constraintContext,
-            randomSource,
-            slotTargets,
-            inputs.FixedSlots,
-            groupTargets,
-            drawRules?.PotRules?.NumberOfPots,
-            inputs.PotMembership,
-            inputs.FixedGroups);
+        return draw.Kind == DrawResolutionKind.Group && drawRules?.PotRules is null ? throw new ApplicationFailureException($"Draw '{draw.Id}' requires PotRules on Stage regulation for Group generation.", ApplicationErrorCodes.DrawGenerationFailure) : new DrawGenerationRequest(draw.Kind, inputs.Entries, constraints, constraintContext, randomSource, slotTargets, inputs.FixedSlots, groupTargets, drawRules?.PotRules?.NumberOfPots, inputs.PotMembership, inputs.FixedGroups);
     }
 
     /// <summary>
