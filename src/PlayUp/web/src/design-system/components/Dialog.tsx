@@ -2,12 +2,12 @@ import {
   useEffect,
   useId,
   useRef,
-  useState,
   type ReactNode,
   type RefObject,
 } from 'react';
 import { CloseIcon } from '../icons/shellIcons';
 import { DS_MOTION_EXIT_MS } from '../motion';
+import { usePresence } from '../usePresence';
 import { useDismissLayer } from '../useDismissLayer';
 import { getFocusableElements, useFocusTrap } from '../useFocusTrap';
 import { Tooltip } from './Tooltip';
@@ -80,25 +80,11 @@ export function Dialog({
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const hadOpenedRef = useRef(false);
   const fallbackReturnRef = useRef<HTMLElement | null>(null);
-  const [mounted, setMounted] = useState(open);
-  const [visible, setVisible] = useState(open);
-
-  useEffect(() => {
-    if (open) {
-      setMounted(true);
-      const frame = requestAnimationFrame(() => {
-        requestAnimationFrame(() => setVisible(true));
-      });
-      return () => cancelAnimationFrame(frame);
-    }
-
-    setVisible(false);
-    const timeout = window.setTimeout(
-      () => setMounted(false),
-      DS_MOTION_EXIT_MS,
-    );
-    return () => window.clearTimeout(timeout);
-  }, [open]);
+  const { present: mounted, state: presenceState } = usePresence(
+    open,
+    DS_MOTION_EXIT_MS,
+  );
+  const visible = presenceState === 'open';
 
   useEffect(() => {
     if (open) {

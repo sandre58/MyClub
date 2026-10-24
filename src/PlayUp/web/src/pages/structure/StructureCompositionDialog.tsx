@@ -4,6 +4,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useOpenEdge, useSyncWhen } from '../../design-system/useRenderSync';
 import { useTranslation } from 'react-i18next';
 import { replaceStageAffectationAuthoring } from '../../api';
 import { ConfirmDialog } from '../../design-system/components/ConfirmDialog';
@@ -101,16 +102,17 @@ export function StructureCompositionDialog({
     resetDiscard,
   } = useDiscardConfirm(dirty, onClose);
 
-  useEffect(() => {
-    if (!open) {
-      setSearch('');
-      return;
-    }
-    const initial = new Set(stage.affectationEntryIds ?? []);
-    setSelected(initial);
-    setBaseline(new Set(initial));
-    resetDiscard();
-  }, [open, stage.affectationEntryIds, stage.stageId, resetDiscard]);
+  useOpenEdge(open, { onClose: () => setSearch('') });
+  useSyncWhen(
+    open,
+    `${stage.stageId}:${(stage.affectationEntryIds ?? []).join(',')}`,
+    () => {
+      const initial = new Set(stage.affectationEntryIds ?? []);
+      setSelected(initial);
+      setBaseline(new Set(initial));
+      resetDiscard();
+    },
+  );
 
   useEffect(() => {
     if (!open || !focusSearch) return;

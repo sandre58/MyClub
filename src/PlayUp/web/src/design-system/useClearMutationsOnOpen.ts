@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useOpenEdge } from './useRenderSync';
 
 export type ResettableMutation = {
   reset: () => void;
@@ -12,14 +12,11 @@ export function useClearMutationsOnOpen(
   open: boolean,
   ...mutations: ResettableMutation[]
 ): void {
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    for (const mutation of mutations) {
-      mutation.reset();
-    }
-    // Open edge only — mutation identities are stable; including them retriggers every render.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  useOpenEdge(open, {
+    onOpen: () => {
+      for (const mutation of mutations) {
+        mutation.reset();
+      }
+    },
+  });
 }

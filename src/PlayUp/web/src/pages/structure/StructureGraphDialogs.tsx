@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useId, useState, type FormEvent } from 'react';
+import { useId, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   addCompetitionStage,
@@ -13,6 +13,7 @@ import { Dialog } from '../../design-system/components/Dialog';
 import { Field } from '../../design-system/components/Field';
 import { TextInput } from '../../design-system/components/TextInput';
 import { useClearMutationsOnOpen } from '../../design-system/useClearMutationsOnOpen';
+import { useSyncWhen } from '../../design-system/useRenderSync';
 import { useDiscardConfirm } from '../../design-system/useDiscardConfirm';
 import {
   ChampionshipFormatIcon,
@@ -122,15 +123,12 @@ export function AddPhaseDialog({
     resetDiscard,
   } = useDiscardConfirm(dirty, onClose);
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
+  useSyncWhen(open, 'add-phase', () => {
     setName('');
     setFormatPicked(false);
     setSkeleton(defaultSkeletonForm());
     resetDiscard();
-  }, [open, resetDiscard]);
+  });
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -321,15 +319,16 @@ export function EditSkeletonDialog({
     resetDiscard,
   } = useDiscardConfirm(dirty, onClose);
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    const next = skeletonFromStage(stage, data.structure.matchGenerationFormat);
-    setBaseline(next);
-    setSkeleton(next);
-    resetDiscard();
-  }, [open, stage, data.structure.matchGenerationFormat, resetDiscard]);
+  useSyncWhen(
+    open,
+    `${stage.stageId}:${data.structure.matchGenerationFormat}`,
+    () => {
+      const next = skeletonFromStage(stage, data.structure.matchGenerationFormat);
+      setBaseline(next);
+      setSkeleton(next);
+      resetDiscard();
+    },
+  );
 
   const mutation = useMutation({
     mutationFn: () =>

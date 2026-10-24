@@ -12,20 +12,28 @@ export function usePresence(
 ): { present: boolean; state: PresenceState } {
   const [present, setPresent] = useState(open);
   const [state, setState] = useState<PresenceState>(open ? 'open' : 'closed');
+  const [prevOpen, setPrevOpen] = useState(open);
 
-  useEffect(() => {
+  if (open !== prevOpen) {
+    setPrevOpen(open);
     if (open) {
       setPresent(true);
-      const frame = window.requestAnimationFrame(() => {
-        window.requestAnimationFrame(() => {
-          setState('open');
-        });
-      });
-      return () => window.cancelAnimationFrame(frame);
+    } else {
+      setState('closed');
+    }
+  }
+
+  useEffect(() => {
+    if (!open) {
+      return;
     }
 
-    setState('closed');
-    return undefined;
+    const frame = window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        setState('open');
+      });
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, [open]);
 
   useEffect(() => {
