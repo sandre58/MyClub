@@ -148,12 +148,6 @@ public static class SwissPairingEngine
     {
         var homesLeft = homeCounts.GetValueOrDefault(left);
         var homesRight = homeCounts.GetValueOrDefault(right);
-        return homesLeft != homesRight
-            ? homesLeft < homesRight
-                ? new SwissPairing(left, right)
-                : new SwissPairing(right, left)
-            : left.Value.CompareTo(right.Value) <= 0
-            ? new SwissPairing(left, right)
-            : new SwissPairing(right, left);
+        return homesLeft != homesRight ? homesLeft < homesRight ? new SwissPairing(left, right) : new SwissPairing(right, left) : left.Value.CompareTo(right.Value) <= 0 ? new SwissPairing(left, right) : new SwissPairing(right, left);
     }
 }

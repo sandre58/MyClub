@@ -72,17 +72,7 @@ internal static class InboundQualificationSeatProjection
             return null;
         }
 
-        return instruction is null
-            ? null
-            : DestinationSatisfaction.EvaluateQualification(
-                destination,
-                sourceStage.Id,
-                path,
-                instruction.EntryId)
-            == DestinationSatisfaction.Kind.Satisfied || ((path.Destination.TargetsForm || path.Destination.TargetsPopulation)
-            && destination.CompositionEntries.Any(entry => entry.EntryId.Equals(instruction.EntryId)))
-            ? instruction.EntryId
-            : null;
+        return instruction is null ? null : DestinationSatisfaction.EvaluateQualification(destination, sourceStage.Id, path, instruction.EntryId) == DestinationSatisfaction.Kind.Satisfied || ((path.Destination.TargetsForm || path.Destination.TargetsPopulation) && destination.CompositionEntries.Any(entry => entry.EntryId.Equals(instruction.EntryId))) ? instruction.EntryId : null;
     }
 
     private static MatchAttentionSlice ToAttentionSlice(MatchSummaryRow row) =>

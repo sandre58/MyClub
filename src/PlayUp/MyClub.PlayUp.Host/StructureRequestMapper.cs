@@ -81,36 +81,7 @@ public static class StructureRequestMapper
         var format = formatRaw.Trim();
         var matchGenerationFormat = ParseMatchGenerationFormat(matchGenerationFormatRaw);
 
-        return format.Equals("Championship", StringComparison.OrdinalIgnoreCase)
-            || format.Equals("Championnat", StringComparison.OrdinalIgnoreCase)
-            ? StructureIntent.Championship(stageName, matchGenerationFormat)
-            : format.Equals("Groups", StringComparison.OrdinalIgnoreCase)
-            || format.Equals("Groupes", StringComparison.OrdinalIgnoreCase)
-            ? groupCount is null || participantsPerGroup is null
-                ? throw new ApplicationFailureException(
-                    "Groups format requires GroupCount and ParticipantsPerGroup.",
-                    ApplicationErrorCodes.InvalidStructureIntent)
-                : StructureIntent.Groups(
-                    groupCount.Value,
-                    participantsPerGroup.Value,
-                    stageName,
-                    matchGenerationFormat)
-            : format.Equals("Cup", StringComparison.OrdinalIgnoreCase)
-            || format.Equals("Coupe", StringComparison.OrdinalIgnoreCase)
-            ? bracketSize is null
-                ? throw new ApplicationFailureException(
-                    "Cup format requires BracketSize (power of two, 2–64).",
-                    ApplicationErrorCodes.InvalidStructureIntent)
-                : StructureIntent.Cup(bracketSize.Value, stageName)
-            : format.Equals("Swiss", StringComparison.OrdinalIgnoreCase)
-            ? swissRoundCount is null
-                ? throw new ApplicationFailureException(
-                    "Swiss format requires SwissRoundCount (≥ 1).",
-                    ApplicationErrorCodes.InvalidStructureIntent)
-                : StructureIntent.Swiss(swissRoundCount.Value, stageName)
-            : throw new ApplicationFailureException(
-            $"Unknown structure format '{formatRaw}'. Expected Championship, Groups, Cup, or Swiss.",
-            ApplicationErrorCodes.InvalidStructureIntent);
+        return format.Equals("Championship", StringComparison.OrdinalIgnoreCase) || format.Equals("Championnat", StringComparison.OrdinalIgnoreCase) ? StructureIntent.Championship(stageName, matchGenerationFormat) : format.Equals("Groups", StringComparison.OrdinalIgnoreCase) || format.Equals("Groupes", StringComparison.OrdinalIgnoreCase) ? groupCount is null || participantsPerGroup is null ? throw new ApplicationFailureException("Groups format requires GroupCount and ParticipantsPerGroup.", ApplicationErrorCodes.InvalidStructureIntent) : StructureIntent.Groups(groupCount.Value, participantsPerGroup.Value, stageName, matchGenerationFormat) : format.Equals("Cup", StringComparison.OrdinalIgnoreCase) || format.Equals("Coupe", StringComparison.OrdinalIgnoreCase) ? bracketSize is null ? throw new ApplicationFailureException("Cup format requires BracketSize (power of two, 2–64).", ApplicationErrorCodes.InvalidStructureIntent) : StructureIntent.Cup(bracketSize.Value, stageName) : !format.Equals("Swiss", StringComparison.OrdinalIgnoreCase) ? throw new ApplicationFailureException($"Unknown structure format '{formatRaw}'. Expected Championship, Groups, Cup, or Swiss.", ApplicationErrorCodes.InvalidStructureIntent) : swissRoundCount is null ? throw new ApplicationFailureException("Swiss format requires SwissRoundCount (≥ 1).", ApplicationErrorCodes.InvalidStructureIntent) : StructureIntent.Swiss(swissRoundCount.Value, stageName);
     }
 
     /// <summary>
@@ -159,16 +130,7 @@ public static class StructureRequestMapper
             shootout = new PenaltyShootoutPolicy(request.PenaltyInitialKicksPerTeam.Value);
         }
 
-        var criteria = request.RankingCriteria is { Count: > 0 }
-            ? request.RankingCriteria
-            :
-            [
-                RankingCriterion.Points,
-                RankingCriterion.GoalDifference,
-                RankingCriterion.GoalsFor,
-                RankingCriterion.HeadToHead
-            ];
-
+        var criteria = request.RankingCriteria is { Count: > 0 } ? request.RankingCriteria : [RankingCriterion.Points, RankingCriterion.GoalDifference, RankingCriterion.GoalsFor, RankingCriterion.HeadToHead];
         return new Regulation(
             new EntryRules(request.MinimumTeams, request.MaximumTeams),
             new MatchRules(
@@ -239,13 +201,5 @@ public static class StructureRequestMapper
             shootout);
     }
 
-    private static MatchGenerationFormat ParseMatchGenerationFormat(string? value) =>
-        string.IsNullOrWhiteSpace(value)
-            ? MatchGenerationFormat.SingleRoundRobin
-            : Enum.TryParse<MatchGenerationFormat>(value.Trim(), ignoreCase: true, out var parsed)
-              && Enum.IsDefined(parsed)
-                ? parsed
-                : throw new ApplicationFailureException(
-                    $"Unknown MatchGenerationFormat '{value}'. Expected SingleRoundRobin or DoubleRoundRobin.",
-                    ApplicationErrorCodes.InvalidStructureIntent);
+    private static MatchGenerationFormat ParseMatchGenerationFormat(string? value) => string.IsNullOrWhiteSpace(value) ? MatchGenerationFormat.SingleRoundRobin : Enum.TryParse<MatchGenerationFormat>(value.Trim(), ignoreCase: true, out var parsed) && Enum.IsDefined(parsed) ? parsed : throw new ApplicationFailureException($"Unknown MatchGenerationFormat '{value}'. Expected SingleRoundRobin or DoubleRoundRobin.", ApplicationErrorCodes.InvalidStructureIntent);
 }

@@ -95,11 +95,7 @@ internal static class DestinationSatisfaction
 
         var resolution = destination.FormPathResolutions
             .FirstOrDefault(r => r.PathFingerprint == fingerprint);
-        return resolution is null
-            ? Kind.Pending
-            : !resolution.EntryId.Equals(expectedEntry)
-            ? Kind.Conflict
-            : InComposition(destination, expectedEntry) ? Kind.Satisfied : Kind.Pending;
+        return resolution is null ? Kind.Pending : !resolution.EntryId.Equals(expectedEntry) ? Kind.Conflict : InComposition(destination, expectedEntry) ? Kind.Satisfied : Kind.Pending;
     }
 
     private static Kind EvaluateGroup(Stage destination, EntryId expectedEntry, GroupId? groupId)
@@ -123,11 +119,7 @@ internal static class DestinationSatisfaction
         }
 
         var slot = destination.FindSlot(slotKey);
-        return slot is null
-            ? Kind.Pending
-            : slot.EntryId is { } occupant && !occupant.Equals(expectedEntry)
-            ? Kind.Conflict
-            : !InComposition(destination, expectedEntry) || slot.EntryId is null ? Kind.Pending : Kind.Satisfied;
+        return slot is null ? Kind.Pending : slot.EntryId is { } occupant && !occupant.Equals(expectedEntry) ? Kind.Conflict : !InComposition(destination, expectedEntry) || slot.EntryId is null ? Kind.Pending : Kind.Satisfied;
     }
 
     private static bool InComposition(Stage destination, EntryId entryId) =>

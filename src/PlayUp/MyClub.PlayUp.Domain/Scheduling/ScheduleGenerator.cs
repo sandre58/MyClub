@@ -274,12 +274,7 @@ public static class ScheduleGenerator
             }
         }
 
-        return match.AllowedStartWindows is null
-            ? starts
-            : [
-            .. starts
-                .Where(start => match.AllowedStartWindows.Any(w => w.ContainsOccupation(start, start + duration)))
-        ];
+        return match.AllowedStartWindows is null ? starts : [.. starts.Where(start => match.AllowedStartWindows.Any(w => w.ContainsOccupation(start, start + duration)))];
     }
 
     private static IReadOnlyList<ResourceId> ResolveResources(

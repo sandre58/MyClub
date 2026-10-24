@@ -75,30 +75,18 @@ public static class StructureDiagnosticPresentation
         PresentationPhaseBucket bucket,
         StructureStageHubSummaryDto stage,
         StructureViewDto view) =>
-        code is CompetitionFlowAnalyzer.OverCapacityEdge
-            or CompetitionFlowAnalyzer.ExpectedRankUnreachable
-            ? MatrixCell.Attention
-            : code is CompetitionFlowAnalyzer.PopulationShortfall
-                or CompetitionFlowAnalyzer.SourcePopulationShortfall
-                ? bucket == PresentationPhaseBucket.Ready
-                    ? MatrixCell.Danger
-                    : MatrixCell.Attention
-                : code == CompetitionFlowAnalyzer.SlotFeedMissing
-                    ? bucket == PresentationPhaseBucket.Draft
-                        ? MatrixCell.Attention
-                        : MatrixCell.Danger
-                    : code == StructurePresentedStageDiagnostics.PresentedAwaitingInboundQualification
-                    ? MatrixCell.Progress
-                    : code != CompetitionFlowAnalyzer.NonRootUnfed
-                    ? code == CompetitionFlowAnalyzer.AuthoredAwardUnreachable
-                        ? stage.FormatKind == StructureFormatKind.Cup
-                            ? MatrixCell.Danger
-                            : MatrixCell.Attention
-                        : MatrixCell.Danger
-                    : bucket == PresentationPhaseBucket.Draft
-                      && ResolveIncompletenessExpectedNonRootUnfed(stage, view)
-                        ? MatrixCell.Progress
-                        : MatrixCell.Attention;
+        code switch
+        {
+            CompetitionFlowAnalyzer.OverCapacityEdge or CompetitionFlowAnalyzer.ExpectedRankUnreachable => MatrixCell
+                .Attention,
+            CompetitionFlowAnalyzer.PopulationShortfall or CompetitionFlowAnalyzer.SourcePopulationShortfall =>
+                bucket == PresentationPhaseBucket.Ready ? MatrixCell.Danger : MatrixCell.Attention,
+            CompetitionFlowAnalyzer.SlotFeedMissing => bucket == PresentationPhaseBucket.Draft
+                ? MatrixCell.Attention
+                : MatrixCell.Danger,
+            StructurePresentedStageDiagnostics.PresentedAwaitingInboundQualification => MatrixCell.Progress,
+            _ => code != CompetitionFlowAnalyzer.NonRootUnfed ? code == CompetitionFlowAnalyzer.AuthoredAwardUnreachable ? stage.FormatKind == StructureFormatKind.Cup ? MatrixCell.Danger : MatrixCell.Attention : MatrixCell.Danger : bucket == PresentationPhaseBucket.Draft && ResolveIncompletenessExpectedNonRootUnfed(stage, view) ? MatrixCell.Progress : MatrixCell.Attention
+        };
 
     internal static bool ResolveIncompletenessExpectedNonRootUnfed(
         StructureStageHubSummaryDto stage,

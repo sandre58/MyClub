@@ -51,17 +51,7 @@ public sealed record ProgressionRules
         ArgumentNullException.ThrowIfNull(intents);
         ArgumentNullException.ThrowIfNull(paths);
 
-        return intents.Count == 0
-            ? new ProgressionRules(paths)
-            : paths.Count == 0
-            ? throw new DomainException(
-                "Persisted progression intents require a path projection.",
-                RulesErrorCodes.ProgressionRulesInvalid)
-            : intents.Select(i => i.Order).Distinct().Count() != intents.Count
-            ? throw new DomainException(
-                "Progression intent orders must be unique.",
-                RulesErrorCodes.ProgressionRulesInvalid)
-            : new ProgressionRules(intents, paths);
+        return intents.Count == 0 ? new ProgressionRules(paths) : paths.Count == 0 ? throw new DomainException("Persisted progression intents require a path projection.", RulesErrorCodes.ProgressionRulesInvalid) : intents.Select(i => i.Order).Distinct().Count() != intents.Count ? throw new DomainException("Progression intent orders must be unique.", RulesErrorCodes.ProgressionRulesInvalid) : new ProgressionRules(intents, paths);
     }
 
     /// <summary>
@@ -122,16 +112,6 @@ public sealed record ProgressionRules
             .Where(p => p.Destination.TargetsSlot)
             .Select(p => (p.Destination.StageId, p.Destination.SlotKey))
             .ToArray();
-        return slotDestinationKeys.Distinct().Count() != slotDestinationKeys.Length
-            ? throw new DomainException(
-                "Progression paths must target unique slot destinations.",
-                RulesErrorCodes.ProgressionRulesInvalid)
-            : [
-            ..paths.OrderBy(p => p.SourcePairKey, StringComparer.Ordinal)
-                .ThenBy(p => p.Outcome)
-                .ThenBy(p => p.Destination.StageId.Value)
-                .ThenBy(p => p.Destination.SlotKey ?? string.Empty, StringComparer.Ordinal)
-                .ThenBy(p => p.Destination.GroupId?.Value ?? Guid.Empty)
-        ];
+        return slotDestinationKeys.Distinct().Count() != slotDestinationKeys.Length ? throw new DomainException("Progression paths must target unique slot destinations.", RulesErrorCodes.ProgressionRulesInvalid) : [.. paths.OrderBy(p => p.SourcePairKey, StringComparer.Ordinal).ThenBy(p => p.Outcome).ThenBy(p => p.Destination.StageId.Value).ThenBy(p => p.Destination.SlotKey ?? string.Empty, StringComparer.Ordinal).ThenBy(p => p.Destination.GroupId?.Value ?? Guid.Empty)];
     }
 }

@@ -61,7 +61,7 @@ npm run tile:check
 - [x] AUD-0003 — `lint:css` passes.
 - [x] AUD-0006 — `lint` passes with `--deny-warnings`.
 - [x] AUD-0007 — `format:check` passes.
-- [ ] Registre Notion — AUD-0001, 0003, 0006, 0007 → correction / vérifié (post-merge).
+- [x] Registre Notion — AUD-0001, 0003, 0006, 0007 → vérifié (post-merge @ `bbb76630`).
 - [x] AUD-0013 / 0014 — follow-up IC lot (orphan removal).
 
 ---

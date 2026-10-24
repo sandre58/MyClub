@@ -13,7 +13,10 @@ using MyClub.Media.Infrastructure.Storage;
 
 namespace MyClub.PlayUp.Host.Tests;
 
-internal sealed class PlayUpWebApplicationFactory(string connectionString, bool failMediaDelete = false)
+internal sealed class PlayUpWebApplicationFactory(
+    string connectionString,
+    bool failMediaDelete = false,
+    string environment = "Development")
     : WebApplicationFactory<Program>
 {
     private readonly string _mediaStorageRoot = Path.Combine(
@@ -27,7 +30,7 @@ internal sealed class PlayUpWebApplicationFactory(string connectionString, bool 
         builder.UseSetting("ConnectionStrings:PlayUp", connectionString);
         builder.UseSetting("ConnectionStrings:Media", connectionString);
         builder.UseSetting("Media:StorageRoot", _mediaStorageRoot);
-        builder.UseEnvironment("Development");
+        builder.UseEnvironment(environment);
 
         if (!failMediaDelete)
         {

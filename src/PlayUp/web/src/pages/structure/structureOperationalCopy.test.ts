@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  drawPoolToneToRatioGaugeTone,
   operationalStripPoolTone,
   resolvePlaceOccupancyTone,
 } from './structureOperationalCopy';
@@ -11,6 +12,11 @@ describe('operationalStripPoolTone', () => {
 
   it('keeps partial when message is informational', () => {
     expect(operationalStripPoolTone('info', 'partial')).toBe('partial');
+  });
+
+  it('uses attention pool tone when strip message is attention (empty gauge stays neutral)', () => {
+    expect(operationalStripPoolTone('attention', 'neutral')).toBe('attention');
+    expect(drawPoolToneToRatioGaugeTone('attention')).toBe('attention');
   });
 });
 
