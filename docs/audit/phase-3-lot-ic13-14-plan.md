@@ -28,4 +28,4 @@ Post-change: `i18n:audit` → **0 suspect** ; `npm run i18n:check` → 16/16.
 
 - [x] Audit scripts clean for structure fiche scope.
 - [x] Parity en/fr preserved.
-- [ ] Registre Notion → **Vérifié** (post-commit).
+- [x] Registre Notion → **Vérifié** (merge `bbb76630`).

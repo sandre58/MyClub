@@ -134,17 +134,7 @@ public static class ReplaceStageQualificationRules
         var hasSlot = !string.IsNullOrWhiteSpace(slotKey);
         var hasGroup = destinationGroupId is not null;
         var modes = (destinationForm ? 1 : 0) + (hasSlot ? 1 : 0) + (hasGroup ? 1 : 0);
-        return modes > 1
-            ? throw new ApplicationFailureException(
-                "Qualification path destination must be exactly one of: population, form, slot, or group.",
-                ApplicationErrorCodes.InvalidStructureIntent)
-            : destinationForm
-            ? QualificationDestination.ForForm(stageId)
-            : hasGroup
-            ? QualificationDestination.ForGroup(stageId, new GroupId(destinationGroupId!.Value))
-            : hasSlot
-            ? QualificationDestination.ForSlot(stageId, slotKey!)
-            : QualificationDestination.ForPopulation(stageId);
+        return modes > 1 ? throw new ApplicationFailureException("Qualification path destination must be exactly one of: population, form, slot, or group.", ApplicationErrorCodes.InvalidStructureIntent) : destinationForm ? QualificationDestination.ForForm(stageId) : hasGroup ? QualificationDestination.ForGroup(stageId, new GroupId(destinationGroupId!.Value)) : hasSlot ? QualificationDestination.ForSlot(stageId, slotKey!) : QualificationDestination.ForPopulation(stageId);
     }
 
     private static QualificationIntent ToDomainIntent(QualificationIntentSpec spec) =>

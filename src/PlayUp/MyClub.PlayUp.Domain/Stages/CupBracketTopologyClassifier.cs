@@ -35,11 +35,7 @@ public static class CupBracketTopologyClassifier
 
         var slotKeys = stage.Slots.Select(slot => slot.SlotKey).ToArray();
         var expected = BracketPair.CreateEntryRoundPairs(slotKeys);
-        return !ExistingPairsAlignWithExpected(stage, expected)
-            ? CupBracketTopologyKind.ExplicitTopology
-            : stage.BracketPairs.Count == expected.Count
-            ? CupBracketTopologyKind.CanonicalComplete
-            : CupBracketTopologyKind.CanonicalIncomplete;
+        return !ExistingPairsAlignWithExpected(stage, expected) ? CupBracketTopologyKind.ExplicitTopology : stage.BracketPairs.Count == expected.Count ? CupBracketTopologyKind.CanonicalComplete : CupBracketTopologyKind.CanonicalIncomplete;
     }
 
     /// <summary>
