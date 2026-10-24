@@ -192,6 +192,7 @@ function TooltipActive({
   const [open, setOpen] = useState(false);
   const { present, state } = usePresence(open, EXIT_MS);
   const [placement, setPlacement] = useState<Placement | undefined>();
+  const [prevPresent, setPrevPresent] = useState(present);
   const fine = useFinePointer();
   const mobileMode = resolveActivation(activation, child);
 
@@ -202,6 +203,13 @@ function TooltipActive({
   const longPressOrigin = useRef<{ x: number; y: number } | null>(null);
   const openedByLongPress = useRef(false);
   const suppressClick = useRef(false);
+
+  if (present !== prevPresent) {
+    if (!present) {
+      setPlacement(undefined);
+    }
+    setPrevPresent(present);
+  }
 
   const clearAllTimers = useCallback(() => {
     clearTimer(openTimer);
@@ -217,7 +225,9 @@ function TooltipActive({
     releaseTooltip(closeFnRef.current);
   }, [clearAllTimers]);
 
-  closeFnRef.current = close;
+  useEffect(() => {
+    closeFnRef.current = close;
+  }, [close]);
 
   const openNow = useCallback(() => {
     clearAllTimers();
@@ -239,7 +249,6 @@ function TooltipActive({
 
   useLayoutEffect(() => {
     if (!present) {
-      setPlacement(undefined);
       return;
     }
 

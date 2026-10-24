@@ -4,7 +4,7 @@
 // -----------------------------------------------------------------------
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useId, useMemo, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { fetchStageOverview, replaceStagePlacementAwardRules } from '../../api';
 import { Alert } from '../../design-system/components/Alert';
@@ -24,6 +24,7 @@ import { CloseIcon } from '../../design-system/icons/shellIcons';
 import { ToastToneIcon } from '../../design-system/icons/toastIcons';
 import { notify } from '../../design-system/toastStore';
 import { useClearMutationsOnOpen } from '../../design-system/useClearMutationsOnOpen';
+import { useOpenEdge, useSyncWhen } from '../../design-system/useRenderSync';
 import { useDiscardConfirm } from '../../design-system/useDiscardConfirm';
 import { queryKeys } from '../../queryKeys';
 import type {
@@ -125,33 +126,33 @@ export function StructurePlacementAwardDialog({
     },
   });
 
-  useEffect(() => {
-    if (!open) return;
-    setSessionReady(false);
-  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps -- open edge only
+  useOpenEdge(open, { onOpen: () => setSessionReady(false) });
 
   useClearMutationsOnOpen(open, mutation);
 
-  useEffect(() => {
-    if (!open) return;
-    if (overviewQuery.isLoading) return;
-    if (mutation.isPending || mutation.isSuccess) return;
-
-    const existing = stage.placementAwards ?? [];
-    const next = existing.length > 0 ? cardsFromApiPaths(existing) : [];
-    setCards(next);
-    setBaselineSerialized(serializeCards(next));
-    setSessionReady(true);
-    resetDiscard();
-  }, [
-    open,
-    overviewQuery.isLoading,
-    mutation.isPending,
-    mutation.isSuccess,
-    stage.placementAwards,
+  const placementHydrateKey = [
     stage.stageId,
-    resetDiscard,
-  ]);
+    overviewQuery.isLoading ? 'loading' : 'ready',
+    mutation.isPending ? 'p' : '',
+    mutation.isSuccess ? 's' : '',
+    JSON.stringify(stage.placementAwards ?? []),
+  ].join('|');
+
+  useSyncWhen(
+    open &&
+      !overviewQuery.isLoading &&
+      !mutation.isPending &&
+      !mutation.isSuccess,
+    placementHydrateKey,
+    () => {
+      const existing = stage.placementAwards ?? [];
+      const next = existing.length > 0 ? cardsFromApiPaths(existing) : [];
+      setCards(next);
+      setBaselineSerialized(serializeCards(next));
+      setSessionReady(true);
+      resetDiscard();
+    },
+  );
 
   const canAddNew = sourceOptions.length > 0;
   const canRemediate = cards.length > 0;

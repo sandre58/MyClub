@@ -389,8 +389,8 @@ describe('StructureDrawDialog', () => {
 
     renderDialog();
 
-    expect(await screen.findByText('Annulé')).toBeInTheDocument();
-    expect(screen.getByText('Aucun résultat')).toBeInTheDocument();
+    await screen.findByText('Aucun résultat');
+    expect(screen.getAllByText('Annulé').length).toBeGreaterThan(0);
     expect(
       screen.queryByText(
         'Exécution annulée. Un nouveau tirage est nécessaire pour recommencer.',

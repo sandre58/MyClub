@@ -126,11 +126,9 @@ export function InputNumber({
   const currentRef = useRef(current);
   currentRef.current = current;
 
-  useEffect(() => {
-    if (!focused) {
-      setDraft(current == null ? '' : formatNumber(current, precision));
-    }
-  }, [current, precision, focused]);
+  const formattedValue =
+    current == null ? '' : formatNumber(current, precision);
+  const displayValue = focused ? draft : formattedValue;
 
   useEffect(() => {
     return () => {
@@ -273,9 +271,10 @@ export function InputNumber({
       disabled={disabled}
       className="ds-input__control"
       aria-invalid={invalid || undefined}
-      value={draft}
+      value={displayValue}
       onChange={handleChange}
       onFocus={(event) => {
+        setDraft(formattedValue);
         setFocused(true);
         onFocus?.(event);
       }}

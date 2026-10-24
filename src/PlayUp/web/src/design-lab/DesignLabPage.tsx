@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import '../design-system/fonts';
 import '../design-system/index.css';
@@ -34,6 +34,7 @@ import { LabWait, LabWaitAtom, type LabWaitKind } from './LabWait';
 import { Toaster } from '../design-system/components/Toaster';
 import { Tooltip } from '../design-system/components/Tooltip';
 import type { LabLifecycle } from './labData';
+import { useShellChromeMotion } from '../shell/useShellChromeMotion';
 
 type LabChromeVp = 'desktop' | 'tablet' | 'phone';
 
@@ -67,8 +68,7 @@ export function DesignLabPage() {
   const [railCollapsed, setRailCollapsed] = useState(false);
   const [chromeVp, setChromeVp] = useState<LabChromeVp>('desktop');
   const [phoneNavOpen, setPhoneNavOpen] = useState(false);
-  const [motionViewport, setMotionViewport] = useState(chromeVp);
-  const [chromeReady, setChromeReady] = useState(chromeVp === 'desktop');
+  const { motionViewport, chromeReady } = useShellChromeMotion(chromeVp);
   const [waitKind, setWaitKind] = useState<LabWaitKind>('c');
   const labShellRef = useRef<HTMLDivElement>(null);
 
@@ -81,28 +81,6 @@ export function DesignLabPage() {
   const isFormBoard = view === 'form';
   const isRegulationBoard = view === 'regulation';
   const labCollapsed = chromeVp === 'phone' ? false : railCollapsed;
-
-  useEffect(() => {
-    if (chromeVp === 'desktop') {
-      setMotionViewport('desktop');
-      setChromeReady(true);
-      return;
-    }
-
-    setChromeReady(false);
-    setMotionViewport(chromeVp);
-    let cancelled = false;
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        if (!cancelled) {
-          setChromeReady(true);
-        }
-      });
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [chromeVp]);
 
   useLayoutEffect(() => {
     const root = labShellRef.current;
