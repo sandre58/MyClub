@@ -32,7 +32,7 @@ jobs:
 
       - name: Upload restore diagnostic logs
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: restore-diagnostic-${{ github.job }}
           path: ${{ runner.temp }}/myclub-restore-diag/
@@ -154,7 +154,7 @@ jobs:
 
       - name: Upload restore diagnostic logs
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: restore-diagnostic-${{ github.job }}
           path: ${{ runner.temp }}/myclub-restore-diag/
