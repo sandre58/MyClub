@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useId, useState, type FormEvent } from 'react';
+import { useId, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { replaceStageDrawRules } from '../../api';
 import { Alert } from '../../design-system/components/Alert';
@@ -11,6 +11,7 @@ import { InputNumber } from '../../design-system/components/InputNumber';
 import { SwitchPanel } from '../../design-system/components/SwitchPanel';
 import { notify } from '../../design-system/toastStore';
 import { useClearMutationsOnOpen } from '../../design-system/useClearMutationsOnOpen';
+import { useSyncWhen } from '../../design-system/useRenderSync';
 import { useDiscardConfirm } from '../../design-system/useDiscardConfirm';
 import { RandomIcon, CheckIcon } from '../../design-system/icons/contentIcons';
 import { CloseIcon } from '../../design-system/icons/shellIcons';
@@ -89,19 +90,20 @@ export function DrawRulesDialog({
     resetDiscard,
   } = useDiscardConfirm(isDirty, onClose);
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    const pots = normalizeDrawPots(stage.numberOfPots ?? null);
-    const enabled = pots != null;
-    const value = pots ?? defaultPots;
-    setUsePots(enabled);
-    setNumberOfPots(value);
-    setBaselineUsePots(enabled);
-    setBaselinePots(value);
-    resetDiscard();
-  }, [open, stage, defaultPots, resetDiscard]);
+  useSyncWhen(
+    open,
+    `${stage.stageId}:${stage.numberOfPots ?? 'none'}:${defaultPots}`,
+    () => {
+      const pots = normalizeDrawPots(stage.numberOfPots ?? null);
+      const enabled = pots != null;
+      const value = pots ?? defaultPots;
+      setUsePots(enabled);
+      setNumberOfPots(value);
+      setBaselineUsePots(enabled);
+      setBaselinePots(value);
+      resetDiscard();
+    },
+  );
 
   const saveMutation = useMutation({
     mutationFn: async () => {

@@ -12,6 +12,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSyncWhen } from '../../design-system/useRenderSync';
 import {
   addDeclaredMember,
   removeDeclaredMember,
@@ -184,12 +185,12 @@ export function TeamRosterDrawer({
     (candidate) => candidate.entryId === entryId,
   );
 
-  useEffect(() => {
+  useSyncWhen(true, entryId, () => {
     setSelectedMemberIds([]);
     setPendingRemove(null);
     setPendingRenameId(null);
     setRenameDraft('');
-  }, [entryId]);
+  });
 
   const addMutation = useMutation({
     mutationFn: (payload: { name: string; role: DeclaredMemberRole }) =>

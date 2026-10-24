@@ -2,7 +2,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   type SubmitEvent,
   type RefObject,
-  useEffect,
   useId,
   useRef,
   useState,
@@ -12,6 +11,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { createCompetition, fetchCompetitions } from '../api';
 import { Dialog } from '../design-system/components/Dialog';
 import { useClearMutationsOnOpen } from '../design-system/useClearMutationsOnOpen';
+import { useOpenEdge } from '../design-system/useRenderSync';
 import { Field } from '../design-system/components/Field';
 import { HomeBrand } from '../design-system/components/HomeBrand';
 import { TextInput } from '../design-system/components/TextInput';
@@ -243,11 +243,7 @@ function CreateCompetitionDialog({
   const nameId = useId();
   const [name, setName] = useState('');
 
-  useEffect(() => {
-    if (open) {
-      setName('');
-    }
-  }, [open]);
+  useOpenEdge(open, { onOpen: () => setName('') });
 
   const mutation = useMutation({
     mutationFn: () => createCompetition({ name: name.trim() }),

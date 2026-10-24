@@ -87,10 +87,17 @@ export function Popover({
   const panelRef = useRef<HTMLDivElement>(null);
   const [placement, setPlacement] = useState<Placement | undefined>();
   const { present, state } = usePresence(open, EXIT_MS);
+  const [prevPresent, setPrevPresent] = useState(present);
+
+  if (present !== prevPresent) {
+    if (!present) {
+      setPlacement(undefined);
+    }
+    setPrevPresent(present);
+  }
 
   useLayoutEffect(() => {
     if (!present) {
-      setPlacement(undefined);
       return;
     }
 

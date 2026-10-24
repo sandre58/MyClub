@@ -4,15 +4,10 @@ import {
   useQueryClient,
   type QueryClient,
 } from '@tanstack/react-query';
-import {
-  useEffect,
-  useId,
-  useState,
-  type SubmitEvent,
-  type ReactNode,
-} from 'react';
+import { useId, useState, type SubmitEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useSyncWhen } from '../../design-system/useRenderSync';
 import {
   addCompetitionEntry,
   deleteCompetitionEntries,
@@ -178,11 +173,9 @@ function TeamsView({
     navigate(teamsHref, { replace: true });
   }
 
-  useEffect(() => {
-    if (routeEntryId) {
-      setSelectedIds([routeEntryId]);
-    }
-  }, [routeEntryId]);
+  useSyncWhen(Boolean(routeEntryId), routeEntryId ?? '', () => {
+    setSelectedIds([routeEntryId!]);
+  });
 
   useDismissLayer(selectedIds.length > 0, () => {
     goToSelection([]);
@@ -718,10 +711,7 @@ function AddEntryDialog({
     resetDiscard,
   } = useDiscardConfirm(isDirty, onClose);
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
+  useSyncWhen(open, 'add-entry', () => {
     setDisplayName('');
     setShortName('');
     setNameTouched(false);
@@ -731,7 +721,7 @@ function AddEntryDialog({
     setSecondaryColor('');
     setSubmitted(false);
     resetDiscard();
-  }, [open, resetDiscard]);
+  });
 
   const duplicateName = hasDuplicateEntryName(
     data.participants.entries,
@@ -928,20 +918,26 @@ function IdentityDialog({
     resetDiscard,
   } = useDiscardConfirm(isDirty, onClose);
 
-  useEffect(() => {
-    if (!entry) {
-      return;
-    }
-    setName(entry.displayName);
-    setShortName(entry.shortName ?? '');
-    setLogoMediaId(entry.logoMediaId ?? null);
-    setPrimaryColor(entry.primaryColor ?? '');
-    setSecondaryColor(entry.secondaryColor ?? '');
-    setNameTouched(false);
-    setShortNameTouched(false);
-    setSubmitted(false);
-    resetDiscard();
-  }, [entry, resetDiscard]);
+  useSyncWhen(
+    Boolean(entry),
+    entry
+      ? `${entry.entryId}:${entry.displayName}:${entry.shortName ?? ''}:${entry.logoMediaId ?? ''}:${entry.primaryColor ?? ''}:${entry.secondaryColor ?? ''}`
+      : '',
+    () => {
+      if (!entry) {
+        return;
+      }
+      setName(entry.displayName);
+      setShortName(entry.shortName ?? '');
+      setLogoMediaId(entry.logoMediaId ?? null);
+      setPrimaryColor(entry.primaryColor ?? '');
+      setSecondaryColor(entry.secondaryColor ?? '');
+      setNameTouched(false);
+      setShortNameTouched(false);
+      setSubmitted(false);
+      resetDiscard();
+    },
+  );
 
   const duplicateName = hasDuplicateEntryName(entries, name, entry?.entryId);
 
