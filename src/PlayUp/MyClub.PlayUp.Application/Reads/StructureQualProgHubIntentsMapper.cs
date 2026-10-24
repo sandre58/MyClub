@@ -19,15 +19,7 @@ internal static class StructureQualProgHubIntentsMapper
     internal static IReadOnlyList<StructureQualificationIntentDto>? MapQualificationIntents(
         Stage stage,
         QualificationRules? rules) =>
-        rules is null || rules.Paths.Count == 0
-            ? null
-            : rules.Intents.Count > 0
-                ? [
-                    .. rules.Intents.Select(intent => MapQualificationIntent(stage, intent))
-                ]
-                : [
-                    .. rules.Paths.Select(path => MapLegacyQualificationPath(stage, path))
-                ];
+        rules is null || rules.Paths.Count == 0 ? null : rules.Intents.Count > 0 ? [.. rules.Intents.Select(intent => MapQualificationIntent(stage, intent))] : [.. rules.Paths.Select(path => MapLegacyQualificationPath(stage, path))];
 
     internal static IReadOnlyList<StructureProgressionIntentDto>? MapProgressionIntents(
         Stage stage,

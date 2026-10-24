@@ -37,7 +37,6 @@
     "inheritedFromFrame": "Règles héritées du règlement général",
     "specificToPhase": "Règles adaptées à cette phase"
   },
-  "personalized": "Personnalisé",
   "editRegulation": "Modifier le règlement",
   "editRegulationDisabledHint": "Le règlement ne peut pas être modifié dans cet état.",
   "editor": {
@@ -124,7 +123,6 @@
     "aria": "Score administratif en cas de forfait : {{winner}}–{{loser}}"
   },
   "frameHeading": "Cadre de la compétition",
-  "loadError": "Impossible de charger le règlement.",
   "matchTimeline": {
     "aria": "Déroulement du match",
     "regulationHeading": "Temps réglementaire",
@@ -144,7 +142,6 @@
   },
   "openInStructure": "Aller à la phase",
   "phaseRegulationAria": "Règlement de la phase",
-  "phaseStructureAria": "Structure de la phase",
   "phasesHeading": "Phases",
   "points": {
     "aria": "Barème de points",
@@ -160,9 +157,7 @@
     "groups": "{{count}} groupes",
     "championship": "Championnat · {{teams}} équipes",
     "swiss": "Système suisse · {{rounds}} rondes",
-    "swissGeneric": "Système suisse",
-    "swissRound": "Ronde {{n}}",
-    "alimentation": "Alimentation"
+    "swissGeneric": "Système suisse"
   },
   "title": "Règlement",
   "tokens": {

@@ -28,12 +28,7 @@ internal static class CupCanonicalEntryRoundStartGate
 
         if (competition is null || competitionStages is null)
         {
-            return TryGetCanonicalEntryRoundProgress(stage, out var canonical, out var placementIncomplete)
-                   && canonical > 0
-                ? placementIncomplete > 0
-                : StructureSkeleton.InferFormat(stage) == StructureFormatKind.Cup
-                  && stage.Status == StageStatus.Ready
-                  && HasUndeterminedBracketPairs(stage);
+            return TryGetCanonicalEntryRoundProgress(stage, out var canonical, out var placementIncomplete) && canonical > 0 ? placementIncomplete > 0 : StructureSkeleton.InferFormat(stage) == StructureFormatKind.Cup && stage.Status == StageStatus.Ready && HasUndeterminedBracketPairs(stage);
         }
 
         if (CupEntryRoundPairPlacementGauge.TryGetCanonicalEntryRoundDisplayProgress(

@@ -181,7 +181,7 @@ public sealed class StructurePresentedStageDiagnosticsTests
     }
 
     [Fact]
-    public void Assemble_cup_partial_round_materialization_surfaces_start_and_presented_match_gaps()
+    public void Assemble_cup_partial_round_materialization_surfaces_incomplete_entry_round_without_unmaterialized_duplicate()
     {
         var situation = TestCompetition.Create("Cup partial presented", _clock)
             .WithTeams("A", "B", "C", "D")
@@ -209,10 +209,12 @@ public sealed class StructurePresentedStageDiagnosticsTests
             matchSummariesByStage: summaries).Stages.Single();
 
         hub.Lifecycle!.Transition.Enabled.Should().BeFalse();
-        hub.PresentedIssueCodes.Should().Contain(
-            StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations);
+        hub.Lifecycle.Transition.DisabledReasonCode.Should()
+            .Be(StructureStageLifecycleAssembler.DisabledIncompleteEntryRound);
         hub.PresentedIssueCodes.Should().Contain(
             StructureStageLifecycleAssembler.DisabledIncompleteEntryRound);
+        hub.PresentedIssueCodes.Should().NotContain(
+            StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations);
         hub.MatchProductionPresentation!.PrimaryGauge.MessageKind.Should().Be(
             StructureMatchProductionPresentationAssembler.MessageKindDanger);
     }

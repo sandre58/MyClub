@@ -31,9 +31,11 @@ public sealed class DevelopmentTestsArchitectureIsolationTests
     }
 
     private static string[] LoadProjectReferences(string csprojPath) =>
-        [.. XDocument.Load(csprojPath)
+    [
+        .. XDocument.Load(csprojPath)
             .Descendants("ProjectReference")
-            .Select(static e => (string?)e.Attribute("Include") ?? string.Empty)];
+            .Select(static e => (string?)e.Attribute("Include") ?? string.Empty)
+    ];
 
     private static string LocateDevelopmentTestsCsproj()
     {

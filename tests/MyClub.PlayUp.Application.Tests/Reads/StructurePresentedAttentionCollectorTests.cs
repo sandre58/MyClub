@@ -393,7 +393,7 @@ public sealed class StructurePresentedAttentionCollectorTests
     }
 
     [Fact]
-    public void Collect_emits_incomplete_entry_round_when_primary_start_blocker_is_unmaterialized()
+    public void Collect_cup_incomplete_entry_round_does_not_duplicate_unmaterialized_attention()
     {
         var situation = TestCompetition.Create("Cup dual start blockers", _clock)
             .WithTeams("A", "B", "C", "D")
@@ -417,9 +417,8 @@ public sealed class StructurePresentedAttentionCollectorTests
         items.Should().Contain(item =>
             item.Source == StructureStageLifecycleAssembler.DisabledIncompleteEntryRound
             && item.Severity == NeedsAttentionAssembler.SeverityBlocking);
-        items.Should().Contain(item =>
-            item.Source == StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations
-            && item.Severity == NeedsAttentionAssembler.SeverityBlocking);
+        items.Should().NotContain(item =>
+            item.Source == StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations);
     }
 
     [Fact]

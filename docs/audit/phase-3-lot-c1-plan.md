@@ -134,7 +134,7 @@ Estimated size: **small** (mostly docs); **≤30 lines** Host code if B3 only.
 - [x] Proposed guardrails (Tier A + agreed Tier B) implemented or explicitly deferred with reason in Notion task.
 - [x] Media and API behaviour **unchanged** unless listed and arbitrated.
 - [x] Auth / TLS / Media policy tracked as **future decisions**, not smuggled into C1.
-- [ ] AUD-0008 register row updated: C1 technical closure vs remaining trajectoire C work (Notion — post-merge).
+- [x] AUD-0008 register row updated: C1 technical closure vs remaining trajectoire C work (Notion — post-merge @ `bbb76630`).
 
 ---
 

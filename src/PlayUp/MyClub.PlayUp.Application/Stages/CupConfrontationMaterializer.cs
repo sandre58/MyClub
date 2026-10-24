@@ -109,10 +109,6 @@ internal static class CupConfrontationMaterializer
         EntryId away)
     {
         var attachment = fixture.Attachments.FirstOrDefault(a => a.LegIndex == legIndex);
-        return attachment is null || !knownById.TryGetValue(attachment.MatchId, out var match)
-            ? null
-            : match.HomeEntryId.Equals(home) && match.AwayEntryId.Equals(away)
-            ? match
-            : null;
+        return attachment is null || !knownById.TryGetValue(attachment.MatchId, out var match) ? null : match.HomeEntryId.Equals(home) && match.AwayEntryId.Equals(away) ? match : null;
     }
 }
