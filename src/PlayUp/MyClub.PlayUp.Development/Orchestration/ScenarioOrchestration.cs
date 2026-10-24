@@ -3218,13 +3218,13 @@ internal static class ScenarioOrchestration
         ScenarioContext context,
         CancellationToken cancellationToken)
     {
-        var (_, stage, _) = await CreateRecetteGroups2X3Async(
+        var (competition, stage, _) = await CreateRecetteGroups2X3Async(
                 context,
                 "RECETTE G1 — Groups 0/6 actionable",
                 "recette-g1",
                 cancellationToken)
             .ConfigureAwait(false);
-        _ = stage;
+        SeedLifecycle.PrepareOnly(context, competition, stage);
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
