@@ -152,6 +152,7 @@ describe('Dialog dismiss stack', () => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
     expect(trigger).toHaveFocus();
+    expect(document.body.style.overflow).not.toBe('hidden');
   });
 
   it('does not close while closeDisabled but still consumes Escape', async () => {

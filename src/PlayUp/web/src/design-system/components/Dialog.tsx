@@ -1,6 +1,7 @@
 import {
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   type ReactNode,
   type RefObject,
@@ -96,7 +97,8 @@ export function Dialog({
     }
   }, [open]);
 
-  useEffect(() => {
+  // Return focus in the commit that removes the dialog, before paint.
+  useLayoutEffect(() => {
     if (hadOpenedRef.current && !mounted) {
       hadOpenedRef.current = false;
       const target = returnFocusRef?.current ?? fallbackReturnRef.current;
@@ -129,7 +131,8 @@ export function Dialog({
     }
   });
 
-  useEffect(() => {
+  // Release the scroll lock in the commit that removes the dialog, before paint.
+  useLayoutEffect(() => {
     if (!mounted || !panelRef.current) {
       return;
     }
