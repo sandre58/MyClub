@@ -24,4 +24,15 @@ public sealed class HealthEndpointTests(HostPostgresFixture fixture)
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
+
+    [IntegrationFact]
+    public async Task HealthReady_returns_200_when_database_is_availableAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        using var client = factory.CreateClient();
+
+        using var response = await client.GetAsync(new Uri("/health/ready", UriKind.Relative));
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
 }
