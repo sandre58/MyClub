@@ -6,6 +6,7 @@
 
 using System.Globalization;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using MyClub.Media.Infrastructure.DependencyInjection;
 using MyClub.PlayUp.Application.Abstractions;
@@ -94,6 +95,12 @@ try
     app.UseExceptionHandler();
 
     app.MapHealthChecks("/health");
+    app.MapHealthChecks(
+        "/health/ready",
+        new HealthCheckOptions
+        {
+            Predicate = static registration => registration.Tags.Contains("ready"),
+        });
 
     app.MapMediaEndpoints();
     app.MapCompetitionEndpoints();
