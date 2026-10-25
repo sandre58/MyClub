@@ -12,6 +12,7 @@ import { ShellMain } from './ShellMain';
 import { ShellSidebar } from './ShellSidebar';
 import { SHELL_ATTENTION_DRAWER_PANEL_ID } from './shellIds';
 import { useThemeRoot } from '../theme/useThemeRoot';
+import { useShellChromeMotion } from './useShellChromeMotion';
 import { useShellViewport } from './useShellViewport';
 import { WaitMark } from '../design-system/components/WaitMark';
 
@@ -30,9 +31,10 @@ export function AppShell() {
   const shellRef = useRef<HTMLDivElement>(null);
   const [attentionDrawerOpen, setAttentionDrawerOpen] = useState(false);
   const [phoneNavOpen, setPhoneNavOpen] = useState(false);
-  const [motionViewport, setMotionViewport] = useState(viewport);
-  const [chromeReady, setChromeReady] = useState(viewport === 'desktop');
+  const { motionViewport, chromeReady } = useShellChromeMotion(viewport);
   const [tabletExpanded, setTabletExpanded] = useState(false);
+  const [prevViewport, setPrevViewport] = useState(viewport);
+  const [prevPath, setPrevPath] = useState(location.pathname);
   const [desktopCollapsed, setDesktopCollapsed] = useState(() => {
     if (typeof window === 'undefined') {
       return false;
@@ -48,40 +50,21 @@ export function AppShell() {
     );
   }, [desktopCollapsed]);
 
-  useEffect(() => {
+  if (viewport !== prevViewport) {
+    setPrevViewport(viewport);
     if (viewport !== 'tablet') {
       setTabletExpanded(false);
     }
-
     if (viewport !== 'phone') {
       setPhoneNavOpen(false);
     }
+  }
 
-    if (viewport === 'desktop') {
-      setMotionViewport('desktop');
-      setChromeReady(true);
-      return;
-    }
-
-    setChromeReady(false);
-    setMotionViewport(viewport);
-    let cancelled = false;
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        if (!cancelled) {
-          setChromeReady(true);
-        }
-      });
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [viewport]);
-
-  useEffect(() => {
+  if (location.pathname !== prevPath) {
+    setPrevPath(location.pathname);
     setPhoneNavOpen(false);
     setAttentionDrawerOpen(false);
-  }, [location.pathname]);
+  }
 
   useEffect(() => {
     if (viewport !== 'phone' || !phoneNavOpen) {
