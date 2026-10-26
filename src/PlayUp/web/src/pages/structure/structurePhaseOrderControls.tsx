@@ -11,7 +11,7 @@ import {
 
 const compactIcon =
   'ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact';
-const compactDangerIcon =
+const compactToolbarDanger =
   'ds-btn ds-btn--destructive ds-icon-button ds-icon-button--compact';
 
 function stopControlEvent(event: MouseEvent | PointerEvent) {
@@ -19,58 +19,24 @@ function stopControlEvent(event: MouseEvent | PointerEvent) {
 }
 
 /**
- * Removes a phase from the list. Sibling of the select button.
- */
-export function StructurePhaseRemoveControl({
-  stageName,
-  onRemove,
-}: {
-  stageName: string;
-  onRemove: () => void;
-}) {
-  const { t } = useTranslation('structure');
-  const label = t('graph.removePhaseName', { name: stageName });
-
-  return (
-    <div
-      className="structure-topology__remove"
-      onClick={stopControlEvent}
-      onPointerDown={stopControlEvent}
-    >
-      <Tooltip content={label}>
-        <button
-          type="button"
-          className={compactDangerIcon}
-          aria-label={label}
-          onClick={onRemove}
-        >
-          <TrashIcon size="sm" />
-        </button>
-      </Tooltip>
-    </div>
-  );
-}
-
-/**
- * Single-phase birth: append is the primary action, insert is the menu.
+ * Single-phase birth: append is the primary action; the menu inserts before.
  */
 export function StructureSinglePhaseBirth({
   stageName,
   disabled = false,
   onAppend,
   onInsertBefore,
-  onInsertAfter,
 }: {
   stageName: string;
   disabled?: boolean;
   onAppend: () => void;
   onInsertBefore: () => void;
-  onInsertAfter: () => void;
 }) {
   const { t } = useTranslation('structure');
   const [open, setOpen] = useState(false);
   const anchorRef = useRef<HTMLButtonElement>(null);
-  const menuLabel = t('graph.insertPhaseMenu');
+  const insertBeforeLabel = t('graph.insertPhaseBefore', { name: stageName });
+  const menuButtonLabel = t('graph.insertPhaseMenu');
 
   return (
     <div className="structure-phase-birth">
@@ -87,7 +53,7 @@ export function StructureSinglePhaseBirth({
         ref={anchorRef}
         type="button"
         className="ds-btn ds-btn--primary structure-phase-birth__more"
-        aria-label={menuLabel}
+        aria-label={menuButtonLabel}
         aria-haspopup="menu"
         aria-expanded={open}
         disabled={disabled}
@@ -102,7 +68,7 @@ export function StructureSinglePhaseBirth({
         role="menu"
         align="end"
         width={240}
-        aria-label={menuLabel}
+        aria-label={menuButtonLabel}
       >
         <ul className="structure-overflow-menu">
           <li role="none">
@@ -115,20 +81,7 @@ export function StructureSinglePhaseBirth({
                 onInsertBefore();
               }}
             >
-              {t('graph.insertPhaseBefore', { name: stageName })}
-            </button>
-          </li>
-          <li role="none">
-            <button
-              type="button"
-              role="menuitem"
-              className="structure-overflow-menu__item"
-              onClick={() => {
-                setOpen(false);
-                onInsertAfter();
-              }}
-            >
-              {t('graph.insertPhaseAfter', { name: stageName })}
+              {insertBeforeLabel}
             </button>
           </li>
         </ul>
@@ -178,67 +131,95 @@ export function StructurePhaseInsertSlot({
 }
 
 /**
- * Move toolbar at the bottom end of the tile, beside the select hit area.
- * Sibling of the select button so the chevrons are not nested in it.
+ * Move and remove controls at the bottom end of the tile.
+ * Sibling of the select button so actions are not nested in it.
  */
-export function StructurePhaseMoveControls({
+export function StructurePhaseTileActions({
   stageName,
   disabled = false,
   pending = null,
-  onMoveUp,
-  onMoveDown,
+  showMove = false,
   moveUpDisabled = false,
   moveDownDisabled = false,
+  onMoveUp,
+  onMoveDown,
+  onRemove,
 }: {
   stageName: string;
   disabled?: boolean;
   pending?: 'up' | 'down' | null;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
+  showMove?: boolean;
   moveUpDisabled?: boolean;
   moveDownDisabled?: boolean;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  onRemove?: () => void;
 }) {
   const { t } = useTranslation('structure');
+  const removeLabel = t('graph.removePhaseName', { name: stageName });
 
   return (
     <div
-      className="structure-topology__move"
+      className="structure-topology__tile-actions ds-icon-toolbar"
       role="toolbar"
       aria-orientation="horizontal"
-      aria-label={t('graph.moveToolbar', { name: stageName })}
+      aria-label={t('graph.tileActionsToolbar', { name: stageName })}
       onClick={stopControlEvent}
       onPointerDown={stopControlEvent}
     >
-      <Tooltip content={t('graph.moveUp', { name: stageName })}>
-        <button
-          type="button"
-          className={compactIcon}
-          aria-label={t('graph.moveUp', { name: stageName })}
-          disabled={disabled || moveUpDisabled}
-          onClick={onMoveUp}
-        >
-          {pending === 'up' ? (
-            <span className="ds-spinner" aria-hidden="true" />
-          ) : (
-            <ChevronUpIcon size="sm" />
-          )}
-        </button>
-      </Tooltip>
-      <Tooltip content={t('graph.moveDown', { name: stageName })}>
-        <button
-          type="button"
-          className={compactIcon}
-          aria-label={t('graph.moveDown', { name: stageName })}
-          disabled={disabled || moveDownDisabled}
-          onClick={onMoveDown}
-        >
-          {pending === 'down' ? (
-            <span className="ds-spinner" aria-hidden="true" />
-          ) : (
-            <ChevronDownIcon size="sm" />
-          )}
-        </button>
-      </Tooltip>
+      {showMove ? (
+        <>
+          <Tooltip content={t('graph.moveUp', { name: stageName })}>
+            <button
+              type="button"
+              className={compactIcon}
+              aria-label={t('graph.moveUp', { name: stageName })}
+              disabled={disabled || moveUpDisabled}
+              onClick={onMoveUp}
+            >
+              {pending === 'up' ? (
+                <span className="ds-spinner" aria-hidden="true" />
+              ) : (
+                <ChevronUpIcon size="sm" />
+              )}
+            </button>
+          </Tooltip>
+          <Tooltip content={t('graph.moveDown', { name: stageName })}>
+            <button
+              type="button"
+              className={compactIcon}
+              aria-label={t('graph.moveDown', { name: stageName })}
+              disabled={disabled || moveDownDisabled}
+              onClick={onMoveDown}
+            >
+              {pending === 'down' ? (
+                <span className="ds-spinner" aria-hidden="true" />
+              ) : (
+                <ChevronDownIcon size="sm" />
+              )}
+            </button>
+          </Tooltip>
+        </>
+      ) : null}
+      {showMove && onRemove ? (
+        <span
+          className="structure-topology__tile-actions-separator"
+          aria-hidden="true"
+        />
+      ) : null}
+      {onRemove ? (
+        <Tooltip content={removeLabel}>
+          <button
+            type="button"
+            className={compactToolbarDanger}
+            aria-label={removeLabel}
+            disabled={disabled}
+            onClick={onRemove}
+          >
+            <TrashIcon size="sm" />
+          </button>
+        </Tooltip>
+      ) : null}
     </div>
   );
 }

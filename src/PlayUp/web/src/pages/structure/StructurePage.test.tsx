@@ -813,7 +813,7 @@ describe('StructurePage Structure hub', () => {
     ).toBeInTheDocument();
   });
 
-  it('creates a phase via ChoiceTiles from an insert slot and selects the new stage', async () => {
+  it('creates a second phase via ChoiceTiles from append and selects the new stage', async () => {
     const user = userEvent.setup();
     const newStageId = 'dddddddd-dddd-dddd-dddd-dddddddddddd';
     const initial = structureView({
@@ -846,7 +846,7 @@ describe('StructurePage Structure hub', () => {
 
     let currentView = initial;
     vi.mocked(fetchStructureView).mockImplementation(async () => currentView);
-    vi.mocked(insertCompetitionStage).mockImplementation(async () => {
+    vi.mocked(addCompetitionStage).mockImplementation(async () => {
       currentView = afterCreate;
       return {
         stageId: newStageId,
@@ -858,15 +858,10 @@ describe('StructurePage Structure hub', () => {
     renderStructurePage();
 
     await user.click(
-      await screen.findByRole('button', { name: 'Insérer une phase' }),
-    );
-    await user.click(
-      await screen.findByRole('menuitem', {
-        name: 'Insérer une phase après League',
-      }),
+      await screen.findByRole('button', { name: /Ajouter une phase/i }),
     );
 
-    const dialog = await screen.findByRole('dialog');
+    const dialog = await screen.findByRole('dialog', { name: /Nouvelle phase/i });
     await user.type(
       within(dialog).getByPlaceholderText(/ex\. Saison régulière/i),
       'Temp',
@@ -880,14 +875,11 @@ describe('StructurePage Structure hub', () => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
 
-    await user.click(screen.getByRole('button', { name: 'Insérer une phase' }));
     await user.click(
-      await screen.findByRole('menuitem', {
-        name: 'Insérer une phase après League',
-      }),
+      screen.getByRole('button', { name: /Ajouter une phase/i }),
     );
     const createDialog = await screen.findByRole('dialog', {
-      name: /Insérer une phase/i,
+      name: /Nouvelle phase/i,
     });
     await user.type(
       within(createDialog).getByPlaceholderText(/ex\. Saison régulière/i),
@@ -923,22 +915,20 @@ describe('StructurePage Structure hub', () => {
 
     await user.click(within(createDialog).getByRole('checkbox', { name: '8' }));
     await user.click(
-      within(createDialog).getByRole('button', { name: /Insérer la phase/i }),
+      within(createDialog).getByRole('button', { name: /Créer la phase/i }),
     );
 
     await waitFor(() => {
-      expect(insertCompetitionStage).toHaveBeenCalledWith(
+      expect(addCompetitionStage).toHaveBeenCalledWith(
         competitionId,
         expect.objectContaining({
           format: 'Cup',
           name: 'Barrages',
           bracketSize: 8,
-          anchorStageId: stageId,
-          position: 'After',
         }),
       );
     });
-    expect(addCompetitionStage).not.toHaveBeenCalled();
+    expect(insertCompetitionStage).not.toHaveBeenCalled();
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();

@@ -425,8 +425,10 @@ describe('Structure phase insert and reorder', () => {
       }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('menuitem', { name: 'Insérer une phase après League' }),
-    ).toBeInTheDocument();
+      screen.queryByRole('menuitem', {
+        name: 'Insérer une phase après League',
+      }),
+    ).not.toBeInTheDocument();
   });
 
   it('hides order controls when Host does not expose AddCompetitionStage', async () => {

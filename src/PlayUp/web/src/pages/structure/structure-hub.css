@@ -92,12 +92,12 @@
 }
 
 .structure-topology__insert .structure-topology__insert-button,
-.structure-topology__move .ds-btn {
+.structure-topology__tile-actions .ds-btn--ghost {
   color: var(--color-text-secondary);
 }
 
 .structure-topology__insert .structure-topology__insert-button:hover:not(:disabled),
-.structure-topology__move .ds-btn:hover:not(:disabled) {
+.structure-topology__tile-actions .ds-btn--ghost:hover:not(:disabled) {
   color: var(--color-text-primary);
 }
 
@@ -136,17 +136,27 @@
   width: 100%;
 }
 
-.structure-topology__tile-foot[data-move='true'] {
+.structure-topology__tile-foot[data-toolbar='move'],
+.structure-topology__tile-foot[data-toolbar='remove'],
+.structure-topology__tile-foot[data-toolbar='move-remove'] {
   min-height: 1.75rem;
+}
+
+.structure-topology__tile-foot[data-toolbar='move'] {
   padding-inline-end: calc(1.75rem + 1.75rem + var(--space-4));
 }
 
-.structure-topology__tile-foot[data-remove='true'] {
-  min-height: 1.75rem;
-  padding-inline-start: calc(1.75rem + var(--space-4));
+.structure-topology__tile-foot[data-toolbar='remove'] {
+  padding-inline-end: calc(1.75rem + var(--space-4));
 }
 
-.structure-topology__move {
+.structure-topology__tile-foot[data-toolbar='move-remove'] {
+  padding-inline-end: calc(
+    1.75rem + 1.75rem + 1.75rem + 1px + var(--space-4) * 3
+  );
+}
+
+.structure-topology__tile-actions {
   position: absolute;
   z-index: 1;
   bottom: var(--space-12);
@@ -158,11 +168,12 @@
   gap: 0;
 }
 
-.structure-topology__remove {
-  position: absolute;
-  z-index: 1;
-  bottom: var(--space-12);
-  inset-inline-start: var(--space-12);
+.structure-topology__tile-actions-separator {
+  flex-shrink: 0;
+  width: 1px;
+  height: 1rem;
+  margin-inline: var(--space-4);
+  background: var(--color-border);
 }
 
 .structure-topology__bridge {

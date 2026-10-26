@@ -223,6 +223,7 @@
     "moveUp": "Monter {{name}}",
     "moveDown": "Descendre {{name}}",
     "moveToolbar": "Déplacer {{name}}",
+    "tileActionsToolbar": "Actions sur {{name}}",
     "insertPhaseMenu": "Insérer une phase",
     "insertPhaseBefore": "Insérer une phase avant {{name}}",
     "insertPhaseAfter": "Insérer une phase après {{name}}",

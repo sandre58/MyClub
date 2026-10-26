@@ -55,8 +55,7 @@ import {
 import { AddPhaseDialog, RemovePhaseDialog } from './StructureGraphDialogs';
 import {
   StructurePhaseInsertSlot,
-  StructurePhaseMoveControls,
-  StructurePhaseRemoveControl,
+  StructurePhaseTileActions,
   StructureSinglePhaseBirth,
 } from './structurePhaseOrderControls';
 import { scheduleStructureRefresh } from './structureInvalidation';
@@ -281,9 +280,6 @@ function StructureHub({ data }: { data: StructureView }) {
                     selectedStage.name,
                   )
                 }
-                onInsertAfter={() =>
-                  openInsert(selectedStage.stageId, 'After', selectedStage.name)
-                }
               />
             ) : (
               addPhaseAction
@@ -482,8 +478,18 @@ function TopologyPanel({
             const canRemoveStage = (stage.actions ?? []).includes(
               'RemoveStage',
             );
+            const showMove = canReorder && stages.length > 1;
+            const showTileActions = showMove || canRemoveStage;
+            const toolbarKind =
+              showMove && canRemoveStage
+                ? 'move-remove'
+                : showMove
+                  ? 'move'
+                  : canRemoveStage
+                    ? 'remove'
+                    : 'none';
             const showFoot =
-              canReorder || canRemoveStage || stage.hasDrawRules === true;
+              showTileActions || stage.hasDrawRules === true;
 
             return (
               <li key={stage.stageId} className="structure-topology__item">
@@ -562,8 +568,7 @@ function TopologyPanel({
                       {showFoot ? (
                         <span
                           className="structure-topology__tile-foot"
-                          data-move={canReorder ? 'true' : 'false'}
-                          data-remove={canRemoveStage ? 'true' : 'false'}
+                          data-toolbar={toolbarKind}
                         >
                           <StructurePhaseDrawHint
                             stage={stage}
@@ -573,8 +578,8 @@ function TopologyPanel({
                       ) : null}
                     </span>
                   </button>
-                  {canReorder && stages.length > 1 ? (
-                    <StructurePhaseMoveControls
+                  {showTileActions ? (
+                    <StructurePhaseTileActions
                       stageName={stage.name}
                       disabled={reorder.isPending}
                       pending={
@@ -582,16 +587,16 @@ function TopologyPanel({
                           ? pendingMove.direction
                           : null
                       }
+                      showMove={showMove}
                       moveUpDisabled={index === 0}
                       moveDownDisabled={index === stages.length - 1}
                       onMoveUp={() => moveStage(index, 'up')}
                       onMoveDown={() => moveStage(index, 'down')}
-                    />
-                  ) : null}
-                  {canRemoveStage ? (
-                    <StructurePhaseRemoveControl
-                      stageName={stage.name}
-                      onRemove={() => setRemoveStage(stage)}
+                      onRemove={
+                        canRemoveStage
+                          ? () => setRemoveStage(stage)
+                          : undefined
+                      }
                     />
                   ) : null}
                 </SelectableTile>
