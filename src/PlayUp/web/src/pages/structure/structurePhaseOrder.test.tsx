@@ -394,7 +394,8 @@ describe('Structure phase insert and reorder', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('offers insert slots without move controls when there is a single phase', async () => {
+  it('offers append and an insert menu when there is a single phase', async () => {
+    const user = userEvent.setup();
     vi.mocked(fetchStructureView).mockResolvedValue(
       view({ stages: [stage()] }),
     );
@@ -402,18 +403,13 @@ describe('Structure phase insert and reorder', () => {
     renderPage();
 
     expect(
-      await screen.findByRole('button', {
-        name: 'Insérer une phase avant League',
-      }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'Insérer une phase après League' }),
+      await screen.findByRole('button', { name: /Ajouter une phase/i }),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole('region', { name: /Topologie/i }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /Ajouter une phase/i }),
+      screen.queryByRole('button', { name: 'Insérer une phase avant League' }),
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: 'Monter League' }),
@@ -421,7 +417,16 @@ describe('Structure phase insert and reorder', () => {
     expect(
       screen.queryByRole('button', { name: 'Descendre League' }),
     ).not.toBeInTheDocument();
-    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Insérer une phase' }));
+    expect(
+      await screen.findByRole('menuitem', {
+        name: 'Insérer une phase avant League',
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('menuitem', { name: 'Insérer une phase après League' }),
+    ).toBeInTheDocument();
   });
 
   it('hides order controls when Host does not expose AddCompetitionStage', async () => {

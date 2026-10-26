@@ -749,14 +749,14 @@ describe('StructurePage Structure hub', () => {
       await screen.findByRole('heading', { name: 'League' }),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /Ajouter une phase/i }),
+      await screen.findByRole('button', { name: /Ajouter une phase/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Insérer une phase' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Insérer une phase avant League' }),
     ).not.toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'Insérer une phase avant League' }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'Insérer une phase après League' }),
-    ).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /^Reconstruire$/i }),
     ).not.toBeInTheDocument();
@@ -858,7 +858,10 @@ describe('StructurePage Structure hub', () => {
     renderStructurePage();
 
     await user.click(
-      await screen.findByRole('button', {
+      await screen.findByRole('button', { name: 'Insérer une phase' }),
+    );
+    await user.click(
+      await screen.findByRole('menuitem', {
         name: 'Insérer une phase après League',
       }),
     );
@@ -877,8 +880,11 @@ describe('StructurePage Structure hub', () => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
 
+    await user.click(screen.getByRole('button', { name: 'Insérer une phase' }));
     await user.click(
-      screen.getByRole('button', { name: 'Insérer une phase après League' }),
+      await screen.findByRole('menuitem', {
+        name: 'Insérer une phase après League',
+      }),
     );
     const createDialog = await screen.findByRole('dialog', {
       name: /Insérer une phase/i,
@@ -1786,7 +1792,10 @@ describe('StructurePage Structure hub', () => {
     expect(
       screen.getByRole('button', { name: /Renommer la phase/i }),
     ).toBeInTheDocument();
-    const remove = screen.getByRole('button', { name: /Supprimer la phase/i });
+    const remove = screen.getByRole('button', {
+      name: 'Supprimer Demi-finales',
+    });
+    expect(remove.closest('.structure-topology__tile')).not.toBeNull();
     expect(remove).toBeEnabled();
     await user.click(remove);
     const dialog = await screen.findByRole('dialog', {

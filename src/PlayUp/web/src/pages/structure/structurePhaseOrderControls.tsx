@@ -1,7 +1,9 @@
 import type { MouseEvent, PointerEvent } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Popover } from '../../design-system/components/Popover';
 import { Tooltip } from '../../design-system/components/Tooltip';
-import { PlusIcon } from '../../design-system/icons/contentIcons';
+import { PlusIcon, TrashIcon } from '../../design-system/icons/contentIcons';
 import {
   ChevronDownIcon,
   ChevronUpIcon,
@@ -9,9 +11,130 @@ import {
 
 const compactIcon =
   'ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact';
+const compactDangerIcon =
+  'ds-btn ds-btn--destructive ds-icon-button ds-icon-button--compact';
 
 function stopControlEvent(event: MouseEvent | PointerEvent) {
   event.stopPropagation();
+}
+
+/**
+ * Removes a phase from the list. Sibling of the select button.
+ */
+export function StructurePhaseRemoveControl({
+  stageName,
+  onRemove,
+}: {
+  stageName: string;
+  onRemove: () => void;
+}) {
+  const { t } = useTranslation('structure');
+  const label = t('graph.removePhaseName', { name: stageName });
+
+  return (
+    <div
+      className="structure-topology__remove"
+      onClick={stopControlEvent}
+      onPointerDown={stopControlEvent}
+    >
+      <Tooltip content={label}>
+        <button
+          type="button"
+          className={compactDangerIcon}
+          aria-label={label}
+          onClick={onRemove}
+        >
+          <TrashIcon size="sm" />
+        </button>
+      </Tooltip>
+    </div>
+  );
+}
+
+/**
+ * Single-phase birth: append is the primary action, insert is the menu.
+ */
+export function StructureSinglePhaseBirth({
+  stageName,
+  disabled = false,
+  onAppend,
+  onInsertBefore,
+  onInsertAfter,
+}: {
+  stageName: string;
+  disabled?: boolean;
+  onAppend: () => void;
+  onInsertBefore: () => void;
+  onInsertAfter: () => void;
+}) {
+  const { t } = useTranslation('structure');
+  const [open, setOpen] = useState(false);
+  const anchorRef = useRef<HTMLButtonElement>(null);
+  const menuLabel = t('graph.insertPhaseMenu');
+
+  return (
+    <div className="structure-phase-birth">
+      <button
+        type="button"
+        className="ds-btn ds-btn--primary structure-phase-birth__main"
+        disabled={disabled}
+        onClick={onAppend}
+      >
+        <PlusIcon size="sm" />
+        <span>{t('graph.addPhase')}</span>
+      </button>
+      <button
+        ref={anchorRef}
+        type="button"
+        className="ds-btn ds-btn--primary structure-phase-birth__more"
+        aria-label={menuLabel}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        disabled={disabled}
+        onClick={() => setOpen((current) => !current)}
+      >
+        <ChevronDownIcon size="sm" />
+      </button>
+      <Popover
+        open={open}
+        onOpenChange={setOpen}
+        anchorRef={anchorRef}
+        role="menu"
+        align="end"
+        width={240}
+        aria-label={menuLabel}
+      >
+        <ul className="structure-overflow-menu">
+          <li role="none">
+            <button
+              type="button"
+              role="menuitem"
+              className="structure-overflow-menu__item"
+              onClick={() => {
+                setOpen(false);
+                onInsertBefore();
+              }}
+            >
+              {t('graph.insertPhaseBefore', { name: stageName })}
+            </button>
+          </li>
+          <li role="none">
+            <button
+              type="button"
+              role="menuitem"
+              className="structure-overflow-menu__item"
+              onClick={() => {
+                setOpen(false);
+                onInsertAfter();
+              }}
+            >
+              {t('graph.insertPhaseAfter', { name: stageName })}
+            </button>
+          </li>
+        </ul>
+      </Popover>
+    </div>
+  );
 }
 
 /**

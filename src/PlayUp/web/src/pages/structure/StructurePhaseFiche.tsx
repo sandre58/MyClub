@@ -162,7 +162,7 @@ function stageActions(stage: StructureStageHubSummary): string[] {
 export function StructurePhaseFiche({
   data,
   stage,
-  singlePhaseHub: _singlePhaseHub = false,
+  singlePhaseHub = false,
   onSelectStage,
   initialEdit,
   initialCompose,
@@ -1213,7 +1213,7 @@ export function StructurePhaseFiche({
         nameDraft={nameDraft}
         renameMutation={renameMutation}
         canRename={canRename && !isCompletedStage}
-        canRemove={canRemove}
+        canRemove={canRemove && singlePhaseHub}
         compactIcon={compactIcon}
         compactDangerIcon={compactDangerIcon}
         onNameDraftChange={setNameDraft}
@@ -1380,7 +1380,7 @@ export function StructurePhaseFiche({
         }
       />
 
-      {canRemove && (
+      {canRemove && singlePhaseHub && (
         <RemovePhaseDialog
           data={data}
           stage={stage}
