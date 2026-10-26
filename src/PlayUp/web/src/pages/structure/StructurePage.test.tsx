@@ -1154,7 +1154,7 @@ describe('StructurePage Structure hub', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('disables add-phase when Host actions omit it', async () => {
+  it('hides add-phase when Host actions omit it', async () => {
     vi.mocked(fetchStructureView).mockResolvedValue(
       structureView({
         actions: [],
@@ -1178,8 +1178,8 @@ describe('StructurePage Structure hub', () => {
       await screen.findByRole('heading', { name: 'Structure' }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: /Ajouter une phase/i }),
-    ).toBeDisabled();
+      screen.queryByRole('button', { name: /Ajouter une phase/i }),
+    ).not.toBeInTheDocument();
     // Teams shortfall is not a Structure banner signal (Équipes owns correction).
     expect(
       screen.queryByText(/Structure à finaliser/i),

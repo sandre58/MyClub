@@ -232,23 +232,14 @@ function StructureHub({ data }: { data: StructureView }) {
   };
 
   const addPhaseAction = (
-    <Tooltip
-      content={
-        canAddPhase ? t('graph.addPhase') : t('hub.addPhaseDisabledHint')
-      }
+    <button
+      type="button"
+      className="ds-btn ds-btn--primary"
+      onClick={openAppend}
     >
-      <span>
-        <button
-          type="button"
-          className="ds-btn ds-btn--primary"
-          disabled={!canAddPhase}
-          onClick={openAppend}
-        >
-          <PlusIcon size="sm" />
-          <span>{t('graph.addPhase')}</span>
-        </button>
-      </span>
-    </Tooltip>
+      <PlusIcon size="sm" />
+      <span>{t('graph.addPhase')}</span>
+    </button>
   );
 
   const bootstrapEmpty =
@@ -257,7 +248,7 @@ function StructureHub({ data }: { data: StructureView }) {
         variant="idle"
         icon={<EmptySelectionIcon size="lg" />}
         title={t('structure.emptyTitle')}
-        action={addPhaseAction}
+        action={canAddPhase ? addPhaseAction : undefined}
       >
         {t('structure.emptyBody')}
       </EmptyState>
@@ -268,8 +259,8 @@ function StructureHub({ data }: { data: StructureView }) {
       <PageHead
         title={t('title')}
         actions={
-          stages.length === 1 ? (
-            canAddPhase && selectedStage ? (
+          stages.length === 1 && canAddPhase ? (
+            selectedStage ? (
               <StructureSinglePhaseBirth
                 stageName={selectedStage.name}
                 onAppend={openAppend}

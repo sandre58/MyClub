@@ -460,6 +460,31 @@ describe('Structure phase insert and reorder', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('hides single-phase birth when Host does not expose AddCompetitionStage', async () => {
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      view({
+        status: 'Running',
+        actions: ['WithdrawEntry', 'RenameEntry'],
+        stages: [stage()],
+      }),
+    );
+
+    renderPage();
+
+    expect(
+      await screen.findByRole('heading', { name: 'Structure' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Ajouter une phase/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Insérer une phase/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Monter League' }),
+    ).not.toBeInTheDocument();
+  });
+
   it('keeps insert and move controls when the competition is Ready', async () => {
     vi.mocked(fetchStructureView).mockResolvedValue(view({ status: 'Ready' }));
 
