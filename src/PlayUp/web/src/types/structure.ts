@@ -471,6 +471,27 @@ export interface AddCompetitionStageResponse {
   structure: StructureView;
 }
 
+/** Before | After an existing anchor stage. */
+export type StageInsertPosition = 'Before' | 'After';
+
+/** POST /competitions/{id}/stages/insert — birth fields plus anchor placement. */
+export type InsertCompetitionStageRequest = AddCompetitionStageRequest & {
+  anchorStageId: string;
+  position: StageInsertPosition;
+};
+
+/** POST /competitions/{id}/stages/insert */
+export interface InsertCompetitionStageResponse {
+  stageId: string;
+  name: string;
+  structure: StructureView;
+}
+
+/** PUT /competitions/{id}/stages/order — permutation of current stage ids. */
+export type SetCompetitionStageOrderRequest = {
+  stageIds: string[];
+};
+
 /** PUT /stages/{id}/structure — same-kind skeleton rebuild */
 export type RebuildStageStructureRequest = {
   format: StructureFormatKind | string;

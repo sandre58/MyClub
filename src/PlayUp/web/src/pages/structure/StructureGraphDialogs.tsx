@@ -3,6 +3,7 @@ import { useId, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   addCompetitionStage,
+  insertCompetitionStage,
   rebuildStageStructure,
   removeCompetitionStage,
 } from '../../api';
@@ -31,6 +32,7 @@ import { queryKeys } from '../../queryKeys';
 import { EmptyState, MutationError, PendingLabel } from '../../ui';
 import type {
   MatchGenerationFormat,
+  StageInsertPosition,
   StructureFormatKind,
   StructureStageHubSummary,
   StructureView,
@@ -97,6 +99,8 @@ export function AddPhaseDialog({
   open,
   onClose,
   onCreated,
+  placement = null,
+  anchorName = '',
 }: {
   competitionId: string;
   structureStages?: readonly StructureStageHubSummary[];
@@ -104,6 +108,12 @@ export function AddPhaseDialog({
   onClose: () => void;
   /** Called after a successful create so the hub can select the new phase. */
   onCreated?: (stageId: string) => void;
+  /** When set, birth is positioned against this anchor. Append stays the default. */
+  placement?: {
+    anchorStageId: string;
+    position: StageInsertPosition;
+  } | null;
+  anchorName?: string;
 }) {
   const { t } = useTranslation('structure');
   const { t: tCommon } = useTranslation('common');
@@ -123,20 +133,30 @@ export function AddPhaseDialog({
     resetDiscard,
   } = useDiscardConfirm(dirty, onClose);
 
-  useSyncWhen(open, 'add-phase', () => {
+  const placementKey = placement
+    ? `${placement.anchorStageId}:${placement.position}`
+    : 'append';
+  useSyncWhen(open, `add-phase:${placementKey}`, () => {
     setName('');
     setFormatPicked(false);
     setSkeleton(defaultSkeletonForm());
     resetDiscard();
   });
 
+  const birthPayload = {
+    format: skeleton.format,
+    name: name.trim(),
+    ...skeletonPayload(skeleton),
+  };
   const mutation = useMutation({
     mutationFn: () =>
-      addCompetitionStage(competitionId, {
-        format: skeleton.format,
-        name: name.trim(),
-        ...skeletonPayload(skeleton),
-      }),
+      placement
+        ? insertCompetitionStage(competitionId, {
+            ...birthPayload,
+            anchorStageId: placement.anchorStageId,
+            position: placement.position,
+          })
+        : addCompetitionStage(competitionId, birthPayload),
     onSuccess: (response) => {
       queryClient.setQueryData(
         queryKeys.competitions.structure(competitionId),
@@ -162,8 +182,21 @@ export function AddPhaseDialog({
       <Dialog
         open={open}
         onClose={requestClose}
-        title={t('graph.addPhaseTitle')}
-        description={t('skeleton.wizardIdentityLede')}
+        title={
+          placement ? t('graph.insertPhaseTitle') : t('graph.addPhaseTitle')
+        }
+        description={
+          placement
+            ? t('graph.insertPhaseLede', {
+                position: t(
+                  placement.position === 'Before'
+                    ? 'graph.positionBefore'
+                    : 'graph.positionAfter',
+                ),
+                anchor: anchorName,
+              })
+            : t('skeleton.wizardIdentityLede')
+        }
         closeLabel={tCommon('close')}
         closeDisabled={mutation.isPending || discardOpen}
         trapFocus={!discardOpen}
@@ -190,7 +223,9 @@ export function AddPhaseDialog({
               ) : (
                 <>
                   <PlusIcon size="sm" />
-                  {t('graph.addPhaseSubmit')}
+                  {placement
+                    ? t('graph.insertPhaseSubmit')
+                    : t('graph.addPhaseSubmit')}
                 </>
               )}
             </button>

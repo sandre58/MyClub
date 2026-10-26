@@ -53,6 +53,31 @@
   align-items: stretch;
 }
 
+.structure-topology__row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-8);
+  width: 100%;
+}
+
+.structure-topology__row .structure-topology__tile {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.structure-topology__order {
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  gap: var(--space-4);
+  padding-top: var(--space-8);
+}
+
+.structure-fiche__header-tools .structure-topology__order {
+  flex-direction: row;
+  padding-top: 0;
+}
+
 .structure-topology__bridge {
   display: flex;
   flex-direction: column;

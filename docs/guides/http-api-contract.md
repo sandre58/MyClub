@@ -414,12 +414,40 @@ Stage hub `actions` may include `RebuildStructure`, `RenameStage`, `AddMatchday`
 
 #### `POST /competitions/{competitionId}/stages` → 201 `AddCompetitionStageResponse`
 
+Appends the new stage at the end of `StageIds`. Body is the birth payload (`format`, `name`, and the format's skeleton fields). Response is `stageId`, `name`, and the refreshed `structure` view. This route does not take an anchor.
+
 ```json
 { "name": "Semi-Finals" }
 ```
 
 ```json
 { "stageId": "<guid>", "name": "Semi-Finals" }
+```
+
+#### `POST /competitions/{competitionId}/stages/insert` → 201 `InsertCompetitionStageResponse`
+
+Positioned birth. Same skeleton fields as append, plus `anchorStageId` and `position` (`Before` | `After`). Identity, skeleton, and `StageIds` position commit in one SaveChanges. Requires an existing anchor — the first stage stays on the append route. Refused while the competition is Running, Suspended, Completed, or Archived (`Application.StructureNotMutable`). An unknown anchor returns `Application.StageNotInCompetition` and persists nothing.
+
+```json
+{
+  "format": "Cup",
+  "name": "Quarter-Finals",
+  "bracketSize": 8,
+  "anchorStageId": "<guid>",
+  "position": "Before"
+}
+```
+
+```json
+{ "stageId": "<guid>", "name": "Quarter-Finals", "structure": { } }
+```
+
+#### `PUT /competitions/{competitionId}/stages/order` → 200 `StructureViewDto`
+
+Reorders stages. Body is `stageIds` only — a permutation of the current stage ids. Qualification and progression wires are not rewritten. Same lifecycle refusal as insert (`Application.StructureNotMutable`). A list that is not a permutation returns `Competition.InvalidStageOrder`.
+
+```json
+{ "stageIds": ["<guid>", "<guid>"] }
 ```
 
 #### `DELETE /competitions/{competitionId}/stages/{stageId}` → 200 `RemoveCompetitionStageResponse`
