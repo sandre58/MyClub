@@ -92,8 +92,8 @@
       "RunDraw_solo": "Draw to run",
       "MaterializeMatches": "Matches to create · {{stageName}}",
       "MaterializeMatches_solo": "Matches to create",
-      "unknown": "Structural step · {{stageName}}",
-      "unknown_solo": "Structural step"
+      "unknown": "Structural stage · {{stageName}}",
+      "unknown_solo": "Structural stage"
     },
     "nextStep": {
       "RunDraw": "Run the random draw",
@@ -201,20 +201,20 @@
     "phaseType": "Phase type",
     "formatConsequence": "This decision is irreversible. The chosen type determines the phase’s initial structure.",
     "formatAwaitingTitle": "No type selected",
-    "formatAwaitingType": "Choose a type to define the phase organisation.",
+    "formatAwaitingType": "Choose a type to define the phase structure.",
     "discardTitle": "Discard this phase?",
     "discardMessage": "What you entered will be lost.",
     "discardConfirm": "Discard",
     "editDiscardTitle": "Discard changes?",
     "editDiscardMessage": "The parameters you entered will be lost.",
     "formatTile": {
-      "Championship": "A single pool, matchdays, and a standing.",
+      "Championship": "A single group, matchdays, and a standing.",
       "Groups": "Several groups with a defined place capacity.",
       "Cup": "A single-elimination bracket.",
       "Swiss": "Rounds with pairings that evolve with results."
     },
-    "editTitle": "Edit organisation",
-    "editLede": "Rebuilds the phase organisation (same type). No draw or relation is created."
+    "editTitle": "Edit structure",
+    "editLede": "Rebuilds the phase structure (same type). No draw or relation is created."
   },
   "graph": {
     "addPhase": "Add a phase",
@@ -516,7 +516,7 @@
       "placeAssignment": "Place assignment"
     },
     "edit": "Edit",
-    "editForme": "Edit organisation",
+    "editForme": "Edit structure",
     "editPhase": "Rename phase",
     "renamePhase": "Phase name",
     "confirmRename": "Save",
@@ -631,7 +631,7 @@
         "entryRoundResolvedCaption": "Resolved",
         "meterAriaEntryPairs": "Entry-bracket pair fill progress",
         "groupsPlacementRatioCaption": "Places",
-        "meterAriaGroupsPlacement": "Group pool place assignment progress",
+        "meterAriaGroupsPlacement": "Group place assignment progress",
         "ratioLabel_one": "created",
         "ratioLabel_other": "created",
         "ratioLabelMatches_one": "match created",
@@ -982,9 +982,9 @@
     "emptyTitle": "No progression rules",
     "emptyBody": "Add a rule, or save to clear any existing rules.",
     "emptyNoPeerTitle": "No destination phase",
-    "emptyNoPeerBody": "Add a downstream phase in Structure before defining exits (Entries or Place). Connections inside a phase belong to its organisation.",
+    "emptyNoPeerBody": "Add a downstream phase in Structure before defining exits (Entries or Place). Connections inside a phase belong to its structure.",
     "emptyNoPlacePeerTitle": "No addressable place",
-    "emptyNoPlacePeerBody": "Place mode only lists Cup phases whose organisation exposes labeled places. No downstream phase is eligible. Choose Entries, or set up a downstream Cup phase.",
+    "emptyNoPlacePeerBody": "Place mode only lists Cup phases whose structure exposes labeled places. No downstream phase is eligible. Choose Entries, or set up a downstream Cup phase.",
     "missingDestinationPhase": "Phase not found",
     "missingDestinationsAlert_one": "{{count}} destination not found",
     "missingDestinationsAlert_other": "{{count}} destinations not found",
@@ -1085,7 +1085,7 @@
     "emptyNoPeerTitle": "No destination phase",
     "emptyNoPeerBody": "Add a downstream phase in Structure before you can define where teams qualify.",
     "emptyNoPlacePeerTitle": "No addressable place",
-    "emptyNoPlacePeerBody": "Place mode only lists Cup phases whose organisation exposes labeled places. No downstream phase is eligible. Choose Entries, or set up a downstream Cup phase.",
+    "emptyNoPlacePeerBody": "Place mode only lists Cup phases whose structure exposes labeled places. No downstream phase is eligible. Choose Entries, or set up a downstream Cup phase.",
     "missingDestinationPhase": "Phase not found",
     "missingDestinationsAlert_one": "{{count}} destination not found",
     "missingDestinationsAlert_other": "{{count}} destinations not found",

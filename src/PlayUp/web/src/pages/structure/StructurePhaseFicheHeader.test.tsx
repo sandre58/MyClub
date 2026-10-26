@@ -86,7 +86,7 @@ describe('StructurePhaseFicheHeader', () => {
   it('does not show edit forme in header (B2 F2 — hero chrome only)', () => {
     renderHeader({ ...baseStage, status: 'Draft' } as StructureStageHubSummary);
     expect(
-      screen.queryByRole('button', { name: /Modifier l.organisation/i }),
+      screen.queryByRole('button', { name: /Modifier la structure/i }),
     ).not.toBeInTheDocument();
   });
 
