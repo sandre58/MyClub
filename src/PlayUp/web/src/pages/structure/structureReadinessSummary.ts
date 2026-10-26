@@ -19,10 +19,7 @@ import {
 import { structureDiagnosticContextFromStage } from './structureDiagnosticContext';
 import { collectAllStructureReadinessActionItems } from './structureReadinessActions';
 import { readinessHasBlockerCode } from './structureReadinessBlockerDetails';
-import {
-  stageHasEngagedMissingPots,
-  stagePresentedIssueCodes,
-} from './structureStagePresentedIssues';
+import { stagePresentedIssueCodes } from './structureStagePresentedIssues';
 
 /** Ambient kinds on a topology tile (unified pastille). Not structureIssues. */
 export type StageAmbientKind =
@@ -46,7 +43,10 @@ export type StructureReadinessSummary = {
   presentedProblemCount: number;
   /** Diagnostics with a banner CTA (full list, not capped at 3). */
   actionableCount: number;
-  /** Phases without graph/shortfall but Groups + engaged draw + missing pots (E1/E6). */
+  /**
+   * Phases whose presented codes include MissingPotRules.
+   * Already included in presentedProblemCount.
+   */
   missingPotsPhaseCount: number;
   /** CupBracketInvalid on an existing structure. */
   shapeInvalid: boolean;
@@ -129,8 +129,6 @@ export function stageHasPopulationShortfall(
   return gap != null && gap < 0;
 }
 
-export { stageHasEngagedMissingPots } from './structureStagePresentedIssues';
-
 /**
  * Hub synthesis (not selected fiche stage): are all presented structure problems
  * contributed only by Suspended phases?
@@ -150,9 +148,7 @@ export function presentedStructureProblemsSuspendedOnly(
       continue;
     }
     const presented = stagePresentedIssueCodes(data, stage);
-    const contributes =
-      presented.length > 0 || stageHasEngagedMissingPots(stage);
-    if (!contributes) {
+    if (presented.length === 0) {
       continue;
     }
     hasContributor = true;
@@ -177,6 +173,10 @@ export function stageAmbientKinds(
   const presented = stagePresentedIssueCodes(data, stage);
   const context = structureDiagnosticContextFromStage(data, stage);
   for (const code of presented) {
+    // Catalogue family is execution; draw pots are a separate ambient kind.
+    if (code === 'MissingPotRules') {
+      continue;
+    }
     if (structureDiagnosticTone(code, context) === 'progress') {
       continue;
     }
@@ -185,7 +185,7 @@ export function stageAmbientKinds(
     seen.add(family);
     kinds.push(family);
   }
-  if (stageHasEngagedMissingPots(stage)) {
+  if (presented.includes('MissingPotRules')) {
     kinds.push('drawPots');
   }
   return kinds;
@@ -230,13 +230,15 @@ export function computeStructureReadinessSummary(
       firstAttentionStageId ??= stage.stageId;
       presentedCodes.push(...presented);
     }
-    if (stageHasEngagedMissingPots(stage)) {
+    if (presented.includes('MissingPotRules')) {
       missingPotsPhaseCount += 1;
-      firstAttentionStageId ??= stage.stageId;
     }
   }
 
-  const byFamily = countStructureIssuesByFamily(presentedCodes);
+  // MissingPotRules is drawPots ambient, not the execution family.
+  const byFamily = countStructureIssuesByFamily(
+    presentedCodes.filter((code) => code !== 'MissingPotRules'),
+  );
   const familyCounts: StructureFamilyCount[] =
     STRUCTURE_DIAGNOSTIC_FAMILIES.filter((family) => byFamily[family] > 0).map(
       (family) => ({ family, count: byFamily[family] }),
@@ -244,8 +246,7 @@ export function computeStructureReadinessSummary(
 
   const shapeInvalid = readinessHasBlockerCode(data, 'CupBracketInvalid');
 
-  const presentedProblemCount =
-    presentedCodes.length + missingPotsPhaseCount + (shapeInvalid ? 1 : 0);
+  const presentedProblemCount = presentedCodes.length + (shapeInvalid ? 1 : 0);
 
   const hasAny = presentedProblemCount > 0;
 

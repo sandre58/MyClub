@@ -163,7 +163,12 @@ public static class StructurePresentedStageDiagnostics
             stage.InboundComposition,
             stage.Materialize?.DeterminedCount ?? 0);
 
-    /// <summary>SPA: <c>stageHasEngagedMissingPots</c>.</summary>
+    /// <summary>
+    /// Groups with draw engaged and no pot count — the shape
+    /// <see cref="StructureViewAssembler"/> uses when it emits MissingPotRules
+    /// on readiness blocker details. <see cref="CollectPresentedIssueCodes"/> folds
+    /// that blocker into <c>presentedIssueCodes</c>. The Structure SPA reads the code.
+    /// </summary>
     public static bool StageHasEngagedMissingPots(StructureStageHubSummaryDto stage) =>
         stage is { FormatKind: StructureFormatKind.Groups, HasDrawRules: true, NumberOfPots: null };
 

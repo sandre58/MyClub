@@ -36,8 +36,8 @@
 | Source | Mechanism | Contract note |
 |--------|-----------|---------------|
 | `PopulationShortfall` (U1) | `stagePresentedIssueCodes` / `StructurePopulationVolume.ShouldSynthesizePopulationShortfall` | Must follow Ready visual danger; keep parity Host/SPA |
-| `MissingPotRules` | `stageHasEngagedMissingPots` → attention item, not `structureIssues` | Classify in catalogue or keep separate; topology/readiness already count it |
-| `CupBracketInvalid` | readiness blocker → attention | Not in matrix; keep danger until classified |
+| `MissingPotRules` | Host readiness blocker folded into `presentedIssueCodes`. SPA `missingPotsPhaseCount`, ambient `drawPots`, and the tirage CTA use `codes.includes('MissingPotRules')` only — not `structureDiagnosticFamily` (`execution`) and not a local Groups / draw / pots rule | One presented signal per Host code (no second synthetic count) |
+| `CupBracketInvalid` | readiness blocker → attention, and a synthetic banner beside `presentedIssueCodes` | Not in matrix; keep danger until classified. Same double-channel class as MissingPotRules was — follow-up, not this lot |
 | `StructureGraphInvalid` | readiness / overview | danger presentation |
 
 ---

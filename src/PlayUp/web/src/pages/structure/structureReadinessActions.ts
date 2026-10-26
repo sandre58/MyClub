@@ -8,10 +8,7 @@ import {
   type StructureDiagnosticTone,
 } from './structureDiagnosticPresentation';
 import { structureDiagnosticContextFromStage } from './structureDiagnosticContext';
-import {
-  stageHasEngagedMissingPots,
-  stagePresentedIssueCodes,
-} from './structureStagePresentedIssues';
+import { stagePresentedIssueCodes } from './structureStagePresentedIssues';
 import { blockerDetailsForStage } from './structureReadinessBlockerDetails';
 import {
   structureDeepLink,
@@ -223,17 +220,6 @@ export function collectAllStructureReadinessActionItems(
     const presented = stagePresentedIssueCodes(data, stage);
     for (const code of presented) {
       pushIssueItem(items, { data, competitionId, stage, code });
-    }
-    if (stageHasEngagedMissingPots(stage)) {
-      pushSyntheticItem(items, {
-        competitionId,
-        stage,
-        id: `${stage.stageId}:MissingPotRules`,
-        code: 'MissingPotRules',
-        tone: 'attention',
-        titleKey: 'readiness.issue.missingPots',
-        cta: 'structure',
-      });
     }
   }
 
