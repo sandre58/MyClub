@@ -31,13 +31,19 @@ public static class StageSchematicAssembler
     /// <param name="competitionStages">All competition stages (inbound WhoFeeds).</param>
     /// <param name="matchRows">Stage match rows (pairing-draw cup sides); empty when unavailable.</param>
     /// <param name="matchSummariesByStage">Upstream fixture rows for Qual/Prog seat projection on cup slots.</param>
+    /// <param name="championshipSwissExpectedOccupancy">
+    /// Expected occupancy for Championship / Swiss Places N when set.
+    /// Non-positive values leave Places N unknown.
+    /// Null reads the configured expected occupancy. Ignored for other formats.
+    /// </param>
     /// <returns>The assembled schematic.</returns>
     public static StageSchematicDto Assemble(
         Stage stage,
         Competition competition,
         IReadOnlyList<Stage> competitionStages,
         IReadOnlyList<MatchSummaryRow>? matchRows = null,
-        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>>? matchSummariesByStage = null)
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>>? matchSummariesByStage = null,
+        int? championshipSwissExpectedOccupancy = null)
     {
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(competition);
@@ -56,7 +62,13 @@ public static class StageSchematicAssembler
                 matchSummariesByStage),
             StructureFormatKind.Groups => AssembleGroups(stage, competitionStages, entries),
             StructureFormatKind.Championship or StructureFormatKind.Swiss =>
-                AssembleRosterCapacity(stage, competition, competitionStages, format.Value, entries),
+                AssembleRosterCapacity(
+                    stage,
+                    competition,
+                    competitionStages,
+                    format.Value,
+                    entries,
+                    championshipSwissExpectedOccupancy),
             _ => Empty(stage, format)
         };
     }
@@ -531,10 +543,17 @@ public static class StageSchematicAssembler
         Competition competition,
         IReadOnlyList<Stage> competitionStages,
         StructureFormatKind format,
-        IReadOnlyDictionary<EntryId, CompetitionEntry> entries)
+        IReadOnlyDictionary<EntryId, CompetitionEntry> entries,
+        int? championshipSwissExpectedOccupancy = null)
     {
         var expected = ResolveExpectedFormParticipants(stage, competitionStages, entries);
-        var places = ResolvePlaces(competition, stage, format, competitionStages);
+        var places = championshipSwissExpectedOccupancy is { } expectedOccupancy
+            ? ChampionshipSwissPhasePlaces.ResolvePlacesN(
+                competition,
+                stage,
+                competitionStages,
+                expectedOccupancy)
+            : ResolvePlaces(competition, stage, format, competitionStages);
         if (places is null or < 1)
         {
             return Empty(stage, format) with { ExpectedFormParticipants = expected };

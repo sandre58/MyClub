@@ -15,6 +15,7 @@ using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
+using MyClub.PlayUp.TestKit;
 using Xunit;
 
 namespace MyClub.PlayUp.Application.Tests.Reads;
@@ -260,6 +261,61 @@ public sealed class StageSchematicAssemblerTests
         schematic.Cases[2].Entry.Should().BeNull();
         schematic.Cases[3].Entry.Should().BeNull();
         schematic.Connections.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Championship_fed_by_group_qualification_sizes_roster_to_expected_occupancy()
+    {
+        var (situation, league) = CreateGroupsFedChampionship();
+        var stages = situation.Stages;
+        var expected = StructurePopulationVolume.ExpectedOccupancy(league, stages);
+
+        expected.Should().Be(4);
+        situation.Competition.Entries.Should().HaveCount(8);
+        ChampionshipSwissPhasePlaces
+            .ResolvePlacesN(situation.Competition, league, stages)
+            .Should()
+            .Be(expected);
+
+        var schematic = StageSchematicAssembler.Assemble(league, situation.Competition, stages);
+        var hub = StructureViewAssembler.Assemble(situation.Competition, stages)
+            .Stages.Single(stage => stage.StageId == league.Id.Value);
+
+        schematic.FormatKind.Should().Be(StructureFormatKind.Championship);
+        schematic.Cases.Should().HaveCount(expected);
+        schematic.Cases.Should().NotHaveCount(situation.Competition.Entries.Count);
+        schematic.Cases.Select(c => c.FormPosition.Index).Should().Equal(1, 2, 3, 4);
+        schematic.Cases.Should().OnlyContain(c =>
+            c.FormPosition.Kind == StageSchematicAssembler.FormKindRosterPlace);
+        hub.IsRootComposition.Should().BeFalse();
+        hub.CompositionCapacity.Should().Be(schematic.Cases.Count);
+    }
+
+    [Fact]
+    public void Championship_non_root_unknown_expected_occupancy_schematic_has_no_cases()
+    {
+        var (situation, league) = CreateGroupsFedChampionship();
+        var stages = situation.Stages;
+
+        StructureStageInboundTopology.IsRootComposition(league, stages).Should().BeFalse();
+        situation.Competition.Entries.Should().HaveCount(8);
+        ChampionshipSwissPhasePlaces
+            .ResolvePlacesN(
+                situation.Competition,
+                league,
+                stages,
+                expectedOccupancy: 0)
+            .Should()
+            .BeNull();
+
+        var schematic = StageSchematicAssembler.Assemble(
+            league,
+            situation.Competition,
+            stages,
+            championshipSwissExpectedOccupancy: 0);
+
+        schematic.FormatKind.Should().Be(StructureFormatKind.Championship);
+        schematic.Cases.Should().BeEmpty();
     }
 
     [Fact]
@@ -572,5 +628,36 @@ public sealed class StageSchematicAssemblerTests
                 summaries)
             .Should()
             .Be(1);
+    }
+
+    private (TestCompetition Situation, Stage League) CreateGroupsFedChampionship()
+    {
+        var situation = TestCompetition.Create("Groups to champ", _clock)
+            .WithTeams("A", "B", "C", "D", "E", "F", "G", "H")
+            .WithStructure(StructureIntent.Groups(2, 4, "Poules"));
+        var groups = situation.PrimaryStage!;
+        var orderedGroups = groups.Groups.OrderBy(group => group.Name, StringComparer.Ordinal).ToArray();
+        var entries = situation.Competition.Entries.ToList();
+        for (var i = 0; i < entries.Count; i++)
+        {
+            groups.AssignEntryToGroup(orderedGroups[i / 4].Id, entries[i].Id);
+        }
+
+        var league = situation.AddBareStage("League");
+        league.AddMatchday(1, _clock);
+        ReplaceStageQualificationRules.Execute(
+            groups,
+            [
+                new QualificationIntentSpec(
+                    Guid.NewGuid(),
+                    1,
+                    QualificationIntentSourceKind.EachGroup,
+                    1,
+                    2,
+                    league.Id.Value)
+            ],
+            _clock);
+
+        return (situation, league);
     }
 }

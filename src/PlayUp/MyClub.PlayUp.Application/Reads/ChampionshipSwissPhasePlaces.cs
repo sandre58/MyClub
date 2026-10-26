@@ -17,7 +17,9 @@ namespace MyClub.PlayUp.Application.Reads;
 internal static class ChampionshipSwissPhasePlaces
 {
     /// <summary>
-    /// Target Places N for the championship phase (not always all competition actives).
+    /// Places N for a Championship or Swiss phase.
+    /// Root: occupying entry count (competition entries, including withdrawn).
+    /// Non-root: positive expected occupancy; null when that occupancy is unknown.
     /// </summary>
     internal static int? ResolvePlacesN(
         Competition competition,
@@ -30,13 +32,45 @@ internal static class ChampionshipSwissPhasePlaces
             return null;
         }
 
-        if (StructureStageInboundTopology.IsRootComposition(stage, competitionStages))
+        var isRoot = StructureStageInboundTopology.IsRootComposition(stage, competitionStages);
+        var expected = isRoot
+            ? 0
+            : StructurePopulationVolume.ExpectedOccupancy(stage, competitionStages);
+        return ResolvePlacesN(occupying, isRoot, expected);
+    }
+
+    /// <summary>
+    /// Places N using an explicit expected occupancy. Root and occupying rules still apply.
+    /// </summary>
+    internal static int? ResolvePlacesN(
+        Competition competition,
+        Stage stage,
+        IReadOnlyList<Stage> competitionStages,
+        int expectedOccupancy) =>
+        ResolvePlacesN(
+            CountOccupyingEntries(competition),
+            StructureStageInboundTopology.IsRootComposition(stage, competitionStages),
+            expectedOccupancy);
+
+    /// <summary>
+    /// Places N from occupying count, root topology, and expected occupancy.
+    /// </summary>
+    internal static int? ResolvePlacesN(
+        int occupyingEntryCount,
+        bool isRootComposition,
+        int expectedOccupancy)
+    {
+        if (occupyingEntryCount == 0)
         {
-            return occupying;
+            return null;
         }
 
-        var expected = StructurePopulationVolume.ExpectedOccupancy(stage, competitionStages);
-        return expected > 0 ? expected : occupying;
+        if (isRootComposition)
+        {
+            return occupyingEntryCount;
+        }
+
+        return expectedOccupancy > 0 ? expectedOccupancy : null;
     }
 
     /// <summary>
