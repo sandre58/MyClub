@@ -39,7 +39,7 @@ jobs:
           retention-days: 7
 
       - name: NuGet vulnerable packages
-        run: dotnet list MyClub.slnx package --vulnerable --include-transitive
+        run: bash .github/scripts/verify-nuget-vulnerable-packages.sh MyClub.slnx
 
       - name: Build
         run: dotnet build MyClub.slnx --no-restore --configuration Release 2>&1 | tee "${RUNNER_TEMP}/dotnet-build.log"
