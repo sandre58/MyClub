@@ -84,5 +84,12 @@ public sealed class StructurePlacesContractTests
 
         champHub.IsRootComposition.Should().BeFalse();
         champHub.CompositionCapacity.Should().Be(4);
+
+        var schematic = StageSchematicAssembler.Assemble(
+            league,
+            situation.Competition,
+            situation.Stages);
+        schematic.Cases.Should().HaveCount(champHub.CompositionCapacity!.Value);
+        schematic.Cases.Should().NotHaveCount(situation.Competition.Entries.Count);
     }
 }
