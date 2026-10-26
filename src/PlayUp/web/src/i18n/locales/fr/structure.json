@@ -223,7 +223,6 @@
     "moveUp": "Monter {{name}}",
     "moveDown": "Descendre {{name}}",
     "moveToolbar": "Déplacer {{name}}",
-    "insertPhaseSlot": "Insérer une phase",
     "insertPhaseBefore": "Insérer une phase avant {{name}}",
     "insertPhaseAfter": "Insérer une phase après {{name}}",
     "insertPhaseTitle": "Insérer une phase",

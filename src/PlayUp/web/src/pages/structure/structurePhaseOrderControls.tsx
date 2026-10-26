@@ -15,8 +15,8 @@ function stopControlEvent(event: MouseEvent | PointerEvent) {
 }
 
 /**
- * Birth control for a phase gap. Visible label is shared; the accessible
- * name carries before/after so identical slots stay distinct.
+ * Quiet birth control for a phase gap. Icon only; the accessible name
+ * carries before/after so identical slots stay distinct.
  */
 export function StructurePhaseInsertSlot({
   stageName,
@@ -39,22 +39,23 @@ export function StructurePhaseInsertSlot({
 
   return (
     <div className="structure-topology__insert">
-      <button
-        type="button"
-        className="ds-btn ds-btn--ghost structure-topology__insert-button"
-        aria-label={accessibleName}
-        disabled={disabled}
-        onClick={onInsert}
-      >
-        <PlusIcon size="sm" />
-        <span>{t('graph.insertPhaseSlot')}</span>
-      </button>
+      <Tooltip content={accessibleName}>
+        <button
+          type="button"
+          className={`${compactIcon} structure-topology__insert-button`}
+          aria-label={accessibleName}
+          disabled={disabled}
+          onClick={onInsert}
+        >
+          <PlusIcon size="sm" />
+        </button>
+      </Tooltip>
     </div>
   );
 }
 
 /**
- * In-tile move toolbar. Sits beside the select hit area, not inside it.
+ * In-tile move toolbar, stacked on one icon width beside the select hit area.
  */
 export function StructurePhaseMoveControls({
   stageName,
@@ -79,7 +80,7 @@ export function StructurePhaseMoveControls({
     <div
       className="structure-topology__move"
       role="toolbar"
-      aria-orientation="horizontal"
+      aria-orientation="vertical"
       aria-label={t('graph.moveToolbar', { name: stageName })}
       onClick={stopControlEvent}
       onPointerDown={stopControlEvent}

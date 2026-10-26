@@ -73,19 +73,14 @@
   padding-block: var(--space-4);
 }
 
-.structure-topology__insert .ds-btn.structure-topology__insert-button {
-  opacity: 0;
-  transition: opacity var(--motion-duration) var(--motion-easing);
+.structure-topology__insert .structure-topology__insert-button,
+.structure-topology__move .ds-btn {
+  color: var(--color-text-secondary);
 }
 
-.structure-topology__insert:hover .structure-topology__insert-button,
-.structure-topology__insert:focus-within .structure-topology__insert-button {
-  opacity: 1;
-}
-
-.structure-topology__insert:hover .structure-topology__insert-button:disabled,
-.structure-topology__insert:focus-within .structure-topology__insert-button:disabled {
-  opacity: 0.48;
+.structure-topology__insert .structure-topology__insert-button:hover:not(:disabled),
+.structure-topology__move .ds-btn:hover:not(:disabled) {
+  color: var(--color-text-primary);
 }
 
 .structure-topology__tile {
@@ -108,8 +103,8 @@
   cursor: pointer;
 }
 
-.structure-topology__tile:has(.structure-topology__move) .structure-topology__tile-head {
-  padding-inline-end: calc(1.75rem + 1.75rem + var(--space-4));
+.structure-topology__tile:has(.structure-topology__move) .structure-topology__select {
+  padding-inline-end: calc(var(--space-12) + 1.75rem);
 }
 
 .structure-topology__move {
@@ -118,19 +113,9 @@
   top: var(--space-12);
   inset-inline-end: var(--space-12);
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: center;
-  gap: var(--space-4);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--motion-duration) var(--motion-easing);
-}
-
-.structure-topology__tile:hover .structure-topology__move,
-.structure-topology__tile:focus-within .structure-topology__move,
-.structure-topology__tile[data-selected='true'] .structure-topology__move {
-  opacity: 1;
-  pointer-events: auto;
+  gap: 0;
 }
 
 .structure-topology__bridge {

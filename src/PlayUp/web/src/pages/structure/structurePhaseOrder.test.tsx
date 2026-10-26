@@ -202,8 +202,12 @@ describe('Structure phase insert and reorder', () => {
     expect(moveDown.closest('.structure-topology__tile')).not.toBeNull();
     expect(moveDown.closest('[role="toolbar"]')).toHaveAttribute(
       'aria-orientation',
-      'horizontal',
+      'vertical',
     );
+    const insertBefore = screen.getByRole('button', {
+      name: 'Insérer une phase avant League',
+    });
+    expect(insertBefore).not.toHaveTextContent(/Insérer une phase/);
     expect(document.querySelector('.structure-topology__order')).toBeNull();
     expect(
       screen.queryByRole('button', { name: /Ajouter une phase/i }),

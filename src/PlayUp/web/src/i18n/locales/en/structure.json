@@ -223,7 +223,6 @@
     "moveUp": "Move {{name}} up",
     "moveDown": "Move {{name}} down",
     "moveToolbar": "Move {{name}}",
-    "insertPhaseSlot": "Insert a phase",
     "insertPhaseBefore": "Insert a phase before {{name}}",
     "insertPhaseAfter": "Insert a phase after {{name}}",
     "insertPhaseTitle": "Insert a phase",
