@@ -232,6 +232,7 @@
     "positionBefore": "before",
     "positionAfter": "after",
     "insertPhaseSubmit": "Insert phase",
+    "insertLinkedPhasesWarning": "This insert sits between phases already linked by qualification or progression. Existing links will not be changed.",
     "phaseName": "Phase name",
     "removePhase": "Remove phase",
     "removePhaseName": "Remove {{name}}",

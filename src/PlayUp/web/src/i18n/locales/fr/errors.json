@@ -15,7 +15,7 @@
     "RoutingNondeterminism": "Le routage entre phases est ambigu.",
     "OverCapacityEdge": "Le volume entrant dépasse la capacité de places.",
     "OverExtraction": "L’extraction sortante dépasse la capacité de la source.",
-    "StructureNotMutable": "La structure n’est plus modifiable dans cet état.",
+    "StructureNotMutable": "La structure ne peut plus être modifiée tant que la compétition est en cours / close.",
     "ReadyConsumerWouldBreak": "Cette modification casserait une phase aval déjà prête avec des équipes placées via la qualification — ajustez la phase aval ou repassez-la en brouillon.",
     "StructureFormatImmutable": "Le format de structure ne peut plus être changé.",
     "DrawRulesRequired": "Configurez les règles de tirage avant de créer une exécution.",

@@ -46,6 +46,7 @@ import {
   skeletonPayload,
   skeletonStepValid,
 } from './structureSkeletonForm';
+import { insertSplitsLinkedPhases } from './structureInsertLinkedPhases';
 import { countInboundQualProgRules } from './structureStageQualProgProjection';
 
 const ADD_PHASE_FORMATS: StructureFormatKind[] = [
@@ -172,6 +173,8 @@ export function AddPhaseDialog({
 
   const canSubmit =
     name.trim().length > 0 && formatPicked && skeletonStepValid(skeleton);
+  const splitsLinkedPhases =
+    placement !== null && insertSplitsLinkedPhases(structureStages, placement);
 
   function requestClose() {
     requestDiscardClose(mutation.isPending);
@@ -251,6 +254,12 @@ export function AddPhaseDialog({
             mutation.mutate();
           }}
         >
+          {splitsLinkedPhases ? (
+            <Alert tone="warning" role="status">
+              {t('graph.insertLinkedPhasesWarning')}
+            </Alert>
+          ) : null}
+
           <Field label={t('graph.phaseName')} htmlFor={nameId} required>
             <TextInput
               id={nameId}

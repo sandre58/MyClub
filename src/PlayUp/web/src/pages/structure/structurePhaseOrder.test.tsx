@@ -247,7 +247,9 @@ describe('Structure phase insert and reorder', () => {
       await screen.findByRole('button', { name: 'Descendre League' }),
     );
 
-    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'La structure ne peut plus être modifiée tant que la compétition est en cours / close.',
+    );
     expect(tileNames()[0]).toContain('League');
     expect(tileNames()[1]).toContain('Barrages');
     expect(success).not.toHaveBeenCalled();
@@ -431,8 +433,13 @@ describe('Structure phase insert and reorder', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('hides order controls when Host does not expose AddCompetitionStage', async () => {
-    vi.mocked(fetchStructureView).mockResolvedValue(view({ actions: [] }));
+  it('hides insert, move, and add when the competition is running', async () => {
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      view({
+        status: 'Running',
+        actions: ['WithdrawEntry', 'RenameEntry'],
+      }),
+    );
 
     renderPage();
 
@@ -446,7 +453,129 @@ describe('Structure phase insert and reorder', () => {
       screen.queryByRole('button', { name: 'Monter League' }),
     ).not.toBeInTheDocument();
     expect(
+      screen.queryByRole('button', { name: 'Descendre League' }),
+    ).not.toBeInTheDocument();
+    expect(
       screen.queryByRole('button', { name: /Insérer une phase/i }),
     ).not.toBeInTheDocument();
+  });
+
+  it('keeps insert and move controls when the competition is Ready', async () => {
+    vi.mocked(fetchStructureView).mockResolvedValue(view({ status: 'Ready' }));
+
+    renderPage();
+
+    expect(
+      await screen.findByRole('button', { name: 'Monter League' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Insérer une phase avant League' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Ajouter une phase/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('warns without blocking when the insert splits a qualification link', async () => {
+    const user = userEvent.setup();
+    const createdId = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee';
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      view({
+        stages: [
+          stage({
+            qualificationIntents: [
+              {
+                intentId: 'q1',
+                order: 1,
+                sourceKind: 'Overall',
+                positionFrom: 1,
+                positionTo: 1,
+                destinationStageId: barrageId,
+              },
+            ],
+          }),
+          stage({ stageId: barrageId, name: 'Barrages' }),
+        ],
+      }),
+    );
+    vi.mocked(insertCompetitionStage).mockResolvedValue({
+      stageId: createdId,
+      name: 'Milieu',
+      structure: view(),
+    });
+
+    renderPage();
+
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'Insérer une phase après League',
+      }),
+    );
+    const dialog = await screen.findByRole('dialog', {
+      name: /Insérer une phase/i,
+    });
+    expect(
+      within(dialog).getByText(
+        /entre des phases déjà reliées par une qualification ou une progression/i,
+      ),
+    ).toBeInTheDocument();
+    await user.type(
+      within(dialog).getByLabelText(/Nom de la phase/i),
+      'Milieu',
+    );
+    await user.click(
+      within(dialog).getByRole('checkbox', { name: /Championnat/i }),
+    );
+    const submit = within(dialog).getByRole('button', {
+      name: /Insérer la phase/i,
+    });
+    expect(submit).toBeEnabled();
+    await user.click(submit);
+
+    await waitFor(() => {
+      expect(insertCompetitionStage).toHaveBeenCalledWith(
+        competitionId,
+        expect.objectContaining({
+          anchorStageId: leagueId,
+          position: 'After',
+          name: 'Milieu',
+        }),
+      );
+    });
+  });
+
+  it('does not warn when the insert leaves qualification links intact', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      view({
+        stages: [
+          stage({
+            qualificationIntents: [
+              {
+                intentId: 'q1',
+                order: 1,
+                sourceKind: 'Overall',
+                positionFrom: 1,
+                positionTo: 1,
+                destinationStageId: barrageId,
+              },
+            ],
+          }),
+          stage({ stageId: barrageId, name: 'Barrages' }),
+        ],
+      }),
+    );
+
+    renderPage();
+
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'Insérer une phase après Barrages',
+      }),
+    );
+    const dialog = await screen.findByRole('dialog', {
+      name: /Insérer une phase/i,
+    });
+    expect(within(dialog).queryByText(/déjà reliées/i)).not.toBeInTheDocument();
   });
 });
