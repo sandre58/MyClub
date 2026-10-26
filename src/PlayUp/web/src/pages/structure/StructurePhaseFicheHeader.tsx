@@ -12,7 +12,6 @@ import {
   PencilIcon,
   StructureIcon,
   SwissFormatIcon,
-  TrashIcon,
 } from '../../design-system/icons/contentIcons';
 import { CloseIcon } from '../../design-system/icons/shellIcons';
 import { structureFormatKindLabel } from '../../i18n/enumLabels';
@@ -54,15 +53,11 @@ export function StructurePhaseFicheHeader({
   nameDraft,
   renameMutation,
   canRename,
-  canRemove,
   compactIcon,
-  compactDangerIcon,
   onNameDraftChange,
   onBeginRename,
   onCancelRename,
   onCommitRename,
-  onOpenRemove,
-  orderMenu = null,
 }: {
   stage: StructureStageHubSummary;
   competitionId: string;
@@ -72,15 +67,11 @@ export function StructurePhaseFicheHeader({
   nameDraft: string;
   renameMutation: UseMutationResult<void, Error, string, unknown>;
   canRename: boolean;
-  canRemove: boolean;
   compactIcon: string;
-  compactDangerIcon: string;
   onNameDraftChange: (value: string) => void;
   onBeginRename: () => void;
   onCancelRename: () => void;
   onCommitRename: () => void;
-  onOpenRemove: () => void;
-  orderMenu?: ReactNode | null;
 }) {
   const { t } = useTranslation('structure');
   const { t: tCommon } = useTranslation('common');
@@ -90,8 +81,6 @@ export function StructurePhaseFicheHeader({
     (stage.formatKind ? structureFormatKindLabel(stage.formatKind) : null);
 
   const showLifecycleRow = !editingName && shouldShowMatchsLifecycle(stage);
-  const showCompletedBadgeOnIdentity =
-    !editingName && !showLifecycleRow && stage.status === 'Completed';
 
   return (
     <header className="structure-fiche__header structure-fiche__header--two-rows">
@@ -201,32 +190,12 @@ export function StructurePhaseFicheHeader({
         </div>
         {!editingName ? (
           <div className="structure-fiche__header-row-end">
-            {showCompletedBadgeOnIdentity ? (
-              <StageStatusBadge status={stage.status} />
-            ) : null}
-            {canRemove || orderMenu ? (
-              <div className="structure-fiche__header-tools ds-icon-toolbar">
-                {orderMenu}
-                {canRemove ? (
-                  <Tooltip content={t('graph.removePhase')}>
-                    <button
-                      type="button"
-                      className={compactDangerIcon}
-                      aria-label={t('graph.removePhase')}
-                      onClick={onOpenRemove}
-                    >
-                      <TrashIcon size="sm" />
-                    </button>
-                  </Tooltip>
-                ) : null}
-              </div>
-            ) : null}
+            <StageStatusBadge status={stage.status} />
           </div>
         ) : null}
       </div>
       {showLifecycleRow ? (
         <div className="structure-fiche__header-row structure-fiche__header-row--lifecycle">
-          <StageStatusBadge status={stage.status} />
           <div className="structure-fiche__header-lifecycle-cluster">
             <StructurePhaseHeaderLifecycle
               competitionId={competitionId}
