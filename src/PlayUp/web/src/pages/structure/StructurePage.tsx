@@ -53,7 +53,10 @@ import {
   resolveStructurePageHeadNoteKind,
 } from './structurePageHeadReadiness';
 import { AddPhaseDialog } from './StructureGraphDialogs';
-import { StructurePhaseOrderControls } from './structurePhaseOrderControls';
+import {
+  StructurePhaseInsertSlot,
+  StructurePhaseMoveControls,
+} from './structurePhaseOrderControls';
 import { scheduleStructureRefresh } from './structureInvalidation';
 import { StructureReadinessHint } from './StructureReadinessHint';
 import { StructurePageHeadReadinessStatus } from './structurePageHeadReadinessStatus';
@@ -247,6 +250,9 @@ function StructureHub({ data }: { data: StructureView }) {
     </Tooltip>
   );
 
+  const singlePhaseAnchor =
+    !multiPhase && canAddPhase && selectedStage ? selectedStage : null;
+
   const bootstrapEmpty =
     stages.length === 0 ? (
       <EmptyState
@@ -263,7 +269,6 @@ function StructureHub({ data }: { data: StructureView }) {
     <div className="structure-hub">
       <PageHead
         title={t('title')}
-        actions={stages.length === 0 ? undefined : addPhaseAction}
         note={readinessStatusNote(
           data,
           stages,
@@ -286,58 +291,71 @@ function StructureHub({ data }: { data: StructureView }) {
               onInsert={openInsert}
             />
           ) : null}
-          <StructurePhaseFiche
-            data={data}
-            stage={selectedStage}
-            singlePhaseHub={!multiPhase}
-            onSelectStage={selectStage}
-            orderMenu={
-              !multiPhase && canAddPhase && selectedStage ? (
-                <StructurePhaseOrderControls
-                  stageName={selectedStage.name}
-                  onInsertBefore={() =>
-                    openInsert(
-                      selectedStage.stageId,
-                      'Before',
-                      selectedStage.name,
-                    )
-                  }
-                  onInsertAfter={() =>
-                    openInsert(
-                      selectedStage.stageId,
-                      'After',
-                      selectedStage.name,
-                    )
-                  }
-                />
-              ) : null
+          <div
+            className={
+              multiPhase
+                ? 'structure-hub__fiche-column'
+                : 'structure-hub__single-phase'
             }
-            initialEdit={pendingEdit}
-            initialCompose={pendingCompose}
-            initialFocus={pendingFocus}
-            initialManual={pendingManual}
-            initialDrawWorkflow={pendingDrawWorkflow}
-            onInitialEditConsumed={() => {
-              setPendingEdit(null);
-              setPendingCompose(false);
-              setPendingFocus(null);
-              setPendingManual(false);
-              setPendingDrawWorkflow(false);
-              setSearchParams(
-                (prev) => {
-                  const next = new URLSearchParams(prev);
-                  next.delete(STRUCTURE_SECTION_PARAM);
-                  next.delete(STRUCTURE_ROUND_PARAM);
-                  next.delete(STRUCTURE_COMPOSE_PARAM);
-                  next.delete(STRUCTURE_FOCUS_PARAM);
-                  next.delete(STRUCTURE_MANUAL_PARAM);
-                  next.delete(STRUCTURE_DRAW_PARAM);
-                  return next;
-                },
-                { replace: true },
-              );
-            }}
-          />
+          >
+            {singlePhaseAnchor ? (
+              <StructurePhaseInsertSlot
+                stageName={singlePhaseAnchor.name}
+                position="before"
+                onInsert={() =>
+                  openInsert(
+                    singlePhaseAnchor.stageId,
+                    'Before',
+                    singlePhaseAnchor.name,
+                  )
+                }
+              />
+            ) : null}
+            <StructurePhaseFiche
+              data={data}
+              stage={selectedStage}
+              singlePhaseHub={!multiPhase}
+              onSelectStage={selectStage}
+              initialEdit={pendingEdit}
+              initialCompose={pendingCompose}
+              initialFocus={pendingFocus}
+              initialManual={pendingManual}
+              initialDrawWorkflow={pendingDrawWorkflow}
+              onInitialEditConsumed={() => {
+                setPendingEdit(null);
+                setPendingCompose(false);
+                setPendingFocus(null);
+                setPendingManual(false);
+                setPendingDrawWorkflow(false);
+                setSearchParams(
+                  (prev) => {
+                    const next = new URLSearchParams(prev);
+                    next.delete(STRUCTURE_SECTION_PARAM);
+                    next.delete(STRUCTURE_ROUND_PARAM);
+                    next.delete(STRUCTURE_COMPOSE_PARAM);
+                    next.delete(STRUCTURE_FOCUS_PARAM);
+                    next.delete(STRUCTURE_MANUAL_PARAM);
+                    next.delete(STRUCTURE_DRAW_PARAM);
+                    return next;
+                  },
+                  { replace: true },
+                );
+              }}
+            />
+            {singlePhaseAnchor ? (
+              <StructurePhaseInsertSlot
+                stageName={singlePhaseAnchor.name}
+                position="after"
+                onInsert={() =>
+                  openInsert(
+                    singlePhaseAnchor.stageId,
+                    'After',
+                    singlePhaseAnchor.name,
+                  )
+                }
+              />
+            ) : null}
+          </div>
         </div>
       )}
 
@@ -464,11 +482,22 @@ function TopologyPanel({
 
           return (
             <li key={stage.stageId} className="structure-topology__item">
-              <div className="structure-topology__row">
-                <SelectableTile
+              {canReorder && index === 0 ? (
+                <StructurePhaseInsertSlot
+                  stageName={stage.name}
+                  position="before"
+                  disabled={reorder.isPending}
+                  onInsert={() => onInsert(stage.stageId, 'Before', stage.name)}
+                />
+              ) : null}
+              <SelectableTile
+                as="div"
+                className="structure-topology__tile"
+                selected={selected}
+              >
+                <button
                   type="button"
-                  className="structure-topology__tile"
-                  selected={selected}
+                  className="structure-topology__select"
                   aria-current={selected ? 'true' : undefined}
                   onClick={() => onSelectStage(stage.stageId)}
                 >
@@ -517,9 +546,9 @@ function TopologyPanel({
                   </span>
 
                   <StructurePhaseDrawHint stage={stage} variant="topology" />
-                </SelectableTile>
-                {canReorder ? (
-                  <StructurePhaseOrderControls
+                </button>
+                {canReorder && stages.length > 1 ? (
+                  <StructurePhaseMoveControls
                     stageName={stage.name}
                     disabled={reorder.isPending}
                     pending={
@@ -531,21 +560,25 @@ function TopologyPanel({
                     moveDownDisabled={index === stages.length - 1}
                     onMoveUp={() => moveStage(index, 'up')}
                     onMoveDown={() => moveStage(index, 'down')}
-                    onInsertBefore={() =>
-                      onInsert(stage.stageId, 'Before', stage.name)
-                    }
-                    onInsertAfter={() =>
-                      onInsert(stage.stageId, 'After', stage.name)
-                    }
                   />
                 ) : null}
-              </div>
+              </SelectableTile>
 
-              {index < stages.length - 1 && (
+              {index < stages.length - 1 ? (
                 <div
                   className="structure-topology__bridge"
                   data-bridge={bridgeMode}
                 >
+                  {canReorder ? (
+                    <StructurePhaseInsertSlot
+                      stageName={stage.name}
+                      position="after"
+                      disabled={reorder.isPending}
+                      onInsert={() =>
+                        onInsert(stage.stageId, 'After', stage.name)
+                      }
+                    />
+                  ) : null}
                   {bridgeMode === 'outbound' ? (
                     <TopologyOutboundLinks
                       destinationIds={outbound}
@@ -567,7 +600,14 @@ function TopologyPanel({
                     </div>
                   ) : null}
                 </div>
-              )}
+              ) : canReorder ? (
+                <StructurePhaseInsertSlot
+                  stageName={stage.name}
+                  position="after"
+                  disabled={reorder.isPending}
+                  onInsert={() => onInsert(stage.stageId, 'After', stage.name)}
+                />
+              ) : null}
             </li>
           );
         })}

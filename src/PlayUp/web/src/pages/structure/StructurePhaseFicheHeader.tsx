@@ -62,7 +62,6 @@ export function StructurePhaseFicheHeader({
   onCancelRename,
   onCommitRename,
   onOpenRemove,
-  orderMenu = null,
 }: {
   stage: StructureStageHubSummary;
   competitionId: string;
@@ -80,7 +79,6 @@ export function StructurePhaseFicheHeader({
   onCancelRename: () => void;
   onCommitRename: () => void;
   onOpenRemove: () => void;
-  orderMenu?: ReactNode | null;
 }) {
   const { t } = useTranslation('structure');
   const { t: tCommon } = useTranslation('common');
@@ -204,21 +202,18 @@ export function StructurePhaseFicheHeader({
             {showCompletedBadgeOnIdentity ? (
               <StageStatusBadge status={stage.status} />
             ) : null}
-            {canRemove || orderMenu ? (
+            {canRemove ? (
               <div className="structure-fiche__header-tools ds-icon-toolbar">
-                {orderMenu}
-                {canRemove ? (
-                  <Tooltip content={t('graph.removePhase')}>
-                    <button
-                      type="button"
-                      className={compactDangerIcon}
-                      aria-label={t('graph.removePhase')}
-                      onClick={onOpenRemove}
-                    >
-                      <TrashIcon size="sm" />
-                    </button>
-                  </Tooltip>
-                ) : null}
+                <Tooltip content={t('graph.removePhase')}>
+                  <button
+                    type="button"
+                    className={compactDangerIcon}
+                    aria-label={t('graph.removePhase')}
+                    onClick={onOpenRemove}
+                  >
+                    <TrashIcon size="sm" />
+                  </button>
+                </Tooltip>
               </div>
             ) : null}
           </div>

@@ -32,6 +32,16 @@
   }
 }
 
+.structure-hub__fiche-column {
+  display: contents;
+}
+
+.structure-hub__single-phase {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
 .structure-topology {
   min-width: 0;
   container-type: inline-size;
@@ -53,29 +63,74 @@
   align-items: stretch;
 }
 
-.structure-topology__row {
+/* Birth control sits above the qual/prog connector so it is not read as an edge label. */
+.structure-topology__insert {
   display: flex;
-  align-items: flex-start;
-  gap: var(--space-8);
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin: 0;
+  padding-block: var(--space-4);
+}
+
+.structure-topology__insert .ds-btn.structure-topology__insert-button {
+  opacity: 0;
+  transition: opacity var(--motion-duration) var(--motion-easing);
+}
+
+.structure-topology__insert:hover .structure-topology__insert-button,
+.structure-topology__insert:focus-within .structure-topology__insert-button {
+  opacity: 1;
+}
+
+.structure-topology__insert:hover .structure-topology__insert-button:disabled,
+.structure-topology__insert:focus-within .structure-topology__insert-button:disabled {
+  opacity: 0.48;
+}
+
+.structure-topology__tile {
+  position: relative;
   width: 100%;
 }
 
-.structure-topology__row .structure-topology__tile {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.structure-topology__order {
+.structure-topology__select {
   display: flex;
   flex-direction: column;
-  flex: none;
-  gap: var(--space-4);
-  padding-top: var(--space-8);
+  gap: var(--space-12);
+  width: 100%;
+  margin: 0;
+  padding: var(--space-12);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
 }
 
-.structure-fiche__header-tools .structure-topology__order {
+.structure-topology__tile:has(.structure-topology__move) .structure-topology__tile-head {
+  padding-inline-end: calc(1.75rem + 1.75rem + var(--space-4));
+}
+
+.structure-topology__move {
+  position: absolute;
+  z-index: 1;
+  top: var(--space-12);
+  inset-inline-end: var(--space-12);
+  display: flex;
   flex-direction: row;
-  padding-top: 0;
+  align-items: center;
+  gap: var(--space-4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--motion-duration) var(--motion-easing);
+}
+
+.structure-topology__tile:hover .structure-topology__move,
+.structure-topology__tile:focus-within .structure-topology__move,
+.structure-topology__tile[data-selected='true'] .structure-topology__move {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .structure-topology__bridge {
@@ -160,18 +215,6 @@
   color: var(--color-text-secondary);
   font-size: var(--text-meta);
   font-weight: var(--font-weight-semibold);
-}
-
-.structure-topology__tile {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-12);
-  width: 100%;
-  margin: 0;
-  padding: var(--space-12);
-  font: inherit;
-  text-align: start;
-  cursor: pointer;
 }
 
 .structure-topology__tile-head {

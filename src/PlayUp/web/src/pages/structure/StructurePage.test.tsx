@@ -5,6 +5,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   addCompetitionStage,
+  insertCompetitionStage,
   fetchStructureView,
   fetchNeedsAttention,
   fetchStageOverview,
@@ -25,6 +26,7 @@ vi.mock('../../api', async (importOriginal) => {
     fetchStructureView: vi.fn(),
     fetchNeedsAttention: vi.fn(),
     addCompetitionStage: vi.fn(),
+    insertCompetitionStage: vi.fn(),
     fetchStageOverview: vi.fn(),
     fetchStageSchematic: vi.fn(),
     renameStage: vi.fn(),
@@ -744,7 +746,16 @@ describe('StructurePage Structure hub', () => {
     renderStructurePage();
 
     expect(
-      await screen.findByRole('button', { name: /Ajouter une phase/i }),
+      await screen.findByRole('heading', { name: 'League' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Ajouter une phase/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Insérer une phase avant League' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Insérer une phase après League' }),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /^Reconstruire$/i }),
@@ -802,7 +813,7 @@ describe('StructurePage Structure hub', () => {
     ).toBeInTheDocument();
   });
 
-  it('creates a phase via ChoiceTiles and selects the new stage', async () => {
+  it('creates a phase via ChoiceTiles from an insert slot and selects the new stage', async () => {
     const user = userEvent.setup();
     const newStageId = 'dddddddd-dddd-dddd-dddd-dddddddddddd';
     const initial = structureView({
@@ -835,7 +846,7 @@ describe('StructurePage Structure hub', () => {
 
     let currentView = initial;
     vi.mocked(fetchStructureView).mockImplementation(async () => currentView);
-    vi.mocked(addCompetitionStage).mockImplementation(async () => {
+    vi.mocked(insertCompetitionStage).mockImplementation(async () => {
       currentView = afterCreate;
       return {
         stageId: newStageId,
@@ -847,7 +858,9 @@ describe('StructurePage Structure hub', () => {
     renderStructurePage();
 
     await user.click(
-      await screen.findByRole('button', { name: /Ajouter une phase/i }),
+      await screen.findByRole('button', {
+        name: 'Insérer une phase après League',
+      }),
     );
 
     const dialog = await screen.findByRole('dialog');
@@ -865,10 +878,10 @@ describe('StructurePage Structure hub', () => {
     });
 
     await user.click(
-      screen.getByRole('button', { name: /Ajouter une phase/i }),
+      screen.getByRole('button', { name: 'Insérer une phase après League' }),
     );
     const createDialog = await screen.findByRole('dialog', {
-      name: /Nouvelle phase/i,
+      name: /Insérer une phase/i,
     });
     await user.type(
       within(createDialog).getByPlaceholderText(/ex\. Saison régulière/i),
@@ -904,34 +917,32 @@ describe('StructurePage Structure hub', () => {
 
     await user.click(within(createDialog).getByRole('checkbox', { name: '8' }));
     await user.click(
-      within(createDialog).getByRole('button', { name: /Créer la phase/i }),
+      within(createDialog).getByRole('button', { name: /Insérer la phase/i }),
     );
 
     await waitFor(() => {
-      expect(addCompetitionStage).toHaveBeenCalledWith(
+      expect(insertCompetitionStage).toHaveBeenCalledWith(
         competitionId,
         expect.objectContaining({
           format: 'Cup',
           name: 'Barrages',
           bracketSize: 8,
+          anchorStageId: stageId,
+          position: 'After',
         }),
       );
     });
+    expect(addCompetitionStage).not.toHaveBeenCalled();
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
 
     await waitFor(() => {
-      const newPhaseCard = screen
-        .getAllByRole('button')
-        .find(
-          (button) =>
-            button.classList.contains('structure-topology__tile') &&
-            button.textContent?.includes('Barrages') &&
-            button.getAttribute('data-selected') === 'true',
-        );
-      expect(newPhaseCard).toBeTruthy();
+      const selected = document.querySelector(
+        '.structure-topology__tile[data-selected="true"]',
+      );
+      expect(selected?.textContent).toContain('Barrages');
     });
   });
 

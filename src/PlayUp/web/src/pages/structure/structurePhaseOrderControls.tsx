@@ -1,21 +1,62 @@
-import { useRef, useState } from 'react';
+import type { MouseEvent, PointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Popover } from '../../design-system/components/Popover';
 import { Tooltip } from '../../design-system/components/Tooltip';
+import { PlusIcon } from '../../design-system/icons/contentIcons';
 import {
   ChevronDownIcon,
   ChevronUpIcon,
-  OverflowMenuIcon,
 } from '../../design-system/icons/shellIcons';
 
 const compactIcon =
   'ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact';
 
+function stopControlEvent(event: MouseEvent | PointerEvent) {
+  event.stopPropagation();
+}
+
 /**
- * Explicit phase order controls: move up/down and insert before/after.
- * No drag-and-drop. Insert opens the birth dialog; move calls the order route.
+ * Birth control for a phase gap. Visible label is shared; the accessible
+ * name carries before/after so identical slots stay distinct.
  */
-export function StructurePhaseOrderControls({
+export function StructurePhaseInsertSlot({
+  stageName,
+  position,
+  disabled = false,
+  onInsert,
+}: {
+  stageName: string;
+  position: 'before' | 'after';
+  disabled?: boolean;
+  onInsert: () => void;
+}) {
+  const { t } = useTranslation('structure');
+  const accessibleName = t(
+    position === 'before'
+      ? 'graph.insertPhaseBefore'
+      : 'graph.insertPhaseAfter',
+    { name: stageName },
+  );
+
+  return (
+    <div className="structure-topology__insert">
+      <button
+        type="button"
+        className="ds-btn ds-btn--ghost structure-topology__insert-button"
+        aria-label={accessibleName}
+        disabled={disabled}
+        onClick={onInsert}
+      >
+        <PlusIcon size="sm" />
+        <span>{t('graph.insertPhaseSlot')}</span>
+      </button>
+    </div>
+  );
+}
+
+/**
+ * In-tile move toolbar. Sits beside the select hit area, not inside it.
+ */
+export function StructurePhaseMoveControls({
   stageName,
   disabled = false,
   pending = null,
@@ -23,113 +64,56 @@ export function StructurePhaseOrderControls({
   onMoveDown,
   moveUpDisabled = false,
   moveDownDisabled = false,
-  onInsertBefore,
-  onInsertAfter,
 }: {
   stageName: string;
   disabled?: boolean;
   pending?: 'up' | 'down' | null;
-  onMoveUp?: () => void;
-  onMoveDown?: () => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
   moveUpDisabled?: boolean;
   moveDownDisabled?: boolean;
-  onInsertBefore: () => void;
-  onInsertAfter: () => void;
 }) {
   const { t } = useTranslation('structure');
-  const [menuOpen, setMenuOpen] = useState(false);
-  const anchorRef = useRef<HTMLButtonElement>(null);
-  const showMove = onMoveUp != null && onMoveDown != null;
-  const menuLabel = t('graph.orderMenu', { name: stageName });
 
   return (
-    <div className="structure-topology__order">
-      {showMove ? (
-        <>
-          <Tooltip content={t('graph.moveUp', { name: stageName })}>
-            <button
-              type="button"
-              className={compactIcon}
-              aria-label={t('graph.moveUp', { name: stageName })}
-              disabled={disabled || moveUpDisabled}
-              onClick={onMoveUp}
-            >
-              {pending === 'up' ? (
-                <span className="ds-spinner" aria-hidden="true" />
-              ) : (
-                <ChevronUpIcon size="sm" />
-              )}
-            </button>
-          </Tooltip>
-          <Tooltip content={t('graph.moveDown', { name: stageName })}>
-            <button
-              type="button"
-              className={compactIcon}
-              aria-label={t('graph.moveDown', { name: stageName })}
-              disabled={disabled || moveDownDisabled}
-              onClick={onMoveDown}
-            >
-              {pending === 'down' ? (
-                <span className="ds-spinner" aria-hidden="true" />
-              ) : (
-                <ChevronDownIcon size="sm" />
-              )}
-            </button>
-          </Tooltip>
-        </>
-      ) : null}
-      <Tooltip content={menuLabel}>
+    <div
+      className="structure-topology__move"
+      role="toolbar"
+      aria-orientation="horizontal"
+      aria-label={t('graph.moveToolbar', { name: stageName })}
+      onClick={stopControlEvent}
+      onPointerDown={stopControlEvent}
+    >
+      <Tooltip content={t('graph.moveUp', { name: stageName })}>
         <button
-          ref={anchorRef}
           type="button"
           className={compactIcon}
-          aria-label={menuLabel}
-          aria-haspopup="menu"
-          aria-expanded={menuOpen}
-          disabled={disabled}
-          onClick={() => setMenuOpen((open) => !open)}
+          aria-label={t('graph.moveUp', { name: stageName })}
+          disabled={disabled || moveUpDisabled}
+          onClick={onMoveUp}
         >
-          <OverflowMenuIcon size="sm" />
+          {pending === 'up' ? (
+            <span className="ds-spinner" aria-hidden="true" />
+          ) : (
+            <ChevronUpIcon size="sm" />
+          )}
         </button>
       </Tooltip>
-      <Popover
-        open={menuOpen}
-        onOpenChange={setMenuOpen}
-        anchorRef={anchorRef}
-        role="menu"
-        align="end"
-        width={220}
-        aria-label={menuLabel}
-      >
-        <ul className="structure-overflow-menu">
-          <li role="none">
-            <button
-              type="button"
-              role="menuitem"
-              className="structure-overflow-menu__item"
-              onClick={() => {
-                setMenuOpen(false);
-                onInsertBefore();
-              }}
-            >
-              {t('graph.insertBefore')}
-            </button>
-          </li>
-          <li role="none">
-            <button
-              type="button"
-              role="menuitem"
-              className="structure-overflow-menu__item"
-              onClick={() => {
-                setMenuOpen(false);
-                onInsertAfter();
-              }}
-            >
-              {t('graph.insertAfter')}
-            </button>
-          </li>
-        </ul>
-      </Popover>
+      <Tooltip content={t('graph.moveDown', { name: stageName })}>
+        <button
+          type="button"
+          className={compactIcon}
+          aria-label={t('graph.moveDown', { name: stageName })}
+          disabled={disabled || moveDownDisabled}
+          onClick={onMoveDown}
+        >
+          {pending === 'down' ? (
+            <span className="ds-spinner" aria-hidden="true" />
+          ) : (
+            <ChevronDownIcon size="sm" />
+          )}
+        </button>
+      </Tooltip>
     </div>
   );
 }

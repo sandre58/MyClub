@@ -170,15 +170,12 @@ export function StructurePhaseFiche({
   initialManual,
   initialDrawWorkflow,
   onInitialEditConsumed,
-  orderMenu = null,
 }: {
   data: StructureView;
   stage: StructureStageHubSummary | null;
-  /** Hub has a single phase — context lives in the fiche header (no topology column). */
+  /** Hub has a single phase — fiche is full width (no topology column). */
   singlePhaseHub?: boolean;
   onSelectStage?: (stageId: string) => void;
-  /** Insert-before/after menu when the hub has a single phase. */
-  orderMenu?: ReactNode | null;
   initialEdit?: StructureSectionId | null;
   initialCompose?: boolean;
   initialFocus?: StructureFocusId | null;
@@ -1224,7 +1221,6 @@ export function StructurePhaseFiche({
         onCancelRename={cancelRename}
         onCommitRename={commitRename}
         onOpenRemove={() => setRemoveOpen(true)}
-        orderMenu={orderMenu}
       />
 
       <div
