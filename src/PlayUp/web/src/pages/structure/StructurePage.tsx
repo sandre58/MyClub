@@ -532,20 +532,25 @@ function TopologyPanel({
                     </span>
                   </span>
 
-                  <span className="structure-topology__tile-facts">
-                    {facts.map((fact) => (
-                      <span key={fact.id} className="structure-topology__fact">
-                        <span className="structure-topology__fact-icon">
-                          {fact.icon}
+                  <span className="structure-topology__tile-body">
+                    <span className="structure-topology__tile-facts">
+                      {facts.map((fact) => (
+                        <span
+                          key={fact.id}
+                          className="structure-topology__fact"
+                        >
+                          <span className="structure-topology__fact-icon">
+                            {fact.icon}
+                          </span>
+                          <span className="structure-topology__fact-value">
+                            {fact.value}
+                          </span>
                         </span>
-                        <span className="structure-topology__fact-value">
-                          {fact.value}
-                        </span>
-                      </span>
-                    ))}
-                  </span>
+                      ))}
+                    </span>
 
-                  <StructurePhaseDrawHint stage={stage} variant="topology" />
+                    <StructurePhaseDrawHint stage={stage} variant="topology" />
+                  </span>
                 </button>
                 {canReorder && stages.length > 1 ? (
                   <StructurePhaseMoveControls

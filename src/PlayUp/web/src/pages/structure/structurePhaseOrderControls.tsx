@@ -55,7 +55,8 @@ export function StructurePhaseInsertSlot({
 }
 
 /**
- * In-tile move toolbar, stacked on one icon width beside the select hit area.
+ * Move toolbar under the title, on the left of the tile body.
+ * Sibling of the select button so the chevrons are not nested in it.
  */
 export function StructurePhaseMoveControls({
   stageName,
