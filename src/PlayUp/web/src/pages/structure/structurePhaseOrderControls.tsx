@@ -55,7 +55,7 @@ export function StructurePhaseInsertSlot({
 }
 
 /**
- * Move toolbar under the title, on the left of the tile body.
+ * Move toolbar at the bottom end of the tile, beside the select hit area.
  * Sibling of the select button so the chevrons are not nested in it.
  */
 export function StructurePhaseMoveControls({
@@ -81,7 +81,7 @@ export function StructurePhaseMoveControls({
     <div
       className="structure-topology__move"
       role="toolbar"
-      aria-orientation="vertical"
+      aria-orientation="horizontal"
       aria-label={t('graph.moveToolbar', { name: stageName })}
       onClick={stopControlEvent}
       onPointerDown={stopControlEvent}

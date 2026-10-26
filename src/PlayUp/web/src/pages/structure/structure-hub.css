@@ -63,19 +63,19 @@
   align-items: stretch;
 }
 
-/* Birth control sits above the qual/prog connector so it is not read as an edge label. */
+/* Birth control sits on the right of the gap, clear of the qual/prog label. */
 .structure-topology__insert {
   display: flex;
-  justify-content: flex-start;
+  justify-content: flex-end;
   align-items: center;
   width: 100%;
   margin: 0;
   padding-block: var(--space-4);
-  padding-inline-start: calc(var(--space-12) + var(--border-width));
+  padding-inline-end: calc(var(--space-12) + var(--border-width));
 }
 
 .structure-hub__single-phase .structure-topology__insert {
-  padding-inline-start: calc(var(--space-24) + var(--border-width));
+  padding-inline-end: calc(var(--space-24) + var(--border-width));
 }
 
 .structure-topology__insert .structure-topology__insert-button,
@@ -116,50 +116,23 @@
   min-width: 0;
 }
 
-.structure-topology__tile:has(.structure-topology__move) {
-  display: grid;
-  grid-template-columns: 1.75rem minmax(0, 1fr);
-  grid-template-rows: auto auto;
-  column-gap: var(--space-8);
-  row-gap: var(--space-12);
-  padding: var(--space-12);
-}
-
 .structure-topology__tile:has(.structure-topology__move) .structure-topology__select {
-  display: grid;
-  grid-column: 1 / -1;
-  grid-row: 1 / -1;
-  grid-template-columns: subgrid;
-  grid-template-rows: subgrid;
-  width: auto;
-  padding: 0;
-  gap: 0;
-}
-
-.structure-topology__tile:has(.structure-topology__move) .structure-topology__tile-head {
-  grid-column: 1 / -1;
-  grid-row: 1;
-}
-
-.structure-topology__tile:has(.structure-topology__move) .structure-topology__tile-body {
-  grid-column: 2;
-  grid-row: 2;
+  padding-bottom: calc(var(--space-8) + 1.75rem);
 }
 
 .structure-topology__move {
-  position: relative;
+  position: absolute;
   z-index: 1;
-  grid-column: 1;
-  grid-row: 2;
-  align-self: start;
-  justify-self: start;
+  bottom: var(--space-4);
+  inset-inline-end: var(--space-4);
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   gap: 0;
 }
 
 .structure-topology__bridge {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -167,6 +140,17 @@
   min-height: 2.8rem;
   box-sizing: border-box;
   margin: var(--space-4);
+}
+
+.structure-topology__bridge > .structure-topology__insert {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  inset-inline-end: calc(var(--space-12) + var(--border-width));
+  width: auto;
+  margin: 0;
+  padding: 0;
+  transform: translateY(-50%);
 }
 
 .structure-topology__connector {
