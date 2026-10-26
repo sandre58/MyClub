@@ -1,9 +1,18 @@
-import { type UseQueryResult, useQuery } from '@tanstack/react-query';
+import {
+  type UseQueryResult,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { type ReactNode, useMemo, useState } from 'react';
 import { useSyncWhen } from '../../design-system/useRenderSync';
 import { useTranslation } from 'react-i18next';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { fetchNeedsAttention, fetchStructureView } from '../../api';
+import {
+  fetchNeedsAttention,
+  fetchStructureView,
+  setCompetitionStageOrder,
+} from '../../api';
 import { partitionPresentableAttention } from '../../shell/attentionPartition';
 import { FormSection } from '../../design-system/components/FormSection';
 import { SelectableTile } from '../../design-system/components/SelectableTile';
@@ -27,11 +36,13 @@ import {
   EmptyState,
   ErrorState,
   LoadingState,
+  MutationError,
   StageStatusBadge,
 } from '../../ui';
 import {
   type StructureFormatKind,
   type StructureHubNextStep,
+  type StageInsertPosition,
   type StructureStageHubSummary,
   type NeedsAttention,
   type StructureView,
@@ -42,6 +53,8 @@ import {
   resolveStructurePageHeadNoteKind,
 } from './structurePageHeadReadiness';
 import { AddPhaseDialog } from './StructureGraphDialogs';
+import { StructurePhaseOrderControls } from './structurePhaseOrderControls';
+import { scheduleStructureRefresh } from './structureInvalidation';
 import { StructureReadinessHint } from './StructureReadinessHint';
 import { StructurePageHeadReadinessStatus } from './structurePageHeadReadinessStatus';
 import { StructurePhaseDrawHint } from './StructurePhaseDrawHint';
@@ -97,6 +110,11 @@ function StructureHub({ data }: { data: StructureView }) {
   const deepLink = parseStructureDeepLink(searchParams.toString());
   const canAddPhase = data.actions.includes('AddCompetitionStage');
   const [addPhaseOpen, setAddPhaseOpen] = useState(false);
+  const [insertPlacement, setInsertPlacement] = useState<{
+    anchorStageId: string;
+    position: StageInsertPosition;
+    anchorName: string;
+  } | null>(null);
   const stages = useMemo(() => resolveStructureHubStages(data), [data]);
   const multiPhase = stages.length > 1;
   const [selectedStageId, setSelectedStageId] = useState<string | null>(() => {
@@ -190,6 +208,25 @@ function StructureHub({ data }: { data: StructureView }) {
     staleTime: 30_000,
   });
 
+  const openAppend = () => {
+    setInsertPlacement(null);
+    setAddPhaseOpen(true);
+  };
+
+  const openInsert = (
+    stageId: string,
+    position: StageInsertPosition,
+    anchorName: string,
+  ) => {
+    setInsertPlacement({ anchorStageId: stageId, position, anchorName });
+    setAddPhaseOpen(true);
+  };
+
+  const closeBirth = () => {
+    setAddPhaseOpen(false);
+    setInsertPlacement(null);
+  };
+
   const addPhaseAction = (
     <Tooltip
       content={
@@ -201,7 +238,7 @@ function StructureHub({ data }: { data: StructureView }) {
           type="button"
           className="ds-btn ds-btn--primary"
           disabled={!canAddPhase}
-          onClick={() => setAddPhaseOpen(true)}
+          onClick={openAppend}
         >
           <PlusIcon size="sm" />
           <span>{t('graph.addPhase')}</span>
@@ -244,7 +281,9 @@ function StructureHub({ data }: { data: StructureView }) {
               data={data}
               stages={stages}
               selectedStageId={selectedStageId}
+              canReorder={canAddPhase}
               onSelectStage={selectStage}
+              onInsert={openInsert}
             />
           ) : null}
           <StructurePhaseFiche
@@ -252,6 +291,27 @@ function StructureHub({ data }: { data: StructureView }) {
             stage={selectedStage}
             singlePhaseHub={!multiPhase}
             onSelectStage={selectStage}
+            orderMenu={
+              !multiPhase && canAddPhase && selectedStage ? (
+                <StructurePhaseOrderControls
+                  stageName={selectedStage.name}
+                  onInsertBefore={() =>
+                    openInsert(
+                      selectedStage.stageId,
+                      'Before',
+                      selectedStage.name,
+                    )
+                  }
+                  onInsertAfter={() =>
+                    openInsert(
+                      selectedStage.stageId,
+                      'After',
+                      selectedStage.name,
+                    )
+                  }
+                />
+              ) : null
+            }
             initialEdit={pendingEdit}
             initialCompose={pendingCompose}
             initialFocus={pendingFocus}
@@ -285,8 +345,17 @@ function StructureHub({ data }: { data: StructureView }) {
         competitionId={data.competitionId}
         structureStages={stages}
         open={addPhaseOpen}
-        onClose={() => setAddPhaseOpen(false)}
+        onClose={closeBirth}
         onCreated={selectStage}
+        placement={
+          insertPlacement
+            ? {
+                anchorStageId: insertPlacement.anchorStageId,
+                position: insertPlacement.position,
+              }
+            : null
+        }
+        anchorName={insertPlacement?.anchorName ?? ''}
       />
     </div>
   );
@@ -296,15 +365,58 @@ function TopologyPanel({
   data,
   stages,
   selectedStageId,
+  canReorder,
   onSelectStage,
+  onInsert,
 }: {
   data: StructureView;
   stages: StructureStageHubSummary[];
   selectedStageId: string | null;
+  canReorder: boolean;
   onSelectStage: (stageId: string) => void;
+  onInsert: (
+    stageId: string,
+    position: StageInsertPosition,
+    anchorName: string,
+  ) => void;
 }) {
   const { t } = useTranslation('structure');
+  const queryClient = useQueryClient();
+  const [pendingMove, setPendingMove] = useState<{
+    stageId: string;
+    direction: 'up' | 'down';
+  } | null>(null);
+  const reorder = useMutation({
+    mutationFn: (stageIds: string[]) =>
+      setCompetitionStageOrder(data.competitionId, { stageIds }),
+    onSuccess: (structure) => {
+      queryClient.setQueryData(
+        queryKeys.competitions.structure(data.competitionId),
+        structure,
+      );
+      scheduleStructureRefresh(queryClient, data.competitionId, ['graph']);
+    },
+  });
   const multiPhase = stages.length > 1;
+
+  const moveStage = (index: number, direction: 'up' | 'down') => {
+    const target = direction === 'up' ? index - 1 : index + 1;
+    if (target < 0 || target >= stages.length || reorder.isPending) {
+      return;
+    }
+    const stageIds = stages.map((stage) => stage.stageId);
+    const current = stageIds[index];
+    const neighbor = stageIds[target];
+    if (!current || !neighbor) {
+      return;
+    }
+    stageIds[index] = neighbor;
+    stageIds[target] = current;
+    setPendingMove({ stageId: current, direction });
+    reorder.mutate(stageIds, {
+      onSettled: () => setPendingMove(null),
+    });
+  };
   const stageNameById = useMemo(() => {
     const map = new Map<string, string>();
     for (const stage of stages) {
@@ -320,6 +432,9 @@ function TopologyPanel({
       icon={<StructureIcon size="md" aria-hidden="true" />}
       title={t('hub.topology')}
     >
+      {reorder.isError ? (
+        <MutationError error={reorder.error} structureStages={stages} />
+      ) : null}
       <ol
         className={`structure-topology__list${multiPhase ? '' : ' structure-topology__list--single'}`}
       >
@@ -349,56 +464,82 @@ function TopologyPanel({
 
           return (
             <li key={stage.stageId} className="structure-topology__item">
-              <SelectableTile
-                type="button"
-                className="structure-topology__tile"
-                selected={selected}
-                aria-current={selected ? 'true' : undefined}
-                onClick={() => onSelectStage(stage.stageId)}
-              >
-                <span className="structure-topology__tile-head">
-                  <span className="structure-topology__tile-title">
-                    <Tooltip content={formatLabel}>
-                      <span className="structure-topology__format-icon">
-                        <StageFormatGlyph kind={stage.formatKind} size="sm" />
-                      </span>
-                    </Tooltip>
-                    <span className="structure-topology__tile-name">
-                      {stage.name}
-                    </span>
-                  </span>
-                  <span className="structure-topology__tile-status">
-                    <StageStatusBadge status={stage.status} density="compact" />
-                    {topologyIssueTone != null ? (
-                      <span
-                        className="structure-topology__issue"
-                        data-tone={topologyIssueTone}
-                        aria-label={t('hub.phaseGapsAmbient')}
-                      >
-                        <StructureDiagnosticIssueIcon
-                          tone={topologyIssueTone}
-                          size="sm"
-                        />
-                      </span>
-                    ) : null}
-                  </span>
-                </span>
-
-                <span className="structure-topology__tile-facts">
-                  {facts.map((fact) => (
-                    <span key={fact.id} className="structure-topology__fact">
-                      <span className="structure-topology__fact-icon">
-                        {fact.icon}
-                      </span>
-                      <span className="structure-topology__fact-value">
-                        {fact.value}
+              <div className="structure-topology__row">
+                <SelectableTile
+                  type="button"
+                  className="structure-topology__tile"
+                  selected={selected}
+                  aria-current={selected ? 'true' : undefined}
+                  onClick={() => onSelectStage(stage.stageId)}
+                >
+                  <span className="structure-topology__tile-head">
+                    <span className="structure-topology__tile-title">
+                      <Tooltip content={formatLabel}>
+                        <span className="structure-topology__format-icon">
+                          <StageFormatGlyph kind={stage.formatKind} size="sm" />
+                        </span>
+                      </Tooltip>
+                      <span className="structure-topology__tile-name">
+                        {stage.name}
                       </span>
                     </span>
-                  ))}
-                </span>
+                    <span className="structure-topology__tile-status">
+                      <StageStatusBadge
+                        status={stage.status}
+                        density="compact"
+                      />
+                      {topologyIssueTone != null ? (
+                        <span
+                          className="structure-topology__issue"
+                          data-tone={topologyIssueTone}
+                          aria-label={t('hub.phaseGapsAmbient')}
+                        >
+                          <StructureDiagnosticIssueIcon
+                            tone={topologyIssueTone}
+                            size="sm"
+                          />
+                        </span>
+                      ) : null}
+                    </span>
+                  </span>
 
-                <StructurePhaseDrawHint stage={stage} variant="topology" />
-              </SelectableTile>
+                  <span className="structure-topology__tile-facts">
+                    {facts.map((fact) => (
+                      <span key={fact.id} className="structure-topology__fact">
+                        <span className="structure-topology__fact-icon">
+                          {fact.icon}
+                        </span>
+                        <span className="structure-topology__fact-value">
+                          {fact.value}
+                        </span>
+                      </span>
+                    ))}
+                  </span>
+
+                  <StructurePhaseDrawHint stage={stage} variant="topology" />
+                </SelectableTile>
+                {canReorder ? (
+                  <StructurePhaseOrderControls
+                    stageName={stage.name}
+                    disabled={reorder.isPending}
+                    pending={
+                      pendingMove?.stageId === stage.stageId
+                        ? pendingMove.direction
+                        : null
+                    }
+                    moveUpDisabled={index === 0}
+                    moveDownDisabled={index === stages.length - 1}
+                    onMoveUp={() => moveStage(index, 'up')}
+                    onMoveDown={() => moveStage(index, 'down')}
+                    onInsertBefore={() =>
+                      onInsert(stage.stageId, 'Before', stage.name)
+                    }
+                    onInsertAfter={() =>
+                      onInsert(stage.stageId, 'After', stage.name)
+                    }
+                  />
+                ) : null}
+              </div>
 
               {index < stages.length - 1 && (
                 <div

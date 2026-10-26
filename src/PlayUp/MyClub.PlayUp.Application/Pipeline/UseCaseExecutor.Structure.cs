@@ -12,7 +12,7 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Pipeline;
 
 /// <content>
-/// Structure configure / add-stage / rebuild / remove-stage commands.
+/// Structure configure / add-stage / insert-stage / reorder / rebuild / remove-stage commands.
 /// </content>
 public sealed partial class UseCaseExecutor
 {
@@ -63,6 +63,48 @@ public sealed partial class UseCaseExecutor
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         var view = await AssembleStructureViewAsync(competition, cancellationToken).ConfigureAwait(false);
         return (stage, view);
+    }
+
+    /// <summary>
+    /// Positioned stage birth: identity + skeleton + order in one SaveChanges.
+    /// </summary>
+    /// <param name="competitionId">Owning competition.</param>
+    /// <param name="intent">Validated format intent.</param>
+    /// <param name="anchorStageId">Existing stage the new stage is placed against.</param>
+    /// <param name="position">Before or after the anchor.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The new stage and the refreshed structure read model.</returns>
+    public async Task<(Stage Stage, StructureViewDto View)> InsertCompetitionStageAsync(
+        CompetitionId competitionId,
+        StructureIntent intent,
+        StageId anchorStageId,
+        StageInsertPosition position,
+        CancellationToken cancellationToken = default)
+    {
+        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
+        var stage = InsertCompetitionStage.Execute(competition, intent, anchorStageId, position, clock);
+        stages.Add(stage);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        var view = await AssembleStructureViewAsync(competition, cancellationToken).ConfigureAwait(false);
+        return (stage, view);
+    }
+
+    /// <summary>
+    /// Reorders stages. <paramref name="orderedStageIds"/> is a permutation of the current ids.
+    /// </summary>
+    /// <param name="competitionId">Owning competition.</param>
+    /// <param name="orderedStageIds">Desired stage order.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The refreshed structure read model.</returns>
+    public async Task<StructureViewDto> SetCompetitionStageOrderAsync(
+        CompetitionId competitionId,
+        IReadOnlyList<StageId> orderedStageIds,
+        CancellationToken cancellationToken = default)
+    {
+        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
+        SetCompetitionStageOrder.Execute(competition, orderedStageIds, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return await AssembleStructureViewAsync(competition, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>

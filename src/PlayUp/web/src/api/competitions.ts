@@ -4,6 +4,9 @@
 import type {
   AddCompetitionStageRequest,
   AddCompetitionStageResponse,
+  InsertCompetitionStageRequest,
+  InsertCompetitionStageResponse,
+  SetCompetitionStageOrderRequest,
   ConfigureStructureRequest,
   ConfigureStructureResponse,
   ConsultationView,
@@ -103,6 +106,30 @@ export function addCompetitionStage(
   request: AddCompetitionStageRequest,
 ): Promise<AddCompetitionStageResponse> {
   return sendJson('POST', `/competitions/${competitionId}/stages`, request);
+}
+
+/** POST /competitions/{id}/stages/insert → InsertCompetitionStageResponse */
+export function insertCompetitionStage(
+  competitionId: string,
+  request: InsertCompetitionStageRequest,
+): Promise<InsertCompetitionStageResponse> {
+  return sendJson(
+    'POST',
+    `/competitions/${competitionId}/stages/insert`,
+    request,
+  );
+}
+
+/** PUT /competitions/{id}/stages/order → StructureView */
+export function setCompetitionStageOrder(
+  competitionId: string,
+  request: SetCompetitionStageOrderRequest,
+): Promise<StructureView> {
+  return sendJson(
+    'PUT',
+    `/competitions/${competitionId}/stages/order`,
+    request,
+  );
 }
 
 /** DELETE /competitions/{id}/stages/{stageId} → RemoveCompetitionStageResponse */

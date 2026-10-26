@@ -50,6 +50,70 @@ public static class StructureRequestMapper
     }
 
     /// <summary>
+    /// Maps <see cref="InsertCompetitionStageRequest"/> birth fields to <see cref="StructureIntent"/>.
+    /// </summary>
+    public static StructureIntent ToStructureIntent(InsertCompetitionStageRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return ToStructureIntent(
+            request.Format,
+            request.Name,
+            request.GroupCount,
+            request.ParticipantsPerGroup,
+            request.BracketSize,
+            request.MatchGenerationFormat,
+            request.SwissRoundCount);
+    }
+
+    /// <summary>
+    /// Maps a Before/After wire token to <see cref="StageInsertPosition"/>.
+    /// </summary>
+    /// <param name="position">HTTP position token.</param>
+    /// <returns>The application position.</returns>
+    public static StageInsertPosition ToStageInsertPosition(string? position)
+    {
+        if (string.IsNullOrWhiteSpace(position))
+        {
+            throw new ApplicationFailureException(
+                "Position is required (Before or After).",
+                ApplicationErrorCodes.InvalidStructureIntent);
+        }
+
+        var token = position.Trim();
+        if (token.Equals("Before", StringComparison.OrdinalIgnoreCase))
+        {
+            return StageInsertPosition.Before;
+        }
+
+        if (token.Equals("After", StringComparison.OrdinalIgnoreCase))
+        {
+            return StageInsertPosition.After;
+        }
+
+        throw new ApplicationFailureException(
+            $"Unknown stage insert position '{position}'. Expected Before or After.",
+            ApplicationErrorCodes.InvalidStructureIntent);
+    }
+
+    /// <summary>
+    /// Maps <see cref="SetCompetitionStageOrderRequest.StageIds"/> to domain ids.
+    /// </summary>
+    /// <param name="request">HTTP reorder body.</param>
+    /// <returns>Stage ids in the requested order.</returns>
+    public static IReadOnlyList<StageId> ToOrderedStageIds(SetCompetitionStageOrderRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        if (request.StageIds is null)
+        {
+            throw new ApplicationFailureException(
+                "StageIds is required.",
+                ApplicationErrorCodes.InvalidStructureIntent);
+        }
+
+        return request.StageIds.Select(id => new StageId(id)).ToArray();
+    }
+
+    /// <summary>
     /// Maps <see cref="RebuildStageStructureRequest"/> to <see cref="StructureIntent"/>.
     /// </summary>
     /// <param name="request">HTTP rebuild body.</param>

@@ -52,6 +52,49 @@ internal static class StructureEndpoints
                     new AddCompetitionStageResponse(stage.Id.Value, stage.Name.Value, view));
             });
 
+        app.MapPost(
+            "/competitions/{competitionId:guid}/stages/insert",
+            async (
+                Guid competitionId,
+                InsertCompetitionStageRequest request,
+                UseCaseExecutor executor,
+                CancellationToken cancellationToken) =>
+            {
+                ArgumentNullException.ThrowIfNull(request);
+                var intent = StructureRequestMapper.ToStructureIntent(request);
+                var position = StructureRequestMapper.ToStageInsertPosition(request.Position);
+                var (stage, view) = await executor
+                    .InsertCompetitionStageAsync(
+                        new CompetitionId(competitionId),
+                        intent,
+                        new StageId(request.AnchorStageId),
+                        position,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+                return Results.Created(
+                    $"/stages/{stage.Id.Value}",
+                    new InsertCompetitionStageResponse(stage.Id.Value, stage.Name.Value, view));
+            });
+
+        app.MapPut(
+            "/competitions/{competitionId:guid}/stages/order",
+            async (
+                Guid competitionId,
+                SetCompetitionStageOrderRequest request,
+                UseCaseExecutor executor,
+                CancellationToken cancellationToken) =>
+            {
+                ArgumentNullException.ThrowIfNull(request);
+                var orderedStageIds = StructureRequestMapper.ToOrderedStageIds(request);
+                var view = await executor
+                    .SetCompetitionStageOrderAsync(
+                        new CompetitionId(competitionId),
+                        orderedStageIds,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+                return Results.Ok(view);
+            });
+
         app.MapPut(
             "/stages/{stageId:guid}/structure",
             async (

@@ -15,6 +15,8 @@ export {
   fetchNeedsAttention,
   replaceCompetitionRegulation,
   addCompetitionStage,
+  insertCompetitionStage,
+  setCompetitionStageOrder,
   removeCompetitionStage,
   prepareCompetition,
   startCompetition,
