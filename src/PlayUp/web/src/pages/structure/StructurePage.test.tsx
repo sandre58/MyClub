@@ -861,7 +861,9 @@ describe('StructurePage Structure hub', () => {
       await screen.findByRole('button', { name: /Ajouter une phase/i }),
     );
 
-    const dialog = await screen.findByRole('dialog', { name: /Nouvelle phase/i });
+    const dialog = await screen.findByRole('dialog', {
+      name: /Nouvelle phase/i,
+    });
     await user.type(
       within(dialog).getByPlaceholderText(/ex\. Saison régulière/i),
       'Temp',

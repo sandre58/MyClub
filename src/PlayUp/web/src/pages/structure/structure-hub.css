@@ -151,9 +151,7 @@
 }
 
 .structure-topology__tile-foot[data-toolbar='move-remove'] {
-  padding-inline-end: calc(
-    1.75rem + 1.75rem + 1.75rem + 1px + var(--space-4) * 3
-  );
+  padding-inline-end: calc(1.75rem + 1.75rem + 1.75rem + 1px + var(--space-4) * 3);
 }
 
 .structure-topology__tile-actions {

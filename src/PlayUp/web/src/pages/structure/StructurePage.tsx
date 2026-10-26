@@ -488,8 +488,7 @@ function TopologyPanel({
                   : canRemoveStage
                     ? 'remove'
                     : 'none';
-            const showFoot =
-              showTileActions || stage.hasDrawRules === true;
+            const showFoot = showTileActions || stage.hasDrawRules === true;
 
             return (
               <li key={stage.stageId} className="structure-topology__item">
@@ -593,9 +592,7 @@ function TopologyPanel({
                       onMoveUp={() => moveStage(index, 'up')}
                       onMoveDown={() => moveStage(index, 'down')}
                       onRemove={
-                        canRemoveStage
-                          ? () => setRemoveStage(stage)
-                          : undefined
+                        canRemoveStage ? () => setRemoveStage(stage) : undefined
                       }
                     />
                   ) : null}
