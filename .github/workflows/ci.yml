@@ -196,7 +196,7 @@ jobs:
             --urls http://127.0.0.1:5287 &
           HOST_PID=$!
           for i in $(seq 1 60); do
-            if curl -sf http://127.0.0.1:5287/health > /dev/null; then
+            if curl -sf http://127.0.0.1:5287/health/ready > /dev/null; then
               echo "Host ready"
               break
             fi
