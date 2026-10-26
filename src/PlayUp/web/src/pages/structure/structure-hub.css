@@ -112,34 +112,25 @@
   min-width: 0;
 }
 
-.structure-topology__tile:has(.structure-topology__move):not(:has(.structure-topology__draw-signal))
-  .structure-topology__select {
-  padding-bottom: calc(var(--space-8) + 1.75rem);
-}
-
-.structure-topology__tile:has(.structure-topology__move) .structure-topology__draw-signal {
+.structure-topology__tile-foot {
+  display: flex;
+  align-items: center;
   box-sizing: border-box;
   width: 100%;
   min-height: 1.75rem;
-  align-self: stretch;
   padding-inline-end: calc(1.75rem + 1.75rem + var(--space-4));
 }
 
 .structure-topology__move {
   position: absolute;
   z-index: 1;
-  bottom: var(--space-4);
-  inset-inline-end: var(--space-4);
+  bottom: var(--space-12);
+  inset-inline-end: var(--space-12);
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 0;
-}
-
-.structure-topology__tile:has(.structure-topology__draw-signal) .structure-topology__move {
-  bottom: var(--space-12);
   height: 1.75rem;
-  inset-inline-end: var(--space-12);
+  gap: 0;
 }
 
 .structure-topology__bridge {

@@ -549,7 +549,19 @@ function TopologyPanel({
                       ))}
                     </span>
 
-                    <StructurePhaseDrawHint stage={stage} variant="topology" />
+                    {canReorder && stages.length > 1 ? (
+                      <span className="structure-topology__tile-foot">
+                        <StructurePhaseDrawHint
+                          stage={stage}
+                          variant="topology"
+                        />
+                      </span>
+                    ) : (
+                      <StructurePhaseDrawHint
+                        stage={stage}
+                        variant="topology"
+                      />
+                    )}
                   </span>
                 </button>
                 {canReorder && stages.length > 1 ? (
