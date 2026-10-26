@@ -4,8 +4,25 @@ import { inboundPopulationConfiguredVolume } from './structurePopulationVolume';
 import { resolvePlacesN } from './structurePlaces';
 
 /**
- * Test-only: build explicit `presentedIssueCodes` for fixtures (Host graph + U1 slice).
- * Do not use in production code — mirrors StructurePresentedStageDiagnostics graph path only.
+ * Test-only Host shape for fixtures. Production SPA reads `presentedIssueCodes`
+ * and does not apply this rule.
+ * Mirrors BuildReadiness: Groups + draw engaged + null pots emits MissingPotRules
+ * on blocker details, which CollectPresentedIssueCodes folds into the codes.
+ */
+function fixtureHostEmitsMissingPotRules(
+  stage: StructureStageHubSummary,
+): boolean {
+  return (
+    stage.formatKind === 'Groups' &&
+    stage.hasDrawRules &&
+    stage.numberOfPots == null
+  );
+}
+
+/**
+ * Test-only: build explicit `presentedIssueCodes` for fixtures (Host graph + U1
+ * slice, plus MissingPotRules when Host readiness would emit it).
+ * Do not use in production code.
  */
 export function fixturePresentedIssueCodesFromStructure(
   data: StructureView,
@@ -24,7 +41,14 @@ export function fixturePresentedIssueCodesFromStructure(
       raw.push('PopulationShortfall');
     }
   }
-  return projectPresentedStageIssueCodes(raw, stage);
+  const projected = projectPresentedStageIssueCodes(raw, stage);
+  if (
+    fixtureHostEmitsMissingPotRules(stage) &&
+    !projected.includes('MissingPotRules')
+  ) {
+    projected.push('MissingPotRules');
+  }
+  return projected;
 }
 
 /** Merge fixture stage with Host-shaped `presentedIssueCodes` when omitted. */

@@ -13,17 +13,3 @@ export function stagePresentedIssueCodes(
   }
   return stage.presentedIssueCodes ?? [];
 }
-
-/**
- * E1 / E6 — MissingPotRules construction gap.
- * Strictly aligned with Host: Groups && HasDrawRules && NumberOfPots == null.
- */
-export function stageHasEngagedMissingPots(
-  stage: StructureStageHubSummary,
-): boolean {
-  return (
-    stage.formatKind === 'Groups' &&
-    stage.hasDrawRules &&
-    stage.numberOfPots == null
-  );
-}
