@@ -71,14 +71,11 @@ function renderHeader(
             } as unknown as UseMutationResult<void, Error, string, unknown>
           }
           canRename={false}
-          canRemove={false}
           compactIcon=""
-          compactDangerIcon=""
           onNameDraftChange={vi.fn()}
           onBeginRename={vi.fn()}
           onCancelRename={vi.fn()}
           onCommitRename={vi.fn()}
-          onOpenRemove={vi.fn()}
         />
       </QueryClientProvider>
     </MemoryRouter>,
@@ -118,14 +115,25 @@ describe('StructurePhaseFicheHeader', () => {
     expect(
       screen.getByRole('button', { name: /Marquer comme prête/i }),
     ).toBeInTheDocument();
+    expect(
+      container.querySelector(
+        '.structure-fiche__header-row--lifecycle .ds-status',
+      ),
+    ).toBeNull();
+    expect(
+      container.querySelector('.structure-fiche__header-row-end .ds-status'),
+    ).toBeTruthy();
   });
 
-  it('shows Completed badge on identity row without lifecycle row', () => {
+  it('shows status on the identity row when lifecycle is absent', () => {
     const { container } = renderHeader(baseStage);
     expect(
       container.querySelector('.structure-fiche__header-row--lifecycle'),
     ).toBeNull();
     expect(screen.getByText(/Terminé/i)).toBeInTheDocument();
+    expect(
+      container.querySelector('.structure-fiche__header-row-end .ds-status'),
+    ).toBeTruthy();
   });
 
   it('hides lifecycle row while renaming', () => {

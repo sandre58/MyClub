@@ -18,9 +18,7 @@ function stopControlEvent(event: MouseEvent | PointerEvent) {
   event.stopPropagation();
 }
 
-/**
- * Single-phase birth: append is the primary action; the menu inserts before.
- */
+/** Single-phase hub: append is primary; the menu inserts before. */
 export function StructureSinglePhaseBirth({
   stageName,
   disabled = false,

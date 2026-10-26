@@ -711,7 +711,7 @@ describe('StructurePage Structure hub', () => {
     });
   });
 
-  it('offers add-phase when Host exposes AddCompetitionStage', async () => {
+  it('offers single-phase split birth in PageHead when Host exposes AddCompetitionStage', async () => {
     vi.mocked(fetchStructureView).mockResolvedValue(
       structureView({
         actions: ['ConfigureStructure', 'AddCompetitionStage'],
@@ -813,12 +813,19 @@ describe('StructurePage Structure hub', () => {
     ).toBeInTheDocument();
   });
 
-  it('creates a second phase via ChoiceTiles from append and selects the new stage', async () => {
+  it('creates a phase via ChoiceTiles from a topology insert slot and selects the new stage', async () => {
     const user = userEvent.setup();
     const newStageId = 'dddddddd-dddd-dddd-dddd-dddddddddddd';
+    const secondStageId = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
     const initial = structureView({
       actions: ['ConfigureStructure', 'AddCompetitionStage'],
-      stages: [championshipStage()],
+      stages: [
+        championshipStage(),
+        championshipStage({
+          stageId: secondStageId,
+          name: 'Playoffs',
+        }),
+      ],
       format: {
         kind: 'Championship',
         primaryStageId: stageId,
@@ -835,7 +842,14 @@ describe('StructurePage Structure hub', () => {
     });
     const afterCreate = structureView({
       actions: ['ConfigureStructure', 'AddCompetitionStage'],
-      stages: [championshipStage(), createdStage],
+      stages: [
+        championshipStage(),
+        createdStage,
+        championshipStage({
+          stageId: secondStageId,
+          name: 'Playoffs',
+        }),
+      ],
       format: {
         kind: 'Championship',
         primaryStageId: stageId,
@@ -846,7 +860,7 @@ describe('StructurePage Structure hub', () => {
 
     let currentView = initial;
     vi.mocked(fetchStructureView).mockImplementation(async () => currentView);
-    vi.mocked(addCompetitionStage).mockImplementation(async () => {
+    vi.mocked(insertCompetitionStage).mockImplementation(async () => {
       currentView = afterCreate;
       return {
         stageId: newStageId,
@@ -858,11 +872,13 @@ describe('StructurePage Structure hub', () => {
     renderStructurePage();
 
     await user.click(
-      await screen.findByRole('button', { name: /Ajouter une phase/i }),
+      await screen.findByRole('button', {
+        name: 'Insérer une phase après League',
+      }),
     );
 
     const dialog = await screen.findByRole('dialog', {
-      name: /Nouvelle phase/i,
+      name: /Insérer une phase/i,
     });
     await user.type(
       within(dialog).getByPlaceholderText(/ex\. Saison régulière/i),
@@ -878,10 +894,10 @@ describe('StructurePage Structure hub', () => {
     });
 
     await user.click(
-      screen.getByRole('button', { name: /Ajouter une phase/i }),
+      screen.getByRole('button', { name: 'Insérer une phase après League' }),
     );
     const createDialog = await screen.findByRole('dialog', {
-      name: /Nouvelle phase/i,
+      name: /Insérer une phase/i,
     });
     await user.type(
       within(createDialog).getByPlaceholderText(/ex\. Saison régulière/i),
@@ -917,20 +933,22 @@ describe('StructurePage Structure hub', () => {
 
     await user.click(within(createDialog).getByRole('checkbox', { name: '8' }));
     await user.click(
-      within(createDialog).getByRole('button', { name: /Créer la phase/i }),
+      within(createDialog).getByRole('button', { name: /Insérer la phase/i }),
     );
 
     await waitFor(() => {
-      expect(addCompetitionStage).toHaveBeenCalledWith(
+      expect(insertCompetitionStage).toHaveBeenCalledWith(
         competitionId,
         expect.objectContaining({
           format: 'Cup',
           name: 'Barrages',
           bracketSize: 8,
+          anchorStageId: stageId,
+          position: 'After',
         }),
       );
     });
-    expect(insertCompetitionStage).not.toHaveBeenCalled();
+    expect(addCompetitionStage).not.toHaveBeenCalled();
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();

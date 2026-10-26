@@ -259,22 +259,14 @@ function StructureHub({ data }: { data: StructureView }) {
       <PageHead
         title={t('title')}
         actions={
-          stages.length === 1 && canAddPhase ? (
-            selectedStage ? (
-              <StructureSinglePhaseBirth
-                stageName={selectedStage.name}
-                onAppend={openAppend}
-                onInsertBefore={() =>
-                  openInsert(
-                    selectedStage.stageId,
-                    'Before',
-                    selectedStage.name,
-                  )
-                }
-              />
-            ) : (
-              addPhaseAction
-            )
+          stages.length === 1 && canAddPhase && selectedStage ? (
+            <StructureSinglePhaseBirth
+              stageName={selectedStage.name}
+              onAppend={openAppend}
+              onInsertBefore={() =>
+                openInsert(selectedStage.stageId, 'Before', selectedStage.name)
+              }
+            />
           ) : undefined
         }
         note={readinessStatusNote(
@@ -309,7 +301,6 @@ function StructureHub({ data }: { data: StructureView }) {
             <StructurePhaseFiche
               data={data}
               stage={selectedStage}
-              singlePhaseHub={!multiPhase}
               onSelectStage={selectStage}
               initialEdit={pendingEdit}
               initialCompose={pendingCompose}

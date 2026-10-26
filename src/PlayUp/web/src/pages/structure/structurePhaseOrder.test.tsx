@@ -396,8 +396,7 @@ describe('Structure phase insert and reorder', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('offers append and an insert menu when there is a single phase', async () => {
-    const user = userEvent.setup();
+  it('offers split birth in PageHead when there is a single phase', async () => {
     vi.mocked(fetchStructureView).mockResolvedValue(
       view({ stages: [stage()] }),
     );
@@ -406,6 +405,9 @@ describe('Structure phase insert and reorder', () => {
 
     expect(
       await screen.findByRole('button', { name: /Ajouter une phase/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Insérer une phase' }),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole('region', { name: /Topologie/i }),
@@ -418,18 +420,6 @@ describe('Structure phase insert and reorder', () => {
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: 'Descendre League' }),
-    ).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: 'Insérer une phase' }));
-    expect(
-      await screen.findByRole('menuitem', {
-        name: 'Insérer une phase avant League',
-      }),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole('menuitem', {
-        name: 'Insérer une phase après League',
-      }),
     ).not.toBeInTheDocument();
   });
 
@@ -460,7 +450,7 @@ describe('Structure phase insert and reorder', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('hides single-phase birth when Host does not expose AddCompetitionStage', async () => {
+  it('hides PageHead birth when Host does not expose AddCompetitionStage', async () => {
     vi.mocked(fetchStructureView).mockResolvedValue(
       view({
         status: 'Running',

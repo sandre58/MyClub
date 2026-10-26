@@ -40,7 +40,6 @@ import {
   EditSkeletonDialog,
   QualificationRulesDialog,
   ProgressionRulesDialog,
-  RemovePhaseDialog,
 } from './StructureGraphDialogs';
 import { StructurePlacementAwardDialog } from './StructurePlacementAwardDialog';
 import { StructureManualPlacementDialog } from './StructureManualPlacementDialog';
@@ -152,9 +151,6 @@ type EditTarget =
 
 const compactIcon =
   'ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact';
-const compactDangerIcon =
-  'ds-btn ds-btn--destructive ds-icon-button ds-icon-button--compact';
-
 function stageActions(stage: StructureStageHubSummary): string[] {
   return stage.actions ?? [];
 }
@@ -162,7 +158,6 @@ function stageActions(stage: StructureStageHubSummary): string[] {
 export function StructurePhaseFiche({
   data,
   stage,
-  singlePhaseHub = false,
   onSelectStage,
   initialEdit,
   initialCompose,
@@ -173,8 +168,6 @@ export function StructurePhaseFiche({
 }: {
   data: StructureView;
   stage: StructureStageHubSummary | null;
-  /** Hub has a single phase — fiche is full width (no topology column). */
-  singlePhaseHub?: boolean;
   onSelectStage?: (stageId: string) => void;
   initialEdit?: StructureSectionId | null;
   initialCompose?: boolean;
@@ -194,7 +187,6 @@ export function StructurePhaseFiche({
   const [edit, setEdit] = useState<EditTarget>(null);
   const [rulesEditStage, setRulesEditStage] =
     useState<StructureStageHubSummary | null>(null);
-  const [removeOpen, setRemoveOpen] = useState(false);
   const [skeletonOpen, setSkeletonOpen] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
@@ -209,7 +201,6 @@ export function StructurePhaseFiche({
   useSyncWhen(true, stage?.stageId ?? '', () => {
     setEdit(null);
     setRulesEditStage(null);
-    setRemoveOpen(false);
     setSkeletonOpen(false);
     setEditingName(false);
     setNameDraft('');
@@ -607,7 +598,6 @@ export function StructurePhaseFiche({
   const canEditMatch = actions.includes('ReplaceMatchRules');
   const canEditStanding = actions.includes('ReplaceStandingRules');
   const canRebind = actions.includes('BindToCompetition');
-  const canRemove = actions.includes('RemoveStage');
   const canRename = actions.includes('RenameStage');
   const canRebuild = actions.includes('RebuildStructure');
   const canCompose = actions.includes('ReplaceAffectationAuthoring');
@@ -1213,14 +1203,11 @@ export function StructurePhaseFiche({
         nameDraft={nameDraft}
         renameMutation={renameMutation}
         canRename={canRename && !isCompletedStage}
-        canRemove={canRemove && singlePhaseHub}
         compactIcon={compactIcon}
-        compactDangerIcon={compactDangerIcon}
         onNameDraftChange={setNameDraft}
         onBeginRename={beginRename}
         onCancelRename={cancelRename}
         onCommitRename={commitRename}
-        onOpenRemove={() => setRemoveOpen(true)}
       />
 
       <div
@@ -1380,14 +1367,6 @@ export function StructurePhaseFiche({
         }
       />
 
-      {canRemove && singlePhaseHub && (
-        <RemovePhaseDialog
-          data={data}
-          stage={stage}
-          open={removeOpen}
-          onClose={() => setRemoveOpen(false)}
-        />
-      )}
       <EditSkeletonDialog
         data={data}
         stage={stage}

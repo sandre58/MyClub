@@ -177,14 +177,11 @@ describe('Phase 3 recette — Matchs aside (O-MAT-VIS-1)', () => {
               } as unknown as UseMutationResult<void, Error, string, unknown>
             }
             canRename={true}
-            canRemove={false}
             compactIcon=""
-            compactDangerIcon=""
             onNameDraftChange={() => {}}
             onBeginRename={() => {}}
             onCancelRename={() => {}}
             onCommitRename={() => {}}
-            onOpenRemove={() => {}}
           />
         </QueryClientProvider>
       </MemoryRouter>,
