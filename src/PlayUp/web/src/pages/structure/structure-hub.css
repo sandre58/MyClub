@@ -63,7 +63,7 @@
   align-items: stretch;
 }
 
-/* Birth control sits on the right of the gap, clear of the qual/prog label. */
+/* Birth control flush with the tile's trailing edge, clear of the qual/prog label. */
 .structure-topology__insert {
   display: flex;
   justify-content: flex-end;
@@ -71,11 +71,7 @@
   width: 100%;
   margin: 0;
   padding-block: var(--space-4);
-  padding-inline-end: calc(var(--space-12) + var(--border-width));
-}
-
-.structure-hub__single-phase .structure-topology__insert {
-  padding-inline-end: calc(var(--space-24) + var(--border-width));
+  padding-inline-end: 0;
 }
 
 .structure-topology__insert .structure-topology__insert-button,
@@ -116,8 +112,17 @@
   min-width: 0;
 }
 
-.structure-topology__tile:has(.structure-topology__move) .structure-topology__select {
+.structure-topology__tile:has(.structure-topology__move):not(:has(.structure-topology__draw-signal))
+  .structure-topology__select {
   padding-bottom: calc(var(--space-8) + 1.75rem);
+}
+
+.structure-topology__tile:has(.structure-topology__move) .structure-topology__draw-signal {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 1.75rem;
+  align-self: stretch;
+  padding-inline-end: calc(1.75rem + 1.75rem + var(--space-4));
 }
 
 .structure-topology__move {
@@ -129,6 +134,12 @@
   flex-direction: row;
   align-items: center;
   gap: 0;
+}
+
+.structure-topology__tile:has(.structure-topology__draw-signal) .structure-topology__move {
+  bottom: var(--space-12);
+  height: 1.75rem;
+  inset-inline-end: var(--space-12);
 }
 
 .structure-topology__bridge {
@@ -146,7 +157,7 @@
   position: absolute;
   z-index: 1;
   top: 50%;
-  inset-inline-end: calc(var(--space-12) + var(--border-width));
+  inset-inline-end: calc(var(--space-4) * -1);
   width: auto;
   margin: 0;
   padding: 0;
