@@ -764,7 +764,7 @@ describe('StructurePage Structure hub', () => {
       screen.queryByRole('heading', { name: /^Forme$/i }),
     ).not.toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: /Modifier l['’]organisation/i }),
+      screen.getByRole('button', { name: /Modifier la structure/i }),
     ).toBeInTheDocument();
   });
 
@@ -793,13 +793,13 @@ describe('StructurePage Structure hub', () => {
 
     await user.click(
       await screen.findByRole('button', {
-        name: /Modifier l['’]organisation/i,
+        name: /Modifier la structure/i,
       }),
     );
     const dialog = await screen.findByRole('dialog');
     expect(
       within(dialog).getByRole('heading', {
-        name: /Modifier l['’]organisation/i,
+        name: /Modifier la structure/i,
       }),
     ).toBeInTheDocument();
     expect(
@@ -908,7 +908,7 @@ describe('StructurePage Structure hub', () => {
     ).toBeInTheDocument();
     expect(
       within(createDialog).getByText(
-        /Choisissez un type pour définir l['’]organisation de la phase/i,
+        /Choisissez un type pour définir la structure de la phase/i,
       ),
     ).toBeInTheDocument();
 

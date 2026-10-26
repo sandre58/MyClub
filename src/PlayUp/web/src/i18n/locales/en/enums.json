@@ -71,7 +71,7 @@
     "InsufficientParticipants": "Not enough teams",
     "InsufficientOccupiedSlots": "Insufficient occupied slots for fixtures",
     "MissingStage": "Missing stage",
-    "MissingStructure": "Missing phase organisation",
+    "MissingStructure": "Missing stage structure",
     "MissingPotRules": "Missing draw pots",
     "CupBracketInvalid": "Invalid cup bracket",
     "StructureGraphInvalid": "Phase connections need fixing",

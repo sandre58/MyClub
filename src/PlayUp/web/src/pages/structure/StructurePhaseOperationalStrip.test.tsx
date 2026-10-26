@@ -875,7 +875,7 @@ describe('StructurePhaseOperationalStrip', () => {
       ).toBeNull();
       expect(
         within(matchesSection).getByText(
-          /Complétez les places en poules avant de pouvoir créer les matchs/i,
+          /Complétez les places en groupes avant de pouvoir créer les matchs/i,
         ),
       ).toBeInTheDocument();
       expect(

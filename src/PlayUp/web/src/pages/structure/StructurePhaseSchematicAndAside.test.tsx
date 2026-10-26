@@ -105,7 +105,7 @@ describe('StructurePhaseSchematicAndAside hero chrome', () => {
     renderSchematic({ canRebuild: true, onOpenSkeleton });
 
     const button = screen.getByRole('button', {
-      name: /Modifier l.organisation/i,
+      name: /Modifier la structure/i,
     });
     expect(button).toHaveClass('structure-phase-hero__edit-forme');
     await user.click(button);
@@ -115,7 +115,7 @@ describe('StructurePhaseSchematicAndAside hero chrome', () => {
   it('shows edit forme without stats when rebuild allowed and no hero stats', () => {
     renderSchematic({ showHeroStats: false, canRebuild: true });
     expect(
-      screen.getByRole('button', { name: /Modifier l.organisation/i }),
+      screen.getByRole('button', { name: /Modifier la structure/i }),
     ).toBeInTheDocument();
     expect(screen.queryByRole('list')).not.toBeInTheDocument();
   });
