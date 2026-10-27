@@ -45,6 +45,14 @@ public interface IStageRepository
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Projects the owning competition id without loading the stage graph.
+    /// </summary>
+    /// <param name="id">The stage identity.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>The competition id, or <see langword="null"/> when the stage does not exist.</returns>
+    Task<CompetitionId?> GetCompetitionIdReadOnlyAsync(StageId id, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Loads multiple stages in one query without change tracking.
     /// </summary>
     /// <param name="ids">Stage identities in competition order.</param>

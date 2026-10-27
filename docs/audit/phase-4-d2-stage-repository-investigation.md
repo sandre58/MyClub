@@ -67,8 +67,9 @@ This explains why **Full** loads can exceed split-query `Include` count substant
 | `GetNeedsAttentionAsync` | Attention capabilities |
 | `GetConsultationAsync` | Full stage graph, summary matches |
 | `ListMatchesByStageAsync` | **Structure** for one stage |
+| `GetStageOverviewAsync` | Structure + draws + slots, one batched `GetByIds` (see [stage overview lot](phase-perf-lot-stage-overview-structure.md)) |
 
-Read bundling is intentional; AUD-0012 risk is **repeated Full loads** and **hydration cost**, not the existence of Includes per se.
+Read bundling is intentional; AUD-0012 risk is **repeated Full loads** and **hydration cost**, not the existence of Includes per se. Overview and Consultation bundles stay **Full**.
 
 ## 6. Measurement protocol (reproducible)
 
@@ -117,6 +118,10 @@ For ad-hoc analysis (local only), enable EF logging on the fixture `DbContext` o
 | groups:running | `ListMatchesByStage` (executor) | 18 (post D2-B; was 20) |
 | champions-league:running | `ListMatchesByStage` | 18 (post D2-B; was 20) |
 | cup-qf-sf | `GetOverviewViewAsync` | see `ReadPerformanceBaselineTests` output |
+| cup-qf-sf | `GetStageOverviewAsync` | 19 (stage overview lot; was 32) |
+| cup-qf-sf | `GetByIdsReadOnly(Structure + Draws + Slots)` | 16 |
+| groups:running | `GetStageOverviewAsync` | 20 (unchanged; single stage) |
+| groups:running | `GetStructureViewAsync` | 21 (hub already Structure; unchanged) |
 | champions-league:running | `ListMatchesByStageAsync` | see `ReadPerformanceBaselineTests` output |
 
 Existing guard assertions in `ReadPerformanceBaselineTests` encode **regression ceilings** for several read endpoints (e.g. detail projection &lt; 10 SQL).
