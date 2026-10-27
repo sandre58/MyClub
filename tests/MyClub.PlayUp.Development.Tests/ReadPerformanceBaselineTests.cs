@@ -40,6 +40,7 @@ public sealed class ReadPerformanceBaselineTests(
         var detailSql = await MeasureAsync(executor => executor.GetCompetitionDetailAsync(competitionId));
         var matchHubSql = await MeasureAsync(executor => executor.GetMatchHubViewAsync(competitionId));
         var stageOverviewSql = await MeasureAsync(executor => executor.GetStageOverviewAsync(stageIds[0]));
+        var stageSchematicSql = await MeasureAsync(executor => executor.GetStageSchematicAsync(stageIds[0]));
 
         var matchHubStageSql = new List<(Guid StageId, int Sql)>(stageIds.Count);
         var matchHubFanOutTotalSql = detailSql;
@@ -68,6 +69,7 @@ public sealed class ReadPerformanceBaselineTests(
                 ["GET /competitions/{id} (GetCompetitionDetailAsync)"] = detailSql,
                 ["GET /matches-hub (GetMatchHubViewAsync)"] = matchHubSql,
                 ["GET /stages/{id} (GetStageOverviewAsync)"] = stageOverviewSql,
+                ["GET /stages/{id}/schematic (GetStageSchematicAsync)"] = stageSchematicSql,
                 ["Match Hub fan-out — GET /competitions/{id}"] = detailSql,
                 ["Match Hub fan-out — sum GET /stages/{id}/matches"] = matchHubStageSql.Sum(row => row.Sql),
                 ["Match Hub fan-out — total (1 + N HTTP requests)"] = matchHubFanOutTotalSql,
@@ -90,6 +92,9 @@ public sealed class ReadPerformanceBaselineTests(
         stageOverviewSql.Should().BeLessThanOrEqualTo(
             19,
             "one Structure+Draws+Slots batch for every competition stage (baseline was 32 SQL: Full target plus a second Structure peer load)");
+        stageSchematicSql.Should().BeLessThanOrEqualTo(
+            20,
+            "one Structure+Draws+Slots batch for every competition stage, plus match summary rows (baseline was 32 SQL: target batch plus a second Structure peer load)");
     }
 
     [Fact]
@@ -105,6 +110,7 @@ public sealed class ReadPerformanceBaselineTests(
         var matchesSql = await MeasureAsync(executor => executor.ListMatchesByStageAsync(stageIds[0]));
         var matchHubSql = await MeasureAsync(executor => executor.GetMatchHubViewAsync(competitionId));
         var stageOverviewSql = await MeasureAsync(executor => executor.GetStageOverviewAsync(stageIds[0]));
+        var stageSchematicSql = await MeasureAsync(executor => executor.GetStageSchematicAsync(stageIds[0]));
 
         WriteScenario(
             """
@@ -119,6 +125,7 @@ public sealed class ReadPerformanceBaselineTests(
                 ["GET /stages/{id}/matches"] = matchesSql,
                 ["GET /matches-hub"] = matchHubSql,
                 ["GET /stages/{id} (GetStageOverviewAsync)"] = stageOverviewSql,
+                ["GET /stages/{id}/schematic (GetStageSchematicAsync)"] = stageSchematicSql,
                 ["Match Hub fan-out (detail + 1 stage matches)"] = detailSql + matchesSql
             });
 
@@ -130,6 +137,9 @@ public sealed class ReadPerformanceBaselineTests(
         stageOverviewSql.Should().BeLessThanOrEqualTo(
             20,
             "single-stage overview stays flat: the competition-id projection offsets the dropped penalty include (baseline 20 SQL)");
+        stageSchematicSql.Should().BeLessThanOrEqualTo(
+            21,
+            "single-stage schematic pays the competition-id projection and has no second hydration to remove (baseline was 20 SQL)");
     }
 
     [Fact]
