@@ -7,7 +7,7 @@
 namespace MyClub.PlayUp.Domain.Stages;
 
 /// <summary>
-/// Domain predicate for A5: whether a stage topology produces or uses a standing as phase business data.
+/// Whether a stage topology produces or uses a standing as phase business data.
 /// Used only to build/validate standing presence — runtime/reads use <c>Stage.Regulation.StandingRules != null</c>.
 /// </summary>
 /// <remarks>

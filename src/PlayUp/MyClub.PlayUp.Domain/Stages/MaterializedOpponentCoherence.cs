@@ -10,7 +10,7 @@ namespace MyClub.PlayUp.Domain.Stages;
 
 /// <summary>
 /// Domain rule: mutation of a determination source after materialization must stay coherent
-/// with attached match opponents (D1–D4 / F1). Not a Confrontation aggregate.
+/// with attached match opponents. Not a Confrontation aggregate.
 /// </summary>
 /// <remarks>
 /// Cup: BracketPair slot occupants vs attached Fixture matches (final simulated pair state).
@@ -91,7 +91,7 @@ public static class MaterializedOpponentCoherence
     }
 
     /// <summary>
-    /// Ensures an entry that appears on an attached match cannot leave its determination group (C3 remove/move).
+    /// Ensures an entry that appears on an attached match cannot leave its determination group.
     /// </summary>
     public static void EnsureEntryNotBoundToAttachedMatch(
         Stage stage,

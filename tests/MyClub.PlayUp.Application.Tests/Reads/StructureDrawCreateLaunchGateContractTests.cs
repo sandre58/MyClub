@@ -17,7 +17,7 @@ using Xunit;
 namespace MyClub.PlayUp.Application.Tests.Reads;
 
 /// <summary>
-/// Step 2 — precursors for <c>StructureDrawCreateLaunchGate</c> (see
+/// Precursors for <c>StructureDrawCreateLaunchGate</c> (see
 /// docs/design/structure-lifecycle/structure-draw-create-launch-gate.md).
 /// These tests run today; they do not call the gate type (not implemented yet).
 /// </summary>
@@ -53,7 +53,7 @@ public sealed class StructureDrawCreateLaunchGateContractTests
 
         badge.Should().Be(StructureDrawExecutionBadge.InProgress);
 
-        // Contract: DrawCreateLaunchAllowed == false (L1 — active non-cancelled draw).
+        // Contract: DrawCreateLaunchAllowed == false (an active non-cancelled draw exists).
     }
 
     [Fact]
@@ -77,7 +77,7 @@ public sealed class StructureDrawCreateLaunchGateContractTests
         StructureViewAssembler.GetDrawExecutionBadge(stage, hasDrawRules: true)
             .Should().Be(StructureDrawExecutionBadge.ToLaunch);
 
-        // Contract: RunDraw hub step must not use badge alone (C8).
+        // Contract: RunDraw hub step must not use badge alone .
     }
 
     [Fact]
@@ -104,7 +104,7 @@ public sealed class StructureDrawCreateLaunchGateContractTests
         hub.CompositionCapacity.Should().Be(4);
         hub.DrawExecutionBadge.Should().Be(StructureDrawExecutionBadge.ToLaunch);
 
-        // Contract: gate layers L3–L6 satisfied — RunDraw eligible after priority rules (not yet implemented).
+        // Contract: later gate layers satisfied — RunDraw eligible after priority rules (not yet implemented).
     }
 
     [Fact]
@@ -146,6 +146,6 @@ public sealed class StructureDrawCreateLaunchGateContractTests
         hub.HasDrawRules.Should().BeFalse();
         hub.DrawExecutionBadge.Should().BeNull();
 
-        // Contract: L2 — not launchable for RunDraw.
+        // Contract: not launchable for RunDraw.
     }
 }

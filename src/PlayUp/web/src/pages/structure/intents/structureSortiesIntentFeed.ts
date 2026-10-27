@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------
 // Sorties rail — authoring Intentions (not Expand paths).
-// Decision: Population = chemins ; Sorties = intentions.
+// Population paths are the routes; Sorties are the intents.
 // -----------------------------------------------------------------------
 
 import type {
@@ -44,8 +44,7 @@ function nameOf(data: StructureView, id: string): string {
 }
 
 /**
- * Outbound Sorties: intentions when present per family, else Expand paths
- * (legacy / incomplete migration).
+ * Outbound Sorties: intentions when present per family, otherwise Expand paths.
  */
 export function outboundSortiesFeeds(
   data: StructureView,

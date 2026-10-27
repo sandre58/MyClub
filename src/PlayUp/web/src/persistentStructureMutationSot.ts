@@ -1,6 +1,6 @@
 import { ApiError } from './api';
 
-/** Application codes that encode persistent Structure graph / feed state (Q6). */
+/** Application codes that encode persistent Structure graph / feed state. */
 const PERSISTENT_STRUCTURE_MUTATION_CODES = new Set([
   'Application.SlotFeedsInvalid',
   'Application.DanglingFeedTarget',

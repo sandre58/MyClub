@@ -146,7 +146,7 @@ public static class StructurePopulationVolume
     }
 
     /// <summary>
-    /// Expected Places N occupancy for U1 meter (affectation + inbound qual/prog).
+    /// Expected Places N occupancy for the population meter (affectation + inbound qual/prog).
     /// </summary>
     public static int ExpectedOccupancy(StructureViewDto view, StructureStageHubSummaryDto destination)
     {
@@ -182,7 +182,7 @@ public static class StructurePopulationVolume
     }
 
     /// <summary>
-    /// SPA U1: synthesize <see cref="CompetitionFlowAnalyzer.PopulationShortfall"/> when occupancy &lt; Places N.
+    /// SPA: synthesize <see cref="CompetitionFlowAnalyzer.PopulationShortfall"/> when occupancy &lt; Places N.
     /// </summary>
     public static bool ShouldSynthesizePopulationShortfall(
         StructureViewDto view,

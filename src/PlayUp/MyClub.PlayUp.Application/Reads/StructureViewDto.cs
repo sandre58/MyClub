@@ -232,9 +232,9 @@ public sealed record StructureReadinessDto(
 /// Host-authored presented diagnostics for this phase (structure projection + lifecycle + readiness attribution).
 /// </param>
 /// <param name="PhaseRosterPresentation">
-/// Read classifier for fed championship/Swiss roster gaps (Ready phases); drives presented-code substitution (A3).
+/// Read classifier for fed championship/Swiss roster gaps (Ready phases); drives presented-code substitution.
 /// </param>
-/// <param name="StructureIssueSemantics">Pilot organizer-problem semantics for selected issue codes.</param>
+/// <param name="StructureIssueSemantics">Organizer-problem semantics for selected issue codes.</param>
 /// <param name="HalfTimeDuration">MatchRules half-time break minutes.</param>
 /// <param name="DirectAssignmentCount">Configured DirectAssignment feed count (SlotKey → Entry).</param>
 /// <param name="CompositionEntryCount">Runtime population membership size (Draw / Live pool).</param>
@@ -242,7 +242,7 @@ public sealed record StructureReadinessDto(
 /// <param name="CompositionCapacity">
 /// Target Places N at T (≠ composition set k). Cup = entry places (1st-round cardinality;
 /// ≠ total slotCount when multi-round); Championship/Swiss = Active;
-/// Groups = groupCount × placesPerGroup. Null = indeterminable (E4), not zero.
+/// Groups = groupCount × placesPerGroup. Null means indeterminable, not zero.
 /// </param>
 /// <param name="CompositionPreviewNames">Display names for runtime composition (Draw / Live).</param>
 /// <param name="CompositionIneligibleCount">Runtime composition entries that are no longer Active (row chrome only).</param>

@@ -10,7 +10,7 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
-/// Builds Domain participant snapshots from loaded Match aggregates for F1 coherence gates.
+/// Builds Domain participant snapshots from loaded Match aggregates for opponent-coherence gates.
 /// </summary>
 internal static class MaterializedParticipantSnapshots
 {

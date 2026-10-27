@@ -42,7 +42,7 @@ public static class StageErrorCodes
     public const string DisplayNameLocked = "Stage.DisplayNameLocked";
 
     /// <summary>
-    /// Gets the code when standing rules cannot be replaced (ready phase per D4).
+    /// Gets the code when standing rules cannot be replaced while the phase is Ready.
     /// </summary>
     public const string StandingRulesLocked = "Stage.StandingRulesLocked";
 
@@ -132,7 +132,7 @@ public static class StageErrorCodes
     public const string SlotFeedConflict = "Stage.SlotFeedConflict";
 
     /// <summary>
-    /// Gets the code when a determination-source mutation would diverge from materialized match opponents (F1 / D4).
+    /// Gets the code when a determination-source mutation would diverge from materialized match opponents.
     /// </summary>
     public const string MaterializedOpponentConflict = "Stage.MaterializedOpponentConflict";
 
@@ -275,12 +275,12 @@ public static class StageErrorCodes
     public const string DrawRulesReplaceBlockedAfterGenerate = "Stage.DrawRulesReplaceBlockedAfterGenerate";
 
     /// <summary>
-    /// Gets the code when a second non-cancelled draw would be created (B-Q3a).
+    /// Gets the code when a second non-cancelled draw would be created.
     /// </summary>
     public const string NonCancelledDrawAlreadyExists = "Stage.NonCancelledDrawAlreadyExists";
 
     /// <summary>
-    /// Gets the code when standing rules presence violates A5 (classifying vs non-classifying topology).
+    /// Gets the code when standing rules presence violates topology (classifying vs non-classifying).
     /// </summary>
     public const string StandingRulesInvariant = "Stage.StandingRulesInvariant";
 }

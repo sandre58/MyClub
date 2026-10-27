@@ -13,7 +13,7 @@ using Xunit;
 namespace MyClub.PlayUp.Domain.Tests.Stages;
 
 /// <summary>
-/// Topology-derived gates for MatchGenerationFormat / PlacesPerGroup (Option G — no product format enum).
+/// Topology-derived gates for MatchGenerationFormat / PlacesPerGroup (no product format enum).
 /// </summary>
 public sealed class StageTopologyPropertyGatesTests
 {

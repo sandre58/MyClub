@@ -17,7 +17,7 @@ using Xunit;
 namespace MyClub.PlayUp.Application.Tests.Stages;
 
 /// <summary>
-/// SLICE-C-ENF-DETECT — predicate proofs (no Apply/Materialize/Start gates).
+/// Obsolete-draw predicate proofs (no Apply, Materialize, or Start gates).
 /// </summary>
 public sealed class DrawConsumptionConformanceTests
 {

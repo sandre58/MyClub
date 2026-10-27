@@ -122,7 +122,7 @@ describe('structurePopulationVolume', () => {
     expect(expectedPopulationOccupancy(data, final)).toBe(4);
   });
 
-  it('inboundPopulationConfiguredVolume matches sum of inboundFeeds row volumes (U1 intent projection)', () => {
+  it('inboundPopulationConfiguredVolume matches the sum of inboundFeeds row volumes', () => {
     const final = stage({
       stageId: 'final',
       name: 'Finale',

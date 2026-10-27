@@ -17,7 +17,7 @@ internal static class SampleRegulations
     public static Regulation Standard() => RegulationPacks.Standard();
 
     /// <summary>
-    /// Single-leg cup tie that can always decide a draw (G-MAT1 / necessary progression exits).
+    /// Single-leg cup tie that can always decide a draw (necessary progression exits).
     /// </summary>
     public static TieFormat KnockoutTieDecidable() =>
         new(

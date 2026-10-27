@@ -17,7 +17,7 @@ namespace MyClub.PlayUp.Application.Stages;
 /// </summary>
 /// <remarks>
 /// Progression only fills Slot.EntryId. This UC creates Fixture(SlotA/B, BracketPairKey) and Matches when
-/// a pair is eligible. Reuses C1 leg rules via <see cref="CupConfrontationMaterializer"/>.
+/// a pair is eligible. Reuses leg rules via <see cref="CupConfrontationMaterializer"/>.
 /// Does not author ProgressionRules, create Stages, or schedule.
 /// </remarks>
 public static class MaterializeCupFromOccupiedSlots
@@ -277,7 +277,7 @@ public static class MaterializeCupFromOccupiedSlots
             IsEligible(stage, pair, context, competition, competitionStages));
     }
 
-    /// <summary>Eligible pair keys for G-MAT2 global scope (no side effects).</summary>
+    /// <summary>Eligible pair keys (no side effects).</summary>
     internal static IReadOnlyList<string> CollectEligiblePairKeys(
         Stage stage,
         Competition? competition = null,

@@ -20,7 +20,7 @@ function fixtureHostEmitsMissingPotRules(
 }
 
 /**
- * Test-only: build explicit `presentedIssueCodes` for fixtures (Host graph + U1
+ * Test-only: build explicit `presentedIssueCodes` for fixtures (Host graph + population shortfall
  * slice, plus MissingPotRules when Host readiness would emit it).
  * Do not use in production code.
  */

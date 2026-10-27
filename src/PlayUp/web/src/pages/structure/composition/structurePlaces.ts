@@ -8,7 +8,7 @@ import type { StructureStageHubSummary } from '../../../types';
  * Cup: entry places (1st-round). Multi-round total slotCount is form units, not Places.
  */
 /**
- * Places N (Y) for Qual / Prog destination tiles only (arbitrage 2c).
+ * Places N for Qual / Prog destination tiles only.
  * Fed Championship/Swiss destinations: competition Active on the hub is not destination Places — hide meter.
  * Root phases and Cup/Groups keep hub {@link resolvePlacesN}.
  */

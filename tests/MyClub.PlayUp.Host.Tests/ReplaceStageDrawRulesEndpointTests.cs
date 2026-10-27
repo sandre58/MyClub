@@ -17,7 +17,7 @@ using Xunit;
 namespace MyClub.PlayUp.Host.Tests;
 
 /// <summary>
-/// B-Q1b — <c>ReplaceStageDrawRules</c> is Draft-only; Ready refuses via <see cref="StageErrorCodes.StructureLocked"/>.
+/// <c>ReplaceStageDrawRules</c> is Draft-only; Ready refuses via <see cref="StageErrorCodes.StructureLocked"/>.
 /// Application proof: <c>ReplaceStageDrawRulesTests.Replace_rejected_when_stage_is_Ready</c>.
 /// </summary>
 [Collection("host-postgres")]

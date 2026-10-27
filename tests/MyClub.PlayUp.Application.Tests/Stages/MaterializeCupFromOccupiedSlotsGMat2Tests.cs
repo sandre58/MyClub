@@ -18,7 +18,7 @@ using Xunit;
 namespace MyClub.PlayUp.Application.Tests.Stages;
 
 /// <summary>
-/// G-MAT2 — production-scoped <see cref="CompetitionFlowAnalyzer.AuthoredAwardUnreachable"/> at materialize (option B).
+/// Production-scoped <see cref="CompetitionFlowAnalyzer.AuthoredAwardUnreachable"/> at materialize.
 /// </summary>
 public sealed class MaterializeCupFromOccupiedSlotsGMat2Tests
 {

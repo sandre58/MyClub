@@ -144,7 +144,7 @@ public static class ConsultationAssembler
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(matches);
 
-        // Canonical runtime signal (A5/C1): materialized StandingRules, not a second classifying predicate.
+        // Canonical runtime signal: materialized StandingRules, not a second classifying predicate.
         var rules = stage.Regulation.StandingRules;
         if (rules is null)
         {

@@ -11,7 +11,7 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Host.Tests;
 
 /// <summary>
-/// HTTP helpers for stage lifecycle in integration tests (phase V2).
+/// HTTP helpers for stage lifecycle in integration tests.
 /// </summary>
 internal static class HostStageHttpHelpers
 {

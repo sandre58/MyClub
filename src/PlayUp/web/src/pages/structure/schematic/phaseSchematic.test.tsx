@@ -270,7 +270,7 @@ describe('PhaseSchematic', () => {
     expect(screen.queryByText(/Match #/)).toBeNull();
   });
 
-  it('cup Qual/Prog shows resolved participant primary; path in tooltip (R7)', () => {
+  it('cup Qual/Prog shows the resolved participant as primary and the path in the tooltip', () => {
     const { container } = render(
       <PhaseSchematic
         schematic={cupSchematic({
@@ -451,7 +451,7 @@ describe('PhaseSchematic', () => {
     });
   });
 
-  it('buildSchematicCaseTooltipModel Qual/Prog resolved: path in tip, team on case (R7)', () => {
+  it('buildSchematicCaseTooltipModel Qual/Prog resolved: path in tip, team on case', () => {
     const model = buildSchematicCaseTooltipModel({
       address: '1·A',
       primary: 'FC Nice',

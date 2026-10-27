@@ -51,7 +51,7 @@ public sealed class StagePersistenceTests
             loaded.Status.Should().Be(StageStatus.Completed);
             loaded.Status.Should().NotBe(StageStatus.Draft);
 
-            // AddRound clears StandingRules when the stage becomes knockout (A5).
+            // AddRound clears StandingRules when the stage becomes knockout.
             loaded.Regulation.Should().Be(initial.WithStandingRules(null));
             loaded.Rounds.Should().ContainSingle().Which.Name.Should().Be("Quarter-finals");
         }

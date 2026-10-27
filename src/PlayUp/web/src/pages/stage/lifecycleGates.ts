@@ -27,7 +27,7 @@ export function isDrawExecutionCancellable(status: DrawStatus): boolean {
 
 /**
  * SPA Cancel CTA for a draw execution — same conjunction as Host + Domain
- * `CancelDraw`. Option C (fixtures / Live|Finished matches) is intentionally
+ * `CancelDraw`. Fixtures and Live or Finished matches are intentionally
  * out of scope.
  */
 export function canCancelDrawExecution(input: {

@@ -17,7 +17,7 @@ using Xunit;
 namespace MyClub.PlayUp.Application.Tests.Stages;
 
 /// <summary>
-/// G-MAT1 command contracts — <see cref="MaterializeCupFromOccupiedSlots"/> + undecidable necessary confrontation.
+/// <see cref="MaterializeCupFromOccupiedSlots"/> when a necessary confrontation cannot always decide a draw.
 /// </summary>
 public sealed class MaterializeCupFromOccupiedSlotsGMat1Tests
 {

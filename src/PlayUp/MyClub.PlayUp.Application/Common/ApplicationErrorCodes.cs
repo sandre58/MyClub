@@ -206,17 +206,17 @@ public static class ApplicationErrorCodes
     public const string ReadyConsumerWouldBreak = "Application.ReadyConsumerWouldBreak";
 
     /// <summary>
-    /// Gets the code when affectation pool <c>EntryId</c> membership would change while a draw is Applied on the stage (G-B-3).
+    /// Gets the code when affectation pool <c>EntryId</c> membership would change while a draw is Applied on the stage.
     /// </summary>
     public const string AppliedDrawPoolChangeBlocked = "Application.AppliedDrawPoolChangeBlocked";
 
     /// <summary>
-    /// Gets the code when qualification or progression rules would change while a draw is Applied (G-OPS3).
+    /// Gets the code when qualification or progression rules would change while a draw is Applied.
     /// </summary>
     public const string AppliedDrawFeedRulesChangeBlocked = "Application.AppliedDrawFeedRulesChangeBlocked";
 
     /// <summary>
-    /// Gets the code when progression rules would change after a touched path satisfied its destination (G-OPS3 W-OPS3-2).
+    /// Gets the code when progression rules would change after a touched path satisfied its destination.
     /// </summary>
     public const string ProgressionFeedConsumed = "Application.ProgressionFeedConsumed";
 
@@ -226,7 +226,7 @@ public static class ApplicationErrorCodes
     public const string ProgressionFeedImpactAmbiguous = "Application.ProgressionFeedImpactAmbiguous";
 
     /// <summary>
-    /// Gets the code when a touched path participates in downstream attached match production (G-OPS3 2c).
+    /// Gets the code when a touched path participates in downstream attached match production.
     /// </summary>
     public const string ProgressionDownstreamProductionBlocked = "Application.ProgressionDownstreamProductionBlocked";
 
@@ -236,12 +236,12 @@ public static class ApplicationErrorCodes
     public const string ProgressionProductionParticipationAmbiguous = "Application.ProgressionProductionParticipationAmbiguous";
 
     /// <summary>
-    /// Gets the code when a Cup slot assignment would break a placement guaranteed by an Applied draw (G-OPS3 B1).
+    /// Gets the code when a Cup slot assignment would break a placement guaranteed by an Applied draw.
     /// </summary>
     public const string AppliedDrawSlotPlacementProtected = "Application.AppliedDrawSlotPlacementProtected";
 
     /// <summary>
-    /// Gets the code when a draw resolution is obsolete for consumption (C-ENF-Apply).
+    /// Gets the code when a draw resolution is obsolete for consumption.
     /// </summary>
     public const string DrawObsoleteForConsumption = "Application.DrawObsoleteForConsumption";
 
@@ -256,7 +256,7 @@ public static class ApplicationErrorCodes
     public const string MaterializationFailure = "Application.MaterializationFailure";
 
     /// <summary>
-    /// Gets the code when Swiss <c>GenerateNextRound</c> fails (preconditions or I8 NoSolution).
+    /// Gets the code when Swiss <c>GenerateNextRound</c> fails (preconditions or NoSolution).
     /// </summary>
     public const string SwissRoundGenerationFailure = "Application.SwissRoundGenerationFailure";
 
@@ -271,7 +271,7 @@ public static class ApplicationErrorCodes
     public const string ConsequenceOperationNotAllowed = "Application.ConsequenceOperationNotAllowed";
 
     /// <summary>
-    /// Gets the code when ApplyProgression would overwrite a dynamic slot occupant (F8 preflight).
+    /// Gets the code when ApplyProgression would overwrite a dynamic slot occupant.
     /// </summary>
     public const string SlotOccupancyConflict = "Application.SlotOccupancyConflict";
 

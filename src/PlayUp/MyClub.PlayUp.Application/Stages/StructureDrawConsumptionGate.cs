@@ -11,7 +11,7 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
-/// C-ENF consumption gates — obsolete draw resolution must not be consumed as valid.
+/// Obsolete draw resolution must not be consumed as valid.
 /// </summary>
 internal static class StructureDrawConsumptionGate
 {

@@ -12,7 +12,7 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Reads;
 
 /// <summary>
-/// Phase schematic read model — form units + placed entries (S1–S8).
+/// Phase schematic read model — form units + placed entries.
 /// No computed occupation flags; SPA derives empty/placed from <see cref="SchematicCaseDto.Entry"/>.
 /// </summary>
 /// <param name="StageId">Stage identity.</param>

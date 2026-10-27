@@ -224,7 +224,7 @@ describe('deriveOnFieldMembers / canMutateRecordedSubstitutions', () => {
   });
 });
 
-describe('MatchPage substitutions (Lot 1)', () => {
+describe('MatchPage substitutions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(fetchStageOverview).mockResolvedValue(stageOverview);
@@ -307,7 +307,7 @@ describe('MatchPage substitutions (Lot 1)', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('Finished∧Live: read-only (CorrectAfterFinish hors V1)', async () => {
+  it('Finished and Live is read-only', async () => {
     vi.mocked(fetchMatchDetail).mockResolvedValue(
       baseMatch({
         status: 'Finished',

@@ -19,7 +19,7 @@ using Xunit;
 namespace MyClub.PlayUp.Application.Tests.Reads;
 
 /// <summary>
-/// Reference cases R1–R5 — Prepare gate Attribution (option C).
+/// Prepare gate for placement-award attribution.
 /// </summary>
 public sealed class StructurePrepareAttributionTests
 {

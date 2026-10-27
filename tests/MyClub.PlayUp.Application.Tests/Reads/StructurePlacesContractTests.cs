@@ -16,7 +16,7 @@ using Xunit;
 namespace MyClub.PlayUp.Application.Tests.Reads;
 
 /// <summary>
-/// Places N / compositionCapacity hub contract (arbitrage 2c).
+/// Places N / compositionCapacity hub contract.
 /// </summary>
 public sealed class StructurePlacesContractTests
 {

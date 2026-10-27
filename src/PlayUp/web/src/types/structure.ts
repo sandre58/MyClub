@@ -162,7 +162,7 @@ export interface StructureStageHubSummary {
   penaltyInitialKicksPerTeam?: number | null;
   /** MatchRules half-time break minutes. */
   halfTimeDuration?: number;
-  /** A5: standing present only when the phase classifies. */
+  /** Standing rules are present only when the phase classifies. */
   hasStandingRules?: boolean;
   winPoints?: number | null;
   drawPoints?: number | null;
@@ -224,7 +224,7 @@ export interface StructureStageHubSummary {
     | 'AwaitingInboundQualification'
     | 'CompositionIncomplete'
     | null;
-  /** Pilot organizer-problem semantics for selected structure issues. */
+  /** Organizer-problem semantics for selected structure issues. */
   structureIssueSemantics?: OrganizerProblemRead[] | null;
   /** Configured DirectAssignment count (slot → entry). */
   directAssignmentCount?: number;

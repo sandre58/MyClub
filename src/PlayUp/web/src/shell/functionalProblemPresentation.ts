@@ -4,11 +4,11 @@
  *
  * Identity aligns with Overview DeduplicateSituations: source + targetType + targetId.
  *
- * Structure construction surfaces (E1–E5): détection ≠ diagnostic ≠ correction.
+ * Structure construction surfaces: detection, diagnosis, and correction stay distinct.
  * Diagnostic taxonomy → presentation via structureDiagnosticPresentation (family / tile / CTA).
- * Population shortfall may also come from U1 volume helper (never Host blockers alone).
+ * Population shortfall may also come from the volume helper (never Host blockers alone).
  * MissingPotRules = only when draw engaged (HasDrawRules); PageHead = synthesis counts
- * AttentionDrawer = T5 + Structure catalogue (D1 revision); birth denylist in attentionPartition.
+ * AttentionDrawer = T5 + Structure catalogue; birth denylist in attentionPartition.
  */
 
 import { situationHref } from './situationRoutes';

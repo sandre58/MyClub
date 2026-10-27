@@ -143,7 +143,7 @@ export function qualificationRuleParts(
   const sortSecondary = group;
   const isAcross =
     path.rankingScope === 'AcrossGroups' || path.acrossGroupsPosition != null;
-  // R1: rails never show Place/Population chips — only non-form extras (points gate).
+  // rails never show Place/Population chips — only non-form extras (points gate).
   const extra =
     path.minimumPoints != null
       ? t('fiche.rule.minimumPoints', { n: path.minimumPoints })
@@ -387,7 +387,7 @@ export function progressionRuleParts(
   | 'sortSecondary'
 > {
   const isWinner = path.outcome === 'Winner';
-  // R1: destination Place | Population lives on the schematic, not the rail.
+  // destination Place | Population lives on the schematic, not the rail.
   return {
     badge: isWinner
       ? t('fiche.rule.winner', { count: 1 })

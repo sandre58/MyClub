@@ -856,7 +856,7 @@ describe('resolveTopologyDrawExecutionBadge', () => {
   });
 });
 
-describe('canAuthorStageDrawRules (G-OPS3 lot B)', () => {
+describe('canAuthorStageDrawRules is Draft-only', () => {
   it('allows authoring only in Draft when ReplaceDrawRules is available', () => {
     expect(canAuthorStageDrawRules('Draft', true)).toBe(true);
     expect(canAuthorStageDrawRules('Ready', true)).toBe(false);

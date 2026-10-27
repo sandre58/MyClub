@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// Expected Places N occupancy (meter C / U1 capacity).
+// Expected Places N occupancy (population-meter capacity).
 // Affectation + Qual + Prog (Population and Place). Qual draft substitutes
 // persisted Qual from the authoring source only.
 // -----------------------------------------------------------------------
@@ -61,7 +61,7 @@ export function inboundPopulationConfiguredVolume(
   return n;
 }
 
-/** U1 meter — affectation authoring + inbound Qual/Prog configured volume. */
+/** Population meter — affectation authoring + inbound Qual/Prog configured volume. */
 export function expectedPopulationOccupancy(
   data: StructureView,
   destination: StructureStageHubSummary,

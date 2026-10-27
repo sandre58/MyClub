@@ -15,7 +15,7 @@ function round(id: string, fixtureCount: number) {
 }
 
 describe('championshipTerminalRound', () => {
-  it('returns the only round even without fixtures (Cup V1 structural)', () => {
+  it('returns the only round even without fixtures', () => {
     expect(
       championshipTerminalRound([{ id: 'entry', name: 'entry', fixtures: [] }])
         ?.id,

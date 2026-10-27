@@ -12,7 +12,7 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
-/// G-OPS2: refuse operational mutations when Ready downstream consumers would lose a satisfied feed
+/// Refuses operational mutations when Ready downstream consumers would lose a satisfied feed
 /// contract (promised inbound volume vs placed composition).
 /// </summary>
 internal static class StructureReadyConsumerFeedGate
@@ -60,7 +60,7 @@ internal static class StructureReadyConsumerFeedGate
     }
 
     /// <summary>
-    /// D1 for affectation: qual/prog rules unchanged; shrinking source population caps promised feed to Ready consumers.
+    /// Affectation: qual/prog rules unchanged; shrinking source population caps promised feed to Ready consumers.
     /// </summary>
     internal static void EnsureAffectationReplaceAllowed(
         Stage upstream,

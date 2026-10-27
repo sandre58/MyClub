@@ -18,7 +18,7 @@ using Xunit;
 namespace MyClub.PlayUp.Application.Tests.Stages;
 
 /// <summary>
-/// R-Prog-OPS3-* — progression impact gate (WC-1 / WC-2).
+/// Progression impact gate: consumed paths and downstream match production.
 /// </summary>
 public sealed class ReplaceStageProgressionRulesGOps3ImpactTests
 {

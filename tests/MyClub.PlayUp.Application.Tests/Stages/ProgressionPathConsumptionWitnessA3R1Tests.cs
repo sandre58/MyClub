@@ -19,7 +19,7 @@ using Xunit;
 namespace MyClub.PlayUp.Application.Tests.Stages;
 
 /// <summary>
-/// A-3-R1 / TECH-1 characterization — per-path satisfaction attribution (no production gate).
+/// Per-path satisfaction attribution (no production gate).
 /// </summary>
 public sealed class ProgressionPathConsumptionWitnessA3R1Tests
 {

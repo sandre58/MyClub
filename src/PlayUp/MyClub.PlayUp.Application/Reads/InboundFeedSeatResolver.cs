@@ -261,7 +261,7 @@ internal static class InboundFeedSeatResolver
     }
 
     /// <summary>
-    /// Replays upstream fixture outcome for WC-1 / hub (no slot occupant shortcut).
+    /// Replays upstream fixture outcome for consumption checks (no slot occupant shortcut).
     /// </summary>
     internal static EntryId? ProjectProgressionEntryFromSourceFixture(
         ProgressionPath path,

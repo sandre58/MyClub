@@ -90,7 +90,7 @@ describe('StructurePhaseFicheHeader', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('hides rename affordance when canRename is false (Δ-O4-1 Completed)', () => {
+  it('hides rename affordance when canRename is false (Completed)', () => {
     renderHeader(baseStage);
     expect(
       screen.queryByRole('button', { name: /Renommer la phase/i }),

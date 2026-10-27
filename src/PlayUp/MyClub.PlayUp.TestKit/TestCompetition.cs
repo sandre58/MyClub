@@ -420,7 +420,7 @@ public sealed class TestCompetition
     public Stage RequirePrimaryStage() => EnsurePrimaryStage();
 
     /// <summary>
-    /// Prepares the primary stage when still Draft (phase V2 materialize gate).
+    /// Prepares the primary stage when still Draft (materialize requires Ready).
     /// </summary>
     public Stage PreparePrimaryStageForMaterialization()
     {

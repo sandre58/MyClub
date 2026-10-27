@@ -24,7 +24,7 @@ namespace MyClub.PlayUp.Development.Tests;
 
 /// <summary>
 /// Executable recette protocol — Cup materialize contract (domain, read-model, command).
-/// Maps to R1–R8 in structure-lifecycle Cup recette checklist.
+/// Maps to the structure-lifecycle Cup recette checklist.
 /// </summary>
 [Collection("DevelopmentPostgres")]
 [Trait("Category", "Integration")]

@@ -38,7 +38,7 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            // Backfill (verrou 4): structural pairs only from slot order — never invent from fixtures.
+            // Backfill: structural pairs only from slot order — never invent from fixtures.
             // Cup heuristic: has rounds, no matchdays. Natural-sort S{n} keys.
             migrationBuilder.Sql(
                 """

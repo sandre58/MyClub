@@ -7,7 +7,7 @@
 namespace MyClub.PlayUp.Application.Reads;
 
 /// <summary>
-/// Application-side organizer problem semantics on read models (pilot — not ProblemDetails).
+/// Application-side organizer problem semantics on read models (not ProblemDetails).
 /// </summary>
 /// <param name="CanonCode">Most precise stable fact code.</param>
 /// <param name="SemanticLevel"><see cref="OrganizerProblemSemanticLevels"/> value.</param>

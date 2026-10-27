@@ -7,7 +7,7 @@
 namespace MyClub.PlayUp.Application.Reads;
 
 /// <summary>
-/// Step 2 semantic levels (product arbitration 2026-10-12) — read-model projection only.
+/// Organizer-problem semantic levels — read-model projection only.
 /// </summary>
 public static class OrganizerProblemSemanticLevels
 {

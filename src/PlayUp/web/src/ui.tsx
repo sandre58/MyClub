@@ -235,7 +235,7 @@ export function MutationError({
   error: unknown;
   /** When the failure reveals a persistent Structure problem, link to its SoT. */
   sotHref?: string | null;
-  /** When set, D1 failures list blocking downstream phase names. */
+  /** When set, downstream-consumer failures list blocking phase names. */
   structureStages?: readonly StructureStageHubSummary[];
 }) {
   const { t } = useTranslation('common');

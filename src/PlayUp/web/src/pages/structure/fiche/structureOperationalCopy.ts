@@ -22,7 +22,7 @@ export function resolvePlacementPoolTone(
   return resolveDrawCtaPoolTone(filled, capacity);
 }
 
-/** Align ratio / gauge chrome with the operational strip message severity (D5). */
+/** Align ratio / gauge chrome with the operational strip message severity. */
 export function drawPoolToneToRatioGaugeTone(
   tone: DrawCtaPoolTone,
 ): RatioMessageGaugeRatioTone {

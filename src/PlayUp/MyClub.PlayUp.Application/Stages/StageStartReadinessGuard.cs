@@ -16,7 +16,7 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
-/// Application guard: Ready → Running Start readiness (phase V2 § H).
+/// Application guard: Ready → Running Start readiness.
 /// </summary>
 internal static class StageStartReadinessGuard
 {

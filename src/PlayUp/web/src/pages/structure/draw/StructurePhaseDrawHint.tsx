@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { DrawPendingIcon } from '../../../design-system/icons/contentIcons';
 import type { StructureStageHubSummary } from '../../../types';
 
-/** Draw execution badge (E6) — fiche header and topology tile (label only, no tooltip). */
+/** Draw execution badge — fiche header and topology tile (label only, no tooltip). */
 export function StructurePhaseDrawHint({
   stage,
   variant = 'fiche',

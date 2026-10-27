@@ -227,7 +227,7 @@ describe('canMutateRecordedDisciplinaryEvents', () => {
   });
 });
 
-describe('MatchPage discipline (Lot 1)', () => {
+describe('MatchPage discipline', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(fetchStageOverview).mockResolvedValue(stageOverview);

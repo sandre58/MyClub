@@ -10,11 +10,11 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Reads;
 
 /// <summary>
-/// C-ENF-Detect — whether a draw resolution is obsolete for consumption (W-inputs + W-pool; §11C C4).
+/// Whether a draw resolution is obsolete for consumption (stored inputs and the effective entry pool).
 /// </summary>
 /// <remarks>
-/// Distinct from <see cref="DrawAppliedState"/> (occupancy) and from G-B-3 pool-change refuse.
-/// W-rules comparison is explicitly out of scope for Detect.
+/// Distinct from <see cref="DrawAppliedState"/> (occupancy) and from refusing pool changes while a draw is Applied.
+/// Rules comparison is out of scope for this predicate.
 /// </remarks>
 public static class DrawConsumptionConformance
 {

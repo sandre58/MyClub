@@ -19,7 +19,7 @@ using Xunit;
 namespace MyClub.PlayUp.Application.Tests.Stages;
 
 /// <summary>
-/// SLICE-C-ENF-MAT-START — Materialize/Start consumption gates and read parity.
+/// Materialize and Start consumption gates, and read parity.
 /// </summary>
 public sealed class DrawConsumptionMatStartTests
 {

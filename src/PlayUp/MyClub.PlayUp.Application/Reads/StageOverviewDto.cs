@@ -104,7 +104,7 @@ public sealed record StageSlotDto(
 /// <param name="SlotPlacements">Slot placements when resolved as Slot; otherwise empty.</param>
 /// <param name="GroupPlacements">Group placements when resolved as Group; otherwise empty.</param>
 /// <param name="IsApplied">Derived occupancy (Publish ≠ Apply) via <c>DrawAppliedState</c>.</param>
-/// <param name="IsObsoleteForConsumption">C-ENF-Detect — draw resolution obsolete for Apply/Materialize consumption.</param>
+/// <param name="IsObsoleteForConsumption">Draw resolution obsolete for Apply/Materialize consumption.</param>
 public sealed record StageDrawDto(
     Guid Id,
     DrawResolutionKind Kind,

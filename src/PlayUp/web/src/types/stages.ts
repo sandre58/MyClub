@@ -71,7 +71,7 @@ export interface StageDraw {
   groupPlacements?: StageDrawGroupPlacement[];
   /** Server-derived occupancy (DrawAppliedState). Prefer over local heuristics. */
   isApplied?: boolean;
-  /** C-ENF-Detect — resolution obsolete for Apply / Materialize consumption. */
+  /** Resolution obsolete for Apply / Materialize consumption. */
   isObsoleteForConsumption?: boolean;
 }
 
@@ -113,7 +113,7 @@ export interface StageBracketPair {
   slotBKey: string;
 }
 
-/** GET /stages/{id}/schematic — form units + placed entries (S1–S8). */
+/** GET /stages/{id}/schematic — form units + placed entries. */
 export type SchematicFormPositionKind =
   'CupSlot' | 'GroupPlace' | 'RosterPlace';
 

@@ -349,7 +349,7 @@ By signing **§11A**, the decision maker validates **intent only** — not that 
 
 ### 11B — Implementation contract (**SIGNED** 2026-10-15)
 
-**Maintainer pack:** [section-11b-signoff-preparation.md](./section-11b-signoff-preparation.md) · Notion copy [notion-decision-11b-draft.md](./notion-decision-11b-draft.md).
+**Maintainer pack:** [section-11b-signoff-preparation.md](./section-11b-signoff-preparation.md).
 
 - [x] **B1** — All §12 rows **Done**, **Deferred**, or **Constraint** (no orphan **Litigious**) — §12 below
 - [x] **B2** — Reference tests §10 agreed for deferred materialize/draw paths (A5 contracts)

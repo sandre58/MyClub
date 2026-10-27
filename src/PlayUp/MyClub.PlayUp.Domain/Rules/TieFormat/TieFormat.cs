@@ -47,7 +47,7 @@ public sealed record TieFormat
     /// </summary>
     /// <remarks>
     /// Extra time alone is not decisive (a draw can remain after ET). A configured
-    /// <see cref="PenaltyShootoutRule"/> is the V1 always-decisive draw resolution.
+    /// <see cref="PenaltyShootoutRule"/> is the always-decisive draw resolution.
     /// Aligns with <c>FixtureOutcomeResolver</c> after ExtraTimeRule is honored.
     /// </remarks>
     public bool CanAlwaysDecideDraw() =>

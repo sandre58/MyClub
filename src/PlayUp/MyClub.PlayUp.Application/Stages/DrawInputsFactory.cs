@@ -26,7 +26,7 @@ public static class DrawInputsFactory
     /// </summary>
     /// <param name="stage">Stage that owns the draw.</param>
     /// <param name="kind">Draw resolution kind.</param>
-    /// <param name="intent">Default = Encoding F; Rerun = full redraw without occupancy Fixed*.</param>
+    /// <param name="intent">Default keeps occupancy Fixed*; Rerun is a full redraw without them.</param>
     public static DrawInputs CreateDefault(
         Stage stage,
         DrawResolutionKind kind,

@@ -113,7 +113,7 @@ export function hasDuplicateSlotKeys(keys: string[]): boolean {
 }
 
 /**
- * D1 completeness for a Place mapping of size `expandCount`.
+ * Completeness for a Place mapping of size `expandCount`.
  * Returns MultiSlot | DuplicateSlot | null (complete).
  * Groups A1: pass `allowDuplicates: true` (DuplicateSlot never returned).
  */

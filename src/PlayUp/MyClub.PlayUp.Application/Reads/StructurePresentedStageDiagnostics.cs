@@ -17,7 +17,7 @@ namespace MyClub.PlayUp.Application.Reads;
 public static class StructurePresentedStageDiagnostics
 {
     /// <summary>
-    /// Informative presented code when roster gap is solely upstream qual flux not yet produced (A3).
+    /// Informative presented code when roster gap is solely upstream qual flux not yet produced.
     /// Replaces <see cref="StructureStageLifecycleAssembler.DisabledPhaseRosterIncomplete"/> in
     /// <c>presentedIssueCodes</c> only — Start <c>disabledReasonCode</c> stays PhaseRosterIncomplete.
     /// </summary>
@@ -89,7 +89,7 @@ public static class StructurePresentedStageDiagnostics
         AddDistinct(codes, PresentedAwaitingInboundQualification);
     }
 
-    /// <summary>SPA: <c>stagePresentedIssueCodes</c> structure slice (structureIssues + U1).</summary>
+    /// <summary>SPA: <c>stagePresentedIssueCodes</c> structure slice (structure issues and population shortfall).</summary>
     public static IReadOnlyList<string> ProjectPresentedStageIssueCodesFromStructure(
         StructureViewDto view,
         StructureStageHubSummaryDto stage)

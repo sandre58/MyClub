@@ -12,7 +12,7 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
-/// G-OPS1: allow qualification/progression exit edits on Draft/Ready upstream when no production is attached (D2).
+/// Allows qualification and progression exit edits on Draft or Ready upstream when no production is attached.
 /// </summary>
 internal static class StructureOperationalExitEditGuard
 {
@@ -43,7 +43,7 @@ internal static class StructureOperationalExitEditGuard
     }
 
     /// <summary>
-    /// Cup mono-round: incomplete canonical entry round may still be completed while partial production exists (C1 recette).
+    /// Cup mono-round: incomplete canonical entry round may still be completed while partial production exists.
     /// </summary>
     private static bool AllowsOperationalEditsDespiteAttachedProduction(Stage stage) =>
         StructureSkeleton.InferFormat(stage) == StructureFormatKind.Cup

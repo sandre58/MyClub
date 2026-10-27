@@ -134,7 +134,7 @@ public static class PrepareStage
     }
 
     /// <summary>
-    /// D10-D: outbound Qualification / Progression destinations must exist in the competition
+    /// Outbound Qualification / Progression destinations must exist in the competition
     /// and expose the declared SlotKey.
     /// </summary>
     private static void EnsureOutboundPathDestinations(

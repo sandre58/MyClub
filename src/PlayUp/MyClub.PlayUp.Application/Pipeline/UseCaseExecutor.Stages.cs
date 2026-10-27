@@ -849,7 +849,7 @@ public sealed partial class UseCaseExecutor
     /// <param name="stageId">Stage that owns the draw.</param>
     /// <param name="drawId">Draw to configure.</param>
     /// <param name="intent">
-    /// <see cref="DrawInputsIntent.Default"/> = Encoding F (Fixed* from occupancy).
+    /// <see cref="DrawInputsIntent.Default"/> keeps Fixed* from occupancy.
     /// <see cref="DrawInputsIntent.Rerun"/> = full redraw, Fixed* empty.
     /// </param>
     /// <param name="cancellationToken">Cancellation token.</param>

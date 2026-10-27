@@ -16,7 +16,7 @@ using Xunit;
 namespace MyClub.PlayUp.Application.Tests.Stages;
 
 /// <summary>
-/// A1 reference: Qual Place → Groups poule (dual-write Population + group membership).
+/// Reference: Qual Place → Groups poule (dual-write Population + group membership).
 /// </summary>
 public sealed class ApplyQualificationForGroupTests
 {

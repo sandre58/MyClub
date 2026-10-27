@@ -166,7 +166,7 @@ function assertDiagnosticLayers(
 }
 
 describe('population recette fixtures (B/C observation)', () => {
-  it('running root U1 satisfied: occupation vs eligibility witness', () => {
+  it('running root population satisfied: occupation vs eligibility witness', () => {
     const obs = runningRootU1Satisfied as PopulationRecetteObservation;
     const hub = hubFromObservation(obs);
     const data = viewFromObservation(obs);
@@ -185,7 +185,7 @@ describe('population recette fixtures (B/C observation)', () => {
     expect(stageHasPopulationShortfall(data, hub)).toBe(false);
   });
 
-  it('ready root: raw SlotFeedMissing vs presented synthesis (U1 + roster)', () => {
+  it('ready root: raw SlotFeedMissing vs presented synthesis (population shortfall + roster)', () => {
     const obs = readyRootSevenSeats as PopulationRecetteObservation;
     const hub = hubFromObservation(obs);
     const data = viewFromObservation(obs);
@@ -217,7 +217,7 @@ describe('population recette fixtures (B/C observation)', () => {
     ).toBe('graph.issues.PopulationShortfall');
   });
 
-  it('running root U1 deficit: PopulationShortfall only in presentation layer', () => {
+  it('running root population deficit: PopulationShortfall only in the presentation layer', () => {
     const obs = runningRootU1Deficit as PopulationRecetteObservation;
     const hub = hubFromObservation(obs);
     const data = viewFromObservation(obs);

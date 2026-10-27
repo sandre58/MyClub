@@ -17,7 +17,7 @@ using Xunit;
 namespace MyClub.PlayUp.Application.Tests.Stages;
 
 /// <summary>
-/// G-OPS1 (D2 only) — <see cref="ReplaceStageAffectationAuthoring"/> on Ready upstream.
+/// <see cref="ReplaceStageAffectationAuthoring"/> on Ready upstream when no production is attached.
 /// </summary>
 public sealed class ReplaceStageAffectationAuthoringGOpsTests
 {

@@ -165,7 +165,7 @@ function renderMatchPage() {
   return { queryClient };
 }
 
-describe('MatchPage sheet (Lot 2)', () => {
+describe('MatchPage sheet', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(fetchStageOverview).mockResolvedValue(stageOverview);

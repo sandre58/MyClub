@@ -15,7 +15,7 @@ using Xunit;
 namespace MyClub.PlayUp.Application.Tests.Stages;
 
 /// <summary>
-/// G-OPS3 reliquat — qualification/progression rules with Applied draw.
+/// Qualification and progression rules while a draw is Applied.
 /// </summary>
 public sealed class ReplaceStageQualificationRulesGOps3Tests
 {

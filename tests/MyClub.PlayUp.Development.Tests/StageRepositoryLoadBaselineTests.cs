@@ -17,7 +17,7 @@ using Xunit.Abstractions;
 namespace MyClub.PlayUp.Development.Tests;
 
 /// <summary>
-/// Isolates <see cref="IStageRepository"/> SQL cost by <see cref="StageLoadProfile"/> (AUD-0012 / D2).
+/// Isolates <see cref="IStageRepository"/> SQL cost by <see cref="StageLoadProfile"/>.
 /// Run with <c>Category=PerformanceBaseline</c> alongside <see cref="ReadPerformanceBaselineTests"/>.
 /// </summary>
 [Collection("DevelopmentPostgres")]

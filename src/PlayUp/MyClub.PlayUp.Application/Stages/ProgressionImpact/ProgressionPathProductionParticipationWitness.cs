@@ -13,7 +13,7 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Stages.ProgressionImpact;
 
 /// <summary>
-/// WC-2 witness (A-4 / 2c), evaluated by <see cref="StructureProgressionImpactGate"/>.
+/// Whether a touched progression path participates in downstream attached matches. Evaluated by <see cref="StructureProgressionImpactGate"/>.
 /// </summary>
 internal static class ProgressionPathProductionParticipationWitness
 {

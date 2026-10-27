@@ -10,7 +10,7 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
-/// G-MAT1: refuse match production when a necessary confrontation cannot always decide a draw
+/// Refuses match production when a necessary confrontation cannot always decide a draw
 /// (same predicate as <see cref="CompetitionFlowAnalyzer.AnalyzeExecution"/> for the target stage).
 /// </summary>
 internal static class StructureMaterializeExecutionGate

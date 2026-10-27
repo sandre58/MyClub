@@ -11,7 +11,7 @@ using MyClub.PlayUp.Domain.Matches;
 namespace MyClub.PlayUp.Application.Matches;
 
 /// <summary>
-/// Application orchestration rules for match composition eligibility (C1 / players only).
+/// Application orchestration rules for match composition eligibility (players only).
 /// </summary>
 internal static class MatchSheetEligibility
 {

@@ -5,7 +5,7 @@ import {
 } from './structureAttentionPresentation';
 
 /**
- * Δ-drawer-1: neutral drawer lede when every presentable row is a structure
+ * Neutral drawer lede when every presentable row is a structure
  * diagnostic on a Suspended stage (same set as the bell count).
  */
 export function shouldUseNeutralAttentionDrawerLede(

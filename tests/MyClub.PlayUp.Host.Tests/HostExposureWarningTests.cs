@@ -12,7 +12,7 @@ using Xunit;
 namespace MyClub.PlayUp.Host.Tests;
 
 /// <summary>
-/// AUD-0008-C lot — bind exposure warnings and AllowedHosts regression (§4.3.3 T1–T5).
+/// Bind exposure warnings and AllowedHosts regression.
 /// </summary>
 public sealed class HostExposureWarningTests
 {

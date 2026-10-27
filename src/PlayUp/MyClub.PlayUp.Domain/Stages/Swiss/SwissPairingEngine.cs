@@ -9,7 +9,7 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Domain.Stages;
 
 /// <summary>
-/// Pure Domain Swiss round pairing (I5–I8): hard constraints → I7 order → deterministic backtracking.
+/// Pure Domain Swiss round pairing: hard constraints, then a fixed candidate order, then deterministic backtracking.
 /// </summary>
 /// <remarks>
 /// Same inputs always yield the same pairings. No randomization, timeout, or CSP library.

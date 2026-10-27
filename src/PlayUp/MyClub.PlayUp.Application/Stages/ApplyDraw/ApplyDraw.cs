@@ -31,7 +31,7 @@ public static class ApplyDraw
     /// <param name="stage">Stage that owns the Draw.</param>
     /// <param name="drawId">Draw identity.</param>
     /// <param name="clock">Clock for domain events.</param>
-    /// <param name="stageMatches">Matches attached on the stage (F1 coherence); empty when none.</param>
+    /// <param name="stageMatches">Matches attached on the stage (opponent coherence); empty when none.</param>
     /// <returns>Slot instructions (Group returns empty instructions).</returns>
     public static ApplyDrawResult Execute(
         Stage stage,

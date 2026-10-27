@@ -8,11 +8,11 @@ namespace MyClub.PlayUp.Domain.Rules;
 
 /// <summary>
 /// Stage regulation value object: materialized phase rules (independent from <see cref="Regulation"/>).
-/// Active families: match, optional standing (A5 — required when the phase classifies), optional draw /
+/// Active families: match, optional standing (required when the phase classifies), optional draw /
 /// qualification / progression / placement-award rules and default <see cref="TieFormat"/>.
 /// </summary>
 /// <remarks>
-/// <see cref="StandingRules"/> is nullable for the two valid A5 states only: classifying → non-null;
+/// <see cref="StandingRules"/> is nullable for the two valid states only: classifying → non-null;
 /// non-classifying (Cup/KO) → null. Null is not a free-form optional everywhere — topology invariants live on <c>Stage</c>.
 /// </remarks>
 public sealed record StageRegulation
@@ -91,7 +91,7 @@ public sealed record StageRegulation
     /// </summary>
     /// <param name="competitionRegulation">The source competition regulation.</param>
     /// <param name="isClassifyingPhase">
-    /// When <see langword="true"/>, copies competition standing defaults (A4 seed).
+    /// When <see langword="true"/>, copies competition standing defaults .
     /// When <see langword="false"/> (Cup/KO), standing remains absent.
     /// </param>
     /// <returns>A new stage regulation with no shared nested references.</returns>

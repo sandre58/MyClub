@@ -22,8 +22,8 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <remarks>
 /// Composes existing Application diagnostics — does not re-implement Domain invariants.
 /// Competition Prepare/Start are Host-executable and projected as available actions
-/// opportunities when Domain preconditions appear satisfied (R19 — not execution guarantees).
-/// They are intentional lifecycle transitions (L7) — not automatically elevated to naturalProgression.
+/// opportunities when Domain preconditions appear satisfied (not execution guarantees).
+/// They are intentional lifecycle transitions — not automatically elevated to naturalProgression.
 /// </remarks>
 public static class OverviewAssembler
 {
@@ -96,7 +96,7 @@ public static class OverviewAssembler
     /// <summary>Blocker: fewer than two active entries for Swiss pairing.</summary>
     public const string BlockerSwissInsufficientParticipants = "SwissInsufficientParticipants";
 
-    /// <summary>Source: competition suspended (operational, L11).</summary>
+    /// <summary>Source: competition suspended.</summary>
     public const string SourceCompetitionSuspended = "CompetitionSuspended";
 
     /// <summary>Prominence: present.</summary>
@@ -651,7 +651,7 @@ public static class OverviewAssembler
     /// Projects from-slots transition only when an opportunity exists.
     /// Omitting the not-ready row avoids poisoning regulation primaryGap with
     /// <see cref="BlockerInsufficientOccupiedSlots"/> during early Cup construction
-    /// (skeleton / draw are separate concepts — D2 readiness audit).
+    /// (skeleton and draw are separate concepts).
     /// </summary>
     private static void AppendFromSlotsTransitionReadiness(
         Competition competition,
@@ -750,7 +750,7 @@ public static class OverviewAssembler
 
         var match = reference.Regulation.MatchRules;
 
-        // Stage StandingRules when classifying; otherwise competition defaults (A4 seed) for display.
+        // Stage StandingRules when classifying; otherwise competition defaults  for display.
         var standing = (reference.Regulation.StandingRules ?? competition.Regulation.StandingRules).Points;
         var tie = TieFormat.OrDefaultOneLeg(reference.Regulation.TieFormat);
         var formatKind = ResolveGameRulesFormatKind(reference, competitionFormatKind);
@@ -1169,7 +1169,7 @@ public static class OverviewAssembler
     }
 
     /// <summary>
-    /// AttentionSummary = Blocking situations only — subset of GET /attention (D1 revision).
+    /// AttentionSummary = Blocking situations only — subset of GET /attention.
     /// </summary>
     private static OverviewAttentionSummaryDto BuildAttentionSummary(
         IReadOnlyList<OverviewSituationDto> situations)

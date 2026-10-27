@@ -13,7 +13,7 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
-/// Application use case: dematerialize the last Swiss round only (S2 contract).
+/// Application use case: dematerialize the last Swiss round only.
 /// </summary>
 public static class DematerializeSwissLastRound
 {

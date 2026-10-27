@@ -12,8 +12,8 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
-/// G-OPS3 / SLICE-3 — refuse qualification rule changes when a draw is Applied on the stage.
-/// Progression uses <see cref="StructureProgressionImpactGate"/> (SLICE-4 P5+).
+/// Refuses qualification rule changes when a draw is Applied on the stage.
+/// Progression uses <see cref="StructureProgressionImpactGate"/>.
 /// </summary>
 internal static class StructureAppliedDrawFeedRulesChangeGate
 {
