@@ -61,7 +61,7 @@ public sealed class LocaleStructureTests
         RenameStage.Execute(configured.Stage, "Saison");
         configured.Stage.Name.Value.Should().Be("Saison");
 
-        AddStageMatchday.Execute(configured.Stage, number: null, _clock);
+        AddStageMatchday.Execute(configured.Stage, competition, number: null, _clock);
         configured.Stage.Matchdays.Should().HaveCount(2);
     }
 
@@ -90,11 +90,12 @@ public sealed class LocaleStructureTests
             StructureIntent.Groups(2, 2),
             _clock);
 
-        AddStageGroup.Execute(configured.Stage, name: null, _clock);
+        AddStageGroup.Execute(configured.Stage, competition, name: null, _clock);
         configured.Stage.Groups.Should().HaveCount(3);
 
         ReplaceStageMatchGenerationFormat.Execute(
             configured.Stage,
+            competition,
             MatchGenerationFormat.DoubleRoundRobin);
         configured.Stage.MatchGenerationFormat.Should().Be(MatchGenerationFormat.DoubleRoundRobin);
     }
@@ -109,7 +110,7 @@ public sealed class LocaleStructureTests
             StructureIntent.Swiss(3),
             _clock);
 
-        ReplaceStageSwissSettings.Execute(configured.Stage, 5);
+        ReplaceStageSwissSettings.Execute(configured.Stage, competition, 5);
         configured.Stage.SwissSettings!.RoundCount.Should().Be(5);
     }
 }

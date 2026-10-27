@@ -487,8 +487,10 @@ public sealed partial class UseCaseExecutor
         CancellationToken cancellationToken = default)
     {
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
+            .ConfigureAwait(false);
         var tieFormat = AddStageRound.BuildTieFormat(numberOfLegs, aggregateScoring);
-        var round = AddStageRound.Execute(stage, name, tieFormat, clock);
+        var round = AddStageRound.Execute(stage, competition, name, tieFormat, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return round;
     }
@@ -502,7 +504,9 @@ public sealed partial class UseCaseExecutor
         CancellationToken cancellationToken = default)
     {
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        var slot = AddStageSlot.Execute(stage, slotKey);
+        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
+            .ConfigureAwait(false);
+        var slot = AddStageSlot.Execute(stage, competition, slotKey);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return slot;
     }
@@ -564,7 +568,9 @@ public sealed partial class UseCaseExecutor
         CancellationToken cancellationToken = default)
     {
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        var matchday = AddStageMatchday.Execute(stage, number, clock);
+        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
+            .ConfigureAwait(false);
+        var matchday = AddStageMatchday.Execute(stage, competition, number, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return matchday;
     }
@@ -578,7 +584,9 @@ public sealed partial class UseCaseExecutor
         CancellationToken cancellationToken = default)
     {
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        var group = AddStageGroup.Execute(stage, name, clock);
+        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
+            .ConfigureAwait(false);
+        var group = AddStageGroup.Execute(stage, competition, name, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return group;
     }
@@ -592,7 +600,9 @@ public sealed partial class UseCaseExecutor
         CancellationToken cancellationToken = default)
     {
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        ReplaceStageMatchGenerationFormat.Execute(stage, format);
+        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
+            .ConfigureAwait(false);
+        ReplaceStageMatchGenerationFormat.Execute(stage, competition, format);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -605,7 +615,9 @@ public sealed partial class UseCaseExecutor
         CancellationToken cancellationToken = default)
     {
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        ReplaceStageSwissSettings.Execute(stage, roundCount);
+        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
+            .ConfigureAwait(false);
+        ReplaceStageSwissSettings.Execute(stage, competition, roundCount);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -729,7 +741,9 @@ public sealed partial class UseCaseExecutor
         CancellationToken cancellationToken = default)
     {
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        ReplaceStageStandingRules.Execute(stage, standingRules, clock);
+        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
+            .ConfigureAwait(false);
+        ReplaceStageStandingRules.Execute(stage, competition, standingRules, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -742,7 +756,9 @@ public sealed partial class UseCaseExecutor
         CancellationToken cancellationToken = default)
     {
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        ReplaceStageMatchRules.Execute(stage, matchRules, clock);
+        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
+            .ConfigureAwait(false);
+        ReplaceStageMatchRules.Execute(stage, competition, matchRules, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -770,7 +786,9 @@ public sealed partial class UseCaseExecutor
         CancellationToken cancellationToken = default)
     {
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        ReplaceStageDrawRules.Execute(stage, drawRules, clock);
+        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
+            .ConfigureAwait(false);
+        ReplaceStageDrawRules.Execute(stage, competition, drawRules, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -809,7 +827,9 @@ public sealed partial class UseCaseExecutor
         CancellationToken cancellationToken = default)
     {
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        ReplaceStageDefaultTieFormat.Execute(stage, tieFormat, clock);
+        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
+            .ConfigureAwait(false);
+        ReplaceStageDefaultTieFormat.Execute(stage, competition, tieFormat, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -823,7 +843,9 @@ public sealed partial class UseCaseExecutor
         CancellationToken cancellationToken = default)
     {
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        ReplaceRoundTieFormat.Execute(stage, roundId, tieFormat, clock);
+        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
+            .ConfigureAwait(false);
+        ReplaceRoundTieFormat.Execute(stage, competition, roundId, tieFormat, clock);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 

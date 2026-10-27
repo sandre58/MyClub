@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Stages;
@@ -17,12 +18,13 @@ public static class AddStageGroup
     /// <summary>
     /// Adds a group. When <paramref name="name"/> is null/blank, uses A, B, … labels.
     /// </summary>
-    public static Group Execute(Stage stage, string? name, IClock clock)
+    public static Group Execute(Stage stage, Competition competition, string? name, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(clock);
 
-        StageStructureEditGuard.EnsureEditable(stage);
+        StageStructureEditGuard.EnsureEditable(stage, competition);
 
         var resolved = string.IsNullOrWhiteSpace(name)
             ? DefaultGroupLabel(stage.Groups.Count)

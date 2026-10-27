@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 
@@ -19,16 +20,23 @@ public static class AddStageRound
     /// Adds a round with an optional explicit tie format.
     /// </summary>
     /// <param name="stage">Target stage.</param>
+    /// <param name="competition">Owning competition.</param>
     /// <param name="name">Round display name.</param>
     /// <param name="tieFormat">Optional confrontation format (null ⇒ Domain default from stage regulation).</param>
     /// <param name="clock">Clock for domain events.</param>
     /// <returns>The created round.</returns>
-    public static Round Execute(Stage stage, string name, TieFormat? tieFormat, IClock clock)
+    public static Round Execute(
+        Stage stage,
+        Competition competition,
+        string name,
+        TieFormat? tieFormat,
+        IClock clock)
     {
         ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(clock);
 
-        EnsureStageMutable(stage);
+        EnsureStageMutable(stage, competition);
         return tieFormat is null
             ? stage.AddRound(name, clock)
             : stage.AddRound(name, tieFormat, clock);
@@ -62,5 +70,6 @@ public static class AddStageRound
         return new TieFormat(legs, aggregate);
     }
 
-    private static void EnsureStageMutable(Stage stage) => StageStructureEditGuard.EnsureEditable(stage);
+    private static void EnsureStageMutable(Stage stage, Competition competition) =>
+        StageStructureEditGuard.EnsureEditable(stage, competition);
 }

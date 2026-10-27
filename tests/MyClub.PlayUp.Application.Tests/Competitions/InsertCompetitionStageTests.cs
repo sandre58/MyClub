@@ -187,7 +187,7 @@ public sealed class InsertCompetitionStageTests
         var pair = source.BracketPairs.Should().ContainSingle().Subject;
         source.AddFixture(source.Rounds[0].Id, _clock, pair.SlotAKey, pair.SlotBKey, pair.PairKey);
         var destination = AddCompetitionStage.Execute(competition, StructureIntent.Cup(2, "Destination"), _clock);
-        AddStageSlot.Execute(destination, "QF1");
+        AddStageSlot.Execute(destination, competition, "QF1");
 
         ReplaceStageQualificationRules.Execute(
             source,

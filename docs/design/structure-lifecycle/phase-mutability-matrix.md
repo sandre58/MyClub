@@ -205,7 +205,7 @@ Tests to preserve: [`GenerateNextRoundTests`](../../../tests/MyClub.PlayUp.Appli
 
 ## 9. Commands — `UseCaseExecutor.Stages` inventory (current)
 
-Domain default: `EnsureStructureMutable()` ⇒ **Draft only** unless noted. Application `StageStructureEditGuard` mirrors Draft-only.
+Domain default: `EnsureStructureMutable()` ⇒ **Draft only** unless noted. Application `StageStructureEditGuard` requires stage Draft, and denies heavy structure when the competition is Running or Suspended (`AddRound` / `AddSlot` / `AddMatchday` / `AddGroup`, rebuild, draw-rules replace, match and tie regulation). Downstream Draft hub actions match Ready operational authoring; an orphan Draft phase projects `RenameStage` only. `ReplaceDrawRules` and `AddSlot` stay denied on that Draft phase until a later allowlist.
 
 **§9 table = runtime today.** Target draw policy = **§9.1.1**. Do not read **Allow** in §9.1 as “already enforced” where §9 shows Draft-only.
 

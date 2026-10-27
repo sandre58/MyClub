@@ -111,7 +111,7 @@ These must stay **separate** in copy and layout; none replaces another.
 | **Start** | Ready → Running | `ResolveStartTransition`; blocked with `InitialRoundNotPlayable` when first cup round has slotted but non-playable fixtures |
 | **Complete** | Running / Suspended → Completed | `ResolveCompleteTransition`; disabled with `OpenMatches` when any match not Finished/Cancelled |
 
-**Competition-level gates (VERIFIED):** If competition is `Completed` / `Archived` → `CompetitionClosed`. If competition is `Running` and phase is Draft or Ready → `ConstructionFrozen` (Prepare or Start projected but disabled).
+**Competition-level gates (VERIFIED):** If competition is `Completed` / `Archived` → `CompetitionClosed`. If competition is `Running` and the phase is a lone Draft or Ready (no peer `Running`, `Suspended`, or `Completed`) → `ConstructionFrozen` on Prepare or Start. A downstream Draft phase with a live peer stays preparable. Its hub actions are the Ready operational set. Heavy structure edits on that Draft phase are denied in Application (`StageStructureEditGuard`, `StructureNotMutable`).
 
 **Copy intent (DECIDED, not final strings):**
 
@@ -292,7 +292,7 @@ Action code on wire: `PrepareStage`.
 | `disabledReasonCode` | Stepper already explains? | Proposed band message (OPEN copy) | i18n key (target) | If already explained elsewhere | Unknown / today |
 | :------------------- | :-------------------------- | :-------------------------------- | :---------------- | :----------------------------- | :-------------- |
 | `CompetitionClosed` | No | Competition closed — lifecycle actions unavailable | `lifecycle.disabled.CompetitionClosed` | Show band only | **VERIFIED** today |
-| `ConstructionFrozen` | No | Competition live — phase prep frozen | `lifecycle.disabled.ConstructionFrozen` | Show band + overview link | **VERIFIED** today |
+| `ConstructionFrozen` | No | Lone phase left behind a live competition — not every Draft phase | `lifecycle.disabled.ConstructionFrozen` | Show band + overview link | **VERIFIED** today |
 | `StageNotReady` | **No** — aggregate `DomainAllowsPrepare` only | Draft Matchs body uses `lifecycle.state.Draft.detail` (honest aggregate); other surfaces use `problems.lifecycle.StageNotReady` | `problems.lifecycle.StageNotReady` | Show band / draft detail | **ALIGNED** |
 | `StructureGraphInvalid` | Yes — step `Regulation` KO | (use stepper + remediation link) | `lifecycle.disabled.StructureGraphInvalid` | **Suppress band** | **VERIFIED** today |
 | `ConfrontationUndecidable` | Yes — step `Exits` KO (issue in exit set) | Tie format / exits | `lifecycle.disabled.ConfrontationUndecidable` or reuse `errors:Application.ConfrontationUndecidable` | **Suppress band** (to add) | Today: band may show **raw code** |
@@ -443,7 +443,8 @@ All other disabled codes call `lifecycle.disabled.{code}` or emit the **raw code
 | Running, 0 matches played | Running | Complete allowed; “no matches” meta if total 0 |
 | Draft, matches materialized | Draft | Matches step may be OK; Prepare still required |
 | Dematerialize after materialize | Draft/Ready unchanged | Matches step may flip to KO |
-| Competition Running, phase Draft/Ready | Draft/Ready | `ConstructionFrozen` message + overview link |
+| Competition Running, orphan Draft/Ready | Draft/Ready | `ConstructionFrozen` — this phase only, no peer in play |
+| Competition Running, downstream Draft | Draft | Ready operational authoring; Prepare follows the usual gates |
 | Checklist all satisfied, Prepare disabled | Draft | Must explain gate C / `StageNotReady` (GAP today) |
 | Completed | Completed | **No band** (VERIFIED) |
 
@@ -564,7 +565,7 @@ Then implement copy / stepper / fallback in one focused PR (no unrelated band po
 | Read (Structure lifecycle) | short reason on DTO | `ConstructionFrozen`, `InitialRoundNotPlayable`, `OpenMatches` |
 | **PROPOSED** | not in repo yet — register before implement | See § Proposed error codes |
 
-**Competition context:** unless noted, competition is **Draft** or **Ready** (not Completed/Archived). Rows with competition **Running** and phase Draft/Ready use **`ConstructionFrozen`** on Prepare/Start (read), not a domain throw on arbitrary ops.
+**Competition context:** unless noted, competition is **Draft** or **Ready** (not Completed/Archived). An **orphan** phase Draft/Ready under competition **Running** uses **`ConstructionFrozen`** on Prepare/Start. A downstream Draft phase is not frozen: operational authoring matches Ready, and heavy structure commands throw `Application.StructureNotMutable`.
 
 ---
 
@@ -598,7 +599,7 @@ Applies to: add matchday/round/group, slot assign, replace Qual/Prog/Draw rules,
 
 **Regression (incrément 1):** `Rename` same name / cosmetic rename in Ready → **still Ready**, no event († today: ALIGNED in `StageLifecycleTests.Rename_real_change_keeps_Ready`).
 
-**Regression:** competition **Running**, phase **Draft** — structural ops that today are blocked only via app/competition policy must **remain** blocked; Prepare/Start read **`ConstructionFrozen`**.
+**Regression:** competition **Running**, orphan phase **Draft** — Prepare/Start read **`ConstructionFrozen`**. Heavy structure edits on any Draft phase under Running throw `Application.StructureNotMutable`. Operational authoring (Ready mirror) stays allowed on a downstream Draft phase.
 
 ---
 
@@ -694,7 +695,7 @@ Secondary transitions (reverts) must not hide primary without explicit product l
 | Swiss | Prepare without matchdays → Start → `GenerateNextRound` still Running-only |
 | Cup | Start blocked when initial positional round not playable (`Stage.NotReady` / `InitialRoundNotPlayable`) |
 | Multi-phase | Complete poules while finale Draft — still allowed (Gate B) |
-| Competition Running | Phase Draft: Prepare/Start disabled with `ConstructionFrozen`; **no** accidental unlock of structure edit via domain |
+| Competition Running | Orphan Draft/Ready: Prepare/Start disabled with `ConstructionFrozen`. Downstream Draft: operational authoring allowed; heavy structure denied in Application (`StageStructureEditGuard`) |
 
 ---
 

@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Stages;
@@ -17,11 +18,12 @@ public static class ReplaceStageMatchGenerationFormat
     /// <summary>
     /// Sets the match generation format when the stage is mutable.
     /// </summary>
-    public static void Execute(Stage stage, MatchGenerationFormat format)
+    public static void Execute(Stage stage, Competition competition, MatchGenerationFormat format)
     {
         ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(competition);
 
-        StageStructureEditGuard.EnsureEditable(stage);
+        StageStructureEditGuard.EnsureEditable(stage, competition);
 
         if (!Enum.IsDefined(format))
         {

@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 
@@ -18,11 +19,13 @@ public static class ReplaceStageDefaultTieFormat
     /// <summary>
     /// Replaces the stage default tie format (<see langword="null"/> clears).
     /// </summary>
-    public static void Execute(Stage stage, TieFormat? tieFormat, IClock clock)
+    public static void Execute(Stage stage, Competition competition, TieFormat? tieFormat, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(clock);
 
+        StageStructureEditGuard.EnsureDraftHeavyStructureAllowed(stage, competition);
         stage.ReplaceDefaultTieFormat(tieFormat, clock);
     }
 }

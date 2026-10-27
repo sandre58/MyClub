@@ -34,22 +34,24 @@ public sealed class ThinAuthoringTests
         var qf = AddEmptyStage(competition, "Quarter-Finals");
         var qfRound = AddStageRound.Execute(
             qf,
+            competition,
             "QF",
             new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
             _clock);
-        AddStageSlot.Execute(qf, "QF1-A");
-        AddStageSlot.Execute(qf, "QF1-B");
+        AddStageSlot.Execute(qf, competition, "QF1-A");
+        AddStageSlot.Execute(qf, competition, "QF1-B");
         qf.SeedEntryRoundBracketPairs();
         qf.AddFixture(qfRound.Id, _clock, "QF1-A", "QF1-B", "P1");
 
         var sf = AddEmptyStage(competition, "Semi-Finals");
         var sfRound = AddStageRound.Execute(
             sf,
+            competition,
             "SF",
             AddStageRound.BuildTieFormat(numberOfLegs: 2, aggregateScoring: true),
             _clock);
-        AddStageSlot.Execute(sf, "SF1-A");
-        AddStageSlot.Execute(sf, "SF1-B");
+        AddStageSlot.Execute(sf, competition, "SF1-A");
+        AddStageSlot.Execute(sf, competition, "SF1-B");
 
         ReplaceStageProgressionRules.Execute(
             qf,
@@ -87,7 +89,7 @@ public sealed class ThinAuthoringTests
         var competition = CreateCompetition.Execute("Cup-Qualif", _clock);
         var groups = AddCompetitionStage.Execute(competition, StructureIntent.Groups(2, 2, "Groups"), _clock);
         var ko = AddEmptyStage(competition, "KO");
-        AddStageSlot.Execute(ko, "QF1");
+        AddStageSlot.Execute(ko, competition, "QF1");
 
         ReplaceStageQualificationRules.Execute(
             groups,
@@ -129,11 +131,11 @@ public sealed class ThinAuthoringTests
     {
         var competition = CreateCompetition.Execute("Cup-D1-Lock", _clock);
         var stage = AddEmptyStage(competition, "Locked");
-        AddStageRound.Execute(stage, "R1", null, _clock);
+        AddStageRound.Execute(stage, competition, "R1", null, _clock);
         stage.Prepare(_clock);
         stage.Start(_clock);
 
-        var act = () => AddStageRound.Execute(stage, "R2", null, _clock);
+        var act = () => AddStageRound.Execute(stage, competition, "R2", null, _clock);
 
         act.Should().Throw<ApplicationFailureException>()
             .Which.Code.Should().Be(ApplicationErrorCodes.StructureNotMutable);
@@ -144,11 +146,11 @@ public sealed class ThinAuthoringTests
     {
         var competition = CreateCompetition.Execute("Cup-D1-SlotLock", _clock);
         var stage = AddEmptyStage(competition, "Locked");
-        AddStageRound.Execute(stage, "R1", null, _clock);
+        AddStageRound.Execute(stage, competition, "R1", null, _clock);
         stage.Prepare(_clock);
         stage.Start(_clock);
 
-        var act = () => AddStageSlot.Execute(stage, "X");
+        var act = () => AddStageSlot.Execute(stage, competition, "X");
 
         act.Should().Throw<ApplicationFailureException>()
             .Which.Code.Should().Be(ApplicationErrorCodes.StructureNotMutable);
@@ -159,9 +161,9 @@ public sealed class ThinAuthoringTests
     {
         var competition = CreateCompetition.Execute("Cup-Awards", _clock);
         var stage = AddEmptyStage(competition, "Final");
-        var round = AddStageRound.Execute(stage, "Final", null, _clock);
-        AddStageSlot.Execute(stage, "F-A");
-        AddStageSlot.Execute(stage, "F-B");
+        var round = AddStageRound.Execute(stage, competition, "Final", null, _clock);
+        AddStageSlot.Execute(stage, competition, "F-A");
+        AddStageSlot.Execute(stage, competition, "F-B");
         stage.ReplaceBracketPairs([new BracketPair("P1", "F-A", "F-B")]);
         var fixture = stage.AddFixture(round.Id, _clock, "F-A", "F-B", "P1");
 
@@ -187,9 +189,9 @@ public sealed class ThinAuthoringTests
     {
         var competition = CreateCompetition.Execute("Cup-Awards-Clear", _clock);
         var stage = AddEmptyStage(competition, "Final");
-        var round = AddStageRound.Execute(stage, "Final", null, _clock);
-        AddStageSlot.Execute(stage, "F-A");
-        AddStageSlot.Execute(stage, "F-B");
+        var round = AddStageRound.Execute(stage, competition, "Final", null, _clock);
+        AddStageSlot.Execute(stage, competition, "F-A");
+        AddStageSlot.Execute(stage, competition, "F-B");
         stage.ReplaceBracketPairs([new BracketPair("P1", "F-A", "F-B")]);
         var fixture = stage.AddFixture(round.Id, _clock, "F-A", "F-B", "P1");
         ReplaceStagePlacementAwardRules.Execute(
@@ -209,9 +211,9 @@ public sealed class ThinAuthoringTests
     {
         var competition = CreateCompetition.Execute("Cup-Awards-Lock", _clock);
         var stage = AddEmptyStage(competition, "Final");
-        var round = AddStageRound.Execute(stage, "R1", null, _clock);
-        AddStageSlot.Execute(stage, "F-A");
-        AddStageSlot.Execute(stage, "F-B");
+        var round = AddStageRound.Execute(stage, competition, "R1", null, _clock);
+        AddStageSlot.Execute(stage, competition, "F-A");
+        AddStageSlot.Execute(stage, competition, "F-B");
         stage.ReplaceBracketPairs([new BracketPair("P1", "F-A", "F-B")]);
         var fixture = stage.AddFixture(round.Id, _clock, "F-A", "F-B", "P1");
         stage.ApplyResolvedEntry("F-A", EntryId.New(), _clock);
@@ -235,7 +237,7 @@ public sealed class ThinAuthoringTests
     {
         var competition = CreateCompetition.Execute("Cup-D1-ProgLock", _clock);
         var stage = AddEmptyStage(competition, "QF");
-        var round = AddStageRound.Execute(stage, "R1", null, _clock);
+        var round = AddStageRound.Execute(stage, competition, "R1", null, _clock);
         stage.AddFixture(round.Id, _clock);
         stage.Prepare(_clock);
         stage.Start(_clock);

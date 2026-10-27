@@ -39,7 +39,7 @@ public static class StructureStageLifecycleAssembler
     /// <summary>Lifecycle disabled — competition Completed / Archived.</summary>
     public const string DisabledCompetitionClosed = "CompetitionClosed";
 
-    /// <summary>Lifecycle disabled — competition Running while phase remains Draft (construction frozen).</summary>
+    /// <summary>Lifecycle disabled — lone Draft or Ready phase while the competition is Running.</summary>
     public const string DisabledConstructionFrozen = "ConstructionFrozen";
 
     /// <summary>Lifecycle disabled — Cup initial round lacks playable fixtures.</summary>
@@ -101,13 +101,25 @@ public static class StructureStageLifecycleAssembler
         input.Competition.Status is CompetitionStatus.Completed or CompetitionStatus.Archived ? BlockedTransition(ResolveTransitionCode(input.Stage.Status), DisabledCompetitionClosed, input, remediationCode: DisabledCompetitionClosed) : input.Stage.Status == StageStatus.Draft ? ResolvePrepareTransition(input) : input.Competition.Status == CompetitionStatus.Running && input.Stage.Status == StageStatus.Ready && IsConstructionFrozenWhileCompetitionRunning(input) ? BlockedTransition(OverviewAssembler.ActionStartStage, DisabledConstructionFrozen, input, DisabledConstructionFrozen) : input.Stage.Status switch { StageStatus.Ready => ResolveStartTransition(input), StageStatus.Running or StageStatus.Suspended => ResolveCompleteTransition(input, matchProgress), StageStatus.Completed or StageStatus.Draft => new StructureStageLifecycleTransitionDto(null, false), _ => new StructureStageLifecycleTransitionDto(null, false) };
 
     /// <summary>
+    /// True when no other phase is Running, Suspended, or Completed.
+    /// Downstream phases (for example SF after QF is Running) are not orphans.
+    /// </summary>
+    internal static bool IsOrphanPhase(Stage stage, IReadOnlyList<Stage> competitionStages)
+    {
+        ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(competitionStages);
+
+        return !competitionStages.Any(peer =>
+            !peer.Id.Equals(stage.Id)
+            && peer.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed);
+    }
+
+    /// <summary>
     /// Freezes Prepare and Start on a lone Draft/Ready phase left behind when the competition went live.
     /// Downstream phases (e.g. SF after QF is Running) stay lifecycle-eligible.
     /// </summary>
     private static bool IsConstructionFrozenWhileCompetitionRunning(StructureStageLifecycleInput input) =>
-        !input.CompetitionStages.Any(peer =>
-            !peer.Id.Equals(input.Stage.Id)
-            && peer.Status is StageStatus.Running or StageStatus.Suspended or StageStatus.Completed);
+        IsOrphanPhase(input.Stage, input.CompetitionStages);
 
     private static StructureStageLifecycleTransitionDto ResolvePrepareTransition(
         StructureStageLifecycleInput input)

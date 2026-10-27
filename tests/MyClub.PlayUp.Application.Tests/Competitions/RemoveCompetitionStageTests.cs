@@ -54,7 +54,7 @@ public sealed class RemoveCompetitionStageTests
         var competition = CreateCompetition.Execute("Groups-Remove", _clock);
         var groups = AddCompetitionStage.Execute(competition, StructureIntent.Groups(2, 2, "Groups"), _clock);
         var knockout = AddCompetitionStage.Execute(competition, StructureIntent.Cup(2, "Knockout"), _clock);
-        AddStageSlot.Execute(knockout, "QF1");
+        AddStageSlot.Execute(knockout, competition, "QF1");
 
         ReplaceStageQualificationRules.Execute(
             groups,

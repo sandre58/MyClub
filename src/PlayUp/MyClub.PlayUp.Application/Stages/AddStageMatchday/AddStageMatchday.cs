@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Stages;
@@ -17,12 +18,13 @@ public static class AddStageMatchday
     /// <summary>
     /// Adds a matchday with the next available 1-based number when <paramref name="number"/> is null.
     /// </summary>
-    public static Matchday Execute(Stage stage, int? number, IClock clock)
+    public static Matchday Execute(Stage stage, Competition competition, int? number, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(clock);
 
-        StageStructureEditGuard.EnsureEditable(stage);
+        StageStructureEditGuard.EnsureEditable(stage, competition);
 
         var resolved = number ?? (stage.Matchdays.Count == 0
             ? 1

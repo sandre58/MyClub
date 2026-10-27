@@ -9,6 +9,7 @@ using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using Xunit;
@@ -22,12 +23,12 @@ public sealed class ReplaceStageStandingRulesTests
     [Fact]
     public void Replace_updates_points_and_criteria_while_running()
     {
-        var stage = CreateRunningChampionship();
+        var (competition, stage) = CreateRunningChampionship();
         var replacement = new StandingRules(
             new PointsPolicy(2, 1, 0),
             [RankingCriterion.Points, RankingCriterion.Wins]);
 
-        ReplaceStageStandingRules.Execute(stage, replacement, _clock);
+        ReplaceStageStandingRules.Execute(stage, competition, replacement, _clock);
 
         stage.Status.Should().Be(StageStatus.Running);
         stage.Regulation.StandingRules.Should().Be(replacement);
@@ -43,6 +44,7 @@ public sealed class ReplaceStageStandingRulesTests
 
         var act = () => ReplaceStageStandingRules.Execute(
             stage,
+            competition,
             new StandingRules(new PointsPolicy(3, 1, 0), [RankingCriterion.Points]),
             _clock);
 
@@ -52,10 +54,11 @@ public sealed class ReplaceStageStandingRulesTests
     [Fact]
     public void Replace_rejects_when_ready()
     {
-        var stage = CreateReadyChampionship();
+        var (competition, stage) = CreateReadyChampionship();
 
         var act = () => ReplaceStageStandingRules.Execute(
             stage,
+            competition,
             new StandingRules(new PointsPolicy(3, 1, 0), [RankingCriterion.Points]),
             _clock);
 
@@ -65,30 +68,30 @@ public sealed class ReplaceStageStandingRulesTests
     [Fact]
     public void Replace_rejects_when_completed()
     {
-        var stage = CreateRunningChampionship();
+        var (competition, stage) = CreateRunningChampionship();
         stage.Complete(_clock);
 
         var act = () => ReplaceStageStandingRules.Execute(
             stage,
+            competition,
             new StandingRules(new PointsPolicy(3, 1, 0), [RankingCriterion.Points]),
             _clock);
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.InvalidTransition);
     }
 
-    private Stage CreateReadyChampionship()
+    private (Competition Competition, Stage Stage) CreateReadyChampionship()
     {
         var competition = CreateCompetition.Execute("League-Standing-Ready", _clock);
         var stage = AddCompetitionStage.Execute(competition, StructureIntent.Championship(stageName: "Championship"), _clock);
-        stage.AddMatchday(1, _clock);
         stage.Prepare(_clock);
-        return stage;
+        return (competition, stage);
     }
 
-    private Stage CreateRunningChampionship()
+    private (Competition Competition, Stage Stage) CreateRunningChampionship()
     {
-        var stage = CreateReadyChampionship();
+        var (competition, stage) = CreateReadyChampionship();
         stage.Start(_clock);
-        return stage;
+        return (competition, stage);
     }
 }
