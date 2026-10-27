@@ -35,6 +35,13 @@ public sealed class StageRepositoryLoadBaselineTests(
             stages.GetByIdReadOnlyAsync(stageId, StageLoadProfile.Summary));
         var structureSql = await MeasureAsync(stages =>
             stages.GetByIdReadOnlyAsync(stageId, StageLoadProfile.Structure));
+        var structureDrawsSlotsSql = await MeasureAsync(async stages =>
+            _ = await stages.GetByIdsReadOnlyAsync(
+                [stageId],
+                new StageReadCapabilities(
+                    StageLoadProfile.Structure,
+                    IncludeDraws: true,
+                    IncludeSlots: true)));
         var fullReadSql = await MeasureAsync(stages =>
             stages.GetByIdReadOnlyAsync(stageId, StageLoadProfile.Full));
         var fullUpdateSql = await MeasureAsync(stages =>
@@ -45,13 +52,22 @@ public sealed class StageRepositoryLoadBaselineTests(
             new Dictionary<string, int>
             {
                 ["GetByIdReadOnly(Summary)"] = summarySql,
-                ["GetByIdReadOnly(Structure)"] = structureSql,
+                ["GetByIdReadOnly(Structure) — includes + hydration"] = structureSql,
+                ["GetByIdsReadOnly(Structure + Draws + Slots)"] = structureDrawsSlotsSql,
                 ["GetByIdReadOnly(Full)"] = fullReadSql,
-                ["GetByIdForUpdate(Full)"] = fullUpdateSql
+                ["GetByIdForUpdate(Full)"] = fullUpdateSql,
+                ["Structure hydration surplus over Summary"] = structureSql - summarySql
             });
 
         structureSql.Should().BeGreaterThan(summarySql);
-        fullReadSql.Should().BeGreaterThanOrEqualTo(structureSql);
+        structureSql.Should().BeLessThanOrEqualTo(
+            14,
+            "Structure includes plus hydration (unchanged by the stage-overview lot; surplus over Summary is that bundle)");
+        structureDrawsSlotsSql.Should().BeGreaterThanOrEqualTo(structureSql);
+        structureDrawsSlotsSql.Should().BeLessThan(
+            fullReadSql,
+            "penalties are the Full collection the stage overview read does not use");
+        structureDrawsSlotsSql.Should().BeLessThanOrEqualTo(16, "Structure + Draws + Slots on one cup stage");
         fullUpdateSql.Should().BeInRange(fullReadSql - 2, fullReadSql + 2);
     }
 

@@ -50,11 +50,10 @@ public sealed class UseCaseExecutorReadTests
         var matches = new Mock<IMatchRepository>(MockBehavior.Strict);
         var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
         stages
-            .Setup(repository => repository.GetByIdReadOnlyAsync(
+            .Setup(repository => repository.GetCompetitionIdReadOnlyAsync(
                 It.IsAny<StageId>(),
-                StageLoadProfile.Full,
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Stage?)null);
+            .ReturnsAsync((CompetitionId?)null);
 
         var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock, AlwaysExistingMedia.Instance, NullLogger<UseCaseExecutor>.Instance);
         var act = async () => await executor.GetStageOverviewAsync(StageId.New());
@@ -181,5 +180,63 @@ public sealed class UseCaseExecutorReadTests
         schematic.StageId.Should().Be(target.Id.Value);
         schematic.Cases.Should().ContainSingle(c => c.FormPosition.SlotKey == "R16-A");
         unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GetStageOverviewAsync_loads_competition_stages_once_with_structure_draws_and_slotsAsync()
+    {
+        var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
+        var source = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
+        source.AddRound("QF", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        var target = Stage.Create(competition.Id, new StageName("SF"), SampleRegulations.Standard(), _clock);
+        target.AddRound("SF", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        target.AddSlot("SF-A");
+        competition.AddStage(source.Id, _clock);
+        competition.AddStage(target.Id, _clock);
+
+        var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
+        var stages = new Mock<IStageRepository>(MockBehavior.Strict);
+        var matches = new Mock<IMatchRepository>(MockBehavior.Strict);
+        var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
+
+        stages
+            .Setup(repository => repository.GetCompetitionIdReadOnlyAsync(target.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(competition.Id);
+        competitions
+            .Setup(repository => repository.GetByIdReadOnlyAsync(competition.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(competition);
+        stages
+            .Setup(repository => repository.GetByIdsReadOnlyAsync(
+                It.Is<IReadOnlyList<StageId>>(ids =>
+                    ids.Count == 2 && ids.Contains(source.Id) && ids.Contains(target.Id)),
+                It.Is<StageReadCapabilities>(capabilities =>
+                    capabilities.Profile == StageLoadProfile.Structure
+                    && capabilities.IncludeDraws
+                    && capabilities.IncludeSlots
+                    && !capabilities.IncludePenalties),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync([source, target]);
+
+        var executor = new UseCaseExecutor(
+            stages.Object,
+            matches.Object,
+            competitions.Object,
+            unitOfWork.Object,
+            _clock,
+            AlwaysExistingMedia.Instance,
+            NullLogger<UseCaseExecutor>.Instance);
+
+        var overview = await executor.GetStageOverviewAsync(target.Id);
+
+        overview.Id.Should().Be(target.Id.Value);
+        overview.Name.Should().Be("SF");
+        overview.Slots.Should().ContainSingle(slot => slot.SlotKey == "SF-A");
+        unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+        stages.Verify(
+            repository => repository.GetByIdReadOnlyAsync(
+                It.IsAny<StageId>(),
+                It.IsAny<StageLoadProfile>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 }

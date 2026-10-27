@@ -16,7 +16,7 @@ namespace MyClub.PlayUp.Application.Pipeline;
 /// </content>
 public sealed partial class UseCaseExecutor
 {
-    private static readonly StageReadCapabilities SchematicTargetCapabilities = new(
+    private static readonly StageReadCapabilities StructureDrawsAndSlotsCapabilities = new(
         StageLoadProfile.Structure,
         IncludeDraws: true,
         IncludeSlots: true);
@@ -210,17 +210,30 @@ public sealed partial class UseCaseExecutor
         StageId stageId,
         CancellationToken cancellationToken = default)
     {
-        var stage = await stages.GetByIdReadOnlyAsync(stageId, StageLoadProfile.Full, cancellationToken)
-                        .ConfigureAwait(false)
-                    ?? throw new ApplicationFailureException(
-                        $"Stage '{stageId}' was not found.",
-                        ApplicationErrorCodes.StageNotFound);
+        var competitionId = await stages.GetCompetitionIdReadOnlyAsync(stageId, cancellationToken)
+            .ConfigureAwait(false)
+            ?? throw new ApplicationFailureException(
+                $"Stage '{stageId}' was not found.",
+                ApplicationErrorCodes.StageNotFound);
 
-        var competition = await competitions.GetByIdReadOnlyAsync(stage.CompetitionId, cancellationToken)
-                              .ConfigureAwait(false)
-                          ?? throw new ApplicationFailureException(
-                              $"Competition '{stage.CompetitionId}' was not found.",
-                              ApplicationErrorCodes.CompetitionNotFound);
+        var competition = await competitions.GetByIdReadOnlyAsync(competitionId, cancellationToken)
+            .ConfigureAwait(false)
+            ?? throw new ApplicationFailureException(
+                $"Competition '{competitionId}' was not found.",
+                ApplicationErrorCodes.CompetitionNotFound);
+
+        var batchIds = CompetitionStageBatch(stageId, competition.StageIds);
+        var loaded = await stages
+            .GetByIdsReadOnlyAsync(batchIds, StructureDrawsAndSlotsCapabilities, cancellationToken)
+            .ConfigureAwait(false);
+
+        var byId = loaded.ToDictionary(candidate => candidate.Id);
+        if (!byId.TryGetValue(stageId, out var stage))
+        {
+            throw new ApplicationFailureException(
+                $"Stage '{stageId}' was not found.",
+                ApplicationErrorCodes.StageNotFound);
+        }
 
         IReadOnlyList<Stage> competitionStages;
         if (competition.StageIds.Count == 0)
@@ -229,25 +242,31 @@ public sealed partial class UseCaseExecutor
         }
         else
         {
-            var peerIds = competition.StageIds.Where(id => !id.Equals(stageId)).ToList();
-            var peers = peerIds.Count == 0
-                ? []
-                : await stages
-                    .GetByIdsReadOnlyAsync(peerIds, SchematicPeerCapabilities, cancellationToken)
-                    .ConfigureAwait(false);
-            if (peers.Count != peerIds.Count)
+            if (competition.StageIds.Any(id => !byId.ContainsKey(id)))
             {
                 throw new ApplicationFailureException(
                     "One or more competition stages were not found.",
                     ApplicationErrorCodes.StageNotFound);
             }
 
-            var byId = peers.ToDictionary(candidate => candidate.Id);
-            byId[stage.Id] = stage;
             competitionStages = [.. competition.StageIds.Select(id => byId[id])];
         }
 
         return StageOverviewAssembler.Assemble(stage, competition, competitionStages);
+    }
+
+    private static IReadOnlyList<StageId> CompetitionStageBatch(
+        StageId stageId,
+        IReadOnlyList<StageId> competitionStageIds)
+    {
+        if (competitionStageIds.Count == 0)
+        {
+            return [stageId];
+        }
+
+        return competitionStageIds.Any(id => id.Equals(stageId))
+            ? competitionStageIds
+            : [stageId, .. competitionStageIds];
     }
 
     /// <summary>
@@ -262,7 +281,7 @@ public sealed partial class UseCaseExecutor
         CancellationToken cancellationToken = default)
     {
         var targetLoaded = await stages
-            .GetByIdsReadOnlyAsync([stageId], SchematicTargetCapabilities, cancellationToken)
+            .GetByIdsReadOnlyAsync([stageId], StructureDrawsAndSlotsCapabilities, cancellationToken)
             .ConfigureAwait(false);
         if (targetLoaded.Count != 1)
         {

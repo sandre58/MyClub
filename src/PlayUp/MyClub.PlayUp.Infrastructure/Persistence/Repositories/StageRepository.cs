@@ -89,6 +89,22 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
         LoadByIdAsync(id, profile, trackChanges: false, cancellationToken);
 
     /// <inheritdoc />
+    public async Task<CompetitionId?> GetCompetitionIdReadOnlyAsync(
+        StageId id,
+        CancellationToken cancellationToken = default)
+    {
+        // Projection: materializing the Stage entity would auto-include owned collections.
+        var match = await context.Set<Stage>()
+            .AsNoTracking()
+            .Where(stage => stage.Id == id)
+            .Select(stage => new { stage.CompetitionId })
+            .SingleOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        return match is null ? null : match.CompetitionId;
+    }
+
+    /// <inheritdoc />
     public Task<IReadOnlyList<Stage>> GetByIdsReadOnlyAsync(
         IReadOnlyList<StageId> ids,
         StageLoadProfile profile,

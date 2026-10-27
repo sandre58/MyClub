@@ -39,6 +39,7 @@ public sealed class ReadPerformanceBaselineTests(
         var attentionSql = await MeasureAsync(executor => executor.GetNeedsAttentionAsync(competitionId));
         var detailSql = await MeasureAsync(executor => executor.GetCompetitionDetailAsync(competitionId));
         var matchHubSql = await MeasureAsync(executor => executor.GetMatchHubViewAsync(competitionId));
+        var stageOverviewSql = await MeasureAsync(executor => executor.GetStageOverviewAsync(stageIds[0]));
 
         var matchHubStageSql = new List<(Guid StageId, int Sql)>(stageIds.Count);
         var matchHubFanOutTotalSql = detailSql;
@@ -66,6 +67,7 @@ public sealed class ReadPerformanceBaselineTests(
                 ["GET /attention (GetNeedsAttentionAsync)"] = attentionSql,
                 ["GET /competitions/{id} (GetCompetitionDetailAsync)"] = detailSql,
                 ["GET /matches-hub (GetMatchHubViewAsync)"] = matchHubSql,
+                ["GET /stages/{id} (GetStageOverviewAsync)"] = stageOverviewSql,
                 ["Match Hub fan-out — GET /competitions/{id}"] = detailSql,
                 ["Match Hub fan-out — sum GET /stages/{id}/matches"] = matchHubStageSql.Sum(row => row.Sql),
                 ["Match Hub fan-out — total (1 + N HTTP requests)"] = matchHubFanOutTotalSql,
@@ -85,6 +87,9 @@ public sealed class ReadPerformanceBaselineTests(
         structureSql.Should().BeLessThanOrEqualTo(
             overviewSql,
             "structure bundle must not exceed overview load (parity allowed when bundles align)");
+        stageOverviewSql.Should().BeLessThanOrEqualTo(
+            19,
+            "one Structure+Draws+Slots batch for every competition stage (baseline was 32 SQL: Full target plus a second Structure peer load)");
     }
 
     [Fact]
@@ -95,9 +100,11 @@ public sealed class ReadPerformanceBaselineTests(
         stageIds.Should().ContainSingle();
 
         var overviewSql = await MeasureAsync(executor => executor.GetOverviewViewAsync(competitionId));
+        var structureSql = await MeasureAsync(executor => executor.GetStructureViewAsync(competitionId));
         var detailSql = await MeasureAsync(executor => executor.GetCompetitionDetailAsync(competitionId));
         var matchesSql = await MeasureAsync(executor => executor.ListMatchesByStageAsync(stageIds[0]));
         var matchHubSql = await MeasureAsync(executor => executor.GetMatchHubViewAsync(competitionId));
+        var stageOverviewSql = await MeasureAsync(executor => executor.GetStageOverviewAsync(stageIds[0]));
 
         WriteScenario(
             """
@@ -107,14 +114,22 @@ public sealed class ReadPerformanceBaselineTests(
             new Dictionary<string, int>
             {
                 ["GET /overview"] = overviewSql,
+                ["GET /structure (GetStructureViewAsync)"] = structureSql,
                 ["GET /competitions/{id}"] = detailSql,
                 ["GET /stages/{id}/matches"] = matchesSql,
                 ["GET /matches-hub"] = matchHubSql,
+                ["GET /stages/{id} (GetStageOverviewAsync)"] = stageOverviewSql,
                 ["Match Hub fan-out (detail + 1 stage matches)"] = detailSql + matchesSql
             });
 
         matchesSql.Should().BeGreaterThan(3, "list endpoint loads stage + competition + matches");
         matchesSql.Should().BeLessThanOrEqualTo(18, "D2-B batch attachment hydration (baseline was 20 SQL)");
+        structureSql.Should().BeLessThanOrEqualTo(
+            21,
+            "structure hub already uses the Structure profile; this lot does not retarget it");
+        stageOverviewSql.Should().BeLessThanOrEqualTo(
+            20,
+            "single-stage overview stays flat: the competition-id projection offsets the dropped penalty include (baseline 20 SQL)");
     }
 
     [Fact]
