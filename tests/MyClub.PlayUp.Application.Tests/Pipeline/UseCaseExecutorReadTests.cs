@@ -119,7 +119,28 @@ public sealed class UseCaseExecutorReadTests
     }
 
     [Fact]
-    public async Task GetStageSchematicAsync_loads_target_with_draws_and_peers_with_structure_onlyAsync()
+    public async Task GetStageSchematicAsync_when_missing_throws_and_does_not_saveAsync()
+    {
+        var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
+        var stages = new Mock<IStageRepository>(MockBehavior.Strict);
+        var matches = new Mock<IMatchRepository>(MockBehavior.Strict);
+        var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
+        stages
+            .Setup(repository => repository.GetCompetitionIdReadOnlyAsync(
+                It.IsAny<StageId>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((CompetitionId?)null);
+
+        var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock, AlwaysExistingMedia.Instance, NullLogger<UseCaseExecutor>.Instance);
+        var act = async () => await executor.GetStageSchematicAsync(StageId.New());
+
+        (await act.Should().ThrowAsync<ApplicationFailureException>()).Which.Code
+            .Should().Be(ApplicationErrorCodes.StageNotFound);
+        unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GetStageSchematicAsync_loads_competition_stages_once_with_structure_draws_and_slotsAsync()
     {
         var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
         var source = Stage.Create(competition.Id, new StageName("R32"), SampleRegulations.Standard(), _clock);
@@ -137,32 +158,26 @@ public sealed class UseCaseExecutorReadTests
         var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
 
         stages
-            .Setup(repository => repository.GetByIdsReadOnlyAsync(
-                It.Is<IReadOnlyList<StageId>>(ids => ids.Single().Equals(target.Id)),
-                It.Is<StageReadCapabilities>(capabilities =>
-                    capabilities.Profile == StageLoadProfile.Structure
-                    && capabilities.IncludeDraws
-                    && capabilities.IncludeSlots),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync([target]);
-        stages
-            .Setup(repository => repository.GetByIdsReadOnlyAsync(
-                It.Is<IReadOnlyList<StageId>>(ids => ids.Single().Equals(source.Id)),
-                It.Is<StageReadCapabilities>(capabilities =>
-                    capabilities.Profile == StageLoadProfile.Structure
-                    && !capabilities.IncludeDraws
-                    && !capabilities.IncludeSlots),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync([source]);
+            .Setup(repository => repository.GetCompetitionIdReadOnlyAsync(target.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(competition.Id);
         competitions
             .Setup(repository => repository.GetByIdReadOnlyAsync(competition.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(competition);
-        matches
-            .Setup(repository => repository.ListSummaryRowsByStageReadOnlyAsync(target.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync([]);
+        stages
+            .Setup(repository => repository.GetByIdsReadOnlyAsync(
+                It.Is<IReadOnlyList<StageId>>(ids =>
+                    ids.Count == 2 && ids.Contains(source.Id) && ids.Contains(target.Id)),
+                It.Is<StageReadCapabilities>(capabilities =>
+                    capabilities.Profile == StageLoadProfile.Structure
+                    && capabilities.IncludeDraws
+                    && capabilities.IncludeSlots
+                    && !capabilities.IncludePenalties),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync([source, target]);
         matches
             .Setup(repository => repository.ListSummaryRowsByStageIdsReadOnlyAsync(
-                It.IsAny<IReadOnlyList<StageId>>(),
+                It.Is<IReadOnlyList<StageId>>(ids =>
+                    ids.Count == 2 && ids.Contains(source.Id) && ids.Contains(target.Id)),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>());
 
@@ -180,6 +195,18 @@ public sealed class UseCaseExecutorReadTests
         schematic.StageId.Should().Be(target.Id.Value);
         schematic.Cases.Should().ContainSingle(c => c.FormPosition.SlotKey == "R16-A");
         unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+        stages.Verify(
+            repository => repository.GetByIdReadOnlyAsync(
+                It.IsAny<StageId>(),
+                It.IsAny<StageLoadProfile>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+        stages.Verify(
+            repository => repository.GetByIdsReadOnlyAsync(
+                It.IsAny<IReadOnlyList<StageId>>(),
+                It.IsAny<StageReadCapabilities>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
