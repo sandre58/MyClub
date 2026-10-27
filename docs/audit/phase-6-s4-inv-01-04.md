@@ -67,10 +67,15 @@ rg -n "structure-phase-rail--empty|structure-phase-rail__empty" --glob '*.{css,t
 
 ## Visual recipe (3A)
 
-No layout declaration on a matched selector changed. Check these surfaces anyway:
+No layout declaration on a matched selector changed.
 
-1. **Shell, phone** (`<48rem`, `data-shell-vp="phone"`), competition with a period: the date range and the `·` separator are hidden; crest, name, and status stay. Desktop and tablet: the period stays next to the status.
+1. **Shell, phone** (`data-shell-vp="phone"`), competition with a period: the date range and the `·` separator are hidden; crest, name, and status stay. Desktop and tablet: the period stays next to the status.
 2. **Structure phase fiche, flux tile** (Sorties / Attribution): a filled rail and an empty rail (`EmptyState` inside `.structure-phase-rail__empty`) keep the same rail column (`flex: 1 1 auto; min-height: 0` under `.structure-phase-hero__out`). Hub spacing around the flux tile does not jump.
+
+### Observed (preview + Chrome, production bundle)
+
+- Design Lab shell (same `shell-header__period` / `shell-header__meta-separator` under `[data-shell-vp]`): desktop shows `12 sept. — 10 oct. 2026` beside the status. **Phone 390** sets `data-shell-vp="phone"` and both nodes compute to `display: none`. The competition name stays.
+- Structure hub on the stub League fiche (no Sorties / Attribution — `showOutRail` is false for that payload): the fiche renders (équipes, match, règlement). DOM has **zero** `.structure-phase-rail` and **zero** `.structure-phase-rail--empty`. The flux-rail flex rule was not on screen for this fixture; it still ships as `.structure-phase-hero__out>.structure-phase-rail { flex: 1 1 auto; min-height: 0 }`, which is what every direct-child rail already matched before the `:not(--empty)` exclusion was removed.
 
 ## Gates
 
