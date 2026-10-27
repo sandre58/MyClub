@@ -385,7 +385,6 @@
   flex: none;
 }
 
-[data-shell-vp='phone'] .ds-shell-header__period,
 [data-shell-vp='phone'] .shell-header__period,
 [data-shell-vp='phone'] .shell-header__meta-separator {
   display: none;

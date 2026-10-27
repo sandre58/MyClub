@@ -642,14 +642,9 @@
   margin-top: var(--space-8);
 }
 
-.structure-phase-hero__out > .structure-phase-rail:not(.structure-phase-rail--empty) {
+.structure-phase-hero__out > .structure-phase-rail {
   flex: 1 1 auto;
   min-height: 0;
-}
-
-.structure-phase-hero__out > .structure-phase-rail--empty {
-  flex: 0 0 auto;
-  gap: 0;
 }
 
 .structure-phase-rail__body {

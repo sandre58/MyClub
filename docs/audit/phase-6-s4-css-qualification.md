@@ -70,6 +70,8 @@ Les **100** classes ne sont pas 100 défauts : la majorité est utilisée via **
 | **S4-INV-03** | Lot `structure-regulation-digest__*` (6+ classes) + voisins layout | CSS dans `structure-phase-layout.css` ; TSX actif utilise `__section`, `__sep`, `__facts`, `__chips` — pas `__body` / `__header` / `__title` / `__actions` / `__hero-icon`. | Lot CSS structure après recette visuelle. |
 | **S4-INV-04** | `.structure-phase-rail--empty` | Présent en sélecteurs CSS ; **jamais** posé en TSX (grep). | Vérifier si état vide encore requis ; sinon retirer règles associées. |
 
+**Lot post–phase 6 (F-07, partiel) :** S4-INV-01 and S4-INV-04 are applied in [`phase-6-s4-inv-01-04.md`](phase-6-s4-inv-01-04.md). S4-INV-02 and S4-INV-03 stay deferred. The phase-6 closure checklist below is historical: no CSS was removed during phase 6 itself.
+
 Les **15** autres entrées `page_modifier_investigate` suivent la même logique : grep TS → recette → lot unique.
 
 ---
