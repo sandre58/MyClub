@@ -6,7 +6,7 @@ import {
   isGenericNetworkFailure,
 } from '../../../i18n/apiErrorLabel';
 import { ApiError } from '../../../api';
-import type { OrganizerProblemRead } from '../../../types';
+import type { CompetitionStatus, OrganizerProblemRead } from '../../../types';
 import {
   isPhaseRosterIncompleteCode,
   resolvePhaseRosterIncompleteOperationalMessageKey,
@@ -72,6 +72,21 @@ export function resolveLifecycleMutationMessage(
 }
 
 const DRAFT_DETAIL_KEY = 'lifecycle.state.Draft.detail';
+const DRAFT_DETAIL_LIVE_KEY =
+  'lifecycle.state.Draft.detailUnderLiveCompetition';
+
+/** Running or Suspended competition: Draft copy stays on operational authoring. */
+export function isLiveCompetitionForDraftCopy(
+  status: CompetitionStatus | null | undefined,
+): boolean {
+  return status === 'Running' || status === 'Suspended';
+}
+
+function draftDetailKey(competitionStatus?: CompetitionStatus | null): string {
+  return isLiveCompetitionForDraftCopy(competitionStatus)
+    ? DRAFT_DETAIL_LIVE_KEY
+    : DRAFT_DETAIL_KEY;
+}
 
 /** Draft Prepare empty-state body (product: StageNotReady → aggregate draft detail). */
 export function resolveDraftPrepareBodyMessage(
@@ -80,10 +95,12 @@ export function resolveDraftPrepareBodyMessage(
   disabledReason: string | null,
   problem?: OrganizerProblemRead | null,
   rosterCopyContext?: StructureDiagnosticIssueCopyContext,
+  competitionStatus?: CompetitionStatus | null,
 ): string {
+  const detailKey = draftDetailKey(competitionStatus);
   if (showBlockMessage && disabledReason) {
     if (disabledReason === 'StageNotReady') {
-      return t(DRAFT_DETAIL_KEY);
+      return t(detailKey);
     }
     return resolveLifecycleAnticipatedMessage(
       t,
@@ -92,5 +109,5 @@ export function resolveDraftPrepareBodyMessage(
       rosterCopyContext,
     );
   }
-  return t(DRAFT_DETAIL_KEY);
+  return t(detailKey);
 }

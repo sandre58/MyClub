@@ -1,6 +1,9 @@
 import type { ReactNode } from 'react';
 
-import type { StructureStageHubSummary } from '../../../types';
+import type {
+  CompetitionStatus,
+  StructureStageHubSummary,
+} from '../../../types';
 import { shouldShowMatchsLifecycle } from './structurePhaseStatusBandModel';
 import {
   StructurePhaseDraftMatchsPrepare,
@@ -14,10 +17,12 @@ function HeaderLifecycleChrome({ children }: { children: ReactNode }) {
 export function StructurePhaseHeaderLifecycle({
   competitionId,
   stage,
+  competitionStatus = null,
   productionBusy = false,
 }: {
   competitionId: string;
   stage: StructureStageHubSummary;
+  competitionStatus?: CompetitionStatus | null;
   productionBusy?: boolean;
 }) {
   if (!shouldShowMatchsLifecycle(stage)) {
@@ -30,12 +35,14 @@ export function StructurePhaseHeaderLifecycle({
         <StructurePhaseDraftMatchsPrepare
           competitionId={competitionId}
           stage={stage}
+          competitionStatus={competitionStatus}
           part="header"
         />
         <div className="structure-fiche__header-lifecycle-messages">
           <StructurePhaseDraftMatchsPrepare
             competitionId={competitionId}
             stage={stage}
+            competitionStatus={competitionStatus}
             part="headerAlerts"
           />
         </div>

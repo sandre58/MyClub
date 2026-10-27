@@ -371,7 +371,8 @@
     "state": {
       "Draft": {
         "lead": "Draft",
-        "detail": "Complete the structure, then mark the phase as ready. Once validated, placement and sporting operations remain available."
+        "detail": "Complete the structure, then mark the phase as ready. Once validated, placement and sporting operations remain available.",
+        "detailUnderLiveCompetition": "The competition is underway. This phase stays in draft: placement and sporting operations remain available."
       },
       "Ready": {
         "lead": "Ready",

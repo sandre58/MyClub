@@ -3,7 +3,7 @@
  *
  * Preparation: signals (Next action · Needs attention) → config (Teams | Regulation)
  *   → full-width structure.
- * In progress / Completed: attention? → condensed config → tip? → sport.
+ * In progress / Completed: attention? → condensed config → tip? → sport → closure?
  *
  * Invariants: absent zone = silence; signals = fit-content (no forced width);
  * dimensions = facts; Needs attention = blockers; Next action = transition 0|1.
@@ -139,6 +139,23 @@
   flex-wrap: wrap;
   gap: var(--space-8);
   margin: 0;
+}
+
+.overview-closure__lead {
+  margin: 0;
+}
+
+.overview-closure__lead + .overview-closure__blockers {
+  margin-top: var(--space-4);
+}
+
+.overview-closure__blockers {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
 }
 
 /* ---------- Teams ---------- */

@@ -1209,6 +1209,7 @@ function MatchesColumn({
   index,
   titleChipRefreshing,
   competitionId,
+  competitionStatus,
   stage,
   structureStages,
   presentation,
@@ -1620,6 +1621,7 @@ function MatchesColumn({
       <StructurePhaseDraftMatchsPrepare
         competitionId={competitionId}
         stage={stage}
+        competitionStatus={competitionStatus}
       />
     );
   } else if (stage.status === 'Completed') {

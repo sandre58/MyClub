@@ -205,6 +205,36 @@ describe('resolveDraftPrepareBodyMessage', () => {
     const msg = resolveDraftPrepareBodyMessage(tStructure, true, 'Places');
     expect(msg).toBe(enStructure.problems.lifecycle.Places);
   });
+
+  it('keeps the structure promise while the competition is still in construction', () => {
+    const msg = resolveDraftPrepareBodyMessage(
+      tStructure,
+      false,
+      null,
+      null,
+      undefined,
+      'Draft',
+    );
+    expect(msg).toBe(enStructure.lifecycle.state.Draft.detail);
+    expect(msg).toMatch(/complete the structure/i);
+  });
+
+  it('stops promising structure completion under a live competition', () => {
+    for (const status of ['Running', 'Suspended'] as const) {
+      const msg = resolveDraftPrepareBodyMessage(
+        tStructure,
+        true,
+        'StageNotReady',
+        null,
+        undefined,
+        status,
+      );
+      expect(msg).toBe(
+        enStructure.lifecycle.state.Draft.detailUnderLiveCompetition,
+      );
+      expect(msg).not.toMatch(/complete the structure/i);
+    }
+  });
 });
 
 describe('normalizeLifecycleMutationError', () => {
