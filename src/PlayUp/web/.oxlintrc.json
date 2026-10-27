@@ -13,7 +13,9 @@
       }
     },
     {
-      "files": ["src/pages/structure/structureRegulationDigest.build.tsx"],
+      "files": [
+        "src/pages/structure/regulation/structureRegulationDigest.build.tsx"
+      ],
       "rules": {
         "react/only-export-components": "off"
       }

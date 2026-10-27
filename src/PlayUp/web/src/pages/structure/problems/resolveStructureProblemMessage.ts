@@ -10,8 +10,8 @@ import type { OrganizerProblemRead } from '../../../types';
 import {
   isPhaseRosterIncompleteCode,
   resolvePhaseRosterIncompleteOperationalMessageKey,
-} from '../structurePhaseRosterIncompletePresentation';
-import type { StructureDiagnosticIssueCopyContext } from '../structurePopulationShortfallPresentation';
+} from '../composition/structurePhaseRosterIncompletePresentation';
+import type { StructureDiagnosticIssueCopyContext } from '../issues/structurePopulationShortfallPresentation';
 import { LIFECYCLE_UNKNOWN_KEY, MUTATION_UNKNOWN_KEY } from './constants';
 import { normalizeLifecycleAnticipated } from './normalizeLifecycleAnticipated';
 import { normalizeLifecycleMutationError } from './normalizeLifecycleMutation';

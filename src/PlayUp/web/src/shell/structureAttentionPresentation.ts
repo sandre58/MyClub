@@ -4,8 +4,8 @@ import type {
   OverviewSituationNature,
   StageStatus,
 } from '../types';
-import { structureDiagnosticMeta } from '../pages/structure/structureDiagnosticPresentation';
-import { structureDiagnosticPresentation } from '../pages/structure/structureDiagnosticPresentationPolicy';
+import { structureDiagnosticMeta } from '../pages/structure/issues/structureDiagnosticPresentation';
+import { structureDiagnosticPresentation } from '../pages/structure/issues/structureDiagnosticPresentationPolicy';
 
 const EXTRA_STRUCTURE_ATTENTION_SOURCES = new Set([
   'CupBracketInvalid',

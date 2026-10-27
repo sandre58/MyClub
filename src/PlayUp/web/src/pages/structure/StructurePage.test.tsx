@@ -16,8 +16,8 @@ import {
 import type { StructureStageHubSummary, StructureView } from '../../types';
 import { StructurePage } from './StructurePage';
 import { relevantPhaseSections } from './structureHubSections';
-import { withFixturePresentedIssueCodes } from './structurePresentedIssueCodes.fixture';
-import { readyMatchProductionHub } from './structureMatchProductionPresentation.testPayloads';
+import { withFixturePresentedIssueCodes } from './issues/structurePresentedIssueCodes.fixture';
+import { readyMatchProductionHub } from './matchs/structureMatchProductionPresentation.testPayloads';
 
 vi.mock('../../api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../api')>();

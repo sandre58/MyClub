@@ -52,27 +52,30 @@ import {
   isStructureHubOperationalSlicePending,
   resolveStructurePageHeadNoteKind,
 } from './structurePageHeadReadiness';
-import { AddPhaseDialog, RemovePhaseDialog } from './StructureGraphDialogs';
+import {
+  AddPhaseDialog,
+  RemovePhaseDialog,
+} from './schematic/StructureGraphDialogs';
 import {
   StructurePhaseInsertSlot,
   StructurePhaseTileActions,
   StructureSinglePhaseBirth,
-} from './structurePhaseOrderControls';
+} from './schematic/structurePhaseOrderControls';
 import { scheduleStructureRefresh } from './structureInvalidation';
-import { StructureReadinessHint } from './StructureReadinessHint';
+import { StructureReadinessHint } from './issues/StructureReadinessHint';
 import { StructurePageHeadReadinessStatus } from './structurePageHeadReadinessStatus';
-import { StructurePhaseDrawHint } from './StructurePhaseDrawHint';
-import { StructurePhaseFiche } from './StructurePhaseFiche';
+import { StructurePhaseDrawHint } from './draw/StructurePhaseDrawHint';
+import { StructurePhaseFiche } from './fiche/StructurePhaseFiche';
 import { type StructureSectionId } from './structureHubSections';
-import { resolveStructureHubStages } from './structureResolveStages';
-import { outboundDestinationStageIds } from './structureStageQualProgProjection';
-import { topologyCardFacts } from './structureTopologyFacts';
+import { resolveStructureHubStages } from './schematic/structureResolveStages';
+import { outboundDestinationStageIds } from './intents/structureStageQualProgProjection';
+import { topologyCardFacts } from './schematic/structureTopologyFacts';
 import {
   computeStructureReadinessSummary,
   type StructureReadinessSummary,
-} from './structureReadinessSummary';
-import { StructureDiagnosticIssueIcon } from './StructureDiagnosticIssueIcon';
-import { stageWorstPresentedDiagnosticTone } from './structureStageTopologyPresentation';
+} from './issues/structureReadinessSummary';
+import { StructureDiagnosticIssueIcon } from './issues/StructureDiagnosticIssueIcon';
+import { stageWorstPresentedDiagnosticTone } from './schematic/structureStageTopologyPresentation';
 import {
   parseStructureDeepLink,
   STRUCTURE_COMPOSE_PARAM,

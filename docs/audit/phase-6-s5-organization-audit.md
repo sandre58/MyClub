@@ -94,3 +94,9 @@ Découpage = chantier produit / lisibilité — **hors** phase 6 (pas de refacto
 - [x] Inventaire helpers/fixtures + risques couplage.
 - [x] Décision explicite : **pas** de déplacement en phase 6.
 - [x] S6 noté comme inchangé / accepté.
+
+## Addendum — F-08 hotspot map
+
+Class A/B/C map and the thematic folders under `pages/structure/`: [`organization-hotspots.md`](organization-hotspots.md).
+
+S5 still stands for fixtures and helpers: they stay colocalized under `pages/structure/` (theme folders and `__fixtures__/`), not under `src/test/`.

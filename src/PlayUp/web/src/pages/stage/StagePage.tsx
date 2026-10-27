@@ -44,7 +44,7 @@ import {
   getDrawUiProjection,
   groupPlacementRows,
   projectSlotDrawResult,
-} from '../structure/drawUi';
+} from '../structure/draw/drawUi';
 import './StagePage.css';
 import '../structure/structure.css';
 
