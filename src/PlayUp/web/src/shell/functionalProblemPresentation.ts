@@ -22,9 +22,9 @@ import {
   structureDiagnosticMeta,
   structureDiagnosticTone,
   type StructureDiagnosticTone,
-} from '../pages/structure/structureDiagnosticPresentation';
-import type { StructureDiagnosticSeverityContext } from '../pages/structure/structureDiagnosticSeverity';
-import { resolveStructureDiagnosticIssueTitleKey } from '../pages/structure/structurePausedDiagnosticCopy';
+} from '../pages/structure/issues/structureDiagnosticPresentation';
+import type { StructureDiagnosticSeverityContext } from '../pages/structure/issues/structureDiagnosticSeverity';
+import { resolveStructureDiagnosticIssueTitleKey } from '../pages/structure/issues/structurePausedDiagnosticCopy';
 
 /** Orthogonal signal tone (DS Alert / Status / toast mapping — design §6.3). */
 export type FunctionalProblemTone = 'danger' | 'warning' | 'info' | 'attention';

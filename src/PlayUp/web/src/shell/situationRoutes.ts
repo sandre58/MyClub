@@ -1,5 +1,5 @@
 import type { OverviewSituation } from '../types';
-import { structureDiagnosticMeta } from '../pages/structure/structureDiagnosticPresentation';
+import { structureDiagnosticMeta } from '../pages/structure/issues/structureDiagnosticPresentation';
 import { structureDeepLink } from '../pages/structure/structureNavigation';
 
 /**

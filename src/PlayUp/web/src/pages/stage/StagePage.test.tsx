@@ -19,7 +19,10 @@ import type {
   StageSchematic,
   StageSlot,
 } from '../../types';
-import { getDrawUiProjection, isSlotDrawApplied } from '../structure/drawUi';
+import {
+  getDrawUiProjection,
+  isSlotDrawApplied,
+} from '../structure/draw/drawUi';
 import { StagePage } from './StagePage';
 
 vi.mock('../../api', async (importOriginal) => {

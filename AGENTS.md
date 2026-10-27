@@ -18,6 +18,7 @@ Pointers that are easy to miss from this page alone (existing rules and guides; 
 | Design source hierarchy (Notion / Lab / rules / code) | `design/00-design-principles.mdc`, `design-system.mdc` |
 | HTTP wire contract (`Request` / `Dto`) | `csharp.mdc`; [`docs/guides/http-api-contract.md`](docs/guides/http-api-contract.md) |
 | MediatR-style dispatch, Platform layer | `architecture.mdc`, `no-cargo-cult.mdc` |
+| Organisation hotspots (Class A/B/C) | [`docs/audit/organization-hotspots.md`](docs/audit/organization-hotspots.md) |
 
 Media and DevRunner keep this coverage: dedicated `.mdc` files stay deferred.
 
