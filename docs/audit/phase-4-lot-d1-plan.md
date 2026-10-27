@@ -9,6 +9,7 @@
 | SA1143 | Examine rule and occurrences; fix where readability/conformance genuinely improves. |
 | Other warnings | Fix confirmed defects; document intentionally tolerated ones. |
 | CI | Progressive gate: block **new** warnings vs recorded baseline (no immediate zero-warning mandate). |
+| Gate scope | **Compiler and analyzer** diagnostics only (`SA*`, `CA*`, `IDE*`, `RCS*`, …). **NuGet `NU*` warnings are excluded** (version skew between packages, e.g. EF Core vs Npgsql EF on different RC trains). Align package versions in `Directory.Packages.props`; do not use the gate to tolerate permanent `NU1608`. |
 | `NoWarn` | No global blanket; only targeted, justified, traceable exceptions. |
 | `TreatWarningsAsErrors` | **Not** global at this stage; consider phased activation after baseline qualification. |
 
@@ -36,7 +37,7 @@ Avoid permanent tolerance (83+ warnings drift) and avoid premature global hard-f
 
 ## CI
 
-After `dotnet build` (Release): `.github/scripts/verify-dotnet-warnings-baseline.sh` — fails if total or per-code counts exceed baseline.
+After `dotnet build` (Release): `.github/scripts/verify-dotnet-warnings-baseline.sh` — fails if **gated** total or per-code counts exceed baseline. The script ignores `NU*` lines in the build log (logged as excluded count only). Totals in `dotnet-warnings-baseline.json` are gated totals, not MSBuild’s full warning count.
 
 ## Out of scope (D1)
 
