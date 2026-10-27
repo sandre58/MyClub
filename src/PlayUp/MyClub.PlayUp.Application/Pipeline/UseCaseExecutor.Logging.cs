@@ -23,6 +23,12 @@ public sealed partial class UseCaseExecutor
     [LoggerMessage(EventId = 1003, Level = LogLevel.Information, Message = "Competition started {CompetitionId}")]
     private static partial void LogCompetitionStarted(ILogger logger, Guid competitionId);
 
+    [LoggerMessage(EventId = 1006, Level = LogLevel.Information, Message = "Competition suspended {CompetitionId}")]
+    private static partial void LogCompetitionSuspended(ILogger logger, Guid competitionId);
+
+    [LoggerMessage(EventId = 1007, Level = LogLevel.Information, Message = "Competition resumed {CompetitionId}")]
+    private static partial void LogCompetitionResumed(ILogger logger, Guid competitionId);
+
     [LoggerMessage(
         EventId = 1004,
         Level = LogLevel.Information,

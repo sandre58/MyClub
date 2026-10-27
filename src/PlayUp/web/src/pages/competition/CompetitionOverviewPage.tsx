@@ -5,6 +5,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { fetchCompetitionOverview, fetchStructureView } from '../../api';
 import { TeamCrest } from '../../design-system/TeamCrest';
 import { Alert } from '../../design-system/components/Alert';
+import { ConfirmDialog } from '../../design-system/components/ConfirmDialog';
 import { StatChipPanel } from '../../design-system/components/Chip';
 import { AttentionGroup } from '../../design-system/components/AttentionGroup';
 import { OverviewNextAction } from '../../design-system/components/OverviewNextAction';
@@ -17,6 +18,8 @@ import {
   CheckCircleIcon,
   CheckIcon,
   CalendarIcon,
+  PauseIcon,
+  PlayIcon,
   TrashIcon,
 } from '../../design-system/icons/contentIcons';
 import {
@@ -103,6 +106,7 @@ export function CompetitionOverviewPage() {
 
 function OverviewViewBody({ data }: { data: OverviewView }) {
   const { t } = useTranslation('overview');
+  const { t: tCommon } = useTranslation('common');
   const actionRunner = useOverviewActionRunner(data);
 
   const orgQuery = useQuery({
@@ -162,6 +166,13 @@ function OverviewViewBody({ data }: { data: OverviewView }) {
       action.code === 'PrepareCompetition' ||
       action.code === 'StartCompetition',
   );
+  // Rendered here (not only on the informational situation) so Suspend/Resume
+  // stay visible even when a structural tip occupies Prochaine action.
+  const competitionCycleActions = leftover.filter(
+    (action) =>
+      action.code === 'SuspendCompetition' ||
+      action.code === 'ResumeCompetition',
+  );
   const inProgress = data.cycleReading.code === 'InProgress';
   const completedLike =
     data.cycleReading.code === 'Completed' ||
@@ -184,7 +195,9 @@ function OverviewViewBody({ data }: { data: OverviewView }) {
   const matchesHref = `/competitions/${data.competitionId}/matches`;
   const classementsHref = `/competitions/${data.competitionId}/classements`;
   const showProgression =
-    Boolean(data.naturalProgression?.code) || lifecycleActions.length > 0;
+    Boolean(data.naturalProgression?.code) ||
+    lifecycleActions.length > 0 ||
+    competitionCycleActions.length > 0;
   const focus = data.operationalFocus;
   // In-progress + Completed: standingCompact when Host projects it (independent of Outcome).
   // Completed Result: Host presentation Winner|Podium — silence when Outcome null.
@@ -335,6 +348,7 @@ function OverviewViewBody({ data }: { data: OverviewView }) {
                 data={data}
                 actionRunner={actionRunner}
                 lifecycleActions={lifecycleActions}
+                competitionCycleActions={competitionCycleActions}
               />
             </div>
           )}
@@ -351,6 +365,7 @@ function OverviewViewBody({ data }: { data: OverviewView }) {
                 data={data}
                 actionRunner={actionRunner}
                 lifecycleActions={lifecycleActions}
+                competitionCycleActions={competitionCycleActions}
               />
             </div>
           )}
@@ -455,6 +470,39 @@ function OverviewViewBody({ data }: { data: OverviewView }) {
         />
       )}
 
+      {actionRunner.pendingCycleAction && (
+        <ConfirmDialog
+          open
+          title={t(
+            actionRunner.pendingCycleAction.code === 'ResumeCompetition'
+              ? 'competitionCycle.resumeTitle'
+              : 'competitionCycle.suspendTitle',
+          )}
+          message={t(
+            actionRunner.pendingCycleAction.code === 'ResumeCompetition'
+              ? 'competitionCycle.resumeMessage'
+              : 'competitionCycle.suspendMessage',
+          )}
+          confirmLabel={t(
+            actionRunner.pendingCycleAction.code === 'ResumeCompetition'
+              ? 'competitionCycle.resumeConfirm'
+              : 'competitionCycle.suspendConfirm',
+          )}
+          cancelLabel={tCommon('cancel')}
+          closeLabel={tCommon('close')}
+          confirmIcon={
+            actionRunner.pendingCycleAction.code === 'ResumeCompetition' ? (
+              <PlayIcon size="sm" />
+            ) : (
+              <PauseIcon size="sm" />
+            )
+          }
+          confirmPending={actionRunner.mutation.isPending}
+          onConfirm={actionRunner.confirmPendingCycle}
+          onCancel={actionRunner.dismissPendingCycle}
+        />
+      )}
+
       {actionRunner.mutation.isError && (
         <MutationError error={actionRunner.mutation.error} />
       )}
@@ -480,6 +528,8 @@ function useOverviewActionRunner(data: OverviewView) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [activeKey, setActiveKey] = useState<string | null>(null);
+  const [pendingCycleAction, setPendingCycleAction] =
+    useState<OverviewAction | null>(null);
   const [materializeFollowUp, setMaterializeFollowUp] =
     useState<MaterializeFollowUp | null>(null);
 
@@ -527,6 +577,7 @@ function useOverviewActionRunner(data: OverviewView) {
       }
 
       setActiveKey(null);
+      setPendingCycleAction(null);
     },
     onError: () => {
       setActiveKey(null);
@@ -539,14 +590,34 @@ function useOverviewActionRunner(data: OverviewView) {
       void navigate(intent.to);
       return;
     }
-    if (intent.kind === 'execute') {
-      setActiveKey(overviewActionKey(action));
-      mutation.mutate(action);
+    if (intent.kind !== 'execute') {
+      return;
     }
+    if (
+      action.code === 'SuspendCompetition' ||
+      action.code === 'ResumeCompetition'
+    ) {
+      setPendingCycleAction(action);
+      return;
+    }
+    setActiveKey(overviewActionKey(action));
+    mutation.mutate(action);
+  }
+
+  function confirmPendingCycle() {
+    if (!pendingCycleAction) {
+      return;
+    }
+    const action = pendingCycleAction;
+    setActiveKey(overviewActionKey(action));
+    mutation.mutate(action);
   }
 
   return {
     onActionClick,
+    confirmPendingCycle,
+    dismissPendingCycle: () => setPendingCycleAction(null),
+    pendingCycleAction,
     resolveIntent: (action: OverviewAction) =>
       resolveOverviewActionIntent(action, data),
     mutation,
@@ -1657,7 +1728,11 @@ function ActionButtons({
               <PendingLabel>{t('actions.busy')}</PendingLabel>
             ) : (
               <>
-                {action.code.includes('Archive') ? (
+                {action.code === 'SuspendCompetition' ? (
+                  <PauseIcon size="sm" />
+                ) : action.code === 'ResumeCompetition' ? (
+                  <PlayIcon size="sm" />
+                ) : action.code.includes('Archive') ? (
                   <TrashIcon size="sm" />
                 ) : (
                   <CheckIcon size="sm" />
@@ -1742,6 +1817,7 @@ function NaturalProgressionSection({
   data,
   actionRunner,
   lifecycleActions,
+  competitionCycleActions,
 }: {
   data: OverviewView;
   actionRunner: ActionRunner;
@@ -1750,6 +1826,11 @@ function NaturalProgressionSection({
    * naturalProgression is null (never stacked with a structural tip).
    */
   lifecycleActions: OverviewAction[];
+  /**
+   * SuspendCompetition / ResumeCompetition — rendered whenever projected,
+   * including beside a structural tip.
+   */
+  competitionCycleActions: OverviewAction[];
 }) {
   const { t } = useTranslation('overview');
   const code = data.naturalProgression?.code;
@@ -1757,6 +1838,7 @@ function NaturalProgressionSection({
     ? findActionByCode(data.availableActions, code)
     : undefined;
   const lifecycle = lifecycleActions[0];
+  const cycle = competitionCycleActions[0];
   const hasPrimary = Boolean(code);
 
   const whyKey =
@@ -1764,8 +1846,9 @@ function NaturalProgressionSection({
       ? `progression.codes.${code}Complete`
       : `progression.codes.${code}`;
 
-  // Structural tip XOR lifecycle — never both.
+  // Structural tip XOR Prepare/Start. Suspend/Resume still render beside the tip.
   if (hasPrimary) {
+    const actions = [...(matched ? [matched] : []), ...(cycle ? [cycle] : [])];
     return (
       <OverviewNextAction
         headingId="overview-progression"
@@ -1777,9 +1860,9 @@ function NaturalProgressionSection({
           ...matched?.params,
         })}
         action={
-          matched ? (
+          actions.length > 0 ? (
             <ActionButtons
-              actions={[matched]}
+              actions={actions}
               actionRunner={actionRunner}
               emphasizeFirst
             />
@@ -1789,7 +1872,8 @@ function NaturalProgressionSection({
     );
   }
 
-  if (!lifecycle) {
+  const calm = lifecycle ?? cycle;
+  if (!calm) {
     return null;
   }
 
@@ -1798,13 +1882,13 @@ function NaturalProgressionSection({
       headingId="overview-progression"
       heading={t('progression.heading')}
       icon={<NextActionIcon size="md" />}
-      title={actionLabel(lifecycle.code)}
-      why={t(`progression.codes.${lifecycle.code}`, {
-        defaultValue: actionLabel(lifecycle.code),
+      title={actionLabel(calm.code)}
+      why={t(`progression.codes.${calm.code}`, {
+        defaultValue: actionLabel(calm.code),
       })}
       action={
         <ActionButtons
-          actions={[lifecycle]}
+          actions={[calm]}
           actionRunner={actionRunner}
           emphasizeFirst
         />

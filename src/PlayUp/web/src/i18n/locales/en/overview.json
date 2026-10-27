@@ -84,6 +84,8 @@
       "ApplyQualification": "Apply qualification to feed the next stage.",
       "PrepareCompetition": "Move the competition to the ready state.",
       "StartCompetition": "Open the sporting cycle — the competition starts.",
+      "SuspendCompetition": "Pause the competition. Phases are not suspended automatically.",
+      "ResumeCompetition": "Resume the competition. Phases that are already suspended stay suspended — resume a phase from Structure.",
       "PrepareStage": "Finalise the stage configuration before sporting operations.",
       "StartStage": "Open the stage for matches and sporting operations.",
       "CompleteCompetition": "Normal completion of the competition is possible."
@@ -128,6 +130,14 @@
   "nature": {
     "Blocking": "Blocking",
     "Informational": "Info"
+  },
+  "competitionCycle": {
+    "suspendTitle": "Suspend the competition",
+    "suspendMessage": "The competition pauses. Phases are not suspended with it: a phase that is in progress stays in progress.",
+    "suspendConfirm": "Suspend the competition",
+    "resumeTitle": "Resume the competition",
+    "resumeMessage": "The competition resumes. Phases that are already suspended stay suspended: resume a phase with “Resume phase” in Structure.",
+    "resumeConfirm": "Resume the competition"
   },
   "closure": {
     "heading": "Closure",

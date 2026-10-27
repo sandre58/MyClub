@@ -216,9 +216,9 @@ Contract notes:
 - `naturalProgression` (Running / Suspended): **0 or 1** structural tip from `availableActions` in fixed priority — `MaterializeFromOccupiedSlots` → `GenerateNextRound` → `PublishDraw` → `ApplyDraw` → `ApplyProgression` → `ApplyQualification` → `PrepareStage` → `StartStage` → `CompleteCompetition`. **`null` is a valid calm state** (no `OpenMatches` fallback; SPA hides the card). Distinct from `availableActions` and from À traiter.
 - `naturalProgression` (Completed / Archived): **`null`** — no Overview tip (consultation is not a “next action”; `OpenConsultation` may still appear on other surfaces such as workspace).
 - Absence of optional Stage families (`hasDrawRules: false`, …) is a **fact**, not an automatic invalidity claim.
-- Competition Prepare/Start are Host-exposed (`POST …/prepare`, `POST …/start`) and projected as Overview `availableActions` (`PrepareCompetition` / `StartCompetition`) when Domain preconditions appear satisfied. They are **not** elevated to `naturalProgression` (intentional lifecycle — L7). SPA may show **one** of them on Prochaine action **only when** `naturalProgression` is null — never stacked with a structural tip. Stage `PrepareStage` / `StartStage` **are** eligible as Préparation tips when projected. Resume (Suspended) remains Domain-only — not projected as an action.
+- Competition Prepare/Start/Suspend/Resume are Host-exposed (`POST …/prepare`, `POST …/start`, `POST …/suspend`, `POST …/resume`) and projected as Overview `availableActions` (`PrepareCompetition` / `StartCompetition` / `SuspendCompetition` / `ResumeCompetition`) when Domain preconditions appear satisfied. They are **not** elevated to `naturalProgression`. SPA shows Prepare/Start on Prochaine action **only when** `naturalProgression` is null — never stacked with a structural tip. Suspend/Resume render on Overview whenever projected, including beside a structural tip. `CompetitionSuspended` stays Informational (not Needs Attention) and carries `actionCode` `ResumeCompetition`. Stage `PrepareStage` / `StartStage` **are** eligible as Préparation tips when projected. Competition suspend/resume does not cascade to stages (`SuspendStage` / `ResumeStage` stay on Structure).
 - `closureHint` (CompletionAnalyzer) is **distinct** from attention / situations — completion blockers ≠ À traiter.
-- `availableActions` are opportunities from known state — not execution guarantees (R19). Resume (Suspended) is Domain-only — not projected as an action.
+- `availableActions` are opportunities from known state — not execution guarantees (R19). Running projects `SuspendCompetition`; Suspended projects `ResumeCompetition`.
 - **`MaterializeFromOccupiedSlots` (Overview):** projected with `stageId` + params (`stageName`, `occupiedSlotCount`) when a Cup stage has an from-slots opportunity. The Overview does **not** choose `pairKeys` and does **not** POST materialize-from-slots. SPA intent is **navigate** to `/stages/{stageId}`; the organizer selects bracket pairs explicitly on the Stage surface (or omits for all eligible), then calls `POST …/matches/materialize-from-slots`.
 - Stage overview `slots[].coveredByCompleteFixture`: true when that slot key is already on a Fixture with the expected legs attached. Confrontations pairing UI excludes those slots (same coverage rule as Overview opportunity).
 - `naturalProgression` replaces the workspace `nextAction*` stub for Overview consumption (code only). May be `MaterializeFromOccupiedSlots` when that opportunity is the relevant tip. On Running/Suspended may be **null** when no structural tip applies.
@@ -391,6 +391,26 @@ Competition lifecycle: Domain `Ready → Running`. No request body.
 | HTTP | When |
 | :--- | :--- |
 | **204** | Started successfully |
+| **404** | Competition not found (`Application.CompetitionNotFound`) |
+| **409** | Invalid transition / closed competition (`Competition.InvalidTransition` or `Application.CompetitionClosed`) |
+
+### `POST /competitions/{competitionId}/suspend` → 204 No Content
+
+Competition lifecycle: Domain `Running → Suspended`. No request body. Does not suspend stages.
+
+| HTTP | When |
+| :--- | :--- |
+| **204** | Suspended successfully |
+| **404** | Competition not found (`Application.CompetitionNotFound`) |
+| **409** | Invalid transition / closed competition (`Competition.InvalidTransition` or `Application.CompetitionClosed`) |
+
+### `POST /competitions/{competitionId}/resume` → 204 No Content
+
+Competition lifecycle: Domain `Suspended → Running`. No request body. Does not resume stages — a stage that was Suspended stays Suspended.
+
+| HTTP | When |
+| :--- | :--- |
+| **204** | Resumed successfully |
 | **404** | Competition not found (`Application.CompetitionNotFound`) |
 | **409** | Invalid transition / closed competition (`Competition.InvalidTransition` or `Application.CompetitionClosed`) |
 

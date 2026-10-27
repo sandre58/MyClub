@@ -245,6 +245,10 @@ public sealed class ReadSurfaceEndpointTests(HostPostgresFixture fixture)
             action.Code == OverviewAssembler.ActionPrepareCompetition
             || action.Code == OverviewAssembler.ActionStartCompetition
             || action.Code == "OpenMatches");
+        body.AvailableActions.Should().Contain(action =>
+            action.Code == OverviewAssembler.ActionSuspendCompetition);
+        body.AvailableActions.Should().NotContain(action =>
+            action.Code == OverviewAssembler.ActionResumeCompetition);
         body.Situations.Should().NotContain(item =>
             item.Source == "InsufficientParticipants" || item.Source == "MissingStage");
         body.OperationalFocus.MatchCounts.Scheduled.Should().Be(1);
@@ -267,7 +271,13 @@ public sealed class ReadSurfaceEndpointTests(HostPostgresFixture fixture)
         body.NaturalProgression.Should().BeNull();
         body.Situations.Should().Contain(item =>
             item.Source == OverviewAssembler.SourceCompetitionSuspended
-            && item.Nature == OverviewAssembler.NatureInformational);
+            && item.Nature == OverviewAssembler.NatureInformational
+            && item.Actionable
+            && item.ActionCode == OverviewAssembler.ActionResumeCompetition);
+        body.AvailableActions.Should().Contain(action =>
+            action.Code == OverviewAssembler.ActionResumeCompetition);
+        body.AvailableActions.Should().NotContain(action =>
+            action.Code == OverviewAssembler.ActionSuspendCompetition);
         body.AttentionSummary.Items.Should().NotContain(item =>
             item.Source == OverviewAssembler.SourceCompetitionSuspended);
         body.AttentionSummary.Items.Should().OnlyContain(item => item.Nature == OverviewAssembler.NatureBlocking);

@@ -25,6 +25,8 @@
   "ApplyQualification": "Apply qualification",
   "PrepareCompetition": "Prepare the competition",
   "StartCompetition": "Start the competition",
+  "SuspendCompetition": "Suspend the competition",
+  "ResumeCompetition": "Resume the competition",
   "CompleteCompetition": "Complete the competition",
   "ArchiveCompetition": "Archive the competition",
   "ContinueStructure": "Continue preparation",

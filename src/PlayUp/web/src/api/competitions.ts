@@ -150,6 +150,16 @@ export function startCompetition(competitionId: string): Promise<void> {
   return postNoContent(`/competitions/${competitionId}/start`);
 }
 
+/** POST /competitions/{id}/suspend → 204 (bodyless; Running → Suspended). Does not suspend phases. */
+export function suspendCompetition(competitionId: string): Promise<void> {
+  return postNoContent(`/competitions/${competitionId}/suspend`);
+}
+
+/** POST /competitions/{id}/resume → 204 (bodyless; Suspended → Running). Does not resume phases. */
+export function resumeCompetition(competitionId: string): Promise<void> {
+  return postNoContent(`/competitions/${competitionId}/resume`);
+}
+
 /** POST /competitions/{id}/complete → 204 */
 export function completeCompetition(
   competitionId: string,
