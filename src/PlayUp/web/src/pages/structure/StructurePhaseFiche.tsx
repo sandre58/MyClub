@@ -49,7 +49,7 @@ import {
   StandingRulesDialog,
   TieFormatDialog,
 } from './StructureRegulationDialogs';
-import { StructureDrawDialog } from './StructureDrawDialog';
+import { StructureDrawDialogHost } from './StructureDrawDialogHost';
 import { StructureCompositionDialog } from './StructureCompositionDialog';
 import { StructurePhaseFicheHeader } from './StructurePhaseFicheHeader';
 import { StructureReadinessAttributedBlockerBanner } from './StructureReadinessAttributedBlockerBanner';
@@ -1465,7 +1465,7 @@ export function StructurePhaseFiche({
           releaseMutation.mutate(releasableDraw.id);
         }}
       />
-      <StructureDrawDialog
+      <StructureDrawDialogHost
         competitionId={data.competitionId}
         competitionStatus={data.status}
         minimumTeams={data.regulation.minimumTeams}

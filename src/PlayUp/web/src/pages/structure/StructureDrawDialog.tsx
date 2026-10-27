@@ -178,7 +178,7 @@ function resolveDrawKindForFormat(
 }
 
 /** One non-Cancelled Draw may own the active execution; rerun = Cancel → Nouveau. */
-type StructureDrawDialogProps = {
+export type StructureDrawDialogProps = {
   open: boolean;
   onClose: () => void;
   competitionId: string;
