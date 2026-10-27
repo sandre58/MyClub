@@ -842,10 +842,6 @@
   box-shadow: none;
 }
 
-.structure-phase-tile--flux .structure-phase-rail--empty .structure-flux-rail__head {
-  margin-bottom: 0;
-}
-
 .structure-phase-tile--matchs {
   display: flex;
   flex-direction: column;
