@@ -20,6 +20,8 @@ export {
   removeCompetitionStage,
   prepareCompetition,
   startCompetition,
+  suspendCompetition,
+  resumeCompetition,
   completeCompetition,
   archiveCompetition,
 } from './api/competitions';

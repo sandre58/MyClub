@@ -84,6 +84,8 @@
       "ApplyQualification": "Appliquez la qualification pour alimenter la phase suivante.",
       "PrepareCompetition": "Passez la compétition en état prêt.",
       "StartCompetition": "Ouvrez le cycle sportif — la compétition démarre.",
+      "SuspendCompetition": "Mettez la compétition en pause. Les phases ne sont pas suspendues automatiquement.",
+      "ResumeCompetition": "Relancez la compétition. Les phases déjà suspendues restent suspendues — reprenez une phase depuis Structure.",
       "PrepareStage": "Finalisez la configuration de la phase avant les opérations sportives.",
       "StartStage": "Ouvrez la phase pour les matchs et le pilotage sportif.",
       "CompleteCompetition": "La clôture normale de la compétition est envisageable."
@@ -128,6 +130,14 @@
   "nature": {
     "Blocking": "Bloquant",
     "Informational": "Information"
+  },
+  "competitionCycle": {
+    "suspendTitle": "Suspendre la compétition",
+    "suspendMessage": "La compétition passe en pause. Les phases ne sont pas suspendues avec elle : une phase en cours reste en cours.",
+    "suspendConfirm": "Suspendre la compétition",
+    "resumeTitle": "Reprendre la compétition",
+    "resumeMessage": "La compétition reprend. Les phases déjà suspendues restent suspendues : reprenez une phase avec « Reprendre la phase » dans Structure.",
+    "resumeConfirm": "Reprendre la compétition"
   },
   "closure": {
     "heading": "Clôture",

@@ -46,7 +46,7 @@ namespace MyClub.PlayUp.Application.Reads;
 /// Draft/Ready: null is a valid calm Construction state (no ContinueStructure fallback).
 /// Running/Suspended: null is a valid calm state (no OpenMatches fallback).
 /// Distinct from <paramref name="AvailableActions"/> (full opportunity set).
-/// PrepareCompetition / StartCompetition are never elevated here (lifecycle only).
+/// PrepareCompetition / StartCompetition / SuspendCompetition / ResumeCompetition are never elevated here (lifecycle only).
 /// </param>
 /// <param name="ClosureHint">Completion synthesis (distinct from Attention).</param>
 /// <param name="NavigationHints">Navigable targets including resolved match ids.</param>

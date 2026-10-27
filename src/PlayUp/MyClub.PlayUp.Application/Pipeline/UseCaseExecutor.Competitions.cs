@@ -52,6 +52,42 @@ public sealed partial class UseCaseExecutor
     }
 
     /// <summary>
+    /// Suspends a competition (Running → Suspended). Domain owns preconditions.
+    /// Does not suspend stages.
+    /// </summary>
+    /// <param name="competitionId">Competition identity.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A task that completes when the competition is suspended and persisted.</returns>
+    public async Task SuspendCompetitionAsync(
+        CompetitionId competitionId,
+        CancellationToken cancellationToken = default)
+    {
+        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
+        EnsureCompetitionAllowsLifecycleMutation(competition);
+        SuspendCompetition.Execute(competition, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        LogCompetitionSuspended(logger, competitionId.Value);
+    }
+
+    /// <summary>
+    /// Resumes a competition (Suspended → Running). Domain owns preconditions.
+    /// Does not resume stages.
+    /// </summary>
+    /// <param name="competitionId">Competition identity.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A task that completes when the competition is resumed and persisted.</returns>
+    public async Task ResumeCompetitionAsync(
+        CompetitionId competitionId,
+        CancellationToken cancellationToken = default)
+    {
+        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
+        EnsureCompetitionAllowsLifecycleMutation(competition);
+        ResumeCompetition.Execute(competition, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        LogCompetitionResumed(logger, competitionId.Value);
+    }
+
+    /// <summary>
     /// Completes a competition (Normal gated by <see cref="CompletionAnalyzer"/>).
     /// </summary>
     /// <param name="competitionId">Competition identity.</param>

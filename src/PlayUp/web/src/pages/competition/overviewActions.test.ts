@@ -34,6 +34,22 @@ describe('resolveOverviewActionIntent', () => {
     expect(intent.kind).toBe('execute');
   });
 
+  it('executes SuspendCompetition as a bodyless Host command', () => {
+    const intent = resolveOverviewActionIntent(
+      { code: 'SuspendCompetition', guaranteed: false },
+      overviewView(),
+    );
+    expect(intent.kind).toBe('execute');
+  });
+
+  it('executes ResumeCompetition as a bodyless Host command', () => {
+    const intent = resolveOverviewActionIntent(
+      { code: 'ResumeCompetition', guaranteed: false },
+      overviewView(),
+    );
+    expect(intent.kind).toBe('execute');
+  });
+
   it('keeps unknown action codes unsupported', () => {
     const intent = resolveOverviewActionIntent(
       { code: 'InventedAction', guaranteed: false },

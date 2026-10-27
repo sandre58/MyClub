@@ -5,6 +5,8 @@ import {
   archiveCompetition,
   completeCompetition,
   fetchCompetitionOverview,
+  resumeCompetition,
+  suspendCompetition,
 } from '../../api';
 import {
   overviewSituation,
@@ -28,6 +30,8 @@ vi.mock('../../api', async (importOriginal) => {
     prepareStage: vi.fn(),
     prepareCompetition: vi.fn(),
     startCompetition: vi.fn(),
+    suspendCompetition: vi.fn(),
+    resumeCompetition: vi.fn(),
     completeCompetition: vi.fn(),
     archiveCompetition: vi.fn(),
     materializeMatches: vi.fn(),
@@ -1084,5 +1088,146 @@ describe('CompetitionOverviewPage — En cours / Terminée', () => {
       }),
     ).not.toBeInTheDocument();
     expect(within(closure).queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  it('renders Suspend competition beside a structural tip and confirms before the Host command', async () => {
+    const user = userEvent.setup();
+    vi.mocked(suspendCompetition).mockResolvedValue(undefined);
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      inProgressLayoutBase({
+        status: 'Running',
+        naturalProgression: { code: 'GenerateNextRound' },
+        availableActions: [
+          {
+            code: 'GenerateNextRound',
+            guaranteed: false,
+            stageId,
+            params: { stageName: 'Swiss', roundIndex: '2', plannedRounds: '8' },
+          },
+          { code: 'SuspendCompetition', guaranteed: false },
+        ],
+      }),
+    );
+
+    renderOverviewPage();
+
+    const progression = await screen.findByTestId(
+      'overview-region-progression',
+    );
+    expect(
+      within(progression).getByRole('button', {
+        name: /Générer le tour Swiss/i,
+      }),
+    ).toBeInTheDocument();
+    const suspend = within(progression).getByRole('button', {
+      name: 'Suspendre la compétition',
+    });
+    expect(
+      screen.queryByRole('button', { name: 'Suspendre la phase' }),
+    ).not.toBeInTheDocument();
+
+    await user.click(suspend);
+    expect(suspendCompetition).not.toHaveBeenCalled();
+    const dialog = await screen.findByRole('dialog', {
+      name: 'Suspendre la compétition',
+    });
+    expect(
+      within(dialog).getByText(/phases ne sont pas suspendues/i),
+    ).toBeInTheDocument();
+
+    await user.click(within(dialog).getByRole('button', { name: 'Annuler' }));
+    expect(suspendCompetition).not.toHaveBeenCalled();
+
+    await user.click(
+      within(progression).getByRole('button', {
+        name: 'Suspendre la compétition',
+      }),
+    );
+    const confirm = await screen.findByRole('dialog', {
+      name: 'Suspendre la compétition',
+    });
+    await user.click(
+      within(confirm).getByRole('button', { name: 'Suspendre la compétition' }),
+    );
+    expect(suspendCompetition).toHaveBeenCalledWith(competitionId);
+  });
+
+  it('shows Resume competition on a GroupsSuspended overview and keeps suspended phases in the confirm copy', async () => {
+    const user = userEvent.setup();
+    vi.mocked(resumeCompetition).mockResolvedValue(undefined);
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      inProgressLayoutBase({
+        status: 'Suspended',
+        name: 'Groupes Suspended',
+        naturalProgression: null,
+        situations: [
+          {
+            source: 'CompetitionSuspended',
+            nature: 'Informational',
+            targetType: 'Competition',
+            targetId: competitionId,
+            matchId: null,
+            actionable: true,
+            actionCode: 'ResumeCompetition',
+            impactCode: null,
+            params: {},
+          },
+        ],
+        attentionSummary: { count: 0, items: [] },
+        availableActions: [
+          { code: 'ResumeCompetition', guaranteed: false },
+          { code: 'CompleteCompetition', guaranteed: false },
+        ],
+        closureHint: { canCompleteNormally: true, blockerCodes: [] },
+        operationalFocus: {
+          ...inProgressLayoutBase().operationalFocus,
+          stages: [
+            {
+              stageId,
+              name: 'Phase de groupes',
+              status: 'Suspended',
+            },
+          ],
+        },
+      }),
+    );
+
+    renderOverviewPage();
+
+    const progression = await screen.findByTestId(
+      'overview-region-progression',
+    );
+    expect(
+      within(progression).getByRole('button', {
+        name: 'Reprendre la compétition',
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Reprendre la phase/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('overview-region-attention'),
+    ).not.toBeInTheDocument();
+    const closure = screen.getByTestId('overview-region-closure');
+    expect(
+      within(closure).getByRole('button', { name: 'Clôturer la compétition' }),
+    ).toBeInTheDocument();
+
+    await user.click(
+      within(progression).getByRole('button', {
+        name: 'Reprendre la compétition',
+      }),
+    );
+    const dialog = await screen.findByRole('dialog', {
+      name: 'Reprendre la compétition',
+    });
+    expect(
+      within(dialog).getByText(/phases déjà suspendues restent suspendues/i),
+    ).toBeInTheDocument();
+    expect(within(dialog).getByText(/Reprendre la phase/)).toBeInTheDocument();
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Reprendre la compétition' }),
+    );
+    expect(resumeCompetition).toHaveBeenCalledWith(competitionId);
   });
 });

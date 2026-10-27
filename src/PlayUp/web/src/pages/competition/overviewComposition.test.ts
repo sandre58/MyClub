@@ -44,6 +44,8 @@ describe('overviewComposition', () => {
     // Lifecycle Prepare/Start stay secondary — closure slot is hidden during Construction.
     expect(actionPresentationSlot('PrepareCompetition')).toBe('secondary');
     expect(actionPresentationSlot('StartCompetition')).toBe('secondary');
+    expect(actionPresentationSlot('SuspendCompetition')).toBe('secondary');
+    expect(actionPresentationSlot('ResumeCompetition')).toBe('secondary');
   });
 
   it('excludes already-rendered and team-admin actions from the secondary strip', () => {

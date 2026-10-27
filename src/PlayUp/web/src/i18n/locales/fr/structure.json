@@ -419,7 +419,7 @@
     "disabled": {
       "_unknown": "Cette action de cycle de phase est indisponible pour le moment.",
       "CompetitionClosed": "La compétition est clôturée — les actions de cycle de phase sont indisponibles.",
-      "ConstructionFrozen": "Aucune autre phase n’est en jeu. Cette phase, seule restée en retrait, ne peut être ni préparée ni démarrée tant que la compétition est en cours — ajustez depuis la vue d’ensemble.",
+      "ConstructionFrozen": "Aucune autre phase n’est en jeu. Cette phase, seule restée en retrait, ne peut être ni préparée ni démarrée tant que la compétition est en cours ou suspendue — ajustez depuis la vue d’ensemble.",
       "Places": "Complétez le pool de composition (groupes) avant de marquer la phase comme prête.",
       "InitialRoundNotPlayable": "Le premier tour n’est pas encore jouable — vérifiez places, tirage et production des matchs.",
       "IncompleteEntryRound": "Complétez toutes les paires d’entrée du tableau avant de démarrer la phase.",
@@ -463,7 +463,7 @@
     "lifecycle": {
       "_unknown": "Cette action de cycle de phase est indisponible pour le moment.",
       "CompetitionClosed": "La compétition est clôturée — les actions de cycle de phase sont indisponibles.",
-      "ConstructionFrozen": "Aucune autre phase n’est en jeu. Cette phase, seule restée en retrait, ne peut être ni préparée ni démarrée tant que la compétition est en cours — ajustez depuis la vue d’ensemble.",
+      "ConstructionFrozen": "Aucune autre phase n’est en jeu. Cette phase, seule restée en retrait, ne peut être ni préparée ni démarrée tant que la compétition est en cours ou suspendue — ajustez depuis la vue d’ensemble.",
       "Places": "Complétez le pool de composition (groupes) avant de marquer la phase comme prête.",
       "Entries": "Affectez toutes les équipes à cette phase avant de la préparer.",
       "Draw": "Terminez la configuration et l’exécution du tirage avant de préparer la phase.",

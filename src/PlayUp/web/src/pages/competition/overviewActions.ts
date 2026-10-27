@@ -11,9 +11,11 @@ import {
   prepareCompetition,
   prepareStage,
   publishDraw,
+  resumeCompetition,
   startCompetition,
   startMatch,
   startStage,
+  suspendCompetition,
 } from '../../api';
 import type { OverviewAction, OverviewView } from '../../types';
 
@@ -140,6 +142,18 @@ export function resolveOverviewActionIntent(
       return {
         kind: 'execute',
         run: () => startCompetition(competitionId),
+      };
+
+    case 'SuspendCompetition':
+      return {
+        kind: 'execute',
+        run: () => suspendCompetition(competitionId),
+      };
+
+    case 'ResumeCompetition':
+      return {
+        kind: 'execute',
+        run: () => resumeCompetition(competitionId),
       };
 
     case 'CompleteCompetition':

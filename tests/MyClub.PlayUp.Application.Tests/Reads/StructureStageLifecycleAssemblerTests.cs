@@ -282,6 +282,58 @@ public sealed class StructureStageLifecycleAssemblerTests
     }
 
     [Fact]
+    public void Assemble_competition_Suspended_freezes_lone_Draft_phase_Prepare()
+    {
+        var competition = Competition.Create(new CompetitionName("Suspended multi"), SampleRegulations.Standard(), _clock);
+        competition.AddEntry(TeamId.New(), "A", _clock);
+        competition.AddEntry(TeamId.New(), "B", _clock);
+        competition.AddEntry(TeamId.New(), "C", _clock);
+        competition.AddEntry(TeamId.New(), "D", _clock);
+        var stage = Stage.Create(competition.Id, new StageName("League"), SampleRegulations.Standard(), _clock);
+        stage.AddMatchday(1, _clock);
+        competition.AddStage(stage.Id, _clock);
+        foreach (var entry in competition.Entries)
+        {
+            stage.AddResolvedPopulationEntry(entry.Id, _clock);
+        }
+
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+        competition.Suspend(_clock);
+
+        var view = StructureViewAssembler.Assemble(competition, [stage]);
+        var hub = view.Stages.Single();
+
+        hub.Lifecycle!.Transition.Code.Should().Be(OverviewAssembler.ActionPrepareStage);
+        hub.Lifecycle.Transition.Enabled.Should().BeFalse();
+        hub.Lifecycle.Transition.DisabledReasonCode.Should()
+            .Be(StructureStageLifecycleAssembler.DisabledConstructionFrozen);
+    }
+
+    [Fact]
+    public void Assemble_competition_Suspended_freezes_lone_Ready_phase_Start()
+    {
+        var competition = Competition.Create(new CompetitionName("Frozen suspended start"), SampleRegulations.Standard(), _clock);
+        competition.AddEntry(TeamId.New(), "A", _clock);
+        competition.AddEntry(TeamId.New(), "B", _clock);
+        var stage = Stage.Create(competition.Id, new StageName("League"), SampleRegulations.Standard(), _clock);
+        stage.AddMatchday(1, _clock);
+        competition.AddStage(stage.Id, _clock);
+        stage.Prepare(_clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+        competition.Suspend(_clock);
+
+        var view = StructureViewAssembler.Assemble(competition, [stage]);
+        var hub = view.Stages.Single();
+
+        hub.Lifecycle!.Transition.Code.Should().Be(OverviewAssembler.ActionStartStage);
+        hub.Lifecycle.Transition.Enabled.Should().BeFalse();
+        hub.Lifecycle.Transition.DisabledReasonCode.Should()
+            .Be(StructureStageLifecycleAssembler.DisabledConstructionFrozen);
+    }
+
+    [Fact]
     public void Assemble_flux_qualif_wired_quarters_prepare_without_composition_entries()
     {
         var situation = TestCompetition.Create("Flux QF prepare", _clock)

@@ -502,7 +502,32 @@ public sealed class OverviewAssemblerTests
     }
 
     [Fact]
-    public void Assemble_suspended_is_informational_not_in_attention_and_not_actionable()
+    public void Assemble_running_projects_SuspendCompetition_not_Resume()
+    {
+        var competition = Competition.Create(new CompetitionName("Live"), SampleRegulations.Standard(), _clock);
+        competition.AddEntry(TeamId.New(), "A", _clock);
+        competition.AddEntry(TeamId.New(), "B", _clock);
+        var stage = Stage.Create(competition.Id, new StageName("MD"), SampleRegulations.Standard(), _clock);
+        competition.AddStage(stage.Id, _clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+
+        var view = OverviewAssembler.Assemble(
+            competition,
+            [stage],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
+
+        view.AvailableActions.Should().Contain(action =>
+            action.Code == OverviewAssembler.ActionSuspendCompetition && !action.Guaranteed);
+        view.AvailableActions.Should().NotContain(action =>
+            action.Code == OverviewAssembler.ActionResumeCompetition);
+        view.NaturalProgression?.Code.Should().NotBe(OverviewAssembler.ActionSuspendCompetition);
+        view.Situations.Should().NotContain(item =>
+            item.Source == OverviewAssembler.SourceCompetitionSuspended);
+    }
+
+    [Fact]
+    public void Assemble_suspended_is_informational_actionable_resume_and_keeps_complete()
     {
         var competition = Competition.Create(new CompetitionName("Paused"), SampleRegulations.Standard(), _clock);
         competition.AddEntry(TeamId.New(), "A", _clock);
@@ -521,12 +546,18 @@ public sealed class OverviewAssemblerTests
         var suspended = view.Situations.Should().ContainSingle(item =>
             item.Source == OverviewAssembler.SourceCompetitionSuspended).Subject;
         suspended.Nature.Should().Be(OverviewAssembler.NatureInformational);
-        suspended.Actionable.Should().BeFalse();
-        suspended.ActionCode.Should().BeNull();
+        suspended.Actionable.Should().BeTrue();
+        suspended.ActionCode.Should().Be(OverviewAssembler.ActionResumeCompetition);
         suspended.ImpactCode.Should().BeNull();
         view.AttentionSummary.Items.Should().NotContain(item =>
             item.Source == OverviewAssembler.SourceCompetitionSuspended);
-        view.AvailableActions.Should().NotContain(action => action.Code == "ResumeCompetition");
+        view.AvailableActions.Should().Contain(action =>
+            action.Code == OverviewAssembler.ActionResumeCompetition && !action.Guaranteed);
+        view.AvailableActions.Should().NotContain(action =>
+            action.Code == OverviewAssembler.ActionSuspendCompetition);
+        view.AvailableActions.Should().Contain(action =>
+            action.Code == OverviewAssembler.ActionCompleteCompetition);
+        view.NaturalProgression?.Code.Should().NotBe(OverviewAssembler.ActionResumeCompetition);
     }
 
     [Fact]

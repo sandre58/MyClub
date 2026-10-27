@@ -192,6 +192,12 @@ public static class OverviewAssembler
     /// <summary>Start competition (Ready → Running).</summary>
     public const string ActionStartCompetition = "StartCompetition";
 
+    /// <summary>Suspend competition (Running → Suspended). Does not suspend stages.</summary>
+    public const string ActionSuspendCompetition = "SuspendCompetition";
+
+    /// <summary>Resume competition (Suspended → Running). Does not resume stages.</summary>
+    public const string ActionResumeCompetition = "ResumeCompetition";
+
     /// <summary>
     /// Builds the Overview view.
     /// </summary>
@@ -1214,15 +1220,14 @@ public static class OverviewAssembler
 
         if (competition.Status == CompetitionStatus.Suspended)
         {
-            // Domain Resume exists; Host exposure OPEN — informational, not actionable.
-            // Not Needs Attention / not AttentionSummary (Informational).
+            // Informational, not Needs Attention. Actionable via ResumeCompetition.
             items.Add(CreateSituation(
                 SourceCompetitionSuspended,
                 NatureInformational,
                 "Competition",
                 competition.Id.Value.ToString(),
                 null,
-                null,
+                ActionResumeCompetition,
                 null,
                 new Dictionary<string, string>()));
         }
@@ -1381,6 +1386,16 @@ public static class OverviewAssembler
         if (competition.Status == CompetitionStatus.Ready)
         {
             actions.Add(new OverviewActionDto(ActionStartCompetition, Guaranteed: false));
+        }
+
+        if (competition.Status == CompetitionStatus.Running)
+        {
+            actions.Add(new OverviewActionDto(ActionSuspendCompetition, Guaranteed: false));
+        }
+
+        if (competition.Status == CompetitionStatus.Suspended)
+        {
+            actions.Add(new OverviewActionDto(ActionResumeCompetition, Guaranteed: false));
         }
 
         foreach (var stage in stages)
@@ -1657,7 +1672,8 @@ public static class OverviewAssembler
     /// <summary>
     /// Preparation structural tip priority — first matching projected action wins.
     /// From-slots is handled separately before this scan (<see cref="ResolveNaturalProgression"/>).
-    /// PrepareCompetition / StartCompetition stay in availableActions only — never naturalProgression.
+    /// PrepareCompetition / StartCompetition / SuspendCompetition / ResumeCompetition stay in
+    /// availableActions only — never naturalProgression.
     /// AddEntry is never a tip (Teams / Needs attention).
     /// </summary>
     internal static readonly string[] ConstructionStructuralProgressionPriority =

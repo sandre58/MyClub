@@ -400,6 +400,26 @@ internal static class CompetitionEndpoints
             });
 
         app.MapPost(
+            "/competitions/{competitionId:guid}/suspend",
+            async (Guid competitionId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
+            {
+                await executor
+                    .SuspendCompetitionAsync(new CompetitionId(competitionId), cancellationToken)
+                    .ConfigureAwait(false);
+                return Results.NoContent();
+            });
+
+        app.MapPost(
+            "/competitions/{competitionId:guid}/resume",
+            async (Guid competitionId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
+            {
+                await executor
+                    .ResumeCompetitionAsync(new CompetitionId(competitionId), cancellationToken)
+                    .ConfigureAwait(false);
+                return Results.NoContent();
+            });
+
+        app.MapPost(
             "/competitions/{competitionId:guid}/complete",
             async (
                 Guid competitionId,
