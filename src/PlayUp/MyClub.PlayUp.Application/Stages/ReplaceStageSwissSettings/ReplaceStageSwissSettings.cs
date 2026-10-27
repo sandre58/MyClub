@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Stages;
@@ -16,11 +17,12 @@ public static class ReplaceStageSwissSettings
     /// <summary>
     /// Sets Swiss settings to the given planned round count.
     /// </summary>
-    public static void Execute(Stage stage, int roundCount)
+    public static void Execute(Stage stage, Competition competition, int roundCount)
     {
         ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(competition);
 
-        StageStructureEditGuard.EnsureEditable(stage);
+        StageStructureEditGuard.EnsureEditable(stage, competition);
 
         if (roundCount < 1)
         {

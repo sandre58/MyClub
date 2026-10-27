@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 
@@ -18,12 +19,14 @@ public static class ReplaceStageMatchRules
     /// <summary>
     /// Replaces stage match rules.
     /// </summary>
-    public static void Execute(Stage stage, MatchRules matchRules, IClock clock)
+    public static void Execute(Stage stage, Competition competition, MatchRules matchRules, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(matchRules);
         ArgumentNullException.ThrowIfNull(clock);
 
+        StageStructureEditGuard.EnsureDraftHeavyStructureAllowed(stage, competition);
         stage.ReplaceMatchRules(matchRules, clock);
     }
 }

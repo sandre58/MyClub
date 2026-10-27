@@ -747,7 +747,7 @@ public static class StructureViewAssembler
 
         return stage.Status switch
         {
-            StageStatus.Draft => BuildDraftStageActions(competition, stage, attachedMatches),
+            StageStatus.Draft => BuildDraftStageActions(competition, stage, competitionStages, attachedMatches),
             StageStatus.Ready => BuildReadyStageActions(competition, stage, competitionStages, attachedMatches),
             StageStatus.Running or StageStatus.Suspended => BuildExploitationStageActions(stage),
             StageStatus.Completed => [],
@@ -755,18 +755,18 @@ public static class StructureViewAssembler
         };
     }
 
-    private static bool CompetitionFreezesDraftStructure(Competition competition) =>
-        competition.Status is CompetitionStatus.Running or CompetitionStatus.Suspended;
-
-    /// <summary>Draft — full form, game regulation, and operational edits.</summary>
+    /// <summary>Draft — full form while the competition is still in construction; operational mirror once it is live.</summary>
     private static List<string> BuildDraftStageActions(
         Competition competition,
         Stage stage,
+        IReadOnlyList<Stage> competitionStages,
         int attachedMatches)
     {
-        if (CompetitionFreezesDraftStructure(competition))
+        if (competition.Status is CompetitionStatus.Running or CompetitionStatus.Suspended)
         {
-            return [ActionRenameStage];
+            return StructureStageLifecycleAssembler.IsOrphanPhase(stage, competitionStages)
+                ? [ActionRenameStage]
+                : BuildOperationalAuthoringActions(competition, stage, competitionStages, attachedMatches);
         }
 
         var actions = new List<string>
@@ -852,6 +852,17 @@ public static class StructureViewAssembler
 
     /// <summary>Ready — operational edits only when no production is attached; form is frozen.</summary>
     private static List<string> BuildReadyStageActions(
+        Competition competition,
+        Stage stage,
+        IReadOnlyList<Stage> competitionStages,
+        int attachedMatches) =>
+        BuildOperationalAuthoringActions(competition, stage, competitionStages, attachedMatches);
+
+    /// <summary>
+    /// Rename plus the Ready operational authoring set.
+    /// Draft phases under a live competition use the same set when they are not orphans.
+    /// </summary>
+    private static List<string> BuildOperationalAuthoringActions(
         Competition competition,
         Stage stage,
         IReadOnlyList<Stage> competitionStages,

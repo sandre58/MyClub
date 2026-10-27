@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 
@@ -15,6 +16,20 @@ namespace MyClub.PlayUp.Application.Stages;
 /// </summary>
 public static class ReplaceStageDrawRules
 {
+    /// <summary>
+    /// Replaces stage draw rules and denies the edit when the competition is Running or Suspended.
+    /// </summary>
+    /// <param name="stage">Target stage.</param>
+    /// <param name="competition">Owning competition.</param>
+    /// <param name="drawRules">Replacement rules, or <see langword="null"/> to clear.</param>
+    /// <param name="clock">Clock for domain events.</param>
+    public static void Execute(Stage stage, Competition competition, DrawRules? drawRules, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(competition);
+        StageStructureEditGuard.EnsureDraftHeavyStructureAllowed(stage, competition);
+        Execute(stage, drawRules, clock);
+    }
+
     /// <summary>
     /// Replaces stage draw rules (<see langword="null"/> clears).
     /// When replacing, existing constraints are preserved if the incoming

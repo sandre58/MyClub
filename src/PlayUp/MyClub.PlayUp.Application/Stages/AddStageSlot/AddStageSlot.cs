@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Stages;
@@ -16,11 +17,12 @@ public static class AddStageSlot
     /// <summary>
     /// Adds a slot key to the stage.
     /// </summary>
-    public static Slot Execute(Stage stage, string slotKey)
+    public static Slot Execute(Stage stage, Competition competition, string slotKey)
     {
         ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(competition);
 
-        StageStructureEditGuard.EnsureEditable(stage);
+        StageStructureEditGuard.EnsureEditable(stage, competition);
 
         return string.IsNullOrWhiteSpace(slotKey)
             ? throw new ApplicationFailureException(

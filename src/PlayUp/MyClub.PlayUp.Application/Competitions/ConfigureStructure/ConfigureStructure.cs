@@ -97,7 +97,7 @@ public static class ConfigureStructure
                 stage.Rename(new StageName(intent.StageName));
             }
 
-            StageStructureEditGuard.EnsureEditable(stage);
+            StageStructureEditGuard.EnsureEditable(stage, competition);
             rebuildImpact = StructureSkeleton.Clear(stage, clock);
         }
 

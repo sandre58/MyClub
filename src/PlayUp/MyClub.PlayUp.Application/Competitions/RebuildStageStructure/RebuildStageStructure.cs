@@ -59,7 +59,7 @@ public static class RebuildStageStructure
                 ApplicationErrorCodes.StructureNotMutable);
         }
 
-        StageStructureEditGuard.EnsureEditable(stage);
+        StageStructureEditGuard.EnsureEditable(stage, competition);
 
         StructureSkeleton.EnsureSameKind(stage, intent.Format);
 

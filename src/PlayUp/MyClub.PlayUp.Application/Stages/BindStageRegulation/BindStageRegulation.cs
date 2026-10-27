@@ -40,6 +40,8 @@ public static class BindStageRegulation
         ArgumentNullException.ThrowIfNull(clock);
         ArgumentException.ThrowIfNullOrWhiteSpace(scope);
 
+        StageStructureEditGuard.EnsureDraftHeavyStructureAllowed(stage, competition);
+
         var parts = ResolveParts(scope);
         foreach (var part in parts)
         {

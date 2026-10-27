@@ -8,7 +8,12 @@ Competition-level: `AddCompetitionStage` on `StructurePage` (`data.actions`).
 
 ## Hub action codes (stage.actions)
 
-Emitted only when competition `Draft` and stage `Draft` (otherwise typically `RenameStage` only). Constants in `StructureViewAssembler.cs`.
+Constants in `StructureViewAssembler.cs`.
+
+- Competition `Draft` or `Ready`, stage `Draft`: full form, regulation, and operational authoring.
+- Competition `Running` or `Suspended`, stage `Draft`, with a peer phase `Running`, `Suspended`, or `Completed` (downstream / future phase): same operational set as Ready (`AppendReadyOperationalAuthoringActions`) plus `RenameStage`. Heavy structure actions (`RebuildStructure`, `AddGroup`, `AddMatchday`, `AddRound`, `AddSlot`, `RemoveStage`, `ReplaceDrawRules`, tie and match regulation, and the rest outside that set) are not emitted. Application `StageStructureEditGuard` denies those commands with `StructureNotMutable` even when the stage is still Draft.
+- Competition `Running` or `Suspended`, stage `Draft`, and no such peer (orphan): `RenameStage` only. Lifecycle Prepare/Start uses `ConstructionFrozen` for that lone phase.
+- Stage `Ready`: operational authoring when no production is attached.
 
 | Action | Fiche usage (current) | UI surface |
 |--------|----------------------|------------|

@@ -418,7 +418,7 @@
     "disabled": {
       "_unknown": "This phase lifecycle action is unavailable right now.",
       "CompetitionClosed": "The competition is closed — phase lifecycle actions are unavailable.",
-      "ConstructionFrozen": "The competition is live — finish preparing this phase before the competition started, or adjust from Overview.",
+      "ConstructionFrozen": "No other phase is in play. This phase was left unprepared, so it cannot be prepared or started while the competition is live — adjust from Overview.",
       "Places": "Complete the composition pool (groups) before marking the phase as ready.",
       "InitialRoundNotPlayable": "The first round is not playable yet — check places, draw, and match production.",
       "IncompleteEntryRound": "Complete every entry-bracket pair before starting the phase.",
@@ -462,7 +462,7 @@
     "lifecycle": {
       "_unknown": "This phase lifecycle action is unavailable right now.",
       "CompetitionClosed": "The competition is closed — phase lifecycle actions are unavailable.",
-      "ConstructionFrozen": "The competition is live — finish preparing this phase before the competition started, or adjust from Overview.",
+      "ConstructionFrozen": "No other phase is in play. This phase was left unprepared, so it cannot be prepared or started while the competition is live — adjust from Overview.",
       "Places": "Complete the composition pool (groups) before marking the phase as ready.",
       "Entries": "Assign every team to this phase before preparing it.",
       "Draw": "Finish draw setup and execution before preparing the phase.",

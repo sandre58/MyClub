@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 
@@ -21,14 +22,21 @@ public static class ReplaceStageStandingRules
     /// Replaces stage standing rules (points + ranking criteria).
     /// </summary>
     /// <param name="stage">Target stage.</param>
+    /// <param name="competition">Owning competition.</param>
     /// <param name="standingRules">Replacement standing rules.</param>
     /// <param name="clock">Clock for domain events.</param>
-    public static void Execute(Stage stage, StandingRules standingRules, IClock clock)
+    public static void Execute(
+        Stage stage,
+        Competition competition,
+        StandingRules standingRules,
+        IClock clock)
     {
         ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(standingRules);
         ArgumentNullException.ThrowIfNull(clock);
 
+        StageStructureEditGuard.EnsureDraftHeavyStructureAllowed(stage, competition);
         stage.ReplaceStandingRules(standingRules, clock);
     }
 }
