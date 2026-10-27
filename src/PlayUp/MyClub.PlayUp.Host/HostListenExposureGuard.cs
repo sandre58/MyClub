@@ -12,7 +12,7 @@ using Microsoft.Extensions.Configuration;
 namespace MyClub.PlayUp.Host;
 
 /// <summary>
-/// AUD-0008 trajectoire C — bind exposure: Development warnings; Production refuses non-loopback unless opted in.
+/// Development warns on non-loopback binds; Production refuses them unless opted in.
 /// </summary>
 internal static partial class HostListenExposureGuard
 {

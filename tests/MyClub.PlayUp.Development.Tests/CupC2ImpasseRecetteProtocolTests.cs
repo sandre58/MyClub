@@ -23,10 +23,10 @@ using Xunit;
 namespace MyClub.PlayUp.Development.Tests;
 
 /// <summary>
-/// Executable recette C2 — Cup impasse Start guards (Notion Cup arbitration, AUD-0004 option 2).
+/// Executable recette C2 — Cup impasse Start guards.
 /// Track A: <see cref="C2_A3_at_one_of_two_without_manual_assign_start_blocked_as_incomplete_entry_roundAsync"/> (A3),
 /// <see cref="C2_A5_after_all_eligible_materialized_start_still_blocked_incomplete_entry_roundAsync"/> (A4→A5).
-/// Manual assign before Start at 1/2 (cas assign) is out of scope — qualify in a future decision before a dedicated test.
+/// Manual assign before Start at 1/2 is out of scope for this protocol.
 /// </summary>
 [Collection("DevelopmentPostgres")]
 [Trait("Category", "Integration")]

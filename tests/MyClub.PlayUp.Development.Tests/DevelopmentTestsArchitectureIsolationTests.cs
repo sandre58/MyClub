@@ -11,7 +11,7 @@ using Xunit;
 namespace MyClub.PlayUp.Development.Tests;
 
 /// <summary>
-/// Integration test project composition — Infrastructure allowed; Host/DevRunner forbidden (AUD-0011 / lot C8).
+/// Integration test project composition — Infrastructure allowed; Host and DevRunner forbidden.
 /// </summary>
 public sealed class DevelopmentTestsArchitectureIsolationTests
 {

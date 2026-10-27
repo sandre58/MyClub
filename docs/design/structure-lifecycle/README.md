@@ -47,16 +47,13 @@ Product and technical references for **stage lifecycle** (Draft / Ready / Runnin
 | [composition-tile-lifecycle-presentation-2026-10-16.md](./composition-tile-lifecycle-presentation-2026-10-16.md) | **Signed (presentation)** — Composition tile zone density by lifecycle; compact Places/Tirage summary; recette R-CT-1…4 |
 | [structure-diagnostic-presentation-technical-audit.md](./structure-diagnostic-presentation-technical-audit.md) | Pre-implementation audit — codes, gaps, parity plan |
 | [structure-diagnostic-presentation-impact-rules.md](./structure-diagnostic-presentation-impact-rules.md) | Impact ², `R-Pres-*`, mutation inventory — **steps 3–5 implemented** (policy, surfaces, i18n short + mutation copy) |
-| [notion-decision-draft.md](./notion-decision-draft.md) | Short **Décision** text for Notion (copy/paste); links to Git annex |
 | [implementation-plan-placeholder.md](./implementation-plan-placeholder.md) | Pre-§11B placeholder (historical) |
 | [section-11b-signoff-preparation.md](./section-11b-signoff-preparation.md) | **§11B** maintainer pack (signed 2026-10-15) |
 | [section-11c-addendum-clarification-arbitration.md](./section-11c-addendum-clarification-arbitration.md) | **§11C signed (Git)** 2026-10-15 — workbook + matrix (état au sign-off ; slices actuelles → [programme-b](./programme-b-arbitration-2026-10-16.md)) |
 | [section-11c-e5-matrix-diff-proposal.md](./section-11c-e5-matrix-diff-proposal.md) | **E5** — applied matrix diff record (§9–§11) |
-| [notion-decision-11c-draft.md](./notion-decision-11c-draft.md) | Notion copy block §11C |
 | [implementation-plan-post-11c.md](./implementation-plan-post-11c.md) | **Historical** (2026-10-15) — catalogue pré–Programme B ; SoT opérationnelle : [programme-b](./programme-b-arbitration-2026-10-16.md) + matrice §11C.4 |
 | [slice-1-g-b-3-enf.md](./slice-1-g-b-3-enf.md) | **Closed** `SLICE-1-G-B-3-ENF` — `G-B-3-ENF` (§12 **Done**) |
 | [implementation-plan-post-11b.md](./implementation-plan-post-11b.md) | Scope **after** §11B signature |
-| [notion-decision-11b-draft.md](./notion-decision-11b-draft.md) | Notion copy block §11B |
 | [g-mat1-confrontation-undecidable-at-materialize.md](./g-mat1-confrontation-undecidable-at-materialize.md) | **G-MAT1** — Done (Cup gate) |
 | [g-mat2-authored-award-unreachable-at-materialize.md](./g-mat2-authored-award-unreachable-at-materialize.md) | **G-MAT2** — Done (Cup gate, option B) |
 | [g-ops-ready-operational-mutations-and-d1.md](./g-ops-ready-operational-mutations-and-d1.md) | **G-OPS1 + G-OPS2** — **Done** (qual/prog/affectation; R-D1a/b) |
@@ -80,5 +77,5 @@ Product and technical references for **stage lifecycle** (Draft / Ready / Runnin
 **G-MAT3 (2026-10-15):** gate deferred — [decision](./g-mat3-arbitration-session.md), **R-Mat-M2b** test.  
 **G-MAT4 (2026-10-15):** gate deferred — [decision](./g-mat4-arbitration-session.md), **R-Mat-M4b** + analyzer + overlap tests.  
 **G-OPS3 (2026-10-15):** gate deferred — [decision](./g-ops3-arbitration-session.md).  
-**§11B (2026-10-15):** **signed** — [signoff pack](./section-11b-signoff-preparation.md) · [Notion copy](./notion-decision-11b-draft.md) · matrix §11B ticked. Post-sign work: [implementation-plan-post-11b.md](./implementation-plan-post-11b.md).  
+**§11B (2026-10-15):** **signed** — [signoff pack](./section-11b-signoff-preparation.md) · matrix §11B ticked. Post-sign work: [implementation-plan-post-11b.md](./implementation-plan-post-11b.md).  
 **§11C (2026-10-15):** [addendum](./section-11c-addendum-clarification-arbitration.md) + [matrix §11](./phase-mutability-matrix.md#11-sign-off-scope-three-layers) — full Git sign. **Programme B (2026-10-16):** slices arbitrées **Closed** (SLICE-1..3 + C-ENF) · **G-C-INV** **Done** · §12 **G-B-1 Deferred** · **G-OPS3 Partial** — [wave-b](./wave-b-programme-after-gel-a.md).
