@@ -263,7 +263,7 @@ public static class CompetitionFlowAnalyzer
                 }
             }
 
-            // V1 ExpectedRanks for PlacementAwards policy = authored ranks on this stage.
+            // ExpectedRanks for PlacementAwards are the authored ranks on this stage.
             diagnostics.AddRange(from rank in authoredOnStage where !reachableOnStage.Contains(rank) select new CompetitionFlowDiagnostic(ExpectedRankUnreachable, stage.Id.Value));
         }
 

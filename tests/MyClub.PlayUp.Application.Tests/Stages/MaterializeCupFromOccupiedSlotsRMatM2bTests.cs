@@ -16,9 +16,9 @@ using Xunit;
 namespace MyClub.PlayUp.Application.Tests.Stages;
 
 /// <summary>
-/// R-Mat-M2b — A5 non-regression: <see cref="CompetitionFlowAnalyzer.NonRootUnfed"/> on a foreign phase
+/// <see cref="CompetitionFlowAnalyzer.NonRootUnfed"/> on a foreign phase
 /// must not block <see cref="MaterializeCupFromOccupiedSlots"/> on an independent eligible batch.
-/// G-MAT3 positive gate is deferred; this contract guards against a future blanket topology veto.
+/// Guards against a blanket topology veto.
 /// </summary>
 public sealed class MaterializeCupFromOccupiedSlotsRMatM2BTests
 {

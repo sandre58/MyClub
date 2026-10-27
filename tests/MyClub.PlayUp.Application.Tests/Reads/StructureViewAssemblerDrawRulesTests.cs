@@ -17,7 +17,7 @@ using Xunit;
 namespace MyClub.PlayUp.Application.Tests.Reads;
 
 /// <summary>
-/// Δ-03 — hub must not expose P1 draw-rules authoring on Ready (B-Q1b).
+/// Hub must not expose draw-rules authoring on Ready.
 /// </summary>
 public sealed class StructureViewAssemblerDrawRulesTests
 {

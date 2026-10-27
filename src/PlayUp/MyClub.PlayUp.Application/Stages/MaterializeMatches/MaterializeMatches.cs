@@ -70,8 +70,7 @@ public static class MaterializeMatches
                 "Cup stages use MaterializeCupFromOccupiedSlots (BracketPair → Fixture) — MaterializeMatches is not applicable.",
                 ApplicationErrorCodes.MaterializationFailure),
 
-            // Legacy DBs may still contain unbound Cup fixtures created by the removed skeleton path
-            // (no BracketPairKey). Do not auto-delete them here; clean up via a dedicated data task if needed.
+            // Unbound Cup fixtures (no BracketPairKey) are not deleted here.
             StructureFormatKind.Swiss => throw new ApplicationFailureException(
                 "Swiss stages use GenerateNextRound — MaterializeMatches is not applicable.",
                 ApplicationErrorCodes.MaterializationFailure),

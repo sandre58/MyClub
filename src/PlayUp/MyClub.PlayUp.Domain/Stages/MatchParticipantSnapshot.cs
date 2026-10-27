@@ -9,7 +9,7 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Domain.Stages;
 
 /// <summary>
-/// Lightweight participant view of a materialized match for determination-source coherence (D4 / F1).
+/// Lightweight participant view of a materialized match for determination-source coherence.
 /// </summary>
 /// <remarks>
 /// Application builds these from loaded <c>Match</c> aggregates. Domain never loads Match/EF here.

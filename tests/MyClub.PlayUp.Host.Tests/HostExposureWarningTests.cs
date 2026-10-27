@@ -12,7 +12,7 @@ using Xunit;
 namespace MyClub.PlayUp.Host.Tests;
 
 /// <summary>
-/// Bind exposure warnings and AllowedHosts regression (T1–T5).
+/// Bind exposure warnings and AllowedHosts regression.
 /// </summary>
 public sealed class HostExposureWarningTests
 {

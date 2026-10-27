@@ -204,7 +204,7 @@ describe('adjustRunningScore / canMutateRecordedGoals', () => {
   });
 });
 
-describe('MatchPage goals (Lot 3)', () => {
+describe('MatchPage goals', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(fetchStageOverview).mockResolvedValue(stageOverview);

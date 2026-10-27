@@ -11,7 +11,7 @@ using MyClub.PlayUp.Development.Runtime;
 namespace MyClub.PlayUp.Development.Scenarios;
 
 /// <summary>
-/// Invariants QA — RESULT AuthoredAwardUnreachable / ExpectedRankUnreachable (hors Ready).
+/// Invariants QA — AuthoredAwardUnreachable / ExpectedRankUnreachable outside Ready.
 /// </summary>
 public sealed class InvariantsResultUnreachableScenario : IScenario
 {

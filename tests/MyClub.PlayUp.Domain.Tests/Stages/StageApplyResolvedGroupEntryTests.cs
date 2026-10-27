@@ -13,7 +13,7 @@ using Xunit;
 namespace MyClub.PlayUp.Domain.Tests.Stages;
 
 /// <summary>
-/// Documents A1 membership invariant: <see cref="Stage.ApplyResolvedGroupEntry"/> mirrors
+/// Documents the membership invariant: <see cref="Stage.ApplyResolvedGroupEntry"/> mirrors
 /// <see cref="Stage.AssignEntryToGroup"/> exclusivity (reject other-group; no-op same-group)
 /// under resolution mutability (no Ready demotion).
 /// </summary>

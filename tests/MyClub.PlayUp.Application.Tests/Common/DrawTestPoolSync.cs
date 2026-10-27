@@ -15,7 +15,7 @@ namespace MyClub.PlayUp.Application.Tests.Common;
 internal static class DrawTestPoolSync
 {
     /// <summary>
-    /// Ensures C-ENF W-pool covers <paramref name="pool"/> without duplicating inbound-only authoring.
+    /// Ensures the effective entry pool covers <paramref name="pool"/> without duplicating inbound-only authoring.
     /// </summary>
     public static void EnsureEffectivePool(Stage stage, IReadOnlyList<EntryId> pool, IClock clock)
     {

@@ -18,7 +18,7 @@ using Xunit;
 namespace MyClub.PlayUp.Application.Tests.Stages;
 
 /// <summary>
-/// G-OPS3 / G-B-3 — R-Draw1 contracts on <see cref="ReplaceStageAffectationAuthoring"/>.
+/// <see cref="ReplaceStageAffectationAuthoring"/> when a draw is Applied.
 /// </summary>
 public sealed class ReplaceStageAffectationAuthoringGOps3Tests
 {

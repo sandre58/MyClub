@@ -11,7 +11,7 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
-/// G-B-3: refuse affectation pool <see cref="EntryId"/> set changes when a non-cancelled draw is Applied on the stage.
+/// Refuses affectation pool <see cref="EntryId"/> set changes when a non-cancelled draw is Applied on the stage.
 /// </summary>
 internal static class StructureAppliedDrawPoolChangeGate
 {

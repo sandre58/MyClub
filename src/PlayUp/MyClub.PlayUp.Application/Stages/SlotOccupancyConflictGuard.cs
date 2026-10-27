@@ -9,7 +9,7 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
-/// Application F8 preflight: refuse silent overwrite of a dynamic slot occupant.
+/// Refuses a silent overwrite of a dynamic slot occupant before ApplyProgression mutates.
 /// </summary>
 /// <remarks>
 /// Same Entry → allowed (idempotent Domain no-op). Empty slot → allowed.
@@ -32,7 +32,7 @@ public static class SlotOccupancyConflictGuard
                 $"Destination slot '{instruction.SlotKey}' was not found on stage '{destination.Id}'.",
                 ApplicationErrorCodes.DanglingFeedTarget);
 
-        // DirectAssignment conflicts remain Domain SlotFeedConflict — F8 covers dynamic occupants only.
+        // DirectAssignment conflicts remain Domain SlotFeedConflict — this guard covers dynamic occupants only.
         if (destination.DirectAssignments.Any(assignment =>
                 string.Equals(assignment.SlotKey, instruction.SlotKey, StringComparison.Ordinal)))
         {

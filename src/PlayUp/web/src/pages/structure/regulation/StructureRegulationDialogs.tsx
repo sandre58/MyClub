@@ -39,7 +39,7 @@ export type DrawRulesDialogIntent = 'activate' | 'params';
  * Activate (`DrawRules` null → Random min) or edit DrawRules params.
  * Deactivate lives under the stage-card CTA group (not in this dialog).
  * Fields: Mode (RO) + PotRules for Groups only (SwitchPanel). Seeds/constraints not editable.
- * L2: when `rulesLocked`, params are view-only (Generate already consumed the rules).
+ * When `rulesLocked`, params are view-only (Generate already consumed the rules).
  */
 export function DrawRulesDialog({
   competitionId,

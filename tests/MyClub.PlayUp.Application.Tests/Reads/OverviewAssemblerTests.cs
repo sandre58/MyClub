@@ -73,7 +73,7 @@ public sealed class OverviewAssemblerTests
             action.Code == OverviewAssembler.ActionPrepareCompetition && !action.Guaranteed);
         view.AvailableActions.Should().NotContain(action => action.Code == OverviewAssembler.ActionStartCompetition);
 
-        // Intentional lifecycle stays in availableActions — not naturalProgression (L7 / Option B).
+        // Intentional lifecycle stays in availableActions — not naturalProgression.
         view.NaturalProgression!.Code.Should().Be(OverviewAssembler.ActionPrepareStage);
     }
 

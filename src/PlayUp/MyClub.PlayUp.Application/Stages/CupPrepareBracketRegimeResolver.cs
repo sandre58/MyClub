@@ -10,7 +10,7 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
-/// Prepare-stage Cup mono-round bracket regimes (contract A1).
+/// Prepare-stage Cup mono-round bracket regimes.
 /// </summary>
 internal enum CupPrepareBracketRegime
 {

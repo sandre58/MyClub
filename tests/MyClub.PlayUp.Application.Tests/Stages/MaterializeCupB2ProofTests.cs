@@ -20,7 +20,7 @@ using Xunit;
 
 namespace MyClub.PlayUp.Application.Tests.Stages;
 
-/// <summary>B2 proof tests N1–N6 (materialization eligibility contract).</summary>
+/// <summary>Proof tests (materialization eligibility contract).</summary>
 public sealed class MaterializeCupB2ProofTests
 {
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 10, 20, 10, 0, 0, TimeSpan.Zero));

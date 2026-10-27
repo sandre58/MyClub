@@ -104,7 +104,7 @@ export function PhaseSchematic({
   );
 }
 
-/** Shared slot design: chrome (C2 SlotKey) + S3 primary; team only without feed (B1). */
+/** Shared slot design: slot-key chrome and primary content; team only when there is no feed. */
 function SlotBox({
   c,
   t,
@@ -180,7 +180,7 @@ function SlotBox({
     ? { width: '100%', height: '100%', minHeight: 0 }
     : undefined;
 
-  // Crest when case primary is the resolved participant (R7, Draw, Direct).
+  // Crest when case primary is the resolved participant (Draw, Direct).
   const showTeamCrest = !!resolvedName && !!primary && primary === resolvedName;
   const showSlotCrest = density === 'full' && showTeamCrest;
   const pendingConstructionLabel = !!(primary && !resolvedName);
@@ -1290,7 +1290,7 @@ function orderLeafCases(
 }
 
 /**
- * Structure projection (R7 accepted): resolved participant is case primary for all feeds.
+ * Structure projection: resolved participant is case primary for all feeds.
  * Qual/Prog path stays on the case only when unresolved; provenance in tooltip when resolved.
  */
 function structureCaseLabels(
@@ -1322,7 +1322,7 @@ function structureCaseLabels(
     return { primary: feedOriginLabel(feed, t), secondary: null };
   }
 
-  // Qualification / Progression — occupant primary when resolved (R7).
+  // Qualification / Progression — occupant primary when resolved.
   if (occupant) {
     return { primary: occupant, secondary: null };
   }

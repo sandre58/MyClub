@@ -11,6 +11,6 @@ namespace MyClub.PlayUp.Host.Contracts;
 /// </summary>
 /// <param name="Intent">
 /// Default | Rerun (case-insensitive). Rerun ignores occupancy-derived Fixed*.
-/// Omitted or null → Default (Encoding F).
+/// Omitted or null → Default (Fixed* from occupancy).
 /// </param>
 public sealed record ConfigureDrawInputsRequest(string? Intent = null);

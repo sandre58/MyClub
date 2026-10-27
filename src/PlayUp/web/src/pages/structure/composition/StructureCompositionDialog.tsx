@@ -65,7 +65,7 @@ function sameIdSet(a: Set<string>, b: ReadonlySet<string>): boolean {
 /**
  * Work dialog — edit the phase Population via Affectation (CompositionEntries).
  * Partial Draft sets are allowed. Selection cap accounts for inbound feed volume.
- * B2: available on non-root phases alongside inbound Qualif/Prog.
+ * Available on non-root phases alongside inbound Qualif/Prog.
  */
 export function StructureCompositionDialog({
   open,

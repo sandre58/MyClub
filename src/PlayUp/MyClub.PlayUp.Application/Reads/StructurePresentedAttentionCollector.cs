@@ -14,7 +14,7 @@ namespace MyClub.PlayUp.Application.Reads;
 /// </summary>
 public static class StructurePresentedAttentionCollector
 {
-    /// <summary>Collects presented structure anomalies for the attention catalogue (D1 revision).</summary>
+    /// <summary>Collects presented structure anomalies for the attention catalogue.</summary>
     public static void Collect(StructureViewDto structureView, IList<NeedsAttentionItemDto> items)
     {
         ArgumentNullException.ThrowIfNull(structureView);

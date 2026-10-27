@@ -31,7 +31,7 @@ internal static class SeedSlotDraw
         ArgumentNullException.ThrowIfNull(stage);
         EnsureDrawRulesEngaged(stage);
 
-        // Encoding F: pool = CompositionEntries (not Active[]).
+        // Pool is CompositionEntries (not Active[]).
         var entries = stage.CompositionEntries
             .Select(entry => entry.EntryId)
             .OrderBy(id => id.Value)

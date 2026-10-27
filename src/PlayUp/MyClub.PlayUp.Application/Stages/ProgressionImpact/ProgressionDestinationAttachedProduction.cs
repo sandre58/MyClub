@@ -10,7 +10,7 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Stages.ProgressionImpact;
 
 /// <summary>
-/// WC-2 helpers: attached match production on a destination stage.
+/// Helpers for attached match production on a destination stage.
 /// </summary>
 internal static class ProgressionDestinationAttachedProduction
 {

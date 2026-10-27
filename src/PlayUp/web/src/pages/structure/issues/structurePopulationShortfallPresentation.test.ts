@@ -39,7 +39,7 @@ describe('PopulationShortfall presentation copy (arbitrage B)', () => {
   const full = { compositionEntryCount: 8, compositionCapacity: 8 };
   const partial = { compositionEntryCount: 7, compositionCapacity: 8 };
 
-  it('uses full-composition title when U1 shortfall and band is full', () => {
+  it('uses the full-composition title when there is a population shortfall and the band is full', () => {
     expect(
       resolveStructureDiagnosticIssueTitleKey(
         'PopulationShortfall',

@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// Structure readiness summary (E1–E5) — business-family synthesis.
+// Structure readiness summary — business-family synthesis.
 // Detection ≠ diagnostic ≠ correction.
 // Banner = problems on an existing structure (stages.length >= 1).
 // Birth (0 phase) = empty state only — MissingStage / InsufficientParticipants stay Host-only.
@@ -108,7 +108,7 @@ function headerToneFromStages(
   return 'none';
 }
 
-/** U1 occupancy gap: entries − Places N. Null when Places N unknown. */
+/** Occupancy gap: entries − Places N. Null when Places N unknown. */
 export function stagePopulationGap(
   data: StructureView,
   stage: StructureStageHubSummary,

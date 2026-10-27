@@ -356,7 +356,7 @@ describe('StructurePhaseOperationalStrip', () => {
     ).toBeInTheDocument();
   });
 
-  describe('Δ-O4-2 Completed — draw strip read-only final state', () => {
+  describe('Completed — draw strip read-only final state', () => {
     const completedCupStage: StructureStageHubSummary = {
       ...baseStage,
       status: 'Completed',
@@ -421,13 +421,13 @@ describe('StructurePhaseOperationalStrip', () => {
     });
   });
 
-  describe('Δ-03 Ready — P1 hidden, P3 preserved', () => {
+  describe('Ready — draw-rules authoring hidden, execution preserved', () => {
     const readyCupStage: StructureStageHubSummary = {
       ...baseStage,
       status: 'Ready',
     };
 
-    it('hides P1 setup controls but keeps perform-draw CTA when rules are engaged', () => {
+    it('hides draw-rules setup controls but keeps the perform-draw CTA when rules are engaged', () => {
       renderStrip({
         layoutVariant: 'composition',
         stage: readyCupStage,
@@ -450,7 +450,7 @@ describe('StructurePhaseOperationalStrip', () => {
       ).not.toBeInTheDocument();
     });
 
-    it('shows draw readiness checklist read-only when P1 authoring is off', () => {
+    it('shows the draw readiness checklist read-only when draw-rules authoring is off', () => {
       const drawReadinessChecklist = [
         { id: 'teamsFillPlaces' as const, met: false, current: 4, capacity: 8 },
         { id: 'teamsAllKnown' as const, met: true, current: 4, capacity: 4 },
@@ -511,7 +511,7 @@ describe('StructurePhaseOperationalStrip', () => {
       ).not.toBeInTheDocument();
     });
 
-    it('hides activate draw when P1 authoring is off and draw is not engaged', () => {
+    it('hides activate draw when draw-rules authoring is off and draw is not engaged', () => {
       renderStrip({
         layoutVariant: 'composition',
         stage: readyCupStage,
@@ -529,7 +529,7 @@ describe('StructurePhaseOperationalStrip', () => {
       ).not.toBeInTheDocument();
     });
 
-    it('keeps view-draw workflow when draw is applied without P1 toolbar', () => {
+    it('keeps the view-draw workflow when the draw is applied without the authoring toolbar', () => {
       renderStrip({
         layoutVariant: 'composition',
         stage: readyCupStage,
@@ -945,7 +945,7 @@ describe('StructurePhaseOperationalStrip', () => {
       ).not.toBeInTheDocument();
     });
 
-    it('Suspended frozen partial: no materialize primary (CTRL-O3-MAT)', () => {
+    it('Suspended frozen partial: no materialize primary', () => {
       const materialize: StructureMaterialize = {
         commandCode: 'MaterializeMatches',
         labelVariant: 'exhausted',

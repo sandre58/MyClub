@@ -1708,7 +1708,7 @@ internal static class ScenarioOrchestration
     }
 
     /// <summary>
-    /// Invariants QA — RESULT AuthoredAwardUnreachable (Signal hors Ready): award source pair missing.
+    /// Invariants QA — AuthoredAwardUnreachable outside Ready: award source pair missing.
     /// </summary>
     public static async Task BuildInvariantsResultUnreachableAsync(
         ScenarioContext context,
@@ -3506,7 +3506,7 @@ internal static class ScenarioOrchestration
     }
 
     /// <summary>
-    /// Seeds CTRL-O3-MAT recette competitions (see <c>ctrl-o3-mat-recette</c> scenario).
+    /// Seeds suspended-phase production UI recette competitions (<c>ctrl-o3-mat-recette</c>).
     /// </summary>
     public static async Task BuildCtrlO3MatRecetteAsync(
         ScenarioContext context,
@@ -3661,7 +3661,7 @@ internal static class ScenarioOrchestration
     }
 
     /// <summary>
-    /// Δ-O3-1 recette — Suspended cup, full composition, no bracket occupancy (0 / N).
+    /// Suspended cup, full composition, no bracket occupancy (0 / N).
     /// </summary>
     private static async Task BuildCtrlO3MatS5CupSuspendedEmptyPlacementAsync(
         ScenarioContext context,
@@ -3681,7 +3681,7 @@ internal static class ScenarioOrchestration
     }
 
     /// <summary>
-    /// Δ-O3-1 recette — Suspended cup, partial bracket occupancy (2 / 8) via slot draw.
+    /// Suspended cup, partial bracket occupancy (2 / 8) via slot draw.
     /// </summary>
     private static async Task BuildCtrlO3MatS6CupSuspendedPartialPlacementAsync(
         ScenarioContext context,
@@ -3702,7 +3702,7 @@ internal static class ScenarioOrchestration
     }
 
     /// <summary>
-    /// Δ-O3-1 recette — Suspended cup, population shortfall on entries rail (5 / 8).
+    /// Suspended cup, population shortfall on entries rail (5 / 8).
     /// </summary>
     private static async Task BuildCtrlO3MatS7CupSuspendedPopulationShortfallAsync(
         ScenarioContext context,

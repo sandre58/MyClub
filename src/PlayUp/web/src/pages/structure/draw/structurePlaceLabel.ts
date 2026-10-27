@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------
 // Place address labels — Cup (Slot), Groups A1 (Group), Champ/Swiss (Form).
 // UX Place = Placement destination picker (Slot | Group | Form).
-// Long label (rail/dialog) = topology; chrome (schematic) = SlotKey (C2).
+// Long label (rail/dialog) = topology; chrome (schematic) = SlotKey.
 // Backend supplies structural facts; SPA localizes side only (not RoundName).
 // -----------------------------------------------------------------------
 
@@ -46,7 +46,7 @@ export function cupPlaceApiIdentity(
 }
 
 /**
- * Schematic Place chrome — Domain SlotKey only (I2).
+ * Schematic Place chrome — Domain SlotKey only.
  * Never invents `ordinal·side` as a Place address (that is confrontation identity).
  */
 export function placeChromeLabel(
@@ -246,7 +246,7 @@ export function findCaseByPlaceIdentity(
   );
 }
 
-/** Rail / summary chip — same id as schematic chrome (C2), not the long topology string. */
+/** Rail / summary chip — same id as schematic chrome, not the long topology string. */
 export function placeChromeForDestinationSlotKey(
   schematic: StageSchematic | null | undefined,
   destinationSlotKey: string | null | undefined,

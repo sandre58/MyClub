@@ -179,10 +179,10 @@ export type DrawCreateGate =
 
 /**
  * Client gate for Create+Generate (Rerun workflow start).
- * Encoding F: pool = CompositionEntries only.
+ * Pool = CompositionEntries only.
  * Group: pots ≥ 2 and entries = pots × groupCount.
  * Slot (Cup): pool non-empty, composition == Places, no DirectAssignment,
- * all Places free (entryId null). Priority is fixed — do not reorder without product decision.
+ * all Places free (entryId null). Priority is fixed.
  */
 export function resolveDrawCreateGate(input: {
   kind: 'Group' | 'Slot' | null;
@@ -465,7 +465,7 @@ export function resolveDrawReadinessChecklist(input: {
 
 /**
  * Synthetic chrome flags — projection keeps three axes; UI does not teach the matrix
- * via three systematic badges (PublishAndApply decision).
+ * via three systematic badges.
  */
 export type DrawChromeFlags = {
   showStatus: boolean;
@@ -558,7 +558,7 @@ export function drawExecutionNumber(
 }
 
 /**
- * L2 lock: DrawRules become immutable once a non-cancelled Draw has left
+ * DrawRules become immutable once a non-cancelled Draw has left
  * NotResolved (Generate consumed the rules — Resolved or NoSolution).
  * Draft+NotResolved remains editable; Cancel unlocks for a new cycle.
  */
@@ -569,7 +569,7 @@ export function areDrawRulesLockedByExecution(draws: StageDraw[]): boolean {
 }
 
 /**
- * B-Q1b SPA — P1 draw-rules authoring (activate / params) is Draft-only.
+ * Draw-rules authoring (activate / params) is Draft-only.
  * Distinct from draw execution workflow (`openDrawWorkflow`).
  */
 export function canAuthorStageDrawRules(

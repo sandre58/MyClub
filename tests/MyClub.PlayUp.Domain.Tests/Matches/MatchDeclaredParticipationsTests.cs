@@ -41,7 +41,7 @@ public sealed class MatchDeclaredParticipationsTests
     [Fact]
     public void Case2_match_accepts_member_id_without_loading_competition()
     {
-        // C1: eligibility is Application — Match only enforces local invariants.
+        // Eligibility is Application — Match only enforces local invariants.
         var match = CreateMatch();
         var unknownMemberId = MemberId.New();
 
@@ -64,7 +64,7 @@ public sealed class MatchDeclaredParticipationsTests
         match.DeclaredParticipations.Should().BeEmpty();
         match.HasDeclaredParticipation(memberId).Should().BeFalse();
 
-        // R4 refuse on Competition.RemoveDeclaredMember while still on sheet = Application orchestration.
+        // Refusing Competition.RemoveDeclaredMember while the player is still on the sheet is Application orchestration.
     }
 
     [Fact]

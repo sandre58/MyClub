@@ -57,7 +57,7 @@ public sealed class StageLifecyclePersistenceTests(PostgresFixture fixture)
             loaded.Should().NotBeNull();
             loaded.Status.Should().Be(StageStatus.Completed);
 
-            // AddRound clears StandingRules when the stage becomes knockout (A5).
+            // AddRound clears StandingRules when the stage becomes knockout.
             loaded.Regulation.Should().Be(regulation.WithStandingRules(null));
         }
     }

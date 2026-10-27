@@ -357,7 +357,7 @@ public sealed class GenerateDrawResolutionTests
     [Fact]
     public void Execute_filters_pairing_constraints_off_slot_and_resolves()
     {
-        // S9: Application filters SameGroup off Slot; generation proceeds without Domain Invalid.
+        // Application filters SameGroup off Slot; generation proceeds without Domain Invalid.
         var stage = CreateStage();
         stage.ReplaceDrawRules(
             new DrawRules(

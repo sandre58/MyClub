@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { structureProductSeverity } from './structureDiagnosticSeverity';
 import { structureDiagnosticTone } from './structureDiagnosticPresentation';
 
-describe('structureDiagnosticSeverity (D5)', () => {
+describe('structureDiagnosticSeverity', () => {
   it('classifies blocking vs warning codes in Draft', () => {
     expect(
       structureProductSeverity('OverCapacityEdge', { stageStatus: 'Draft' }),
@@ -24,7 +24,7 @@ describe('structureDiagnosticSeverity (D5)', () => {
     ).toBe('warning');
   });
 
-  it('AuthoredAwardUnreachable is blocking on Cup only (G-UI1)', () => {
+  it('AuthoredAwardUnreachable is blocking on Cup only', () => {
     expect(
       structureProductSeverity('AuthoredAwardUnreachable', {
         formatKind: 'Cup',

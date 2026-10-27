@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------
 // Structure diagnostic → presentation projection (family / tile / CTA).
 // Analyzer facts stay unchanged; Host only maps codes for Structure UX.
-// Product severity (D5) drives diagnostic tone; lifecycle gates stay in Host.
+// Product severity drives diagnostic tone; lifecycle gates stay in Host.
 // -----------------------------------------------------------------------
 
 import {
@@ -45,7 +45,7 @@ export type StructureDiagnosticMeta = {
   tile: StructureDiagnosticTile;
   cta: StructureDiagnosticCta;
   /**
-   * Legacy default tone for tile routing only — chrome uses {@link structureDiagnosticTone} (D5).
+   * Default tone for tile routing only — chrome uses {@link structureDiagnosticTone}.
    */
   tone: StructureDiagnosticTone;
   /** Default i18n key under structure.graph.issues.* (may be overridden for context). */
@@ -302,7 +302,7 @@ export function structureDiagnosticTitleKey(code: string): string {
   return structureDiagnosticMeta(code)?.titleKey ?? `graph.issues.${code}`;
 }
 
-/** Effective UX tone — derived from product severity (D5), not legacy meta.tone alone. */
+/** Effective UX tone — derived from product severity, not the stored tone alone. */
 export function structureDiagnosticTone(
   code: string,
   context?: StructureDiagnosticSeverityContext,

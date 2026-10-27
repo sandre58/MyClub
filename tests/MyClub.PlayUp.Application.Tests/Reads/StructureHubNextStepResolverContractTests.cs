@@ -19,7 +19,7 @@ using Xunit;
 namespace MyClub.PlayUp.Application.Tests.Reads;
 
 /// <summary>
-/// Product contract for <see cref="StructureHubNextStepResolver"/> (S1–S14, C1–C8, Q1, G1).
+/// Product contract for <see cref="StructureHubNextStepResolver"/> .
 /// </summary>
 public sealed class StructureHubNextStepResolverContractTests
 {

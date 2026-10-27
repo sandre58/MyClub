@@ -60,7 +60,7 @@ function wireNatureToPresentationNature(
   return nature === 'Blocking' ? 'Blocking' : 'Informational';
 }
 
-/** Drawer / shell chrome: D5 policy overrides wire severity for structure catalogue rows. */
+/** Drawer / shell chrome: product severity overrides wire severity for structure catalogue rows. */
 export function presentedStructureAttentionNature(
   item: OverviewSituation,
   stages: readonly CompetitionStageSummary[],

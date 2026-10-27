@@ -16,7 +16,7 @@ using Xunit;
 namespace MyClub.PlayUp.Application.Tests.Stages;
 
 /// <summary>
-/// G-OPS1 / G-OPS2 slice 1 — <see cref="ReplaceStageQualificationRules"/> on Ready upstream (R-D1a/b).
+/// <see cref="ReplaceStageQualificationRules"/> on Ready upstream, including downstream consumer feeds.
 /// </summary>
 public sealed class ReplaceStageQualificationRulesGOpsTests
 {

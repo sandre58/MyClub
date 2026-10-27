@@ -26,7 +26,7 @@ public sealed record StructureStageLifecycleDto(
 /// <param name="Enabled">When <see langword="true"/>, Host accepts the command for this phase.</param>
 /// <param name="DisabledReasonCode">Stable machine code when <paramref name="Code"/> is set and <paramref name="Enabled"/> is false.</param>
 /// <param name="Remediation">Optional deep-link for the first corrective step.</param>
-/// <param name="Problem">Optional Step 2 semantics (canon, level, blocked actions); pilot read models.</param>
+/// <param name="Problem">Optional organizer-problem semantics (canon, level, blocked actions).</param>
 public sealed record StructureStageLifecycleTransitionDto(
     string? Code,
     bool Enabled,

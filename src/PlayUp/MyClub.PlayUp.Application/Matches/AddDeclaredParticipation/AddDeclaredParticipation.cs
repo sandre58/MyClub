@@ -14,7 +14,7 @@ namespace MyClub.PlayUp.Application.Matches;
 /// Application use case: add a player to the match composition sheet.
 /// </summary>
 /// <remarks>
-/// Domain owns sheet invariants and lifecycle gates. Application enforces player eligibility (C1).
+/// Domain owns sheet invariants and lifecycle gates. Application enforces player eligibility.
 /// </remarks>
 public static class AddDeclaredParticipation
 {

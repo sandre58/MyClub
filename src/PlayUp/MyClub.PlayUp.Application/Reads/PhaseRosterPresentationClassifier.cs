@@ -17,7 +17,7 @@ using MyClub.PlayUp.Domain.Standings;
 namespace MyClub.PlayUp.Application.Reads;
 
 /// <summary>
-/// Classifies roster gaps for downstream presentation (A3) without altering lifecycle or materialize gates.
+/// Classifies roster gaps for downstream presentation without altering lifecycle or materialize gates.
 /// </summary>
 public static class PhaseRosterPresentationClassifier
 {

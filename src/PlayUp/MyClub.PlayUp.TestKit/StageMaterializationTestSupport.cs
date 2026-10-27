@@ -12,7 +12,7 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.TestKit;
 
 /// <summary>
-/// Phase V2: batch materialization requires <see cref="StageStatus.Ready"/> and Host Prepare gates.
+/// Batch materialization requires <see cref="StageStatus.Ready"/> and Host Prepare gates.
 /// </summary>
 public static class StageMaterializationTestSupport
 {

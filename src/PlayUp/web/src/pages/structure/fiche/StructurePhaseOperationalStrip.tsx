@@ -273,7 +273,7 @@ export function StructurePhaseOperationalStrip({
   competitionId: string;
   competitionStatus: CompetitionStatus;
   stage: StructureStageHubSummary;
-  /** Hub phases for structure-aware mutation copy (D1 consumer names). */
+  /** Hub phases for structure-aware mutation copy (downstream consumer names). */
   structureStages: readonly StructureStageHubSummary[];
   presentation: MaterializePresentation | null;
   structureHubBackgroundRefresh?: boolean;

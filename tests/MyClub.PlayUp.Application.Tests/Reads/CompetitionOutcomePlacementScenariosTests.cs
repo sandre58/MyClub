@@ -30,7 +30,7 @@ public sealed class CompetitionOutcomePlacementScenariosTests
         fixture.BracketPairKey ?? throw new InvalidOperationException("missing BracketPairKey");
 
     /// <summary>
-    /// F1 — Amateur 2×6 shape: terminal placement fixtures award ranks 1–12.
+    /// Amateur 2×6 shape: terminal placement fixtures award ranks 1–12.
     /// (Groups feed slots via Qualification/Progression elsewhere; this scenario owns the award→outcome seam.)
     /// </summary>
     [Fact]
@@ -75,7 +75,7 @@ public sealed class CompetitionOutcomePlacementScenariosTests
     }
 
     /// <summary>
-    /// F2 — Cup 16 + consolation: eight terminal fixtures award ranks 1–16 via explicit PlacementAwardPath,
+    /// Cup 16 + consolation: eight terminal fixtures award ranks 1–16 via explicit PlacementAwardPath,
     /// never via SlotKey heuristics (Consolante3 ≠ rank).
     /// </summary>
     [Fact]
@@ -119,7 +119,7 @@ public sealed class CompetitionOutcomePlacementScenariosTests
     }
 
     /// <summary>
-    /// F3 — Partial outcome: only Final decided → ranks 1–2; finishing Bronze fills 3–4; never invents 5+.
+    /// Partial outcome: only Final decided → ranks 1–2; finishing Bronze fills 3–4; never invents 5+.
     /// </summary>
     [Fact]
     public void F3_partial_outcome_grows_only_when_fixtures_are_decided()

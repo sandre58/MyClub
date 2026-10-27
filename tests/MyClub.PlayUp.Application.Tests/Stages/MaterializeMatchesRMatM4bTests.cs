@@ -19,8 +19,8 @@ using Xunit;
 namespace MyClub.PlayUp.Application.Tests.Stages;
 
 /// <summary>
-/// R-Mat-M4b — A5: <see cref="CompetitionFlowAnalyzer.SourcePopulationShortfall"/> on foreign stage <c>T</c>
-/// must not block <see cref="MaterializeMatches"/> on independent championship <c>S</c>.
+/// <see cref="CompetitionFlowAnalyzer.SourcePopulationShortfall"/> on a foreign stage
+/// must not block <see cref="MaterializeMatches"/> on an independent championship.
 /// </summary>
 public sealed class MaterializeMatchesRMatM4BTests
 {

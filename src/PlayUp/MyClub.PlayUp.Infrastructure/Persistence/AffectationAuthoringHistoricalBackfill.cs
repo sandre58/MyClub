@@ -7,7 +7,7 @@
 namespace MyClub.PlayUp.Infrastructure.Persistence;
 
 /// <summary>
-/// One-shot historical heuristic for S1 AffectationAuthoring backfill (not a durable Domain rule).
+/// One-shot historical heuristic for AffectationAuthoring backfill (not a durable Domain rule).
 /// </summary>
 public static class AffectationAuthoringHistoricalBackfill
 {

@@ -11,7 +11,7 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
-/// Canonical mono-round Cup Po2 readiness for Prepare (A1 R2 only).
+/// Canonical mono-round Cup Po2 readiness for Prepare.
 /// </summary>
 internal static class CupPrepareBracketReadiness
 {

@@ -267,7 +267,7 @@ describe('resolveLifecycleMutationMessageKey', () => {
     ).toBe('problems.lifecycle.AppliedDrawSlotPlacementProtected');
   });
 
-  it('resolves G-B-3 pool change refusal without mutation unknown', () => {
+  it('resolves applied-draw pool change refusal without mutation unknown', () => {
     const msg = resolveLifecycleMutationMessage(
       tStructure,
       new ApiError(
@@ -299,7 +299,7 @@ describe('resolveLifecycleMutationMessageKey', () => {
     expect(msg).not.toBe(enStructure.problems.mutation._unknown);
   });
 
-  it('resolves B-Q3a second draw refusal via errors.Stage (lot A)', async () => {
+  it('resolves a second-draw refusal via errors.Stage', async () => {
     await i18n.changeLanguage('en');
     const msg = resolveLifecycleMutationMessage(
       tStructure,
@@ -315,7 +315,7 @@ describe('resolveLifecycleMutationMessageKey', () => {
   });
 });
 
-describe('errors Stage parity (lot A B-Q3a)', () => {
+describe('errors.Stage parity for a second draw', () => {
   it('has matching FR/EN copy for NonCancelledDrawAlreadyExists', () => {
     expect(frErrors.Stage.NonCancelledDrawAlreadyExists).toBe(
       'Cette phase compte déjà un tirage non annulé. Annulez-le avant d’en créer un autre.',

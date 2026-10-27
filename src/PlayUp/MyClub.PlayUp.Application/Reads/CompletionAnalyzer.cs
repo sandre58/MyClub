@@ -75,7 +75,7 @@ public static class CompletionAnalyzer
             {
                 // Construction deficit is Needs Attention for Shell / Overview, not a sporting completion reason.
                 case NeedsAttentionAssembler.SourceInsufficientParticipants:
-                // U1 population signal on Structure — not an unresolved sporting operation.
+                // Population-shortfall signal on Structure — not an unresolved sporting operation.
                 case CompetitionFlowAnalyzer.PopulationShortfall:
                     continue;
             }

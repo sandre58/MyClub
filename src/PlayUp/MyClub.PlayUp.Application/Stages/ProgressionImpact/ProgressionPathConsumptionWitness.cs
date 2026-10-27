@@ -13,7 +13,7 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Stages.ProgressionImpact;
 
 /// <summary>
-/// WC-1 witness (A-3-R1), evaluated by <see cref="StructureProgressionImpactGate"/>.
+/// Whether a touched progression path already satisfied its destination. Evaluated by <see cref="StructureProgressionImpactGate"/>.
 /// </summary>
 internal static class ProgressionPathConsumptionWitness
 {
@@ -25,7 +25,7 @@ internal static class ProgressionPathConsumptionWitness
     }
 
     /// <summary>
-    /// Evaluates WC-1 for one touched <paramref name="pathBefore"/> against proposed <paramref name="afterRules"/>.
+    /// Evaluates one touched <paramref name="pathBefore"/> against proposed <paramref name="afterRules"/>.
     /// </summary>
     internal static Verdict EvaluateTouchedPath(
         ProgressionPath pathBefore,

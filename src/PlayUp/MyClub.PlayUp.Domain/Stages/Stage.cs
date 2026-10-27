@@ -480,7 +480,7 @@ public sealed class Stage : AggregateRoot<StageId>
     /// Seeds standing rules from competition defaults when absent (classifying phases).
     /// Allowed in Draft only (structure locked from Ready). No-op when standing already present.
     /// </summary>
-    /// <param name="standingDefaults">Competition standing defaults (A4 seed).</param>
+    /// <param name="standingDefaults">Competition standing defaults .</param>
     /// <param name="clock">The clock used for domain events.</param>
     public void SeedStandingRules(StandingRules standingDefaults, IClock clock)
     {
@@ -502,7 +502,7 @@ public sealed class Stage : AggregateRoot<StageId>
     /// Replaces draw rules. Draft only (structure locked from Ready).
     /// Clear is refused while any non-cancelled Draw exists.
     /// Replace (non-null) is refused once a non-cancelled Draw has left NotResolved
-    /// (Generate consumed the rules for that execution — L2 lock).
+    /// (Generate consumed the rules for that execution).
     /// </summary>
     /// <param name="drawRules">The new draw rules, or <see langword="null"/>.</param>
     /// <param name="clock">The clock used for domain events.</param>
@@ -694,7 +694,7 @@ public sealed class Stage : AggregateRoot<StageId>
 
     /// <summary>
     /// Replaces qualification rules while the stage is <see cref="StageStatus.Draft"/> or
-    /// <see cref="StageStatus.Ready"/> (operational exit edit). Caller enforces production and D1 guards.
+    /// <see cref="StageStatus.Ready"/> (operational exit edit). Caller enforces production and downstream-consumer guards.
     /// </summary>
     /// <param name="qualificationRules">The new qualification rules, or <see langword="null"/>.</param>
     /// <param name="clock">The clock used for domain events.</param>
@@ -738,7 +738,7 @@ public sealed class Stage : AggregateRoot<StageId>
 
     /// <summary>
     /// Replaces progression rules while the stage is <see cref="StageStatus.Draft"/> or
-    /// <see cref="StageStatus.Ready"/> (operational exit edit). Caller enforces production and D1 guards.
+    /// <see cref="StageStatus.Ready"/> (operational exit edit). Caller enforces production and downstream-consumer guards.
     /// </summary>
     /// <param name="progressionRules">The new progression rules, or <see langword="null"/>.</param>
     /// <param name="clock">The clock used for domain events.</param>
@@ -963,7 +963,7 @@ public sealed class Stage : AggregateRoot<StageId>
         || _matchdays.SelectMany(m => m.Fixtures).Any(f => f.Contains(matchId));
 
     /// <summary>
-    /// Whether the display name may be renamed (C-18 / O-04 — not when the phase is completed).
+    /// Whether the display name may be renamed (not when the phase is completed).
     /// </summary>
     public bool CanRenameDisplayName() => Status is not StageStatus.Completed;
 
@@ -1321,7 +1321,7 @@ public sealed class Stage : AggregateRoot<StageId>
     /// <param name="groupId">The group identity.</param>
     /// <param name="entryId">The entry identity.</param>
     /// <param name="materializedParticipants">
-    /// Participant snapshots of matches attached on this stage (empty when none). Required for C3 F1.
+    /// Participant snapshots of matches attached on this stage (empty when none). Required for group determination coherence.
     /// </param>
     public void RemoveEntryFromGroup(
         GroupId groupId,
@@ -1506,7 +1506,7 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
-    /// Adds a resolved entry to the phase population (B1-M2 / Progression inter → population).
+    /// Adds a resolved entry to the phase population from progression.
     /// Does not touch slots or <see cref="DirectAssignment"/>. Idempotent when already present.
     /// Allowed under the same mutability as dynamic slot resolution (Draft/Ready/Running/Suspended).
     /// </summary>
@@ -1568,7 +1568,7 @@ public sealed class Stage : AggregateRoot<StageId>
 
     /// <summary>
     /// Replaces Affectation authoring while <see cref="StageStatus.Draft"/> or <see cref="StageStatus.Ready"/>.
-    /// Caller enforces production freeze (D2). No D1 downstream exit guard.
+    /// Caller enforces the production freeze. No downstream-consumer exit guard.
     /// </summary>
     /// <param name="entryIds">Authoring entry identities (may be empty to clear Affectation).</param>
     /// <param name="clock">The clock used for domain events.</param>
@@ -1709,7 +1709,7 @@ public sealed class Stage : AggregateRoot<StageId>
     /// <param name="slotKey">Target slot key.</param>
     /// <param name="entryId">Entry identity.</param>
     /// <param name="materializedParticipants">
-    /// Participant snapshots of matches attached on this stage (empty when none). Required for Cup F1.
+    /// Participant snapshots of matches attached on this stage (empty when none). Required for Cup opponent coherence.
     /// </param>
     public void AssignEntryToSlot(
         string slotKey,
@@ -1770,7 +1770,7 @@ public sealed class Stage : AggregateRoot<StageId>
     /// </summary>
     /// <param name="slotKey">Target slot key.</param>
     /// <param name="materializedParticipants">
-    /// Participant snapshots of matches attached on this stage (empty when none). Required for Cup F1.
+    /// Participant snapshots of matches attached on this stage (empty when none). Required for Cup opponent coherence.
     /// </param>
     public void ClearSlotAssignment(
         string slotKey,
@@ -1807,13 +1807,13 @@ public sealed class Stage : AggregateRoot<StageId>
     /// Resolution mutation (not structure): allowed in Draft, Ready, Running, and Suspended; forbidden when Completed.
     /// Does not demote Ready to Draft. A DirectAssignment on the target slot yields <see cref="StageErrorCodes.SlotFeedConflict"/>.
     /// When the entry already occupies another slot of this stage, it is moved (previous slot cleared without a separate event).
-    /// Cup F1: validates final simulated BracketPair occupants against attached match participants.
+    /// Validates final simulated BracketPair occupants against attached match participants.
     /// </remarks>
     /// <param name="slotKey">Target slot key.</param>
     /// <param name="entryId">Resolved entry identity.</param>
     /// <param name="clock">The clock used for domain events.</param>
     /// <param name="materializedParticipants">
-    /// Participant snapshots of matches attached on this stage (empty when none). Required for Cup F1.
+    /// Participant snapshots of matches attached on this stage (empty when none). Required for Cup opponent coherence.
     /// </param>
     public void ApplyResolvedEntry(
         string slotKey,
@@ -1914,7 +1914,7 @@ public sealed class Stage : AggregateRoot<StageId>
     /// <param name="slotKey">Target slot key.</param>
     /// <param name="clock">The clock used for domain events.</param>
     /// <param name="materializedParticipants">
-    /// Participant snapshots of matches attached on this stage (empty when none). Required for Cup F1.
+    /// Participant snapshots of matches attached on this stage (empty when none). Required for Cup opponent coherence.
     /// </param>
     public void ClearResolvedEntry(
         string slotKey,
@@ -2011,7 +2011,7 @@ public sealed class Stage : AggregateRoot<StageId>
         var round = new Round(RoundId.New(), name, tieFormat?.Copy());
         _rounds.Add(round);
 
-        // Becoming knockout (A5): standing capacity is removed with the topology change.
+        // Becoming knockout: standing capacity is removed with the topology change.
         if (Regulation.StandingRules is not null)
         {
             Regulation = Regulation.WithStandingRules(null);
@@ -2821,7 +2821,7 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
-    /// Enforces A5 against current topology: classifying ⇒ Standing present; knockout ⇒ Standing absent.
+    /// Enforces standing presence against current topology: classifying ⇒ Standing present; knockout ⇒ Standing absent.
     /// Unstructured stages impose no presence constraint (seed may exist before ConfigureStructure).
     /// </summary>
     private void EnsureStandingRulesInvariant()

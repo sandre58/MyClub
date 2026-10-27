@@ -17,7 +17,7 @@ using Xunit;
 namespace MyClub.PlayUp.Application.Tests.Stages;
 
 /// <summary>
-/// D1 thin authoring: AddStage / AddRound / AddSlot / ReplaceProgressionRules composition.
+/// Composition of AddStage, AddRound, AddSlot, and ReplaceProgressionRules.
 /// </summary>
 public sealed class ThinAuthoringTests
 {

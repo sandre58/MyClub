@@ -17,7 +17,7 @@ using Xunit;
 namespace MyClub.PlayUp.Application.Tests.Stages;
 
 /// <summary>
-/// G-OPS slice 2 — <see cref="ReplaceStageProgressionRules"/> on Ready upstream.
+/// <see cref="ReplaceStageProgressionRules"/> on Ready upstream.
 /// </summary>
 public sealed class ReplaceStageProgressionRulesGOpsTests
 {

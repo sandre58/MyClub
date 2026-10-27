@@ -15,7 +15,7 @@ function resolveConsumerStageLabels(
 }
 
 /**
- * Structure mutation footer copy — lifecycle/problems namespace plus D1 consumer names when present.
+ * Structure mutation footer copy — lifecycle/problems namespace plus downstream consumer names when present.
  * Organizer-facing: no HTTP status suffix (step 5).
  */
 export function formatStructureMutationMessage(

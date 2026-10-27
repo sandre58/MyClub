@@ -215,7 +215,7 @@ describe('resolvePlaceOccupancyMeterCopy', () => {
     ).toBe('attention');
   });
 
-  it('uses info and pause copy for partial occupancy in Suspended (Δ-O3-1)', () => {
+  it('uses info and pause copy for partial occupancy in Suspended', () => {
     const result = resolvePlaceOccupancyMeterCopy({
       t,
       occupancyReady: true,
@@ -231,7 +231,7 @@ describe('resolvePlaceOccupancyMeterCopy', () => {
     );
   });
 
-  it('uses info final readout for partial occupancy in Completed (Δ-O4-1)', () => {
+  it('uses info final readout for partial occupancy in Completed', () => {
     const result = resolvePlaceOccupancyMeterCopy({
       t,
       occupancyReady: true,
@@ -276,7 +276,7 @@ describe('resolveCompositionPopulationMeterCopy', () => {
     expect(result.text).toBe('composition.gauge.populationShortfallPaused');
   });
 
-  it('uses final-state info for population shortfall in Completed (Δ-O4-1)', () => {
+  it('uses final-state info for population shortfall in Completed', () => {
     const result = resolveCompositionPopulationMeterCopy({
       t,
       current: 4,

@@ -17,7 +17,7 @@ using Xunit;
 namespace MyClub.PlayUp.Development.Tests;
 
 /// <summary>
-/// Read-model gate for CTRL-O3-MAT (docs/design/structure-lifecycle/ctrl-o3-mat-devrunner-recette.md).
+/// Read-model gate for suspended-phase production UI (docs/design/structure-lifecycle/ctrl-o3-mat-devrunner-recette.md).
 /// </summary>
 [Collection("DevelopmentPostgres")]
 [Trait("Category", "Integration")]

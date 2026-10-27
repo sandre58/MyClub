@@ -11,7 +11,7 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
-/// G-OPS3 B1: refuse manual Cup slot mutations that break placements guaranteed by an Applied draw.
+/// Refuses manual Cup slot mutations that break placements guaranteed by an Applied draw.
 /// </summary>
 internal static class StructureAppliedDrawSlotPlacementGate
 {
@@ -48,10 +48,10 @@ internal static class StructureAppliedDrawSlotPlacementGate
             ApplicationErrorCodes.AppliedDrawSlotPlacementProtected);
 
     /// <summary>
-    /// Returns whether <paramref name="slotKey"/> is protected by an Applied Slot draw (R0–R2).
+    /// Returns whether <paramref name="slotKey"/> is protected by an Applied Slot draw.
     /// </summary>
     /// <remarks>
-    /// When multiple Applied draws disagree on the same slot key, returns <see langword="false"/> (R4) so B1 does not refuse globally.
+    /// When multiple Applied draws disagree on the same slot key, returns <see langword="false"/> so the gate does not refuse globally.
     /// With valid domain data this path is unreachable: <see cref="DrawResolution.ResolvedSlots"/> enforces unique slot keys,
     /// and two non-cancelled Applied draws cannot disagree on occupancy. The branch is defensive for corrupt persistence.
     /// </remarks>

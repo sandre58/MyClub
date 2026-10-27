@@ -7,7 +7,7 @@
 namespace MyClub.PlayUp.Application.Stages.ProgressionImpact;
 
 /// <summary>
-/// Documents WC-1 + WC-2 composition for P5 gate (read-only helper).
+/// Combines consumption and downstream-production witnesses for the progression impact gate.
 /// </summary>
 internal static class ProgressionImpactWitnessComposition
 {

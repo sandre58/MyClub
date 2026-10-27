@@ -9,7 +9,7 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Domain.Stages;
 
 /// <summary>
-/// Outcome of <see cref="SwissPairingEngine.BuildPairings"/> — success or NoSolution (I8).
+/// Outcome of <see cref="SwissPairingEngine.BuildPairings"/> — success or NoSolution.
 /// </summary>
 public sealed class SwissPairingResult
 {
@@ -55,7 +55,7 @@ public sealed class SwissPairingResult
     }
 
     /// <summary>
-    /// Creates a no-solution outcome (I8 — no complete legal matching).
+    /// Creates a no-solution outcome (no complete legal matching).
     /// </summary>
     /// <returns>A no-solution result.</returns>
     public static SwissPairingResult NoSolution() => new(true, null, null);

@@ -19,7 +19,7 @@ using Xunit;
 namespace MyClub.PlayUp.Application.Tests.Stages;
 
 /// <summary>
-/// B1 / C1 — Qual → Championship / Swiss = Population only (matrice Placement).
+/// Qual → Championship / Swiss = Population only (matrice Placement).
 /// No form feeds, no Slot/Group dual-write. Schematic RosterPlace stays FeedOrigin-null.
 /// </summary>
 public sealed class QualificationPopulationOnlyDestinationTests

@@ -11,9 +11,9 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
-/// G-MAT2: refuse Cup materialization when requested or eligible production intersects
+/// Refuses Cup materialization when requested or eligible production intersects
 /// unreachable placement award keys (<see cref="CompetitionFlowAnalyzer.AuthoredAwardUnreachable"/>).
-/// Production-scoped (option B) — not global Prepare attribution parity.
+/// Scoped to the production being created — not a global Prepare attribution check.
 /// </summary>
 internal static class StructureMaterializeAttributionGate
 {

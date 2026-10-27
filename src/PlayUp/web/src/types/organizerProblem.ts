@@ -1,4 +1,4 @@
-/** Step 2 read-model semantics (Application pilot — optional on wire). */
+/** Organizer-problem read-model semantics (optional on the wire). */
 export interface OrganizerProblemRead {
   canonCode: string;
   semanticLevel: 'Gate' | 'Signal' | 'Attention' | 'Information';

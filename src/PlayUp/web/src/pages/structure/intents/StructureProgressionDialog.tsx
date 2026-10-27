@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------
 // Progression dialog — Intent Round × Outcome → Destination.
 // UX Place = Placement destination picker (Slot | Group).
-// Place D1: Expand[i] ↔ destinationSlotKeys[i] XOR destinationGroupIds[i].
+// Place mapping: Expand[i] ↔ destinationSlotKeys[i] XOR destinationGroupIds[i].
 // -----------------------------------------------------------------------
 
 import {

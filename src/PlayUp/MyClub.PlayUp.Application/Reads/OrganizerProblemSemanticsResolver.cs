@@ -9,7 +9,7 @@ using MyClub.PlayUp.Application.Stages;
 namespace MyClub.PlayUp.Application.Reads;
 
 /// <summary>
-/// Maps existing read-model codes to Step 2 semantics (pilot trio + shared lifecycle gates).
+/// Maps existing read-model codes to organizer-problem semantics, including shared lifecycle gates.
 /// </summary>
 public static class OrganizerProblemSemanticsResolver
 {

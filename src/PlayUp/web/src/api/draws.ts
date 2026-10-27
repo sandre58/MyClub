@@ -73,7 +73,7 @@ export function generateDraw(
 
 /**
  * One UI gesture for a new draw: Create → inputs (Rerun) → Generate.
- * Rerun = full redraw (ignore occupancy Fixed*); Encoding F stays Default elsewhere.
+ * Rerun = full redraw (ignore occupancy Fixed*); Default keeps Fixed* elsewhere.
  * Generate is not exposed as a separate product action.
  *
  * If Create succeeded but inputs/Generate fail technically, throws

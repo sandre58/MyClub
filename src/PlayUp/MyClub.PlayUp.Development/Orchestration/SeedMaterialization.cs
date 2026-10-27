@@ -206,7 +206,7 @@ internal static class SeedMaterialization
         {
             if (stage.Status is StageStatus.Draft)
             {
-                // Structure Materialize recette (C2): partial slot draw — PrepareStage requires all slot feeds.
+                // Structure Materialize recette: partial slot draw — PrepareStage requires all slot feeds.
                 stage.Prepare(context.Clock);
             }
         }

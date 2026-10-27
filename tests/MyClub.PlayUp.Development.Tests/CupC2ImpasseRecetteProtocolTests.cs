@@ -23,9 +23,9 @@ using Xunit;
 namespace MyClub.PlayUp.Development.Tests;
 
 /// <summary>
-/// Executable recette C2 — Cup impasse Start guards.
-/// Track A: <see cref="C2_A3_at_one_of_two_without_manual_assign_start_blocked_as_incomplete_entry_roundAsync"/> (A3),
-/// <see cref="C2_A5_after_all_eligible_materialized_start_still_blocked_incomplete_entry_roundAsync"/> (A4→A5).
+/// Executable recette for Cup impasse Start guards.
+/// <see cref="C2_A3_at_one_of_two_without_manual_assign_start_blocked_as_incomplete_entry_roundAsync"/>,
+/// <see cref="C2_A5_after_all_eligible_materialized_start_still_blocked_incomplete_entry_roundAsync"/>.
 /// Manual assign before Start at 1/2 is out of scope for this protocol.
 /// </summary>
 [Collection("DevelopmentPostgres")]
@@ -46,7 +46,7 @@ public sealed class CupC2ImpasseRecetteProtocolTests(DevelopmentPostgresFixture 
         hub.Materialize.DeterminedCount.Should().Be(2);
         hub.Materialize.EligibleCount.Should().Be(1);
 
-        // No manual assign before Start (checklist A2/A3). Guard 1a runs before production-gap Unmaterialized on this seed.
+        // No manual assign before Start. The incomplete-entry-round guard runs before the production-gap check on this seed.
         hub.Lifecycle!.Transition.DisabledReasonCode.Should()
             .Be(StructureStageLifecycleAssembler.DisabledIncompleteEntryRound);
         hub.PresentedIssueCodes.Should().Contain(

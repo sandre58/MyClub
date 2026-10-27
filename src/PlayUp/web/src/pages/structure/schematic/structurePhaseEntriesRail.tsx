@@ -87,7 +87,7 @@ function compositionTeamProvenanceBadge(
   );
 }
 
-/** Cardinality gauge — expected Population vs Places N (D5 phase-aware chrome). */
+/** Cardinality gauge — expected Population vs Places N (phase-aware chrome). */
 export function CompositionMeter({
   entries,
   places,
@@ -225,7 +225,7 @@ export function RootEntriesRail({
 }: {
   stage: StructureStageHubSummary;
   entries: readonly StructureEntry[];
-  /** B2 — inbound Qualif/Prog rules (same rail as Affectation teams). */
+  /** Inbound Qualif/Prog rules (same rail as Affectation teams). */
   sources?: ReactNode;
   /** Expected volume from inbound rules (promised Entries, not yet necessarily in CompositionEntries). */
   sourcesConfiguredVolume?: number;
@@ -253,7 +253,7 @@ export function RootEntriesRail({
   const previewNames = runtimeMode
     ? (stage.compositionPreviewNames ?? [])
     : (stage.affectationPreviewNames ?? []);
-  // U1 — Population gauge always covers authoring alimentations (never runtime membership).
+  // Population gauge always covers authoring alimentations (never runtime membership).
   const meterEntries = fromAffectation + fromFeeds;
   const composed = useMemo(
     () =>

@@ -11,12 +11,12 @@ using MyClub.PlayUp.Domain.Matches;
 namespace MyClub.PlayUp.Application.Competitions;
 
 /// <summary>
-/// Named atomic batch: remove several declared members from one entry. One R4 failure refuses the lot.
+/// Named atomic batch: remove several declared members from one entry. One eligibility failure refuses the lot.
 /// </summary>
 public static class RemoveDeclaredMembers
 {
     /// <summary>
-    /// Removes every listed member after all R4 gates succeed.
+    /// Removes every listed member after every eligibility gate succeeds.
     /// </summary>
     public static void Execute(
         Competition competition,

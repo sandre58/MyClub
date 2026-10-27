@@ -13,7 +13,7 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
-/// Cup Start guard (decision 1a): canonical mono-round entry pairs must have both placement slots filled before Running.
+/// Cup Start guard: canonical mono-round entry pairs must have both placement slots filled before Running.
 /// </summary>
 internal static class CupCanonicalEntryRoundStartGate
 {

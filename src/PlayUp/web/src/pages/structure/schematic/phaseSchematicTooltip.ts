@@ -21,7 +21,7 @@ export type SchematicCaseTooltipModel = {
     primaryColor?: string | null;
   } | null;
   /**
-   * Legacy Qual/Prog tip row when case primary was the path (pre-R7). Unused when R7
+   * Qual/Prog tip row kept for when the path was the case primary. Unused when the resolved participant
    * shows the participant on the case and the path in the tip subject.
    */
   resolvedTeam: {
@@ -39,7 +39,7 @@ export type SchematicCaseTooltipModel = {
   } | null;
   /** When the place accepts manual placement (click to open dialog). */
   action: string | null;
-  /** Team row in tip when forfeit and case primary is a construction label (R7). */
+  /** Team row in tip when forfeit and case primary is a construction label . */
   withdrawnTeamRow: {
     name: string;
     logoMediaId?: string | null;
@@ -50,7 +50,7 @@ export type SchematicCaseTooltipModel = {
 };
 
 /**
- * Case tooltip model — R7: participant on case when resolved; Qual/Prog path in tip.
+ * Case tooltip model — participant on case when resolved; Qual/Prog path in tip.
  */
 export function buildSchematicCaseTooltipModel({
   address,
@@ -66,7 +66,7 @@ export function buildSchematicCaseTooltipModel({
   address: string | null;
   primary: string | null;
   resolvedName: string | null;
-  /** Qual/Prog feed path label — independent of case primary after R7. */
+  /** Qual/Prog feed path label — independent of case primary. */
   constructionPathLabel?: string | null;
   feed?: SchematicFeedOrigin | null;
   crest?: {
@@ -91,7 +91,7 @@ export function buildSchematicCaseTooltipModel({
 
   if (isStructuralFeed) {
     if (teamName && pathLabel) {
-      // R7 — case shows team; tip carries construction path (+ from-phase footer).
+      // case shows team; tip carries construction path (+ from-phase footer).
       subject = { kind: 'label', name: pathLabel };
     } else if (pathLabel) {
       subject = { kind: 'label', name: pathLabel };

@@ -1,8 +1,8 @@
 /**
- * Structure UX — confrontation labels (arbitrage A).
+ * Structure UX — confrontation labels.
  *
  * - Cup / bracket: {@link PairKey} alone (`P1`, …) is the organizer-facing identity.
- * - `Match #n` is a secondary repère for championship, groups, or legacy fixture-only paths
+ * - `Match #n` is a secondary label for championship, groups, or fixture-only paths
  *   when no PairKey is available — never combined with PairKey on the same line.
  */
 

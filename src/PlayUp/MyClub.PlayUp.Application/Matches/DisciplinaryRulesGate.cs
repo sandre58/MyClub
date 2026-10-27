@@ -11,7 +11,7 @@ using MyClub.PlayUp.Domain.Rules;
 namespace MyClub.PlayUp.Application.Matches;
 
 /// <summary>
-/// Application gate for competition disciplinary catalogue authorization (D1 / cases 2 &amp; 4).
+/// Application gate for competition disciplinary catalogue authorization .
 /// </summary>
 internal static class DisciplinaryRulesGate
 {

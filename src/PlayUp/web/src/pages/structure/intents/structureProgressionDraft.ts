@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------
 // Progression Intent drafts — Round × Outcome → Destination.
 // UX Place = Placement destination picker (Slot | Group).
-// Place D1: Expand[i] ↔ destinationSlotKeys[i] XOR destinationGroupIds[i].
+// Place mapping: Expand[i] ↔ destinationSlotKeys[i] XOR destinationGroupIds[i].
 // -----------------------------------------------------------------------
 
 import type {
@@ -84,7 +84,7 @@ export function newProgIntentId(): string {
   return crypto.randomUUID();
 }
 
-/** Expand count for Place D1 (fixtures on the selected round). */
+/** Expand count for a Place mapping (fixtures on the selected round). */
 export function expandCount(draft: ProgIntentDraft): number {
   return Math.max(draft.expandedPathCount, 0);
 }

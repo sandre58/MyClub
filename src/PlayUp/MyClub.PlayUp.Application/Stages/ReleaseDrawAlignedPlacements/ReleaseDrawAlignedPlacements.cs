@@ -30,7 +30,7 @@ public static class ReleaseDrawAlignedPlacements
     /// <param name="stage">Stage that owns the draw.</param>
     /// <param name="drawId">Draw whose resolution defines target pairs.</param>
     /// <param name="clock">Clock for domain events.</param>
-    /// <param name="stageMatches">Matches attached on the stage (F1 coherence); empty when none.</param>
+    /// <param name="stageMatches">Matches attached on the stage (opponent coherence); empty when none.</param>
     /// <returns>How many placements were released vs skipped.</returns>
     public static ReleaseDrawAlignedPlacementsResult Execute(
         Stage stage,

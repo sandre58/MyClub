@@ -13,7 +13,7 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
-/// G-OPS3 progression impact (W-OPS3-2) — WC-1 consumption and WC-2 downstream production participation.
+/// Refuses progression rule changes when a touched path is already consumed or participates in downstream match production.
 /// </summary>
 internal static class StructureProgressionImpactGate
 {

@@ -13,8 +13,8 @@ namespace MyClub.PlayUp.Application.Reads;
 /// Aggregated Overview Read projection — Application interpretation, not Domain.
 /// </summary>
 /// <remarks>
-/// One projection among several Read Surfaces (R22). Does not replace workspace / structure / attention endpoints.
-/// Available actions are opportunities based on known state (R19) — not execution guarantees.
+/// One projection among several Read Surfaces. Does not replace workspace / structure / attention endpoints.
+/// Available actions are opportunities based on known state — not execution guarantees.
 /// Organizer-facing copy lives in the SPA i18n layer (codes + facts only on the wire).
 /// </remarks>
 /// <param name="CompetitionId">Competition identity.</param>
@@ -128,7 +128,7 @@ public sealed record OverviewCompetitionPeriodDto(DateTimeOffset? Start, DateTim
 /// <param name="Code">Construction | InProgress | Completed | Archived.</param>
 public sealed record OverviewCycleReadingDto(string Code);
 
-/// <summary>Four construction dimensions (R2).</summary>
+/// <summary>Four construction dimensions.</summary>
 public sealed record OverviewConstructionDimensionsDto(
     OverviewDimensionDto Teams,
     OverviewDimensionDto Structure,
@@ -182,7 +182,7 @@ public sealed record OverviewStageRegulationSummaryDto(
     int ProgressionPathCount,
     bool HasTieFormat);
 
-/// <summary>Readiness relative to a concrete transition (R5) — not a global regulation validity claim.</summary>
+/// <summary>Readiness relative to a concrete transition — not a global regulation validity claim.</summary>
 /// <param name="Transition">Stable code (e.g. MaterializeMatches, Draw).</param>
 /// <param name="Ready">True when Structure readiness says the transition path is identifiable.</param>
 /// <param name="BlockerCodes">Same machine codes as Structure / Situations when not ready.</param>
@@ -356,7 +356,7 @@ public sealed record OverviewStandingCompactRowDto(
     int Played,
     int Points);
 
-/// <summary>Derived situation unit (R8–R9) — codes + targets; copy in SPA i18n.</summary>
+/// <summary>Derived situation unit — codes + targets; copy in SPA i18n.</summary>
 /// <remarks>
 /// Stable identity = <see cref="Source"/> + <see cref="TargetType"/> + <see cref="TargetId"/> (not translated text).
 /// Reason copy = SPA i18n keyed by <see cref="Source"/> (+ <see cref="Params"/>).
@@ -385,7 +385,7 @@ public sealed record OverviewSituationDto(
 /// <summary>Attention view derived from situations (not a parallel list).</summary>
 public sealed record OverviewAttentionSummaryDto(int Count, IReadOnlyList<OverviewSituationDto> Items);
 
-/// <summary>Semantic action / transition opportunity (R6, R19) — label via SPA i18n.</summary>
+/// <summary>Semantic action / transition opportunity — label via SPA i18n.</summary>
 /// <param name="Code">Stable machine code.</param>
 /// <param name="Guaranteed">Always false — Domain/Application remain authoritative.</param>
 /// <param name="StageId">Optional stage context.</param>
@@ -402,7 +402,7 @@ public sealed record OverviewActionDto(
     Guid? FixtureId = null,
     IReadOnlyDictionary<string, string>? Params = null);
 
-/// <summary>Natural progression hint (R18) — guide without prescribing; label via SPA i18n.</summary>
+/// <summary>Natural progression hint — guide without prescribing; label via SPA i18n.</summary>
 public sealed record OverviewNaturalProgressionDto(string Code);
 
 /// <summary>Closure synthesis — distinct from Attention (Completion blockers ≠ Needs attention).</summary>

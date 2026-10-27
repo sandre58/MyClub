@@ -17,7 +17,7 @@ public static class AssignEntryToSlot
 {
     /// <summary>
     /// Pins <paramref name="entryId"/> on <paramref name="slotKey"/> (configuration + sync resolution).
-    /// Domain enforces population membership, feed conflicts, and Cup F1 coherence.
+    /// Domain enforces population membership, feed conflicts, and Cup opponent coherence.
     /// </summary>
     public static void Execute(
         Stage stage,

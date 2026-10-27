@@ -73,7 +73,7 @@ public static class ApplyQualification
     /// <param name="competitionStages">All competition stages (tracked).</param>
     /// <param name="clock">Clock for domain events.</param>
     /// <param name="destinationMatches">
-    /// Matches on destination stages for F1 determination coherence (may include all competition stages).
+    /// Matches on destination stages for determination coherence (may include all competition stages).
     /// </param>
     public static IReadOnlyList<QualificationInstruction> Execute(
         Stage sourceStage,

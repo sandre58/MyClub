@@ -100,7 +100,7 @@ public sealed class ProgressionRulesPathDiffResult
     /// <summary>Gets paths equal in both snapshots.</summary>
     public IReadOnlyList<ProgressionPath> Unchanged { get; }
 
-    /// <summary>Gets removed ∪ replaced before snapshots (WC-1 scope).</summary>
+    /// <summary>Gets removed and replaced-before paths (the set rechecked for consumption).</summary>
     public IReadOnlyList<ProgressionPath> Touched { get; }
 
     /// <summary>Gets a value indicating whether any path was removed or replaced.</summary>

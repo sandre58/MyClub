@@ -18,7 +18,7 @@ using Xunit;
 namespace MyClub.PlayUp.Application.Tests.Stages;
 
 /// <summary>
-/// G-OPS3 B1 — Cup <see cref="AssignEntryToSlot"/> / <see cref="ClearSlotAssignment"/> vs Applied draw.
+/// Cup <see cref="AssignEntryToSlot"/> / <see cref="ClearSlotAssignment"/> versus an Applied draw.
 /// </summary>
 public sealed class CupSlotPlacementGOps3B1Tests
 {

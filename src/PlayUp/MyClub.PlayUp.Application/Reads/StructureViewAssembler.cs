@@ -668,7 +668,7 @@ public static class StructureViewAssembler
     /// <summary>
     /// Places N — target cardinality at T (form capacity; Championship/Swiss root = occupying entries,
     /// fed phase = expected occupancy, or null when that occupancy is unknown).
-    /// Never derived from Draw or composition set k. Null = indeterminable (E4), not zero.
+    /// Never derived from Draw or composition set k. Null means indeterminable, not zero.
     /// DTO name compositionCapacity retained temporarily = target Places, not current k.
     /// Cup: entry places (1st-round cardinality), not total <c>slotCount</c> when multi-round.
     /// </summary>
@@ -758,7 +758,7 @@ public static class StructureViewAssembler
     private static bool CompetitionFreezesDraftStructure(Competition competition) =>
         competition.Status is CompetitionStatus.Running or CompetitionStatus.Suspended;
 
-    /// <summary>Draft — full form + game regulation + operational (§11A A1).</summary>
+    /// <summary>Draft — full form, game regulation, and operational edits.</summary>
     private static List<string> BuildDraftStageActions(
         Competition competition,
         Stage stage,
@@ -850,7 +850,7 @@ public static class StructureViewAssembler
         return actions;
     }
 
-    /// <summary>Ready — operational only when no production (G-OPS1 / D2); form frozen (A2).</summary>
+    /// <summary>Ready — operational edits only when no production is attached; form is frozen.</summary>
     private static List<string> BuildReadyStageActions(
         Competition competition,
         Stage stage,

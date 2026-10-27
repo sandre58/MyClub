@@ -11,7 +11,7 @@ using MyClub.PlayUp.Development.Runtime;
 namespace MyClub.PlayUp.Development.Scenarios;
 
 /// <summary>
-/// CTRL-O3-MAT — Suspended-phase production UI gate (see docs/design/structure-lifecycle/ctrl-o3-mat-devrunner-recette.md).
+/// Suspended-phase production UI gate (see docs/design/structure-lifecycle/ctrl-o3-mat-devrunner-recette.md).
 /// </summary>
 public sealed class CtrlO3MatRecetteScenario : IScenario
 {
