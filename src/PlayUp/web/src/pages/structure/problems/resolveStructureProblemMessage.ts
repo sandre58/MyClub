@@ -1,6 +1,10 @@
 import type { TFunction } from 'i18next';
 
-import { apiErrorLabel } from '../../../i18n/apiErrorLabel';
+import {
+  apiErrorLabel,
+  genericNetworkLabel,
+  isGenericNetworkFailure,
+} from '../../../i18n/apiErrorLabel';
 import { ApiError } from '../../../api';
 import type { OrganizerProblemRead } from '../../../types';
 import {
@@ -39,6 +43,10 @@ export function resolveLifecycleMutationMessage(
   t: TFunction<'structure'>,
   error: unknown,
 ): string {
+  if (isGenericNetworkFailure(error)) {
+    return genericNetworkLabel();
+  }
+
   if (error instanceof Error && !(error instanceof ApiError)) {
     return error.message;
   }

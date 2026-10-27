@@ -19,6 +19,7 @@
     "home": "Retour à l’accueil"
   },
   "unknownError": "Erreur inconnue",
+  "networkError": "Connexion impossible. Vérifiez le réseau, puis réessayez.",
   "errorWithStatus": "{{message}} ({{status}})",
   "unknownEntry": "Entrée inconnue",
   "fixOnStructure": "Voir dans Structure"

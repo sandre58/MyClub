@@ -182,8 +182,9 @@ describe('HomePage', () => {
     renderHomePage();
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Host unavailable (500)',
+      'Connexion impossible. Vérifiez le réseau, puis réessayez.',
     );
+    expect(screen.getByRole('alert')).not.toHaveTextContent('Host unavailable');
     expect(
       screen.getByRole('button', { name: /Créer une compétition/i }),
     ).toBeInTheDocument();
