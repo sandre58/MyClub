@@ -666,7 +666,8 @@ public static class StructureViewAssembler
     }
 
     /// <summary>
-    /// Places N — target cardinality at T (form capacity, or Active for Championship/Swiss).
+    /// Places N — target cardinality at T (form capacity; Championship/Swiss root = occupying entries,
+    /// fed phase = expected occupancy, or null when that occupancy is unknown).
     /// Never derived from Draw or composition set k. Null = indeterminable (E4), not zero.
     /// DTO name compositionCapacity retained temporarily = target Places, not current k.
     /// Cup: entry places (1st-round cardinality), not total <c>slotCount</c> when multi-round.

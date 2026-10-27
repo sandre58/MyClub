@@ -244,10 +244,67 @@ describe('structureReadinessSummary', () => {
       compositionCapacity: 8,
     });
     const data = view([poules]);
+    expect(data.stages[0]?.presentedIssueCodes).toContain('MissingPotRules');
     const summary = computeStructureReadinessSummary(data, data.stages);
+    const potActions = collectAllStructureReadinessActionItems(
+      data,
+      data.stages,
+    ).filter((item) => item.code === 'MissingPotRules');
     expect(summary.missingPotsPhaseCount).toBe(1);
+    expect(summary.presentedProblemCount).toBe(1);
     expect(summary.familyCounts).toEqual([]);
-    expect(summary.headerTone).toBe('attention');
+    expect(potActions).toHaveLength(1);
+    expect(summary.headerTone).toBe('danger');
+  });
+
+  it('counts MissingPotRules once when Host already sent the code', () => {
+    const poules = stage({
+      stageId: 'a',
+      name: 'Poules',
+      formatKind: 'Groups',
+      hasDrawRules: true,
+      numberOfPots: null,
+      affectationEntryCount: 8,
+      compositionCapacity: 8,
+      presentedIssueCodes: ['MissingPotRules'],
+    });
+    const data = view([poules]);
+    const summary = computeStructureReadinessSummary(data, data.stages);
+    const potActions = collectAllStructureReadinessActionItems(
+      data,
+      data.stages,
+    ).filter((item) => item.code === 'MissingPotRules');
+    expect(summary.missingPotsPhaseCount).toBe(1);
+    expect(summary.presentedProblemCount).toBe(1);
+    expect(summary.familyCounts).toEqual([]);
+    expect(potActions).toHaveLength(1);
+    expect(potActions[0]?.id).toBe('a:MissingPotRules');
+    expect(potActions[0]?.href).toContain('section=tirage');
+    expect(stageAmbientKinds(data, data.stages[0]!)).toEqual(['drawPots']);
+  });
+
+  it('does not invent MissingPotRules when Host presentedIssueCodes is empty', () => {
+    const poules = stage({
+      stageId: 'a',
+      name: 'Poules',
+      formatKind: 'Groups',
+      hasDrawRules: true,
+      numberOfPots: null,
+      affectationEntryCount: 8,
+      compositionCapacity: 8,
+      presentedIssueCodes: [],
+    });
+    const data = view([poules]);
+    const summary = computeStructureReadinessSummary(data, data.stages);
+    expect(summary.missingPotsPhaseCount).toBe(0);
+    expect(summary.presentedProblemCount).toBe(0);
+    expect(summary.hasAny).toBe(false);
+    expect(stageAmbientKinds(data, data.stages[0]!)).toEqual([]);
+    expect(
+      collectAllStructureReadinessActionItems(data, data.stages).filter(
+        (item) => item.code === 'MissingPotRules',
+      ),
+    ).toHaveLength(0);
   });
 
   it('does not treat Cup null pots as MissingPotRules (Host-aligned E1/E6)', () => {

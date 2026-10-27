@@ -21,6 +21,8 @@ updates:
           - "Microsoft.CodeAnalysis.*"
           - "Microsoft.NET.Test.Sdk"
           - "Microsoft.SourceLink.*"
+          - "Microsoft.EntityFrameworkCore.*"
+          - "Npgsql.EntityFrameworkCore.PostgreSQL"
       test-stack:
         patterns:
           - "xunit*"

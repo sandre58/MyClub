@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Progressive .NET warnings gate (phase 4 lot D1 / AUD-0005-C).
+# Counts compiler/analyzer warnings only; NU* (NuGet) lines are excluded from the gate.
 # Usage: verify-dotnet-warnings-baseline.sh <path-to-build.log>
 set -euo pipefail
 
@@ -48,22 +49,33 @@ if [[ -z "$SUMMARY_LINE" ]]; then
   exit 1
 fi
 
-ACTUAL_TOTAL=$(echo "$SUMMARY_LINE" | grep -oE '[0-9]+' | head -1)
-if [[ -z "$ACTUAL_TOTAL" ]]; then
-  ACTUAL_TOTAL=0
+BUILD_REPORTED_TOTAL=$(echo "$SUMMARY_LINE" | grep -oE '[0-9]+' | head -1)
+if [[ -z "$BUILD_REPORTED_TOTAL" ]]; then
+  BUILD_REPORTED_TOTAL=0
 fi
 
 # One line per diagnostic; MSBuild may duplicate — use unique physical lines.
+# NU* (NuGet restore/resolution) is out of scope — see docs/audit/phase-4-lot-d1-plan.md.
 mapfile -t UNIQUE_LINES < <(grep -E ': warning [A-Z][A-Z0-9]*[0-9]+:' "$LOG" | sort -u)
 declare -A ACTUAL_BY_CODE
+NU_EXCLUDED=0
 for line in "${UNIQUE_LINES[@]}"; do
   if [[ "$line" =~ warning[[:space:]]([A-Z][A-Z0-9]*[0-9]+): ]]; then
     code="${BASH_REMATCH[1]}"
+    if [[ "$code" == NU* ]]; then
+      NU_EXCLUDED=$((NU_EXCLUDED + 1))
+      continue
+    fi
     ACTUAL_BY_CODE["$code"]=$(( ${ACTUAL_BY_CODE["$code"]:-0} + 1 ))
   fi
 done
 
-echo "dotnet warnings total: $ACTUAL_TOTAL (baseline max $MAX_TOTAL)"
+ACTUAL_TOTAL=0
+for code in "${!ACTUAL_BY_CODE[@]}"; do
+  ACTUAL_TOTAL=$((ACTUAL_TOTAL + ACTUAL_BY_CODE[code]))
+done
+
+echo "dotnet warnings (gated): $ACTUAL_TOTAL (baseline max $MAX_TOTAL); build reported $BUILD_REPORTED_TOTAL; NU* excluded: $NU_EXCLUDED"
 
 if (( ACTUAL_TOTAL > MAX_TOTAL )); then
   echo "ERROR: warning total $ACTUAL_TOTAL exceeds baseline $MAX_TOTAL" >&2

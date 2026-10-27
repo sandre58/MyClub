@@ -80,7 +80,10 @@ public static class StructurePresentedAttentionCollector
     internal static bool DeferGroupsNotReadyForDraw(StructureStageHubSummaryDto stage) =>
         StructurePresentedStageDiagnostics.DeferGroupsNotReadyForDraw(stage);
 
-    /// <summary>SPA: <c>stageHasEngagedMissingPots</c>.</summary>
+    /// <summary>
+    /// Same shape as <see cref="StructurePresentedStageDiagnostics.StageHasEngagedMissingPots"/>.
+    /// The Structure SPA reads MissingPotRules from <c>presentedIssueCodes</c>.
+    /// </summary>
     internal static bool StageHasEngagedMissingPots(StructureStageHubSummaryDto stage) =>
         StructurePresentedStageDiagnostics.StageHasEngagedMissingPots(stage);
 

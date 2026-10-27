@@ -52,6 +52,22 @@ public sealed class SetCompetitionStageOrderTests
     }
 
     [Fact]
+    public void Execute_allows_reorder_when_a_stage_is_Ready_and_the_competition_is_Draft()
+    {
+        var competition = CreateCompetition.Execute("Order-StageReady", _clock);
+        var ready = AddCompetitionStage.Execute(competition, StructureIntent.Championship("Ready"), _clock);
+        ready.AddMatchday(1, _clock);
+        ready.Prepare(_clock);
+        var draft = AddCompetitionStage.Execute(competition, StructureIntent.Championship("Draft"), _clock);
+
+        SetCompetitionStageOrder.Execute(competition, [draft.Id, ready.Id], _clock);
+
+        competition.Status.Should().Be(CompetitionStatus.Draft);
+        ready.Status.Should().Be(StageStatus.Ready);
+        competition.StageIds.Should().Equal(draft.Id, ready.Id);
+    }
+
+    [Fact]
     public void Execute_same_order_on_Ready_is_a_noop()
     {
         var competition = CreateCompetition.Execute("Order-Noop", _clock);

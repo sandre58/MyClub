@@ -52,8 +52,12 @@ import {
   isStructureHubOperationalSlicePending,
   resolveStructurePageHeadNoteKind,
 } from './structurePageHeadReadiness';
-import { AddPhaseDialog } from './StructureGraphDialogs';
-import { StructurePhaseOrderControls } from './structurePhaseOrderControls';
+import { AddPhaseDialog, RemovePhaseDialog } from './StructureGraphDialogs';
+import {
+  StructurePhaseInsertSlot,
+  StructurePhaseTileActions,
+  StructureSinglePhaseBirth,
+} from './structurePhaseOrderControls';
 import { scheduleStructureRefresh } from './structureInvalidation';
 import { StructureReadinessHint } from './StructureReadinessHint';
 import { StructurePageHeadReadinessStatus } from './structurePageHeadReadinessStatus';
@@ -228,23 +232,14 @@ function StructureHub({ data }: { data: StructureView }) {
   };
 
   const addPhaseAction = (
-    <Tooltip
-      content={
-        canAddPhase ? t('graph.addPhase') : t('hub.addPhaseDisabledHint')
-      }
+    <button
+      type="button"
+      className="ds-btn ds-btn--primary"
+      onClick={openAppend}
     >
-      <span>
-        <button
-          type="button"
-          className="ds-btn ds-btn--primary"
-          disabled={!canAddPhase}
-          onClick={openAppend}
-        >
-          <PlusIcon size="sm" />
-          <span>{t('graph.addPhase')}</span>
-        </button>
-      </span>
-    </Tooltip>
+      <PlusIcon size="sm" />
+      <span>{t('graph.addPhase')}</span>
+    </button>
   );
 
   const bootstrapEmpty =
@@ -253,7 +248,7 @@ function StructureHub({ data }: { data: StructureView }) {
         variant="idle"
         icon={<EmptySelectionIcon size="lg" />}
         title={t('structure.emptyTitle')}
-        action={addPhaseAction}
+        action={canAddPhase ? addPhaseAction : undefined}
       >
         {t('structure.emptyBody')}
       </EmptyState>
@@ -263,7 +258,17 @@ function StructureHub({ data }: { data: StructureView }) {
     <div className="structure-hub">
       <PageHead
         title={t('title')}
-        actions={stages.length === 0 ? undefined : addPhaseAction}
+        actions={
+          stages.length === 1 && canAddPhase && selectedStage ? (
+            <StructureSinglePhaseBirth
+              stageName={selectedStage.name}
+              onAppend={openAppend}
+              onInsertBefore={() =>
+                openInsert(selectedStage.stageId, 'Before', selectedStage.name)
+              }
+            />
+          ) : undefined
+        }
         note={readinessStatusNote(
           data,
           stages,
@@ -286,58 +291,44 @@ function StructureHub({ data }: { data: StructureView }) {
               onInsert={openInsert}
             />
           ) : null}
-          <StructurePhaseFiche
-            data={data}
-            stage={selectedStage}
-            singlePhaseHub={!multiPhase}
-            onSelectStage={selectStage}
-            orderMenu={
-              !multiPhase && canAddPhase && selectedStage ? (
-                <StructurePhaseOrderControls
-                  stageName={selectedStage.name}
-                  onInsertBefore={() =>
-                    openInsert(
-                      selectedStage.stageId,
-                      'Before',
-                      selectedStage.name,
-                    )
-                  }
-                  onInsertAfter={() =>
-                    openInsert(
-                      selectedStage.stageId,
-                      'After',
-                      selectedStage.name,
-                    )
-                  }
-                />
-              ) : null
+          <div
+            className={
+              multiPhase
+                ? 'structure-hub__fiche-column'
+                : 'structure-hub__single-phase'
             }
-            initialEdit={pendingEdit}
-            initialCompose={pendingCompose}
-            initialFocus={pendingFocus}
-            initialManual={pendingManual}
-            initialDrawWorkflow={pendingDrawWorkflow}
-            onInitialEditConsumed={() => {
-              setPendingEdit(null);
-              setPendingCompose(false);
-              setPendingFocus(null);
-              setPendingManual(false);
-              setPendingDrawWorkflow(false);
-              setSearchParams(
-                (prev) => {
-                  const next = new URLSearchParams(prev);
-                  next.delete(STRUCTURE_SECTION_PARAM);
-                  next.delete(STRUCTURE_ROUND_PARAM);
-                  next.delete(STRUCTURE_COMPOSE_PARAM);
-                  next.delete(STRUCTURE_FOCUS_PARAM);
-                  next.delete(STRUCTURE_MANUAL_PARAM);
-                  next.delete(STRUCTURE_DRAW_PARAM);
-                  return next;
-                },
-                { replace: true },
-              );
-            }}
-          />
+          >
+            <StructurePhaseFiche
+              data={data}
+              stage={selectedStage}
+              onSelectStage={selectStage}
+              initialEdit={pendingEdit}
+              initialCompose={pendingCompose}
+              initialFocus={pendingFocus}
+              initialManual={pendingManual}
+              initialDrawWorkflow={pendingDrawWorkflow}
+              onInitialEditConsumed={() => {
+                setPendingEdit(null);
+                setPendingCompose(false);
+                setPendingFocus(null);
+                setPendingManual(false);
+                setPendingDrawWorkflow(false);
+                setSearchParams(
+                  (prev) => {
+                    const next = new URLSearchParams(prev);
+                    next.delete(STRUCTURE_SECTION_PARAM);
+                    next.delete(STRUCTURE_ROUND_PARAM);
+                    next.delete(STRUCTURE_COMPOSE_PARAM);
+                    next.delete(STRUCTURE_FOCUS_PARAM);
+                    next.delete(STRUCTURE_MANUAL_PARAM);
+                    next.delete(STRUCTURE_DRAW_PARAM);
+                    return next;
+                  },
+                  { replace: true },
+                );
+              }}
+            />
+          </div>
         </div>
       )}
 
@@ -386,6 +377,8 @@ function TopologyPanel({
     stageId: string;
     direction: 'up' | 'down';
   } | null>(null);
+  const [removeStage, setRemoveStage] =
+    useState<StructureStageHubSummary | null>(null);
   const reorder = useMutation({
     mutationFn: (stageIds: string[]) =>
       setCompetitionStageOrder(data.competitionId, { stageIds }),
@@ -426,153 +419,227 @@ function TopologyPanel({
   }, [stages]);
 
   return (
-    <FormSection
-      id="topology"
-      className="structure-topology"
-      icon={<StructureIcon size="md" aria-hidden="true" />}
-      title={t('hub.topology')}
-    >
-      {reorder.isError ? (
-        <MutationError error={reorder.error} structureStages={stages} />
-      ) : null}
-      <ol
-        className={`structure-topology__list${multiPhase ? '' : ' structure-topology__list--single'}`}
+    <>
+      <FormSection
+        id="topology"
+        className="structure-topology"
+        icon={<StructureIcon size="md" aria-hidden="true" />}
+        title={t('hub.topology')}
       >
-        {stages.map((stage, index) => {
-          const selected = stage.stageId === selectedStageId;
-          const next = stages[index + 1];
-          const outbound = outboundDestinations(stage);
-          const facts = topologyCardFacts(stage, t);
-          const topologyIssueTone = stageWorstPresentedDiagnosticTone(
-            data,
-            stage,
-          );
-          const formatLabel = stage.formatKind
-            ? structureFormatKindLabel(stage.formatKind)
-            : t('structure.formatNotConfigured');
-          const univocalToNext =
-            outbound.length === 1 &&
-            next != null &&
-            outbound[0] === next.stageId;
-          const bridgeMode: 'connector' | 'outbound' | 'empty' = univocalToNext
-            ? 'connector'
-            : outbound.length > 0
-              ? 'outbound'
-              : 'empty';
-          const edgeLabel =
-            bridgeMode === 'connector' ? edgeLabelFromSource(stage, t) : null;
+        {reorder.isError ? (
+          <MutationError error={reorder.error} structureStages={stages} />
+        ) : null}
+        <ol
+          className={`structure-topology__list${multiPhase ? '' : ' structure-topology__list--single'}`}
+        >
+          {stages.map((stage, index) => {
+            const selected = stage.stageId === selectedStageId;
+            const next = stages[index + 1];
+            const outbound = outboundDestinations(stage);
+            const facts = topologyCardFacts(stage, t);
+            const topologyIssueTone = stageWorstPresentedDiagnosticTone(
+              data,
+              stage,
+            );
+            const formatLabel = stage.formatKind
+              ? structureFormatKindLabel(stage.formatKind)
+              : t('structure.formatNotConfigured');
+            const univocalToNext =
+              outbound.length === 1 &&
+              next != null &&
+              outbound[0] === next.stageId;
+            const bridgeMode: 'connector' | 'outbound' | 'empty' =
+              univocalToNext
+                ? 'connector'
+                : outbound.length > 0
+                  ? 'outbound'
+                  : 'empty';
+            const edgeLabel =
+              bridgeMode === 'connector' ? edgeLabelFromSource(stage, t) : null;
 
-          return (
-            <li key={stage.stageId} className="structure-topology__item">
-              <div className="structure-topology__row">
+            const canRemoveStage = (stage.actions ?? []).includes(
+              'RemoveStage',
+            );
+            const showMove = canReorder && stages.length > 1;
+            const showTileActions = showMove || canRemoveStage;
+            const toolbarKind =
+              showMove && canRemoveStage
+                ? 'move-remove'
+                : showMove
+                  ? 'move'
+                  : canRemoveStage
+                    ? 'remove'
+                    : 'none';
+            const showFoot = showTileActions || stage.hasDrawRules === true;
+
+            return (
+              <li key={stage.stageId} className="structure-topology__item">
+                {canReorder && index === 0 ? (
+                  <StructurePhaseInsertSlot
+                    stageName={stage.name}
+                    position="before"
+                    disabled={reorder.isPending}
+                    onInsert={() =>
+                      onInsert(stage.stageId, 'Before', stage.name)
+                    }
+                  />
+                ) : null}
                 <SelectableTile
-                  type="button"
+                  as="div"
                   className="structure-topology__tile"
                   selected={selected}
-                  aria-current={selected ? 'true' : undefined}
-                  onClick={() => onSelectStage(stage.stageId)}
                 >
-                  <span className="structure-topology__tile-head">
-                    <span className="structure-topology__tile-title">
-                      <Tooltip content={formatLabel}>
-                        <span className="structure-topology__format-icon">
-                          <StageFormatGlyph kind={stage.formatKind} size="sm" />
+                  <button
+                    type="button"
+                    className="structure-topology__select"
+                    aria-current={selected ? 'true' : undefined}
+                    onClick={() => onSelectStage(stage.stageId)}
+                  >
+                    <span className="structure-topology__tile-head">
+                      <span className="structure-topology__tile-title">
+                        <Tooltip content={formatLabel}>
+                          <span className="structure-topology__format-icon">
+                            <StageFormatGlyph
+                              kind={stage.formatKind}
+                              size="sm"
+                            />
+                          </span>
+                        </Tooltip>
+                        <span className="structure-topology__tile-name">
+                          {stage.name}
                         </span>
-                      </Tooltip>
-                      <span className="structure-topology__tile-name">
-                        {stage.name}
+                      </span>
+                      <span className="structure-topology__tile-status">
+                        <StageStatusBadge
+                          status={stage.status}
+                          density="compact"
+                        />
+                        {topologyIssueTone != null ? (
+                          <span
+                            className="structure-topology__issue"
+                            data-tone={topologyIssueTone}
+                            aria-label={t('hub.phaseGapsAmbient')}
+                          >
+                            <StructureDiagnosticIssueIcon
+                              tone={topologyIssueTone}
+                              size="sm"
+                            />
+                          </span>
+                        ) : null}
                       </span>
                     </span>
-                    <span className="structure-topology__tile-status">
-                      <StageStatusBadge
-                        status={stage.status}
-                        density="compact"
-                      />
-                      {topologyIssueTone != null ? (
+
+                    <span className="structure-topology__tile-body">
+                      <span className="structure-topology__tile-facts">
+                        {facts.map((fact) => (
+                          <span
+                            key={fact.id}
+                            className="structure-topology__fact"
+                          >
+                            <span className="structure-topology__fact-icon">
+                              {fact.icon}
+                            </span>
+                            <span className="structure-topology__fact-value">
+                              {fact.value}
+                            </span>
+                          </span>
+                        ))}
+                      </span>
+
+                      {showFoot ? (
                         <span
-                          className="structure-topology__issue"
-                          data-tone={topologyIssueTone}
-                          aria-label={t('hub.phaseGapsAmbient')}
+                          className="structure-topology__tile-foot"
+                          data-toolbar={toolbarKind}
                         >
-                          <StructureDiagnosticIssueIcon
-                            tone={topologyIssueTone}
-                            size="sm"
+                          <StructurePhaseDrawHint
+                            stage={stage}
+                            variant="topology"
                           />
                         </span>
                       ) : null}
                     </span>
-                  </span>
-
-                  <span className="structure-topology__tile-facts">
-                    {facts.map((fact) => (
-                      <span key={fact.id} className="structure-topology__fact">
-                        <span className="structure-topology__fact-icon">
-                          {fact.icon}
-                        </span>
-                        <span className="structure-topology__fact-value">
-                          {fact.value}
-                        </span>
-                      </span>
-                    ))}
-                  </span>
-
-                  <StructurePhaseDrawHint stage={stage} variant="topology" />
+                  </button>
+                  {showTileActions ? (
+                    <StructurePhaseTileActions
+                      stageName={stage.name}
+                      disabled={reorder.isPending}
+                      pending={
+                        pendingMove?.stageId === stage.stageId
+                          ? pendingMove.direction
+                          : null
+                      }
+                      showMove={showMove}
+                      moveUpDisabled={index === 0}
+                      moveDownDisabled={index === stages.length - 1}
+                      onMoveUp={() => moveStage(index, 'up')}
+                      onMoveDown={() => moveStage(index, 'down')}
+                      onRemove={
+                        canRemoveStage ? () => setRemoveStage(stage) : undefined
+                      }
+                    />
+                  ) : null}
                 </SelectableTile>
-                {canReorder ? (
-                  <StructurePhaseOrderControls
+
+                {index < stages.length - 1 ? (
+                  <div
+                    className="structure-topology__bridge"
+                    data-bridge={bridgeMode}
+                  >
+                    {canReorder ? (
+                      <StructurePhaseInsertSlot
+                        stageName={stage.name}
+                        position="after"
+                        disabled={reorder.isPending}
+                        onInsert={() =>
+                          onInsert(stage.stageId, 'After', stage.name)
+                        }
+                      />
+                    ) : null}
+                    {bridgeMode === 'outbound' ? (
+                      <TopologyOutboundLinks
+                        destinationIds={outbound}
+                        stageNameById={stageNameById}
+                        onSelectStage={onSelectStage}
+                      />
+                    ) : bridgeMode === 'connector' && edgeLabel != null ? (
+                      <div
+                        className="structure-topology__connector"
+                        aria-hidden="true"
+                      >
+                        <span className="structure-topology__edge">
+                          {edgeLabel}
+                        </span>
+                        <span className="structure-topology__connector-arrow">
+                          <span className="structure-topology__connector-shaft" />
+                          <span className="structure-topology__connector-head" />
+                        </span>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : canReorder ? (
+                  <StructurePhaseInsertSlot
                     stageName={stage.name}
+                    position="after"
                     disabled={reorder.isPending}
-                    pending={
-                      pendingMove?.stageId === stage.stageId
-                        ? pendingMove.direction
-                        : null
-                    }
-                    moveUpDisabled={index === 0}
-                    moveDownDisabled={index === stages.length - 1}
-                    onMoveUp={() => moveStage(index, 'up')}
-                    onMoveDown={() => moveStage(index, 'down')}
-                    onInsertBefore={() =>
-                      onInsert(stage.stageId, 'Before', stage.name)
-                    }
-                    onInsertAfter={() =>
+                    onInsert={() =>
                       onInsert(stage.stageId, 'After', stage.name)
                     }
                   />
                 ) : null}
-              </div>
-
-              {index < stages.length - 1 && (
-                <div
-                  className="structure-topology__bridge"
-                  data-bridge={bridgeMode}
-                >
-                  {bridgeMode === 'outbound' ? (
-                    <TopologyOutboundLinks
-                      destinationIds={outbound}
-                      stageNameById={stageNameById}
-                      onSelectStage={onSelectStage}
-                    />
-                  ) : bridgeMode === 'connector' && edgeLabel != null ? (
-                    <div
-                      className="structure-topology__connector"
-                      aria-hidden="true"
-                    >
-                      <span className="structure-topology__edge">
-                        {edgeLabel}
-                      </span>
-                      <span className="structure-topology__connector-arrow">
-                        <span className="structure-topology__connector-shaft" />
-                        <span className="structure-topology__connector-head" />
-                      </span>
-                    </div>
-                  ) : null}
-                </div>
-              )}
-            </li>
-          );
-        })}
-      </ol>
-    </FormSection>
+              </li>
+            );
+          })}
+        </ol>
+      </FormSection>
+      {removeStage ? (
+        <RemovePhaseDialog
+          data={data}
+          stage={removeStage}
+          open
+          onClose={() => setRemoveStage(null)}
+        />
+      ) : null}
+    </>
   );
 }
 

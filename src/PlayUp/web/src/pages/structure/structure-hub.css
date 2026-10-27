@@ -32,6 +32,33 @@
   }
 }
 
+.structure-hub__fiche-column {
+  display: contents;
+}
+
+.structure-hub__single-phase {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.structure-phase-birth {
+  display: inline-flex;
+  align-items: stretch;
+}
+
+.structure-phase-birth__main {
+  border-start-end-radius: 0;
+  border-end-end-radius: 0;
+}
+
+.structure-phase-birth__more {
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+  border-inline-start: var(--border-width) solid color-mix(in srgb, var(--color-on-brand) 35%, transparent);
+  padding-inline: var(--space-8);
+}
+
 .structure-topology {
   min-width: 0;
   container-type: inline-size;
@@ -53,32 +80,102 @@
   align-items: stretch;
 }
 
-.structure-topology__row {
+/* Birth control flush with the tile's trailing edge, clear of the qual/prog label. */
+.structure-topology__insert {
   display: flex;
-  align-items: flex-start;
-  gap: var(--space-8);
+  justify-content: flex-end;
+  align-items: center;
+  width: 100%;
+  margin: 0;
+  padding-block: var(--space-4);
+  padding-inline-end: 0;
+}
+
+.structure-topology__insert .structure-topology__insert-button,
+.structure-topology__tile-actions .ds-btn--ghost {
+  color: var(--color-text-secondary);
+}
+
+.structure-topology__insert .structure-topology__insert-button:hover:not(:disabled),
+.structure-topology__tile-actions .ds-btn--ghost:hover:not(:disabled) {
+  color: var(--color-text-primary);
+}
+
+.structure-topology__tile {
+  position: relative;
   width: 100%;
 }
 
-.structure-topology__row .structure-topology__tile {
-  flex: 1 1 auto;
+.structure-topology__select {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  width: 100%;
+  margin: 0;
+  padding: var(--space-12);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.structure-topology__tile-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-12);
   min-width: 0;
 }
 
-.structure-topology__order {
+.structure-topology__tile-foot {
   display: flex;
-  flex-direction: column;
-  flex: none;
-  gap: var(--space-4);
-  padding-top: var(--space-8);
+  align-items: center;
+  box-sizing: border-box;
+  width: 100%;
 }
 
-.structure-fiche__header-tools .structure-topology__order {
+.structure-topology__tile-foot[data-toolbar='move'],
+.structure-topology__tile-foot[data-toolbar='remove'],
+.structure-topology__tile-foot[data-toolbar='move-remove'] {
+  min-height: 1.75rem;
+}
+
+.structure-topology__tile-foot[data-toolbar='move'] {
+  padding-inline-end: calc(1.75rem + 1.75rem + var(--space-4));
+}
+
+.structure-topology__tile-foot[data-toolbar='remove'] {
+  padding-inline-end: calc(1.75rem + var(--space-4));
+}
+
+.structure-topology__tile-foot[data-toolbar='move-remove'] {
+  padding-inline-end: calc(1.75rem + 1.75rem + 1.75rem + 1px + var(--space-4) * 3);
+}
+
+.structure-topology__tile-actions {
+  position: absolute;
+  z-index: 1;
+  bottom: var(--space-12);
+  inset-inline-end: var(--space-12);
+  display: flex;
   flex-direction: row;
-  padding-top: 0;
+  align-items: center;
+  height: 1.75rem;
+  gap: 0;
+}
+
+.structure-topology__tile-actions-separator {
+  flex-shrink: 0;
+  width: 1px;
+  height: 1rem;
+  margin-inline: var(--space-4);
+  background: var(--color-border);
 }
 
 .structure-topology__bridge {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -86,6 +183,17 @@
   min-height: 2.8rem;
   box-sizing: border-box;
   margin: var(--space-4);
+}
+
+.structure-topology__bridge > .structure-topology__insert {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  inset-inline-end: calc(var(--space-4) * -1);
+  width: auto;
+  margin: 0;
+  padding: 0;
+  transform: translateY(-50%);
 }
 
 .structure-topology__connector {
@@ -160,18 +268,6 @@
   color: var(--color-text-secondary);
   font-size: var(--text-meta);
   font-weight: var(--font-weight-semibold);
-}
-
-.structure-topology__tile {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-12);
-  width: 100%;
-  margin: 0;
-  padding: var(--space-12);
-  font: inherit;
-  text-align: start;
-  cursor: pointer;
 }
 
 .structure-topology__tile-head {

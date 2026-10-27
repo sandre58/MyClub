@@ -264,8 +264,8 @@ export function LabStructurePageHead() {
           Fiche phase — chrome hero (B2 F2)
         </h2>
         <p className="ds-label">
-          Groupe centré : stats + icône structure (tooltip « Modifier
-          l&apos;organisation ») juste à droite des stats.
+          Groupe centré : stats + icône structure (tooltip « Modifier la
+          structure ») juste à droite des stats.
         </p>
         <div className="dlab-structure-pagehead__shape-grid">
           <div className="structure-phase-hero__chrome">
@@ -290,7 +290,7 @@ export function LabStructurePageHead() {
               <button
                 type="button"
                 className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact structure-phase-hero__edit-forme"
-                aria-label="Modifier l'organisation"
+                aria-label="Modifier la structure"
               >
                 <StructureIcon size="sm" />
               </button>
