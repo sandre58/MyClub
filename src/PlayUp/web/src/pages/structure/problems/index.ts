@@ -16,6 +16,7 @@ export {
 export { normalizeLifecycleAnticipated } from './normalizeLifecycleAnticipated';
 export { normalizeLifecycleMutationError } from './normalizeLifecycleMutation';
 export {
+  isLiveCompetitionForDraftCopy,
   resolveDraftPrepareBodyMessage,
   resolveLifecycleAnticipatedMessage,
   resolveLifecycleMutationMessage,

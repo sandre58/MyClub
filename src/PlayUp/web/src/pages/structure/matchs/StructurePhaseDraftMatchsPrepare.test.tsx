@@ -36,7 +36,10 @@ const baseStage: StructureStageHubSummary = {
   hasTieFormat: false,
 };
 
-function renderDraft(stage: StructureStageHubSummary) {
+function renderDraft(
+  stage: StructureStageHubSummary,
+  competitionStatus?: 'Draft' | 'Running' | 'Suspended',
+) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
@@ -46,6 +49,7 @@ function renderDraft(stage: StructureStageHubSummary) {
         <StructurePhaseDraftMatchsPrepare
           competitionId={competitionId}
           stage={stage}
+          competitionStatus={competitionStatus}
         />
       </MemoryRouter>
     </QueryClientProvider>,
@@ -86,5 +90,26 @@ describe('StructurePhaseDraftMatchsPrepare', () => {
       screen.getByRole('button', { name: /marquer comme prête/i }),
     );
     expect(prepareStage).toHaveBeenCalledWith(baseStage.stageId);
+  });
+
+  it('does not promise completing the structure when the competition is live', () => {
+    renderDraft(
+      {
+        ...baseStage,
+        lifecycle: {
+          transition: {
+            code: 'PrepareStage',
+            enabled: false,
+            disabledReasonCode: 'StageNotReady',
+          },
+        },
+      },
+      'Running',
+    );
+
+    expect(screen.getByText(/la compétition est engagée/i)).toBeInTheDocument();
+    expect(
+      screen.queryByText(/complétez la structure/i),
+    ).not.toBeInTheDocument();
   });
 });

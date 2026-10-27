@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { fetchCompetitionOverview, fetchStructureView } from '../../api';
 import { TeamCrest } from '../../design-system/TeamCrest';
+import { Alert } from '../../design-system/components/Alert';
 import { StatChipPanel } from '../../design-system/components/Chip';
 import { AttentionGroup } from '../../design-system/components/AttentionGroup';
 import { OverviewNextAction } from '../../design-system/components/OverviewNextAction';
@@ -13,6 +14,7 @@ import { SelectableTile } from '../../design-system/components/SelectableTile';
 import { Status } from '../../design-system/components/Status';
 import { Tooltip } from '../../design-system/components/Tooltip';
 import {
+  CheckCircleIcon,
   CheckIcon,
   CalendarIcon,
   TrashIcon,
@@ -32,6 +34,7 @@ import { queryKeys } from '../../queryKeys';
 import type {
   OverviewAction,
   OverviewCalendarSummary,
+  OverviewClosureHint,
   OverviewDimension,
   OverviewMatchLine,
   OverviewReferenceStageGameRules,
@@ -49,6 +52,7 @@ import {
   MutationError,
   PendingLabel,
 } from '../../ui';
+import { closureBlockerLabel, closureHintHasContent } from './closureHintCopy';
 import {
   overviewActionKey,
   resolveOverviewActionIntent,
@@ -203,6 +207,11 @@ function OverviewViewBody({ data }: { data: OverviewView }) {
     !operationalOverview && (teamsVisible || regulationVisible);
   const showOperationalConfig =
     structureVisible || teamsVisible || gameRegulationVisible;
+  const closureActions = slotActions('closure');
+  // Construction stays quiet unless Host projects closure actions.
+  const showClosure =
+    closureActions.length > 0 ||
+    (operationalOverview && closureHintHasContent(data.closureHint));
 
   const operationalConfigBand =
     operationalOverview && showOperationalConfig ? (
@@ -422,6 +431,20 @@ function OverviewViewBody({ data }: { data: OverviewView }) {
             </div>
           )}
         </>
+      )}
+
+      {showClosure && (
+        <div
+          className="overview__closure"
+          data-testid="overview-region-closure"
+        >
+          <ClosureSection
+            hint={data.closureHint}
+            actions={closureActions}
+            actionRunner={actionRunner}
+            emphasizeFirst={!showProgression}
+          />
+        </div>
       )}
 
       {actionRunner.materializeFollowUp && (
@@ -1646,6 +1669,72 @@ function ActionButtons({
         );
       })}
     </div>
+  );
+}
+
+function ClosureSection({
+  hint,
+  actions,
+  actionRunner,
+  emphasizeFirst,
+}: {
+  hint: OverviewClosureHint;
+  actions: OverviewAction[];
+  actionRunner: ActionRunner;
+  emphasizeFirst: boolean;
+}) {
+  const { t } = useTranslation('overview');
+  const blockers = hint.blockerCodes.filter((code) => code.trim().length > 0);
+  const showReady = hint.canCompleteNormally;
+  const showBlockers = blockers.length > 0;
+  if (!showReady && !showBlockers && actions.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="ds-panel" aria-labelledby="overview-closure">
+      <PanelHead
+        id="overview-closure"
+        title={t('closure.heading')}
+        icon={<CheckCircleIcon size="md" />}
+      />
+      {(showReady || showBlockers) && (
+        <Alert
+          tone={showBlockers ? 'warning' : 'success'}
+          role="status"
+          id="overview-closure-hint"
+        >
+          {showReady ? (
+            <p
+              className="overview-closure__lead"
+              data-testid="overview-closure-ready"
+            >
+              {t('closure.canCompleteNormally')}
+            </p>
+          ) : null}
+          {showBlockers ? (
+            <>
+              <p className="overview-closure__lead">
+                {t('closure.blockersLabel')}
+              </p>
+              <ul
+                className="overview-closure__blockers"
+                data-testid="overview-closure-blockers"
+              >
+                {blockers.map((code) => (
+                  <li key={code}>{closureBlockerLabel(code)}</li>
+                ))}
+              </ul>
+            </>
+          ) : null}
+        </Alert>
+      )}
+      <ActionButtons
+        actions={actions}
+        actionRunner={actionRunner}
+        emphasizeFirst={emphasizeFirst}
+      />
+    </section>
   );
 }
 

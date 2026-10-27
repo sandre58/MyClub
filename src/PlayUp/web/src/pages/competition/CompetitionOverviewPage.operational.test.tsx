@@ -1,6 +1,11 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fetchCompetitionOverview } from '../../api';
+import {
+  archiveCompetition,
+  completeCompetition,
+  fetchCompetitionOverview,
+} from '../../api';
 import {
   overviewSituation,
   overviewView,
@@ -23,6 +28,8 @@ vi.mock('../../api', async (importOriginal) => {
     prepareStage: vi.fn(),
     prepareCompetition: vi.fn(),
     startCompetition: vi.fn(),
+    completeCompetition: vi.fn(),
+    archiveCompetition: vi.fn(),
     materializeMatches: vi.fn(),
   };
 });
@@ -322,6 +329,7 @@ describe('CompetitionOverviewPage — En cours / Terminée', () => {
       expectOverviewRegionsAbsent(
         'overview-region-attention',
         'overview-region-progression',
+        'overview-region-closure',
       );
     });
 
@@ -949,5 +957,132 @@ describe('CompetitionOverviewPage — En cours / Terminée', () => {
     expect(screen.getByText('2×45 min')).toBeInTheDocument();
     expect(screen.getByText('Prolongation · Tirs au but')).toBeInTheDocument();
     expect(screen.queryByText(/pts victoire/)).not.toBeInTheDocument();
+  });
+
+  it('renders every closure-slot action with the normal-completion hint', async () => {
+    const user = userEvent.setup();
+    vi.mocked(completeCompetition).mockResolvedValue(undefined);
+    vi.mocked(archiveCompetition).mockResolvedValue(undefined);
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      inProgressLayoutBase({
+        naturalProgression: { code: 'GenerateNextRound' },
+        closureHint: { canCompleteNormally: true, blockerCodes: [] },
+        availableActions: [
+          {
+            code: 'GenerateNextRound',
+            guaranteed: false,
+            stageId,
+            params: { stageName: 'Swiss', roundIndex: '2', plannedRounds: '8' },
+          },
+          { code: 'CompleteCompetition', guaranteed: false },
+          { code: 'ArchiveCompetition', guaranteed: false },
+        ],
+      }),
+    );
+
+    renderOverviewPage();
+
+    const closure = await screen.findByTestId('overview-region-closure');
+    expect(
+      within(closure).getByRole('heading', { name: 'Clôture' }),
+    ).toBeInTheDocument();
+    expect(
+      within(closure).getByTestId('overview-closure-ready'),
+    ).toHaveTextContent('La clôture normale est possible.');
+    expect(
+      within(closure).getByRole('button', { name: 'Clôturer la compétition' }),
+    ).toBeInTheDocument();
+    expect(
+      within(closure).getByRole('button', { name: 'Archiver la compétition' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Générer le tour Swiss/i }),
+    ).toBeInTheDocument();
+
+    await user.click(
+      within(closure).getByRole('button', { name: 'Clôturer la compétition' }),
+    );
+    expect(completeCompetition).toHaveBeenCalledWith(competitionId, 'Normal');
+    expect(archiveCompetition).not.toHaveBeenCalled();
+  });
+
+  it('shows closure blocker codes when Host projects them and still renders projected actions', async () => {
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      inProgressLayoutBase({
+        closureHint: {
+          canCompleteNormally: false,
+          blockerCodes: [
+            'ScheduledMatches',
+            'DrawNoSolution',
+            'NotARealBlocker',
+          ],
+        },
+        availableActions: [
+          { code: 'CompleteCompetition', guaranteed: false },
+          { code: 'ArchiveCompetition', guaranteed: false },
+        ],
+      }),
+    );
+
+    renderOverviewPage();
+
+    const closure = await screen.findByTestId('overview-region-closure');
+    const blockers = within(closure).getByTestId('overview-closure-blockers');
+    expect(blockers).toHaveTextContent('Des matchs sont encore planifiés');
+    expect(blockers).toHaveTextContent('Tirage sans solution');
+    expect(blockers).toHaveTextContent('NotARealBlocker');
+    expect(
+      within(closure).queryByTestId('overview-closure-ready'),
+    ).not.toBeInTheDocument();
+    expect(
+      within(closure).getByRole('button', { name: 'Clôturer la compétition' }),
+    ).toBeInTheDocument();
+    expect(
+      within(closure).getByRole('button', { name: 'Archiver la compétition' }),
+    ).toBeInTheDocument();
+  });
+
+  it('shows the closure hint without inventing actions Host did not project', async () => {
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      inProgressLayoutBase({
+        closureHint: {
+          canCompleteNormally: false,
+          blockerCodes: ['LiveMatches'],
+        },
+        availableActions: [],
+      }),
+    );
+
+    renderOverviewPage();
+
+    const closure = await screen.findByTestId('overview-region-closure');
+    expect(
+      within(closure).getByTestId('overview-closure-blockers'),
+    ).toHaveTextContent('Des matchs sont encore en cours');
+    expect(within(closure).queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('renders Archive on a completed competition when that is the only closure action', async () => {
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      inProgressLayoutBase({
+        status: 'Completed',
+        cycleReading: { code: 'Completed' },
+        closureHint: { canCompleteNormally: false, blockerCodes: [] },
+        availableActions: [{ code: 'ArchiveCompetition', guaranteed: false }],
+      }),
+    );
+
+    renderOverviewPage();
+
+    const closure = await screen.findByTestId('overview-region-closure');
+    expect(
+      within(closure).getByRole('button', { name: 'Archiver la compétition' }),
+    ).toBeInTheDocument();
+    expect(
+      within(closure).queryByRole('button', {
+        name: 'Clôturer la compétition',
+      }),
+    ).not.toBeInTheDocument();
+    expect(within(closure).queryByRole('status')).not.toBeInTheDocument();
   });
 });

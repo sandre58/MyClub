@@ -16,6 +16,7 @@ import {
 import { CloseIcon } from '../../../design-system/icons/shellIcons';
 import { structureFormatKindLabel } from '../../../i18n/enumLabels';
 import type {
+  CompetitionStatus,
   StructureFormatKind,
   StructureStageHubSummary,
 } from '../../../types';
@@ -47,6 +48,7 @@ function FormatGlyph({
 export function StructurePhaseFicheHeader({
   stage,
   competitionId,
+  competitionStatus = null,
   structureStages,
   formatLabel,
   editingName,
@@ -61,6 +63,7 @@ export function StructurePhaseFicheHeader({
 }: {
   stage: StructureStageHubSummary;
   competitionId: string;
+  competitionStatus?: CompetitionStatus | null;
   structureStages: readonly StructureStageHubSummary[];
   formatLabel: string | null;
   editingName: boolean;
@@ -200,6 +203,7 @@ export function StructurePhaseFicheHeader({
             <StructurePhaseHeaderLifecycle
               competitionId={competitionId}
               stage={stage}
+              competitionStatus={competitionStatus}
             />
           </div>
         </div>

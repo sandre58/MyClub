@@ -371,7 +371,8 @@
     "state": {
       "Draft": {
         "lead": "Brouillon",
-        "detail": "Complétez la structure, puis marquez la phase comme prête. Structure validée : le placement et les opérations sportives restent possibles ensuite."
+        "detail": "Complétez la structure, puis marquez la phase comme prête. Structure validée : le placement et les opérations sportives restent possibles ensuite.",
+        "detailUnderLiveCompetition": "La compétition est engagée. Cette phase reste en brouillon : le placement et les opérations sportives restent possibles."
       },
       "Ready": {
         "lead": "Prête",

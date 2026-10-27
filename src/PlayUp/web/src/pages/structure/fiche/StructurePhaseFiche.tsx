@@ -1197,6 +1197,7 @@ export function StructurePhaseFiche({
       <StructurePhaseFicheHeader
         stage={stage}
         competitionId={data.competitionId}
+        competitionStatus={data.status}
         structureStages={data.stages}
         formatLabel={formatLabel}
         editingName={editingName}

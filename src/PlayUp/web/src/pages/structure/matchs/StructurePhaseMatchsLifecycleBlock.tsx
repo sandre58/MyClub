@@ -9,8 +9,11 @@ import {
   PlayIcon,
   UndoIcon,
 } from '../../../design-system/icons/contentIcons';
-import type { StructureStageLifecycleRevertCode } from '../../../types';
-import type { StructureStageHubSummary } from '../../../types';
+import type {
+  CompetitionStatus,
+  StructureStageHubSummary,
+  StructureStageLifecycleRevertCode,
+} from '../../../types';
 import { Alert } from '../../../design-system/components/Alert';
 import { Tooltip } from '../../../design-system/components/Tooltip';
 import { EmptyState, PendingLabel } from '../../../ui';
@@ -22,6 +25,7 @@ import {
 import { structureDiagnosticIssueCopyFromStage } from '../issues/structurePopulationShortfallPresentation';
 import {
   remediationHref,
+  isLiveCompetitionForDraftCopy,
   resolveDraftPrepareBodyMessage,
   resolveLifecycleAnticipatedMessage,
   resolveLifecycleMutationMessage,
@@ -171,10 +175,12 @@ function LifecycleMutationAlert({
 export function StructurePhaseDraftMatchsPrepare({
   competitionId,
   stage,
+  competitionStatus = null,
   part = 'full',
 }: {
   competitionId: string;
   stage: StructureStageHubSummary;
+  competitionStatus?: CompetitionStatus | null;
   part?: LifecycleChromePart;
 }) {
   const { t } = useTranslation('structure');
@@ -195,23 +201,29 @@ export function StructurePhaseDraftMatchsPrepare({
     shouldShowPrimaryBlockMessage(stage.status, disabledReason);
 
   const busy = transitionMutation.isPending;
-  const prepareDisabledTooltip =
-    prepareProjected &&
-    shouldShowDraftPrepareDisabledTooltip(disabledReason, actionEnabled)
-      ? resolveLifecycleAnticipatedMessage(
-          t,
-          disabledReason!,
-          lifecycleProblem,
-          rosterCopyContext,
-        )
-      : null;
   const statusMessage = resolveDraftPrepareBodyMessage(
     t,
     showBlockMessage,
     disabledReason,
     lifecycleProblem,
     rosterCopyContext,
+    competitionStatus,
   );
+  const liveStageNotReady =
+    isLiveCompetitionForDraftCopy(competitionStatus) &&
+    disabledReason === 'StageNotReady';
+  const prepareDisabledTooltip =
+    prepareProjected &&
+    shouldShowDraftPrepareDisabledTooltip(disabledReason, actionEnabled)
+      ? liveStageNotReady
+        ? statusMessage
+        : resolveLifecycleAnticipatedMessage(
+            t,
+            disabledReason!,
+            lifecycleProblem,
+            rosterCopyContext,
+          )
+      : null;
 
   const prepareButtonInner = (
     <button

@@ -128,5 +128,10 @@
   "nature": {
     "Blocking": "Bloquant",
     "Informational": "Information"
+  },
+  "closure": {
+    "heading": "Clôture",
+    "canCompleteNormally": "La clôture normale est possible.",
+    "blockersLabel": "Ce qui empêche la clôture normale"
   }
 }
