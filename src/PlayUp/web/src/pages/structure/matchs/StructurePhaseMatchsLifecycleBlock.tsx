@@ -4,9 +4,9 @@ import { useTranslation } from 'react-i18next';
 
 import {
   CheckIcon,
+  NextActionIcon,
   PauseIcon,
   PlayIcon,
-  RoundsStatIcon,
   UndoIcon,
 } from '../../../design-system/icons/contentIcons';
 import type { StructureStageLifecycleRevertCode } from '../../../types';
@@ -140,7 +140,8 @@ function transitionActionIcon(
     case 'StartStage':
       return <PlayIcon size="sm" aria-hidden="true" />;
     case 'CompleteStage':
-      return <RoundsStatIcon size="sm" aria-hidden="true" />;
+      // Finish flag — the rounds stat uses a different glyph.
+      return <NextActionIcon size="sm" aria-hidden="true" />;
     default:
       return null;
   }
@@ -181,7 +182,6 @@ export function StructurePhaseDraftMatchsPrepare({
   const transitionMutation = useStructureStageLifecycleMutation(
     competitionId,
     stage.stageId,
-    t,
   );
 
   const transition = stage.lifecycle?.transition;
@@ -358,7 +358,6 @@ function StructurePhaseMatchsLifecycleBlockBody({
   const transitionMutation = useStructureStageLifecycleMutation(
     competitionId,
     stage.stageId,
-    t,
   );
 
   const lifecycle = stage.lifecycle;

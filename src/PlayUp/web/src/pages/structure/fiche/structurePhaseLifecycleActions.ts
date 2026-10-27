@@ -63,27 +63,3 @@ export function mutationPendingLabel(
       return t('working');
   }
 }
-
-export function mutationSuccessToast(
-  t: TFunction<'structure'>,
-  code: StructureStageLifecycleMutationCode,
-): string {
-  switch (code) {
-    case 'PrepareStage':
-      return t('lifecycle.toast.prepared');
-    case 'StartStage':
-      return t('lifecycle.toast.started');
-    case 'CompleteStage':
-      return t('lifecycle.toast.completed');
-    case 'RevertToDraftStage':
-      return t('lifecycle.toast.revertedToDraft');
-    case 'RevertToReadyStage':
-      return t('lifecycle.toast.cancelledStart');
-    case 'SuspendStage':
-      return t('lifecycle.toast.suspended');
-    case 'ResumeStage':
-      return t('lifecycle.toast.resumed');
-    default:
-      return t('lifecycle.toast.updated');
-  }
-}

@@ -232,10 +232,9 @@ export function MatchRulesDialog({
     },
     onSuccess: (result) => {
       onClose();
+      // Saved rules show on the phase. Toast only when the phase drops to Draft.
       if (result.demoted) {
         notify.attention(t('regulation.matchSavedDemotedToast'));
-      } else {
-        notify.success(t('regulation.matchSavedToast'));
       }
       scheduleStructureRefresh(queryClient, data.competitionId, ['hubStage'], {
         stageId: stage.stageId,
@@ -590,7 +589,6 @@ export function StandingRulesDialog({
     },
     onSuccess: () => {
       onClose();
-      notify.success(t('regulation.standingSavedToast'));
       scheduleStructureRefresh(queryClient, data.competitionId, ['hubStage'], {
         stageId: stage.stageId,
       });

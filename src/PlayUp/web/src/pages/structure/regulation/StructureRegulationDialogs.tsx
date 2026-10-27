@@ -9,7 +9,6 @@ import { Dialog } from '../../../design-system/components/Dialog';
 import { Field } from '../../../design-system/components/Field';
 import { InputNumber } from '../../../design-system/components/InputNumber';
 import { SwitchPanel } from '../../../design-system/components/SwitchPanel';
-import { notify } from '../../../design-system/toastStore';
 import { useClearMutationsOnOpen } from '../../../design-system/useClearMutationsOnOpen';
 import { useSyncWhen } from '../../../design-system/useRenderSync';
 import { useDiscardConfirm } from '../../../design-system/useDiscardConfirm';
@@ -120,11 +119,6 @@ export function DrawRulesDialog({
     },
     onSuccess: (result) => {
       onClose();
-      notify.success(
-        result.activated
-          ? t('regulation.drawActivatedToast')
-          : t('regulation.drawParamsSavedToast'),
-      );
       if (result.activated) {
         patchDrawRulesActivatedOptimistic(
           queryClient,

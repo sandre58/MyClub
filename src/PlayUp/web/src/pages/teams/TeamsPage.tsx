@@ -33,7 +33,6 @@ import {
 import { TextInput } from '../../design-system/components/TextInput';
 import { ColorPicker } from '../../design-system/components/ColorPicker';
 import { TeamCrest } from '../../design-system/TeamCrest';
-import { notify } from '../../design-system/toastStore';
 import { useDismissLayer } from '../../design-system/useDismissLayer';
 import { deriveShortName, SHORT_NAME_MAX_LENGTH } from './deriveShortName';
 import { LogoMediaField } from './LogoMediaField';
@@ -748,7 +747,6 @@ function AddEntryDialog({
       }),
     onSuccess: async () => {
       await invalidateAfterTeamsMutation(queryClient, data.competitionId);
-      notify.success(t('entryAddedToast'));
       onClose();
     },
   });
@@ -969,7 +967,6 @@ function IdentityDialog({
     },
     onSuccess: async () => {
       await invalidateAfterTeamsMutation(queryClient, competitionId);
-      notify.success(t('identitySavedToast'));
       onClose();
     },
   });

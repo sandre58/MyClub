@@ -9,16 +9,12 @@ import {
   startStage,
   suspendStage,
 } from '../../../api';
-import { notify } from '../../../design-system/toastStore';
 import type { StructureStageLifecycleMutationCode } from '../../../types';
 import { scheduleStructureRefresh } from '../structureInvalidation';
-import { mutationSuccessToast } from './structurePhaseLifecycleActions';
-import type { TFunction } from 'i18next';
 
 export function useStructureStageLifecycleMutation(
   competitionId: string,
   stageId: string,
-  t: TFunction<'structure'>,
 ) {
   const queryClient = useQueryClient();
 
@@ -50,8 +46,8 @@ export function useStructureStageLifecycleMutation(
           break;
       }
     },
-    onSuccess: (_data, code) => {
-      notify.success(mutationSuccessToast(t, code));
+    onSuccess: () => {
+      // The phase status is the feedback. A success toast would repeat it.
       scheduleStructureRefresh(
         queryClient,
         competitionId,

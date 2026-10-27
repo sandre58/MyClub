@@ -25,7 +25,6 @@ import {
 } from '../../../design-system/icons/contentIcons';
 import { CloseIcon } from '../../../design-system/icons/shellIcons';
 import { ToastToneIcon } from '../../../design-system/icons/toastIcons';
-import { notify } from '../../../design-system/toastStore';
 import { useClearMutationsOnOpen } from '../../../design-system/useClearMutationsOnOpen';
 import { useOpenEdge, useSyncWhen } from '../../../design-system/useRenderSync';
 import { useDiscardConfirm } from '../../../design-system/useDiscardConfirm';
@@ -124,7 +123,6 @@ export function StructurePlacementAwardDialog({
     },
     onSuccess: () => {
       onClose();
-      notify.success(t('attribution.toastUpdated'));
       scheduleStructureRefresh(queryClient, data.competitionId, ['graph']);
     },
   });

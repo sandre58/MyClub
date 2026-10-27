@@ -66,6 +66,20 @@ Surfaces: Canvas / Groupe / Panneau (`.ds-panel`) / Overlay — no fifth “card
 - Do not invent one-off semantic wrappers for a single decorative use; reuse an existing named icon when the concept matches.
 - Usage rules (where icons belong / are forbidden): `.cursor/rules/design/09-icons.mdc`.
 
+### Content glyph map
+
+Same meaning shares one glyph. A repeated object family may share one glyph.
+
+| Wrapper                             | Glyph     | Meaning                                                               |
+| ----------------------------------- | --------- | --------------------------------------------------------------------- |
+| `NextActionIcon`                    | Flag      | Next action, and completing a phase (finish)                          |
+| `RoundsStatIcon`                    | Milestone | Cup / Swiss round count                                               |
+| `MatchdayStatIcon`                  | Calendar  | Matchdays                                                             |
+| `DrawPendingIcon`, `DrawConfigIcon` | Shuffle   | Draw object (pending state and draw configuration). Shared on purpose |
+| `RandomIcon`                        | Dices     | Random draw action                                                    |
+
+Decorative per-row glyphs stay out. `lucide-react` stays inside `design-system/icons/`.
+
 ## Routes & query keys
 
 - Product routes may stay French (`classements`, …) — intentional.

@@ -22,7 +22,7 @@
   "columns": {
     "position": "Pos.",
     "team": "Équipe",
-    "played": "PJ",
+    "played": "MJ",
     "wins": "V",
     "draws": "N",
     "losses": "D",

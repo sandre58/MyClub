@@ -19,7 +19,6 @@ import {
 } from '../../../design-system/icons/contentIcons';
 import { CloseIcon } from '../../../design-system/icons/shellIcons';
 import { TeamCrest } from '../../../design-system/TeamCrest';
-import { notify } from '../../../design-system/toastStore';
 import { useClearMutationsOnOpen } from '../../../design-system/useClearMutationsOnOpen';
 import { useDiscardConfirm } from '../../../design-system/useDiscardConfirm';
 import type {
@@ -176,24 +175,18 @@ export function StructureManualPlacementDialog({
   );
 
   const saveMutation = useMutation({
-    mutationFn: async (): Promise<'assign' | 'clear'> => {
+    mutationFn: async () => {
       if (!slotKey) {
         throw new Error('missing selection');
       }
       if (entryId) {
         await assignEntryToSlot(stage.stageId, slotKey, entryId);
-        return 'assign';
+        return;
       }
       await clearSlotAssignment(stage.stageId, slotKey);
-      return 'clear';
     },
-    onSuccess: (kind) => {
+    onSuccess: () => {
       onClose();
-      notify.success(
-        kind === 'clear'
-          ? t('manualPlacement.toastCleared')
-          : t('manualPlacement.toastSaved'),
-      );
       scheduleStructureRefresh(queryClient, competitionId, ['hubStage'], {
         stageId: stage.stageId,
       });

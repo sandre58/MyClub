@@ -36,7 +36,6 @@ import {
   ChevronDownIcon,
   CloseIcon,
 } from '../../../design-system/icons/shellIcons';
-import { notify } from '../../../design-system/toastStore';
 import { useClearMutationsOnOpen } from '../../../design-system/useClearMutationsOnOpen';
 import { useOpenEdge, useSyncWhen } from '../../../design-system/useRenderSync';
 import { useDiscardConfirm } from '../../../design-system/useDiscardConfirm';
@@ -230,7 +229,6 @@ export function StructureProgressionDialog({
     },
     onSuccess: () => {
       onClose();
-      notify.success(t('progression.toastUpdated'));
       scheduleStructureRefresh(queryClient, data.competitionId, ['graph']);
     },
   });

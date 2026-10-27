@@ -24,6 +24,7 @@ import {
   ListPlus,
   Minus,
   Medal,
+  Milestone,
   Network,
   PackageOpen,
   Pencil,
@@ -77,7 +78,7 @@ export function InfoIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Info} size={size} {...props} />;
 }
 
-/** Next action — flag (generic header). */
+/** Next action and phase completion — finish flag. */
 export function NextActionIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Flag} size={size} {...props} />;
 }
@@ -122,9 +123,9 @@ export function CupFormatIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={GitBranch} size={size} {...props} />;
 }
 
-/** Cup rounds — milestones (distinct from Cup format). */
+/** Cup / Swiss round count — milestone marker. */
 export function RoundsStatIcon({ size, ...props }: ContentIconProps) {
-  return <LucideIcon icon={Flag} size={size} {...props} />;
+  return <LucideIcon icon={Milestone} size={size} {...props} />;
 }
 
 /** Matchdays — calendar. */
@@ -187,7 +188,10 @@ export function IncompleteStageIssueIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={PackageOpen} size={size} {...props} />;
 }
 
-/** Draw pending — shuffle / pots (≠ anomaly). */
+/**
+ * Draw ceremony object while it is still pending.
+ * Same glyph as DrawConfigIcon (the draw object). RandomIcon is the random action.
+ */
 export function DrawPendingIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Shuffle} size={size} {...props} />;
 }
@@ -197,7 +201,7 @@ export function ViewIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Eye} size={size} {...props} />;
 }
 
-/** Draw — configuration (aligned with Regulation Shuffle). */
+/** Draw configuration — same draw-object glyph as DrawPendingIcon. */
 export function DrawConfigIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Shuffle} size={size} {...props} />;
 }

@@ -295,10 +295,9 @@ export function TieFormatDialog({
     },
     onSuccess: (result) => {
       onClose();
+      // Saved format shows on the phase. Toast only when the phase drops to Draft.
       if (result.demoted) {
         notify.attention(t('regulation.tieSavedDemotedToast'));
-      } else {
-        notify.success(t('regulation.tieSavedToast'));
       }
       scheduleStructureRefresh(queryClient, competitionId, ['hubStage'], {
         stageId: stage.stageId,

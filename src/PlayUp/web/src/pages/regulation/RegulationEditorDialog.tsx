@@ -46,7 +46,6 @@ import {
   RegulationNavIcon,
 } from '../../design-system/icons/shellIcons';
 import { MutationError, PendingLabel } from '../../ui';
-import { notify } from '../../design-system/toastStore';
 import type {
   DisciplinaryType,
   StructureView,
@@ -337,7 +336,6 @@ export function RegulationEditorDialog({
       setConfirmOpen(false);
       setPendingPreview(null);
       onClose();
-      notify.success(t('editor.savedToast'));
       scheduleStructureRefresh(queryClient, data.competitionId, [
         'competitionReads',
       ]);
