@@ -96,3 +96,14 @@ See [`cursor-rules-inventory.md`](cursor-rules-inventory.md) (P8 addendum below)
 - C8 : [`phase-3-lot-c8-plan.md`](phase-3-lot-c8-plan.md)
 - Wave 5 governance : [`phase-1-wave-5.md`](phase-1-wave-5.md) §4
 - Chantier closure : [`phase-8-plan.md`](phase-8-plan.md)
+
+---
+
+## 8. Re-check at tip `33feae51` (2026-10-27)
+
+**SHA:** `33feae5142a59addef50061c877f561d8c8c5371`  
+**Mode:** read-only re-check. This follow-up is **docs and pointers only** (no rule rewrite, no new `.mdc`).
+
+Re-read of `.cursor/rules/**/*.mdc` (still **22** files) against `architecture.mdc` and the arbitrated boundaries already recorded in §2 found **no rules ↔ SoT conflict**. Media and DevRunner remain covered by `architecture.mdc` plus [`docs/guides/media.md`](../guides/media.md) and [`docs/guides/local-persistence.md`](../guides/local-persistence.md). Host network exposure stays in [`docs/guides/host-exposure.md`](../guides/host-exposure.md). [`AGENTS.md`](../../AGENTS.md) and [`cursor-rules-inventory.md`](cursor-rules-inventory.md) now point at those homes.
+
+**Unchanged, out of this lot:** Stages / `OverviewAssembler` / `StructureViewAssembler` split; MediatR; Platform layer; dedicated Media / DevRunner `.mdc` files.
