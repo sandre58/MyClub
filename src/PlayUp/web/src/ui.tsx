@@ -2,7 +2,11 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { ApiError } from './api';
-import { apiErrorLabel } from './i18n/apiErrorLabel';
+import {
+  apiErrorLabel,
+  genericNetworkLabel,
+  isGenericNetworkFailure,
+} from './i18n/apiErrorLabel';
 import { formatStructureMutationMessage } from './pages/structure/problems/formatStructureMutationMessage';
 import { Status } from './design-system/components/Status';
 import { statusToneFromBadgeTone } from './design-system/components/statusTone';
@@ -344,6 +348,10 @@ function formatError(
   error: unknown,
   t: (key: string, options?: Record<string, unknown>) => string,
 ): string {
+  if (isGenericNetworkFailure(error)) {
+    return genericNetworkLabel();
+  }
+
   if (error instanceof ApiError) {
     const localized = apiErrorLabel(error);
     return t('errorWithStatus', {

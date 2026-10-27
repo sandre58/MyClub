@@ -19,6 +19,7 @@
     "home": "Back to home"
   },
   "unknownError": "Unknown error",
+  "networkError": "The connection failed. Check the network, then try again.",
   "errorWithStatus": "{{message}} ({{status}})",
   "unknownEntry": "Unknown entry",
   "fixOnStructure": "View in Structure"
