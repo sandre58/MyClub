@@ -181,7 +181,7 @@ describe('CompetitionOverviewPage — En cours / Terminée', () => {
       'Alpha',
     );
     expect(
-      screen.getByRole('heading', { name: 'Dernières rencontres' }),
+      screen.getByRole('heading', { name: 'Derniers matchs' }),
     ).toBeInTheDocument();
     expect(screen.getByText(/Journée 5/)).toBeInTheDocument();
     expect(
@@ -191,7 +191,7 @@ describe('CompetitionOverviewPage — En cours / Terminée', () => {
       screen.getByTestId(`overview-match-${finishedMatchId}`),
     ).toHaveTextContent('2–1');
     expect(
-      screen.getByRole('heading', { name: 'Prochaines rencontres' }),
+      screen.getByRole('heading', { name: 'Prochains matchs' }),
     ).toBeInTheDocument();
     expect(screen.getByText(/Journée 6/)).toBeInTheDocument();
     expect(
@@ -257,10 +257,10 @@ describe('CompetitionOverviewPage — En cours / Terminée', () => {
     renderOverviewPage();
 
     expect(
-      await screen.findByRole('heading', { name: 'Dernières rencontres' }),
+      await screen.findByRole('heading', { name: 'Derniers matchs' }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('heading', { name: 'Prochaines rencontres' }),
+      screen.getByRole('heading', { name: 'Prochains matchs' }),
     ).toBeInTheDocument();
     expect(
       screen.getByText('Aucune unité engagée pour le moment'),
@@ -530,10 +530,10 @@ describe('CompetitionOverviewPage — En cours / Terminée', () => {
     ).toBeInTheDocument();
     expect(screen.getByTestId('overview-regulation-game')).toBeInTheDocument();
     expect(
-      screen.getByRole('heading', { name: 'Dernières rencontres' }),
+      screen.getByRole('heading', { name: 'Derniers matchs' }),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole('heading', { name: 'Prochaines rencontres' }),
+      screen.queryByRole('heading', { name: 'Prochains matchs' }),
     ).not.toBeInTheDocument();
     expectOverviewRegionOrder(
       'overview-region-config',
@@ -834,10 +834,10 @@ describe('CompetitionOverviewPage — En cours / Terminée', () => {
     renderOverviewPage();
 
     expect(
-      await screen.findByRole('heading', { name: 'Prochaines rencontres' }),
+      await screen.findByRole('heading', { name: 'Prochains matchs' }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('heading', { name: 'Dernières rencontres' }),
+      screen.getByRole('heading', { name: 'Derniers matchs' }),
     ).toBeInTheDocument();
   });
 
@@ -855,7 +855,7 @@ describe('CompetitionOverviewPage — En cours / Terminée', () => {
     renderOverviewPage();
 
     expect(
-      await screen.findByRole('heading', { name: 'Dernières rencontres' }),
+      await screen.findByRole('heading', { name: 'Derniers matchs' }),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: 'À traiter' }),

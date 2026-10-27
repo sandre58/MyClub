@@ -36,7 +36,6 @@ import {
   ChevronDownIcon,
   CloseIcon,
 } from '../../../design-system/icons/shellIcons';
-import { notify } from '../../../design-system/toastStore';
 import { useClearMutationsOnOpen } from '../../../design-system/useClearMutationsOnOpen';
 import { useOpenEdge, useSyncWhen } from '../../../design-system/useRenderSync';
 import { useDiscardConfirm } from '../../../design-system/useDiscardConfirm';
@@ -235,7 +234,6 @@ export function StructureQualificationDialog({
     },
     onSuccess: () => {
       onClose();
-      notify.success(t('qualification.toastUpdated'));
       scheduleStructureRefresh(queryClient, data.competitionId, ['graph']);
     },
   });

@@ -308,13 +308,10 @@ export function StructurePhaseOperationalStrip({
     },
     onSuccess: (result) => {
       setMaterializeConfirmOpen(false);
-      notify.success(
-        result.alreadyComplete
-          ? t('fiche.materialize.successAlreadyComplete')
-          : t('fiche.materialize.successCreated', {
-              count: result.createdCount,
-            }),
-      );
+      // Created matches show up on the strip. Toast only when nothing changed.
+      if (result.alreadyComplete) {
+        notify.success(t('fiche.materialize.successAlreadyComplete'));
+      }
       scheduleStructureRefresh(queryClient, competitionId, ['hubStageShell'], {
         stageId: stage.stageId,
       });
@@ -332,24 +329,9 @@ export function StructurePhaseOperationalStrip({
   const dematerializeMutation = useMutation({
     mutationFn: () => dematerializePhase(stage.stageId),
     onSuccess: (result) => {
+      // Removed matches leave the strip. Toast only when nothing was removed.
       if (result.removedMatchCount === 0) {
         notify.success(t('fiche.dematerialize.successNoOp'));
-      } else if (
-        dematerializeScope === 'LastSwissRound' &&
-        result.removedRoundNumber != null
-      ) {
-        notify.success(
-          t('fiche.dematerialize.successSwissRound', {
-            round: result.removedRoundNumber,
-            count: result.removedMatchCount,
-          }),
-        );
-      } else {
-        notify.success(
-          t('fiche.dematerialize.successRemoved', {
-            count: result.removedMatchCount,
-          }),
-        );
       }
       setDematerializeConfirmOpen(false);
       scheduleStructureRefresh(queryClient, competitionId, ['hubStageShell'], {

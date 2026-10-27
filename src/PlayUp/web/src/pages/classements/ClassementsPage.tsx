@@ -30,8 +30,7 @@ import type {
   ConsultationView,
   StructureRegulationSummary,
 } from '../../types';
-import { EmptyState, ErrorState } from '../../ui';
-import { WaitMark } from '../../design-system/components/WaitMark';
+import { EmptyState, ErrorState, LoadingState } from '../../ui';
 import './classements.css';
 
 /**
@@ -50,7 +49,7 @@ export function ClassementsPage() {
 
   return (
     <main id="main" className="page page--classements">
-      {query.isPending && !query.data && <WaitMark>{t('loading')}</WaitMark>}
+      {query.isPending && !query.data && <LoadingState label={t('loading')} />}
       {query.isError && !query.data && <ErrorState error={query.error} />}
       {query.data && <ClassementsView data={query.data} />}
     </main>
@@ -135,7 +134,7 @@ function StandingsSection({
           title={t('notApplicable.title')}
           icon={<ClassementsNavIcon size="md" />}
         />
-        <EmptyState>{reason}</EmptyState>
+        <EmptyState title={reason} />
       </section>
     );
   }
@@ -148,7 +147,7 @@ function StandingsSection({
           title={t('table.overall')}
           icon={<ClassementsNavIcon size="md" />}
         />
-        <EmptyState title={t('empty')}>{t('emptyHint')}</EmptyState>
+        <EmptyState title={t('empty')} hint={t('emptyHint')} />
       </section>
     );
   }
@@ -190,7 +189,7 @@ function StandingTableBlock({ table }: { table: ConsultationStandingTable }) {
       ) : null}
 
       {table.rows.length === 0 ? (
-        <EmptyState title={t('empty')}>{t('emptyHint')}</EmptyState>
+        <EmptyState title={t('empty')} hint={t('emptyHint')} />
       ) : (
         <div className="ds-standings-wrap">
           <table className="ds-standings">
@@ -283,7 +282,7 @@ function LastMatchdayPanel({
       />
 
       {!slice || slice.matches.length === 0 ? (
-        <EmptyState>{t('lastMatchday.empty')}</EmptyState>
+        <EmptyState title={t('lastMatchday.empty')} />
       ) : (
         <div>
           {slice.matches.map((match) => (
@@ -423,9 +422,7 @@ function RegulationPanel({
           </p>
         </>
       ) : loading ? (
-        <p className="classements-panel__muted" role="status">
-          {t('regulation.loading')}
-        </p>
+        <LoadingState size="region" label={t('regulation.loading')} />
       ) : (
         <p className="classements-panel__muted">
           {t('regulation.unavailable')}
