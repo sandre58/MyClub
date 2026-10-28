@@ -581,15 +581,24 @@ export function StructureQualificationDialog({
             </button>
           </div>
 
-          {sessionReady && missingDestinationCount > 0 ? (
+          {sessionReady &&
+          (missingDestinationCount > 0 || hostDanglingEcho.length > 0) ? (
             <Alert tone="danger" role="status">
-              <p className="structure-qualification__hint-line">
-                {t('qualification.missingDestinationsAlert', {
-                  count: missingDestinationCount,
-                })}
-              </p>
+              {missingDestinationCount > 0 ? (
+                <p className="structure-qualification__hint-line">
+                  {t('qualification.missingDestinationsAlert', {
+                    count: missingDestinationCount,
+                  })}
+                </p>
+              ) : null}
               {hostDanglingEcho.length > 0 ? (
-                <p className="structure-qualification__hint-line structure-qualification__hint-echo">
+                <p
+                  className={
+                    missingDestinationCount > 0
+                      ? 'structure-qualification__hint-line structure-qualification__hint-echo'
+                      : 'structure-qualification__hint-line'
+                  }
+                >
                   {hostDanglingEcho.join(' · ')}
                 </p>
               ) : null}

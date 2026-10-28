@@ -161,17 +161,27 @@ function overExtractionDestination(): StructureStageHubSummary {
   });
 }
 
-function renderDialog(source: StructureStageHubSummary) {
+function renderDialog(
+  source: StructureStageHubSummary,
+  options?: {
+    destination?: StructureStageHubSummary;
+    openedFromDestinationStageId?: string | null;
+  },
+) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
+  const destination = options?.destination ?? overExtractionDestination();
   render(
     <QueryClientProvider client={client}>
       <StructureQualificationDialog
-        data={structureView(source, overExtractionDestination())}
+        data={structureView(source, destination)}
         stage={source}
         open
         onClose={vi.fn()}
+        openedFromDestinationStageId={
+          options?.openedFromDestinationStageId ?? null
+        }
       />
     </QueryClientProvider>,
   );
@@ -191,8 +201,12 @@ describe('StructureQualificationDialog hydrate / groups (2b)', () => {
     renderDialog(overExtractionSource());
 
     expect(
-      await screen.findByRole('heading', { name: /Qualifications/i }),
+      await screen.findByRole('heading', { name: /Qualifications — Poules/i }),
     ).toBeInTheDocument();
+    expect(screen.getByRole('dialog').closest('.ds-dialog')).toHaveAttribute(
+      'data-size',
+      'lg',
+    );
 
     // Facts stay dashed — hydrate must not treat isLoading=false+error as ready.
     await waitFor(() => {
@@ -263,5 +277,126 @@ describe('StructureQualificationDialog hydrate / groups (2b)', () => {
     expect(
       screen.queryByText(/Phase suivante · 6 qualifiés/i),
     ).not.toBeInTheDocument();
+  });
+
+  it('echoes a slot structure issue while the destination stage still exists', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStageSchematic).mockResolvedValue(groupsSchematic([]));
+
+    renderDialog(
+      hubStage({
+        stageId: sourceId,
+        name: 'Poules',
+        formatKind: 'Groups',
+        hasQualificationRules: true,
+        qualificationPathCount: 1,
+        structureIssues: ['MissingQualificationDestinationSlot'],
+        qualificationIntents: [
+          {
+            intentId: 'qual-pop',
+            order: 1,
+            sourceKind: 'Overall',
+            positionFrom: 1,
+            positionTo: 1,
+            destinationStageId: destId,
+          },
+        ],
+      }),
+    );
+
+    expect(
+      await screen.findByText('Place de qualification manquante'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Phase introuvable/i)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Supprimer' }));
+    const save = screen.getByRole('button', { name: 'Enregistrer' });
+    await waitFor(() => expect(save).toBeEnabled());
+    await user.click(save);
+
+    await waitFor(() => {
+      expect(replaceStageQualificationRules).toHaveBeenCalledWith(sourceId, {
+        intents: [],
+      });
+    });
+  });
+
+  it('states Place ownership when opened from the destination phase', async () => {
+    vi.mocked(fetchStageSchematic).mockResolvedValue(groupsSchematic([]));
+
+    renderDialog(overExtractionSource(), {
+      openedFromDestinationStageId: destId,
+    });
+
+    expect(
+      await screen.findByText(
+        /enregistrés sur Poules, pas sur la phase d’où vous avez ouvert/i,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('does not describe Place as Cup-only when the destination has no labeled places', async () => {
+    const user = userEvent.setup();
+    const cupDestination = hubStage({
+      stageId: destId,
+      name: 'Tableau',
+      formatKind: 'Cup',
+    });
+    vi.mocked(fetchStageSchematic).mockImplementation(async (id: string) => {
+      if (id === destId) {
+        return {
+          stageId: destId,
+          competitionId,
+          name: 'Tableau',
+          status: 'Draft',
+          formatKind: 'Cup',
+          cases: [
+            {
+              formPosition: { kind: 'CupSlot', index: 1 },
+            },
+          ],
+          connections: [],
+        };
+      }
+      return groupsSchematic([]);
+    });
+
+    renderDialog(
+      hubStage({
+        stageId: sourceId,
+        name: 'Poules',
+        formatKind: 'Groups',
+        qualificationIntents: [
+          {
+            intentId: 'qual-place',
+            order: 1,
+            sourceKind: 'Overall',
+            positionFrom: 1,
+            positionTo: 1,
+            destinationStageId: destId,
+            destinationSlotKeys: ['S1'],
+          },
+        ],
+      }),
+      { destination: cupDestination },
+    );
+
+    await user.click(
+      await screen.findByRole('button', {
+        name: /1er du classement général/i,
+      }),
+    );
+
+    expect(
+      await screen.findByText(
+        /Cette phase de destination n’expose pas de places adressables/i,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/phases Coupe dont la structure/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('radiogroup', { name: 'Phase de destination' }),
+    ).toBeInTheDocument();
   });
 });

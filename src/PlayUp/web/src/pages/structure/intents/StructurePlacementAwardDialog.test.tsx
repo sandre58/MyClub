@@ -167,9 +167,13 @@ describe('StructurePlacementAwardDialog orphan remediation', () => {
 
     expect(
       await screen.findByRole('heading', {
-        name: /Attribution des places/i,
+        name: /Attribution des places — Finale/i,
       }),
     ).toBeInTheDocument();
+    expect(screen.getByRole('dialog').closest('.ds-dialog')).toHaveAttribute(
+      'data-size',
+      'lg',
+    );
     expect(
       await screen.findByText(/Paire inconnue|Unknown pair/i),
     ).toBeInTheDocument();
