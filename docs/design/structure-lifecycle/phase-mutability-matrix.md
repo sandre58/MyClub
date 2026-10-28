@@ -205,7 +205,9 @@ Tests to preserve: [`GenerateNextRoundTests`](../../../tests/MyClub.PlayUp.Appli
 
 ## 9. Commands — `UseCaseExecutor.Stages` inventory (current)
 
-Domain default: `EnsureStructureMutable()` ⇒ **Draft only** unless noted. Application `StageStructureEditGuard` requires stage Draft, and denies heavy structure when the competition is Running or Suspended (`AddRound` / `AddSlot` / `AddMatchday` / `AddGroup`, rebuild, draw-rules replace, match and tie regulation). Downstream Draft hub actions match Ready operational authoring; an orphan Draft phase projects `RenameStage` only. `ReplaceDrawRules` and `AddSlot` stay denied on that Draft phase until a later allowlist.
+Domain default: `EnsureStructureMutable()` ⇒ **Draft only** unless noted. Application `StageStructureEditGuard` requires stage Draft, and denies heavy structure when the competition is Running or Suspended (`AddRound` / `AddSlot` / `AddMatchday` / `AddGroup`, rebuild, draw-rules replace, match and tie regulation). Downstream Draft hub actions match Ready operational authoring; an orphan Draft phase projects `RenameStage` only.
+
+**2B.1 (E1A–E6A)** denies every Draft extra outside that Ready operational set while the competition is Running or Suspended. Suspended matches Running. The deny list is `ReplaceDrawRules`, `AddSlot`, `AddRound`, `AddGroup`, `AddMatchday`, `RebuildStructure`, `RemoveStage`, `ReplaceMatchRules`, `BindToCompetition`, `ReplaceDefaultTieFormat`, `ReplaceRoundTieFormat`, `ReplaceStandingRules` on a **Draft** stage, `ReplaceMatchGenerationFormat`, `ReplaceSwissSettings`, and `ConfigureStructure`. Peuplement stays on the Ready operational set (`AssignEntryToSlot` / `ClearSlotAssignment`). `ReplaceStandingRules` on a **Running** classifying stage stays allowed and is outside this pack. Application is the deny source (`StageStructureEditGuard`, plus the competition-status checks on `ConfigureStructure`, `RebuildStageStructure`, and `RemoveCompetitionStage`). The hub only projects that result. The competition-less `ReplaceStageDrawRules` overload is internal and is not a product entry. Proof: [`DraftUnderRunningAuthoringTests`](../../../tests/MyClub.PlayUp.Application.Tests/Stages/DraftUnderRunningAuthoringTests.cs).
 
 **§9 table = runtime today.** Target draw policy = **§9.1.1**. Do not read **Allow** in §9.1 as “already enforced” where §9 shows Draft-only.
 
@@ -241,7 +243,7 @@ Domain default: `EnsureStructureMutable()` ⇒ **Draft only** unless noted. Appl
 | `ReplaceStageStandingRulesAsync` | `ReplaceStageStandingRules` | — | deny `Ready` (`Stage.StandingRulesLocked` / C-20) ; Running+ classifying | `ReplaceStandingRules` | Règlement jeu |
 | `ReplaceStageMatchRulesAsync` | `ReplaceStageMatchRules` | — | `EnsureStructureMutable` | `ReplaceMatchRules` | Règlement jeu |
 | `BindStageRegulationAsync` | `BindStageRegulation` | — | `EnsureStructureMutable` | `BindToCompetition` | Règlement jeu |
-| `ReplaceStageDrawRulesAsync` | `ReplaceStageDrawRules` | — | `EnsureStructureMutable` + draw locks | `ReplaceDrawRules` | Operational draw |
+| `ReplaceStageDrawRulesAsync` | `ReplaceStageDrawRules` | — | `EnsureDraftHeavyStructureAllowed` + `EnsureStructureMutable` + draw locks | `ReplaceDrawRules` | Operational draw |
 | `ReplaceStageAffectationAuthoringAsync` | `ReplaceStageAffectationAuthoring` | lifecycle mutation | `EnsureStructureMutable` | `ReplaceAffectationAuthoring` | Entrées |
 | `ReplaceStageDefaultTieFormatAsync` | `ReplaceStageDefaultTieFormat` | — | `EnsureStructureMutable` | `ReplaceDefaultTieFormat` | Règlement jeu |
 | `ReplaceRoundTieFormatAsync` | `ReplaceRoundTieFormat` | — | `EnsureStructureMutable` | `ReplaceRoundTieFormat` | Règlement jeu |
@@ -278,7 +280,7 @@ Domain default: `EnsureStructureMutable()` ⇒ **Draft only** unless noted. Appl
 
 | Command / concern | Stage **Draft** | Stage **Ready**, no production | **Applied** draw (entity) | Enforcement today |
 |-------------------|-----------------|-------------------------------|---------------------------|-------------------|
-| `ReplaceStageDrawRules` | Allow per guards | **Deny** (B-Q1b) — use cancel → recreate (P2) if needed | **Deny** | **Aligned** — `EnsureStructureMutable` |
+| `ReplaceStageDrawRules` | Allow while the competition is Draft or Ready; **Deny** when the competition is Running or Suspended (2B.1 E1A) | **Deny** (B-Q1b) — use cancel → recreate (P2) if needed | **Deny** | **Aligned** — `EnsureDraftHeavyStructureAllowed` + `EnsureStructureMutable` |
 | `CreateDraw` | Allow | Allow if **≤1 non-cancelled** draw (B-Q3a) | — | **Δ** — SPA partial; **G-B-1-ENF** |
 | `ConfigureDrawInputs` / `GenerateDraw` | Draw entity **Draft** only | **Deny** on entity (B-Q3b) | **Deny** | **Aligned** — `Draw.EnsureDraftMutable` |
 | `PublishDraw` / `ApplyDraw` | Per lifecycle | **Allow** per B-Q2 (not universal deny post-Applied) | Idempotent **Apply** only if conform; **deny** obsolete **D** on **Apply** (**C-ENF-Apply** `85360d3`) | **Aligned** — Apply gate shipped |
