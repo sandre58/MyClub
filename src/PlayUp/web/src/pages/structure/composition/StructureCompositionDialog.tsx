@@ -19,6 +19,7 @@ import {
 import { CloseIcon } from '../../../design-system/icons/shellIcons';
 import { EntryCellWithdrawnMarker } from '../../../design-system/components/EntryCell';
 import { TeamCrest } from '../../../design-system/TeamCrest';
+import { notify } from '../../../design-system/toastStore';
 import { useClearMutationsOnOpen } from '../../../design-system/useClearMutationsOnOpen';
 import { useDiscardConfirm } from '../../../design-system/useDiscardConfirm';
 import type { StructureEntry, StructureStageHubSummary } from '../../../types';
@@ -188,6 +189,7 @@ export function StructureCompositionDialog({
     mutationFn: () =>
       replaceStageAffectationAuthoring(stage.stageId, [...selected]),
     onSuccess: () => {
+      notify.success(t('composition.toastUpdated'));
       onClose();
       scheduleStructureRefresh(queryClient, competitionId, ['graph']);
     },
@@ -255,7 +257,7 @@ export function StructureCompositionDialog({
       <Dialog
         open={open}
         onClose={requestClose}
-        size="md"
+        size="lg"
         title={t('composition.title', { phase: stage.name })}
         description={t('composition.lede')}
         closeLabel={tCommon('close')}
