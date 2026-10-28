@@ -1,6 +1,7 @@
 import type { RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { fetchNeedsAttention } from '../api';
 import { TeamCrest } from '../design-system/TeamCrest';
 import {
@@ -107,6 +108,7 @@ export function ShellHeader({
       ) : null}
 
       <ShellHeaderCompetitionContext
+        competitionId={competitionId}
         competitionName={competitionName}
         logoMediaId={logoMediaId}
         competitionStatus={competitionStatus}
@@ -133,6 +135,7 @@ export function ShellHeader({
 }
 
 function ShellHeaderCompetitionContext({
+  competitionId,
   competitionName,
   logoMediaId,
   competitionStatus,
@@ -140,6 +143,7 @@ function ShellHeaderCompetitionContext({
   state,
   crestSize,
 }: {
+  competitionId?: string;
   competitionName?: string;
   logoMediaId?: string | null;
   competitionStatus?: CompetitionStatus;
@@ -186,9 +190,9 @@ function ShellHeaderCompetitionContext({
           {(competitionStatus || periodLabel) && (
             <div className="ds-shell-header__meta">
               {competitionStatus && (
-                <CompetitionStatusBadge
+                <ShellHeaderStatusBadge
                   status={competitionStatus}
-                  density="compact"
+                  competitionId={competitionId}
                 />
               )}
               {competitionStatus && periodLabel && (
@@ -246,6 +250,33 @@ function ShellHeaderCompetitionContext({
         {t('competition.choose')}
       </span>
     </div>
+  );
+}
+
+/**
+ * Only Suspended bridges to Overview, where Resume already lives.
+ * Other statuses stay a plain badge.
+ */
+function ShellHeaderStatusBadge({
+  status,
+  competitionId,
+}: {
+  status: CompetitionStatus;
+  competitionId?: string;
+}) {
+  const badge = <CompetitionStatusBadge status={status} density="compact" />;
+
+  if (status !== 'Suspended' || !competitionId) {
+    return badge;
+  }
+
+  return (
+    <Link
+      className="shell-header__status-link"
+      to={`/competitions/${competitionId}`}
+    >
+      {badge}
+    </Link>
   );
 }
 

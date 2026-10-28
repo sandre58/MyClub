@@ -16,6 +16,18 @@
   min-width: 0;
 }
 
+.shell-header__status-link {
+  display: inline-flex;
+  color: inherit;
+  text-decoration: none;
+  border-radius: var(--radius-control);
+}
+
+.shell-header__status-link:hover {
+  color: inherit;
+  text-decoration: none;
+}
+
 .shell-header__meta-separator {
   color: inherit;
   font-size: var(--text-meta);

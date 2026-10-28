@@ -11,7 +11,7 @@ import {
   fetchStageOverview,
 } from '../api';
 import { AppLayout } from '../AppLayout';
-import type { NeedsAttentionItem } from '../types';
+import type { CompetitionStatus, NeedsAttentionItem } from '../types';
 
 vi.mock('../api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../api')>();
@@ -44,6 +44,20 @@ function needsAttention(items: Partial<NeedsAttentionItem>[] = []) {
   };
 }
 
+function mockCompetitionStatus(status: CompetitionStatus) {
+  vi.mocked(fetchCompetitions).mockResolvedValue([
+    { id: competitionId, name: 'Coupe U18', status },
+  ]);
+  vi.mocked(fetchCompetitionDetail).mockResolvedValue({
+    id: competitionId,
+    name: 'Coupe U18',
+    status,
+    entries: [],
+    stages: [],
+    logoMediaId: 'dddddddd-dddd-dddd-dddd-dddddddddddd',
+  });
+}
+
 function renderWithShell(initialEntry: string) {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -72,6 +86,10 @@ function renderWithShell(initialEntry: string) {
             <Route
               path="/competitions/:competitionId"
               element={<p>Workspace page</p>}
+            />
+            <Route
+              path="/competitions/:competitionId/structure"
+              element={<p>Structure page</p>}
             />
             <Route path="/stages/:stageId" element={<p>Stage page</p>} />
             <Route path="/matches/:matchId" element={<p>Match page</p>} />
@@ -285,6 +303,44 @@ describe('ShellHeader', () => {
     expect(
       document.getElementById('shell-attention-drawer-panel'),
     ).toBeInTheDocument();
+  });
+
+  it('links a suspended status badge to overview without a resume focus', async () => {
+    mockCompetitionStatus('Suspended');
+    const user = userEvent.setup();
+    renderWithShell(`/competitions/${competitionId}/structure`);
+
+    expect(await screen.findByText('Structure page')).toBeInTheDocument();
+    const link = await screen.findByRole('link', { name: 'Suspendu' });
+    expect(link).toHaveAttribute('href', `/competitions/${competitionId}`);
+
+    await user.click(link);
+
+    expect(await screen.findByText('Workspace page')).toBeInTheDocument();
+    expect(screen.queryByText('Structure page')).not.toBeInTheDocument();
+  });
+
+  it('links a suspended badge resolved from a stage to overview', async () => {
+    mockCompetitionStatus('Suspended');
+    renderWithShell(`/stages/${stageId}`);
+
+    const link = await screen.findByRole('link', { name: 'Suspendu' });
+    expect(link).toHaveAttribute('href', `/competitions/${competitionId}`);
+  });
+
+  it.each([
+    ['Draft', 'Brouillon'],
+    ['Ready', 'Prêt'],
+    ['Running', 'En cours'],
+    ['Completed', 'Terminé'],
+    ['Archived', 'Archivé'],
+  ] as const)('keeps the %s status badge inert', async (status, label) => {
+    mockCompetitionStatus(status);
+    renderWithShell(`/competitions/${competitionId}/structure`);
+
+    const badge = await screen.findByText(label);
+    expect(badge.closest('a')).toBeNull();
+    expect(screen.queryByRole('link', { name: label })).not.toBeInTheDocument();
   });
 
   it('does not change the route when rendering the header', async () => {
