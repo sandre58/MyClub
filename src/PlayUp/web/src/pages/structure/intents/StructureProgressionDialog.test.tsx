@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -7,6 +7,8 @@ import {
   fetchStageSchematic,
   replaceStageProgressionRules,
 } from '../../../api';
+import enStructure from '../../../i18n/locales/en/structure.json';
+import frStructure from '../../../i18n/locales/fr/structure.json';
 import { structureReadiness } from '../../../test/structureTestFixtures';
 import type {
   StageOverview,
@@ -265,5 +267,208 @@ describe('StructureProgressionDialog chrome', () => {
     expect(
       screen.queryByText(/phases Coupe dont la structure/i),
     ).not.toBeInTheDocument();
+  });
+
+  it('stacks pair confrontations and blocks save with a danger alert', async () => {
+    const user = userEvent.setup();
+    expect(frStructure.progression.placeMapHeading).toBe(
+      'Association des places',
+    );
+    expect(frStructure.qualification.placeMapHeading).toBe(
+      'Association des places',
+    );
+    expect(enStructure.progression.placeMapHeading).toBe('Place associations');
+    expect(enStructure.qualification.placeMapHeading).toBe(
+      'Place associations',
+    );
+    expect(enStructure.progression.placeMapHeading).not.toBe('Places');
+    expect(enStructure.progression.placeMapHeading).not.toBe(
+      frStructure.progression.placeMapHeading,
+    );
+
+    vi.mocked(fetchStageOverview).mockResolvedValue({
+      ...overview(),
+      rounds: [
+        {
+          id: 'round-1',
+          name: 'Finale',
+          fixtures: [
+            {
+              id: 'fx-1',
+              slotAKey: 'S1',
+              slotBKey: 'S2',
+              attachments: [],
+            },
+            {
+              id: 'fx-2',
+              slotAKey: 'S3',
+              slotBKey: 'S4',
+              attachments: [],
+            },
+          ],
+        },
+      ],
+      bracketPairs: [
+        { pairKey: 'P1', slotAKey: 'S1', slotBKey: 'S2' },
+        { pairKey: 'P2', slotAKey: 'S3', slotBKey: 'S4' },
+      ],
+    });
+    vi.mocked(fetchStageSchematic).mockImplementation(async (id: string) => {
+      if (id === destId) {
+        return {
+          ...schematic(destId, 'Cup'),
+          name: 'Tableau',
+          cases: [
+            { formPosition: { kind: 'CupSlot', slotKey: 'S1' } },
+            { formPosition: { kind: 'CupSlot', slotKey: 'S2' } },
+          ],
+        };
+      }
+      return schematic(id, 'Cup');
+    });
+
+    renderDialog(
+      hubStage({
+        stageId: sourceId,
+        name: 'Demi',
+        progressionIntents: [
+          {
+            intentId: 'prog-place',
+            order: 1,
+            roundId: 'round-1',
+            roundName: 'Finale',
+            outcome: 'Loser',
+            destinationStageId: destId,
+            destinationSlotKeys: ['', ''],
+            expandedPathCount: 2,
+          },
+        ],
+      }),
+      hubStage({ stageId: destId, name: 'Tableau', formatKind: 'Cup' }),
+    );
+
+    const blocked = await screen.findByRole('alert');
+    expect(blocked).toHaveClass('ds-alert--danger');
+    expect(blocked).toHaveTextContent(
+      /2 places à associer avant d.enregistrer/,
+    );
+    const save = screen.getByRole('button', { name: 'Enregistrer' });
+    expect(save).toBeDisabled();
+
+    await user.click(
+      await screen.findByRole('button', { name: /Perdant — Finale/i }),
+    );
+
+    expect(
+      await screen.findByText('Association des places'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Emplacements')).not.toBeInTheDocument();
+
+    const map = screen.getByRole('list', {
+      name: 'Associer chaque match à une place',
+    });
+    expect(within(map).getByText('P1')).toHaveClass(
+      'structure-qualification__place-map-primary',
+    );
+    expect(within(map).getByText('S1 vs S2')).toHaveClass(
+      'structure-qualification__place-map-secondary',
+    );
+    expect(within(map).getByText('P2')).toHaveClass(
+      'structure-qualification__place-map-primary',
+    );
+    expect(within(map).getByText('S3 vs S4')).toHaveClass(
+      'structure-qualification__place-map-secondary',
+    );
+    expect(within(map).queryByText('P1 · S1 vs S2')).not.toBeInTheDocument();
+    expect(
+      within(map).getByRole('combobox', { name: 'Place pour P1 · S1 vs S2' }),
+    ).toBeInTheDocument();
+
+    await user.click(
+      within(map).getByRole('combobox', { name: 'Place pour P1 · S1 vs S2' }),
+    );
+    await user.click(screen.getByRole('option', { name: 'S1' }));
+    await user.click(
+      within(map).getByRole('combobox', { name: 'Place pour P2 · S3 vs S4' }),
+    );
+    await user.click(screen.getByRole('option', { name: 'S2' }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      expect(save).toBeEnabled();
+    });
+  });
+
+  it('stacks fixture confrontations when the round has no bracket pairs', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStageOverview).mockResolvedValue({
+      ...overview(),
+      rounds: [
+        {
+          id: 'round-1',
+          name: 'Finale',
+          fixtures: [
+            {
+              id: 'fx-1',
+              slotAKey: 'SA',
+              slotBKey: 'SB',
+              attachments: [],
+            },
+          ],
+        },
+      ],
+      bracketPairs: [],
+    });
+    vi.mocked(fetchStageSchematic).mockImplementation(async (id: string) => {
+      if (id === destId) {
+        return {
+          ...schematic(destId, 'Cup'),
+          cases: [{ formPosition: { kind: 'CupSlot', slotKey: 'S1' } }],
+        };
+      }
+      return schematic(id, 'Cup');
+    });
+
+    renderDialog(
+      hubStage({
+        stageId: sourceId,
+        name: 'Demi',
+        progressionIntents: [
+          {
+            intentId: 'prog-fixture',
+            order: 1,
+            roundId: 'round-1',
+            roundName: 'Finale',
+            outcome: 'Loser',
+            destinationStageId: destId,
+            destinationSlotKeys: [''],
+            expandedPathCount: 1,
+          },
+        ],
+      }),
+      hubStage({ stageId: destId, name: 'Tableau', formatKind: 'Cup' }),
+    );
+
+    await user.click(
+      await screen.findByRole('button', { name: /Perdant — Finale/i }),
+    );
+
+    const map = await screen.findByRole('list', {
+      name: 'Associer chaque match à une place',
+    });
+    expect(within(map).getByText('Match #1')).toHaveClass(
+      'structure-qualification__place-map-primary',
+    );
+    expect(within(map).getByText('SA vs SB')).toHaveClass(
+      'structure-qualification__place-map-secondary',
+    );
+    expect(
+      within(map).queryByText('Match #1 · SA vs SB'),
+    ).not.toBeInTheDocument();
+    expect(
+      within(map).getByRole('combobox', {
+        name: 'Place pour Match #1 · SA vs SB',
+      }),
+    ).toBeInTheDocument();
   });
 });

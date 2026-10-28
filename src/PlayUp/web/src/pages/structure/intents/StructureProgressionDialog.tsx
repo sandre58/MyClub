@@ -475,7 +475,7 @@ export function StructureProgressionDialog({
                 />
               ) : null}
               {saveBlockedReason ? (
-                <Alert tone="warning" role="status">
+                <Alert tone="danger" role="alert">
                   <p className="structure-qualification__hint-line">
                     {saveBlockedReason}
                   </p>

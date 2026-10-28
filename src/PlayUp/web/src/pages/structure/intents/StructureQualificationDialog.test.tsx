@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -398,5 +398,106 @@ describe('StructureQualificationDialog hydrate / groups (2b)', () => {
     expect(
       screen.getByRole('radiogroup', { name: 'Phase de destination' }),
     ).toBeInTheDocument();
+  });
+
+  it('shows the place heading and keeps only save blockers on danger', async () => {
+    const user = userEvent.setup();
+    const cupDestination = hubStage({
+      stageId: destId,
+      name: 'Tableau',
+      formatKind: 'Cup',
+      compositionCapacity: null,
+    });
+    vi.mocked(fetchStageSchematic).mockImplementation(async (id: string) => {
+      if (id === destId) {
+        return {
+          stageId: destId,
+          competitionId,
+          name: 'Tableau',
+          status: 'Draft',
+          formatKind: 'Cup',
+          cases: [
+            { formPosition: { kind: 'CupSlot', slotKey: 'S1' } },
+            { formPosition: { kind: 'CupSlot', slotKey: 'S2' } },
+          ],
+          connections: [],
+        };
+      }
+      return groupsSchematic([]);
+    });
+
+    renderDialog(
+      hubStage({
+        stageId: sourceId,
+        name: 'Poules',
+        formatKind: 'Groups',
+        qualificationIntents: [
+          {
+            intentId: 'qual-a',
+            order: 1,
+            sourceKind: 'Overall',
+            positionFrom: 1,
+            positionTo: 1,
+            destinationStageId: destId,
+            destinationSlotKeys: [''],
+          },
+          {
+            intentId: 'qual-b',
+            order: 2,
+            sourceKind: 'Overall',
+            positionFrom: 1,
+            positionTo: 1,
+            destinationStageId: destId,
+            destinationSlotKeys: [''],
+          },
+        ],
+      }),
+      { destination: cupDestination },
+    );
+
+    const blocked = await screen.findByRole('alert');
+    expect(blocked).toHaveClass('ds-alert--danger');
+    expect(blocked).toHaveTextContent(
+      /2 places à associer avant d.enregistrer/,
+    );
+    const duplicate = screen.getByText(/même sélection/i);
+    expect(duplicate.closest('.ds-alert')).toHaveClass('ds-alert--warning');
+    expect(duplicate.closest('.ds-alert')).toHaveAttribute('role', 'status');
+    const save = screen.getByRole('button', { name: 'Enregistrer' });
+    expect(save).toBeDisabled();
+
+    const rows = await screen.findAllByRole('button', {
+      name: /1er du classement général/i,
+    });
+    await user.click(rows[0]!);
+
+    expect(
+      await screen.findByText('Association des places'),
+    ).toBeInTheDocument();
+    const map = screen.getByRole('list', {
+      name: 'Associer chaque sélection à une place',
+    });
+    const sourceLabel = within(map).getByText('1er du classement général');
+    expect(sourceLabel).toHaveClass('structure-qualification__place-map-label');
+    expect(sourceLabel).not.toHaveClass(
+      'structure-qualification__place-map-label--stack',
+    );
+
+    await user.click(
+      within(map).getByRole('combobox', {
+        name: 'Place pour 1er du classement général',
+      }),
+    );
+    await user.click(screen.getByRole('option', { name: 'S1' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        /1 place à associer avant d.enregistrer/,
+      );
+    });
+    expect(save).toBeDisabled();
+    expect(
+      screen.getByText(/même sélection/i).closest('.ds-alert'),
+    ).toHaveAttribute('role', 'status');
   });
 });

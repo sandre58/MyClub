@@ -75,24 +75,43 @@ function stageFormatIcon(kind?: StructureFormatKind | null) {
   }
 }
 
+/** Visual stack (primary / secondary) plus one flat phrase for row aria. */
+type PlaceMapSourceLabel = {
+  primary: string;
+  secondary: string | null;
+  aria: string;
+};
+
 function pairPlaceMapLabel(
   pairKey: string,
   slotAKey: string,
   slotBKey: string,
-): string {
-  return `${pairKey} · ${slotAKey} vs ${slotBKey}`;
+): PlaceMapSourceLabel {
+  const secondary = `${slotAKey} vs ${slotBKey}`;
+  return {
+    primary: pairKey,
+    secondary,
+    aria: `${pairKey} · ${secondary}`,
+  };
 }
 
 function fixturePlaceMapLabel(
   fixture: StageFixture,
   index: number,
   t: (key: string, opts?: Record<string, unknown>) => string,
-): string {
-  const base = t('progression.matchOrdinal', { n: index + 1 });
+): PlaceMapSourceLabel {
+  const primary = t('progression.matchOrdinal', { n: index + 1 });
   const a = fixture.slotAKey?.trim();
   const b = fixture.slotBKey?.trim();
-  if (!a && !b) return base;
-  return `${base} · ${a || '—'} vs ${b || '—'}`;
+  if (!a && !b) {
+    return { primary, secondary: null, aria: primary };
+  }
+  const secondary = `${a || '—'} vs ${b || '—'}`;
+  return {
+    primary,
+    secondary,
+    aria: `${primary} · ${secondary}`,
+  };
 }
 
 export function StructureProgressionIntentEditor({
@@ -172,22 +191,20 @@ export function StructureProgressionIntentEditor({
     () => [...bracketPairs].sort((a, b) => a.pairKey.localeCompare(b.pairKey)),
     [bracketPairs],
   );
-  const expandRows: Array<{
-    key: string;
-    label: string;
-  }> = useMemo(() => {
-    if (orderedPairs.length > 0) {
-      return orderedPairs.map((p) => ({
-        key: p.pairKey,
-        label: pairPlaceMapLabel(p.pairKey, p.slotAKey, p.slotBKey),
+  const expandRows: Array<PlaceMapSourceLabel & { key: string }> =
+    useMemo(() => {
+      if (orderedPairs.length > 0) {
+        return orderedPairs.map((p) => ({
+          key: p.pairKey,
+          ...pairPlaceMapLabel(p.pairKey, p.slotAKey, p.slotBKey),
+        }));
+      }
+      const fixtures = selectedRound?.fixtures ?? [];
+      return fixtures.map((fixture, index) => ({
+        key: fixture.id,
+        ...fixturePlaceMapLabel(fixture, index, t),
       }));
-    }
-    const fixtures = selectedRound?.fixtures ?? [];
-    return fixtures.map((fixture, index) => ({
-      key: fixture.id,
-      label: fixturePlaceMapLabel(fixture, index, t),
-    }));
-  }, [orderedPairs, selectedRound?.fixtures, t]);
+    }, [orderedPairs, selectedRound?.fixtures, t]);
   const placeSlotKeys = useMemo(() => {
     const source =
       placeGrain === 'group'
@@ -552,17 +569,31 @@ export function StructureProgressionIntentEditor({
                       const selected = placeSlotKeys[index]?.trim() || null;
                       const rowId = `prog-place-${draft.id}-${index}`;
                       const rowInvalid = !selected;
-                      const sourceLabel = row.label;
+                      const sourceLabel = row.aria;
                       return (
                         <li
                           key={row.key}
                           data-invalid={rowInvalid ? 'true' : 'false'}
                         >
                           <label
-                            className="structure-qualification__place-map-label"
+                            className={[
+                              'structure-qualification__place-map-label',
+                              row.secondary
+                                ? 'structure-qualification__place-map-label--stack'
+                                : null,
+                            ]
+                              .filter(Boolean)
+                              .join(' ')}
                             htmlFor={rowId}
                           >
-                            {sourceLabel}
+                            <span className="structure-qualification__place-map-primary">
+                              {row.primary}
+                            </span>
+                            {row.secondary ? (
+                              <span className="structure-qualification__place-map-secondary">
+                                {row.secondary}
+                              </span>
+                            ) : null}
                           </label>
                           <div className="structure-qualification__place-map-control">
                             <Select
