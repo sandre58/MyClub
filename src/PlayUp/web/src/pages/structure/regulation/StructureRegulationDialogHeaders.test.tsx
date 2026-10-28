@@ -19,6 +19,7 @@ import {
 } from '../../stage/StageMatchStandingDialogs';
 import { TieFormatDialog } from '../../stage/StageTieFormatDialog';
 import { DrawRulesDialog } from './StructureRegulationDialogs';
+import { EditSkeletonDialog } from '../schematic/StructureGraphDialogs';
 
 vi.mock('../../../api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../../api')>();
@@ -243,6 +244,14 @@ describe.each(['fr', 'en'] as const)(
         withPhase(copy.fiche.drawWorkflow.title),
         copy.regulation.drawExecHeaderHint,
       );
+    });
+
+    it('puts the phase in the edit-structure title and a lede hint under it', () => {
+      renderDialog(
+        <EditSkeletonDialog data={data} stage={stage} open onClose={vi.fn()} />,
+      );
+
+      expectHeader(withPhase(copy.skeleton.editTitle), copy.skeleton.editLede);
     });
   },
 );
