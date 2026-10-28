@@ -160,6 +160,25 @@ describe('structureProgressionDraft', () => {
     );
   });
 
+  it('keeps DuplicateRoundOutcome blocking when Winner intents target different groups', () => {
+    const a = emptyProgIntent('source', 'place');
+    a.roundId = 'r1';
+    a.outcome = 'Winner';
+    a.expandedPathCount = 1;
+    a.destinationGroupIds = ['grp-a'];
+    a.destinationSlotKeys = [];
+    const b = emptyProgIntent('source', 'place');
+    b.roundId = 'r1';
+    b.outcome = 'Winner';
+    b.expandedPathCount = 1;
+    b.destinationGroupIds = ['grp-b'];
+    b.destinationSlotKeys = [];
+    expect(incompleteIntentReason(a, [a, b], true, 'r1')).toBe(
+      'DuplicateRoundOutcome',
+    );
+    expect(isIntentComplete(a, [a, b], true, 'r1')).toBe(false);
+  });
+
   it('allows Winner championship terminal + Loser intermediate to same Population', () => {
     const a = emptyProgIntent('peer');
     a.roundId = 'final';

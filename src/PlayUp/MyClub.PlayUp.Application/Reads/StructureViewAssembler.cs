@@ -155,6 +155,12 @@ public static class StructureViewAssembler
     /// <summary>Stage structure issue: progression destination group missing on target stage.</summary>
     public const string IssueMissingProgressionDestinationGroup = "MissingProgressionDestinationGroup";
 
+    /// <summary>
+    /// Stage structure issue: two persisted progression intents share the same round and outcome.
+    /// Path-list rules are not scanned — legacy paths coalesce on read.
+    /// </summary>
+    public const string IssueDuplicateProgressionRoundOutcome = "DuplicateProgressionRoundOutcome";
+
     /// <summary>Stage structure issue: inbound WhoFeeds InvalidFeed (same-kind duplication).</summary>
     public const string IssueSlotFeedInvalid = CompetitionFlowAnalyzer.SlotFeedInvalid;
 
@@ -989,6 +995,11 @@ public static class StructureViewAssembler
 
         if (stage.Regulation.ProgressionRules is { } progression)
         {
+            if (HasDuplicatePersistedProgressionRoundOutcome(progression))
+            {
+                issues.Add(IssueDuplicateProgressionRoundOutcome);
+            }
+
             foreach (var path in progression.Paths)
             {
                 if (path.Destination.TargetsPopulation || path.Destination.TargetsForm)
@@ -1057,6 +1068,15 @@ public static class StructureViewAssembler
 
         return [.. issues.Distinct(StringComparer.Ordinal)];
     }
+
+    /// <summary>
+    /// True when persisted intents repeat a round × outcome. Empty intents (path-list authoring) are ignored.
+    /// </summary>
+    private static bool HasDuplicatePersistedProgressionRoundOutcome(ProgressionRules progression) =>
+        progression.Intents.Count > 0
+        && progression.Intents
+            .GroupBy(intent => (intent.RoundId, intent.Outcome))
+            .Any(group => group.Count() > 1);
 
     /// <summary>
     /// Form destinations are Prepare-gated to Championship / Swiss (same rule as <c>PrepareStage</c>).

@@ -198,4 +198,74 @@ public sealed class StructureViewAssemblerIssuesTests
         feeds.Should().OnlyContain(d => d.Code == CompetitionFlowAnalyzer.SlotFeedMissing);
         feeds.Select(d => d.SlotKey).Should().BeEquivalentTo("S1", "S2");
     }
+
+    [Fact]
+    public void Assemble_emits_DuplicateProgressionRoundOutcome_only_for_persisted_intent_duplicates()
+    {
+        var competition = CreateCompetition.Execute("Prog duplicate intents", _clock);
+        var source = Stage.Create(
+            competition.Id,
+            new StageName("Demi-finales"),
+            StageRegulation.MaterializeFrom(competition.Regulation, isClassifyingPhase: false),
+            _clock);
+        var destination = Stage.Create(
+            competition.Id,
+            new StageName("Finale"),
+            StageRegulation.MaterializeFrom(competition.Regulation, isClassifyingPhase: false),
+            _clock);
+        competition.AddStage(source.Id, _clock);
+        competition.AddStage(destination.Id, _clock);
+
+        var round = source.AddRound("Tour principal", SampleRegulations.KnockoutTieDecidable(), _clock);
+        source.AddSlot("SF-A");
+        source.AddSlot("SF-B");
+        source.ReplaceBracketPairs([new BracketPair("P1", "SF-A", "SF-B")]);
+        source.AddFixture(round.Id, _clock, "SF-A", "SF-B", "P1");
+
+        var duplicated = ProgressionRules.FromPersisted(
+            [
+                new ProgressionIntent(
+                    IntentId.New(),
+                    1,
+                    round.Id,
+                    ProgressionOutcome.Winner,
+                    destination.Id),
+                new ProgressionIntent(
+                    IntentId.New(),
+                    2,
+                    round.Id,
+                    ProgressionOutcome.Winner,
+                    destination.Id)
+            ],
+            [
+                new ProgressionPath(
+                    "P1",
+                    ProgressionOutcome.Winner,
+                    ProgressionDestination.ForPopulation(destination.Id))
+            ]);
+        source.ReplaceProgressionRules(duplicated, _clock);
+
+        var view = StructureViewAssembler.Assemble(competition, [source, destination]);
+        var hub = view.Stages.Single(stage => stage.StageId == source.Id.Value);
+
+        hub.ProgressionIntents.Should().HaveCount(2);
+        hub.StructureIssues.Should().Contain(StructureViewAssembler.IssueDuplicateProgressionRoundOutcome);
+        hub.PresentedIssueCodes.Should().Contain(StructureViewAssembler.IssueDuplicateProgressionRoundOutcome);
+        view.Readiness.Blockers.Should().Contain(StructureViewAssembler.BlockerStructureGraphInvalid);
+
+        source.ReplaceProgressionRules(
+            new ProgressionRules(
+            [
+                new ProgressionPath(
+                    "P1",
+                    ProgressionOutcome.Winner,
+                    ProgressionDestination.ForPopulation(destination.Id))
+            ]),
+            _clock);
+
+        var pathListHub = StructureViewAssembler.Assemble(competition, [source, destination])
+            .Stages.Single(stage => stage.StageId == source.Id.Value);
+        pathListHub.StructureIssues.Should().NotContain(StructureViewAssembler.IssueDuplicateProgressionRoundOutcome);
+        pathListHub.PresentedIssueCodes.Should().NotContain(StructureViewAssembler.IssueDuplicateProgressionRoundOutcome);
+    }
 }

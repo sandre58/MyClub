@@ -45,6 +45,7 @@ const DANGER_MATRIX_CODES = new Set([
   'MissingQualificationDestinationGroup',
   'MissingProgressionDestinationSlot',
   'MissingProgressionDestinationGroup',
+  'DuplicateProgressionRoundOutcome',
 ]);
 
 export function structurePresentationPhaseBucket(

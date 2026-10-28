@@ -174,4 +174,27 @@ describe('structureDiagnosticPresentation', () => {
     expect(structureDiagnosticTile('OverExtraction')).toBe('exits');
     expect(countStructureIssuesByFamily(['OverExtraction']).capacity).toBe(1);
   });
+
+  it('routes DuplicateProgressionRoundOutcome to Sorties as blocking danger', () => {
+    expect(structureDiagnosticTile('DuplicateProgressionRoundOutcome')).toBe(
+      'exits',
+    );
+    expect(
+      structureDiagnosticTitleKey('DuplicateProgressionRoundOutcome'),
+    ).toBe('graph.issues.DuplicateProgressionRoundOutcome');
+    expect(
+      structureDiagnosticTone('DuplicateProgressionRoundOutcome', {
+        stageStatus: 'Draft',
+      }),
+    ).toBe('danger');
+    expect(
+      structureIssuesForTile(['DuplicateProgressionRoundOutcome'], 'exits'),
+    ).toEqual(['DuplicateProgressionRoundOutcome']);
+    expect(
+      structureIssueBannersForTile(
+        ['DuplicateProgressionRoundOutcome'],
+        'exits',
+      ),
+    ).toEqual(['DuplicateProgressionRoundOutcome']);
+  });
 });

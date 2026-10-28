@@ -144,6 +144,13 @@ const BY_CODE: Record<string, StructureDiagnosticMeta> = {
     tone: 'danger',
     titleKey: 'graph.issues.MissingProgressionDestinationGroup',
   },
+  DuplicateProgressionRoundOutcome: {
+    family: 'graph',
+    tile: 'exits',
+    cta: 'progression',
+    tone: 'danger',
+    titleKey: 'graph.issues.DuplicateProgressionRoundOutcome',
+  },
   OverCapacityEdge: {
     family: 'capacity',
     tile: 'capacity',

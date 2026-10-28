@@ -284,7 +284,8 @@ export function StructureProgressionDialog({
       (code) =>
         code === 'DanglingProgressionTarget' ||
         code === 'MissingProgressionDestinationSlot' ||
-        code === 'MissingProgressionDestinationGroup',
+        code === 'MissingProgressionDestinationGroup' ||
+        code === 'DuplicateProgressionRoundOutcome',
     );
     return [...new Set(codes)].map((code) =>
       t(

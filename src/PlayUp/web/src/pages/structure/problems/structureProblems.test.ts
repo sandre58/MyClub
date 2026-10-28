@@ -403,6 +403,27 @@ describe('resolveLifecycleMutationMessage', () => {
 });
 
 describe('problems i18n parity', () => {
+  it('has FR/EN copy for DuplicateProgressionRoundOutcome', () => {
+    expect(enStructure.graph.issues.DuplicateProgressionRoundOutcome).toBe(
+      'Duplicate round and outcome',
+    );
+    expect(frStructure.graph.issues.DuplicateProgressionRoundOutcome).toBe(
+      'Tour et résultat déjà utilisés',
+    );
+    expect(enStructure.graph.issuesShort.DuplicateProgressionRoundOutcome).toBe(
+      'Duplicate round outcome',
+    );
+    expect(frStructure.graph.issuesShort.DuplicateProgressionRoundOutcome).toBe(
+      'Tour et résultat en double',
+    );
+    expect(enStructure.progression.incompleteHintDuplicateRoundOutcome).toBe(
+      'Duplicate round and outcome',
+    );
+    expect(frStructure.progression.incompleteHintDuplicateRoundOutcome).toBe(
+      'Tour et résultat déjà utilisés',
+    );
+  });
+
   it('has matching FR/EN graph.issuesShort for structure diagnostics', () => {
     // Wire codes only — pause presentation uses graph.issues.{code}Paused (long), not issuesShort.
     const longKeys = Object.keys(enStructure.graph.issues).filter(

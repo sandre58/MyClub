@@ -193,6 +193,30 @@ describe('functionalProblemPresentation', () => {
     expect(presentation.sotHref).toBe('/matches/match-9');
   });
 
+  it('situationPresentation uses short danger copy for a duplicate progression round', () => {
+    const presentation = situationPresentation(
+      {
+        source: 'DuplicateProgressionRoundOutcome',
+        nature: 'Blocking',
+        targetType: 'Stage',
+        targetId: 'stage-1',
+        matchId: null,
+        actionable: false,
+        actionCode: null,
+        impactCode: null,
+        params: { stageId: 'stage-1' },
+      },
+      'comp-1',
+      [{ stageId: 'stage-1', name: 'Demi-finales', status: 'Draft' }],
+    );
+    expect(presentation.titleKey).toBe(
+      'graph.issuesShort.DuplicateProgressionRoundOutcome',
+    );
+    expect(presentation.titleNs).toBe('structure');
+    expect(presentation.tone).toBe('danger');
+    expect(presentation.canal).toBe('attention-drawer');
+  });
+
   it('situationPresentation uses structure short title for drawer structure diagnostics', () => {
     const presentation = situationPresentation(
       {

@@ -12,6 +12,7 @@ const HOST_STRUCTURE_ISSUE_CODES = [
   'DanglingProgressionTarget',
   'MissingProgressionDestinationSlot',
   'MissingProgressionDestinationGroup',
+  'DuplicateProgressionRoundOutcome',
   'SlotFeedInvalid',
   'SlotFeedMultiple',
   'SlotFeedMissing',
