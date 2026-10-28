@@ -86,6 +86,7 @@ public sealed class CEnfMatStartEndpointTests(HostPostgresFixture fixture)
             _clock).Stage;
         ReplaceStageDrawRules.Execute(
             stage,
+            competition,
             new DrawRules(DrawMode.Random, potRules: new PotRules(2)),
             _clock);
         stage.ReplaceAffectationAuthoring(ids, _clock);

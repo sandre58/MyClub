@@ -35,8 +35,10 @@ public static class ReplaceStageDrawRules
     /// When replacing, existing constraints are preserved if the incoming
     /// <see cref="DrawRules"/> carries none — the write API has no constraints
     /// surface yet, so a pots/seeds-only update must not wipe them.
+    /// Not a product entry: callers must already have passed
+    /// <see cref="StageStructureEditGuard.EnsureDraftHeavyStructureAllowed"/>.
     /// </summary>
-    public static void Execute(Stage stage, DrawRules? drawRules, IClock clock)
+    internal static void Execute(Stage stage, DrawRules? drawRules, IClock clock)
     {
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(clock);

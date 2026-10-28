@@ -174,12 +174,55 @@
   gap: var(--space-12);
 }
 
-.structure-draw-result-schematic.regulation-schematic,
-.structure-draw-result-schematic .regulation-schematic {
-  min-height: 0;
+/* Group result: one team + group per row. Same list rhythm as Slot confrontations. */
+.structure-draw-dialog .draw-group-list {
+  list-style: none;
+  margin: 0;
   padding: 0;
-  background: transparent;
-  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.structure-draw-dialog .draw-group-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12);
+  margin: 0;
+  padding: var(--space-12) 0;
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.structure-draw-dialog .draw-group-row:last-child {
+  border-bottom: none;
+}
+
+.structure-draw-dialog .draw-group-row__team {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  min-width: 0;
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
+}
+
+.structure-draw-dialog .draw-group-row__crest {
+  flex: none;
+}
+
+.structure-draw-dialog .draw-group-row__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.structure-draw-dialog .draw-group-row__group {
+  flex: none;
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--leading-tight);
 }
 
 .draw-pairing-list,
@@ -193,6 +236,29 @@
 
 .draw-placement-list {
   gap: var(--space-8);
+}
+
+/* Unpaired Slot leftovers: flat Place → Entry, not a card. */
+.structure-draw-dialog .draw-placement-list {
+  gap: 0;
+}
+
+.structure-draw-dialog .draw-placement {
+  padding: var(--space-12) 0;
+  border: none;
+  border-bottom: var(--border-width) solid var(--color-border);
+  border-radius: 0;
+  background: transparent;
+}
+
+.structure-draw-dialog .draw-placement:last-child {
+  border-bottom: none;
+}
+
+.structure-draw-dialog .draw-placement__key {
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-regular);
+  font-variant-numeric: tabular-nums;
 }
 
 .structure-draw-dialog .draw-pairing-list {

@@ -84,7 +84,6 @@ import {
   PendingLabel,
 } from '../../../ui';
 import { persistentStructureMutationSotHref } from '../../../persistentStructureMutationSot';
-import '../phase-schematic.css';
 
 function pairingSideLabels(
   displayName: string | null | undefined,
@@ -1070,14 +1069,7 @@ function DrawExecutionDetail({
               <DrawDetailHeaderChipBadge
                 key={`${chip.kind}-${index}`}
                 chip={chip}
-                tooltip={
-                  chip.kind === 'applied' ||
-                  (chip.kind === 'resolution' &&
-                    chip.state === 'Resolved' &&
-                    ui.messageKey === 'draftResolved')
-                    ? t(ui.messageKey)
-                    : undefined
-                }
+                tooltip={chip.kind === 'applied' ? t(ui.messageKey) : undefined}
               />
             ))}
           </div>
@@ -1140,7 +1132,7 @@ function DrawExecutionDetail({
             >
               {slotResult.unpaired.map((side) => (
                 <li key={side.slotKey} className="draw-placement">
-                  <code className="draw-placement__key">{side.slotKey}</code>
+                  <span className="draw-placement__key">{side.slotKey}</span>
                   <span className="draw-placement__arrow" aria-hidden="true">
                     →
                   </span>
@@ -1160,46 +1152,32 @@ function DrawExecutionDetail({
           ) : null}
 
           {hasGroups ? (
-            <div
-              className="regulation-schematic regulation-schematic--groups structure-draw-result-schematic"
-              aria-label={t('result')}
-            >
-              <div className="regulation-schematic__cards">
-                {groupRows.map((row, index) => (
-                  <div
-                    key={row.groupId}
-                    className={`regulation-schematic__card regulation-schematic__card--${index % 4}`}
+            <ul className="draw-group-list" aria-label={t('result')}>
+              {groupRows.flatMap((row) =>
+                row.entries.map((entry) => (
+                  <li
+                    key={`${row.groupId}-${entry.entryId}`}
+                    className="draw-group-row"
                   >
-                    <span className="regulation-schematic__card-label">
+                    <span className="draw-group-row__team">
+                      <TeamCrest
+                        name={entry.displayName}
+                        logoMediaId={entry.logoMediaId}
+                        primaryColor={entry.primaryColor}
+                        size="sm"
+                        className="draw-group-row__crest"
+                      />
+                      <span className="draw-group-row__name">
+                        {entry.displayName}
+                      </span>
+                    </span>
+                    <span className="draw-group-row__group">
                       {tStructure('place.group', { name: row.groupLabel })}
                     </span>
-                    <div className="regulation-schematic__card-slots">
-                      {row.entries.map((entry) => (
-                        <div
-                          key={`${row.groupId}-${entry.entryId}`}
-                          className="schematic-slot"
-                        >
-                          <span className="schematic-slot__body">
-                            <TeamCrest
-                              name={entry.displayName}
-                              logoMediaId={entry.logoMediaId}
-                              primaryColor={entry.primaryColor}
-                              size="sm"
-                              className="schematic-slot__crest"
-                            />
-                            <span className="schematic-slot__copy">
-                              <span className="schematic-slot__primary">
-                                {entry.displayName}
-                              </span>
-                            </span>
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+                  </li>
+                )),
+              )}
+            </ul>
           ) : null}
         </div>
       ) : null}

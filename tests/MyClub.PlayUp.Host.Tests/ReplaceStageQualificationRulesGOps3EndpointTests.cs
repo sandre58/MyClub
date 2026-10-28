@@ -81,6 +81,7 @@ public sealed class ReplaceStageQualificationRulesGOps3EndpointTests(HostPostgre
         var stage = AddCompetitionStage.Execute(competition, StructureIntent.Groups(2, 2), _clock);
         ReplaceStageDrawRules.Execute(
             stage,
+            competition,
             new DrawRules(DrawMode.Random, potRules: new PotRules(2)),
             _clock);
         stage.ReplaceAffectationAuthoring(ids, _clock);
