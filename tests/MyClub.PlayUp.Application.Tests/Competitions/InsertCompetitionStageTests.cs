@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
-using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
@@ -256,15 +255,13 @@ public sealed class InsertCompetitionStageTests
         }
 
         competition.Start(_clock);
-        if (status == CompetitionStatus.Running)
+        switch (status)
         {
-            return;
-        }
-
-        if (status == CompetitionStatus.Suspended)
-        {
-            competition.Suspend(_clock);
-            return;
+            case CompetitionStatus.Running:
+                return;
+            case CompetitionStatus.Suspended:
+                competition.Suspend(_clock);
+                return;
         }
 
         competition.Complete(CompletionMode.Normal, _clock);

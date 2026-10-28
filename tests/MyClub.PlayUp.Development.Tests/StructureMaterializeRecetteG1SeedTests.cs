@@ -39,7 +39,7 @@ public sealed class StructureMaterializeRecetteG1SeedTests(DevelopmentPostgresFi
         var competition = await competitions.GetByIdForUpdateAsync(summary.Id);
         competition.Should().NotBeNull();
 
-        var stage = (await stages.GetByIdsForUpdateAsync(competition!.StageIds))
+        var stage = (await stages.GetByIdsForUpdateAsync(competition.StageIds))
             .Should()
             .ContainSingle()
             .Subject;

@@ -67,15 +67,7 @@ public sealed class DraftUnderRunningAuthoringTests
         hub.Lifecycle!.Transition.Code.Should().Be(OverviewAssembler.ActionPrepareStage);
         hub.Lifecycle.Transition.DisabledReasonCode.Should()
             .NotBe(StructureStageLifecycleAssembler.DisabledConstructionFrozen);
-        hub.Actions.Should().BeEquivalentTo(
-        [
-            StructureViewAssembler.ActionRenameStage,
-            StructureViewAssembler.ActionReplaceProgressionRules,
-            StructureViewAssembler.ActionReplacePlacementAwardRules,
-            StructureViewAssembler.ActionReplaceAffectationAuthoring,
-            StructureViewAssembler.ActionAssignEntryToSlot,
-            StructureViewAssembler.ActionClearSlotAssignment
-        ]);
+        hub.Actions.Should().BeEquivalentTo(StructureViewAssembler.ActionRenameStage, StructureViewAssembler.ActionReplaceProgressionRules, StructureViewAssembler.ActionReplacePlacementAwardRules, StructureViewAssembler.ActionReplaceAffectationAuthoring, StructureViewAssembler.ActionAssignEntryToSlot, StructureViewAssembler.ActionClearSlotAssignment);
 
         var addRound = () => AddStageRound.Execute(semi, competition, "Extra", null, _clock);
         addRound.Should().Throw<ApplicationFailureException>()
@@ -119,12 +111,7 @@ public sealed class DraftUnderRunningAuthoringTests
         var hub = StructureViewAssembler.Assemble(competition, [groups, finale]).Stages
             .Single(stage => stage.StageId == finale.Id.Value);
 
-        hub.Actions.Should().BeEquivalentTo(
-        [
-            StructureViewAssembler.ActionRenameStage,
-            StructureViewAssembler.ActionReplaceQualificationRules,
-            StructureViewAssembler.ActionReplaceAffectationAuthoring
-        ]);
+        hub.Actions.Should().BeEquivalentTo(StructureViewAssembler.ActionRenameStage, StructureViewAssembler.ActionReplaceQualificationRules, StructureViewAssembler.ActionReplaceAffectationAuthoring);
         hub.Actions.Should().NotContain(StructureViewAssembler.ActionAddMatchday);
         hub.Actions.Should().NotContain(StructureViewAssembler.ActionRebuildStructure);
         hub.Actions.Should().NotContain(StructureViewAssembler.ActionReplaceDrawRules);

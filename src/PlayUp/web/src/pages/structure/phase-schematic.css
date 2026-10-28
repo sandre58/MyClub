@@ -70,8 +70,6 @@
 .schematic-slot__primary--pending {
   font-style: italic;
   font-weight: var(--font-weight-regular);
-  color: var(--color-text-secondary);
-  opacity: 0.85;
 }
 
 /* Withdrawn occupant — muted, not empty (dashed) or pending construction (italic). */

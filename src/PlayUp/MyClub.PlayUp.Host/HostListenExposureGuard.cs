@@ -7,7 +7,6 @@
 using System.Net;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
-using Microsoft.Extensions.Configuration;
 
 namespace MyClub.PlayUp.Host;
 
@@ -30,14 +29,14 @@ internal static partial class HostListenExposureGuard
 
         app.Lifetime.ApplicationStarted.Register(() =>
         {
-            var listenUrls = ResolveListenUrls(app);
+            var listenUrls = ResolveListenUrls(app).ToList();
             if (!ShouldRefuseNonLoopbackListen(app.Configuration, listenUrls))
             {
                 return;
             }
 
             var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("HostExposure");
-            foreach (var listenUrl in listenUrls.Where(url => IsNonLoopbackListenUrl(url)))
+            foreach (var listenUrl in listenUrls.Where(IsNonLoopbackListenUrl))
             {
                 LogProductionNonLoopbackBindRefused(logger, listenUrl);
             }
@@ -93,7 +92,7 @@ internal static partial class HostListenExposureGuard
             + "Clients on other network interfaces may reach the anonymous Play'Up and Media APIs. "
             + "This warning does not prove WAN reachability (firewall, NAT, and port forwarding are operator concerns). "
             + "Review bind settings: dotnet run --urls, ASPNETCORE_URLS, or Properties/launchSettings.json applicationUrl. "
-            + "See docs/guides/host-exposure.md.")]
+            + "See docs/guides/host-exposure.md. ")]
     private static partial void LogDevelopmentNonLoopbackListenUrl(ILogger logger, string listenUrl);
 
     [LoggerMessage(
@@ -102,6 +101,6 @@ internal static partial class HostListenExposureGuard
         Message = "Play'Up Host refused to run in a non-Development environment with non-loopback listen URL ({ListenUrl}). "
             + "Trajectoire C requires loopback bind until authentication and TLS exist for remote access. "
             + "Use loopback URLs, or set PlayUp:Host:AllowNonLoopbackBind=true only with explicit operator acceptance of risk. "
-            + "See docs/guides/host-exposure.md.")]
+            + "See docs/guides/host-exposure.md. ")]
     private static partial void LogProductionNonLoopbackBindRefused(ILogger logger, string listenUrl);
 }

@@ -99,7 +99,7 @@ try
         "/health/ready",
         new HealthCheckOptions
         {
-            Predicate = static registration => registration.Tags.Contains("ready"),
+            Predicate = static registration => registration.Tags.Contains("ready")
         });
 
     app.MapMediaEndpoints();

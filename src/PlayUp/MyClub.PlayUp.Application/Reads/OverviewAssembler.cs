@@ -1383,19 +1383,17 @@ public static class OverviewAssembler
             actions.Add(new OverviewActionDto(ActionPrepareCompetition, Guaranteed: false));
         }
 
-        if (competition.Status == CompetitionStatus.Ready)
+        switch (competition.Status)
         {
-            actions.Add(new OverviewActionDto(ActionStartCompetition, Guaranteed: false));
-        }
-
-        if (competition.Status == CompetitionStatus.Running)
-        {
-            actions.Add(new OverviewActionDto(ActionSuspendCompetition, Guaranteed: false));
-        }
-
-        if (competition.Status == CompetitionStatus.Suspended)
-        {
-            actions.Add(new OverviewActionDto(ActionResumeCompetition, Guaranteed: false));
+            case CompetitionStatus.Ready:
+                actions.Add(new OverviewActionDto(ActionStartCompetition, Guaranteed: false));
+                break;
+            case CompetitionStatus.Running:
+                actions.Add(new OverviewActionDto(ActionSuspendCompetition, Guaranteed: false));
+                break;
+            case CompetitionStatus.Suspended:
+                actions.Add(new OverviewActionDto(ActionResumeCompetition, Guaranteed: false));
+                break;
         }
 
         foreach (var stage in stages)

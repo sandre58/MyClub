@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
-using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
@@ -110,17 +109,21 @@ public sealed class SetCompetitionStageOrderTests
         AddEntry.Execute(competition, "Alpha", _clock);
         competition.Prepare(_clock);
         competition.Start(_clock);
-        if (status == CompetitionStatus.Suspended)
+        switch (status)
         {
-            competition.Suspend(_clock);
-        }
-        else if (status is CompetitionStatus.Completed or CompetitionStatus.Archived)
-        {
-            competition.Complete(CompletionMode.Normal, _clock);
-            if (status == CompetitionStatus.Archived)
-            {
-                competition.Archive(_clock);
-            }
+            case CompetitionStatus.Suspended:
+                competition.Suspend(_clock);
+                break;
+            case CompetitionStatus.Completed or CompetitionStatus.Archived:
+                {
+                    competition.Complete(CompletionMode.Normal, _clock);
+                    if (status == CompetitionStatus.Archived)
+                    {
+                        competition.Archive(_clock);
+                    }
+
+                    break;
+                }
         }
 
         var act = () => SetCompetitionStageOrder.Execute(competition, [second.Id, first.Id], _clock);

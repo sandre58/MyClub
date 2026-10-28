@@ -4,7 +4,6 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 

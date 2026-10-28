@@ -66,7 +66,7 @@ public sealed class HostExposureWarningTests
             .AddInMemoryCollection(
                 new Dictionary<string, string?>
                 {
-                    [HostListenExposureGuard.AllowNonLoopbackBindConfigKey] = "true",
+                    [HostListenExposureGuard.AllowNonLoopbackBindConfigKey] = "true"
                 })
             .Build();
 

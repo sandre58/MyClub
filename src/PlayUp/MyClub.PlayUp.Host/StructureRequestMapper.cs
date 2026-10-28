@@ -103,14 +103,11 @@ public static class StructureRequestMapper
     public static IReadOnlyList<StageId> ToOrderedStageIds(SetCompetitionStageOrderRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (request.StageIds is null)
-        {
-            throw new ApplicationFailureException(
+        return request.StageIds is null
+            ? throw new ApplicationFailureException(
                 "StageIds is required.",
-                ApplicationErrorCodes.InvalidStructureIntent);
-        }
-
-        return request.StageIds.Select(id => new StageId(id)).ToArray();
+                ApplicationErrorCodes.InvalidStructureIntent)
+            : [.. request.StageIds.Select(id => new StageId(id))];
     }
 
     /// <summary>
