@@ -201,7 +201,9 @@ describe('StructureDrawDialog', () => {
     renderDialog();
 
     expect(
-      await screen.findByRole('heading', { name: 'Exécutions de tirage' }),
+      await screen.findByRole('heading', {
+        name: 'Exécutions de tirage — Groupes',
+      }),
     ).toBeInTheDocument();
     expect(await screen.findByText('Aucune exécution')).toBeInTheDocument();
     expect(

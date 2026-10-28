@@ -388,8 +388,8 @@ export function TieFormatDialog({
       <Dialog
         open={open}
         onClose={requestClose}
-        title={t('regulation.tieTitle')}
-        description={stage.name}
+        title={t('regulation.tieTitle', { phase: stage.name })}
+        description={t('regulation.tieHeaderHint')}
         size="lg"
         closeLabel={tCommon('close')}
         closeDisabled={mutation.isPending || discardOpen}

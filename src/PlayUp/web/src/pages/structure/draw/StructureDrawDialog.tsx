@@ -451,8 +451,8 @@ export function StructureDrawDialog({
       <Dialog
         open={open}
         onClose={onClose}
-        title={t('fiche.drawWorkflow.title')}
-        description={stage.name}
+        title={t('fiche.drawWorkflow.title', { phase: stage.name })}
+        description={t('regulation.drawExecHeaderHint')}
         size="lg"
         closeLabel={tCommon('close')}
         closeDisabled={busy}

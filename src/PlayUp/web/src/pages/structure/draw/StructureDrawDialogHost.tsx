@@ -54,8 +54,8 @@ function DrawDialogChunkFallback({
     <Dialog
       open
       onClose={onClose}
-      title={t('fiche.drawWorkflow.title')}
-      description={stageName}
+      title={t('fiche.drawWorkflow.title', { phase: stageName })}
+      description={t('regulation.drawExecHeaderHint')}
       size="lg"
       closeLabel={tCommon('close')}
     >
