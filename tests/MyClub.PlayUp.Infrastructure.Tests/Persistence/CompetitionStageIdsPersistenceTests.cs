@@ -126,7 +126,7 @@ public sealed class CompetitionStageIdsPersistenceTests(PostgresFixture fixture)
             var stageCEntity = StageSeed.CreateDraft(id, _clock, "C");
             stageC = stageCEntity.Id;
             stages.Add(stageCEntity);
-            competition!.AddStage(stageC, _clock);
+            competition.AddStage(stageC, _clock);
             competition.SetStageOrder([stageC, stageA, stageB], _clock);
             await unitOfWork.SaveChangesAsync();
         }
@@ -139,9 +139,9 @@ public sealed class CompetitionStageIdsPersistenceTests(PostgresFixture fixture)
             var persisted = await stages.GetByIdForUpdateAsync(stageC);
 
             reloaded.Should().NotBeNull();
-            reloaded!.StageIds.Should().Equal(stageC, stageA, stageB);
+            reloaded.StageIds.Should().Equal(stageC, stageA, stageB);
             persisted.Should().NotBeNull();
-            persisted!.Name.Value.Should().Be("C");
+            persisted.Name.Value.Should().Be("C");
         }
     }
 
@@ -184,7 +184,7 @@ public sealed class CompetitionStageIdsPersistenceTests(PostgresFixture fixture)
             var ghostStage = StageSeed.CreateDraft(id, _clock, "Ghost");
             ghost = ghostStage.Id;
             stages.Add(ghostStage);
-            competition!.AddStage(ghost, _clock);
+            competition.AddStage(ghost, _clock);
             competition.SetStageOrder([ghost, stageA, stageB], _clock);
         }
 
@@ -196,7 +196,7 @@ public sealed class CompetitionStageIdsPersistenceTests(PostgresFixture fixture)
             var missing = await stages.GetByIdForUpdateAsync(ghost);
 
             reloaded.Should().NotBeNull();
-            reloaded!.StageIds.Should().Equal(stageA, stageB);
+            reloaded.StageIds.Should().Equal(stageA, stageB);
             missing.Should().BeNull();
         }
     }

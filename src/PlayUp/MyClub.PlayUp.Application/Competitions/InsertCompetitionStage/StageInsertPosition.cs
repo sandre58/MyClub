@@ -15,5 +15,5 @@ public enum StageInsertPosition
     Before = 0,
 
     /// <summary>Immediately after the anchor in <c>Competition.StageIds</c>.</summary>
-    After = 1,
+    After = 1
 }

@@ -41,7 +41,7 @@ public sealed class CompetitionSuspendResumeEndpointTests(HostPostgresFixture fi
         overview.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await overview.Content.ReadFromJsonAsync<OverviewViewDto>(HostJson.Options);
         body.Should().NotBeNull();
-        body!.Status.Should().Be(CompetitionStatus.Suspended);
+        body.Status.Should().Be(CompetitionStatus.Suspended);
         body.AvailableActions.Should().Contain(action =>
             action.Code == OverviewAssembler.ActionResumeCompetition);
         body.AvailableActions.Should().NotContain(action =>

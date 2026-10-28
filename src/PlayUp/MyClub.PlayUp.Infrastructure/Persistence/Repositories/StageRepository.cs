@@ -101,7 +101,7 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
             .SingleOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        return match is null ? null : match.CompetitionId;
+        return match?.CompetitionId;
     }
 
     /// <inheritdoc />
@@ -411,7 +411,7 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
                 StageOrderedCollectionsAccessor.ReorderDraws(stage, draws);
             }
 
-            if (StageOrderedCollectionsAccessor.GetPenalties(stage).Count <= 0) continue;
+            if (StageOrderedCollectionsAccessor.GetPenalties(stage).Count == 0) continue;
             var penalties = StageOrderedCollectionsAccessor.GetPenalties(stage)
                 .OrderBy(penalty => context.Entry(penalty).Property<int>("SortOrder").CurrentValue)
                 .ToList();
