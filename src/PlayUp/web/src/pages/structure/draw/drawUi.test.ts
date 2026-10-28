@@ -316,7 +316,7 @@ describe('resolveDrawDetailGuidance', () => {
     });
   });
 
-  it('uses warning alert for NoSolution', () => {
+  it('uses danger alert for NoSolution', () => {
     const ui = getDrawUiProjection(
       draw({
         id: 'no-sol',
@@ -326,7 +326,7 @@ describe('resolveDrawDetailGuidance', () => {
     );
     expect(resolveDrawDetailGuidance(ui)).toEqual({
       kind: 'alert',
-      tone: 'warning',
+      tone: 'danger',
       messageKey: 'noSolution',
     });
   });
@@ -361,7 +361,7 @@ describe('resolveDrawDetailGuidance', () => {
     expect(resolveDrawDetailGuidance(ui)).toBeNull();
   });
 
-  it('omits draftResolved phrase (tooltip on Résolu chip instead)', () => {
+  it('shows draftResolved as a phrase (ready to publish is not on the chip)', () => {
     const ui = getDrawUiProjection(
       draw({
         id: 'draft-ok',
@@ -369,7 +369,10 @@ describe('resolveDrawDetailGuidance', () => {
         resolutionState: 'Resolved',
       }),
     );
-    expect(resolveDrawDetailGuidance(ui)).toBeNull();
+    expect(resolveDrawDetailGuidance(ui)).toEqual({
+      kind: 'phrase',
+      messageKey: 'draftResolved',
+    });
   });
 });
 

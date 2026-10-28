@@ -558,7 +558,7 @@ describe('StagePage draws', () => {
     expect(
       await screen.findByText('Aucune résolution valide n’a pu être générée.'),
     ).toBeInTheDocument();
-    expect(screen.getByText('Aucune solution')).toBeInTheDocument();
+    expect(screen.getByText('Sans solution')).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Publier et appliquer/i }),
     ).not.toBeInTheDocument();
