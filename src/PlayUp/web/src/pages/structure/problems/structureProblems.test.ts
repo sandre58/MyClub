@@ -410,12 +410,12 @@ describe('problems i18n parity', () => {
     expect(frStructure.graph.issues.DuplicateProgressionRoundOutcome).toBe(
       'Tour et résultat déjà utilisés',
     );
-    expect(
-      enStructure.graph.issuesShort.DuplicateProgressionRoundOutcome,
-    ).toBe('Duplicate round outcome');
-    expect(
-      frStructure.graph.issuesShort.DuplicateProgressionRoundOutcome,
-    ).toBe('Tour et résultat en double');
+    expect(enStructure.graph.issuesShort.DuplicateProgressionRoundOutcome).toBe(
+      'Duplicate round outcome',
+    );
+    expect(frStructure.graph.issuesShort.DuplicateProgressionRoundOutcome).toBe(
+      'Tour et résultat en double',
+    );
     expect(enStructure.progression.incompleteHintDuplicateRoundOutcome).toBe(
       'Duplicate round and outcome',
     );
