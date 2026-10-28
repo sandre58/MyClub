@@ -130,6 +130,33 @@ describe('structureSortiesIntentFeed', () => {
     expect(row.context).toBe('');
   });
 
+  it('shows one Vainqueur row with the round when a single Winner intent is projected', () => {
+    const intent: StructureProgressionIntent = {
+      intentId: 'p-winner',
+      order: 1,
+      roundId: 'r1',
+      roundName: 'Tour principal',
+      outcome: 'Winner',
+      destinationStageId: 'poules',
+      destinationGroupIds: ['grp-a', 'grp-b'],
+      expandedPathCount: 2,
+    };
+    const source = {
+      stageId: 'demi',
+      name: 'Demi-finales',
+      progressionIntents: [intent],
+    } as StructureStageHubSummary;
+    const data = viewWithStages([
+      source,
+      { stageId: 'poules', name: 'Poules' } as StructureStageHubSummary,
+    ]);
+    const feeds = outboundSortiesFeeds(data, source, 'fr', t, []);
+    expect(feeds).toHaveLength(1);
+    expect(feeds[0]?.badge).toBe('Vainqueurs');
+    expect(feeds[0]?.context).toBe('Tour principal');
+    expect(feeds[0]?.volume).toBe(2);
+  });
+
   it('keeps progression round when it differs from the source phase', () => {
     const intent: StructureProgressionIntent = {
       intentId: 'p1',

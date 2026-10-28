@@ -176,6 +176,48 @@ describe('StructureProgressionDialog chrome', () => {
     );
   });
 
+  it('blocks save and echoes a persisted duplicate round outcome', async () => {
+    renderDialog(
+      hubStage({
+        stageId: sourceId,
+        name: 'Demi-finales',
+        hasProgressionRules: true,
+        progressionPathCount: 2,
+        structureIssues: ['DuplicateProgressionRoundOutcome'],
+        progressionIntents: [
+          {
+            intentId: 'prog-a',
+            order: 1,
+            roundId: 'round-1',
+            roundName: 'Tour principal',
+            outcome: 'Winner',
+            destinationStageId: destId,
+            expandedPathCount: 1,
+          },
+          {
+            intentId: 'prog-b',
+            order: 2,
+            roundId: 'round-1',
+            roundName: 'Tour principal',
+            outcome: 'Winner',
+            destinationStageId: destId,
+            expandedPathCount: 1,
+          },
+        ],
+      }),
+      hubStage({
+        stageId: destId,
+        name: 'Poules',
+        formatKind: 'Groups',
+      }),
+    );
+
+    expect(
+      await screen.findAllByText('Tour et résultat déjà utilisés'),
+    ).toHaveLength(2);
+    expect(screen.getByRole('button', { name: 'Enregistrer' })).toBeDisabled();
+  });
+
   it('echoes a slot structure issue while the destination stage still exists', async () => {
     const user = userEvent.setup();
     const destination = hubStage({

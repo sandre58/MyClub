@@ -146,6 +146,9 @@ internal static class StructureQualProgHubIntentsMapper
         ProgressionRules rules)
     {
         var order = 1;
+
+        // Group destinations share one intent. GroupId and MatchNumber stay out of the
+        // coalesce key; destinationGroupIds follow Expand (BracketPair order).
         var groups = rules.Paths
             .GroupBy(path => (
                 DestinationStageId: path.Destination.StageId.Value,
@@ -153,7 +156,8 @@ internal static class StructureQualProgHubIntentsMapper
                 RoundId: ResolveProgressionRoundId(stage, path),
                 path.Destination.TargetsPopulation,
                 path.Destination.TargetsForm,
-                GroupId: path.Destination.GroupId?.Value))
+                path.Destination.TargetsGroup,
+                GroupId: path.Destination.TargetsGroup ? null : path.Destination.GroupId?.Value))
             .OrderBy(g => g.Key.RoundId);
 
         var list = new List<StructureProgressionIntentDto>();
@@ -168,7 +172,7 @@ internal static class StructureQualProgHubIntentsMapper
             {
                 if (first.Destination.TargetsGroup)
                 {
-                    groupIds = [.. paths.Select(p => p.Destination.GroupId!.Value.Value)];
+                    groupIds = DestinationGroupIdsInExpandOrder(stage, paths);
                 }
                 else
                 {
@@ -191,6 +195,30 @@ internal static class StructureQualProgHubIntentsMapper
         }
 
         return list;
+    }
+
+    private static Guid[] DestinationGroupIdsInExpandOrder(Stage stage, ProgressionPath[] paths)
+    {
+        var rank = new Dictionary<string, int>(StringComparer.Ordinal);
+        var orderedPairs = stage.BracketPairs
+            .OrderBy(pair => pair.PairKey, StringComparer.Ordinal)
+            .ToArray();
+        for (var i = 0; i < orderedPairs.Length; i++)
+        {
+            rank[orderedPairs[i].PairKey] = i;
+        }
+
+        return
+        [
+            .. paths
+                .Select((path, index) => (path, index))
+                .OrderBy(item => rank.TryGetValue(item.path.SourcePairKey, out var expandIndex)
+                    ? expandIndex
+                    : int.MaxValue)
+                .ThenBy(item => item.path.SourcePairKey, StringComparer.Ordinal)
+                .ThenBy(item => item.index)
+                .Select(item => item.path.Destination.GroupId!.Value.Value)
+        ];
     }
 
     private static Guid ResolveProgressionRoundId(Stage stage, ProgressionPath path)

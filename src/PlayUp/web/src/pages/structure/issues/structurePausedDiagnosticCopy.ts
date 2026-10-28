@@ -26,6 +26,7 @@ export const STRUCTURE_DIAGNOSTIC_PAUSED_TITLE_CODES: ReadonlySet<string> =
     'MissingQualificationDestinationGroup',
     'MissingProgressionDestinationSlot',
     'MissingProgressionDestinationGroup',
+    'DuplicateProgressionRoundOutcome',
     'OverCapacityEdge',
     'OverExtraction',
     'PopulationShortfall',

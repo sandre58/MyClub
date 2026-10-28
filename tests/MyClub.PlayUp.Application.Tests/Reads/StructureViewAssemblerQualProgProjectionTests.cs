@@ -118,4 +118,113 @@ public sealed class StructureViewAssemblerQualProgProjectionTests
         hub.ProgressionIntents.Should().NotBeNull().And.NotBeEmpty();
         hub.ProgressionPathCount.Should().BeGreaterThan(0);
     }
+
+    [Fact]
+    public void Assemble_coalesces_legacy_group_winner_paths_with_distinct_match_numbers_into_one_intent()
+    {
+        var competition = CreateCompetition.Execute("Flux — Prog Groupe", _clock);
+        var source = Stage.Create(competition.Id, new StageName("Demi-finales"), SampleRegulations.Standard(), _clock);
+        var groups = Stage.Create(competition.Id, new StageName("Poules"), SampleRegulations.Standard(), _clock);
+        competition.AddStage(source.Id, _clock);
+        competition.AddStage(groups.Id, _clock);
+
+        var round = source.AddRound("Tour principal", SampleRegulations.KnockoutTieDecidable(), _clock);
+        source.AddSlot("SF1-A");
+        source.AddSlot("SF1-B");
+        source.AddSlot("SF2-A");
+        source.AddSlot("SF2-B");
+        source.ReplaceBracketPairs(
+        [
+            new BracketPair("P1", "SF1-A", "SF1-B"),
+            new BracketPair("P2", "SF2-A", "SF2-B")
+        ]);
+        source.AddFixture(round.Id, _clock, "SF2-A", "SF2-B", "P2");
+        source.AddFixture(round.Id, _clock, "SF1-A", "SF1-B", "P1");
+
+        var groupA = groups.AddGroup("A", _clock);
+        var groupB = groups.AddGroup("B", _clock);
+        groups.AddMatchday(1, _clock);
+
+        // Authored P2 then P1. Expand order is PairKey (P1, P2), which is also Match #1 then Match #2.
+        source.ReplaceProgressionRules(
+            new ProgressionRules(
+            [
+                new ProgressionPath(
+                    "P2",
+                    ProgressionOutcome.Winner,
+                    ProgressionDestination.ForGroup(groups.Id, groupB.Id)),
+                new ProgressionPath(
+                    "P1",
+                    ProgressionOutcome.Winner,
+                    ProgressionDestination.ForGroup(groups.Id, groupA.Id))
+            ]),
+            _clock);
+
+        var schematic = StageSchematicAssembler.Assemble(source, competition, [source, groups]);
+        var matchByPair = schematic.Connections.ToDictionary(connection => connection.PairKey!);
+        matchByPair["P1"].MatchNumber.Should().Be(1);
+        matchByPair["P2"].MatchNumber.Should().Be(2);
+
+        var hub = StructureViewAssembler.Assemble(competition, [source, groups])
+            .Stages.Single(stage => stage.StageId == source.Id.Value);
+
+        hub.ProgressionIntents.Should().ContainSingle();
+        var intent = hub.ProgressionIntents!.Single();
+        intent.Outcome.Should().Be(ProgressionOutcome.Winner);
+        intent.RoundName.Should().Be("Tour principal");
+        intent.DestinationGroupIds.Should().Equal(groupA.Id.Value, groupB.Id.Value);
+        intent.DestinationSlotKeys.Should().BeNull();
+        intent.ExpandedPathCount.Should().Be(2);
+        hub.StructureIssues.Should().NotContain(StructureViewAssembler.IssueDuplicateProgressionRoundOutcome);
+        hub.PresentedIssueCodes.Should().NotContain(StructureViewAssembler.IssueDuplicateProgressionRoundOutcome);
+    }
+
+    [Fact]
+    public void Assemble_still_coalesces_legacy_slot_winner_paths_across_distinct_match_numbers()
+    {
+        var competition = CreateCompetition.Execute("Prog slots", _clock);
+        var source = Stage.Create(competition.Id, new StageName("Demi-finales"), SampleRegulations.Standard(), _clock);
+        var final = Stage.Create(competition.Id, new StageName("Finale"), SampleRegulations.Standard(), _clock);
+        competition.AddStage(source.Id, _clock);
+        competition.AddStage(final.Id, _clock);
+
+        var round = source.AddRound("Tour principal", SampleRegulations.KnockoutTieDecidable(), _clock);
+        source.AddSlot("SF1-A");
+        source.AddSlot("SF1-B");
+        source.AddSlot("SF2-A");
+        source.AddSlot("SF2-B");
+        source.ReplaceBracketPairs(
+        [
+            new BracketPair("P1", "SF1-A", "SF1-B"),
+            new BracketPair("P2", "SF2-A", "SF2-B")
+        ]);
+        source.AddFixture(round.Id, _clock, "SF1-A", "SF1-B", "P1");
+        source.AddFixture(round.Id, _clock, "SF2-A", "SF2-B", "P2");
+        final.AddSlot("F-A");
+        final.AddSlot("F-B");
+
+        source.ReplaceProgressionRules(
+            new ProgressionRules(
+            [
+                new ProgressionPath(
+                    "P2",
+                    ProgressionOutcome.Winner,
+                    ProgressionDestination.ForSlot(final.Id, "F-B")),
+                new ProgressionPath(
+                    "P1",
+                    ProgressionOutcome.Winner,
+                    ProgressionDestination.ForSlot(final.Id, "F-A"))
+            ]),
+            _clock);
+
+        var hub = StructureViewAssembler.Assemble(competition, [source, final])
+            .Stages.Single(stage => stage.StageId == source.Id.Value);
+
+        hub.ProgressionIntents.Should().ContainSingle();
+        var intent = hub.ProgressionIntents!.Single();
+        intent.DestinationSlotKeys.Should().Equal("F-A", "F-B");
+        intent.DestinationGroupIds.Should().BeNull();
+        intent.ExpandedPathCount.Should().Be(2);
+        hub.StructureIssues.Should().NotContain(StructureViewAssembler.IssueDuplicateProgressionRoundOutcome);
+    }
 }
