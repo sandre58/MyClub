@@ -107,7 +107,7 @@ public sealed class CupMaterializeRecetteProtocolTests(DevelopmentPostgresFixtur
                 _clock).Stage;
             stage.AddSlot("SF1-A");
             stage.AddSlot("SF1-B");
-            ReplaceStageDrawRules.Execute(stage, new DrawRules(DrawMode.Random), _clock);
+            ReplaceStageDrawRules.Execute(stage, competition, new DrawRules(DrawMode.Random), _clock);
             var ids = Enumerable.Range(0, 2)
                 .Select(i => AddEntry.Execute(competition, $"T{i}", _clock).Id)
                 .ToArray();

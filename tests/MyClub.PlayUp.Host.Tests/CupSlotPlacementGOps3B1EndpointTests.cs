@@ -86,7 +86,7 @@ public sealed class CupSlotPlacementGOps3B1EndpointTests(HostPostgresFixture fix
             _clock).Stage;
         var entryIds = competition.Entries.Select(e => e.Id).ToArray();
         stage.ReplaceAffectationAuthoring(entryIds, _clock);
-        ReplaceStageDrawRules.Execute(stage, new DrawRules(DrawMode.Random), _clock);
+        ReplaceStageDrawRules.Execute(stage, competition, new DrawRules(DrawMode.Random), _clock);
 
         var draw = CreateDraw.Execute(stage, DrawResolutionKind.Slot, _clock);
         ConfigureDrawInputs.Execute(
