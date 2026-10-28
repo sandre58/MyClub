@@ -1077,6 +1077,22 @@
   min-width: 0;
 }
 
+.structure-qualification__place-map-label--stack {
+  display: flex;
+  flex-direction: column;
+  line-height: var(--leading-tight);
+}
+
+.structure-qualification__place-map-primary,
+.structure-qualification__place-map-secondary {
+  min-width: 0;
+}
+
+.structure-qualification__place-map-secondary {
+  font-size: var(--text-label);
+  color: var(--color-text-secondary);
+}
+
 .structure-qualification__place-map-control {
   display: flex;
   align-items: center;
