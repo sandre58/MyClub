@@ -113,7 +113,7 @@ describe('StructureCompositionDialog', () => {
     });
     renderDialog(onClose);
 
-    await user.click(screen.getByRole('checkbox', { name: 'Olympique' }));
+    await user.click(screen.getByRole('checkbox', { name: /Olympique/ }));
     await user.click(screen.getByRole('button', { name: 'Enregistrer' }));
 
     await waitFor(() => {
