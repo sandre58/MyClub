@@ -7,18 +7,18 @@ import { Fragment, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useOpenEdge, useSyncWhen } from '../../../design-system/useRenderSync';
 import { useTranslation } from 'react-i18next';
 import { replaceStageAffectationAuthoring } from '../../../api';
-import { Alert } from '../../../design-system/components/Alert';
+import { Chip } from '../../../design-system/components/Chip';
 import { ConfirmDialog } from '../../../design-system/components/ConfirmDialog';
 import { Dialog } from '../../../design-system/components/Dialog';
+import { SelectableTile } from '../../../design-system/components/SelectableTile';
 import { TextLink } from '../../../design-system/components/TextLink';
-import { ToggleButtonGroup } from '../../../design-system/components/ToggleButtonGroup';
+import { Tooltip } from '../../../design-system/components/Tooltip';
 import {
   CheckIcon,
   ListChecksIcon,
   SearchIcon,
 } from '../../../design-system/icons/contentIcons';
 import { CloseIcon } from '../../../design-system/icons/shellIcons';
-import { EntryCellWithdrawnMarker } from '../../../design-system/components/EntryCell';
 import { TeamCrest } from '../../../design-system/TeamCrest';
 import { notify } from '../../../design-system/toastStore';
 import { useClearMutationsOnOpen } from '../../../design-system/useClearMutationsOnOpen';
@@ -26,8 +26,6 @@ import { useDiscardConfirm } from '../../../design-system/useDiscardConfirm';
 import type { StructureEntry, StructureStageHubSummary } from '../../../types';
 import { MutationError, PendingLabel } from '../../../ui';
 import { scheduleStructureRefresh } from '../structureInvalidation';
-import { OccupancyMeter } from './OccupancyMeter';
-import { occupancyMeterState } from './occupancyMeterMath';
 import { resolvePlacesN } from './structurePlaces';
 
 type StructureCompositionDialogProps = {
@@ -55,14 +53,23 @@ type Row = {
   selected: boolean;
 };
 
-type TeamSegment = 'all' | 'selected' | 'available';
+type CompositionFactKey = 'places' | 'selected' | 'remaining' | 'reserved';
 
 type CompositionFact = {
-  key: string;
+  key: CompositionFactKey;
   value: string;
-  label: string | null;
-  primary?: boolean;
+  label: string;
 };
+
+/** Restantes tone. Near is the last open affectation place. */
+type CompositionRemainingTone = 'short' | 'near' | 'exact' | 'over';
+
+function compositionRemainingTone(remaining: number): CompositionRemainingTone {
+  if (remaining < 0) return 'over';
+  if (remaining === 0) return 'exact';
+  if (remaining === 1) return 'near';
+  return 'short';
+}
 
 function sameIdSet(a: Set<string>, b: ReadonlySet<string>): boolean {
   if (a.size !== b.size) return false;
@@ -72,15 +79,12 @@ function sameIdSet(a: Set<string>, b: ReadonlySet<string>): boolean {
   return true;
 }
 
-function matchesQuery(name: string, query: string): boolean {
-  return query.length === 0 || name.toLowerCase().includes(query);
-}
-
 type CompositionTeamRowProps = {
   row: Row;
   pending: boolean;
   locked: boolean;
-  capacityHint?: string;
+  capacityHintId?: string;
+  withdrawnLabel: string;
   withdrawnTip: string;
   onToggle: (entryId: string, selected: boolean) => void;
 };
@@ -89,12 +93,16 @@ function CompositionTeamRow({
   row,
   pending,
   locked,
-  capacityHint,
+  capacityHintId,
+  withdrawnLabel,
   withdrawnTip,
   onToggle,
 }: CompositionTeamRowProps) {
   return (
-    <label
+    <SelectableTile
+      as="label"
+      selected={row.selected}
+      aria-disabled={locked ? true : undefined}
       className={[
         'structure-composition__row',
         !row.eligible ? 'structure-composition__row--ineligible' : null,
@@ -102,7 +110,6 @@ function CompositionTeamRow({
       ]
         .filter(Boolean)
         .join(' ')}
-      title={locked ? capacityHint : undefined}
     >
       <TeamCrest
         name={row.displayName}
@@ -112,78 +119,21 @@ function CompositionTeamRow({
       />
       <span className="structure-composition__name">{row.displayName}</span>
       {!row.eligible ? (
-        <EntryCellWithdrawnMarker
-          tooltip={withdrawnTip}
-          className="structure-composition__withdrawn-marker"
-        />
+        <Tooltip content={withdrawnTip}>
+          <Chip tone="neutral" className="structure-composition__withdrawn">
+            {withdrawnLabel}
+          </Chip>
+        </Tooltip>
       ) : null}
       <input
         type="checkbox"
         className="structure-composition__check"
         checked={row.selected}
         disabled={pending || (!row.eligible && !row.selected) || locked}
+        aria-describedby={locked ? capacityHintId : undefined}
         onChange={() => onToggle(row.entryId, row.selected)}
       />
-    </label>
-  );
-}
-
-type CompositionSectionProps = {
-  headingId: string;
-  title: string;
-  rows: Row[];
-  emptyLabel: string;
-  pending: boolean;
-  atCapacity: boolean;
-  affectationCap: number | null;
-  capacityHint?: string;
-  withdrawnTip: string;
-  onToggle: (entryId: string, selected: boolean) => void;
-};
-
-function CompositionSection({
-  headingId,
-  title,
-  rows,
-  emptyLabel,
-  pending,
-  atCapacity,
-  affectationCap,
-  capacityHint,
-  withdrawnTip,
-  onToggle,
-}: CompositionSectionProps) {
-  return (
-    <section
-      className="structure-composition__section"
-      aria-labelledby={headingId}
-    >
-      <h4 id={headingId} className="structure-composition__section-title">
-        {title}
-      </h4>
-      {rows.length === 0 ? (
-        <p className="structure-composition__section-empty">{emptyLabel}</p>
-      ) : (
-        <ul className="structure-composition__list">
-          {rows.map((row) => {
-            const locked =
-              !row.selected && atCapacity && affectationCap != null;
-            return (
-              <li key={row.entryId}>
-                <CompositionTeamRow
-                  row={row}
-                  pending={pending}
-                  locked={locked}
-                  capacityHint={capacityHint}
-                  withdrawnTip={withdrawnTip}
-                  onToggle={onToggle}
-                />
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </section>
+    </SelectableTile>
   );
 }
 
@@ -207,8 +157,7 @@ export function StructureCompositionDialog({
   const { t: tReg } = useTranslation('regulation');
   const queryClient = useQueryClient();
   const searchRef = useRef<HTMLInputElement>(null);
-  const selectedHeadingId = useId();
-  const availableHeadingId = useId();
+  const capacityHintId = useId();
 
   const placesN = resolvePlacesN(stage);
   const reserved = Math.max(0, reservedFromFeeds);
@@ -219,7 +168,6 @@ export function StructureCompositionDialog({
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
   const [baseline, setBaseline] = useState<Set<string>>(() => new Set());
   const [search, setSearch] = useState('');
-  const [segment, setSegment] = useState<TeamSegment>('all');
 
   const dirty = !sameIdSet(selected, baseline);
   const {
@@ -230,12 +178,7 @@ export function StructureCompositionDialog({
     resetDiscard,
   } = useDiscardConfirm(dirty, onClose);
 
-  useOpenEdge(open, {
-    onClose: () => {
-      setSearch('');
-      setSegment('all');
-    },
-  });
+  useOpenEdge(open, { onClose: () => setSearch('') });
   useSyncWhen(
     open,
     `${stage.stageId}:${(stage.affectationEntryIds ?? []).join(',')}`,
@@ -287,81 +230,47 @@ export function StructureCompositionDialog({
       );
   }, [entries, selected, byId]);
 
-  const query = search.trim().toLowerCase();
-  const searchActive = query.length > 0;
-  const selectedInScope = segment !== 'available';
-  const availableInScope = segment !== 'selected';
-
-  // Disponibles are active and unselected. Withdrawn entries stay in Sélectionnées only.
-  const selectedMatches = selectedInScope
-    ? rows.filter((row) => row.selected && matchesQuery(row.displayName, query))
-    : [];
-  const availableMatches = availableInScope
-    ? rows.filter(
-        (row) =>
-          row.eligible && !row.selected && matchesQuery(row.displayName, query),
-      )
-    : [];
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter((row) => row.displayName.toLowerCase().includes(q));
+  }, [rows, search]);
 
   const k = selected.size;
-  const populationExpected = k + reserved;
+  /** Open affectation places. Not Places N minus k. */
+  const remaining = affectationCap != null ? affectationCap - k : null;
+  const tone = remaining != null ? compositionRemainingTone(remaining) : null;
   const atCapacity = affectationCap != null && k >= affectationCap;
-  const remaining =
-    placesN != null && placesN > 0
-      ? Math.max(0, placesN - populationExpected)
-      : null;
-  const complete =
-    placesN != null && placesN > 0 && populationExpected === placesN;
   const emptyEligible =
     entries.filter((e) => e.status === 'Active').length === 0 && k === 0;
+  const searchActive = search.trim().length > 0;
 
+  const selectableFiltered = useMemo(
+    () => filtered.filter((row) => row.eligible && !row.selected),
+    [filtered],
+  );
   const canSelectAll =
-    availableMatches.length > 0 &&
+    selectableFiltered.length > 0 &&
     (affectationCap == null || k < affectationCap);
 
-  const meterState =
-    placesN != null && placesN > 0
-      ? occupancyMeterState(populationExpected, placesN)
-      : null;
-  const meterLabel =
-    placesN != null && placesN > 0
-      ? t('composition.counter', { k: populationExpected, n: placesN })
-      : null;
-
-  const scopedHasMatch =
-    selectedMatches.length > 0 || availableMatches.length > 0;
-  const showEmptySearch = searchActive && !scopedHasMatch;
-  const showEmptySelected = !searchActive && segment === 'selected' && k === 0;
-  const showEmptyEligible =
-    !searchActive && emptyEligible && segment !== 'selected';
-
-  const showSelectedSection =
-    !showEmptySearch &&
-    !showEmptyEligible &&
-    !showEmptySelected &&
-    selectedInScope &&
-    k > 0 &&
-    (!searchActive || selectedMatches.length > 0);
-  const showAvailableSection =
-    !showEmptySearch &&
-    !showEmptyEligible &&
-    !showEmptySelected &&
-    availableInScope &&
-    (!searchActive || availableMatches.length > 0);
-
-  const facts: CompositionFact[] = [
-    {
-      key: 'selected',
-      value: String(k),
-      label: t('composition.factSelected', { count: k }),
-      primary: true,
-    },
-  ];
+  const facts: CompositionFact[] = [];
   if (placesN != null && placesN > 0) {
     facts.push({
       key: 'places',
       value: String(placesN),
       label: t('composition.factPlaces', { count: placesN }),
+    });
+  }
+  facts.push({
+    key: 'selected',
+    value: String(k),
+    label: t('composition.factSelected', { count: k }),
+  });
+  if (remaining != null) {
+    facts.push({
+      key: 'remaining',
+      value: String(remaining),
+      label: t('composition.factRemaining', { count: remaining }),
     });
   }
   if (reserved > 0) {
@@ -371,26 +280,12 @@ export function StructureCompositionDialog({
       label: t('composition.factReserved', { count: reserved }),
     });
   }
-  if (remaining != null) {
-    facts.push(
-      complete
-        ? {
-            key: 'status',
-            value: t('composition.statusComplete'),
-            label: null,
-          }
-        : {
-            key: 'remaining',
-            value: String(remaining),
-            label: t('composition.factRemaining', { count: remaining }),
-          },
-    );
-  }
 
   const capacityHint =
     affectationCap != null
       ? t('composition.atCapacityHint', { n: affectationCap })
       : undefined;
+  const withdrawnLabel = t('composition.noLongerEligible');
   const withdrawnTip = t('composition.withdrawnFromCompetitionTip');
 
   const saveMutation = useMutation({
@@ -429,7 +324,7 @@ export function StructureCompositionDialog({
           : Number.POSITIVE_INFINITY;
       if (room === 0) return prev;
       let added = 0;
-      for (const row of availableMatches) {
+      for (const row of selectableFiltered) {
         if (added >= room) break;
         if (!next.has(row.entryId)) {
           next.add(row.entryId);
@@ -446,14 +341,8 @@ export function StructureCompositionDialog({
     requestDiscardClose(saveMutation.isPending);
   }
 
-  const sectionProps = {
-    pending: saveMutation.isPending,
-    atCapacity,
-    affectationCap,
-    capacityHint,
-    withdrawnTip,
-    onToggle: toggle,
-  };
+  const showEmptySearch = searchActive && filtered.length === 0;
+  const showEmptyEligible = !searchActive && emptyEligible;
 
   return (
     <>
@@ -507,6 +396,7 @@ export function StructureCompositionDialog({
           <div className="structure-composition__chrome">
             <div
               className="structure-qualification__facts structure-composition__facts"
+              data-tone={tone ?? undefined}
               aria-live="polite"
             >
               {facts.map((fact, index) => (
@@ -518,72 +408,27 @@ export function StructureCompositionDialog({
                     />
                   ) : null}
                   <span
-                    className={[
-                      'structure-qualification__fact',
-                      fact.primary
-                        ? 'structure-qualification__fact--primary'
-                        : 'structure-qualification__fact--secondary',
-                    ].join(' ')}
+                    className="structure-qualification__fact structure-qualification__fact--secondary"
+                    data-fact={fact.key}
                   >
                     <span className="structure-qualification__fact-value">
                       {fact.value}
                     </span>
-                    {fact.label != null ? (
-                      <span className="structure-qualification__fact-label">
-                        {fact.label}
-                      </span>
-                    ) : null}
+                    <span className="structure-qualification__fact-label">
+                      {fact.label}
+                    </span>
                   </span>
                 </Fragment>
               ))}
             </div>
 
-            {meterState != null && meterLabel != null && placesN != null ? (
-              <OccupancyMeter
-                current={populationExpected}
-                capacity={placesN}
-                state={meterState}
-                fillVariant="brand"
-                ariaLabel={meterLabel}
-                className="structure-composition__meter"
-              />
+            {atCapacity && capacityHint != null ? (
+              <p id={capacityHintId} className="ds-visually-hidden">
+                {capacityHint}
+              </p>
             ) : null}
 
-            {atCapacity || reserved > 0 ? (
-              <Alert tone={atCapacity ? 'warning' : 'info'} role="status">
-                <div className="structure-composition__guidance">
-                  {atCapacity && capacityHint != null ? (
-                    <p>{capacityHint}</p>
-                  ) : null}
-                  {reserved > 0 ? (
-                    <p>
-                      {t('composition.reservedBySources', { count: reserved })}
-                    </p>
-                  ) : null}
-                </div>
-              </Alert>
-            ) : null}
-          </div>
-
-          <div className="structure-composition__controls">
-            <ToggleButtonGroup
-              className="structure-composition__segments"
-              aria-label={t('composition.segmentAria')}
-              value={segment}
-              onChange={setSegment}
-              options={[
-                { value: 'all', label: t('composition.segmentAll') },
-                {
-                  value: 'selected',
-                  label: t('composition.segmentSelected'),
-                },
-                {
-                  value: 'available',
-                  label: t('composition.segmentAvailable'),
-                },
-              ]}
-            />
-            <div className="structure-composition__search-row">
+            <div className="structure-composition__toolbar">
               <label className="structure-composition__search">
                 <span className="ds-visually-hidden">
                   {t('composition.search')}
@@ -624,31 +469,31 @@ export function StructureCompositionDialog({
             <div className="structure-composition__empty">
               <p>{t('composition.emptySearch')}</p>
             </div>
-          ) : showEmptySelected ? (
-            <div className="structure-composition__empty">
-              <p>{t('composition.emptySelected')}</p>
-            </div>
           ) : (
-            <div className="structure-composition__sections">
-              {showSelectedSection ? (
-                <CompositionSection
-                  headingId={selectedHeadingId}
-                  title={t('composition.segmentSelected')}
-                  rows={selectedMatches}
-                  emptyLabel={t('composition.emptySelected')}
-                  {...sectionProps}
-                />
-              ) : null}
-              {showAvailableSection ? (
-                <CompositionSection
-                  headingId={availableHeadingId}
-                  title={t('composition.segmentAvailable')}
-                  rows={availableMatches}
-                  emptyLabel={t('composition.emptyAvailable')}
-                  {...sectionProps}
-                />
-              ) : null}
-            </div>
+            <ul
+              className="structure-composition__list"
+              aria-label={t('composition.listAria')}
+            >
+              {filtered.map((row) => {
+                const locked =
+                  !row.selected && atCapacity && affectationCap != null;
+                return (
+                  <li key={row.entryId}>
+                    <CompositionTeamRow
+                      row={row}
+                      pending={saveMutation.isPending}
+                      locked={locked}
+                      capacityHintId={
+                        locked && atCapacity ? capacityHintId : undefined
+                      }
+                      withdrawnLabel={withdrawnLabel}
+                      withdrawnTip={withdrawnTip}
+                      onToggle={toggle}
+                    />
+                  </li>
+                );
+              })}
+            </ul>
           )}
         </div>
       </Dialog>

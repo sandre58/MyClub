@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
   cleanup,
@@ -32,6 +35,11 @@ vi.mock('../../../api', async (importOriginal) => {
 const stageId = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
 const competitionId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
 const entryId = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee';
+
+const compositionCss = readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), '../structure-composition.css'),
+  'utf8',
+);
 
 function stage(
   partial: Partial<StructureStageHubSummary> = {},
@@ -107,12 +115,24 @@ function renderDialog({
   return { onClose };
 }
 
+function factOrder(): string[] {
+  return [...document.querySelectorAll('[data-fact]')].map(
+    (node) => node.getAttribute('data-fact') ?? '',
+  );
+}
+
+function fact(key: string): HTMLElement {
+  const node = document.querySelector(`[data-fact="${key}"]`);
+  if (!(node instanceof HTMLElement)) {
+    throw new Error(`missing fact ${key}`);
+  }
+  return node;
+}
+
 const amiens = '11111111-1111-1111-1111-111111111111';
 const bordeaux = '22222222-2222-2222-2222-222222222222';
 const caen = '33333333-3333-3333-3333-333333333333';
 const dijon = '44444444-4444-4444-4444-444444444444';
-const evian = '55555555-5555-5555-5555-555555555555';
-const france = '66666666-6666-6666-6666-666666666666';
 const withdrawnId = '77777777-7777-7777-7777-777777777777';
 
 describe('StructureCompositionDialog', () => {
@@ -174,197 +194,231 @@ describe('StructureCompositionDialog', () => {
     );
   });
 
-  it('lists Sélectionnées then Disponibles and hides Sélectionnées when none are selected', () => {
+  it('orders Places, Sélectionnées, Restantes, then reserved, using cap minus k', () => {
     renderDialog({
-      entryList: [entry(amiens, 'Amiens'), entry(bordeaux, 'Bordeaux')],
+      compositionCapacity: 8,
+      reservedFromFeeds: 3,
       affectationEntryIds: [amiens],
+      entryList: [entry(amiens, 'Amiens'), entry(bordeaux, 'Bordeaux')],
     });
 
-    const selectedRegion = screen.getByRole('region', {
-      name: 'Sélectionnées',
-    });
-    const availableRegion = screen.getByRole('region', { name: 'Disponibles' });
+    expect(factOrder()).toEqual([
+      'places',
+      'selected',
+      'remaining',
+      'reserved',
+    ]);
+    expect(fact('places')).toHaveTextContent('8');
+    expect(fact('places')).toHaveTextContent('places');
+    expect(fact('selected')).toHaveTextContent('1');
+    expect(fact('selected')).toHaveTextContent('sélectionnée');
+    expect(fact('remaining')).toHaveTextContent('4');
+    expect(fact('remaining')).toHaveTextContent('restantes');
+    expect(fact('reserved')).toHaveTextContent('3');
+    expect(fact('reserved')).toHaveTextContent('réservées par les sources');
+    expect(screen.queryByText('Complet')).not.toBeInTheDocument();
     expect(
-      selectedRegion.compareDocumentPosition(availableRegion) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    expect(
-      within(selectedRegion).getByRole('checkbox', { name: /Amiens/ }),
-    ).toBeChecked();
-    expect(
-      within(availableRegion).getByRole('checkbox', { name: /Bordeaux/ }),
-    ).not.toBeChecked();
-    expect(
-      within(availableRegion).queryByRole('checkbox', { name: /Amiens/ }),
-    ).not.toBeInTheDocument();
-
-    cleanup();
-    renderDialog();
-
-    expect(
-      screen.queryByRole('region', { name: 'Sélectionnées' }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.getByRole('region', { name: 'Disponibles' }),
-    ).toBeInTheDocument();
+      document.querySelector('.structure-composition__facts'),
+    ).toHaveAttribute('data-tone', 'short');
   });
 
-  it('scopes Toutes, Sélectionnées, and Disponibles with search', async () => {
-    const user = userEvent.setup();
+  it('tones Restantes short when more than one place is open and near on the last place', () => {
     renderDialog({
+      compositionCapacity: 4,
+      entryList: [entry(amiens, 'Amiens')],
+    });
+    expect(
+      document.querySelector('.structure-composition__facts'),
+    ).toHaveAttribute('data-tone', 'short');
+    expect(fact('remaining')).toHaveTextContent('4');
+    cleanup();
+
+    renderDialog({
+      compositionCapacity: 4,
+      affectationEntryIds: [amiens, bordeaux, caen],
       entryList: [
         entry(amiens, 'Amiens'),
         entry(bordeaux, 'Bordeaux'),
         entry(caen, 'Caen'),
       ],
-      affectationEntryIds: [amiens],
     });
+    expect(
+      document.querySelector('.structure-composition__facts'),
+    ).toHaveAttribute('data-tone', 'near');
+    expect(fact('remaining')).toHaveTextContent('1');
+    expect(fact('remaining')).toHaveTextContent('restante');
+    expect(screen.queryByText('Complet')).not.toBeInTheDocument();
+  });
 
-    await user.click(screen.getByRole('radio', { name: 'Disponibles' }));
-    expect(
-      screen.queryByRole('region', { name: 'Sélectionnées' }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.getByRole('region', { name: 'Disponibles' }),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole('checkbox', { name: /Amiens/ }),
-    ).not.toBeInTheDocument();
-
-    const search = screen.getByRole('searchbox', {
-      name: 'Rechercher une équipe',
+  it('marks a full affectation exact and an over-cap set as attention, never Complet', () => {
+    renderDialog({
+      compositionCapacity: 2,
+      affectationEntryIds: [amiens, bordeaux],
+      entryList: [entry(amiens, 'Amiens'), entry(bordeaux, 'Bordeaux')],
     });
-    await user.type(search, 'Amiens');
     expect(
-      screen.getByText('Aucune équipe ne correspond à cette recherche'),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole('checkbox', { name: /Bordeaux/ }),
-    ).not.toBeInTheDocument();
+      document.querySelector('.structure-composition__facts'),
+    ).toHaveAttribute('data-tone', 'exact');
+    expect(fact('remaining')).toHaveTextContent('0');
+    expect(screen.queryByText('Complet')).not.toBeInTheDocument();
+    cleanup();
 
-    await user.clear(search);
-    await user.type(search, 'Caen');
-    const available = screen.getByRole('region', { name: 'Disponibles' });
+    renderDialog({
+      compositionCapacity: 2,
+      affectationEntryIds: [amiens, bordeaux, caen],
+      entryList: [
+        entry(amiens, 'Amiens'),
+        entry(bordeaux, 'Bordeaux'),
+        entry(caen, 'Caen'),
+      ],
+    });
     expect(
-      within(available).getByRole('checkbox', { name: /Caen/ }),
-    ).toBeInTheDocument();
-    expect(
-      within(available).queryByRole('checkbox', { name: /Bordeaux/ }),
-    ).not.toBeInTheDocument();
+      document.querySelector('.structure-composition__facts'),
+    ).toHaveAttribute('data-tone', 'over');
+    expect(fact('remaining')).toHaveTextContent('-1');
+    expect(screen.queryByText('Complet')).not.toBeInTheDocument();
+    expect(document.querySelector('.ds-alert')).toBeNull();
+  });
 
-    await user.click(screen.getByRole('radio', { name: 'Toutes' }));
-    await user.clear(search);
-    await user.type(search, 'en');
-    expect(
-      within(screen.getByRole('region', { name: 'Sélectionnées' })).getByRole(
-        'checkbox',
-        { name: /Amiens/ },
-      ),
-    ).toBeInTheDocument();
-    expect(
-      within(screen.getByRole('region', { name: 'Disponibles' })).getByRole(
-        'checkbox',
-        { name: /Caen/ },
-      ),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole('checkbox', { name: /Bordeaux/ }),
-    ).not.toBeInTheDocument();
+  it('does not render an occupancy meter inside the dialog', () => {
+    renderDialog({ reservedFromFeeds: 2 });
 
-    await user.click(screen.getByRole('radio', { name: 'Sélectionnées' }));
     expect(
-      screen.queryByRole('region', { name: 'Disponibles' }),
+      document.querySelector('.structure-occupancy-meter'),
     ).not.toBeInTheDocument();
     expect(
-      screen.getByRole('checkbox', { name: /Amiens/ }),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole('checkbox', { name: /Caen/ }),
+      screen.queryByRole('img', { name: /places/ }),
     ).not.toBeInTheDocument();
   });
 
-  it('selects every filtered team up to the affectation cap and meters k plus reserved', async () => {
+  it('keeps a labeled Sélectionner tout ghost button beside search and stops at the cap', async () => {
     const user = userEvent.setup();
     renderDialog({
-      compositionCapacity: 8,
-      reservedFromFeeds: 3,
+      compositionCapacity: 4,
+      reservedFromFeeds: 1,
       entryList: [
         entry(amiens, 'Amiens'),
         entry(bordeaux, 'Bordeaux'),
         entry(caen, 'Caen'),
         entry(dijon, 'Dijon'),
-        entry(evian, 'Evian'),
-        entry(france, 'France'),
       ],
     });
 
-    expect(screen.getByRole('img', { name: '3/8 places' })).toBeInTheDocument();
-    expect(
-      screen.getByText('3 places réservées par les sources'),
-    ).toBeInTheDocument();
-    expect(document.querySelector('.ds-alert--danger')).toBeNull();
-
     const selectAll = screen.getByRole('button', { name: 'Sélectionner tout' });
     expect(selectAll).toHaveTextContent('Sélectionner tout');
+    expect(selectAll).toHaveClass('ds-btn--ghost');
     expect(
       screen.queryByRole('button', { name: 'Tout sélectionner' }),
     ).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('region', { name: 'Sélectionnées' }),
+    ).not.toBeInTheDocument();
 
-    const search = screen.getByRole('searchbox', {
-      name: 'Rechercher une équipe',
-    });
-    await user.type(search, 'Caen');
     await user.click(selectAll);
-    expect(screen.getByRole('checkbox', { name: /Caen/ })).toBeChecked();
-    await user.clear(search);
-    expect(screen.getByRole('checkbox', { name: /Amiens/ })).not.toBeChecked();
-    expect(screen.getByRole('img', { name: '4/8 places' })).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Sélectionner tout' }));
-
-    for (const name of ['Amiens', 'Bordeaux', 'Dijon', 'Evian']) {
+    for (const name of ['Amiens', 'Bordeaux', 'Caen']) {
       expect(
         screen.getByRole('checkbox', { name: new RegExp(name) }),
       ).toBeChecked();
     }
-    expect(screen.getByRole('checkbox', { name: /France/ })).not.toBeChecked();
-    expect(screen.getByRole('checkbox', { name: /France/ })).toBeDisabled();
+    const locked = screen.getByRole('checkbox', { name: /Dijon/ });
+    expect(locked).not.toBeChecked();
+    expect(locked).toBeDisabled();
+    expect(fact('remaining')).toHaveTextContent('0');
     expect(
       screen.getByRole('button', { name: 'Sélectionner tout' }),
     ).toBeDisabled();
-    expect(screen.getByRole('img', { name: '8/8 places' })).toBeInTheDocument();
-    expect(screen.getByText('Complet')).toBeInTheDocument();
+    expect(document.querySelector('.ds-alert')).toBeNull();
   });
 
-  it('warns at capacity and names reserved source places without a danger tone', () => {
+  it('paints selected cells with the shared tile, locks with a description, and chips withdrawn teams', () => {
     renderDialog({
-      compositionCapacity: 4,
-      reservedFromFeeds: 2,
-      affectationEntryIds: [amiens, bordeaux],
+      compositionCapacity: 1,
+      affectationEntryIds: [withdrawnId],
       entryList: [
         entry(amiens, 'Amiens'),
-        entry(bordeaux, 'Bordeaux'),
-        entry(caen, 'Caen'),
+        entry(withdrawnId, 'Ancien', 'Withdrawn'),
       ],
     });
 
-    const guidance = screen.getByRole('status');
-    expect(guidance).toHaveClass('ds-alert--warning');
-    expect(guidance).not.toHaveClass('ds-alert--danger');
-    expect(guidance).toHaveTextContent(
-      'Plus de place pour des équipes (2 max).',
+    const selectedBox = screen.getByRole('checkbox', { name: /Ancien/ });
+    expect(selectedBox).toBeChecked();
+    expect(selectedBox.closest('.ds-selectable-tile')).toHaveAttribute(
+      'data-selected',
+      'true',
     );
-    expect(guidance).toHaveTextContent('2 places réservées par les sources');
-    expect(document.querySelector('.ds-alert--danger')).toBeNull();
-    expect(screen.getByRole('img', { name: '4/4 places' })).toBeInTheDocument();
-    expect(screen.getByRole('checkbox', { name: /Caen/ })).toBeDisabled();
+    expect(
+      within(selectedBox.closest('li') as HTMLElement).getByText(
+        'Plus éligible',
+      ),
+    ).toHaveClass('ds-chip');
+
+    const locked = screen.getByRole('checkbox', { name: /Amiens/ });
+    expect(locked).toBeDisabled();
+    expect(locked).toHaveAccessibleDescription(
+      'Plus de place pour des équipes (1 max).',
+    );
+    expect(locked.closest('.structure-composition__row')).toHaveClass(
+      'structure-composition__row--locked',
+    );
+    expect(locked.closest('.ds-selectable-tile')).toHaveAttribute(
+      'data-selected',
+      'false',
+    );
+    expect(
+      within(locked.closest('li') as HTMLElement).queryByText('Plus éligible'),
+    ).not.toBeInTheDocument();
+
+    const lockedRule = compositionCss.match(
+      /\.structure-composition__row--locked\s*\{([^}]*)\}/,
+    );
+    expect(lockedRule?.[1]).toBeDefined();
+    expect(lockedRule?.[1]).not.toMatch(/opacity/);
+  });
+
+  it('scrolls only the team list and uses two columns, one at 36rem', () => {
+    renderDialog({
+      entryList: [entry(amiens, 'Amiens'), entry(bordeaux, 'Bordeaux')],
+      affectationEntryIds: [amiens],
+    });
+
+    const list = screen.getByRole('list', { name: 'Équipes' });
+    const selectAll = screen.getByRole('button', { name: 'Sélectionner tout' });
+    const facts = document.querySelector('.structure-composition__facts');
+    expect(list.contains(selectAll)).toBe(false);
+    expect(facts).not.toBeNull();
+    expect(list.contains(facts as Node)).toBe(false);
+    expect(
+      list.compareDocumentPosition(selectAll) &
+        Node.DOCUMENT_POSITION_PRECEDING,
+    ).toBeTruthy();
+
+    const listRule = compositionCss.match(
+      /\.structure-composition__list\s*\{([^}]*)\}/,
+    );
+    expect(listRule?.[1]).toMatch(/overflow:\s*auto/);
+    expect(listRule?.[1]).toMatch(
+      /grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/,
+    );
+    expect(compositionCss).toMatch(
+      /\.ds-dialog:has\(\.structure-composition\) \.ds-dialog__body\s*\{[^}]*overflow:\s*hidden/,
+    );
+    expect(compositionCss).toMatch(
+      /\.structure-composition\s*\{[^}]*overflow:\s*hidden/,
+    );
+    const narrow = compositionCss.slice(
+      compositionCss.indexOf('@media (max-width: 36rem)'),
+    );
+    expect(narrow).toMatch(
+      /\.structure-composition__list\s*\{[^}]*grid-template-columns:\s*1fr/,
+    );
   });
 
   it('shows a dedicated empty state when the search matches nothing', async () => {
     const user = userEvent.setup();
     renderDialog({
       entryList: [entry(amiens, 'Amiens'), entry(bordeaux, 'Bordeaux')],
-      affectationEntryIds: [amiens],
     });
 
     await user.type(
@@ -377,59 +431,7 @@ describe('StructureCompositionDialog', () => {
     ).toBeInTheDocument();
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
     expect(
-      screen.queryByRole('region', { name: 'Sélectionnées' }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole('region', { name: 'Disponibles' }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByText('Aucune équipe éligible'),
-    ).not.toBeInTheDocument();
-  });
-
-  it('keeps withdrawn teams in Sélectionnées and out of Disponibles', async () => {
-    const user = userEvent.setup();
-    renderDialog({
-      entryList: [
-        entry(amiens, 'Amiens'),
-        entry(withdrawnId, 'Ancien', 'Withdrawn'),
-      ],
-      affectationEntryIds: [withdrawnId],
-    });
-
-    const selectedRegion = screen.getByRole('region', {
-      name: 'Sélectionnées',
-    });
-    const availableRegion = screen.getByRole('region', { name: 'Disponibles' });
-    expect(
-      within(selectedRegion).getByRole('checkbox', { name: /Ancien/ }),
-    ).toBeChecked();
-    expect(
-      within(selectedRegion).getByRole('img', {
-        name: 'Équipe retirée de la compétition — ne participe plus à cette phase.',
-      }),
-    ).toBeInTheDocument();
-    expect(
-      within(availableRegion).queryByRole('checkbox', { name: /Ancien/ }),
-    ).not.toBeInTheDocument();
-    expect(
-      within(availableRegion).getByRole('checkbox', { name: /Amiens/ }),
-    ).toBeInTheDocument();
-
-    await user.click(screen.getByRole('radio', { name: 'Disponibles' }));
-    expect(
-      screen.queryByRole('checkbox', { name: /Ancien/ }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.getByRole('checkbox', { name: /Amiens/ }),
-    ).toBeInTheDocument();
-
-    await user.click(screen.getByRole('radio', { name: 'Sélectionnées' }));
-    expect(
-      screen.getByRole('checkbox', { name: /Ancien/ }),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole('checkbox', { name: /Amiens/ }),
+      screen.queryByRole('list', { name: 'Équipes' }),
     ).not.toBeInTheDocument();
   });
 });

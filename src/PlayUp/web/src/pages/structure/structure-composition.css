@@ -1,46 +1,61 @@
 /*
  * Composition (Équipes) dialog — team selection for phase Population.
  * Loaded via structure.css.
- * One body scroll: facts, then filter, then selected and available sections.
+ * Facts and the search toolbar stay put. Only the team list scrolls.
  */
+
+.ds-dialog:has(.structure-composition) .ds-dialog__panel {
+  height: min(92vh, 52rem);
+  max-height: min(92vh, 52rem);
+}
+
+.ds-dialog:has(.structure-composition) .ds-dialog__body {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
 
 .structure-composition {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
-  gap: var(--space-16);
+  gap: var(--space-12);
+  min-height: 0;
+  overflow: hidden;
 }
 
 .structure-composition__chrome {
   display: flex;
+  flex: none;
   flex-direction: column;
-  gap: var(--space-8);
+  gap: var(--space-12);
 }
 
 .structure-composition__facts {
   width: 100%;
 }
 
-.structure-composition__meter.structure-occupancy-meter {
-  gap: var(--space-4);
+/* Restantes only. Near and over share the attention token; over also colors the label. */
+
+.structure-composition__facts[data-tone='short'] [data-fact='remaining'] .structure-qualification__fact-value {
+  color: var(--color-brand);
 }
 
-.structure-composition__meter .structure-occupancy-meter__track {
-  height: var(--space-4);
+.structure-composition__facts[data-tone='near'] [data-fact='remaining'] .structure-qualification__fact-value {
+  color: var(--color-attention);
 }
 
-.structure-composition__guidance {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
+.structure-composition__facts[data-tone='exact'] [data-fact='remaining'] .structure-qualification__fact-value {
+  color: var(--color-success);
 }
 
-.structure-composition__controls {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-12);
+.structure-composition__facts[data-tone='over'] [data-fact='remaining'] .structure-qualification__fact-value,
+.structure-composition__facts[data-tone='over'] [data-fact='remaining'] .structure-qualification__fact-label {
+  color: var(--color-attention);
 }
 
-.structure-composition__search-row {
+.structure-composition__toolbar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -57,55 +72,35 @@
   flex: none;
 }
 
-.structure-composition__sections {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-16);
-}
-
-.structure-composition__section-title {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  margin: 0;
-  padding-block: var(--space-8);
-  background: var(--color-surface);
-  color: var(--color-text-secondary);
-  font-size: var(--text-meta);
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: 0.06em;
-  line-height: var(--leading-tight);
-  text-transform: uppercase;
-}
-
 .structure-composition__list {
   list-style: none;
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-8);
+  align-content: start;
+  min-height: 0;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
+  overflow: auto;
+}
+
+.structure-composition__list > li {
+  min-width: 0;
+  margin: 0;
 }
 
 .structure-composition__row {
   display: flex;
   align-items: center;
   gap: var(--space-8);
+  width: 100%;
   margin: 0;
-  padding: var(--space-12) 0;
-  border-bottom: var(--border-width) solid var(--color-border);
-  background: transparent;
-  color: inherit;
+  padding: var(--space-8);
   font: inherit;
+  text-align: start;
   cursor: pointer;
   min-width: 0;
-}
-
-.structure-composition__list > li:last-child .structure-composition__row {
-  border-bottom: none;
-}
-
-.structure-composition__row:hover {
-  background: var(--color-surface-secondary);
 }
 
 .structure-composition__row .team-crest {
@@ -117,7 +112,9 @@
 }
 
 .structure-composition__row--locked {
-  opacity: 0.55;
+  border-color: var(--color-border-strong);
+  background: var(--color-surface-secondary);
+  color: var(--color-text-secondary);
   cursor: not-allowed;
 }
 
@@ -131,32 +128,33 @@
   line-height: var(--leading-tight);
 }
 
+.structure-composition__row > .ds-tooltip-trigger,
+.structure-composition__withdrawn {
+  flex: none;
+}
+
 .structure-composition__check {
   flex: none;
   margin-inline-start: auto;
 }
 
-.structure-composition__withdrawn-marker {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  color: var(--color-attention);
-  line-height: 0;
-}
-
-.structure-composition__section-empty,
 .structure-composition__empty {
-  margin: 0;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--space-8);
+  justify-content: center;
+  min-height: 0;
+  padding: var(--space-16) 0;
   color: var(--color-text-secondary);
 }
 
-.structure-composition__empty {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-8);
-  padding: var(--space-16) 0;
+.structure-composition__empty p {
+  margin: 0;
 }
 
-.structure-composition__section-empty {
-  padding: var(--space-12) 0;
+@media (max-width: 36rem) {
+  .structure-composition__list {
+    grid-template-columns: 1fr;
+  }
 }
