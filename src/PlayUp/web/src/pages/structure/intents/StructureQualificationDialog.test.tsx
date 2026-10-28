@@ -466,14 +466,19 @@ describe('StructureQualificationDialog hydrate / groups (2b)', () => {
     await user.click(
       await screen.findByRole('button', { name: /1er du classement général/i }),
     );
-    const tray = await screen.findByRole('listbox', { name: /à placer/i });
+    const grid = await screen.findByRole('grid', {
+      name: /associer chaque sélection/i,
+    });
     await user.click(
-      within(tray).getByRole('option', { name: /1er du classement général/i }),
+      within(grid).getByRole('button', { name: /Demi-finale 1 · côté A/i }),
     );
+    const popover = await screen.findByRole('listbox', {
+      name: /sources à placer/i,
+    });
     await user.click(
-      within(
-        screen.getByRole('grid', { name: /associer chaque sélection/i }),
-      ).getByRole('button', { name: /Demi-finale 1 · côté A/i }),
+      within(popover).getByRole('option', {
+        name: /1er du classement général/i,
+      }),
     );
 
     expect(screen.getByText(openedFromCopy)).toBeInTheDocument();

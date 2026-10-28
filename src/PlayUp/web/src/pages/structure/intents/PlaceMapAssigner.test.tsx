@@ -120,38 +120,37 @@ describe('place map model', () => {
 });
 
 describe('PlaceMapAssigner', () => {
-  it('writes the place id on the clicked source index', async () => {
+  it('writes the place id on the source chosen from the cell popover', async () => {
     const user = userEvent.setup();
     const { onAssignmentsChange } = renderAssigner();
 
-    await user.click(
-      screen.getByRole('option', { name: 'Source 2, non placée' }),
-    );
-    expect(
-      screen.getByRole('option', { name: 'Source 2, non placée' }),
-    ).toHaveAttribute('aria-selected', 'true');
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Place 1, libre' }));
+    const popover = screen.getByRole('listbox', { name: /sources à placer/i });
+    await user.click(
+      within(popover).getByRole('option', { name: 'Choisir Source 2' }),
+    );
 
     expect(onAssignmentsChange).toHaveBeenCalledTimes(1);
     expect(onAssignmentsChange).toHaveBeenCalledWith(['', 'p0']);
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
   });
 
-  it('cancels the armed source on Escape without writing', async () => {
+  it('closes the popover on Escape without writing', async () => {
     const user = userEvent.setup();
     const { onAssignmentsChange } = renderAssigner();
 
-    await user.click(
-      screen.getByRole('option', { name: 'Source 1, non placée' }),
-    );
+    await user.click(screen.getByRole('button', { name: 'Place 1, libre' }));
+    expect(
+      screen.getByRole('listbox', { name: /sources à placer/i }),
+    ).toBeInTheDocument();
     await user.keyboard('{Escape}');
 
-    expect(
-      screen.getByRole('option', { name: 'Source 1, non placée' }),
-    ).toHaveAttribute('aria-selected', 'false');
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
     expect(onAssignmentsChange).not.toHaveBeenCalled();
   });
 
-  it('lets Escape cancel the selection before the dialog closes', async () => {
+  it('lets Escape close the popover before the dialog closes', async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
     render(
@@ -177,15 +176,14 @@ describe('PlaceMapAssigner', () => {
       </div>,
     );
 
-    await user.click(
-      screen.getByRole('option', { name: 'Source 1, non placée' }),
-    );
+    await user.click(screen.getByRole('button', { name: 'Place 1, libre' }));
+    expect(
+      screen.getByRole('listbox', { name: /sources à placer/i }),
+    ).toBeInTheDocument();
     await user.keyboard('{Escape}');
 
     expect(onClose).not.toHaveBeenCalled();
-    expect(
-      screen.getByRole('option', { name: 'Source 1, non placée' }),
-    ).toHaveAttribute('aria-selected', 'false');
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
 
     await user.keyboard('{Escape}');
     expect(onClose).toHaveBeenCalledTimes(1);
@@ -201,11 +199,37 @@ describe('PlaceMapAssigner', () => {
       onAssignmentsChange,
     });
 
-    expect(screen.queryByRole('option')).not.toBeInTheDocument();
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
     await user.click(
       screen.getByRole('button', { name: 'Retirer Source 1 de Place 1' }),
     );
     expect(onAssignmentsChange).toHaveBeenCalledWith(['']);
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+  });
+
+  it('clears a filled cup hole and reopens the popover to remap it', async () => {
+    const user = userEvent.setup();
+    render(
+      <Stateful
+        initial={['p0', '']}
+        sources={[source(0), source(1)]}
+        places={[place(0), place(1)]}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Place 1, Source 1' }));
+    const popover = screen.getByRole('listbox', { name: /sources à placer/i });
+    expect(
+      within(popover).getByRole('option', { name: 'Choisir Source 1' }),
+    ).toBeInTheDocument();
+    await user.click(
+      within(popover).getByRole('option', { name: 'Choisir Source 2' }),
+    );
+
+    expect(
+      screen.getByRole('button', { name: 'Place 1, Source 2' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
   });
 
   it('fills empties from the toolbar without overwriting', async () => {
@@ -245,41 +269,46 @@ describe('PlaceMapAssigner', () => {
       />,
     );
 
-    await user.click(
-      screen.getByRole('option', { name: 'Source 1, non placée' }),
-    );
     await user.click(screen.getByRole('button', { name: 'Groupe A, libre' }));
     await user.click(
-      screen.getByRole('option', { name: 'Source 2, non placée' }),
+      within(
+        screen.getByRole('listbox', { name: /sources à placer/i }),
+      ).getByRole('option', { name: 'Choisir Source 1' }),
     );
     await user.click(
       screen.getByRole('button', { name: 'Groupe A, Source 1' }),
     );
+    await user.click(
+      within(
+        screen.getByRole('listbox', { name: /sources à placer/i }),
+      ).getByRole('option', { name: 'Choisir Source 2' }),
+    );
 
-    expect(
-      screen.getByRole('button', { name: 'Groupe A, Source 1, Source 2' }),
-    ).toBeInTheDocument();
+    const hole = screen.getByRole('button', {
+      name: 'Groupe A, Source 1, Source 2',
+    });
+    expect(hole).toBeInTheDocument();
+    await user.click(hole);
     expect(
       screen.getByText(/toutes les sources sont placées/i),
     ).toBeInTheDocument();
   });
 
-  it('refuses a second source on a cup place', async () => {
+  it('lists only unplaced sources for a free cup hole', async () => {
     const user = userEvent.setup();
-    const onAssignmentsChange = vi.fn();
     renderAssigner({
       assignments: ['p0', ''],
-      placeCount: 1,
-      onAssignmentsChange,
+      placeCount: 2,
     });
 
-    await user.click(
-      screen.getByRole('option', { name: 'Source 2, non placée' }),
-    );
-    const cell = screen.getByRole('button', { name: 'Place 1, Source 1' });
-    expect(cell).toHaveAttribute('aria-disabled', 'true');
-    await user.click(cell);
-    expect(onAssignmentsChange).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Place 2, libre' }));
+    const popover = screen.getByRole('listbox', { name: /sources à placer/i });
+    expect(
+      within(popover).getByRole('option', { name: 'Choisir Source 2' }),
+    ).toBeInTheDocument();
+    expect(
+      within(popover).queryByRole('option', { name: /Source 1/ }),
+    ).not.toBeInTheDocument();
   });
 
   it('exposes a grid and a live count, not a radiogroup, and scrolls at 16', async () => {
@@ -303,9 +332,10 @@ describe('PlaceMapAssigner', () => {
     const grid = screen.getByRole('grid', { name: boardAria });
     expect(grid).toHaveAttribute('data-sectioned', 'true');
     expect(screen.queryByRole('radiogroup')).not.toBeInTheDocument();
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
     expect(
-      screen.getByRole('listbox', { name: /à placer/i }),
-    ).toBeInTheDocument();
+      document.querySelector('.structure-place-map-assigner__tray'),
+    ).toBeNull();
     expect(screen.getByText('Huitièmes')).toBeInTheDocument();
     expect(screen.getByText('Quarts')).toBeInTheDocument();
     expect(screen.getByText('0/16')).toBeInTheDocument();
@@ -314,9 +344,11 @@ describe('PlaceMapAssigner', () => {
     const board = document.querySelector(
       '.structure-place-map-assigner__board',
     );
-    const tray = screen.getByRole('listbox', { name: /à placer/i });
+    const toolbar = document.querySelector(
+      '.structure-place-map-assigner__toolbar',
+    );
     expect(board).toHaveAttribute('data-scroll', 'true');
-    expect(board?.contains(tray)).toBe(false);
+    expect(board?.contains(toolbar)).toBe(false);
 
     const first = within(grid).getAllByRole('button')[0];
     first?.focus();

@@ -811,15 +811,14 @@
     "form": "Organisation"
   },
   "placeMap": {
-    "trayLabel": "À placer",
     "counter": "{{filled}}/{{total}}",
     "counterAria": "{{filled}} sur {{total}} placées",
     "clear": "Retirer {{source}} de {{place}}",
-    "sourceOption": "{{source}}, non placée",
+    "chooseSource": "Choisir {{source}}",
     "cellEmpty": "{{place}}, libre",
     "cellFilled": "{{place}}, {{source}}",
-    "emptyTray": "Toutes les sources sont placées",
-    "selectionStatus": "{{source}} sélectionnée. Choisissez une place. Échap annule.",
+    "popoverLabel": "Sources à placer",
+    "popoverEmpty": "Toutes les sources sont placées",
     "sectionOther": "Autres places"
   },
   "population": {

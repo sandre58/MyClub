@@ -11,7 +11,7 @@ import {
 /** Cup density: section the board by round / block from this many places. */
 export const PLACE_MAP_SECTION_MIN = 8;
 
-/** Cup density: scroll the board only; the source tray stays outside. */
+/** Cup density: scroll the board only; the header and k/N stay outside. */
 export const PLACE_MAP_SCROLL_MIN = 16;
 
 /** Visual and keyboard columns. Kept in lockstep (no separate mobile grid). */
@@ -107,7 +107,7 @@ export function assignPlaceToSource(
   return next;
 }
 
-/** Clear the place id at `sourceIndex` (the source returns to the tray). */
+/** Clear the place id at `sourceIndex`. */
 export function clearSourceAssignment(
   assignments: readonly string[],
   sourceCount: number,

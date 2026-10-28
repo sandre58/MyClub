@@ -1,15 +1,16 @@
 // -----------------------------------------------------------------------
-// Shared Place map — destination cells + source tray (click, no drag).
+// Shared Place map — destination holes + source popover (click, no drag).
 // Qual = occurrence / rank. Prog = confrontation. Writes stay source-indexed.
+// Slot: a filled hole clears its source, then the popover reassigns that hole.
+// Groups: the popover adds another source; each chip has its own clear.
 // -----------------------------------------------------------------------
 
-import { useId, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Popover } from '../../../design-system/components/Popover';
 import { Tooltip } from '../../../design-system/components/Tooltip';
-import { useDismissLayer } from '../../../design-system/useDismissLayer';
 import { ListPlusIcon } from '../../../design-system/icons/contentIcons';
 import { CloseIcon } from '../../../design-system/icons/shellIcons';
-import { ToastToneIcon } from '../../../design-system/icons/toastIcons';
 import {
   PLACE_MAP_COLUMNS,
   alignPlaceAssignments,
@@ -77,12 +78,13 @@ export function PlaceMapAssigner({
   const { t } = useTranslation('structure');
   const baseId = useId();
   const fillHintId = useId();
-  const trayLabelId = `${baseId}-tray`;
-  const [selectedKey, setSelectedKey] = useState<string | null>(null);
-  const [activeSource, setActiveSource] = useState(0);
-  const [activePlace, setActivePlace] = useState(0);
-  const sourceRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const popoverId = `${baseId}-sources`;
+  const anchorRef = useRef<HTMLElement | null>(null);
   const placeRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const sourceRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const [openPlaceId, setOpenPlaceId] = useState<string | null>(null);
+  const [activePlace, setActivePlace] = useState(0);
+  const [activeSource, setActiveSource] = useState(0);
 
   const aligned = useMemo(
     () => alignPlaceAssignments(assignments, sources.length),
@@ -155,25 +157,21 @@ export function PlaceMapAssigner({
   const unplaced = sources.flatMap((source, index) =>
     aligned[index]?.trim() ? [] : [{ source, index }],
   );
-  const selected =
-    unplaced.find((row) => row.source.key === selectedKey) ?? null;
   const filled = aligned.filter((key) => key.trim()).length;
   const placeIds = places.map((place) => place.id);
   const fillDisabled = !canFillPlaceMap(aligned, placeIds, uniquePlaces);
+  const safeActiveSource =
+    unplaced.length === 0 ? 0 : Math.min(activeSource, unplaced.length - 1);
 
-  useDismissLayer(selected != null, () => setSelectedKey(null));
+  useEffect(() => {
+    if (!openPlaceId) return;
+    sourceRefs.current[safeActiveSource]?.focus();
+  }, [openPlaceId, safeActiveSource]);
 
   function occupantsFor(placeId: string) {
     return sources.flatMap((source, index) =>
       aligned[index]?.trim() === placeId ? [{ source, index }] : [],
     );
-  }
-
-  function focusSource(index: number) {
-    if (unplaced.length === 0) return;
-    const next = Math.max(0, Math.min(unplaced.length - 1, index));
-    setActiveSource(next);
-    sourceRefs.current[next]?.focus();
   }
 
   function focusPlace(index: number) {
@@ -183,10 +181,59 @@ export function PlaceMapAssigner({
     placeRefs.current[next]?.focus();
   }
 
-  function onTrayKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+  function focusSource(index: number) {
+    if (unplaced.length === 0) return;
+    const next = Math.max(0, Math.min(unplaced.length - 1, index));
+    setActiveSource(next);
+    sourceRefs.current[next]?.focus();
+  }
+
+  function closePopover() {
+    setOpenPlaceId(null);
+  }
+
+  function openPopover(placeId: string, anchor: HTMLElement) {
+    anchorRef.current = anchor;
+    setActiveSource(0);
+    setOpenPlaceId(placeId);
+  }
+
+  function onCellClick(placeId: string, anchor: HTMLButtonElement) {
+    if (openPlaceId === placeId) {
+      closePopover();
+      return;
+    }
+    const occupants = occupantsFor(placeId);
+    if (uniquePlaces && occupants[0]) {
+      onAssignmentsChange(
+        clearSourceAssignment(assignments, sources.length, occupants[0].index),
+      );
+    }
+    openPopover(placeId, anchor);
+  }
+
+  function chooseSource(sourceIndex: number) {
+    if (!openPlaceId) return;
+    const next = assignPlaceToSource(
+      assignments,
+      sources.length,
+      sourceIndex,
+      openPlaceId,
+      uniquePlaces,
+    );
+    if (!next) return;
+    onAssignmentsChange(next);
+    closePopover();
+    const visualIndex = visualPlaces.findIndex(
+      (place) => place.id === openPlaceId,
+    );
+    if (visualIndex >= 0) focusPlace(visualIndex);
+  }
+
+  function onPopoverKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
     const target = event.target;
     if (!(target instanceof HTMLElement)) return;
-    const raw = target.dataset.trayIndex;
+    const raw = target.dataset.sourceIndex;
     if (raw == null) return;
     const index = Number(raw);
     if (!Number.isInteger(index)) return;
@@ -258,22 +305,6 @@ export function PlaceMapAssigner({
     focusPlace(next);
   }
 
-  function onPlaceClick(placeId: string, blocked: boolean) {
-    if (!selected || blocked) return;
-    const next = assignPlaceToSource(
-      assignments,
-      sources.length,
-      selected.index,
-      placeId,
-      uniquePlaces,
-    );
-    if (!next) return;
-    onAssignmentsChange(next);
-    setSelectedKey(null);
-    const visualIndex = visualPlaces.findIndex((place) => place.id === placeId);
-    if (visualIndex >= 0) focusPlace(visualIndex);
-  }
-
   return (
     <div className="structure-place-map-assigner">
       <div className="structure-place-map-assigner__toolbar">
@@ -299,7 +330,7 @@ export function PlaceMapAssigner({
                 onAssignmentsChange(
                   fillPlaceMap(aligned, placeIds, uniquePlaces),
                 );
-                setSelectedKey(null);
+                closePopover();
               }}
             >
               <ListPlusIcon size="sm" />
@@ -307,66 +338,6 @@ export function PlaceMapAssigner({
             </button>
           </Tooltip>
         </span>
-      </div>
-
-      <div className="structure-place-map-assigner__tray">
-        <p
-          id={trayLabelId}
-          className="structure-place-map-assigner__tray-label"
-        >
-          {t('placeMap.trayLabel')}
-        </p>
-        {unplaced.length === 0 ? (
-          <p className="structure-place-map-assigner__empty-tray" role="status">
-            {t('placeMap.emptyTray')}
-          </p>
-        ) : (
-          <div
-            role="listbox"
-            aria-labelledby={trayLabelId}
-            aria-orientation="horizontal"
-            className="structure-place-map-assigner__sources"
-            onKeyDown={onTrayKeyDown}
-          >
-            {unplaced.map((row, trayIndex) => {
-              const isSelected = selectedKey === row.source.key;
-              return (
-                <button
-                  key={row.source.key}
-                  ref={(node) => {
-                    sourceRefs.current[trayIndex] = node;
-                  }}
-                  id={`${baseId}-source-${trayIndex}`}
-                  type="button"
-                  role="option"
-                  data-tray-index={trayIndex}
-                  tabIndex={
-                    trayIndex ===
-                    Math.min(activeSource, Math.max(unplaced.length - 1, 0))
-                      ? 0
-                      : -1
-                  }
-                  aria-selected={isSelected}
-                  aria-invalid="true"
-                  data-invalid="true"
-                  className="structure-place-map-assigner__source"
-                  aria-label={t('placeMap.sourceOption', {
-                    source: row.source.label,
-                  })}
-                  onClick={() => {
-                    setActiveSource(trayIndex);
-                    setSelectedKey((current) =>
-                      current === row.source.key ? null : row.source.key,
-                    );
-                  }}
-                >
-                  <ToastToneIcon tone="attention" size="sm" />
-                  <span>{row.source.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        )}
       </div>
 
       <div
@@ -410,11 +381,6 @@ export function PlaceMapAssigner({
                     >
                       {row.cells.map((cell) => {
                         const occupants = occupantsFor(cell.place.id);
-                        const blocked =
-                          uniquePlaces &&
-                          occupants.length > 0 &&
-                          selected != null;
-                        const armed = selected != null && !blocked;
                         const occupantLabel = occupants
                           .map((occupant) => occupant.source.label)
                           .join(', ');
@@ -427,6 +393,7 @@ export function PlaceMapAssigner({
                             : t('placeMap.cellEmpty', {
                                 place: cell.place.label,
                               });
+                        const open = openPlaceId === cell.place.id;
                         return (
                           <div
                             key={cell.place.id}
@@ -437,8 +404,7 @@ export function PlaceMapAssigner({
                             data-filled={
                               occupants.length > 0 ? 'true' : 'false'
                             }
-                            data-armed={armed ? 'true' : 'false'}
-                            data-blocked={blocked ? 'true' : 'false'}
+                            data-open={open ? 'true' : 'false'}
                           >
                             <button
                               ref={(node) => {
@@ -457,17 +423,26 @@ export function PlaceMapAssigner({
                               }
                               className="structure-place-map-assigner__cell-hit"
                               aria-label={cellLabel}
-                              aria-disabled={blocked || undefined}
-                              onClick={() =>
-                                onPlaceClick(cell.place.id, blocked)
+                              aria-haspopup="listbox"
+                              aria-expanded={open}
+                              aria-controls={open ? popoverId : undefined}
+                              onClick={(event) =>
+                                onCellClick(cell.place.id, event.currentTarget)
                               }
                             >
                               <span className="structure-place-map-assigner__place-label">
                                 {cell.place.label}
                               </span>
                               {occupants.length > 0 ? (
-                                <span className="structure-place-map-assigner__occupant">
-                                  {occupantLabel}
+                                <span className="structure-place-map-assigner__chips">
+                                  {occupants.map((occupant) => (
+                                    <span
+                                      key={occupant.source.key}
+                                      className="structure-place-map-assigner__chip"
+                                    >
+                                      {occupant.source.label}
+                                    </span>
+                                  ))}
                                 </span>
                               ) : null}
                             </button>
@@ -511,13 +486,58 @@ export function PlaceMapAssigner({
         </div>
       </div>
 
+      <Popover
+        key={openPlaceId ?? 'closed'}
+        id={popoverId}
+        open={openPlaceId != null}
+        onOpenChange={(next) => {
+          if (!next) closePopover();
+        }}
+        anchorRef={anchorRef}
+        role="listbox"
+        aria-label={t('placeMap.popoverLabel')}
+        width={280}
+        flipThreshold={160}
+        className="structure-place-map-assigner__popover"
+      >
+        {unplaced.length === 0 ? (
+          <p
+            className="structure-place-map-assigner__popover-empty"
+            role="status"
+          >
+            {t('placeMap.popoverEmpty')}
+          </p>
+        ) : (
+          <div
+            className="structure-place-map-assigner__sources"
+            onKeyDown={onPopoverKeyDown}
+          >
+            {unplaced.map((row, trayIndex) => (
+              <button
+                key={row.source.key}
+                ref={(node) => {
+                  sourceRefs.current[trayIndex] = node;
+                }}
+                type="button"
+                role="option"
+                data-source-index={trayIndex}
+                tabIndex={trayIndex === safeActiveSource ? 0 : -1}
+                aria-selected={trayIndex === safeActiveSource}
+                className="structure-place-map-assigner__source"
+                aria-label={t('placeMap.chooseSource', {
+                  source: row.source.label,
+                })}
+                onClick={() => chooseSource(row.index)}
+              >
+                {row.source.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </Popover>
+
       <p className="ds-visually-hidden" role="status" aria-live="polite">
         {t('placeMap.counterAria', { filled, total: sources.length })}
-      </p>
-      <p className="ds-visually-hidden" role="status" aria-live="polite">
-        {selected
-          ? t('placeMap.selectionStatus', { source: selected.source.label })
-          : ''}
       </p>
     </div>
   );
