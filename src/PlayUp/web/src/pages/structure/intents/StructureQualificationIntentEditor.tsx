@@ -12,7 +12,6 @@ import { Field } from '../../../design-system/components/Field';
 import { InputNumber } from '../../../design-system/components/InputNumber';
 import { Select } from '../../../design-system/components/Select';
 import { Tooltip } from '../../../design-system/components/Tooltip';
-import { ToastToneIcon } from '../../../design-system/icons/toastIcons';
 import {
   ChampionshipFormatIcon,
   CupFormatIcon,
@@ -35,14 +34,13 @@ import { resolveDestinationMeterCapacity } from '../composition/structurePlaces'
 import { SortiesWhoWhereFlow } from './SortiesWhoWhereFlow';
 import {
   areProgressionPlacesLabeled,
-  listLabeledPlaces,
+  listPlaceMapPlaces,
   placeGrainForFormat,
 } from '../draw/structurePlaceLabel';
+import { PlaceMapAssigner, PlaceMapAssignerSkeleton } from './PlaceMapAssigner';
 import { expectedPopulationWithQualDraft } from '../composition/structurePopulationVolume';
 import {
   expandOccurrences,
-  fillEmptyPlaceKeysAllowingReuse,
-  fillEmptyPlaceSlotKeys,
   occurrenceLabel,
   ordinalRank,
   parsePositiveInt,
@@ -217,12 +215,10 @@ export function StructureQualificationIntentEditor({
   onChange: (next: QualIntentDraft) => void;
 }) {
   const { t } = useTranslation('structure');
-  const { t: tCommon } = useTranslation('common');
   const fromId = useId();
   const toId = useId();
   const acrossId = useId();
   const pointsId = useId();
-  const placeFillHintId = useId();
 
   const destStageId = draft.destinationStageId.trim();
   const destPeer = peerStages.find((p) => p.stageId === destStageId);
@@ -237,15 +233,14 @@ export function StructureQualificationIntentEditor({
   });
   const placesLabeled =
     formOnly || areProgressionPlacesLabeled(destSchematicQuery.data);
-  const labeledPlaces = useMemo(
-    () => listLabeledPlaces(destSchematicQuery.data, t),
+  const placeCells = useMemo(
+    () => listPlaceMapPlaces(destSchematicQuery.data, t),
     [destSchematicQuery.data, t],
   );
   /** UX Place grain from dest schematic (Groups / Cup / Form). */
   const placeGrain = formOnly
     ? 'form'
-    : (labeledPlaces[0]?.grain ??
-      placeGrainForFormat(destSchematicQuery.data?.formatKind) ??
+    : (placeGrainForFormat(destSchematicQuery.data?.formatKind) ??
       placeGrainForFormat(destFormat) ??
       'slot');
 
@@ -282,6 +277,14 @@ export function StructureQualificationIntentEditor({
     placeGrain,
     placeOccurrences.length,
   ]);
+  const placeSources = useMemo(
+    () =>
+      placeOccurrences.map((occ, index) => ({
+        key: `${occ.scope}:${occ.groupId ?? ''}:${occ.position}:${occ.acrossGroupsPosition ?? ''}:${index}`,
+        label: occurrenceLabel(occ, (n) => ordinalRank(n, locale), t),
+      })),
+    [locale, placeOccurrences, t],
+  );
 
   function applyPlaceKeys(next: string[]) {
     onChange({
@@ -654,20 +657,7 @@ export function StructureQualificationIntentEditor({
             destStageId &&
             placeGrain !== 'form' ? (
               destSchematicQuery.isLoading ? (
-                <ul
-                  className="structure-qualification__place-map structure-qualification__place-map--skeleton"
-                  aria-busy="true"
-                  aria-label={tCommon('loading')}
-                >
-                  {Array.from({
-                    length: Math.max(placeOccurrences.length, 3),
-                  }).map((_, index) => (
-                    <li key={`skel-${index}`} aria-hidden="true">
-                      <span className="structure-qualification__place-map-skel-label" />
-                      <span className="structure-qualification__place-map-skel-control" />
-                    </li>
-                  ))}
-                </ul>
+                <PlaceMapAssignerSkeleton cells={placeOccurrences.length} />
               ) : placeUnavailable || !placesLabeled ? (
                 <p
                   className="structure-qualification__field-hint"
@@ -675,7 +665,7 @@ export function StructureQualificationIntentEditor({
                 >
                   {t('qualification.emptyNoPlacePeerBody')}
                 </p>
-              ) : labeledPlaces.length === 0 ? (
+              ) : placeCells.length === 0 ? (
                 <p
                   className="structure-qualification__field-hint"
                   role="status"
@@ -690,128 +680,21 @@ export function StructureQualificationIntentEditor({
                   {t('qualification.placeMapEmptySelection')}
                 </p>
               ) : (
-                <div className="structure-qualification__place-map-block">
-                  <div className="structure-qualification__place-map-toolbar">
-                    {peerStages.length > 0 ? (
-                      <p className="structure-qualification__place-map-heading">
-                        {t('qualification.placeMapHeading')}
-                      </p>
-                    ) : null}
-                    <span className="structure-qualification__place-fill">
-                      <span id={placeFillHintId} className="ds-visually-hidden">
-                        {t('qualification.placeFillHint')}
-                      </span>
-                      <Tooltip content={t('qualification.placeFillHint')}>
-                        <button
-                          type="button"
-                          className="ds-btn ds-btn--ghost"
-                          aria-describedby={placeFillHintId}
-                          disabled={(() => {
-                            const emptyCount = placeSlotKeys.filter(
-                              (k) => !k.trim(),
-                            ).length;
-                            if (emptyCount === 0) return true;
-                            if (labeledPlaces.length === 0) return true;
-                            if (placeGrain === 'group') return false;
-                            const used = new Set(
-                              placeSlotKeys
-                                .map((k) => k.trim())
-                                .filter((k) => k.length > 0),
-                            );
-                            return !labeledPlaces.some(
-                              (place) => !used.has(place.apiIdentity),
-                            );
-                          })()}
-                          onClick={() => {
-                            const ids = labeledPlaces.map(
-                              (place) => place.apiIdentity,
-                            );
-                            const next =
-                              placeGrain === 'group'
-                                ? fillEmptyPlaceKeysAllowingReuse(
-                                    placeSlotKeys,
-                                    ids,
-                                  )
-                                : fillEmptyPlaceSlotKeys(placeSlotKeys, ids);
-                            applyPlaceKeys(next);
-                          }}
-                        >
-                          <ListPlusIcon size="sm" />
-                          {t('qualification.placeFillEmpties')}
-                        </button>
-                      </Tooltip>
-                    </span>
-                  </div>
-                  <ul
-                    className="structure-qualification__place-map"
-                    aria-label={t('qualification.placeMapAria')}
-                  >
-                    {placeOccurrences.map((occ, index) => {
-                      const selected = placeSlotKeys[index]?.trim() || null;
-                      const rowId = `qual-place-${draft.id}-${index}`;
-                      const rowInvalid = !selected;
-                      return (
-                        <li
-                          key={`${occ.scope}:${occ.groupId ?? ''}:${occ.position}:${occ.acrossGroupsPosition ?? ''}:${index}`}
-                          data-invalid={rowInvalid ? 'true' : 'false'}
-                        >
-                          <label
-                            className="structure-qualification__place-map-label"
-                            htmlFor={rowId}
-                          >
-                            {occurrenceLabel(
-                              occ,
-                              (n) => ordinalRank(n, locale),
-                              t,
-                            )}
-                          </label>
-                          <div className="structure-qualification__place-map-control">
-                            <Select
-                              id={rowId}
-                              options={labeledPlaces.map((place) => ({
-                                value: place.apiIdentity,
-                                label: place.label,
-                                disabled:
-                                  placeGrain === 'slot' &&
-                                  placeSlotKeys.some(
-                                    (key, j) =>
-                                      j !== index &&
-                                      key.trim() === place.apiIdentity,
-                                  ),
-                              }))}
-                              value={selected}
-                              invalid={rowInvalid}
-                              placeholder={t(
-                                'qualification.placeSlotPlaceholder',
-                              )}
-                              allowClear
-                              aria-label={t('qualification.placeMapRowAria', {
-                                source: occurrenceLabel(
-                                  occ,
-                                  (n) => ordinalRank(n, locale),
-                                  t,
-                                ),
-                              })}
-                              onChange={(value) => {
-                                const next = placeSlotKeys.slice();
-                                next[index] = value?.trim() ?? '';
-                                applyPlaceKeys(next);
-                              }}
-                            />
-                            {rowInvalid ? (
-                              <span
-                                className="structure-qualification__place-map-error"
-                                aria-hidden="true"
-                              >
-                                <ToastToneIcon tone="attention" size="sm" />
-                              </span>
-                            ) : null}
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
+                <PlaceMapAssigner
+                  sources={placeSources}
+                  places={placeCells}
+                  assignments={placeSlotKeys}
+                  uniquePlaces={placeGrain === 'slot'}
+                  heading={
+                    peerStages.length > 0
+                      ? t('qualification.placeMapHeading')
+                      : undefined
+                  }
+                  listAriaLabel={t('qualification.placeMapAria')}
+                  fillLabel={t('qualification.placeFillEmpties')}
+                  fillHint={t('qualification.placeFillHint')}
+                  onAssignmentsChange={applyPlaceKeys}
+                />
               )
             ) : null}
           </>

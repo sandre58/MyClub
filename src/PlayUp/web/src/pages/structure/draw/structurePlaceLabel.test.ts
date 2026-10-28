@@ -8,6 +8,7 @@ import {
   listLabeledCupPlaces,
   listLabeledGroupPlaces,
   listLabeledPlaces,
+  listPlaceMapPlaces,
   placeChromeLabel,
   placeChromeForDestinationSlotKey,
   placeDisplayLabel,
@@ -116,6 +117,13 @@ describe('structurePlaceLabel', () => {
       'Demi-finale 1 · côté A',
     );
     expect(placeLabelForDestinationSlotKey(schematic, 'missing', t)).toBeNull();
+    expect(listPlaceMapPlaces(schematic, t)).toEqual([
+      {
+        id: 'SF-1-A',
+        label: 'Demi-finale 1 · côté A',
+        sectionLabel: 'Demi-finale',
+      },
+    ]);
   });
 
   it('lists Groups A1 places by stable groupId (label = localized Groupe A)', () => {
@@ -171,6 +179,10 @@ describe('structurePlaceLabel', () => {
     expect(listLabeledPlaces(schematic, t)).toEqual(
       listLabeledGroupPlaces(schematic, t),
     );
+    expect(listPlaceMapPlaces(schematic, t)).toEqual([
+      { id: 'grp-a', label: 'Groupe A', sectionLabel: null },
+      { id: 'grp-b', label: 'Groupe B', sectionLabel: null },
+    ]);
   });
 
   it('Groups without stable groupId are Place-ineligible', () => {
@@ -273,5 +285,18 @@ describe('structurePlaceLabel', () => {
       { stageId: 'champ' },
       { stageId: 'swiss' },
     ]);
+  });
+
+  it('does not build a place list for Form destinations', () => {
+    const championship: StageSchematic = {
+      stageId: 'champ',
+      competitionId: 'c1',
+      name: 'Champ',
+      status: 'Draft',
+      formatKind: 'Championship',
+      cases: [{ formPosition: { kind: 'RosterPlace', index: 1 } }],
+      connections: [],
+    };
+    expect(listPlaceMapPlaces(championship, t)).toEqual([]);
   });
 });
