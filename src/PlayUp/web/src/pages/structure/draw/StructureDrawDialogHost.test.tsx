@@ -111,7 +111,7 @@ describe('StructureDrawDialogHost', () => {
     const view = renderHost(false, onClose);
 
     expect(
-      screen.queryByRole('dialog', { name: /Exécutions de tirage/i }),
+      screen.queryByRole('dialog', { name: /Exécutions de tirage — League/i }),
     ).not.toBeInTheDocument();
 
     view.rerender(
@@ -126,12 +126,14 @@ describe('StructureDrawDialogHost', () => {
     );
 
     expect(
-      await screen.findByRole('dialog', { name: /Exécutions de tirage/i }),
+      await screen.findByRole('dialog', {
+        name: /Exécutions de tirage — League/i,
+      }),
     ).toBeVisible();
     expect(await screen.findByText('Aucune exécution')).toBeInTheDocument();
 
     const dialog = screen.getByRole('dialog', {
-      name: /Exécutions de tirage/i,
+      name: /Exécutions de tirage — League/i,
     });
     const close = dialog.querySelector<HTMLButtonElement>(
       '.ds-dialog__header button',
@@ -152,12 +154,14 @@ describe('StructureDrawDialogHost', () => {
     );
 
     expect(
-      screen.getByRole('dialog', { name: /Exécutions de tirage/i }),
+      screen.getByRole('dialog', { name: /Exécutions de tirage — League/i }),
     ).toBeInTheDocument();
 
     await waitFor(() => {
       expect(
-        screen.queryByRole('dialog', { name: /Exécutions de tirage/i }),
+        screen.queryByRole('dialog', {
+          name: /Exécutions de tirage — League/i,
+        }),
       ).not.toBeInTheDocument();
     });
   });

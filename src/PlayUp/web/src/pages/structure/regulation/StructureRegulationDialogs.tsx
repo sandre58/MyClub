@@ -141,7 +141,12 @@ export function DrawRulesDialog({
 
   useClearMutationsOnOpen(open, saveMutation);
 
-  const title = isActivate ? t('fiche.activateDraw') : t('fiche.drawParams');
+  const title = isActivate
+    ? t('regulation.drawActivateTitle', { phase: stage.name })
+    : t('regulation.drawParamsTitle', { phase: stage.name });
+  const description = isActivate
+    ? t('regulation.drawActivateHeaderHint')
+    : t('regulation.drawParamsHeaderHint');
   const saveLabel = isActivate ? t('fiche.activateDraw') : t('regulation.save');
   const busy = saveMutation.isPending;
 
@@ -162,7 +167,7 @@ export function DrawRulesDialog({
         open={open}
         onClose={requestClose}
         title={title}
-        description={stage.name}
+        description={description}
         size="sm"
         closeLabel={tCommon('close')}
         closeDisabled={busy || discardOpen}

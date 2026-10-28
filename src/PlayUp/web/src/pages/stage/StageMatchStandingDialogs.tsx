@@ -275,8 +275,8 @@ export function MatchRulesDialog({
       <Dialog
         open={open}
         onClose={requestClose}
-        title={t('regulation.matchTitle')}
-        description={stage.name}
+        title={t('regulation.matchTitle', { phase: stage.name })}
+        description={t('regulation.matchHeaderHint')}
         size="md"
         closeLabel={tCommon('close')}
         closeDisabled={mutation.isPending || discardOpen}
@@ -636,8 +636,8 @@ export function StandingRulesDialog({
       <Dialog
         open={open}
         onClose={requestClose}
-        title={t('regulation.standingTitle')}
-        description={stage.name}
+        title={t('regulation.standingTitle', { phase: stage.name })}
+        description={t('regulation.standingHeaderHint')}
         size="md"
         closeLabel={tCommon('close')}
         closeDisabled={mutation.isPending || discardOpen}
