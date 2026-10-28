@@ -212,7 +212,7 @@ export function DrawRulesDialog({
       >
         <form
           id={formId}
-          className="structure-form"
+          className="regulation-editor regulation-editor--stage"
           onSubmit={(event: FormEvent) => {
             event.preventDefault();
             requestSave();
