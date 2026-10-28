@@ -3,12 +3,14 @@
 // -----------------------------------------------------------------------
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useOpenEdge, useSyncWhen } from '../../../design-system/useRenderSync';
 import { useTranslation } from 'react-i18next';
 import { replaceStageAffectationAuthoring } from '../../../api';
+import { Chip } from '../../../design-system/components/Chip';
 import { ConfirmDialog } from '../../../design-system/components/ConfirmDialog';
 import { Dialog } from '../../../design-system/components/Dialog';
+import { SelectableTile } from '../../../design-system/components/SelectableTile';
 import { TextLink } from '../../../design-system/components/TextLink';
 import { Tooltip } from '../../../design-system/components/Tooltip';
 import {
@@ -17,7 +19,6 @@ import {
   SearchIcon,
 } from '../../../design-system/icons/contentIcons';
 import { CloseIcon } from '../../../design-system/icons/shellIcons';
-import { EntryCellWithdrawnMarker } from '../../../design-system/components/EntryCell';
 import { TeamCrest } from '../../../design-system/TeamCrest';
 import { notify } from '../../../design-system/toastStore';
 import { useClearMutationsOnOpen } from '../../../design-system/useClearMutationsOnOpen';
@@ -25,8 +26,6 @@ import { useDiscardConfirm } from '../../../design-system/useDiscardConfirm';
 import type { StructureEntry, StructureStageHubSummary } from '../../../types';
 import { MutationError, PendingLabel } from '../../../ui';
 import { scheduleStructureRefresh } from '../structureInvalidation';
-import { OccupancyMeter } from './OccupancyMeter';
-import { occupancyMeterState } from './occupancyMeterMath';
 import { resolvePlacesN } from './structurePlaces';
 
 type StructureCompositionDialogProps = {
@@ -54,12 +53,88 @@ type Row = {
   selected: boolean;
 };
 
+type CompositionFactKey = 'places' | 'selected' | 'remaining' | 'reserved';
+
+type CompositionFact = {
+  key: CompositionFactKey;
+  value: string;
+  label: string;
+};
+
+/** Restantes tone. Near is the last open affectation place. */
+type CompositionRemainingTone = 'short' | 'near' | 'exact' | 'over';
+
+function compositionRemainingTone(remaining: number): CompositionRemainingTone {
+  if (remaining < 0) return 'over';
+  if (remaining === 0) return 'exact';
+  if (remaining === 1) return 'near';
+  return 'short';
+}
+
 function sameIdSet(a: Set<string>, b: ReadonlySet<string>): boolean {
   if (a.size !== b.size) return false;
   for (const id of a) {
     if (!b.has(id)) return false;
   }
   return true;
+}
+
+type CompositionTeamRowProps = {
+  row: Row;
+  pending: boolean;
+  locked: boolean;
+  capacityHintId?: string;
+  withdrawnLabel: string;
+  withdrawnTip: string;
+  onToggle: (entryId: string, selected: boolean) => void;
+};
+
+function CompositionTeamRow({
+  row,
+  pending,
+  locked,
+  capacityHintId,
+  withdrawnLabel,
+  withdrawnTip,
+  onToggle,
+}: CompositionTeamRowProps) {
+  return (
+    <SelectableTile
+      as="label"
+      selected={row.selected}
+      aria-disabled={locked ? true : undefined}
+      className={[
+        'structure-composition__row',
+        !row.eligible ? 'structure-composition__row--ineligible' : null,
+        locked ? 'structure-composition__row--locked' : null,
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      <TeamCrest
+        name={row.displayName}
+        logoMediaId={row.logoMediaId}
+        primaryColor={row.primaryColor}
+        size="sm"
+      />
+      <span className="structure-composition__name">{row.displayName}</span>
+      {!row.eligible ? (
+        <Tooltip content={withdrawnTip}>
+          <Chip tone="neutral" className="structure-composition__withdrawn">
+            {withdrawnLabel}
+          </Chip>
+        </Tooltip>
+      ) : null}
+      <input
+        type="checkbox"
+        className="structure-composition__check"
+        checked={row.selected}
+        disabled={pending || (!row.eligible && !row.selected) || locked}
+        aria-describedby={locked ? capacityHintId : undefined}
+        onChange={() => onToggle(row.entryId, row.selected)}
+      />
+    </SelectableTile>
+  );
 }
 
 /**
@@ -82,6 +157,7 @@ export function StructureCompositionDialog({
   const { t: tReg } = useTranslation('regulation');
   const queryClient = useQueryClient();
   const searchRef = useRef<HTMLInputElement>(null);
+  const capacityHintId = useId();
 
   const placesN = resolvePlacesN(stage);
   const reserved = Math.max(0, reservedFromFeeds);
@@ -157,33 +233,60 @@ export function StructureCompositionDialog({
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return rows;
-    return rows.filter((r) => r.displayName.toLowerCase().includes(q));
+    return rows.filter((row) => row.displayName.toLowerCase().includes(q));
   }, [rows, search]);
 
   const k = selected.size;
-  const populationExpected = k + reserved;
+  /** Open affectation places. Not Places N minus k. */
+  const remaining = affectationCap != null ? affectationCap - k : null;
+  const tone = remaining != null ? compositionRemainingTone(remaining) : null;
   const atCapacity = affectationCap != null && k >= affectationCap;
-  const remaining =
-    placesN != null && placesN > 0
-      ? Math.max(0, placesN - populationExpected)
-      : null;
-  const complete =
-    placesN != null && placesN > 0 && populationExpected === placesN;
   const emptyEligible =
     entries.filter((e) => e.status === 'Active').length === 0 && k === 0;
+  const searchActive = search.trim().length > 0;
 
   const selectableFiltered = useMemo(
-    () => filtered.filter((r) => r.eligible && !r.selected),
+    () => filtered.filter((row) => row.eligible && !row.selected),
     [filtered],
   );
   const canSelectAll =
     selectableFiltered.length > 0 &&
     (affectationCap == null || k < affectationCap);
 
-  const meterState =
-    placesN != null && placesN > 0
-      ? occupancyMeterState(populationExpected, placesN)
-      : null;
+  const facts: CompositionFact[] = [];
+  if (placesN != null && placesN > 0) {
+    facts.push({
+      key: 'places',
+      value: String(placesN),
+      label: t('composition.factPlaces', { count: placesN }),
+    });
+  }
+  facts.push({
+    key: 'selected',
+    value: String(k),
+    label: t('composition.factSelected', { count: k }),
+  });
+  if (remaining != null) {
+    facts.push({
+      key: 'remaining',
+      value: String(remaining),
+      label: t('composition.factRemaining', { count: remaining }),
+    });
+  }
+  if (reserved > 0) {
+    facts.push({
+      key: 'reserved',
+      value: String(reserved),
+      label: t('composition.factReserved', { count: reserved }),
+    });
+  }
+
+  const capacityHint =
+    affectationCap != null
+      ? t('composition.atCapacityHint', { n: affectationCap })
+      : undefined;
+  const withdrawnLabel = t('composition.noLongerEligible');
+  const withdrawnTip = t('composition.withdrawnFromCompetitionTip');
 
   const saveMutation = useMutation({
     mutationFn: () =>
@@ -232,25 +335,14 @@ export function StructureCompositionDialog({
     });
   };
 
-  const counterLabel =
-    placesN == null
-      ? t('composition.counterUnknown', { count: populationExpected })
-      : t('composition.counter', { k: populationExpected, n: placesN });
-
-  const statusLabel =
-    placesN == null
-      ? null
-      : complete
-        ? t('composition.statusComplete')
-        : remaining != null
-          ? t('composition.statusRemaining', { count: remaining })
-          : null;
-
   const teamsHref = `/competitions/${competitionId}/teams`;
 
   function requestClose() {
     requestDiscardClose(saveMutation.isPending);
   }
+
+  const showEmptySearch = searchActive && filtered.length === 0;
+  const showEmptyEligible = !searchActive && emptyEligible;
 
   return (
     <>
@@ -301,87 +393,81 @@ export function StructureCompositionDialog({
         }
       >
         <div className="structure-composition">
-          <div className="structure-composition__toolbar">
-            <div className="structure-composition__meter">
-              {placesN != null && placesN > 0 && meterState != null ? (
-                <OccupancyMeter
-                  current={populationExpected}
-                  capacity={placesN}
-                  state={meterState}
-                  ariaLabel={counterLabel}
-                  header={
-                    <p
-                      className="structure-composition__counter"
-                      aria-live="polite"
-                    >
-                      {counterLabel}
-                    </p>
-                  }
-                  footer={
-                    statusLabel ? (
-                      <p
-                        className="structure-composition__status"
-                        role="status"
-                      >
-                        {statusLabel}
-                      </p>
-                    ) : null
-                  }
-                />
-              ) : (
-                <>
-                  <p
-                    className="structure-composition__counter"
-                    aria-live="polite"
-                  >
-                    {counterLabel}
-                  </p>
-                  {statusLabel ? (
-                    <p className="structure-composition__status" role="status">
-                      {statusLabel}
-                    </p>
+          <div className="structure-composition__chrome">
+            <div
+              className="structure-qualification__facts structure-composition__facts"
+              data-tone={tone ?? undefined}
+              aria-live="polite"
+            >
+              {facts.map((fact, index) => (
+                <Fragment key={fact.key}>
+                  {index > 0 ? (
+                    <span
+                      className="structure-qualification__fact-rule"
+                      aria-hidden="true"
+                    />
                   ) : null}
-                </>
-              )}
+                  <span
+                    className="structure-qualification__fact structure-qualification__fact--secondary"
+                    data-fact={fact.key}
+                  >
+                    <span className="structure-qualification__fact-value">
+                      {fact.value}
+                    </span>
+                    <span className="structure-qualification__fact-label">
+                      {fact.label}
+                    </span>
+                  </span>
+                </Fragment>
+              ))}
             </div>
 
-            <Tooltip content={t('composition.selectAll')}>
+            {atCapacity && capacityHint != null ? (
+              <p id={capacityHintId} className="ds-visually-hidden">
+                {capacityHint}
+              </p>
+            ) : null}
+
+            <div className="structure-composition__toolbar">
+              <label className="structure-composition__search">
+                <span className="ds-visually-hidden">
+                  {t('composition.search')}
+                </span>
+                <span className="ds-input">
+                  <span className="ds-input__leading" aria-hidden="true">
+                    <SearchIcon size="sm" />
+                  </span>
+                  <input
+                    ref={searchRef}
+                    type="search"
+                    className="ds-input__control"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder={t('composition.searchPlaceholder')}
+                    autoComplete="off"
+                  />
+                </span>
+              </label>
               <button
                 type="button"
-                className="ds-btn ds-btn--ghost ds-icon-button structure-composition__select-all"
+                className="ds-btn ds-btn--ghost structure-composition__select-all"
                 disabled={!canSelectAll || saveMutation.isPending}
-                aria-label={t('composition.selectAll')}
                 onClick={selectAllFiltered}
               >
                 <ListChecksIcon size="sm" />
+                {t('composition.selectAll')}
               </button>
-            </Tooltip>
-
-            <label className="structure-composition__search">
-              <span className="ds-visually-hidden">
-                {t('composition.search')}
-              </span>
-              <span className="ds-input">
-                <span className="ds-input__leading" aria-hidden="true">
-                  <SearchIcon size="sm" />
-                </span>
-                <input
-                  ref={searchRef}
-                  type="search"
-                  className="ds-input__control"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder={t('composition.searchPlaceholder')}
-                  autoComplete="off"
-                />
-              </span>
-            </label>
+            </div>
           </div>
 
-          {emptyEligible ? (
+          {showEmptyEligible ? (
             <div className="structure-composition__empty">
               <p>{t('composition.emptyEligible')}</p>
               <TextLink to={teamsHref}>{t('composition.openTeams')}</TextLink>
+            </div>
+          ) : showEmptySearch ? (
+            <div className="structure-composition__empty">
+              <p>{t('composition.emptySearch')}</p>
             </div>
           ) : (
             <ul
@@ -393,50 +479,17 @@ export function StructureCompositionDialog({
                   !row.selected && atCapacity && affectationCap != null;
                 return (
                   <li key={row.entryId}>
-                    <label
-                      className={[
-                        'structure-composition__row',
-                        !row.eligible
-                          ? 'structure-composition__row--ineligible'
-                          : null,
-                        locked ? 'structure-composition__row--locked' : null,
-                      ]
-                        .filter(Boolean)
-                        .join(' ')}
-                      title={
-                        locked
-                          ? t('composition.atCapacityHint', {
-                              n: affectationCap,
-                            })
-                          : undefined
+                    <CompositionTeamRow
+                      row={row}
+                      pending={saveMutation.isPending}
+                      locked={locked}
+                      capacityHintId={
+                        locked && atCapacity ? capacityHintId : undefined
                       }
-                    >
-                      <input
-                        type="checkbox"
-                        checked={row.selected}
-                        disabled={
-                          saveMutation.isPending ||
-                          (!row.eligible && !row.selected) ||
-                          locked
-                        }
-                        onChange={() => toggle(row.entryId, row.selected)}
-                      />
-                      <TeamCrest
-                        name={row.displayName}
-                        logoMediaId={row.logoMediaId}
-                        primaryColor={row.primaryColor}
-                        size="sm"
-                      />
-                      <span className="structure-composition__name">
-                        {row.displayName}
-                      </span>
-                      {!row.eligible ? (
-                        <EntryCellWithdrawnMarker
-                          tooltip={t('composition.withdrawnFromCompetitionTip')}
-                          className="structure-composition__withdrawn-marker"
-                        />
-                      ) : null}
-                    </label>
+                      withdrawnLabel={withdrawnLabel}
+                      withdrawnTip={withdrawnTip}
+                      onToggle={toggle}
+                    />
                   </li>
                 );
               })}
