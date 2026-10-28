@@ -810,6 +810,18 @@
     "group": "Group {{name}}",
     "form": "Organisation"
   },
+  "placeMap": {
+    "trayLabel": "To place",
+    "counter": "{{filled}}/{{total}}",
+    "counterAria": "{{filled}} of {{total}} placed",
+    "clear": "Remove {{source}} from {{place}}",
+    "sourceOption": "{{source}}, not placed",
+    "cellEmpty": "{{place}}, empty",
+    "cellFilled": "{{place}}, {{source}}",
+    "emptyTray": "All sources are placed",
+    "selectionStatus": "{{source}} selected. Choose a place. Escape cancels.",
+    "sectionOther": "Other places"
+  },
   "population": {
     "sectionSources": "Qualified",
     "sectionAffectation": "Teams"
@@ -957,8 +969,6 @@
     "kindPlaceHint": "A specific place in the phase",
     "placeEmpty": "No labeled place on this destination phase.",
     "placeMapAria": "Map each match to a place",
-    "placeMapRowAria": "Place for {{source}}",
-    "placeSlotPlaceholder": "Choose a place…",
     "placeMapEmptySelection": "Choose a round to map places.",
     "placeMapHeading": "Places",
     "placeFillEmpties": "Fill",
@@ -1025,8 +1035,6 @@
     "placeSelectPending": "Choose a labeled place on the destination phase.",
     "placeEmpty": "No labeled place on this destination phase.",
     "placeMapAria": "Map each selection to a place",
-    "placeMapRowAria": "Place for {{source}}",
-    "placeSlotPlaceholder": "Choose a place…",
     "placeMapEmptySelection": "Complete the selection above to map places.",
     "placeMapHeading": "Places",
     "placeFillEmpties": "Fill",

@@ -810,6 +810,18 @@
     "group": "Groupe {{name}}",
     "form": "Organisation"
   },
+  "placeMap": {
+    "trayLabel": "À placer",
+    "counter": "{{filled}}/{{total}}",
+    "counterAria": "{{filled}} sur {{total}} placées",
+    "clear": "Retirer {{source}} de {{place}}",
+    "sourceOption": "{{source}}, non placée",
+    "cellEmpty": "{{place}}, libre",
+    "cellFilled": "{{place}}, {{source}}",
+    "emptyTray": "Toutes les sources sont placées",
+    "selectionStatus": "{{source}} sélectionnée. Choisissez une place. Échap annule.",
+    "sectionOther": "Autres places"
+  },
   "population": {
     "sectionSources": "Qualifiés",
     "sectionAffectation": "Équipes"
@@ -957,8 +969,6 @@
     "kindPlaceHint": "Emplacement précis dans la phase",
     "placeEmpty": "Aucune place libellée dans cette phase de destination.",
     "placeMapAria": "Associer chaque match à une place",
-    "placeMapRowAria": "Place pour {{source}}",
-    "placeSlotPlaceholder": "Choisir une place…",
     "placeMapEmptySelection": "Choisissez un tour pour associer les places.",
     "placeMapHeading": "Emplacements",
     "placeFillEmpties": "Remplir",
@@ -1025,8 +1035,6 @@
     "placeSelectPending": "Choisissez une place libellée de la phase de destination.",
     "placeEmpty": "Aucune place libellée dans cette phase de destination.",
     "placeMapAria": "Associer chaque sélection à une place",
-    "placeMapRowAria": "Place pour {{source}}",
-    "placeSlotPlaceholder": "Choisir une place…",
     "placeMapEmptySelection": "Complétez la sélection ci-dessus pour associer les places.",
     "placeMapHeading": "Emplacements",
     "placeFillEmpties": "Remplir",

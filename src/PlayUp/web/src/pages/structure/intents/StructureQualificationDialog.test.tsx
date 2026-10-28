@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -261,6 +261,9 @@ describe('StructureQualificationDialog hydrate / groups (2b)', () => {
         name: /6 sur 4 places/i,
       }),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('grid', { name: /associer chaque sélection/i }),
+    ).not.toBeInTheDocument();
   });
 
   it('successful empty schematic yields expand 0 (Host Empty), not a hydrate race', async () => {
@@ -398,5 +401,111 @@ describe('StructureQualificationDialog hydrate / groups (2b)', () => {
     expect(
       screen.getByRole('radiogroup', { name: 'Phase de destination' }),
     ).toBeInTheDocument();
+  });
+
+  it('writes a clicked place on the source and keeps the opened-from copy', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStageSchematic).mockImplementation(async (id: string) => {
+      if (id === destId) {
+        return {
+          stageId: destId,
+          competitionId,
+          name: 'Tableau',
+          status: 'Draft',
+          formatKind: 'Cup',
+          cases: [
+            {
+              formPosition: {
+                kind: 'CupSlot',
+                slotKey: 'SF-1-A',
+                roundName: 'Demi-finale',
+                pairOrdinal: 1,
+                side: 'A',
+              },
+            },
+          ],
+          connections: [],
+        };
+      }
+      return groupsSchematic([]);
+    });
+
+    renderDialog(
+      hubStage({
+        stageId: sourceId,
+        name: 'Poules',
+        formatKind: 'Groups',
+        hasQualificationRules: true,
+        qualificationPathCount: 1,
+        qualificationIntents: [
+          {
+            intentId: 'qual-place',
+            order: 1,
+            sourceKind: 'Overall',
+            positionFrom: 1,
+            positionTo: 1,
+            destinationStageId: destId,
+            destinationSlotKeys: [''],
+          },
+        ],
+      }),
+      {
+        destination: hubStage({
+          stageId: destId,
+          name: 'Tableau',
+          formatKind: 'Cup',
+        }),
+        openedFromDestinationStageId: destId,
+      },
+    );
+
+    const openedFromCopy =
+      /enregistrés sur Poules, pas sur la phase d’où vous avez ouvert/i;
+    expect(await screen.findByText(openedFromCopy)).toBeInTheDocument();
+
+    await user.click(
+      await screen.findByRole('button', { name: /1er du classement général/i }),
+    );
+    const tray = await screen.findByRole('listbox', { name: /à placer/i });
+    await user.click(
+      within(tray).getByRole('option', { name: /1er du classement général/i }),
+    );
+    await user.click(
+      within(
+        screen.getByRole('grid', { name: /associer chaque sélection/i }),
+      ).getByRole('button', { name: /Demi-finale 1 · côté A/i }),
+    );
+
+    expect(screen.getByText(openedFromCopy)).toBeInTheDocument();
+    expect(
+      screen.getByText('1/1', {
+        selector: '.structure-place-map-assigner__counter',
+      }),
+    ).toBeInTheDocument();
+
+    const save = screen.getByRole('button', { name: 'Enregistrer' });
+    await waitFor(() => expect(save).toBeEnabled());
+    await user.click(save);
+
+    await waitFor(() => {
+      expect(replaceStageQualificationRules).toHaveBeenCalledWith(
+        sourceId,
+        expect.objectContaining({
+          intents: [
+            expect.objectContaining({
+              destinationStageId: destId,
+              destinationSlotKeys: ['SF-1-A'],
+              destinationGroupIds: null,
+              destinationForm: false,
+            }),
+          ],
+        }),
+      );
+    });
+    expect(
+      vi
+        .mocked(replaceStageQualificationRules)
+        .mock.calls.every((call) => call[0] === sourceId),
+    ).toBe(true);
   });
 });

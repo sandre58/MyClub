@@ -189,6 +189,53 @@ export function listLabeledPlaces(
   return [];
 }
 
+export type PlaceMapPlaceModel = {
+  id: string;
+  /** Human label (topology or group title), not a stacked slot code. */
+  label: string;
+  /** Cup round / block. Null for Groups and when the schematic has no round name. */
+  sectionLabel: string | null;
+};
+
+/**
+ * Destination cells for PlaceMapAssigner.
+ * Cup → human topology + round section. Groups → pool title.
+ * Champ/Swiss Form has no cell table.
+ */
+export function listPlaceMapPlaces(
+  schematic: StageSchematic | null | undefined,
+  t: PlaceTranslate,
+): PlaceMapPlaceModel[] {
+  if (!schematic) return [];
+  if (
+    schematic.formatKind === 'Championship' ||
+    schematic.formatKind === 'Swiss'
+  ) {
+    return [];
+  }
+  if (schematic.formatKind === 'Cup') {
+    const sectionById = new Map<string, string | null>();
+    for (const c of schematic.cases) {
+      const id = cupPlaceApiIdentity(c.formPosition);
+      if (!id || sectionById.has(id)) continue;
+      sectionById.set(id, c.formPosition.roundName?.trim() || null);
+    }
+    return listLabeledCupPlaces(schematic, t).map((place) => ({
+      id: place.apiIdentity,
+      label: place.description ?? place.label,
+      sectionLabel: sectionById.get(place.apiIdentity) ?? null,
+    }));
+  }
+  if (schematic.formatKind === 'Groups') {
+    return listLabeledGroupPlaces(schematic, t).map((place) => ({
+      id: place.apiIdentity,
+      label: place.label,
+      sectionLabel: null,
+    }));
+  }
+  return [];
+}
+
 /** Groups A1 — one Place option per stable groupId (duplicates allowed at map time). */
 export function listLabeledGroupPlaces(
   schematic: StageSchematic | null | undefined,

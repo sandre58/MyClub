@@ -4,20 +4,17 @@
 // -----------------------------------------------------------------------
 
 import { useQuery } from '@tanstack/react-query';
-import { useId, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { fetchStageSchematic } from '../../../api';
 import { ChoiceTile } from '../../../design-system/components/ChoiceTile';
 import { Field } from '../../../design-system/components/Field';
 import { Select } from '../../../design-system/components/Select';
-import { Tooltip } from '../../../design-system/components/Tooltip';
-import { ToastToneIcon } from '../../../design-system/icons/toastIcons';
 import {
   ChampionshipFormatIcon,
   CupFormatIcon,
   EmptySelectionIcon,
   GroupsFormatIcon,
-  ListPlusIcon,
   StructureIcon,
   SwissFormatIcon,
   TrophyIcon,
@@ -37,14 +34,13 @@ import { resolveDestinationMeterCapacity } from '../composition/structurePlaces'
 import { SortiesWhoWhereFlow } from './SortiesWhoWhereFlow';
 import {
   areProgressionPlacesLabeled,
-  listLabeledPlaces,
+  listPlaceMapPlaces,
   placeGrainForFormat,
 } from '../draw/structurePlaceLabel';
+import { PlaceMapAssigner, PlaceMapAssignerSkeleton } from './PlaceMapAssigner';
 import { expectedPopulationWithProgDraft } from '../composition/structurePopulationVolume';
 import {
   expandContribution,
-  fillEmptyPlaceKeysAllowingReuse,
-  fillEmptyPlaceSlotKeys,
   resizeDestinationSlotKeys,
   applyDestinationToDraft,
   applyTargetKindToDraft,
@@ -121,8 +117,6 @@ export function StructureProgressionIntentEditor({
   onChange: (next: ProgIntentDraft) => void;
 }) {
   const { t } = useTranslation('structure');
-  const { t: tCommon } = useTranslation('common');
-  const placeFillHintId = useId();
 
   const destStageId = draft.destinationStageId.trim();
   const destPeer = peerStages.find((p) => p.stageId === destStageId);
@@ -137,15 +131,14 @@ export function StructureProgressionIntentEditor({
   });
   const placesLabeled =
     formOnly || areProgressionPlacesLabeled(destSchematicQuery.data);
-  const labeledPlaces = useMemo(
-    () => listLabeledPlaces(destSchematicQuery.data, t),
+  const placeCells = useMemo(
+    () => listPlaceMapPlaces(destSchematicQuery.data, t),
     [destSchematicQuery.data, t],
   );
   /** UX Place grain from dest schematic (Groups A1 vs Cup slots). */
   const placeGrain = formOnly
     ? 'form'
-    : (labeledPlaces[0]?.grain ??
-      placeGrainForFormat(destSchematicQuery.data?.formatKind) ??
+    : (placeGrainForFormat(destSchematicQuery.data?.formatKind) ??
       placeGrainForFormat(destFormat) ??
       'slot');
 
@@ -200,6 +193,14 @@ export function StructureProgressionIntentEditor({
     placeGrain,
     expandRows.length,
   ]);
+  const placeSources = useMemo(
+    () =>
+      expandRows.map((row, index) => ({
+        key: `${row.key}:${index}`,
+        label: row.label,
+      })),
+    [expandRows],
+  );
 
   function applyPlaceKeys(next: string[]) {
     const aligned = resizeDestinationSlotKeys(next, expandRows.length);
@@ -456,20 +457,7 @@ export function StructureProgressionIntentEditor({
             destStageId &&
             placeGrain !== 'form' ? (
               destSchematicQuery.isLoading ? (
-                <ul
-                  className="structure-qualification__place-map structure-qualification__place-map--skeleton"
-                  aria-busy="true"
-                  aria-label={tCommon('loading')}
-                >
-                  {Array.from({
-                    length: Math.max(expandRows.length, 3),
-                  }).map((_, index) => (
-                    <li key={`skel-${index}`} aria-hidden="true">
-                      <span className="structure-qualification__place-map-skel-label" />
-                      <span className="structure-qualification__place-map-skel-control" />
-                    </li>
-                  ))}
-                </ul>
+                <PlaceMapAssignerSkeleton cells={expandRows.length} />
               ) : placeUnavailable || !placesLabeled ? (
                 <EmptyState
                   icon={<EmptySelectionIcon size="lg" />}
@@ -477,7 +465,7 @@ export function StructureProgressionIntentEditor({
                 >
                   {t('progression.emptyNoPlacePeerBody')}
                 </EmptyState>
-              ) : labeledPlaces.length === 0 ? (
+              ) : placeCells.length === 0 ? (
                 <EmptyState
                   icon={<EmptySelectionIcon size="lg" />}
                   title={t('progression.placeEmpty')}
@@ -492,121 +480,21 @@ export function StructureProgressionIntentEditor({
                   {t('progression.roundNeedsFixturesHint')}
                 </EmptyState>
               ) : (
-                <div className="structure-qualification__place-map-block">
-                  <div className="structure-qualification__place-map-toolbar">
-                    {peerStages.length > 0 ? (
-                      <p className="structure-qualification__place-map-heading">
-                        {t('progression.placeMapHeading')}
-                      </p>
-                    ) : null}
-                    <span className="structure-qualification__place-fill">
-                      <span id={placeFillHintId} className="ds-visually-hidden">
-                        {t('progression.placeFillHint')}
-                      </span>
-                      <Tooltip content={t('progression.placeFillHint')}>
-                        <button
-                          type="button"
-                          className="ds-btn ds-btn--ghost"
-                          aria-describedby={placeFillHintId}
-                          disabled={(() => {
-                            const emptyCount = placeSlotKeys.filter(
-                              (k) => !k.trim(),
-                            ).length;
-                            if (emptyCount === 0) return true;
-                            if (labeledPlaces.length === 0) return true;
-                            if (placeGrain === 'group') return false;
-                            const used = new Set(
-                              placeSlotKeys
-                                .map((k) => k.trim())
-                                .filter((k) => k.length > 0),
-                            );
-                            return !labeledPlaces.some(
-                              (place) => !used.has(place.apiIdentity),
-                            );
-                          })()}
-                          onClick={() => {
-                            const ids = labeledPlaces.map(
-                              (place) => place.apiIdentity,
-                            );
-                            const next =
-                              placeGrain === 'group'
-                                ? fillEmptyPlaceKeysAllowingReuse(
-                                    placeSlotKeys,
-                                    ids,
-                                  )
-                                : fillEmptyPlaceSlotKeys(placeSlotKeys, ids);
-                            applyPlaceKeys(next);
-                          }}
-                        >
-                          <ListPlusIcon size="sm" />
-                          {t('progression.placeFillEmpties')}
-                        </button>
-                      </Tooltip>
-                    </span>
-                  </div>
-                  <ul
-                    className="structure-qualification__place-map"
-                    aria-label={t('progression.placeMapAria')}
-                  >
-                    {expandRows.map((row, index) => {
-                      const selected = placeSlotKeys[index]?.trim() || null;
-                      const rowId = `prog-place-${draft.id}-${index}`;
-                      const rowInvalid = !selected;
-                      const sourceLabel = row.label;
-                      return (
-                        <li
-                          key={row.key}
-                          data-invalid={rowInvalid ? 'true' : 'false'}
-                        >
-                          <label
-                            className="structure-qualification__place-map-label"
-                            htmlFor={rowId}
-                          >
-                            {sourceLabel}
-                          </label>
-                          <div className="structure-qualification__place-map-control">
-                            <Select
-                              id={rowId}
-                              options={labeledPlaces.map((place) => ({
-                                value: place.apiIdentity,
-                                label: place.label,
-                                disabled:
-                                  placeGrain === 'slot' &&
-                                  placeSlotKeys.some(
-                                    (key, j) =>
-                                      j !== index &&
-                                      key.trim() === place.apiIdentity,
-                                  ),
-                              }))}
-                              value={selected}
-                              invalid={rowInvalid}
-                              placeholder={t(
-                                'progression.placeSlotPlaceholder',
-                              )}
-                              allowClear
-                              aria-label={t('progression.placeMapRowAria', {
-                                source: sourceLabel,
-                              })}
-                              onChange={(value) => {
-                                const next = placeSlotKeys.slice();
-                                next[index] = value?.trim() ?? '';
-                                applyPlaceKeys(next);
-                              }}
-                            />
-                            {rowInvalid ? (
-                              <span
-                                className="structure-qualification__place-map-error"
-                                aria-hidden="true"
-                              >
-                                <ToastToneIcon tone="attention" size="sm" />
-                              </span>
-                            ) : null}
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
+                <PlaceMapAssigner
+                  sources={placeSources}
+                  places={placeCells}
+                  assignments={placeSlotKeys}
+                  uniquePlaces={placeGrain === 'slot'}
+                  heading={
+                    peerStages.length > 0
+                      ? t('progression.placeMapHeading')
+                      : undefined
+                  }
+                  boardAriaLabel={t('progression.placeMapAria')}
+                  fillLabel={t('progression.placeFillEmpties')}
+                  fillHint={t('progression.placeFillHint')}
+                  onAssignmentsChange={applyPlaceKeys}
+                />
               )
             ) : null}
           </>
