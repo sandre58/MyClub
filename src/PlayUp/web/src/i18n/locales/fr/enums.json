@@ -33,7 +33,7 @@
   "drawResolutionState": {
     "NotResolved": "Non résolu",
     "Resolved": "Résolu",
-    "NoSolution": "Aucune solution"
+    "NoSolution": "Sans solution"
   },
   "drawResolutionKind": {
     "Slot": "Emplacement",

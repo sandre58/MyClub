@@ -700,14 +700,19 @@ export function resolveDrawDetailGuidance(
     };
   }
   if (ui.messageKey === 'noSolution') {
-    return { kind: 'alert', tone: 'warning', messageKey: 'noSolution' };
+    // Failed resolution — same danger tone as the Sans solution chip, not pending work.
+    return { kind: 'alert', tone: 'danger', messageKey: 'noSolution' };
   }
   if (ui.messageKey === 'published') {
     return { kind: 'alert', tone: 'warning', messageKey: ui.messageKey };
   }
-  if (ui.isApplied || ui.messageKey === 'draftResolved') {
-    // Calm phrases live on the matching chip tooltip — chips already carry the status.
+  if (ui.isApplied) {
+    // Stage effect lives on the Appliqué chip tooltip — no phrase under the title.
     return null;
+  }
+  if (ui.messageKey === 'draftResolved') {
+    // "Résolu" does not say the result is ready to publish — that phrase stays visible.
+    return { kind: 'phrase', messageKey: 'draftResolved' };
   }
   return { kind: 'phrase', messageKey: ui.messageKey };
 }
@@ -782,7 +787,7 @@ export function getDrawUiProjection(
       messageKey: 'draftResolved',
       showResults: true,
       isApplied: false,
-      // "Brouillon" · "Résolu" — phrase carries "ready to apply"
+      // Header chip is Résolu; the visible phrase says the result is ready to publish.
       chrome: { showStatus: true, showResolution: true, showApplied: false },
       masterChip,
     };

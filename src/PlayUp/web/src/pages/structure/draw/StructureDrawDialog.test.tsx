@@ -716,8 +716,8 @@ describe('StructureDrawDialog', () => {
       await screen.findByRole('heading', { name: 'Tirage Groupe' }),
     ).toBeInTheDocument();
     expect(
-      screen.queryByText('Résultat généré, prêt à être publié.'),
-    ).not.toBeInTheDocument();
+      screen.getByText('Résultat généré, prêt à être publié.'),
+    ).toBeInTheDocument();
     expect(screen.getAllByText('Résolu').length).toBeGreaterThanOrEqual(2);
     expect(screen.queryByText('Brouillon')).not.toBeInTheDocument();
     expect(
@@ -769,13 +769,18 @@ describe('StructureDrawDialog', () => {
 
     renderDialog();
 
-    expect(await screen.findByText('Groupe A')).toBeInTheDocument();
-    expect(screen.queryByText('Résultat')).not.toBeInTheDocument();
-    expect(screen.getByText('Équipe 1')).toBeInTheDocument();
-    expect(screen.getByText('Équipe 4')).toBeInTheDocument();
-    expect(screen.getByText('Groupe B')).toBeInTheDocument();
-    expect(screen.getByText('Équipe 2')).toBeInTheDocument();
-    expect(screen.getByText('Équipe 3')).toBeInTheDocument();
+    const list = await screen.findByRole('list', { name: 'Résultat' });
+    expect(document.querySelector('.regulation-schematic')).toBeNull();
+    expect(within(list).getAllByText('Groupe A')).toHaveLength(2);
+    expect(within(list).getByText('Équipe 1')).toBeInTheDocument();
+    expect(within(list).getByText('Équipe 4')).toBeInTheDocument();
+    expect(within(list).getAllByText('Groupe B')).toHaveLength(2);
+    expect(within(list).getByText('Équipe 2')).toBeInTheDocument();
+    expect(within(list).getByText('Équipe 3')).toBeInTheDocument();
+    const rows = within(list).getAllByRole('listitem');
+    expect(rows).toHaveLength(4);
+    expect(rows[0]).toHaveTextContent('Équipe 1');
+    expect(rows[0]).toHaveTextContent('Groupe A');
   });
 
   it('renders Slot placements as dense A vs B from BracketPairs without match numbers', async () => {
@@ -828,6 +833,90 @@ describe('StructureDrawDialog', () => {
     expect(screen.getByText('Poland')).toBeInTheDocument();
     expect(screen.getByText('vs')).toBeInTheDocument();
     expect(screen.queryByText('→')).not.toBeInTheDocument();
+  });
+
+  it('keeps an uncovered Slot placement as a flat Place → Entry row', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview(
+        [
+          slotDraw({
+            slotPlacements: [
+              { slotKey: 'S1', entryId: 'e1', displayName: 'Belgium' },
+              { slotKey: 'S2', entryId: 'e2', displayName: 'Poland' },
+              { slotKey: 'S9', entryId: 'e9', displayName: 'Spain' },
+            ],
+          }),
+        ],
+        {
+          bracketPairs: [{ pairKey: 'P1', slotAKey: 'S1', slotBKey: 'S2' }],
+        },
+      ),
+    );
+
+    renderDialog(cupStage());
+
+    expect(
+      await screen.findByRole('heading', { name: 'Tirage Emplacement' }),
+    ).toBeInTheDocument();
+    const leftovers = screen.getByRole('list', { name: 'Placements' });
+    expect(within(leftovers).getByText('S9')).toBeInTheDocument();
+    expect(within(leftovers).getByText('Spain')).toBeInTheDocument();
+    expect(within(leftovers).getByText('→')).toBeInTheDocument();
+    expect(leftovers.querySelector('.regulation-schematic')).toBeNull();
+  });
+
+  it('shows Sans solution as a danger alert and keeps publish hidden', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([
+        groupDraw({
+          resolutionState: 'NoSolution',
+          groupPlacements: [],
+        }),
+      ]),
+    );
+
+    renderDialog();
+
+    const message = await screen.findByText(
+      'Aucune résolution valide n’a pu être générée.',
+    );
+    expect(message.closest('.ds-alert')).toHaveClass('ds-alert--danger');
+    expect(screen.getAllByText('Sans solution').length).toBeGreaterThan(0);
+    expect(
+      screen.queryByRole('button', { name: 'Publier et appliquer' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Appliquer' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('keeps the applied phrase off the title (Appliqué chip only)', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([
+        groupDraw({
+          status: 'Published',
+          resolutionState: 'Resolved',
+          isApplied: true,
+          groupPlacements: [
+            {
+              groupId: 'g-a',
+              groupDisplayName: 'A',
+              entryId: 'e1',
+              displayName: 'Équipe 1',
+            },
+          ],
+        }),
+      ]),
+    );
+
+    renderDialog();
+
+    expect(await screen.findByText('Équipe 1')).toBeInTheDocument();
+    expect(
+      screen.queryByText('Résultat appliqué à la phase.'),
+    ).not.toBeInTheDocument();
+    expect(screen.getAllByText('Publié').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Appliqué').length).toBeGreaterThan(0);
   });
 
   it('shows master-detail with selectable tiles when more than one draw exists', async () => {
