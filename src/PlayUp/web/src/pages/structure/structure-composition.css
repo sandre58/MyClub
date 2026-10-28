@@ -1,84 +1,115 @@
 /*
  * Composition (Équipes) dialog — team selection for phase Population.
  * Loaded via structure.css.
+ * One body scroll: facts, then filter, then selected and available sections.
  */
 
 .structure-composition {
   display: flex;
   flex-direction: column;
-  gap: var(--space-12);
-  min-height: 0;
+  gap: var(--space-16);
 }
 
-.structure-composition__toolbar {
-  display: grid;
-  grid-template-columns: minmax(7rem, 9.5rem) auto minmax(0, 1fr);
-  gap: var(--space-12);
-  align-items: end;
-}
-
-.structure-composition__meter {
+.structure-composition__chrome {
   display: flex;
   flex-direction: column;
   gap: var(--space-8);
-  min-width: 0;
 }
 
-.structure-composition__counter {
-  margin: 0;
-  font-size: var(--text-body);
-  font-weight: 600;
-  color: var(--color-ink);
+.structure-composition__facts {
+  width: 100%;
 }
 
-.structure-composition__status {
-  margin: 0;
-  font-size: var(--text-meta);
-  color: var(--color-text-secondary);
+.structure-composition__meter.structure-occupancy-meter {
+  gap: var(--space-4);
 }
 
-.structure-composition__meter--short .structure-composition__status,
-.structure-composition__meter--over .structure-composition__status {
-  color: var(--color-attention);
+.structure-composition__meter .structure-occupancy-meter__track {
+  height: var(--space-4);
 }
 
-.structure-composition__meter--complete .structure-composition__status {
-  color: var(--color-success, var(--color-ink));
+.structure-composition__guidance {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.structure-composition__controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+.structure-composition__search-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-12);
 }
 
 .structure-composition__search {
   display: block;
-  min-width: 0;
+  flex: 1 1 12rem;
+  min-width: min(100%, 12rem);
 }
 
 .structure-composition__select-all {
   flex: none;
-  align-self: end;
+}
+
+.structure-composition__sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.structure-composition__section-title {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0;
+  padding-block: var(--space-8);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.06em;
+  line-height: var(--leading-tight);
+  text-transform: uppercase;
 }
 
 .structure-composition__list {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-4);
-  align-content: start;
-  height: 16rem;
-  overflow: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .structure-composition__row {
   display: flex;
   align-items: center;
   gap: var(--space-8);
-  padding: var(--space-8) var(--space-8);
+  margin: 0;
+  padding: var(--space-12) 0;
+  border-bottom: var(--border-width) solid var(--color-border);
+  background: transparent;
+  color: inherit;
+  font: inherit;
   cursor: pointer;
   min-width: 0;
 }
 
+.structure-composition__list > li:last-child .structure-composition__row {
+  border-bottom: none;
+}
+
 .structure-composition__row:hover {
-  background: color-mix(in srgb, var(--color-ink) 4%, var(--color-surface));
+  background: var(--color-surface-secondary);
+}
+
+.structure-composition__row .team-crest {
+  flex: none;
 }
 
 .structure-composition__row--ineligible {
@@ -96,48 +127,36 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
+}
+
+.structure-composition__check {
+  flex: none;
+  margin-inline-start: auto;
 }
 
 .structure-composition__withdrawn-marker {
   flex: none;
-  margin-inline-start: auto;
   display: inline-flex;
   align-items: center;
   color: var(--color-attention);
   line-height: 0;
 }
 
-@media (max-width: 36rem) {
-  .structure-composition__toolbar {
-    grid-template-columns: auto minmax(0, 1fr);
-    align-items: end;
-  }
-
-  .structure-composition__meter {
-    grid-column: 1 / -1;
-  }
-
-  .structure-composition__list {
-    grid-template-columns: 1fr;
-  }
-}
-
-.structure-composition__warn {
-  flex: none;
-  font-size: var(--text-meta);
-  color: var(--color-attention);
+.structure-composition__section-empty,
+.structure-composition__empty {
+  margin: 0;
+  color: var(--color-text-secondary);
 }
 
 .structure-composition__empty {
   display: flex;
   flex-direction: column;
   gap: var(--space-8);
-  justify-content: center;
-  height: 16rem;
   padding: var(--space-16) 0;
-  color: var(--color-text-secondary);
 }
 
-.structure-composition__empty p {
-  margin: 0;
+.structure-composition__section-empty {
+  padding: var(--space-12) 0;
 }
