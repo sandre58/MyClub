@@ -20,6 +20,8 @@ namespace MyClub.PlayUp.Application.Stages;
 /// release via <see cref="Stage.ClearResolvedEntry"/> when aligned (skips DirectAssignment).
 /// Group: for each group placement in <see cref="DrawResolution.GroupResults"/>,
 /// <see cref="Stage.RemoveDrawEntryFromGroup"/> when the entry is still in that group.
+/// The draw must be Cancelled (<see cref="ApplicationErrorCodes.DrawReleaseRequiresCancelled"/>).
+/// Slot and Group release are refused outside Draft or Ready (<see cref="StageErrorCodes.StructureLocked"/>).
 /// A Ready stage with attached matches refuses the whole Group release
 /// (<see cref="ApplicationErrorCodes.DrawReleaseBlockedByAttachedMatches"/>).
 /// Draft keeps the per-entry opponent coherence check.
@@ -45,14 +47,22 @@ public static class ReleaseDrawAlignedPlacements
         ArgumentNullException.ThrowIfNull(clock);
 
         var draw = stage.GetDraw(drawId);
-        EnsureEligible(draw);
-        EnsureNoPublishedAppliedDrawOnStage(stage);
+        var release = DrawActionEvaluator.Evaluate(
+            DrawActionEvaluator.ForCommand(stage, stageMatches),
+            draw).Release;
+        if (release.State == StageDrawActionState.Blocked)
+        {
+            DrawActionFailure.Throw(
+                release.BlockCode!,
+                $"Cannot release aligned placements for draw '{draw.Id}' ({release.BlockCode}).");
+        }
+
         var snapshots = MaterializedParticipantSnapshots.FromMatches(stageMatches ?? []);
 
         return draw.Kind switch
         {
             DrawResolutionKind.Slot => ReleaseSlotPlacements(stage, draw, clock, snapshots),
-            DrawResolutionKind.Group => ReleaseGroupPlacements(stage, draw, snapshots, stageMatches ?? []),
+            DrawResolutionKind.Group => ReleaseGroupPlacements(stage, draw, snapshots),
             _ => throw new ApplicationFailureException(
                 $"ReleaseDrawAlignedPlacements does not support draw kind '{draw.Kind}'.",
                 ApplicationErrorCodes.DrawKindNotSupported)
@@ -94,17 +104,8 @@ public static class ReleaseDrawAlignedPlacements
     private static ReleaseDrawAlignedPlacementsResult ReleaseGroupPlacements(
         Stage stage,
         Draw draw,
-        IReadOnlyList<MatchParticipantSnapshot> snapshots,
-        IReadOnlyList<Match> stageMatches)
+        IReadOnlyList<MatchParticipantSnapshot> snapshots)
     {
-        if (stage.Status == StageStatus.Ready
-            && StageAttachedProduction.HasAttachedMatches(stage, stageMatches))
-        {
-            throw new ApplicationFailureException(
-                $"Cannot release group placements while matches are attached to Ready stage '{stage.Id}'.",
-                ApplicationErrorCodes.DrawReleaseBlockedByAttachedMatches);
-        }
-
         var released = 0;
         var skipped = 0;
 
@@ -122,33 +123,6 @@ public static class ReleaseDrawAlignedPlacements
         }
 
         return new ReleaseDrawAlignedPlacementsResult(released, skipped);
-    }
-
-    private static void EnsureNoPublishedAppliedDrawOnStage(Stage stage)
-    {
-        if (stage.Draws.Any(other => other.Status == DrawStatus.Published && DrawAppliedState.IsApplied(other, stage)))
-        {
-            throw new ApplicationFailureException(
-                "Cannot release aligned placements while a published draw is applied on the stage.",
-                ApplicationErrorCodes.DrawReleaseFailure);
-        }
-    }
-
-    private static void EnsureEligible(Draw draw)
-    {
-        if (draw.Kind is not DrawResolutionKind.Slot and not DrawResolutionKind.Group)
-        {
-            throw new ApplicationFailureException(
-                $"ReleaseDrawAlignedPlacements does not support draw kind '{draw.Kind}'.",
-                ApplicationErrorCodes.DrawKindNotSupported);
-        }
-
-        if (draw.Resolution.State != DrawResolutionState.Resolved)
-        {
-            throw new ApplicationFailureException(
-                $"Draw '{draw.Id}' must be Resolved to release aligned placements (resolution is '{draw.Resolution.State}').",
-                ApplicationErrorCodes.DrawReleaseFailure);
-        }
     }
 }
 

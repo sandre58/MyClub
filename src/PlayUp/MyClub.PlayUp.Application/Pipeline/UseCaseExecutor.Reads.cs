@@ -5,8 +5,11 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Application.Abstractions;
+using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
+using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Pipeline;
@@ -249,7 +252,20 @@ public sealed partial class UseCaseExecutor
             competitionStages = [.. competition.StageIds.Select(id => byId[id])];
         }
 
-        return StageOverviewAssembler.Assemble(stage, competition, competitionStages);
+        var snapshots = Array.Empty<MatchParticipantSnapshot>();
+        if (DrawActionEvaluator.NeedsGroupDraftParticipantRows(stage))
+        {
+            var rows = await matches.ListSummaryRowsByStageReadOnlyAsync(stage.Id, cancellationToken)
+                .ConfigureAwait(false);
+            snapshots = [.. MaterializedParticipantSnapshots.FromSummaryRows(rows)];
+        }
+
+        return StageOverviewAssembler.Assemble(
+            stage,
+            competition,
+            competitionStages,
+            snapshots,
+            StructureSkeleton.CountAttachedMatches(stage) > 0);
     }
 
     private static IReadOnlyList<StageId> CompetitionStageBatch(

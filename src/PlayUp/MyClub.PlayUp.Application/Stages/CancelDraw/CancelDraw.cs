@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Stages;
 
@@ -29,6 +30,15 @@ public static class CancelDraw
     {
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(clock);
+
+        var draw = stage.GetDraw(drawId);
+        var cancel = DrawActionEvaluator.Evaluate(DrawActionEvaluator.ForCommand(stage, null), draw).Cancel;
+        if (cancel.State == StageDrawActionState.Blocked)
+        {
+            DrawActionFailure.Throw(
+                cancel.BlockCode!,
+                $"Cannot cancel draw '{draw.Id}' ({cancel.BlockCode}).");
+        }
 
         stage.CancelDraw(drawId, clock);
     }

@@ -188,6 +188,7 @@ Contract notes:
 - `impactCode` is optional (`BlocksConstruction` | `BlocksDraw` | `BlocksProgression` in V1). Omit when not reliably derivable.
 - Nature V1: `Blocking` | `Informational` only. Richer natures (e.g. Opportunity) remain OPEN — opportunities live in `availableActions` / `naturalProgression`.
 - `draws[].isApplied` is Application-derived (Publish ≠ Apply). Domain has no Applied status.
+- `GET /stages/{stageId}` draw lines include `actions` (`cancel`, `release`, `apply`, `publishAndApply`, `redo`). Each action is `{ state: "Hidden" | "Available" | "Blocked", blockCode? }`. `release` also has `releasableCount` (aligned placements, direct assignments excluded). `releaseCandidateDrawId` is the most recent Cancelled draw with `releasableCount >= 1` (list order, last wins), including when that release is Blocked. `Available` does not guarantee the command succeeds. A closed competition hides every action; the executor still rejects the command.
 - `attentionSummary` is a **derived subset** of `situations` where `nature === "Blocking"` — not a second independent list / ranking. That Blocking set is **Needs Attention only** (same ensemble as `GET /attention`): `InsufficientParticipants`, `DrawNoSolution`, `QualificationPending` / `Conflict`, `ProgressionPending` / `Conflict`.
 - Structure readiness / construction blockers (`MissingStage`, `MissingStructure`, `MissingPotRules`, `CupBracketInvalid`, `StructureGraphInvalid`, capacity/execution readiness blockers, …) stay on Structure readiness / Config / Teams surfaces — **not** Overview situations / `attentionSummary`. `InsufficientParticipants` reaches Attention only via Needs Attention (not a second org-blocker merge).
 - `constructionDimensions.regulation` (Phase 16.4): factual Competition summary (`competition`) + optional Stage regulation flags (`stage`) + `competitionRegulationMutable` + `transitionReadiness[]`. **No** global `isValid` / `isSatisfactory`.
@@ -673,7 +674,7 @@ These DTOs live in `MyClub.PlayUp.Host/Contracts`. They expose Guids only — no
 
 ### `POST /stages/{stageId}/draws/{drawId}/release-aligned-placements` → `ReleaseDrawAlignedPlacementsDto`
 
-Decision D — explicit liberate: clears occupants that still exactly match this draw’s resolution. Slot: `SlotResults` (`EntryId` match, no DirectAssignment). Group: `GroupResults` when the entry is still in that group, via the draw removal path (Draft or Ready). Does **not** cancel the draw, does **not** replace divergent occupants, and does **not** revert Ready to Draft. Not Resolved, or a published draw still applied on the stage → `DrawReleaseFailure`. Group release on a Ready stage with attached matches → `Application.DrawReleaseBlockedByAttachedMatches` (409). Running, Suspended, and Completed stay `Stage.StructureLocked`. Draft Group release keeps the per-entry opponent coherence check.
+Decision D — explicit liberate: clears occupants that still exactly match this draw’s resolution. Slot: `SlotResults` (`EntryId` match, no DirectAssignment). Group: `GroupResults` when the entry is still in that group, via the draw removal path (Draft or Ready). Does **not** cancel the draw, does **not** replace divergent occupants, and does **not** revert Ready to Draft. The draw must be Cancelled; otherwise `Application.DrawReleaseRequiresCancelled` (409), including when the draw is also not Resolved. A Cancelled draw that is not Resolved, or a published draw still applied on the stage → `DrawReleaseFailure` (400). Group release on a Ready stage with attached matches → `Application.DrawReleaseBlockedByAttachedMatches` (409). Slot and Group release on Running, Suspended, and Completed → `Stage.StructureLocked` (409). Draft Group release keeps the per-entry opponent coherence check (`Stage.MaterializedOpponentConflict`).
 
 ```json
 {
@@ -685,8 +686,8 @@ Decision D — explicit liberate: clears occupants that still exactly match this
 | Gate | Allowed |
 | :--- | :--- |
 | Competition | Not `Completed` \| `Archived` (same lifecycle mutation gate as Cancel) |
-| Draw | Slot or Group, Resolved |
-| Stage | Draft or Ready. Ready Group release is refused when matches are attached (`DrawReleaseBlockedByAttachedMatches`, 409) |
+| Draw | Slot or Group, Cancelled, and Resolved. Not Cancelled → `DrawReleaseRequiresCancelled` (409) |
+| Stage | Draft or Ready. Running, Suspended, and Completed → `Stage.StructureLocked` (409). Ready Group release is refused when matches are attached (`DrawReleaseBlockedByAttachedMatches`, 409) |
 | Per placement | Skip when direct assignment (Slot), vacant, or divergent occupant |
 
 ## Error contract (`ProblemDetails`)
@@ -719,6 +720,7 @@ ProblemDetails extensions:
 - `Application.StageCompletionBlocked`
 - `Application.CompetitionClosed`
 - `Application.DrawReleaseBlockedByAttachedMatches`
+- `Application.DrawReleaseRequiresCancelled`
 
 ### Application codes mapped to 404
 

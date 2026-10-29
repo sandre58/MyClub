@@ -22,6 +22,7 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="BracketPairs">Cup structural confrontations (empty for Groups).</param>
 /// <param name="Groups">Group membership snapshot (empty for non-Groups formats).</param>
 /// <param name="DrawBracketLaunchFacts">Bracket occupancy for Tirage launch; null when draw mechanism not applicable.</param>
+/// <param name="ReleaseCandidateDrawId">Most recent Cancelled draw with at least one aligned placement.</param>
 public sealed record StageOverviewDto(
     Guid Id,
     Guid CompetitionId,
@@ -32,7 +33,8 @@ public sealed record StageOverviewDto(
     IReadOnlyList<StageDrawDto> Draws,
     IReadOnlyList<StageBracketPairDto> BracketPairs,
     IReadOnlyList<StageGroupOverviewDto> Groups,
-    StageDrawBracketLaunchFactsDto? DrawBracketLaunchFacts = null);
+    StageDrawBracketLaunchFactsDto? DrawBracketLaunchFacts = null,
+    Guid? ReleaseCandidateDrawId = null);
 
 /// <summary>
 /// Group membership line for stage overview (draw release / alignment checks).
@@ -105,6 +107,7 @@ public sealed record StageSlotDto(
 /// <param name="GroupPlacements">Group placements when resolved as Group; otherwise empty.</param>
 /// <param name="IsApplied">Derived occupancy (Publish ≠ Apply) via <c>DrawAppliedState</c>.</param>
 /// <param name="IsObsoleteForConsumption">Draw resolution obsolete for Apply/Materialize consumption.</param>
+/// <param name="Actions">Server projection of cancel, release, apply, publish-and-apply, and redo. Available is not a success guarantee.</param>
 public sealed record StageDrawDto(
     Guid Id,
     DrawResolutionKind Kind,
@@ -113,7 +116,8 @@ public sealed record StageDrawDto(
     IReadOnlyList<StageDrawSlotPlacementDto> SlotPlacements,
     IReadOnlyList<StageDrawGroupPlacementDto> GroupPlacements,
     bool IsApplied,
-    bool IsObsoleteForConsumption);
+    bool IsObsoleteForConsumption,
+    StageDrawActionsDto? Actions = null);
 
 /// <summary>
 /// Slot placement result summary.
@@ -150,3 +154,51 @@ public sealed record StageDrawGroupPlacementDto(
     string? ShortName = null,
     Guid? LogoMediaId = null,
     string? PrimaryColor = null);
+
+/// <summary>
+/// Whether a projected draw action is offered.
+/// </summary>
+public enum StageDrawActionState
+{
+    /// <summary>The action is not offered.</summary>
+    Hidden,
+
+    /// <summary>The action is offered. Success is not guaranteed.</summary>
+    Available,
+
+    /// <summary>The action is offered and disabled. <c>blockCode</c> explains why.</summary>
+    Blocked
+}
+
+/// <summary>
+/// One projected draw action.
+/// </summary>
+/// <param name="State">Hidden, Available, or Blocked.</param>
+/// <param name="BlockCode">Existing error code when <paramref name="State"/> is Blocked.</param>
+public sealed record StageDrawActionDto(StageDrawActionState State, string? BlockCode = null);
+
+/// <summary>
+/// Projected Libérer action. <paramref name="ReleasableCount"/> excludes direct assignments.
+/// </summary>
+/// <param name="State">Hidden when the count is zero and nothing else blocks the command.</param>
+/// <param name="BlockCode">Existing error code when <paramref name="State"/> is Blocked.</param>
+/// <param name="ReleasableCount">Aligned placements the command would release.</param>
+public sealed record StageDrawReleaseActionDto(
+    StageDrawActionState State,
+    string? BlockCode,
+    int ReleasableCount);
+
+/// <summary>
+/// Draw actions on <c>GET /stages/{id}</c>.
+/// </summary>
+/// <param name="Cancel">Annuler.</param>
+/// <param name="Release">Libérer.</param>
+/// <param name="Apply">Appliquer a published draw.</param>
+/// <param name="PublishAndApply">Publier et appliquer. Apply preconditions are evaluated while the draw is still Draft.</param>
+/// <param name="Redo">Refaire. Not a success guarantee; the client still orchestrates cancel, release, then preview.</param>
+public sealed record StageDrawActionsDto(
+    StageDrawActionDto Cancel,
+    StageDrawReleaseActionDto Release,
+    StageDrawActionDto Apply,
+    StageDrawActionDto PublishAndApply,
+    StageDrawActionDto Redo);

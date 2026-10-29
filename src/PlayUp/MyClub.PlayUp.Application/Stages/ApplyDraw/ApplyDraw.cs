@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
@@ -43,6 +44,16 @@ public static class ApplyDraw
         ArgumentNullException.ThrowIfNull(clock);
 
         var draw = stage.GetDraw(drawId);
+        var apply = DrawActionEvaluator.Evaluate(
+            DrawActionEvaluator.ForCommand(stage, stageMatches),
+            draw).Apply;
+        if (apply.State == StageDrawActionState.Blocked)
+        {
+            DrawActionFailure.Throw(
+                apply.BlockCode!,
+                $"Draw '{draw.Id}' cannot be applied ({apply.BlockCode}).");
+        }
+
         EnsureApplicable(draw);
         var snapshots = MaterializedParticipantSnapshots.FromMatches(stageMatches ?? []);
 
