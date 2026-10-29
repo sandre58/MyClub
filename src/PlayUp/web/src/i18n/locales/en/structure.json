@@ -221,7 +221,7 @@
       "Cup": "A single-elimination bracket.",
       "Swiss": "Rounds with pairings that evolve with results."
     },
-    "editTitle": "Edit structure",
+    "editTitle": "Edit structure — {{phase}}",
     "editLede": "Rebuilds the phase structure (same type). No draw or relation is created."
   },
   "graph": {

@@ -407,7 +407,7 @@ export function EditSkeletonDialog({
       <Dialog
         open={open}
         onClose={requestClose}
-        title={t('skeleton.editTitle')}
+        title={t('skeleton.editTitle', { phase: stage.name })}
         description={t('skeleton.editLede')}
         closeLabel={tCommon('close')}
         closeDisabled={mutation.isPending || discardOpen}

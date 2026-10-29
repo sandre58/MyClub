@@ -799,7 +799,7 @@ describe('StructurePage Structure hub', () => {
     const dialog = await screen.findByRole('dialog');
     expect(
       within(dialog).getByRole('heading', {
-        name: /Modifier la structure/i,
+        name: /Modifier la structure — League/i,
       }),
     ).toBeInTheDocument();
     expect(
