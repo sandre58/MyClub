@@ -16,6 +16,7 @@ using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Infrastructure.Persistence;
 using MyClub.PlayUp.Infrastructure.Persistence.Repositories;
+using MyClub.PlayUp.Infrastructure.DependencyInjection;
 using MyClub.PlayUp.Infrastructure.Tests.Common;
 using Xunit;
 
@@ -184,7 +185,7 @@ public sealed class MatchListSplitQueryPersistenceTests(PostgresFixture fixture)
         return services.BuildServiceProvider(validateScopes: true).CreateScope();
     }
 
-    private static void SeedMatchWithSheetFacts(CompetitionId competitionId, StageId stageId, IMatchRepository repository)
+    private void SeedMatchWithSheetFacts(CompetitionId competitionId, StageId stageId, IMatchRepository repository)
     {
         var match = Match.Create(competitionId, stageId, EntryId.New(), EntryId.New(), _clock);
         var homeStarter = MemberId.New();
