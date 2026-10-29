@@ -18,61 +18,6 @@
   min-height: 0;
 }
 
-.structure-draw-summary {
-  display: flex;
-  flex: none;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-8) var(--space-16);
-}
-
-/* Dialog overlay already elevates; panels inside stay flat. */
-.structure-draw-dialog .ds-panel {
-  box-shadow: none;
-}
-
-.structure-draw-panel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-12);
-  min-width: 0;
-}
-
-.structure-draw-panel__body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-12);
-  min-width: 0;
-}
-
-.structure-draw-panel__footer {
-  display: flex;
-  flex: none;
-  flex-wrap: wrap;
-  gap: var(--space-8);
-}
-
-.structure-draw-parameters__list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-8);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.structure-draw-parameters__fact {
-  margin: 0;
-  color: var(--color-text-primary);
-  font-size: var(--text-body);
-  line-height: var(--leading-normal);
-}
-
-.structure-draw-parameters__mark {
-  color: var(--color-text-secondary);
-}
-
 .structure-draw-cancelled {
   flex: none;
   min-width: 0;
@@ -137,22 +82,26 @@
   min-width: 0;
 }
 
-.structure-draw-history-row__summary {
+.structure-draw-history-row__head {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
   gap: var(--space-8);
-  padding: var(--space-8) 0;
-  color: var(--color-text-primary);
-  font-size: var(--text-body);
-  line-height: var(--leading-tight);
-  cursor: pointer;
-  list-style: none;
+  min-width: 0;
 }
 
-.structure-draw-history-row__summary::marker {
-  content: '';
+.structure-draw-history-row__summary {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-8) 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: var(--text-body);
+  line-height: var(--leading-tight);
+  text-align: start;
+  cursor: pointer;
 }
 
 .structure-draw-history-row__detail {
@@ -209,11 +158,13 @@
   border-top: var(--border-width) solid var(--color-border);
 }
 
-.structure-draw-detail__chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-8);
-  justify-content: flex-end;
+.draw-slot-rows__unpaired .ds-match-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.draw-slot-rows__unpaired .ds-match-row__team--away,
+.draw-slot-rows__unpaired .ds-match-row__aside {
+  display: none;
 }
 
 .structure-draw-detail__phrase {
@@ -223,12 +174,6 @@
   line-height: var(--leading-normal);
 }
 
-.structure-draw-result {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-12);
-}
-
 .draw-placement-list {
   display: flex;
   flex-direction: column;
@@ -236,29 +181,6 @@
   margin: 0;
   padding: 0;
   list-style: none;
-}
-
-/* Unpaired Slot leftovers: flat Place → Entry, not a card. */
-.structure-draw-dialog .draw-placement-list {
-  gap: 0;
-}
-
-.structure-draw-dialog .draw-placement {
-  padding: var(--space-12) 0;
-  border: none;
-  border-bottom: var(--border-width) solid var(--color-border);
-  border-radius: 0;
-  background: transparent;
-}
-
-.structure-draw-dialog .draw-placement:last-child {
-  border-bottom: none;
-}
-
-.structure-draw-dialog .draw-placement__key {
-  color: var(--color-text-secondary);
-  font-weight: var(--font-weight-regular);
-  font-variant-numeric: tabular-nums;
 }
 
 .draw-placement {

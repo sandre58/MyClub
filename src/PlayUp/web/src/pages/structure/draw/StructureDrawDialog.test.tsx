@@ -878,7 +878,7 @@ describe('StructureDrawDialog', () => {
 
     const leftovers = await screen.findByRole('list', { name: 'Placements' });
     expect(
-      within(leftovers).getByRole('listitem', { name: 'S9 · Spain' }),
+      within(leftovers).getByRole('listitem', { name: 'Spain · S9' }),
     ).toBeInTheDocument();
     expect(within(leftovers).getByText('Spain')).toBeInTheDocument();
     expect(within(leftovers).queryByText('→')).not.toBeInTheDocument();
@@ -1187,6 +1187,16 @@ describe('StructureDrawDialog', () => {
       name: 'Libérer 1/2',
     });
     expect(releaseButtons).toHaveLength(2);
+    const rowRelease = releaseButtons.find((button) =>
+      button.closest('.structure-draw-history-row'),
+    );
+    expect(rowRelease).toBeTruthy();
+    expect(rowRelease?.closest('summary')).toBeNull();
+    const toggle = screen.getByRole('button', { name: /#1 · Annulée/ });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(rowRelease?.compareDocumentPosition(toggle)).toBe(
+      Node.DOCUMENT_POSITION_PRECEDING,
+    );
     expect(
       screen.queryByText(/placements encore présents/),
     ).not.toBeInTheDocument();
@@ -1209,6 +1219,79 @@ describe('StructureDrawDialog', () => {
     await waitFor(() => {
       expect(getToastsSnapshot().map((t) => t.message)).toContain(
         'Placements libérés (1).',
+      );
+    });
+  });
+
+  it('targets the newest releasable cancelled draw from the footer', async () => {
+    const user = userEvent.setup();
+    const slot = (slotKey: string, entryId: string, displayName: string) => ({
+      slotKey,
+      entryId,
+      displayName,
+      coveredByCompleteFixture: false,
+    });
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview(
+        [
+          slotDraw({
+            id: 'draw-aaa',
+            status: 'Cancelled',
+            slotPlacements: [
+              { slotKey: 'S1', entryId: 'e1', displayName: 'Older A' },
+              { slotKey: 'S2', entryId: 'e2', displayName: 'Older B' },
+            ],
+          }),
+          slotDraw({
+            id: 'draw-zzz',
+            status: 'Cancelled',
+            slotPlacements: [
+              { slotKey: 'S3', entryId: 'e3', displayName: 'Newer' },
+            ],
+          }),
+        ],
+        {
+          slots: [
+            slot('S1', 'e1', 'Older A'),
+            slot('S2', 'e2', 'Older B'),
+            slot('S3', 'e3', 'Newer'),
+          ],
+        },
+      ),
+    );
+    vi.mocked(releaseDrawAlignedPlacements).mockResolvedValue({
+      releasedCount: 1,
+      skippedCount: 0,
+    });
+
+    renderDialog(cupStage());
+
+    await screen.findByText('Exécutions précédentes (2)');
+    const footer = document.querySelector('.structure-draw-footer');
+    expect(footer).not.toBeNull();
+    const footerRelease = within(footer as HTMLElement).getByRole('button', {
+      name: 'Libérer 1/1',
+    });
+    expect(
+      within(footer as HTMLElement).queryByRole('button', {
+        name: 'Libérer 2/2',
+      }),
+    ).not.toBeInTheDocument();
+
+    await user.click(footerRelease);
+    const confirm = await screen.findByRole('dialog', {
+      name: 'Libérer les placements du tirage ?',
+    });
+    await user.click(
+      within(confirm).getByRole('button', {
+        name: 'Libérer les placements du tirage',
+      }),
+    );
+
+    await waitFor(() => {
+      expect(releaseDrawAlignedPlacements).toHaveBeenCalledWith(
+        stageId,
+        'draw-zzz',
       );
     });
   });
@@ -1878,11 +1961,21 @@ describe('StructureDrawDialog', () => {
       ]),
     );
     renderDialog();
-    await user.click(await screen.findByText(/#1 · Annulée/));
-    expect(await screen.findByText(/Alpha/)).toBeInTheDocument();
-    await user.click(screen.getByText(/#2 · Annulée/));
-    expect(screen.getByText(/Beta/)).toBeInTheDocument();
-    expect(screen.queryByText(/Alpha/)).not.toBeInTheDocument();
+    const older = await screen.findByRole('button', { name: /#1 · Annulée/ });
+    const newer = screen.getByRole('button', { name: /#2 · Annulée/ });
+    await user.click(older);
+    expect(older).toHaveAttribute('aria-expanded', 'true');
+    expect(newer).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByText(/Alpha/).closest('ul')).not.toHaveAttribute(
+      'hidden',
+    );
+    await user.click(newer);
+    expect(older).toHaveAttribute('aria-expanded', 'false');
+    expect(newer).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText(/Alpha/).closest('ul')).toHaveAttribute('hidden');
+    expect(screen.getByText(/Beta/).closest('ul')).not.toHaveAttribute(
+      'hidden',
+    );
   });
 
   it('prefers a mutation error over the Refaire blocked reason', async () => {

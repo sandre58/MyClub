@@ -44,7 +44,9 @@ describe('DrawSlotConfrontationGrid', () => {
     expect(container.querySelector('.draw-confrontation')).toBeNull();
     expect(container.querySelectorAll('.draw-slot-rows > li')).toHaveLength(3);
     expect(
-      screen.getByRole('listitem', { name: 'S9 · Spain' }),
+      screen.getByRole('listitem', { name: 'Spain · S9' }),
     ).toBeInTheDocument();
+    expect(screen.getAllByText('S9')).toHaveLength(1);
+    expect(screen.queryByText('—')).not.toBeInTheDocument();
   });
 });

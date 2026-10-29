@@ -39,15 +39,15 @@ function UnpairedMatchRow({
 }: {
   side: SlotConfrontationSide;
 }): ReactElement {
-  const label = `${side.slotKey} · ${side.displayName}`;
+  const label = `${side.displayName} · ${side.slotKey}`;
   return (
     <li aria-label={label}>
       <MatchRow
         home={{ name: side.displayName, crest: crestFor(side) }}
-        away={{ name: '—', crest: <span aria-hidden="true" /> }}
+        away={{ name: '', crest: <span aria-hidden="true" /> }}
         score={side.slotKey}
         scoreMuted
-        aside={side.slotKey}
+        aside={<span aria-hidden="true" />}
       />
     </li>
   );
@@ -75,7 +75,10 @@ export function DrawSlotConfrontationGrid({
         </ul>
       ) : null}
       {unpaired.length > 0 ? (
-        <ul className="draw-slot-rows" aria-label={unpairedLabel ?? ariaLabel}>
+        <ul
+          className="draw-slot-rows draw-slot-rows__unpaired"
+          aria-label={unpairedLabel ?? ariaLabel}
+        >
           {unpaired.map((side) => (
             <UnpairedMatchRow key={side.slotKey} side={side} />
           ))}

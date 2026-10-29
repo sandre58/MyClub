@@ -1169,26 +1169,26 @@ function CancelledDrawRow({
         })
       : t('historyRowReleased', { n: executionNumber });
 
+  const detailId = `draw-history-${draw.id}`;
+
   return (
-    <details className="structure-draw-history-row" open={open}>
-      <summary
-        className="structure-draw-history-row__summary"
-        onClick={(event) => {
-          event.preventDefault();
-          onToggle();
-        }}
-      >
-        <span>{summary}</span>
+    <div className="structure-draw-history-row">
+      <div className="structure-draw-history-row__head">
+        <button
+          type="button"
+          className="structure-draw-history-row__summary"
+          aria-expanded={open}
+          aria-controls={detailId}
+          onClick={onToggle}
+        >
+          {summary}
+        </button>
         {canRelease ? (
           <button
             type="button"
             className="ds-btn ds-btn--secondary"
             disabled={busy}
-            onClick={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              onRelease();
-            }}
+            onClick={onRelease}
           >
             {releasePending ? (
               <PendingLabel>{t('releasingPlacements')}</PendingLabel>
@@ -1200,15 +1200,19 @@ function CancelledDrawRow({
             )}
           </button>
         ) : null}
-      </summary>
-      {open && lines.length > 0 ? (
-        <ul className="structure-draw-history-row__detail">
+      </div>
+      {lines.length > 0 ? (
+        <ul
+          id={detailId}
+          className="structure-draw-history-row__detail"
+          hidden={!open}
+        >
           {lines.map((line) => (
             <li key={line}>{line}</li>
           ))}
         </ul>
       ) : null}
-    </details>
+    </div>
   );
 }
 
