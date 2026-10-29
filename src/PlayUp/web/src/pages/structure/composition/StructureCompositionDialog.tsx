@@ -253,18 +253,18 @@ export function StructureCompositionDialog({
     value: String(k),
     label: t('composition.factSelected', { count: k }),
   });
-  if (remaining != null) {
-    facts.push({
-      key: 'remaining',
-      value: String(remaining),
-      label: t('composition.factRemaining', { count: remaining }),
-    });
-  }
   if (reserved > 0) {
     facts.push({
       key: 'reserved',
       value: String(reserved),
       label: t('composition.factReserved', { count: reserved }),
+    });
+  }
+  if (remaining != null) {
+    facts.push({
+      key: 'remaining',
+      value: String(remaining),
+      label: t('composition.factRemaining', { count: remaining }),
     });
   }
 

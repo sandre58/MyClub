@@ -208,7 +208,7 @@ describe('StructureCompositionDialog', () => {
     );
   });
 
-  it('orders Places, Sélectionnées, Restantes, then reserved, using cap minus k', () => {
+  it('orders Places, Sélectionnées, Réservées, then Restantes, using cap minus k', () => {
     renderDialog({
       compositionCapacity: 8,
       reservedFromFeeds: 3,
@@ -219,8 +219,8 @@ describe('StructureCompositionDialog', () => {
     expect(factOrder()).toEqual([
       'places',
       'selected',
-      'remaining',
       'reserved',
+      'remaining',
     ]);
     expect(fact('places')).toHaveTextContent('8');
     expect(fact('places')).toHaveTextContent('places');
@@ -245,7 +245,8 @@ describe('StructureCompositionDialog', () => {
       'structure-qualification__fact--secondary',
     );
     expect(fact('reserved')).toHaveTextContent('3');
-    expect(fact('reserved')).toHaveTextContent('réservées par les sources');
+    expect(fact('reserved')).toHaveTextContent('réservées');
+    expect(fact('reserved')).not.toHaveTextContent('sources');
     expect(fact('reserved')).toHaveClass(
       'structure-qualification__fact--secondary',
     );
