@@ -251,7 +251,7 @@ describe('structure draw dialog height', () => {
     expect(drawDialogCss).not.toMatch(/structure-draw-cancelled/);
     expect(drawDialogCss).not.toMatch(/structure-draw-history-row/);
     expect(drawDialogCss).toMatch(
-      /\.structure-draw-previous__tile\.ds-selectable-tile\[data-tone='error'\]:not\(\[data-selected='true'\]\)[\s\S]*opacity:\s*0\.85/,
+      /\.structure-draw-previous__tile\.ds-selectable-tile\[data-tone='error'\]\s*\{[\s\S]*opacity:\s*0\.85/,
     );
     expect(drawDialogCss).toMatch(
       /\.structure-draw-previous__tile\.ds-selectable-tile\[data-tone='error'\]:hover[\s\S]*opacity:\s*1/,
@@ -259,8 +259,15 @@ describe('structure draw dialog height', () => {
     expect(drawDialogCss).toMatch(
       /\.structure-draw-previous__tile\.ds-selectable-tile\[data-tone='error'\]:has\(\.ds-selectable-tile__trigger:focus-visible\)[\s\S]*opacity:\s*1/,
     );
-    expect(drawDialogCss).toMatch(
+    expect(drawDialogCss).not.toMatch(
       /\.structure-draw-previous__tile\.ds-selectable-tile\[data-tone='error'\]\[data-selected='true'\][\s\S]*opacity:\s*1/,
+    );
+    expect(drawDialogCss).toMatch(/\.structure-draw-previous__meta\s*\{/);
+    expect(drawDialogCss).toMatch(
+      /\.structure-draw-previous__panel\s*\{[^}]*\}/,
+    );
+    expect(drawDialogCss).not.toMatch(
+      /\.structure-draw-previous__panel\s*\{[^}]*border-block-start/,
     );
     expect(drawDialogCss).toMatch(
       /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.structure-draw-previous__panel[\s\S]*animation:\s*none/,
@@ -1133,8 +1140,21 @@ describe('StructureDrawDialog', () => {
     const header = trigger.closest('.structure-draw-previous__header');
     expect(header?.tagName).toBe('H5');
     expect(header?.querySelector(':scope > button')).toBe(trigger);
-    expect(within(tile).getByText('Annulé')).toBeInTheDocument();
-    expect(within(tile).getByText('Libérée')).toBeInTheDocument();
+    const meta = trigger.querySelector('.structure-draw-previous__meta');
+    expect(meta).not.toBeNull();
+    expect(within(meta as HTMLElement).getByText('Annulé')).toBeInTheDocument();
+    expect(
+      within(meta as HTMLElement).getByText('Libérée'),
+    ).toBeInTheDocument();
+    expect(
+      trigger.querySelector('.structure-draw-previous__title'),
+    ).toBeTruthy();
+    const chevron = trigger.querySelector('.ds-selectable-tile__chevron');
+    expect(chevron).toBeTruthy();
+    expect(
+      meta!.compareDocumentPosition(chevron!) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
     expect(tile).toHaveAttribute('data-selected', 'false');
     await user.click(trigger);
     expect(tile).toHaveAttribute('data-selected', 'true');

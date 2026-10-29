@@ -130,6 +130,12 @@ describe('SelectableTile', () => {
     expect(selectableTileCss).toMatch(
       /\.ds-selectable-tile\[data-tone='error'\]\[data-selected='true'\]\s*\{[\s\S]*border-color:\s*var\(--color-error\)/,
     );
+    expect(selectableTileCss).not.toMatch(
+      /\[data-tone='error'\]\[data-selected='true'\][\s\S]*inset 0 0 0 1px var\(--color-error\)/,
+    );
+    expect(selectableTileCss).toMatch(
+      /\.ds-root \.ds-selectable-tile\[data-tone='error'\]\[data-selected='true'\]:has\(\.ds-selectable-tile__trigger:focus-visible\)\s*\{[\s\S]*box-shadow:\s*var\(--focus-halo\)/,
+    );
     expect(selectableTileCss).toMatch(
       /\.ds-selectable-tile\[data-tone='error'\]\[data-selected='true'\]:hover:not\(:disabled\):not\(\[aria-disabled='true'\]\)\s*\{[\s\S]*color-mix\(in srgb, var\(--color-error\) 8%/,
     );
