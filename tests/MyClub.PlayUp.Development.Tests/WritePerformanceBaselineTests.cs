@@ -32,7 +32,7 @@ public sealed class WritePerformanceBaselineTests(
     public async Task Baseline_replace_qualification_rules_refused_on_running_qf_seedAsync()
     {
         var runner = fixture.Services.GetRequiredService<ScenarioRunner>();
-        await runner.ResetAndRunAsync([SeedSpec.Parse("cup-qf-sf")]);
+        await runner.ResetAndRunAsync([SeedSpec.Parse("groups:running")]);
 
         using var scope = fixture.Services.CreateScope();
         var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
@@ -59,7 +59,7 @@ public sealed class WritePerformanceBaselineTests(
         stopwatch.Stop();
 
         WriteBlock(
-            "cup-qf-sf — ReplaceStageQualificationRulesAsync refused (Running QF)",
+            "groups:running — ReplaceStageQualificationRulesAsync refused (Running stage)",
             new Dictionary<string, object>
             {
                 ["SQL commands"] = counter.CommandCount,
