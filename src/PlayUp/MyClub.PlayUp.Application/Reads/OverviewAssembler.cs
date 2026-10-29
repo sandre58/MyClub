@@ -1445,10 +1445,14 @@ public static class OverviewAssembler
                     throw new ArgumentOutOfRangeException(nameof(stages));
             }
 
-            var stageMatches = matchesByStage.TryGetValue(stage.Id, out var loadedStageMatches)
-                ? loadedStageMatches
+            var stageRows = matchesByStage.TryGetValue(stage.Id, out var loadedStageRows)
+                ? loadedStageRows
                 : [];
-            var drawContext = DrawActionEvaluator.ForCommand(stage, stageMatches);
+            var drawContext = new DrawActionContext(
+                stage,
+                stages,
+                MaterializedParticipantSnapshots.FromSummaryRows(stageRows),
+                StageAttachedProduction.HasAttachedMatches(stage, stageRows));
             foreach (var draw in stage.Draws)
             {
                 var projected = DrawActionEvaluator.Evaluate(drawContext, draw);
