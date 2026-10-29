@@ -1081,7 +1081,9 @@ describe('StructureDrawDialog', () => {
     const cancelledTile = screen.getByRole('button', {
       name: /Exécution #1/,
     });
-    expect(cancelledTile.closest('.structure-draw-previous__item')).not.toBeNull();
+    expect(
+      cancelledTile.closest('.structure-draw-previous__item'),
+    ).not.toBeNull();
     expect(cancelledTile.closest('.ds-selectable-tile')).not.toHaveAttribute(
       'data-tone',
     );
