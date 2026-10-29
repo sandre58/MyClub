@@ -105,6 +105,32 @@ public sealed class RedoDrawEndpointTests(HostPostgresFixture fixture)
     }
 
     [IntegrationFact]
+    public async Task Redo_when_a_sibling_stage_feed_targets_the_grid_returns_409_and_changes_nothingAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var seed = await SeedAppliedSlotDrawWithSiblingFeedAsync(factory);
+
+        using var client = factory.CreateClient();
+        using var response = await client.PostAsync(RedoUri(seed.StageId, seed.DrawId), content: null);
+
+        // Cancel + Release already run in-memory on the target Stage by the time the real Rerun
+        // launch guard (fed the full competition stages, unlike the upfront single-stage evaluator)
+        // sees the sibling `source` stage's feed and throws. Only the single SaveChanges never being
+        // reached keeps this half-sequence from persisting.
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
+        GetCode(problem!).Should().Be(ApplicationErrorCodes.DrawLaunchGridNotVacant);
+
+        using var scope = factory.Services.CreateScope();
+        var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(seed.StageId);
+        stage.Should().NotBeNull();
+        stage!.GetDraw(seed.DrawId).Status.Should().Be(DrawStatus.Published);
+        stage.Draws.Should().ContainSingle();
+        stage.FindSlot("SF1-A")!.EntryId.Should().Be(seed.SlotS1Entry);
+        stage.FindSlot("SF1-B")!.EntryId.Should().Be(seed.SlotS2Entry);
+    }
+
+    [IntegrationFact]
     public async Task Redo_when_stage_missing_returns_404Async()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
@@ -206,6 +232,60 @@ public sealed class RedoDrawEndpointTests(HostPostgresFixture fixture)
         await unitOfWork.SaveChangesAsync();
 
         return new SlotDrawSeed(stage.Id, draw.Id, SlotS1Entry: null, SlotS2Entry: null);
+    }
+
+    private async Task<SlotDrawSeed> SeedAppliedSlotDrawWithSiblingFeedAsync(PlayUpWebApplicationFactory factory)
+    {
+        using var scope = factory.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+
+        var competition = Competition.Create(new CompetitionName("Redo Draw Cup"), SampleRegulations.Standard(), _clock);
+        var source = Stage.Create(competition.Id, new StageName("Groups"), SampleRegulations.Standard(), _clock);
+        var target = Stage.Create(competition.Id, new StageName("KO"), SampleRegulations.Standard(), _clock);
+        target.AddRound("R1", _clock);
+        target.AddSlot("SF1-A");
+        target.AddSlot("SF1-B");
+        target.SeedEntryRoundBracketPairs();
+        ReplaceStageDrawRules.Execute(target, competition, new DrawRules(DrawMode.Random), _clock);
+        var entryA = EntryId.New();
+        var entryB = EntryId.New();
+        target.ReplaceAffectationAuthoring([entryA, entryB], _clock);
+
+        var draw = CreateDraw.Execute(target, DrawResolutionKind.Slot, _clock);
+        ConfigureDrawInputs.Execute(target, draw.Id, DrawInputsFactory.CreateDefault(target, DrawResolutionKind.Slot));
+        GenerateDrawResolution.Execute(target, draw.Id, _clock, slotTargets: ["SF1-A", "SF1-B"])
+            .IsResolved.Should().BeTrue();
+        PublishDraw.Execute(target, draw.Id, _clock);
+        ApplyDraw.Execute(target, draw.Id, _clock);
+
+        // The sibling `source` stage feeds a slot that `target`'s draw already occupies. The upfront
+        // single-stage evaluator never sees this (it reports Redo as Available); only the real Rerun
+        // launch guard — fed the full competition stages inside UseCaseExecutor.RedoDrawAsync — catches
+        // it, mid-sequence, after Cancel + Release already ran in-memory.
+        source.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.Overall(),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    QualificationDestination.ForSlot(target.Id, "SF1-A"))
+            ]),
+            _clock);
+
+        competition.AddStage(source.Id, _clock);
+        competition.AddStage(target.Id, _clock);
+        competitions.Add(competition);
+        stages.Add(source);
+        stages.Add(target);
+        await unitOfWork.SaveChangesAsync();
+
+        // DrawMode.Random: capture the actual occupancy rather than assuming entryA -> SF1-A.
+        var slotAEntry = target.FindSlot("SF1-A")!.EntryId!.Value;
+        var slotBEntry = target.FindSlot("SF1-B")!.EntryId!.Value;
+        return new SlotDrawSeed(target.Id, draw.Id, slotAEntry, slotBEntry);
     }
 
     private sealed record SlotDrawSeed(StageId StageId, DrawId DrawId, EntryId? SlotS1Entry, EntryId? SlotS2Entry);
