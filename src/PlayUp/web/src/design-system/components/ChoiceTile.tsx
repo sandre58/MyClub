@@ -17,6 +17,8 @@ export type ChoiceTileProps = {
   disabled?: boolean;
   /** Accessible name; defaults to label. */
   'aria-label'?: string;
+  /** Why the option is unavailable, or other supplementary text. */
+  'aria-describedby'?: string;
 };
 
 /**
@@ -32,6 +34,7 @@ export function ChoiceTile({
   leadingPlacement = 'start',
   disabled = false,
   'aria-label': ariaLabel,
+  'aria-describedby': ariaDescribedBy,
 }: ChoiceTileProps) {
   return (
     <button
@@ -39,6 +42,7 @@ export function ChoiceTile({
       role="checkbox"
       aria-checked={selected}
       aria-label={ariaLabel ?? label}
+      aria-describedby={ariaDescribedBy}
       disabled={disabled}
       className="ds-choice-tile"
       data-selected={selected ? 'true' : 'false'}

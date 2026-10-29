@@ -9,8 +9,8 @@ import { useTranslation } from 'react-i18next';
 import { replaceStageAffectationAuthoring } from '../../../api';
 import { Chip } from '../../../design-system/components/Chip';
 import { ConfirmDialog } from '../../../design-system/components/ConfirmDialog';
+import { ChoiceTile } from '../../../design-system/components/ChoiceTile';
 import { Dialog } from '../../../design-system/components/Dialog';
-import { SelectableTile } from '../../../design-system/components/SelectableTile';
 import { TextLink } from '../../../design-system/components/TextLink';
 import { Tooltip } from '../../../design-system/components/Tooltip';
 import {
@@ -98,36 +98,28 @@ function CompositionTeamRow({
   const disabled = pending || (!row.eligible && !row.selected) || locked;
 
   return (
-    <SelectableTile
-      type="button"
+    <ChoiceTile
+      label={row.displayName}
+      leading={
+        <TeamCrest
+          name={row.displayName}
+          logoMediaId={row.logoMediaId}
+          primaryColor={row.primaryColor}
+          size="sm"
+        />
+      }
+      description={
+        !row.eligible ? (
+          <Tooltip content={withdrawnTip}>
+            <Chip tone="neutral">{withdrawnLabel}</Chip>
+          </Tooltip>
+        ) : undefined
+      }
       selected={row.selected}
       disabled={disabled}
-      aria-pressed={row.selected}
       aria-describedby={locked ? capacityHintId : undefined}
-      className={[
-        'structure-composition__row',
-        !row.eligible ? 'structure-composition__row--ineligible' : null,
-        locked ? 'structure-composition__row--locked' : null,
-      ]
-        .filter(Boolean)
-        .join(' ')}
-      onClick={() => onToggle(row.entryId, row.selected)}
-    >
-      <TeamCrest
-        name={row.displayName}
-        logoMediaId={row.logoMediaId}
-        primaryColor={row.primaryColor}
-        size="sm"
-      />
-      <span className="structure-composition__name">{row.displayName}</span>
-      {!row.eligible ? (
-        <Tooltip content={withdrawnTip}>
-          <Chip tone="neutral" className="structure-composition__withdrawn">
-            {withdrawnLabel}
-          </Chip>
-        </Tooltip>
-      ) : null}
-    </SelectableTile>
+      onChange={() => onToggle(row.entryId, row.selected)}
+    />
   );
 }
 

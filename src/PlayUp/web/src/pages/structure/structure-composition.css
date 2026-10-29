@@ -83,61 +83,11 @@
   margin: 0;
 }
 
-.structure-composition__row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-8);
+/* Fill the grid cell. ChoiceTile chrome stays in the design system. */
+
+.structure-composition__list .ds-choice-tile {
   width: 100%;
-  margin: 0;
-  padding: var(--space-8);
-  font: inherit;
-  color: inherit;
-  text-align: start;
-  cursor: pointer;
   min-width: 0;
-}
-
-.structure-composition__row .team-crest {
-  flex: none;
-}
-
-.structure-composition__row--ineligible {
-  color: var(--color-text-secondary);
-}
-
-.structure-composition__row--locked {
-  border-color: var(--color-border-strong);
-  background: var(--color-surface-secondary);
-  color: var(--color-text-secondary);
-  cursor: not-allowed;
-}
-
-/* Beat user-agent and family B disabled surfaces for the locked and withdrawn states. */
-
-.ds-selectable-tile.structure-composition__row--locked:disabled {
-  border-color: var(--color-border-strong);
-  background: var(--color-surface-secondary);
-  color: var(--color-text-secondary);
-  cursor: not-allowed;
-}
-
-.ds-selectable-tile.structure-composition__row--ineligible:disabled {
-  color: var(--color-text-secondary);
-}
-
-.structure-composition__name {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--leading-tight);
-}
-
-.structure-composition__row > .ds-tooltip-trigger,
-.structure-composition__withdrawn {
-  flex: none;
 }
 
 .structure-composition__empty {

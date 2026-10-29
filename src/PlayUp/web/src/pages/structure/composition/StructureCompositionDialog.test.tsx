@@ -140,7 +140,7 @@ function factPart(key: string, part: 'value' | 'label'): HTMLElement {
 }
 
 function teamTile(name: RegExp): HTMLElement {
-  return screen.getByRole('button', { name });
+  return screen.getByRole('checkbox', { name });
 }
 
 const amiens = '11111111-1111-1111-1111-111111111111';
@@ -396,12 +396,12 @@ describe('StructureCompositionDialog', () => {
 
     for (const name of ['Amiens', 'Bordeaux', 'Caen']) {
       const tile = teamTile(new RegExp(name));
-      expect(tile).toHaveAttribute('data-selected', 'true');
-      expect(tile).toHaveAttribute('aria-pressed', 'true');
+      expect(tile).toHaveAttribute('aria-checked', 'true');
+      expect(tile.querySelector('.ds-choice-tile__check')).not.toBeNull();
     }
     const locked = teamTile(/Dijon/);
-    expect(locked).toHaveAttribute('data-selected', 'false');
-    expect(locked).toHaveAttribute('aria-pressed', 'false');
+    expect(locked).toHaveAttribute('aria-checked', 'false');
+    expect(locked.querySelector('.ds-choice-tile__check')).toBeNull();
     expect(locked).toBeDisabled();
     expect(fact('remaining')).toHaveTextContent('0');
     expect(
@@ -410,7 +410,7 @@ describe('StructureCompositionDialog', () => {
     expect(document.querySelector('.ds-alert')).toBeNull();
   });
 
-  it('paints selected cells with the shared tile, locks with a description, and chips withdrawn teams', () => {
+  it('uses ChoiceTiles with the check glyph, locks with a description, and chips withdrawn teams', () => {
     renderDialog({
       compositionCapacity: 1,
       affectationEntryIds: [withdrawnId],
@@ -421,17 +421,17 @@ describe('StructureCompositionDialog', () => {
     });
 
     const selectedTile = teamTile(/Ancien/);
-    expect(selectedTile).toHaveAttribute('data-selected', 'true');
-    expect(selectedTile).toHaveAttribute('aria-pressed', 'true');
-    expect(selectedTile).toHaveClass('ds-selectable-tile');
-    expect(selectedTile.querySelector('.ds-choice-tile__check')).toBeNull();
+    expect(selectedTile).toHaveClass('ds-choice-tile');
+    expect(selectedTile).toHaveAttribute('aria-checked', 'true');
+    expect(selectedTile.querySelector('.ds-choice-tile__check')).not.toBeNull();
     expect(selectedTile.querySelector('input[type="checkbox"]')).toBeNull();
+    expect(selectedTile.querySelector('.ds-selectable-tile')).toBeNull();
     expect(within(selectedTile).getByText('Plus éligible')).toHaveClass(
       'ds-chip',
     );
     expect(selectedTile.querySelector('.team-crest')).not.toBeNull();
     expect(
-      selectedTile.querySelector('.structure-composition__name'),
+      selectedTile.querySelector('.ds-choice-tile__title'),
     ).toHaveTextContent('Ancien');
 
     const locked = teamTile(/Amiens/);
@@ -439,17 +439,22 @@ describe('StructureCompositionDialog', () => {
     expect(locked).toHaveAccessibleDescription(
       'Plus de place pour des équipes (1 max).',
     );
-    expect(locked).toHaveClass('structure-composition__row--locked');
-    expect(locked).toHaveAttribute('data-selected', 'false');
+    expect(locked).toHaveAttribute('aria-checked', 'false');
+    expect(locked.querySelector('.ds-choice-tile__check')).toBeNull();
     expect(within(locked).queryByText('Plus éligible')).not.toBeInTheDocument();
     expect(document.querySelector('input[type="checkbox"]')).toBeNull();
-    expect(document.querySelector('.ds-choice-tile__check')).toBeNull();
+    expect(document.querySelector('.ds-selectable-tile')).toBeNull();
 
-    const lockedRule = compositionCss.match(
-      /\.structure-composition__row--locked\s*\{([^}]*)\}/,
+    const choiceLayout = compositionCss.match(
+      /\.structure-composition__list \.ds-choice-tile\s*\{([^}]*)\}/,
     );
-    expect(lockedRule?.[1]).toBeDefined();
-    expect(lockedRule?.[1]).not.toMatch(/opacity/);
+    expect(choiceLayout?.[1]).toMatch(/width:\s*100%/);
+    expect(choiceLayout?.[1]).not.toMatch(
+      /border|background|opacity|color:|ds-choice-tile__check/,
+    );
+    expect(compositionCss).not.toMatch(/ds-choice-tile__check/);
+    expect(compositionCss).not.toMatch(/ds-selectable-tile/);
+    expect(compositionCss).not.toMatch(/structure-composition__row--locked/);
   });
 
   it('scrolls only the team list and fills columns from 12rem', () => {
@@ -494,16 +499,16 @@ describe('StructureCompositionDialog', () => {
 
     const tile = teamTile(/Amiens/);
     expect(tile.tagName).toBe('BUTTON');
-    expect(tile).toHaveAttribute('data-selected', 'false');
-    expect(tile).toHaveAttribute('aria-pressed', 'false');
+    expect(tile).toHaveAttribute('aria-checked', 'false');
+    expect(tile.querySelector('.ds-choice-tile__check')).toBeNull();
     expect(fact('selected')).toHaveClass(
       'structure-qualification__fact--primary',
     );
     expect(factPart('selected', 'value')).toHaveAttribute('data-zero', 'true');
 
     await user.click(tile);
-    expect(tile).toHaveAttribute('data-selected', 'true');
-    expect(tile).toHaveAttribute('aria-pressed', 'true');
+    expect(tile).toHaveAttribute('aria-checked', 'true');
+    expect(tile.querySelector('.ds-choice-tile__check')).not.toBeNull();
     expect(fact('selected')).toHaveClass(
       'structure-qualification__fact--primary',
     );
@@ -511,8 +516,8 @@ describe('StructureCompositionDialog', () => {
 
     tile.focus();
     await user.keyboard('{Enter}');
-    expect(tile).toHaveAttribute('data-selected', 'false');
-    expect(tile).toHaveAttribute('aria-pressed', 'false');
+    expect(tile).toHaveAttribute('aria-checked', 'false');
+    expect(tile.querySelector('.ds-choice-tile__check')).toBeNull();
     expect(fact('selected')).toHaveClass(
       'structure-qualification__fact--primary',
     );
@@ -520,7 +525,8 @@ describe('StructureCompositionDialog', () => {
 
     tile.focus();
     await user.keyboard(' ');
-    expect(tile).toHaveAttribute('data-selected', 'true');
+    expect(tile).toHaveAttribute('aria-checked', 'true');
+    expect(tile.querySelector('.ds-choice-tile__check')).not.toBeNull();
   });
 
   it('shows a dedicated empty state when the search matches nothing', async () => {
