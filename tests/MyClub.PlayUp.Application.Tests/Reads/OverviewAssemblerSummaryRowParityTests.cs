@@ -38,6 +38,16 @@ public sealed class OverviewAssemblerSummaryRowParityTests
         fromSummaryRows.Should().BeEquivalentTo(fromMatches);
     }
 
+    private static bool HasOverviewDrawAction(
+        IReadOnlyList<OverviewActionDto> actions,
+        string code,
+        Stage stage,
+        Draw draw) =>
+        actions.Any(action =>
+            action.Code == code
+            && action.StageId == stage.Id.Value
+            && action.DrawId == draw.Id.Value);
+
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 9, 12, 18, 0, 0, TimeSpan.Zero));
 
     [Fact]
@@ -185,13 +195,4 @@ public sealed class OverviewAssemblerSummaryRowParityTests
         return (competition, stage, draw, [match]);
     }
 
-    private static bool HasOverviewDrawAction(
-        IReadOnlyList<OverviewActionDto> actions,
-        string code,
-        Stage stage,
-        Draw draw) =>
-        actions.Any(action =>
-            action.Code == code
-            && action.StageId == stage.Id.Value
-            && action.DrawId == draw.Id.Value);
 }
