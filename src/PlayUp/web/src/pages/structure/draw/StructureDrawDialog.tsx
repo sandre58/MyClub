@@ -1052,7 +1052,6 @@ export function StructureDrawDialog({
                     <li key={draw.id} className="structure-draw-previous__item">
                       <SelectableTile
                         as="div"
-                        tone="error"
                         selected={expanded}
                         className="structure-draw-previous__tile"
                       >
@@ -1074,43 +1073,43 @@ export function StructureDrawDialog({
                                 n: executionNumber,
                               })}
                             </span>
+                            {total > 0 && aligned === 0 ? (
+                              <Status
+                                density="compact"
+                                tone="success"
+                                variant="outline"
+                                shape="pill"
+                              >
+                                <span className="ds-status-inline">
+                                  <span
+                                    className="ds-status-inline__icon"
+                                    aria-hidden="true"
+                                  >
+                                    <ToastToneIcon tone="success" size="sm" />
+                                  </span>
+                                  {tDraw('runMetaReleased')}
+                                </span>
+                              </Status>
+                            ) : null}
+                            {aligned > 0 ? (
+                              <Status
+                                density="compact"
+                                tone="neutral"
+                                variant="outline"
+                                shape="pill"
+                              >
+                                {tDraw('runMetaUnreleased', {
+                                  aligned,
+                                  total,
+                                })}
+                              </Status>
+                            ) : null}
                             <span className="structure-draw-previous__meta">
                               <DrawStatusBadge
                                 status="Cancelled"
                                 density="compact"
                                 variant="outline"
                               />
-                              {total > 0 && aligned === 0 ? (
-                                <Status
-                                  density="compact"
-                                  tone="success"
-                                  variant="outline"
-                                  shape="pill"
-                                >
-                                  <span className="ds-status-inline">
-                                    <span
-                                      className="ds-status-inline__icon"
-                                      aria-hidden="true"
-                                    >
-                                      <ToastToneIcon tone="success" size="sm" />
-                                    </span>
-                                    {tDraw('runMetaReleased')}
-                                  </span>
-                                </Status>
-                              ) : null}
-                              {aligned > 0 ? (
-                                <Status
-                                  density="compact"
-                                  tone="neutral"
-                                  variant="outline"
-                                  shape="pill"
-                                >
-                                  {tDraw('runMetaUnreleased', {
-                                    aligned,
-                                    total,
-                                  })}
-                                </Status>
-                              ) : null}
                             </span>
                             <span
                               className="ds-selectable-tile__chevron"

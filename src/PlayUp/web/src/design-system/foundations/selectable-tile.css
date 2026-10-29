@@ -74,13 +74,19 @@
 }
 
 /* Cancelled / obsolete runs — base at rest; destructive chrome only when open. */
-.ds-selectable-tile[data-tone='error'][data-selected='true'] {
-  border-color: var(--color-error);
+.ds-selectable-tile[data-tone='error'] {
+  border-color: color-mix(in srgb, var(--color-error) 20%, var(--color-surface));
+  background: color-mix(in srgb, var(--color-error) 4%, var(--color-surface));
+}
+
+.ds-selectable-tile[data-tone='error']:hover:not(:disabled):not([aria-disabled='true']) {
+  border-color: color-mix(in srgb, var(--color-error) 25%, var(--color-surface));
   background: color-mix(in srgb, var(--color-error) 6%, var(--color-surface));
 }
 
-.ds-selectable-tile[data-tone='error'][data-selected='true']:hover:not(:disabled):not([aria-disabled='true']) {
-  background: color-mix(in srgb, var(--color-error) 8%, var(--color-surface));
+.ds-selectable-tile[data-tone='error'][data-selected='true'] {
+  border-color: var(--color-error)!important;
+  background: color-mix(in srgb, var(--color-error) 8%, var(--color-surface))!important;
 }
 
 .ds-root .ds-selectable-tile[data-tone='error'][data-selected='true']:has(.ds-selectable-tile__trigger:focus-visible) {

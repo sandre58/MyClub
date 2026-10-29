@@ -46,6 +46,7 @@
 .structure-draw-previous__item {
   margin: 0;
   padding: 0;
+  opacity: 0.7;
 }
 
 .structure-draw-previous__tile {
@@ -55,15 +56,6 @@
   width: 100%;
   padding: 0;
   overflow: hidden;
-}
-
-.structure-draw-previous__tile.ds-selectable-tile[data-tone='error'] {
-  opacity: 0.85;
-}
-
-.structure-draw-previous__tile.ds-selectable-tile[data-tone='error']:hover,
-.structure-draw-previous__tile.ds-selectable-tile[data-tone='error']:has(.ds-selectable-tile__trigger:focus-visible) {
-  opacity: 1;
 }
 
 .structure-draw-previous__header {
@@ -80,7 +72,6 @@
 }
 
 .structure-draw-previous__title {
-  flex: 1 1 auto;
   min-width: 0;
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
