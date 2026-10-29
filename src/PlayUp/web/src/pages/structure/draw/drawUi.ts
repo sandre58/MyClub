@@ -1010,3 +1010,29 @@ export function pickReleasableCancelledDraw(input: {
   }
   return best;
 }
+
+/** Footer focus after Libérer — enabled release secondary, else primary, else header X. */
+export function pickDrawFooterFocusAfterRelease(
+  dialog: Element,
+): HTMLElement | undefined {
+  const footer = dialog.querySelector('.structure-draw-footer');
+  if (!footer) {
+    return undefined;
+  }
+  const release = [
+    ...footer.querySelectorAll<HTMLButtonElement>('button'),
+  ].find(
+    (button) =>
+      !button.disabled &&
+      button.classList.contains('ds-btn--secondary') &&
+      (button.textContent?.includes('Libérer') ||
+        button.textContent?.includes('Release')),
+  );
+  const primary = footer.querySelector<HTMLElement>(
+    '.ds-btn--primary:not(:disabled)',
+  );
+  const closeButton = dialog.querySelector<HTMLElement>(
+    'button.ds-icon-button:not(:disabled)',
+  );
+  return release ?? primary ?? closeButton ?? undefined;
+}

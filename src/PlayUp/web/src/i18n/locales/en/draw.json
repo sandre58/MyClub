@@ -42,7 +42,6 @@
   "heroTeams": "teams",
   "heroGroups": "groups",
   "heroPlaces": "places",
-  "runsLabel": "Executions",
   "previousRunsTitle": "Previous executions ({{count}})",
   "previousRunsJump": "↓ {{count}} previous executions",
   "runTileLabel": "Execution #{{n}}, cancelled, {{meta}}",

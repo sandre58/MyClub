@@ -54,6 +54,7 @@ import {
   drawResolutionPlacementCount,
   getDrawUiProjection,
   pickActiveDraw,
+  pickDrawFooterFocusAfterRelease,
   projectSlotDrawResult,
   resolveDrawCreateBlockPresentation,
   resolveDrawDetailGuidance,
@@ -420,10 +421,12 @@ export function StructureDrawDialog({
     mutationFn: (drawId: string) =>
       releaseDrawAlignedPlacements(stageId, drawId),
     onSuccess: (result) => {
-      pendingReleaseFocusRef.current = true;
       closeConfirm();
       scheduleDrawHubRefresh();
       notify.success(tDraw('toastReleased', { count: result.releasedCount }));
+    },
+    onSettled: () => {
+      pendingReleaseFocusRef.current = true;
     },
   });
 
@@ -619,7 +622,7 @@ export function StructureDrawDialog({
     if (!open || !pendingReleaseFocusRef.current) {
       return;
     }
-    if (confirm != null || busy || releaseTarget != null) {
+    if (confirm != null || busy || overviewQuery.isFetching) {
       return;
     }
     const timer = window.setTimeout(() => {
@@ -630,14 +633,8 @@ export function StructureDrawDialog({
       if (!dialog) {
         return;
       }
-      const footer = dialog.querySelector('.structure-draw-footer');
-      const primary = footer?.querySelector<HTMLElement>(
-        '.ds-btn--primary:not(:disabled)',
-      );
-      const closeButton = dialog.querySelector<HTMLElement>(
-        'button.ds-icon-button:not(:disabled)',
-      );
-      (primary ?? closeButton)?.focus({ preventScroll: true });
+      const target = pickDrawFooterFocusAfterRelease(dialog);
+      target?.focus({ preventScroll: true });
       const now = document.activeElement;
       if (
         now instanceof HTMLButtonElement &&
@@ -648,7 +645,7 @@ export function StructureDrawDialog({
       }
     }, 160);
     return () => window.clearTimeout(timer);
-  }, [open, confirm, busy, releaseTarget, footerSignature]);
+  }, [open, confirm, busy, footerSignature, overviewQuery.isFetching]);
 
   useLayoutEffect(() => {
     if (!open) {
@@ -987,8 +984,12 @@ export function StructureDrawDialog({
               icon={<RandomIcon size="lg" />}
               title={tDraw('noActiveTitle')}
             >
-              {releaseTarget != null &&
-              releaseHoldFor(releaseTarget) !== 'publishedDraw' ? (
+              {releaseFooterBlocked ? (
+                <Alert tone="info" role="status">
+                  {tDraw('releaseBlockedAttachedMatches')}
+                </Alert>
+              ) : releaseTarget != null &&
+                releaseHoldFor(releaseTarget) !== 'publishedDraw' ? (
                 <p className="ds-body">
                   {tDraw('noActiveReleaseFirst', {
                     n: drawExecutionNumber(drawList, releaseTarget.id),
@@ -1042,10 +1043,7 @@ export function StructureDrawDialog({
               </div>
               <DrawExecutionView
                 draw={activeDraw}
-                executionNumber={drawExecutionNumber(drawList, activeDraw.id)}
                 readOnly={false}
-                showTitle={false}
-                showObsolete={false}
                 slots={slots}
                 groups={overviewGroups}
                 placesPerGroup={placesPerGroup}
@@ -1127,7 +1125,7 @@ export function StructureDrawDialog({
                     activeDraw={activeDraw}
                     aligned={alignedCountFor(expandedDraw)}
                     total={drawResolutionPlacementCount(expandedDraw)}
-                    releaseVisible={releaseVisible(expandedDraw)}
+                    releaseHold={releaseHoldFor(expandedDraw)}
                     slots={slots}
                     groups={overviewGroups}
                     placesPerGroup={placesPerGroup}
@@ -1355,7 +1353,7 @@ function CancelledDrawDetail({
   activeDraw,
   aligned,
   total,
-  releaseVisible,
+  releaseHold,
   slots,
   groups,
   placesPerGroup,
@@ -1367,7 +1365,7 @@ function CancelledDrawDetail({
   activeDraw: StageDraw | null;
   aligned: number;
   total: number;
-  releaseVisible: boolean;
+  releaseHold: 'publishedDraw' | 'attachedMatches' | null;
   slots: StageSlot[];
   groups: StageGroupOverview[];
   placesPerGroup: number | null;
@@ -1375,7 +1373,13 @@ function CancelledDrawDetail({
 }): ReactElement {
   const { t: tDraw } = useTranslation('draw');
   const titleId = `draw-detail-${draw.id}-title`;
-  const showHeldByActive = activeDraw != null && releaseVisible && aligned > 0;
+  const blockedByActive = activeDraw != null && aligned > 0;
+  const blockReason =
+    releaseHold === 'publishedDraw'
+      ? tDraw('releaseBlockedByPublishedDraw')
+      : releaseHold === 'attachedMatches'
+        ? tDraw('releaseBlockedAttachedMatches')
+        : tDraw('releaseHeldByActive');
 
   return (
     <section aria-labelledby={titleId}>
@@ -1387,20 +1391,17 @@ function CancelledDrawDetail({
         {tDraw('executionTitle', { n: executionNumber })}
         <DrawStatusBadge status="Cancelled" density="compact" />
       </h5>
-      {showHeldByActive ? (
+      {blockedByActive ? (
         <Alert tone="info" role="status">
           <p className="ds-body">
             {tDraw('runMetaUnreleased', { aligned, total })}
           </p>
-          <p className="ds-body">{tDraw('releaseHeldByActive')}</p>
+          <p className="ds-body">{blockReason}</p>
         </Alert>
       ) : null}
       <DrawExecutionView
         draw={draw}
-        executionNumber={executionNumber}
         readOnly
-        showTitle={false}
-        showObsolete={false}
         omitResultAriaLabel={Boolean(activeDraw)}
         slots={slots}
         groups={groups}
@@ -1459,10 +1460,7 @@ function DrawHeroFacts({
 
 function DrawExecutionView({
   draw,
-  executionNumber,
   readOnly,
-  showObsolete,
-  showTitle = true,
   omitResultAriaLabel = false,
   slots,
   groups,
@@ -1470,10 +1468,7 @@ function DrawExecutionView({
   bracketPairs,
 }: {
   draw: StageDraw;
-  executionNumber: number;
   readOnly: boolean;
-  showObsolete: boolean;
-  showTitle?: boolean;
   omitResultAriaLabel?: boolean;
   slots: StageSlot[];
   groups: StageGroupOverview[];
@@ -1518,19 +1513,6 @@ function DrawExecutionView({
 
   return (
     <div className="structure-draw-execution">
-      {showTitle ? (
-        <div className="structure-draw-title">
-          <h4 className="structure-draw-title__heading">
-            {t('executionTitle', { n: executionNumber })}
-          </h4>
-          <DrawStatusBadge status={draw.status} density="compact" />
-          {showObsolete ? (
-            <Status density="compact" tone="attention">
-              {t('obsolete')}
-            </Status>
-          ) : null}
-        </div>
-      ) : null}
       <div className="structure-draw-view">
         {showPhrase ? (
           <p className="structure-draw-detail__phrase" role="status">

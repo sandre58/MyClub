@@ -6,7 +6,15 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import { useState } from 'react';
 import { ApiError } from '../../../api/http';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+  beforeAll,
+  afterEach,
+} from 'vitest';
 import {
   cancelDraw,
   createAndGenerateDraw,
@@ -27,7 +35,14 @@ import type {
   StructureStageHubSummary,
 } from '../../../types';
 import { StructureDrawDialog } from './StructureDrawDialog';
+import { pickDrawFooterFocusAfterRelease } from './drawUi';
 import { scheduleStructureRefresh } from '../structureInvalidation';
+
+const scrollIntoViewMock = vi.fn();
+
+beforeAll(() => {
+  Element.prototype.scrollIntoView = scrollIntoViewMock;
+});
 
 vi.mock('../structureInvalidation', async (importOriginal) => {
   const actual =
@@ -239,6 +254,7 @@ describe('StructureDrawDialog', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     clearToasts();
+    scrollIntoViewMock.mockClear();
   });
 
   it('shows empty state and Create when there are no draws', async () => {
@@ -2087,7 +2103,8 @@ describe('StructureDrawDialog', () => {
   });
 
   it('returns focus to Lancer after Libérer succeeds', async () => {
-    const user = userEvent.setup();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     const placement = {
       slotKey: 'S1',
       entryId: 'e1',
@@ -2167,15 +2184,271 @@ describe('StructureDrawDialog', () => {
         screen.getByRole('button', { name: 'Lancer le tirage' }),
       ).toBeEnabled();
     });
-    await waitFor(
-      () => {
-        expect(
-          screen.getByRole('button', { name: 'Lancer le tirage' }),
-        ).toHaveFocus();
-      },
-      { timeout: 500 },
-    );
+    await vi.advanceTimersByTimeAsync(160);
+    expect(
+      screen.getByRole('button', { name: 'Lancer le tirage' }),
+    ).toHaveFocus();
     expect(screen.getByRole('button', { name: 'Fermer' })).not.toHaveFocus();
+    vi.useRealTimers();
+  });
+
+  describe('release footer focus (B2)', () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('shows Libérer on the older cancelled draw once the newer draw is cleared', async () => {
+      const placementOld = {
+        groupId: 'g-a',
+        groupDisplayName: 'A',
+        entryId: 'e1',
+        displayName: 'Older',
+      };
+      const payload = overview(
+        [
+          groupDraw({
+            id: 'draw-aaa',
+            status: 'Cancelled',
+            groupPlacements: [placementOld],
+          }),
+          groupDraw({
+            id: 'draw-zzz',
+            status: 'Cancelled',
+            groupPlacements: [],
+          }),
+        ],
+        {
+          groups: [
+            { id: 'g-a', name: 'A', entryIds: ['e1'] },
+            { id: 'g-b', name: 'B', entryIds: [] },
+          ],
+        },
+      );
+      vi.mocked(fetchStageOverview).mockResolvedValue(payload);
+      renderDialog(groupsStage());
+      expect(
+        await screen.findByRole('button', { name: 'Libérer #1 (1/1)' }),
+      ).toBeInTheDocument();
+    });
+
+    it('focuses the next Libérer when another cancelled draw stays releasable', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      const placementOld = {
+        groupId: 'g-a',
+        groupDisplayName: 'A',
+        entryId: 'e1',
+        displayName: 'Older',
+      };
+      const placementNew = {
+        groupId: 'g-b',
+        groupDisplayName: 'B',
+        entryId: 'e2',
+        displayName: 'Newer',
+      };
+      const beforeRelease = overview(
+        [
+          groupDraw({
+            id: 'draw-aaa',
+            status: 'Cancelled',
+            groupPlacements: [placementOld],
+          }),
+          groupDraw({
+            id: 'draw-zzz',
+            status: 'Cancelled',
+            groupPlacements: [placementNew],
+          }),
+        ],
+        {
+          groups: [
+            { id: 'g-a', name: 'A', entryIds: ['e1'] },
+            { id: 'g-b', name: 'B', entryIds: ['e2'] },
+          ],
+        },
+      );
+      const afterRelease = overview(
+        [
+          groupDraw({
+            id: 'draw-aaa',
+            status: 'Cancelled',
+            groupPlacements: [placementOld],
+          }),
+          groupDraw({
+            id: 'draw-zzz',
+            status: 'Cancelled',
+            groupPlacements: [],
+          }),
+        ],
+        {
+          groups: [
+            { id: 'g-a', name: 'A', entryIds: ['e1'] },
+            { id: 'g-b', name: 'B', entryIds: [] },
+          ],
+        },
+      );
+      vi.mocked(releaseDrawAlignedPlacements).mockResolvedValue({
+        releasedCount: 1,
+        skippedCount: 0,
+      });
+      vi.mocked(fetchStageOverview).mockImplementation(async () => {
+        if (vi.mocked(releaseDrawAlignedPlacements).mock.calls.length > 0) {
+          return afterRelease;
+        }
+        return beforeRelease;
+      });
+      renderDialog(groupsStage());
+      await user.click(
+        await screen.findByRole('button', { name: 'Libérer #2 (1/1)' }),
+      );
+      const confirm = await screen.findByRole('dialog', {
+        name: 'Libérer les placements du tirage ?',
+      });
+      await user.click(
+        within(confirm).getByRole('button', {
+          name: 'Libérer les placements du tirage',
+        }),
+      );
+      await waitFor(() => {
+        expect(
+          screen.queryByRole('dialog', {
+            name: 'Libérer les placements du tirage ?',
+          }),
+        ).not.toBeInTheDocument();
+      });
+      await waitFor(() => {
+        expect(
+          screen.getByRole('button', { name: 'Libérer #1 (1/1)' }),
+        ).toBeInTheDocument();
+      });
+      await vi.advanceTimersByTimeAsync(160);
+      await waitFor(() => {
+        expect(
+          screen.getByRole('button', { name: 'Libérer #1 (1/1)' }),
+        ).toHaveFocus();
+      });
+    });
+
+    it('focuses Libérer after a partial release on the same draw', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      vi.mocked(fetchStageOverview).mockResolvedValue(
+        overview(
+          [
+            slotDraw({
+              status: 'Cancelled',
+              slotPlacements: [
+                { slotKey: 'S1', entryId: 'e1', displayName: 'A' },
+                { slotKey: 'S2', entryId: 'e2', displayName: 'B' },
+              ],
+            }),
+          ],
+          {
+            slots: [
+              {
+                slotKey: 'S1',
+                entryId: 'e1',
+                displayName: 'A',
+                coveredByCompleteFixture: false,
+              },
+              {
+                slotKey: 'S2',
+                entryId: 'e9',
+                displayName: 'Other',
+                coveredByCompleteFixture: false,
+              },
+            ],
+          },
+        ),
+      );
+      vi.mocked(releaseDrawAlignedPlacements).mockResolvedValue({
+        releasedCount: 1,
+        skippedCount: 1,
+      });
+      renderDialog(cupStage());
+      await user.click(
+        await screen.findByRole('button', { name: 'Libérer #1 (1/2)' }),
+      );
+      const confirm = await screen.findByRole('dialog', {
+        name: 'Libérer les placements du tirage ?',
+      });
+      await user.click(
+        within(confirm).getByRole('button', {
+          name: 'Libérer les placements du tirage',
+        }),
+      );
+      await waitFor(() => {
+        expect(
+          screen.queryByRole('dialog', {
+            name: 'Libérer les placements du tirage ?',
+          }),
+        ).not.toBeInTheDocument();
+      });
+      await vi.advanceTimersByTimeAsync(160);
+      await waitFor(() => {
+        expect(
+          screen.getByRole('button', { name: 'Libérer #1 (1/2)' }),
+        ).toHaveFocus();
+      });
+    });
+
+    it('focuses footer after a failed release once the confirm closes', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      const placement = {
+        groupId: 'g-a',
+        groupDisplayName: 'A',
+        entryId: 'e1',
+        displayName: 'Alpha',
+      };
+      vi.mocked(fetchStageOverview).mockResolvedValue(
+        overview(
+          [
+            groupDraw({
+              status: 'Cancelled',
+              groupPlacements: [placement],
+            }),
+          ],
+          { groups: [{ id: 'g-a', name: 'A', entryIds: ['e1'] }] },
+        ),
+      );
+      vi.mocked(releaseDrawAlignedPlacements).mockRejectedValue(
+        new ApiError(409, 'Conflict', 'fail', 'Application.DrawReleaseBlocked'),
+      );
+      renderDialog(groupsStage());
+      await user.click(
+        await screen.findByRole('button', { name: 'Libérer #1 (1/1)' }),
+      );
+      const confirm = await screen.findByRole('dialog', {
+        name: 'Libérer les placements du tirage ?',
+      });
+      await user.click(
+        within(confirm).getByRole('button', {
+          name: 'Libérer les placements du tirage',
+        }),
+      );
+      await waitFor(() => {
+        expect(within(confirm).getByRole('alert')).toBeInTheDocument();
+      });
+      await user.click(
+        within(confirm).getAllByRole('button', { name: 'Fermer' })[0]!,
+      );
+      await waitFor(() => {
+        expect(
+          screen.queryByRole('dialog', {
+            name: 'Libérer les placements du tirage ?',
+          }),
+        ).not.toBeInTheDocument();
+      });
+      await vi.advanceTimersByTimeAsync(160);
+      await waitFor(() => {
+        const dialog = screen
+          .getByRole('heading', { name: /Exécutions de tirage/ })
+          .closest('[role="dialog"]') as HTMLElement;
+        const target = pickDrawFooterFocusAfterRelease(dialog);
+        expect(target).toHaveFocus();
+        expect(document.body).not.toHaveFocus();
+      });
+    });
   });
 
   it('disables Libérer and blocks Refaire when a Ready group has matches', async () => {
@@ -2256,7 +2529,7 @@ describe('StructureDrawDialog', () => {
     });
     expect(within(tile).getByText('1/1 non libérés')).toBeInTheDocument();
     expect(within(tile).queryByText(reason)).not.toBeInTheDocument();
-    expect(screen.getAllByText(reason)).toHaveLength(1);
+    expect(screen.getAllByText(reason)).toHaveLength(2);
     expect(
       screen.queryByRole('button', { name: 'Refaire le tirage' }),
     ).not.toBeInTheDocument();
@@ -2430,21 +2703,15 @@ describe('StructureDrawDialog', () => {
     const cancelled = await screen.findByRole('button', {
       name: /Exécution #2, annulée/,
     });
-    expect(
-      within(cancelled).getByText(/non libérés|Libérée/),
-    ).toBeInTheDocument();
+    expect(within(cancelled).getByText('1/1 non libérés')).toBeInTheDocument();
     expect(within(cancelled).queryByText(reason)).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Libérer/ }),
     ).not.toBeInTheDocument();
 
     await user.click(cancelled);
-    expect(screen.queryByText(reason)).not.toBeInTheDocument();
-    expect(
-      screen.queryByText(
-        'Abandonnez l’exécution active pour libérer ces placements',
-      ),
-    ).not.toBeInTheDocument();
+    expect(screen.getByText(reason)).toBeInTheDocument();
+    expect(screen.getAllByText('1/1 non libérés').length).toBeGreaterThan(0);
     expect(
       screen.queryByRole('button', { name: /Libérer/ }),
     ).not.toBeInTheDocument();
@@ -2527,6 +2794,130 @@ describe('StructureDrawDialog', () => {
     expect(
       screen.getByRole('button', { name: /Exécution #1, annulée/ }),
     ).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('shows attached-match guidance instead of release-first copy when Libérer is disabled', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview(
+        [
+          groupDraw({
+            id: 'draw-old',
+            status: 'Cancelled',
+            groupPlacements: [
+              {
+                groupId: 'g-a',
+                groupDisplayName: 'A',
+                entryId: 'e1',
+                displayName: 'Alpha',
+              },
+            ],
+          }),
+        ],
+        {
+          status: 'Ready',
+          groups: [{ id: 'g-a', name: 'A', entryIds: ['e1'] }],
+        },
+      ),
+    );
+    renderDialog(groupsStage({ status: 'Ready', matchCount: 2 }));
+    expect(
+      await screen.findByText('Aucun tirage en cours'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByText(
+        'Libérer est indisponible : des matchs sont déjà rattachés à cette phase.',
+      ).length,
+    ).toBeGreaterThanOrEqual(1);
+    expect(
+      screen.queryByText(/Libérez d'abord les placements/),
+    ).not.toBeInTheDocument();
+  });
+
+  it('keeps the footer unchanged when a disclosure tile is toggled', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([
+        groupDraw({ id: 'draw-a', status: 'Cancelled' }),
+        groupDraw({ id: 'draw-b', status: 'Draft' }),
+      ]),
+    );
+    renderDialog();
+    await screen.findByRole('button', { name: 'Relancer' });
+    const footer = document.querySelector('.structure-draw-footer');
+    expect(footer).not.toBeNull();
+    const before = (footer as HTMLElement).innerHTML;
+    await user.click(
+      await screen.findByRole('button', { name: /Exécution #1, annulée/ }),
+    );
+    expect((footer as HTMLElement).innerHTML).toBe(before);
+  });
+
+  it('allows only one cancelled disclosure tile to stay open', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([
+        groupDraw({ id: 'draw-a', status: 'Cancelled' }),
+        groupDraw({ id: 'draw-b', status: 'Cancelled' }),
+        groupDraw({ id: 'draw-c', status: 'Draft' }),
+      ]),
+    );
+    renderDialog();
+    const first = await screen.findByRole('button', {
+      name: /Exécution #1, annulée/,
+    });
+    const second = await screen.findByRole('button', {
+      name: /Exécution #2, annulée/,
+    });
+    await user.click(first);
+    expect(first).toHaveAttribute('aria-expanded', 'true');
+    expect(second).toHaveAttribute('aria-expanded', 'false');
+    await user.click(second);
+    expect(second).toHaveAttribute('aria-expanded', 'true');
+    expect(first).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('shows noActiveBody when cancelled draws are not releasable', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([
+        groupDraw({
+          status: 'Cancelled',
+          groupPlacements: [],
+        }),
+      ]),
+    );
+    renderDialog();
+    expect(
+      await screen.findByText('Aucun tirage en cours'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Lancez un nouveau tirage')).toBeInTheDocument();
+  });
+
+  it('shows noActiveReleaseFirst when a releasable cancelled draw blocks launch', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview(
+        [
+          groupDraw({
+            id: 'draw-old',
+            status: 'Cancelled',
+            groupPlacements: [
+              {
+                groupId: 'g-a',
+                groupDisplayName: 'A',
+                entryId: 'e1',
+                displayName: 'Alpha',
+              },
+            ],
+          }),
+        ],
+        { groups: [{ id: 'g-a', name: 'A', entryIds: ['e1'] }] },
+      ),
+    );
+    renderDialog();
+    expect(
+      await screen.findByText(
+        "Libérez d'abord les placements de l'exécution #1",
+      ),
+    ).toBeInTheDocument();
   });
 
   it('restores footer focus after Relancer when focus falls back to the body', async () => {
