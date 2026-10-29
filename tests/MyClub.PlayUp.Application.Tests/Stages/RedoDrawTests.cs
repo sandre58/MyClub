@@ -149,6 +149,46 @@ public sealed class RedoDrawTests
     }
 
     [Fact]
+    public void Redo_rejects_a_draft_draw_that_was_never_applied()
+    {
+        var stage = CreateStage();
+        stage.AddSlot("S1");
+        ReplaceStageDrawRules.Execute(stage, new DrawRules(DrawMode.Random), _clock);
+        var entry = EntryId.New();
+        stage.ReplaceAffectationAuthoring([entry], _clock);
+        var draw = CreateDraw.Execute(stage, DrawResolutionKind.Slot, _clock);
+
+        AssertBlocked(
+            () => RedoDraw.Execute(stage, draw.Id, _clock, [stage]),
+            ApplicationErrorCodes.DrawRedoRequiresApplied);
+        stage.GetDraw(draw.Id).Status.Should().Be(DrawStatus.Draft);
+        stage.Draws.Should().ContainSingle();
+        stage.FindSlot("S1")!.EntryId.Should().BeNull();
+    }
+
+    [Fact]
+    public void Redo_rejects_a_draw_already_cancelled()
+    {
+        var stage = CreateStage();
+        stage.AddSlot("S1");
+        var entry = EntryId.New();
+        stage.ReplaceAffectationAuthoring([entry], _clock);
+        var draw = ResolveSlotDraw(stage, [new SlotDrawPlacement(entry, "S1")]);
+        stage.PublishDraw(draw.Id, _clock);
+        ApplyDraw.Execute(stage, draw.Id, _clock);
+        CancelDraw.Execute(stage, draw.Id, _clock);
+
+        AssertBlocked(
+            () => RedoDraw.Execute(stage, draw.Id, _clock, [stage]),
+            ApplicationErrorCodes.DrawRedoRequiresApplied);
+        stage.GetDraw(draw.Id).Status.Should().Be(DrawStatus.Cancelled);
+        stage.Draws.Should().ContainSingle();
+
+        // Cancel does not unwind materialization: the slot stays occupied, untouched by the refusal.
+        stage.FindSlot("S1")!.EntryId.Should().Be(entry);
+    }
+
+    [Fact]
     public void Redo_surfaces_a_sibling_feed_the_upfront_single_stage_evaluator_cannot_see()
     {
         var competitionId = CompetitionId.New();
