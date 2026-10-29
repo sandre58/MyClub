@@ -102,6 +102,7 @@ export function AddPhaseFormatParams({ state, onChange }: Props) {
               <ChoiceTile
                 key={size}
                 label={String(size)}
+                layout="inline"
                 selected={state.bracketSize === size}
                 onChange={(selected) => {
                   if (!selected) return;

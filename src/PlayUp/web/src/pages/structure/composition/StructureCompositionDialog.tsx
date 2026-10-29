@@ -9,8 +9,8 @@ import { useTranslation } from 'react-i18next';
 import { replaceStageAffectationAuthoring } from '../../../api';
 import { Chip } from '../../../design-system/components/Chip';
 import { ConfirmDialog } from '../../../design-system/components/ConfirmDialog';
+import { ChoiceTile } from '../../../design-system/components/ChoiceTile';
 import { Dialog } from '../../../design-system/components/Dialog';
-import { SelectableTile } from '../../../design-system/components/SelectableTile';
 import { TextLink } from '../../../design-system/components/TextLink';
 import { Tooltip } from '../../../design-system/components/Tooltip';
 import {
@@ -61,14 +61,11 @@ type CompositionFact = {
   label: string;
 };
 
-/** Restantes tone. Near is the last open affectation place. */
-type CompositionRemainingTone = 'short' | 'near' | 'exact' | 'over';
+/** Restantes tone. Zero stays secondary; any other count is attention. */
+type CompositionRemainingTone = 'attention' | 'secondary';
 
 function compositionRemainingTone(remaining: number): CompositionRemainingTone {
-  if (remaining < 0) return 'over';
-  if (remaining === 0) return 'exact';
-  if (remaining === 1) return 'near';
-  return 'short';
+  return remaining === 0 ? 'secondary' : 'attention';
 }
 
 function sameIdSet(a: Set<string>, b: ReadonlySet<string>): boolean {
@@ -98,42 +95,32 @@ function CompositionTeamRow({
   withdrawnTip,
   onToggle,
 }: CompositionTeamRowProps) {
+  const disabled = pending || (!row.eligible && !row.selected) || locked;
+
   return (
-    <SelectableTile
-      as="label"
+    <ChoiceTile
+      label={row.displayName}
+      leading={
+        <TeamCrest
+          name={row.displayName}
+          logoMediaId={row.logoMediaId}
+          primaryColor={row.primaryColor}
+          size="sm"
+        />
+      }
+      description={
+        !row.eligible ? (
+          <Tooltip content={withdrawnTip}>
+            <Chip tone="neutral">{withdrawnLabel}</Chip>
+          </Tooltip>
+        ) : undefined
+      }
       selected={row.selected}
-      aria-disabled={locked ? true : undefined}
-      className={[
-        'structure-composition__row',
-        !row.eligible ? 'structure-composition__row--ineligible' : null,
-        locked ? 'structure-composition__row--locked' : null,
-      ]
-        .filter(Boolean)
-        .join(' ')}
-    >
-      <TeamCrest
-        name={row.displayName}
-        logoMediaId={row.logoMediaId}
-        primaryColor={row.primaryColor}
-        size="sm"
-      />
-      <span className="structure-composition__name">{row.displayName}</span>
-      {!row.eligible ? (
-        <Tooltip content={withdrawnTip}>
-          <Chip tone="neutral" className="structure-composition__withdrawn">
-            {withdrawnLabel}
-          </Chip>
-        </Tooltip>
-      ) : null}
-      <input
-        type="checkbox"
-        className="structure-composition__check"
-        checked={row.selected}
-        disabled={pending || (!row.eligible && !row.selected) || locked}
-        aria-describedby={locked ? capacityHintId : undefined}
-        onChange={() => onToggle(row.entryId, row.selected)}
-      />
-    </SelectableTile>
+      layout="inline"
+      disabled={disabled}
+      aria-describedby={locked ? capacityHintId : undefined}
+      onChange={() => onToggle(row.entryId, row.selected)}
+    />
   );
 }
 
@@ -266,18 +253,18 @@ export function StructureCompositionDialog({
     value: String(k),
     label: t('composition.factSelected', { count: k }),
   });
-  if (remaining != null) {
-    facts.push({
-      key: 'remaining',
-      value: String(remaining),
-      label: t('composition.factRemaining', { count: remaining }),
-    });
-  }
   if (reserved > 0) {
     facts.push({
       key: 'reserved',
       value: String(reserved),
       label: t('composition.factReserved', { count: reserved }),
+    });
+  }
+  if (remaining != null) {
+    facts.push({
+      key: 'remaining',
+      value: String(remaining),
+      label: t('composition.factRemaining', { count: remaining }),
     });
   }
 
@@ -408,10 +395,20 @@ export function StructureCompositionDialog({
                     />
                   ) : null}
                   <span
-                    className="structure-qualification__fact structure-qualification__fact--secondary"
+                    className={[
+                      'structure-qualification__fact',
+                      fact.key === 'selected'
+                        ? 'structure-qualification__fact--primary'
+                        : 'structure-qualification__fact--secondary',
+                    ].join(' ')}
                     data-fact={fact.key}
                   >
-                    <span className="structure-qualification__fact-value">
+                    <span
+                      className="structure-qualification__fact-value"
+                      data-zero={
+                        fact.key === 'selected' && k === 0 ? 'true' : undefined
+                      }
+                    >
                       {fact.value}
                     </span>
                     <span className="structure-qualification__fact-label">

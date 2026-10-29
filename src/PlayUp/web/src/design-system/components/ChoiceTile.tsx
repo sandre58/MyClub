@@ -17,6 +17,14 @@ export type ChoiceTileProps = {
   disabled?: boolean;
   /** Accessible name; defaults to label. */
   'aria-label'?: string;
+  /** Why the option is unavailable, or other supplementary text. */
+  'aria-describedby'?: string;
+  /**
+   * `stacked` (default) aligns the check to the first line — title plus a
+   * description or other multi-line content. `inline` centers the check for
+   * a single line (crest + name, swatch + label).
+   */
+  layout?: 'stacked' | 'inline';
 };
 
 /**
@@ -32,15 +40,25 @@ export function ChoiceTile({
   leadingPlacement = 'start',
   disabled = false,
   'aria-label': ariaLabel,
+  'aria-describedby': ariaDescribedBy,
+  layout = 'stacked',
 }: ChoiceTileProps) {
+  const classes = [
+    'ds-choice-tile',
+    layout === 'inline' ? 'ds-choice-tile--inline' : null,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
     <button
       type="button"
       role="checkbox"
       aria-checked={selected}
       aria-label={ariaLabel ?? label}
+      aria-describedby={ariaDescribedBy}
       disabled={disabled}
-      className="ds-choice-tile"
+      className={classes}
       data-selected={selected ? 'true' : 'false'}
       data-disabled={disabled ? 'true' : 'false'}
       data-leading={leading ? leadingPlacement : undefined}

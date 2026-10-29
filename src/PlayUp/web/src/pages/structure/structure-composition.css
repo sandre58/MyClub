@@ -36,22 +36,15 @@
   width: 100%;
 }
 
-/* Restantes only. Near and over share the attention token; over also colors the label. */
+/* Sélectionnées stays primary. At zero only the number uses the secondary color. */
 
-.structure-composition__facts[data-tone='short'] [data-fact='remaining'] .structure-qualification__fact-value {
-  color: var(--color-brand);
+.structure-composition__facts [data-fact='selected'] .structure-qualification__fact-value[data-zero='true'] {
+  color: var(--color-text-secondary);
 }
 
-.structure-composition__facts[data-tone='near'] [data-fact='remaining'] .structure-qualification__fact-value {
-  color: var(--color-attention);
-}
+/* Restantes number only. Open and over-cap counts use attention; zero stays secondary. */
 
-.structure-composition__facts[data-tone='exact'] [data-fact='remaining'] .structure-qualification__fact-value {
-  color: var(--color-success);
-}
-
-.structure-composition__facts[data-tone='over'] [data-fact='remaining'] .structure-qualification__fact-value,
-.structure-composition__facts[data-tone='over'] [data-fact='remaining'] .structure-qualification__fact-label {
+.structure-composition__facts[data-tone='attention'] [data-fact='remaining'] .structure-qualification__fact-value {
   color: var(--color-attention);
 }
 
@@ -76,7 +69,7 @@
   list-style: none;
   display: grid;
   flex: 1 1 auto;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
   gap: var(--space-8);
   align-content: start;
   min-height: 0;
@@ -90,52 +83,11 @@
   margin: 0;
 }
 
-.structure-composition__row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-8);
+/* Fill the grid cell. ChoiceTile chrome stays in the design system. */
+
+.structure-composition__list .ds-choice-tile {
   width: 100%;
-  margin: 0;
-  padding: var(--space-8);
-  font: inherit;
-  text-align: start;
-  cursor: pointer;
   min-width: 0;
-}
-
-.structure-composition__row .team-crest {
-  flex: none;
-}
-
-.structure-composition__row--ineligible {
-  color: var(--color-text-secondary);
-}
-
-.structure-composition__row--locked {
-  border-color: var(--color-border-strong);
-  background: var(--color-surface-secondary);
-  color: var(--color-text-secondary);
-  cursor: not-allowed;
-}
-
-.structure-composition__name {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--leading-tight);
-}
-
-.structure-composition__row > .ds-tooltip-trigger,
-.structure-composition__withdrawn {
-  flex: none;
-}
-
-.structure-composition__check {
-  flex: none;
-  margin-inline-start: auto;
 }
 
 .structure-composition__empty {
@@ -151,10 +103,4 @@
 
 .structure-composition__empty p {
   margin: 0;
-}
-
-@media (max-width: 36rem) {
-  .structure-composition__list {
-    grid-template-columns: 1fr;
-  }
 }

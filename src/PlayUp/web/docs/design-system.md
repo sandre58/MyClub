@@ -144,11 +144,11 @@ Do not collapse them: pulse activity ≠ tone chip.
 
 There is **no** generic `Card` foundation (see `foundations/surfaces.css`). New UI must pick one of the families below — do not invent a fourth “card” chrome.
 
-| Family                 | Mechanism                                            | Role                                                         | Typical usages                                                          |
-| ---------------------- | ---------------------------------------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------- |
-| **A. Choice tile**     | `ChoiceTile` + `.ds-choice-tile` (`role="checkbox"`) | Parameter / option choice inside a **form**                  | Structure dialogs scope, Regulation discipline, AddPhase format         |
-| **B. Selectable tile** | `.ds-selectable-tile` + page layout classes          | **Entity** selectable in a list/grid (selection chrome only) | `teams-tile`, `structure-topology__tile`, qualif/prog rows, draw master |
-| **C. Panel**           | `.ds-panel` (+ `PanelHead`)                          | Content container (not decorative card farm)                 | Overview, Classements, Matches hub, Stage                               |
+| Family                 | Mechanism                                                         | Role                                                                                 | Typical usages                                                               |
+| ---------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| **A. Choice tile**     | `ChoiceTile` + `.ds-choice-tile` (`role="checkbox"`, check glyph) | Option inside a form, including a simple entity (crest + name) in a selection dialog | Structure scope, Regulation discipline, AddPhase format, Équipes affectation |
+| **B. Selectable tile** | `.ds-selectable-tile` + page layout classes (no check glyph)      | Rich entity tile in a list or grid                                                   | Teams page, structure topology, qualif/prog rows, draw master                |
+| **C. Panel**           | `.ds-panel` (+ `PanelHead`)                                       | Content container (not decorative card farm)                                         | Overview, Classements, Matches hub, Stage                                    |
 
 **PanelHead** — leading section icon uses `color-brand` (`.ds-panel-head__icon`). Do not recolor section icons to neutral gray.
 
@@ -168,7 +168,7 @@ There is **no** generic `Card` foundation (see `foundations/surfaces.css`). New 
 
 1. **No new one-off “card” CSS** for selection or content chrome — reuse A / B / C.
 2. **B** owns selection visuals exclusively via `.ds-selectable-tile` + `data-selected="true"` (brand border + tint tokens). Page classes may layout content only — **never** re-color selection (no hard-coded blues).
-3. **A** is for form options only — not team/phase lists.
+3. **A** is the checkbox option tile, including a simple entity (crest + name) chosen inside a selection form or dialog. **B** is the rich entity tile in a list or grid (Teams page, topology, draw master, qualif/prog rows) and has no check glyph. On **A**, `layout="inline"` is for an entity or option rendered on one line (the check is vertically centered). `layout="stacked"` (the default) applies as soon as there is a description or other multi-line content (the check stays on the first line).
 4. **C** — no panel-in-panel card farm; prefer Group + proximity for clustering.
 5. Prefer the `__tile` suffix for family **B** page classes (pilots: topology, draw master, qualification rows). Remaining `__card` names are debt to rename when the file is already open.
 6. List rows with checkboxes (e.g. roster members) are **not** family B — use row layout + checkbox; do not fake tile selection chrome.
