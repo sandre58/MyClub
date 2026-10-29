@@ -57,6 +57,7 @@ Public **`--color-*`** roles on `.ds-root` (see `tokens/colors.css`). Sole produ
 
 - Canonical: `components/Dialog.tsx` + `foundations/dialog.css`.
 - **Close = icon X**; accessible name via `closeLabel` (default « Fermer »). Do **not** replace with a text « Fermer » button.
+- **Initial focus.** Default `initialFocus="body"` focuses the first control in the body, then the footer. `initialFocus="footer"` focuses the footer first so a body control does not take the primary action. Footer order: enabled `.ds-btn--primary`, then enabled `.ds-btn--destructive`, then the last focusable control. Pass `focusKey` to apply that focus again when the dialog stays open and the product state changes.
 - Interactive specimen: Design Lab surface **Dialog** only.
 - `AttentionDrawer` is Shell triage — not Dialog.
 

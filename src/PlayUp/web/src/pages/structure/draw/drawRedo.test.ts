@@ -84,7 +84,7 @@ describe('resolveAppliedDrawRedo', () => {
     ).toEqual({ kind: 'available' });
   });
 
-  it('hides Refaire for a group phase in Ready', () => {
+  it('allows Refaire for an applied group draw while the phase is Ready', () => {
     expect(
       resolveAppliedDrawRedo({
         formatKind: 'Groups',
@@ -96,7 +96,7 @@ describe('resolveAppliedDrawRedo', () => {
         bracketPairs: [],
         rounds: [],
       }),
-    ).toEqual({ kind: 'blocked', reason: 'groupNotDraft' });
+    ).toEqual({ kind: 'available' });
   });
 
   it('blocks Cup Refaire when a touched pair has a fixture attachment', () => {

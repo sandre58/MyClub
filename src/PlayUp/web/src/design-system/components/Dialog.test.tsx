@@ -164,4 +164,82 @@ describe('Dialog', () => {
     );
     expect(status.closest('.ds-dialog__body')).toBeNull();
   });
+
+  it('focuses the primary footer action before a destructive one', async () => {
+    const user = userEvent.setup();
+
+    function DestructiveFirstHarness() {
+      const [open, setOpen] = useState(false);
+      return (
+        <div className="ds-root" data-font="plex" data-palette="slate">
+          <button type="button" onClick={() => setOpen(true)}>
+            Ouvrir
+          </button>
+          <Dialog
+            open={open}
+            onClose={() => setOpen(false)}
+            title="Confirmer"
+            footer={
+              <>
+                <button type="button" className="ds-btn ds-btn--destructive">
+                  Supprimer
+                </button>
+                <button type="button" className="ds-btn ds-btn--primary">
+                  Garder
+                </button>
+              </>
+            }
+          >
+            <p>Message seulement</p>
+          </Dialog>
+        </div>
+      );
+    }
+
+    render(<DestructiveFirstHarness />);
+    await user.click(screen.getByRole('button', { name: 'Ouvrir' }));
+    const dialog = await screen.findByRole('dialog');
+    await waitFor(() => {
+      expect(
+        within(dialog).getByRole('button', { name: 'Garder' }),
+      ).toHaveFocus();
+    });
+  });
+
+  it('focuses the footer before the body when initialFocus is footer', async () => {
+    const user = userEvent.setup();
+
+    function FooterFirstHarness() {
+      const [open, setOpen] = useState(false);
+      return (
+        <div className="ds-root" data-font="plex" data-palette="slate">
+          <button type="button" onClick={() => setOpen(true)}>
+            Ouvrir
+          </button>
+          <Dialog
+            open={open}
+            onClose={() => setOpen(false)}
+            title="Tirage"
+            initialFocus="footer"
+            footer={
+              <button type="button" className="ds-btn ds-btn--primary">
+                Valider
+              </button>
+            }
+          >
+            <button type="button">Libérer</button>
+          </Dialog>
+        </div>
+      );
+    }
+
+    render(<FooterFirstHarness />);
+    await user.click(screen.getByRole('button', { name: 'Ouvrir' }));
+    const dialog = await screen.findByRole('dialog');
+    await waitFor(() => {
+      expect(
+        within(dialog).getByRole('button', { name: 'Valider' }),
+      ).toHaveFocus();
+    });
+  });
 });

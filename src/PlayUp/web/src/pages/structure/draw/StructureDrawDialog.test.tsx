@@ -397,8 +397,10 @@ describe('StructureDrawDialog', () => {
 
     renderDialog();
 
-    await screen.findByText('Aucun résultat');
-    expect(screen.getAllByText('Annulé').length).toBeGreaterThan(0);
+    expect(
+      await screen.findByText('#1 · Annulée · libérée'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Aucun résultat')).not.toBeInTheDocument();
     expect(
       screen.queryByText(
         'Exécution annulée. Un nouveau tirage est nécessaire pour recommencer.',
@@ -603,9 +605,11 @@ describe('StructureDrawDialog', () => {
       await screen.findByRole('button', { name: 'Lancer le tirage' }),
     ).toBeDisabled();
 
-    await user.click(
-      await screen.findByRole('button', { name: 'Libérer 2/2' }),
-    );
+    const releaseButtons = await screen.findAllByRole('button', {
+      name: 'Libérer 2/2',
+    });
+    expect(releaseButtons.length).toBeGreaterThan(1);
+    await user.click(releaseButtons[0]!);
     const confirmDialog = await screen.findByRole('dialog', {
       name: 'Libérer les placements du tirage ?',
     });
@@ -659,10 +663,11 @@ describe('StructureDrawDialog', () => {
     );
 
     await waitFor(() => {
-      expect(
-        screen.getByText('Résultat généré, prêt à être publié.'),
-      ).toBeInTheDocument();
+      expect(screen.getByText('Exécution #2 · 8 équipes')).toBeInTheDocument();
     });
+    expect(
+      screen.queryByText('Résultat généré, prêt à être publié.'),
+    ).not.toBeInTheDocument();
     expect(screen.getByText('Exécutions précédentes (1)')).toBeInTheDocument();
     expect(
       screen.queryByLabelText('Historique des exécutions'),
@@ -727,13 +732,13 @@ describe('StructureDrawDialog', () => {
     renderDialog();
 
     expect(
-      await screen.findByRole('heading', { name: 'Tirage Groupe' }),
+      await screen.findByText('Exécution #1 · 8 équipes'),
     ).toBeInTheDocument();
+    expect(screen.getByText('Brouillon')).toBeInTheDocument();
     expect(
-      screen.getByText('Résultat généré, prêt à être publié.'),
-    ).toBeInTheDocument();
-    expect(screen.getAllByText('Résolu')).toHaveLength(1);
-    expect(screen.queryByText('Brouillon')).not.toBeInTheDocument();
+      screen.queryByText('Résultat généré, prêt à être publié.'),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText('Résolu')).not.toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: 'Historique' }),
     ).not.toBeInTheDocument();
@@ -806,15 +811,18 @@ describe('StructureDrawDialog', () => {
     renderDialog(cupStage());
 
     expect(
-      await screen.findByRole('heading', { name: 'Tirage Emplacement' }),
+      await screen.findByRole('listitem', { name: 'P1 · S1 vs S2' }),
     ).toBeInTheDocument();
     expect(screen.getByText('Belgium')).toBeInTheDocument();
     expect(screen.getByText('Poland')).toBeInTheDocument();
     expect(screen.getByText('Turkey')).toBeInTheDocument();
     expect(screen.getByText('Denmark')).toBeInTheDocument();
-    expect(screen.getByText('P1 · S1/S2')).toBeInTheDocument();
-    expect(screen.getByText('P2 · S3/S4')).toBeInTheDocument();
-    expect(screen.getAllByText('vs')).toHaveLength(2);
+    expect(screen.getByText('P1')).toBeInTheDocument();
+    expect(screen.getByText('S1 vs S2')).toBeInTheDocument();
+    expect(screen.getByText('P2')).toBeInTheDocument();
+    expect(screen.getByText('S3 vs S4')).toBeInTheDocument();
+    expect(document.querySelector('.ds-interactive-row__chevron')).toBeNull();
+    expect(document.querySelector('.draw-confrontation')).toBeNull();
     expect(screen.queryByText('#1')).not.toBeInTheDocument();
     expect(document.querySelector('.regulation-schematic--cup')).toBeNull();
     expect(document.querySelector('.schematic-cup')).toBeNull();
@@ -840,12 +848,11 @@ describe('StructureDrawDialog', () => {
     renderDialog(cupStage());
 
     expect(
-      await screen.findByRole('heading', { name: 'Tirage Emplacement' }),
+      await screen.findByRole('listitem', { name: 'P1 · S1 vs S2' }),
     ).toBeInTheDocument();
     expect(screen.getByText('Belgium')).toBeInTheDocument();
     expect(screen.getByText('Poland')).toBeInTheDocument();
-    expect(screen.getByText('P1 · S1/S2')).toBeInTheDocument();
-    expect(screen.getByText('vs')).toBeInTheDocument();
+    expect(screen.getByText('S1 vs S2')).toBeInTheDocument();
     expect(screen.queryByText('→')).not.toBeInTheDocument();
   });
 
@@ -869,14 +876,13 @@ describe('StructureDrawDialog', () => {
 
     renderDialog(cupStage());
 
+    const leftovers = await screen.findByRole('list', { name: 'Placements' });
     expect(
-      await screen.findByRole('heading', { name: 'Tirage Emplacement' }),
+      within(leftovers).getByRole('listitem', { name: 'S9 · Spain' }),
     ).toBeInTheDocument();
-    const leftovers = screen.getByRole('list', { name: 'Placements' });
-    expect(within(leftovers).getByText('S9')).toBeInTheDocument();
     expect(within(leftovers).getByText('Spain')).toBeInTheDocument();
-    expect(within(leftovers).getByText('→')).toBeInTheDocument();
-    expect(leftovers.querySelector('.regulation-schematic')).toBeNull();
+    expect(within(leftovers).queryByText('→')).not.toBeInTheDocument();
+    expect(leftovers.querySelector('.ds-match-row')).not.toBeNull();
   });
 
   it('shows Sans solution as a danger alert and keeps publish hidden', async () => {
@@ -895,7 +901,8 @@ describe('StructureDrawDialog', () => {
       'Aucune résolution valide n’a pu être générée.',
     );
     expect(message.closest('.ds-alert')).toHaveClass('ds-alert--danger');
-    expect(screen.getAllByText('Sans solution').length).toBeGreaterThan(0);
+    expect(screen.getByText('Brouillon')).toBeInTheDocument();
+    expect(screen.queryByText('Sans solution')).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: 'Valider le tirage' }),
     ).not.toBeInTheDocument();
@@ -930,7 +937,10 @@ describe('StructureDrawDialog', () => {
       screen.queryByText('Résultat appliqué à la phase.'),
     ).not.toBeInTheDocument();
     expect(screen.getAllByText('Publié').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Appliqué').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Appliqué')).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Refaire le tirage' }).className,
+    ).toContain('ds-btn--primary');
   });
 
   it('keeps the current execution full width and folds cancelled runs', async () => {
@@ -950,21 +960,18 @@ describe('StructureDrawDialog', () => {
 
     renderDialog();
 
-    const current = await screen.findByRole('heading', {
-      name: 'Tirage Groupe',
-    });
-    expect(current.closest('section')).toHaveTextContent('Résolu');
-    expect(current.closest('section')).not.toHaveTextContent('Brouillon');
+    expect(
+      await screen.findByText('Exécution #2 · 8 équipes'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Brouillon')).toBeInTheDocument();
+    expect(document.querySelector('.ds-panel .ds-panel')).toBeNull();
     expect(
       screen.queryByLabelText('Historique des exécutions'),
     ).not.toBeInTheDocument();
     expect(screen.getByText('Exécutions précédentes (1)')).toBeInTheDocument();
 
     await user.click(screen.getByText('Exécutions précédentes (1)'));
-    const previous = await screen.findByRole('heading', {
-      name: 'Exécution #1',
-    });
-    expect(previous.closest('section')).toHaveTextContent('Annulé');
+    expect(screen.getByText('#1 · Annulée · libérée')).toBeInTheDocument();
     expect(
       screen.queryByText(
         'Exécution annulée. Un nouveau tirage est nécessaire pour recommencer.',
@@ -1103,7 +1110,9 @@ describe('StructureDrawDialog', () => {
 
     renderDialog(groupsStage(), true, 'Completed');
 
-    await screen.findByRole('heading', { name: 'Tirage Groupe' });
+    expect(
+      await screen.findByText('Exécution #1 · 8 équipes'),
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: 'Abandonner' }),
     ).not.toBeInTheDocument();
@@ -1116,7 +1125,9 @@ describe('StructureDrawDialog', () => {
 
     renderDialog(groupsStage({ status: 'Running' }), true, 'Running');
 
-    await screen.findByRole('heading', { name: 'Tirage Groupe' });
+    expect(
+      await screen.findByText('Exécution #1 · 8 équipes'),
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: 'Abandonner' }),
     ).not.toBeInTheDocument();
@@ -1170,15 +1181,16 @@ describe('StructureDrawDialog', () => {
     renderDialog(cupStage());
 
     expect(
-      await screen.findByRole('button', { name: 'Libérer 1/2' }),
+      await screen.findByText('#1 · Annulée · 1/2 placements non libérés'),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText('Annulé, placements non libérés'),
-    ).toBeInTheDocument();
+    const releaseButtons = screen.getAllByRole('button', {
+      name: 'Libérer 1/2',
+    });
+    expect(releaseButtons).toHaveLength(2);
     expect(
       screen.queryByText(/placements encore présents/),
     ).not.toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Libérer 1/2' }));
+    await user.click(releaseButtons[0]!);
     const confirm = await screen.findByRole('dialog', {
       name: 'Libérer les placements du tirage ?',
     });
@@ -1314,7 +1326,7 @@ describe('StructureDrawDialog', () => {
     expect(rerunDrawGeneration).toHaveBeenCalledTimes(1);
   });
 
-  it('refuses Refaire for a group phase that is Ready and explains why', async () => {
+  it('allows Refaire for an applied group draw while the phase is Ready', async () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
       overview(
         [
@@ -1329,13 +1341,15 @@ describe('StructureDrawDialog', () => {
 
     renderDialog(groupsStage({ status: 'Ready' }));
 
+    const redo = await screen.findByRole('button', {
+      name: 'Refaire le tirage',
+    });
+    expect(redo.className).toContain('ds-btn--primary');
     expect(
-      await screen.findByText(
-        'Le tirage ne peut pas être refait tant que la phase n’est pas en brouillon.',
-      ),
-    ).toBeInTheDocument();
+      screen.queryByRole('button', { name: 'Annuler le tirage' }),
+    ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: 'Refaire le tirage' }),
+      screen.queryByText(/n’est pas en brouillon/),
     ).not.toBeInTheDocument();
   });
 
@@ -1410,7 +1424,7 @@ describe('StructureDrawDialog', () => {
     const cancelApplied = screen.getByRole('button', {
       name: 'Annuler le tirage',
     });
-    expect(cancelApplied.className).toContain('ds-btn--secondary');
+    expect(cancelApplied.className).toContain('ds-btn--destructive');
     expect(cancelApplied.className).not.toContain('ds-btn--primary');
   });
 
@@ -1471,35 +1485,7 @@ describe('StructureDrawDialog', () => {
     expect(createAndGenerateDraw).toHaveBeenCalledWith(stageId, 'Group');
   });
 
-  it('marks seeds and constraints as not applied and keeps pots × groups', async () => {
-    vi.mocked(fetchStageOverview).mockResolvedValue(overview([]));
-
-    renderDialog(
-      groupsStage({
-        numberOfSeeds: 2,
-        drawConstraints: [
-          {
-            type: 'MaxSameAssociationPerGroup',
-            enforcement: 'Required',
-            maxPerGroup: 1,
-          },
-          { type: 'SameTeamAvoidance', enforcement: 'Preferred' },
-        ],
-      }),
-    );
-
-    expect(await screen.findByText('4 pots × 2 groupes')).toBeInTheDocument();
-    expect(screen.getByText('2 têtes de série')).toBeInTheDocument();
-    expect(
-      screen.getByText(/Max\. même association \/ groupe/),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/Éviter la même équipe/)).toBeInTheDocument();
-    expect(
-      document.querySelectorAll('.structure-draw-parameters__mark'),
-    ).toHaveLength(3);
-  });
-
-  it('alerts when the draw result is stale', async () => {
+  it('shows an obsolete badge when the draw result is stale', async () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
       overview([
         groupDraw({
@@ -1510,8 +1496,10 @@ describe('StructureDrawDialog', () => {
 
     renderDialog();
 
-    const alert = await screen.findByText(/ne correspond plus à la phase/);
-    expect(alert.closest('.ds-alert')).toHaveClass('ds-alert--warning');
+    expect(await screen.findByText('Obsolète')).toBeInTheDocument();
+    expect(
+      screen.queryByText(/ne correspond plus à la phase/),
+    ).not.toBeInTheDocument();
   });
 
   it('validates a draft without an apply confirmation', async () => {
@@ -1537,22 +1525,57 @@ describe('StructureDrawDialog', () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
       overview(
         [
-          groupDraw({
+          slotDraw({
             status: 'Published',
             isApplied: true,
           }),
         ],
-        { status: 'Ready' },
+        {
+          bracketPairs: cupBracketPairs,
+          slots: [
+            {
+              slotKey: 'S1',
+              entryId: 'e1',
+              displayName: 'Belgium',
+              coveredByCompleteFixture: true,
+            },
+            {
+              slotKey: 'S2',
+              entryId: 'e2',
+              displayName: 'Poland',
+              coveredByCompleteFixture: true,
+            },
+          ],
+          rounds: [
+            {
+              id: 'round-1',
+              name: 'Tour 1',
+              fixtures: [
+                {
+                  id: 'fx-1',
+                  slotAKey: 'S1',
+                  slotBKey: 'S2',
+                  attachments: [{ matchId: 'match-1', legIndex: 0 }],
+                },
+              ],
+            },
+          ],
+        },
       ),
     );
     vi.mocked(cancelDraw).mockResolvedValue(undefined);
 
-    renderDialog(groupsStage({ status: 'Ready' }));
+    renderDialog(
+      cupStage({
+        compositionEntryCount: 4,
+        compositionCapacity: 4,
+      }),
+    );
 
     const cancelApplied = await screen.findByRole('button', {
       name: 'Annuler le tirage',
     });
-    expect(cancelApplied.className).toContain('ds-btn--secondary');
+    expect(cancelApplied.className).toContain('ds-btn--destructive');
     expect(cancelApplied.className).not.toContain('ds-btn--primary');
     expect(
       screen.queryByRole('button', { name: 'Refaire le tirage' }),
@@ -1569,7 +1592,7 @@ describe('StructureDrawDialog', () => {
     );
 
     await waitFor(() => {
-      expect(cancelDraw).toHaveBeenCalledWith(stageId, 'draw-1');
+      expect(cancelDraw).toHaveBeenCalledWith(stageId, 'draw-slot-1');
     });
   });
 
@@ -1682,7 +1705,7 @@ describe('StructureDrawDialog', () => {
         409,
         'Conflict',
         'release failed',
-        'Application.DrawReleaseFailure',
+        'Application.DrawReleaseBlockedByAttachedMatches',
       );
     });
 
@@ -1693,20 +1716,249 @@ describe('StructureDrawDialog', () => {
     const confirm = await screen.findByRole('dialog', {
       name: 'Refaire le tirage ?',
     });
+    expect(
+      within(confirm).getByRole('button', { name: 'Refaire le tirage' })
+        .className,
+    ).toContain('ds-btn--destructive');
+    expect(confirm).toHaveTextContent(/même si la libération échoue/);
     await user.click(
       within(confirm).getByRole('button', { name: 'Refaire le tirage' }),
     );
 
     expect(
-      await screen.findByText('Annulé, placements non libérés'),
+      await screen.findByText('#1 · Annulée · 1/1 placements non libérés'),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: 'Libérer 1/1' }),
+      screen.getAllByRole('button', { name: 'Libérer 1/1' }).length,
+    ).toBeGreaterThan(0);
+    const main = screen
+      .getByRole('heading', { name: /Exécutions de tirage/ })
+      .closest('[role="dialog"]') as HTMLElement;
+    expect(
+      within(main).getByText(/des matchs sont déjà rattachés/),
     ).toBeInTheDocument();
     expect(createAndGenerateDraw).not.toHaveBeenCalled();
     expect(releaseDrawAlignedPlacements).toHaveBeenCalledWith(
       stageId,
       'draw-1',
     );
+  });
+
+  it('focuses Lancer, then Valider after a draft appears', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(overview([]));
+    const { queryClient } = renderDialog();
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: 'Lancer le tirage' }),
+      ).toHaveFocus();
+    });
+
+    vi.mocked(fetchStageOverview).mockResolvedValue(overview([groupDraw()]));
+    await queryClient.invalidateQueries();
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: 'Valider le tirage' }),
+      ).toHaveFocus();
+    });
+  });
+
+  it('focuses Appliquer for a published draw that is not applied', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([
+        groupDraw({
+          status: 'Published',
+          resolutionState: 'Resolved',
+          isApplied: false,
+        }),
+      ]),
+    );
+    renderDialog();
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Appliquer' })).toHaveFocus();
+    });
+  });
+
+  it('focuses Refaire for an applied draw', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([
+        groupDraw({
+          status: 'Published',
+          isApplied: true,
+        }),
+      ]),
+    );
+    renderDialog();
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: 'Refaire le tirage' }),
+      ).toHaveFocus();
+    });
+  });
+
+  it('focuses Annuler when Refaire is blocked', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview(
+        [
+          slotDraw({
+            status: 'Published',
+            isApplied: true,
+          }),
+        ],
+        {
+          bracketPairs: [{ pairKey: 'P1', slotAKey: 'S1', slotBKey: 'S2' }],
+          slots: [
+            {
+              slotKey: 'S1',
+              entryId: 'e1',
+              displayName: 'Belgium',
+              coveredByCompleteFixture: true,
+            },
+            {
+              slotKey: 'S2',
+              entryId: 'e2',
+              displayName: 'Poland',
+              coveredByCompleteFixture: true,
+            },
+          ],
+          rounds: [
+            {
+              id: 'round-1',
+              name: 'Tour',
+              fixtures: [
+                {
+                  id: 'fx',
+                  slotAKey: 'S1',
+                  slotBKey: 'S2',
+                  attachments: [{ matchId: 'm1', legIndex: 0 }],
+                },
+              ],
+            },
+          ],
+        },
+      ),
+    );
+    renderDialog(
+      cupStage({ compositionEntryCount: 4, compositionCapacity: 4 }),
+    );
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: 'Annuler le tirage' }),
+      ).toHaveFocus();
+    });
+  });
+
+  it('opens only one cancelled row at a time', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([
+        groupDraw({
+          id: 'draw-a',
+          status: 'Cancelled',
+          groupPlacements: [
+            {
+              groupId: 'g-a',
+              groupDisplayName: 'A',
+              entryId: 'e1',
+              displayName: 'Alpha',
+            },
+          ],
+        }),
+        groupDraw({
+          id: 'draw-b',
+          status: 'Cancelled',
+          groupPlacements: [
+            {
+              groupId: 'g-b',
+              groupDisplayName: 'B',
+              entryId: 'e2',
+              displayName: 'Beta',
+            },
+          ],
+        }),
+      ]),
+    );
+    renderDialog();
+    await user.click(await screen.findByText(/#1 · Annulée/));
+    expect(await screen.findByText(/Alpha/)).toBeInTheDocument();
+    await user.click(screen.getByText(/#2 · Annulée/));
+    expect(screen.getByText(/Beta/)).toBeInTheDocument();
+    expect(screen.queryByText(/Alpha/)).not.toBeInTheDocument();
+  });
+
+  it('prefers a mutation error over the Refaire blocked reason', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview(
+        [
+          slotDraw({
+            status: 'Published',
+            isApplied: true,
+          }),
+        ],
+        {
+          bracketPairs: [{ pairKey: 'P1', slotAKey: 'S1', slotBKey: 'S2' }],
+          slots: [
+            {
+              slotKey: 'S1',
+              entryId: 'e1',
+              displayName: 'Belgium',
+              coveredByCompleteFixture: true,
+            },
+            {
+              slotKey: 'S2',
+              entryId: 'e2',
+              displayName: 'Poland',
+              coveredByCompleteFixture: true,
+            },
+          ],
+          rounds: [
+            {
+              id: 'round-1',
+              name: 'Tour',
+              fixtures: [
+                {
+                  id: 'fx',
+                  slotAKey: 'S1',
+                  slotBKey: 'S2',
+                  attachments: [{ matchId: 'm1', legIndex: 0 }],
+                },
+              ],
+            },
+          ],
+        },
+      ),
+    );
+    vi.mocked(cancelDraw).mockRejectedValue(
+      new ApiError(
+        409,
+        'Conflict',
+        'blocked',
+        'Application.DrawReleaseFailure',
+      ),
+    );
+    renderDialog(
+      cupStage({ compositionEntryCount: 4, compositionCapacity: 4 }),
+    );
+    expect(
+      await screen.findByText(/un match est rattaché/),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Annuler le tirage' }));
+    const confirm = await screen.findByRole('dialog', {
+      name: 'Annuler le tirage ?',
+    });
+    await user.click(
+      within(confirm).getByRole('button', { name: 'Annuler le tirage' }),
+    );
+    const main = screen
+      .getByRole('heading', { name: /Exécutions de tirage/ })
+      .closest('[role="dialog"]') as HTMLElement;
+    expect(
+      await within(main).findByText(
+        'Impossible de libérer les placements du tirage.',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      within(main).queryByText(/un match est rattaché/),
+    ).not.toBeInTheDocument();
   });
 });

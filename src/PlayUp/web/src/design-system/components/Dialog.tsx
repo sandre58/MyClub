@@ -41,14 +41,31 @@ export type DialogProps = {
   size?: DialogSize;
   /** Accessible name for the icon close control. */
   closeLabel?: string;
+  /**
+   * Where to place focus when the dialog opens (and when `focusKey` changes).
+   * `body` prefers the first body control. `footer` prefers the footer action
+   * so a control in the body does not take the primary action.
+   */
+  initialFocus?: 'body' | 'footer';
+  /**
+   * Re-applies `initialFocus` while the dialog stays open. Pass a value that
+   * changes with the product state (for example the current draw status).
+   */
+  focusKey?: string;
 };
 
 function pickFooterInitialFocus(footer: HTMLElement): HTMLElement | null {
-  const preferred = footer.querySelector<HTMLElement>(
-    '.ds-btn--primary:not(:disabled), .ds-btn--destructive:not(:disabled)',
+  const primary = footer.querySelector<HTMLElement>(
+    '.ds-btn--primary:not(:disabled)',
   );
-  if (preferred) {
-    return preferred;
+  if (primary) {
+    return primary;
+  }
+  const destructive = footer.querySelector<HTMLElement>(
+    '.ds-btn--destructive:not(:disabled)',
+  );
+  if (destructive) {
+    return destructive;
   }
   const focusable = getFocusableElements(footer);
   return focusable[focusable.length - 1] ?? null;
@@ -72,6 +89,8 @@ export function Dialog({
   returnFocusRef,
   size = 'sm',
   closeLabel = 'Fermer',
+  initialFocus = 'body',
+  focusKey,
 }: DialogProps) {
   const titleId = useId();
   const descriptionId = useId();
@@ -119,9 +138,12 @@ export function Dialog({
       : null;
     // Prefer a body field; otherwise the primary footer action (Enter confirms).
     // Never default to the header close control when an action footer exists.
-    const initial = bodyFocusable[0] ?? footerInitial ?? closeButtonRef.current;
+    const initial =
+      initialFocus === 'footer'
+        ? (footerInitial ?? bodyFocusable[0] ?? closeButtonRef.current)
+        : (bodyFocusable[0] ?? footerInitial ?? closeButtonRef.current);
     initial?.focus({ preventScroll: true });
-  }, [open, visible]);
+  }, [open, visible, initialFocus, focusKey]);
 
   // Stay on the dismiss stack while open so Escape is consumed even when
   // closeDisabled (nested popovers still dismiss first via LIFO).

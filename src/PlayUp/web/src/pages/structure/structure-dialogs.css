@@ -11,7 +11,6 @@
   flex-direction: column;
   gap: var(--space-16);
   min-height: 0;
-  overflow: hidden;
 }
 
 .structure-draw-dialog .ds-empty--idle {
@@ -77,9 +76,6 @@
 .structure-draw-cancelled {
   flex: none;
   min-width: 0;
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-panel);
-  background: var(--color-surface);
 }
 
 .structure-draw-cancelled__summary {
@@ -118,69 +114,99 @@
 .structure-draw-cancelled__body {
   display: flex;
   flex-direction: column;
-  gap: var(--space-16);
-  padding: 0 var(--space-16) var(--space-16);
+  gap: var(--space-8);
+  padding: 0;
 }
 
-.draw-confrontation-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
-  gap: var(--space-12);
+.structure-draw-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8) var(--space-12);
+}
+
+.structure-draw-status__line {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
+}
+
+.structure-draw-history-row {
+  min-width: 0;
+}
+
+.structure-draw-history-row__summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+  padding: var(--space-8) 0;
+  color: var(--color-text-primary);
+  font-size: var(--text-body);
+  line-height: var(--leading-tight);
+  cursor: pointer;
+  list-style: none;
+}
+
+.structure-draw-history-row__summary::marker {
+  content: '';
+}
+
+.structure-draw-history-row__detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0 0 var(--space-8);
+  padding: 0;
+  list-style: none;
+  color: var(--color-text-secondary);
+  font-size: var(--text-label);
+  line-height: var(--leading-normal);
+}
+
+.structure-draw-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  width: 100%;
+  min-width: 0;
+}
+
+.structure-draw-footer__start {
+  display: flex;
+  flex: none;
+  margin-inline-end: auto;
+}
+
+.structure-draw-footer__end {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-8);
+}
+
+.ds-dialog:has(.structure-draw-dialog) .ds-dialog__footer-actions {
+  flex: 1 1 auto;
+}
+
+.structure-draw-dialog .regulation-schematic--groups {
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.draw-slot-rows {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.draw-confrontation {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-8);
-  min-width: 0;
-  margin: 0;
-  padding: var(--space-12);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-control);
-  background: var(--color-surface-secondary);
-}
-
-.draw-confrontation__label {
-  margin: 0;
-  color: var(--color-text-secondary);
-  font-size: var(--text-meta);
-  font-weight: var(--font-weight-bold);
-  letter-spacing: 0.04em;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-
-.draw-confrontation__side {
-  display: flex;
-  align-items: center;
-  gap: var(--space-8);
-  min-width: 0;
-  padding: var(--space-8);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-control);
-  background: var(--color-surface);
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--leading-tight);
-}
-
-.draw-confrontation__name {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.draw-confrontation__vs {
-  margin: 0;
-  color: var(--color-text-secondary);
-  font-size: var(--text-meta);
-  font-weight: var(--font-weight-bold);
-  letter-spacing: 0.04em;
-  text-align: center;
-  text-transform: uppercase;
+.draw-slot-rows > li + li > .ds-match-row {
+  border-top: var(--border-width) solid var(--color-border);
 }
 
 .structure-draw-detail__chips {
@@ -292,15 +318,13 @@
 
 /* Fixed chrome while editing — only viewport resize changes dialog size. */
 .ds-dialog:has(.structure-qualification) .ds-dialog__panel,
-.ds-dialog:has(.structure-progression) .ds-dialog__panel,
-.ds-dialog:has(.structure-draw-dialog) .ds-dialog__panel {
+.ds-dialog:has(.structure-progression) .ds-dialog__panel {
   height: min(92vh, 52rem);
   max-height: min(92vh, 52rem);
 }
 
 .ds-dialog:has(.structure-qualification) .ds-dialog__body,
-.ds-dialog:has(.structure-progression) .ds-dialog__body,
-.ds-dialog:has(.structure-draw-dialog) .ds-dialog__body {
+.ds-dialog:has(.structure-progression) .ds-dialog__body {
   overflow: hidden;
   display: flex;
   flex-direction: column;

@@ -30,8 +30,7 @@ export class DrawRedoStoppedError extends Error {
 }
 
 /** Why « Refaire le tirage » stays hidden after an applied draw. */
-export type DrawRedoBlockReason =
-  'groupNotDraft' | 'cupFixtureAttached' | 'lifecycle';
+export type DrawRedoBlockReason = 'cupFixtureAttached' | 'lifecycle';
 
 export type AppliedDrawRedo =
   | { kind: 'hidden' }
@@ -115,8 +114,8 @@ export function cupReleaseTouchesAttachedFixture(input: {
 
 /**
  * Refaire = cancel, release, then a new preview.
- * Group release is Draft-only on the server. Cup release stops when a touched
- * pair already has a fixture attachment. Otherwise the action stays hidden.
+ * Group and Cup share the Draft|Ready lifecycle gate used by Libérer.
+ * Cup release still stops when a touched pair already has a fixture attachment.
  */
 export function resolveAppliedDrawRedo(input: {
   formatKind: StructureFormatKind | null | undefined;
@@ -141,10 +140,6 @@ export function resolveAppliedDrawRedo(input: {
 
   const groupDraw =
     input.formatKind === 'Groups' || input.draw.kind === 'Group';
-  if (groupDraw && input.stageStatus !== 'Draft') {
-    return { kind: 'blocked', reason: 'groupNotDraft' };
-  }
-
   const cupDraw = input.formatKind === 'Cup' || input.draw.kind === 'Slot';
   if (
     cupDraw &&
