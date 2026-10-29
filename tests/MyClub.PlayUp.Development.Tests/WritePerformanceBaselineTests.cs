@@ -38,19 +38,24 @@ public sealed class WritePerformanceBaselineTests(
         var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
         var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
         var competition = (await competitions.ListAsync()).Should().ContainSingle().Subject;
-        var qfStageId = await FindNonOperationalExitStageIdAsync(competition.StageIds, stages);
-        qfStageId.Should().NotBeNull();
-        var qfStage = await stages.GetByIdForUpdateAsync(qfStageId!.Value);
-        qfStage.Should().NotBeNull();
-        qfStage!.Status.Should().Be(StageStatus.Running);
+        var stageId = competition.StageIds.Should().ContainSingle().Subject;
+        var executor = scope.ServiceProvider.GetRequiredService<UseCaseExecutor>();
+        var stage = await stages.GetByIdForUpdateAsync(stageId);
+        stage.Should().NotBeNull();
+        if (stage!.Status is StageStatus.Ready)
+        {
+            await executor.StartStageAsync(stageId);
+            stage = await stages.GetByIdForUpdateAsync(stageId);
+        }
+
+        stage!.Status.Should().Be(StageStatus.Running);
 
         var counter = scope.ServiceProvider.GetRequiredService<SqlCommandCounterInterceptor>();
         counter.Reset();
-        var executor = scope.ServiceProvider.GetRequiredService<UseCaseExecutor>();
         var stopwatch = Stopwatch.StartNew();
 
         var act = async () => await executor.ReplaceStageQualificationRulesAsync(
-            qfStageId!.Value,
+            stageId,
             paths: null);
 
         await act.Should().ThrowAsync<ApplicationFailureException>()
@@ -72,24 +77,6 @@ public sealed class WritePerformanceBaselineTests(
         stopwatch.ElapsedMilliseconds.Should().BeLessThan(
             150,
             "refusal on Running upstream must stay under product latency budget on seed");
-    }
-
-    private static async Task<StageId?> FindNonOperationalExitStageIdAsync(
-        IReadOnlyList<StageId> stageIds,
-        IStageRepository stages)
-    {
-        foreach (var stageId in stageIds)
-        {
-            var stage = await stages.GetByIdForUpdateAsync(stageId);
-            if (stage is not null
-                && stage.Status is not StageStatus.Draft
-                && stage.Status is not StageStatus.Ready)
-            {
-                return stageId;
-            }
-        }
-
-        return null;
     }
 
     private void WriteBlock(string header, IReadOnlyDictionary<string, object> rows)
