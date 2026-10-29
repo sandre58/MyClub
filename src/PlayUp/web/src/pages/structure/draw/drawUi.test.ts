@@ -11,6 +11,7 @@ import {
   groupPlacementRows,
   pickActiveDraw,
   pickDefaultDrawId,
+  pickDrawFooterFocusAfterRelease,
   projectSlotDrawResult,
   resolveDrawCreateBlockPresentation,
   resolveDrawCreateGate,
@@ -906,5 +907,22 @@ describe('areDrawRulesLockedByExecution', () => {
         }),
       ]),
     ).toBe(false);
+  });
+});
+
+describe('pickDrawFooterFocusAfterRelease', () => {
+  it('prefers the release footer action by data-action', () => {
+    document.body.innerHTML = `
+      <div role="dialog">
+        <div class="structure-draw-footer">
+          <button type="button" class="ds-btn ds-btn--primary">Lancer le tirage</button>
+          <button type="button" class="ds-btn ds-btn--secondary" data-action="release-draw-placements">Libérer #1 (1/1)</button>
+        </div>
+      </div>
+    `;
+    const dialog = document.querySelector('[role="dialog"]')!;
+    expect(pickDrawFooterFocusAfterRelease(dialog)?.dataset.action).toBe(
+      'release-draw-placements',
+    );
   });
 });

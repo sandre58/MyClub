@@ -21,8 +21,9 @@ import { placeChromeLabel } from '../draw/structurePlaceLabel';
 import { resolveManualPlaceMode } from '../draw/manualPlacementUi';
 import '../phase-schematic.css';
 
+import { GroupsSchematicView } from './GroupsSchematicView';
+import { groupsSchematicFromStageSchematic } from './groupsSchematic';
 import { buildSchematicCaseTooltipModel } from './phaseSchematicTooltip';
-import { compareGroupLabels } from '../draw/drawUi';
 
 type Translate = (key: string, opts?: Record<string, unknown>) => string;
 type SchematicDensity = 'full' | 'crest' | 'compact';
@@ -387,47 +388,23 @@ function GroupsSchematic({
   schematic: StageSchematic;
   t: Translate;
 }) {
-  const byGroup = new Map<string, SchematicCase[]>();
-  for (const c of schematic.cases) {
-    const id = c.formPosition.groupId ?? '';
-    const list = byGroup.get(id) ?? [];
-    list.push(c);
-    byGroup.set(id, list);
-  }
-
-  const groups = [...byGroup.entries()]
-    .map(([id, cases]) => ({
-      id,
-      name: cases[0]?.formPosition.groupName ?? id,
-      cases: [...cases].sort(
-        (a, b) => (a.formPosition.index ?? 0) - (b.formPosition.index ?? 0),
-      ),
-    }))
-    .sort((a, b) => compareGroupLabels(a.name, b.name));
+  const { groups, casesByGroupId } = groupsSchematicFromStageSchematic(
+    schematic,
+    (name) => t('structure:place.group', { name }),
+  );
 
   return (
-    <div
-      className="regulation-schematic regulation-schematic--groups"
-      aria-label={t('regulation:schematic.groups', { count: groups.length })}
-    >
-      <div className="regulation-schematic__cards">
-        {groups.map((group, i) => (
-          <div
-            key={group.id || i}
-            className={`regulation-schematic__card regulation-schematic__card--${i % 4}`}
-          >
-            <span className="regulation-schematic__card-label">
-              {t('structure:place.group', { name: group.name })}
-            </span>
-            <div className="regulation-schematic__card-slots">
-              {group.cases.map((c, j) => (
-                <SlotBox key={`${group.id}-${j}`} c={c} t={t} />
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
+    <GroupsSchematicView
+      groups={groups}
+      ariaLabel={t('regulation:schematic.groups', { count: groups.length })}
+      renderSeat={(group, seat) => {
+        const place = casesByGroupId.get(group.id)?.[seat];
+        if (!place) {
+          return undefined;
+        }
+        return <SlotBox c={place} t={t} />;
+      }}
+    />
   );
 }
 

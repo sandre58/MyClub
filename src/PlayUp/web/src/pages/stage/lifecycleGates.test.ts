@@ -5,6 +5,7 @@ import {
   canCancelDrawExecution,
   canReleaseDrawAlignedPlacements,
   isDrawExecutionCancellable,
+  releaseDrawPlacementsVisible,
 } from './lifecycleGates';
 
 describe('lifecycleGates', () => {
@@ -156,5 +157,48 @@ describe('lifecycleGates', () => {
         stageHasPublishedAppliedDraw: true,
       }),
     ).toBe(false);
+
+    expect(
+      canReleaseDrawAlignedPlacements({
+        competitionStatus: 'Running',
+        stageStatus: 'Ready',
+        drawStatus: 'Cancelled',
+        drawKind: 'Group',
+        alignedPlacementCount: 2,
+        attachedMatchCount: 3,
+      }),
+    ).toBe(false);
+
+    expect(
+      releaseDrawPlacementsVisible({
+        competitionStatus: 'Running',
+        stageStatus: 'Ready',
+        drawStatus: 'Cancelled',
+        drawKind: 'Group',
+        alignedPlacementCount: 2,
+      }),
+    ).toBe(true);
+
+    expect(
+      canReleaseDrawAlignedPlacements({
+        competitionStatus: 'Running',
+        stageStatus: 'Draft',
+        drawStatus: 'Cancelled',
+        drawKind: 'Group',
+        alignedPlacementCount: 2,
+        attachedMatchCount: 3,
+      }),
+    ).toBe(true);
+
+    expect(
+      canReleaseDrawAlignedPlacements({
+        competitionStatus: 'Running',
+        stageStatus: 'Ready',
+        drawStatus: 'Cancelled',
+        drawKind: 'Slot',
+        alignedPlacementCount: 2,
+        attachedMatchCount: 3,
+      }),
+    ).toBe(true);
   });
 });

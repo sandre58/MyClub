@@ -57,8 +57,22 @@ Public **`--color-*`** roles on `.ds-root` (see `tokens/colors.css`). Sole produ
 
 - Canonical: `components/Dialog.tsx` + `foundations/dialog.css`.
 - **Close = icon X**; accessible name via `closeLabel` (default « Fermer »). Do **not** replace with a text « Fermer » button.
+- **Footer actions.** One right-aligned group. Order: destructive (`.ds-btn--destructive`) first, then a `--space-16` gap, then secondary actions, then the primary (`.ds-btn--primary`) last. Close stays the header X.
+- **Initial focus.** Default `initialFocus="body"` focuses the first control in the body, then the footer rule below. `initialFocus="footer"` uses that footer rule only: focus never lands in the body. `pickFooterInitialFocus` order: enabled `.ds-btn--primary`, then the first enabled footer button that is neither primary nor destructive, then the header close X. Never a destructive button. Never the body. Pass `focusKey` to apply that focus again while the dialog stays open. The Structure draw dialog is the only product surface that sets `initialFocus="footer"`. `ConfirmDialog` keeps the default body path; its message is not focusable, so a danger confirm follows the same footer rule and focuses the ghost cancel (then X), not the destructive confirm.
 - Interactive specimen: Design Lab surface **Dialog** only.
 - `AttentionDrawer` is Shell triage — not Dialog.
+
+## Hero facts
+
+- Shared classes: `.structure-qualification__facts`, `.structure-qualification__fact`, `--primary` / `--secondary`, and `.structure-qualification__fact-rule` between facts.
+- Order is secondary, then the rule, then primary. The container sets `aria-live="polite"`.
+- The draw dialog uses the same pattern: groups show the group count then the team count; a cup shows places then the team count. The facts stay the same whichever execution is selected.
+
+## Match row
+
+- Canonical: `components/MatchRow.tsx` + `foundations/match.css`.
+- Optional `density?: 'compact'` sets `data-density="compact"`. Compact rows use `--text-label` on `.ds-match-row__team`, `--text-meta` on the muted score and the aside, and `min-height: 2rem`.
+- Omitting `density` leaves the default row unchanged. Crest size stays a design-system size (`TeamCrest` `size="sm"`).
 
 ## Popover
 
@@ -176,10 +190,21 @@ There is **no** generic `Card` foundation (see `foundations/surfaces.css`). New 
 ### Selectable tile (family B) recipe
 
 - Canonical: `foundations/selectable-tile.css` (`.ds-selectable-tile`).
-- React: `SelectableTile` sets `data-selected` and merges page layout classes.
+- React: `SelectableTile` sets `data-selected` and optional `tone="error"` (`data-tone="error"` only — no injected layout). Page classes supply triggers, chevrons, and panels.
 - Compose: `className="<page-layout>"` + `selected` prop, or manual `ds-selectable-tile` + `data-selected="true|false"`.
-- Hover / selected recipes live only in the foundation file.
+- Hover / selected recipes live only in the foundation file (brand default; `[data-tone='error'][data-selected='true']` uses destructive error chrome, never brand).
 - CI guard: `npm run tile:check`.
+
+#### Tuile repliable (B)
+
+Structure qualification, progression, and draw **previous runs** share one anatomy (implemented inline per dialog today):
+
+- **Container** — `.ds-selectable-tile` with `data-selected="true"` when open; optional `data-tone="error"` for cancelled / obsolete history (base chrome at rest, destructive tint when open).
+- **Trigger** — `<button class="ds-selectable-tile__trigger">` inside a heading (`h5`), with `aria-expanded` and `aria-controls` pointing at the panel id; chevron `.ds-selectable-tile__chevron` at the end (`aria-hidden`), rotates when open. Draw **previous runs** wrap title + status in `.structure-draw-previous__lead` (flex wrap); badges live in `.structure-draw-previous__meta` (right cluster inside the lead); chevron is a sibling of the lead, top-right (`align-self: flex-start`).
+- **Panel** — sibling block inside the tile (page class e.g. `structure-draw-previous__panel`), shown only when open; page CSS handles padding and entry animation (`prefers-reduced-motion: reduce` disables animation). No header/panel separator on draw previous runs.
+- **Focus** — focus ring on the tile via `.ds-selectable-tile:has(.ds-selectable-tile__trigger:focus-visible)`; trigger itself has no box-shadow (avoids clipping under `overflow: hidden`). Error tone when open: focus uses the halo only (no extra inset ring).
+- **Retired runs (draw)** — page applies light `opacity` (~0.85) on the whole error tile, including when open; hover and focus-visible return to opacity 1. Open state uses a single 1px error border and light error tint (no stacked inset ring). Prefer `variant="outline"` badges in the header meta cluster. Do not use brand selection on `tone="error"` tiles.
+- **Debt** — extract a shared `DisclosureTile` and migrate Qual / Prog / Draw in a follow-up (not required for parity).
 
 ## Attention rows (two models — do not merge)
 

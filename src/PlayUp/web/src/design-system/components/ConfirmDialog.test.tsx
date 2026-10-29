@@ -83,6 +83,42 @@ describe('ConfirmDialog', () => {
     expect(await screen.findByText('Confirmé')).toBeInTheDocument();
   });
 
+  it('focuses cancel instead of the destructive action when danger is set', async () => {
+    const user = userEvent.setup();
+    function DangerHarness() {
+      const [open, setOpen] = useState(false);
+      return (
+        <div className="ds-root" data-font="plex" data-palette="slate">
+          <button type="button" onClick={() => setOpen(true)}>
+            Ouvrir
+          </button>
+          <ConfirmDialog
+            open={open}
+            danger
+            title="Supprimer ?"
+            message="Cette action est irréversible."
+            confirmLabel="Supprimer"
+            cancelLabel="Annuler"
+            onCancel={() => setOpen(false)}
+            onConfirm={() => setOpen(false)}
+          />
+        </div>
+      );
+    }
+
+    render(<DangerHarness />);
+    await user.click(screen.getByRole('button', { name: 'Ouvrir' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Supprimer ?' });
+    await waitFor(() => {
+      expect(
+        within(dialog).getByRole('button', { name: 'Annuler' }),
+      ).toHaveFocus();
+    });
+    expect(
+      within(dialog).getByRole('button', { name: 'Supprimer' }),
+    ).not.toHaveFocus();
+  });
+
   it('calls onCancel on Escape', async () => {
     const user = userEvent.setup();
     const onCancel = vi.fn();

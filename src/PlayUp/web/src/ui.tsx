@@ -134,12 +134,18 @@ export function EntryStatusBadge({ status }: { status: EntryStatus }) {
 export function DrawStatusBadge({
   status,
   density = 'context',
+  variant = 'soft',
 }: {
   status: DrawStatus;
   density?: 'context' | 'compact';
+  variant?: 'soft' | 'outline';
 }) {
   return (
-    <StatusBadge tone={drawStatusTone[status]} density={density}>
+    <StatusBadge
+      tone={drawStatusTone[status]}
+      density={density}
+      variant={variant}
+    >
       {drawStatusLabel(status)}
     </StatusBadge>
   );

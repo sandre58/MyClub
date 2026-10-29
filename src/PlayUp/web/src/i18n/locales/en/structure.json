@@ -710,7 +710,7 @@
       "emptyTitle": "No executions",
       "emptyBody": "Run a first draw to place teams in this phase.",
       "kindUnsupported": "This phase format does not support creating a draw from Structure yet.",
-      "create": "New draw",
+      "create": "Run the draw",
       "createBlocked": {
         "short": {
           "unsupported": "Draw not available for this format.",
