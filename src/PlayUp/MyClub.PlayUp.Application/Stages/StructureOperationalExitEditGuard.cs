@@ -16,6 +16,23 @@ namespace MyClub.PlayUp.Application.Stages;
 /// </summary>
 internal static class StructureOperationalExitEditGuard
 {
+    /// <summary>
+    /// Rejects exit-rule edits when stage status alone forbids them, without loading matches.
+    /// </summary>
+    internal static void EnsureStatusAllowsExitEditWithoutMatches(Stage upstream, string ruleKind)
+    {
+        ArgumentNullException.ThrowIfNull(upstream);
+
+        if (upstream.Status is StageStatus.Draft or StageStatus.Ready)
+        {
+            return;
+        }
+
+        throw new ApplicationFailureException(
+            $"{ruleKind} cannot be replaced while stage status is '{upstream.Status}'.",
+            ApplicationErrorCodes.StructureNotMutable);
+    }
+
     internal static void Ensure(Stage upstream, IReadOnlyList<Match>? upstreamMatches, string ruleKind)
     {
         ArgumentNullException.ThrowIfNull(upstream);

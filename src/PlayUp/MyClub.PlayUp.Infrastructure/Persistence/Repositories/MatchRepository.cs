@@ -52,14 +52,14 @@ internal sealed class MatchRepository(PlayUpDbContext context) : IMatchRepositor
 
         if (missing.Count > 0)
         {
-            var loaded = await context.Set<Match>()
-                .Where(candidate => missing.Contains(candidate.Id))
-                .ToListAsync(cancellationToken)
+            var loaded = await QueryMatchListGraphAsync(
+                    context.Set<Match>().Where(candidate => missing.Contains(candidate.Id)),
+                    trackChanges: true,
+                    cancellationToken)
                 .ConfigureAwait(false);
 
             foreach (var match in loaded)
             {
-                HydrateOrderedCollections(match);
                 byId[match.Id] = match;
             }
         }
@@ -96,15 +96,11 @@ internal sealed class MatchRepository(PlayUpDbContext context) : IMatchRepositor
             return new Dictionary<StageId, IReadOnlyList<Match>>();
         }
 
-        var matches = await context.Set<Match>()
-            .Where(candidate => stageIds.Contains(candidate.StageId))
-            .ToListAsync(cancellationToken)
+        var matches = await QueryMatchListGraphAsync(
+                context.Set<Match>().Where(candidate => stageIds.Contains(candidate.StageId)),
+                trackChanges: true,
+                cancellationToken)
             .ConfigureAwait(false);
-
-        foreach (var match in matches)
-        {
-            HydrateOrderedCollections(match);
-        }
 
         return matches
             .GroupBy(candidate => candidate.StageId)
@@ -123,16 +119,11 @@ internal sealed class MatchRepository(PlayUpDbContext context) : IMatchRepositor
             return new Dictionary<StageId, IReadOnlyList<Match>>();
         }
 
-        var matches = await context.Set<Match>()
-            .AsNoTracking()
-            .Where(candidate => stageIds.Contains(candidate.StageId))
-            .ToListAsync(cancellationToken)
+        var matches = await QueryMatchListGraphAsync(
+                context.Set<Match>().Where(candidate => stageIds.Contains(candidate.StageId)),
+                trackChanges: false,
+                cancellationToken)
             .ConfigureAwait(false);
-
-        foreach (var match in matches)
-        {
-            HydrateOrderedCollections(match);
-        }
 
         return matches
             .GroupBy(candidate => candidate.StageId)
@@ -257,6 +248,13 @@ internal sealed class MatchRepository(PlayUpDbContext context) : IMatchRepositor
         context.Set<Match>().Remove(match);
     }
 
+    private static IQueryable<Match> ApplyListGraph(IQueryable<Match> query) =>
+        query
+            .Include(match => match.DeclaredParticipations)
+            .Include(match => match.RecordedGoals)
+            .Include(match => match.RecordedSubstitutions)
+            .Include(match => match.RecordedDisciplinaryEvents);
+
     private async Task<Match?> LoadByIdAsync(
         MatchId id,
         bool trackChanges,
@@ -286,14 +284,26 @@ internal sealed class MatchRepository(PlayUpDbContext context) : IMatchRepositor
         bool trackChanges,
         CancellationToken cancellationToken)
     {
-        var query = context.Set<Match>().AsQueryable();
+        var matches = await QueryMatchListGraphAsync(
+                context.Set<Match>().Where(candidate => candidate.StageId == stageId),
+                trackChanges,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        return [.. matches.OrderBy(candidate => candidate.Id.Value)];
+    }
+
+    private async Task<IReadOnlyList<Match>> QueryMatchListGraphAsync(
+        IQueryable<Match> root,
+        bool trackChanges,
+        CancellationToken cancellationToken)
+    {
         if (!trackChanges)
         {
-            query = query.AsNoTracking();
+            root = root.AsNoTracking();
         }
 
-        var matches = await query
-            .Where(candidate => candidate.StageId == stageId)
+        var matches = await ApplyListGraph(root.AsSplitQuery())
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
@@ -302,7 +312,7 @@ internal sealed class MatchRepository(PlayUpDbContext context) : IMatchRepositor
             HydrateOrderedCollections(match);
         }
 
-        return [.. matches.OrderBy(candidate => candidate.Id.Value)];
+        return matches;
     }
 
     private void HydrateOrderedCollections(Match match)

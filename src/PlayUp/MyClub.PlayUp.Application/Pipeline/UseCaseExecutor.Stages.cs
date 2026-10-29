@@ -630,11 +630,12 @@ public sealed partial class UseCaseExecutor
         CancellationToken cancellationToken = default)
     {
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        StructureOperationalExitEditGuard.EnsureStatusAllowsExitEditWithoutMatches(stage, "Progression rules");
         var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
             .ConfigureAwait(false);
         var competitionStages = await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken)
             .ConfigureAwait(false);
-        var stageMatches = await matches.ListByStageForUpdateAsync(stageId, cancellationToken)
+        var stageMatches = await LoadStageMatchesForExitRuleReplaceAsync(stage, cancellationToken)
             .ConfigureAwait(false);
         var destinationMatches = await LoadDestinationMatchesForProgressionReplaceAsync(
                 stageId,
@@ -660,11 +661,12 @@ public sealed partial class UseCaseExecutor
         CancellationToken cancellationToken = default)
     {
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        StructureOperationalExitEditGuard.EnsureStatusAllowsExitEditWithoutMatches(stage, "Progression rules");
         var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
             .ConfigureAwait(false);
         var competitionStages = await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken)
             .ConfigureAwait(false);
-        var stageMatches = await matches.ListByStageForUpdateAsync(stageId, cancellationToken)
+        var stageMatches = await LoadStageMatchesForExitRuleReplaceAsync(stage, cancellationToken)
             .ConfigureAwait(false);
         var destinationMatches = await LoadDestinationMatchesForProgressionReplaceAsync(
                 stageId,
@@ -690,11 +692,12 @@ public sealed partial class UseCaseExecutor
         CancellationToken cancellationToken = default)
     {
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        StructureOperationalExitEditGuard.EnsureStatusAllowsExitEditWithoutMatches(stage, "Qualification rules");
         var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
             .ConfigureAwait(false);
         var competitionStages = await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken)
             .ConfigureAwait(false);
-        var stageMatches = await matches.ListByStageForUpdateAsync(stageId, cancellationToken)
+        var stageMatches = await LoadStageMatchesForExitRuleReplaceAsync(stage, cancellationToken)
             .ConfigureAwait(false);
         ReplaceStageQualificationRules.Execute(stage, paths, clock, competitionStages, stageMatches);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -709,11 +712,12 @@ public sealed partial class UseCaseExecutor
         CancellationToken cancellationToken = default)
     {
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        StructureOperationalExitEditGuard.EnsureStatusAllowsExitEditWithoutMatches(stage, "Qualification rules");
         var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
             .ConfigureAwait(false);
         var competitionStages = await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken)
             .ConfigureAwait(false);
-        var stageMatches = await matches.ListByStageForUpdateAsync(stageId, cancellationToken)
+        var stageMatches = await LoadStageMatchesForExitRuleReplaceAsync(stage, cancellationToken)
             .ConfigureAwait(false);
         ReplaceStageQualificationRules.Execute(stage, intents, clock, competitionStages, stageMatches);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

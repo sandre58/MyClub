@@ -471,19 +471,25 @@ public sealed partial class UseCaseExecutor
         IReadOnlyList<Stage> competitionStages,
         CancellationToken cancellationToken)
     {
-        var map = new Dictionary<StageId, IReadOnlyList<Match>>();
-        foreach (var stage in competitionStages)
-        {
-            if (stage.Id.Equals(upstreamStageId))
-            {
-                continue;
-            }
+        var destinationStageIds = competitionStages
+            .Where(stage => !stage.Id.Equals(upstreamStageId))
+            .Select(stage => stage.Id)
+            .ToArray();
 
-            var stageMatches = await matches.ListByStageForUpdateAsync(stage.Id, cancellationToken)
-                .ConfigureAwait(false);
-            map[stage.Id] = stageMatches;
+        if (destinationStageIds.Length == 0)
+        {
+            return [];
         }
 
-        return map;
+        return new Dictionary<StageId, IReadOnlyList<Match>>(
+            await matches.ListByStageIdsForUpdateAsync(destinationStageIds, cancellationToken)
+                .ConfigureAwait(false));
     }
+
+    private async Task<IReadOnlyList<Match>> LoadStageMatchesForExitRuleReplaceAsync(
+        Stage stage,
+        CancellationToken cancellationToken) =>
+        stage.Status is StageStatus.Ready
+            ? await matches.ListByStageForUpdateAsync(stage.Id, cancellationToken).ConfigureAwait(false)
+            : [];
 }
