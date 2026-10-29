@@ -29,6 +29,7 @@ function ConfrontationMatchRow({
         score={row.key}
         scoreMuted
         aside={aside}
+        density="compact"
       />
     </li>
   );
@@ -48,6 +49,7 @@ function UnpairedMatchRow({
         score={side.slotKey}
         scoreMuted
         aside={<span aria-hidden="true" />}
+        density="compact"
       />
     </li>
   );

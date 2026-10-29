@@ -14,6 +14,7 @@ export function MatchRow({
   to,
   ariaLabel,
   scoreMuted = false,
+  density,
 }: {
   home: { name: string; crest: ReactNode };
   away: { name: string; crest: ReactNode };
@@ -23,6 +24,8 @@ export function MatchRow({
   to?: string;
   ariaLabel?: string;
   scoreMuted?: boolean;
+  /** Optional compact type. Omitted density keeps the default row. */
+  density?: 'compact';
 }) {
   const classes = ['ds-match-row', to && 'ds-interactive-row', className]
     .filter(Boolean)
@@ -65,13 +68,22 @@ export function MatchRow({
 
   if (to) {
     return (
-      <Link className={classes} to={to} aria-label={ariaLabel}>
+      <Link
+        className={classes}
+        to={to}
+        aria-label={ariaLabel}
+        data-density={density}
+      >
         {body}
       </Link>
     );
   }
 
-  return <div className={classes}>{body}</div>;
+  return (
+    <div className={classes} data-density={density}>
+      {body}
+    </div>
+  );
 }
 
 export function MatchRowScore({

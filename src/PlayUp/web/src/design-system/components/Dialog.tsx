@@ -43,8 +43,8 @@ export type DialogProps = {
   closeLabel?: string;
   /**
    * Where to place focus when the dialog opens (and when `focusKey` changes).
-   * `body` prefers the first body control. `footer` prefers the footer action
-   * so a control in the body does not take the primary action.
+   * `body` prefers the first body control. `footer` uses the footer rule only
+   * (primary, then a non-destructive footer action, then the header X).
    */
   initialFocus?: 'body' | 'footer';
   /**
@@ -54,21 +54,31 @@ export type DialogProps = {
   focusKey?: string;
 };
 
-function pickFooterInitialFocus(footer: HTMLElement): HTMLElement | null {
-  const primary = footer.querySelector<HTMLElement>(
+function pickFooterInitialFocus(
+  footer: HTMLElement | null,
+  closeButton: HTMLButtonElement | null,
+): HTMLElement | null {
+  const primary = footer?.querySelector<HTMLElement>(
     '.ds-btn--primary:not(:disabled)',
   );
   if (primary) {
     return primary;
   }
-  const destructive = footer.querySelector<HTMLElement>(
-    '.ds-btn--destructive:not(:disabled)',
-  );
-  if (destructive) {
-    return destructive;
+  const neutral = footer
+    ? [...footer.querySelectorAll<HTMLButtonElement>('button')].find(
+        (button) =>
+          !button.disabled &&
+          !button.classList.contains('ds-btn--primary') &&
+          !button.classList.contains('ds-btn--destructive'),
+      )
+    : undefined;
+  if (neutral) {
+    return neutral;
   }
-  const focusable = getFocusableElements(footer);
-  return focusable[focusable.length - 1] ?? null;
+  if (closeButton && !closeButton.disabled) {
+    return closeButton;
+  }
+  return null;
 }
 
 /**
@@ -133,15 +143,16 @@ export function Dialog({
 
     const body = bodyRef.current;
     const bodyFocusable = body ? getFocusableElements(body) : [];
-    const footerInitial = footerRef.current
-      ? pickFooterInitialFocus(footerRef.current)
-      : null;
-    // Prefer a body field; otherwise the primary footer action (Enter confirms).
-    // Never default to the header close control when an action footer exists.
+    const footerInitial = pickFooterInitialFocus(
+      footerRef.current,
+      closeButtonRef.current,
+    );
+    // Body first by default. Footer mode never lands on a destructive action
+    // or on a body control: primary, then a neutral footer action, then X.
     const initial =
       initialFocus === 'footer'
-        ? (footerInitial ?? bodyFocusable[0] ?? closeButtonRef.current)
-        : (bodyFocusable[0] ?? footerInitial ?? closeButtonRef.current);
+        ? footerInitial
+        : (bodyFocusable[0] ?? footerInitial);
     initial?.focus({ preventScroll: true });
   }, [open, visible, initialFocus, focusKey]);
 

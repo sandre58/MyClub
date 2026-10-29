@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import { ApiError } from '../../../api/http';
@@ -47,6 +50,11 @@ vi.mock('../../../api', async (importOriginal) => {
     rerunDrawGeneration: vi.fn(),
   };
 });
+
+const drawDialogCss = readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), '../structure-dialogs.css'),
+  'utf8',
+);
 
 const stageId = 'dddddddd-dddd-dddd-dddd-dddddddddddd';
 const competitionId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
@@ -191,6 +199,26 @@ function renderDialog(
   );
   return { onClose, queryClient };
 }
+
+describe('structure draw dialog height', () => {
+  it('keeps the draw dialog in the shared panel rules', () => {
+    expect(drawDialogCss).not.toMatch(/dvh/);
+    expect(drawDialogCss).toMatch(
+      /\.ds-dialog:has\(\.structure-qualification\) \.ds-dialog__panel,\s*\.ds-dialog:has\(\.structure-progression\) \.ds-dialog__panel,\s*\.ds-dialog:has\(\.structure-draw-dialog\) \.ds-dialog__panel \{[^}]*max-height:\s*min\(92vh,\s*52rem\)/,
+    );
+    expect(drawDialogCss).toMatch(
+      /\.ds-dialog:has\(\.structure-qualification\) \.ds-dialog__body,\s*\.ds-dialog:has\(\.structure-progression\) \.ds-dialog__body,\s*\.ds-dialog:has\(\.structure-draw-dialog\) \.ds-dialog__body \{[^}]*overflow:\s*hidden/,
+    );
+    expect(drawDialogCss).toMatch(/@media \(max-height:\s*36rem\)/);
+    expect(drawDialogCss).not.toMatch(/structure-draw-footer__start/);
+    expect(drawDialogCss).not.toMatch(/structure-draw-cancelled/);
+    expect(drawDialogCss).not.toMatch(/structure-draw-history-row/);
+    const attribution = drawDialogCss.match(
+      /\.ds-dialog:has\(\.structure-attribution\) \.ds-dialog__panel \{[^}]*\}/,
+    );
+    expect(attribution?.[0]).not.toMatch(/structure-draw-dialog/);
+  });
+});
 
 describe('StructureDrawDialog', () => {
   beforeEach(() => {
@@ -398,9 +426,10 @@ describe('StructureDrawDialog', () => {
     renderDialog();
 
     expect(
-      await screen.findByText('#1 · Annulée · libérée'),
+      await screen.findByRole('heading', { name: 'Exécution #1' }),
     ).toBeInTheDocument();
-    expect(screen.queryByText('Aucun résultat')).not.toBeInTheDocument();
+    expect(screen.getByText('Libérée')).toBeInTheDocument();
+    expect(screen.getByText('Aucun résultat')).toBeInTheDocument();
     expect(
       screen.queryByText(
         'Exécution annulée. Un nouveau tirage est nécessaire pour recommencer.',
@@ -605,11 +634,10 @@ describe('StructureDrawDialog', () => {
       await screen.findByRole('button', { name: 'Lancer le tirage' }),
     ).toBeDisabled();
 
-    const releaseButtons = await screen.findAllByRole('button', {
+    const releaseButton = await screen.findByRole('button', {
       name: 'Libérer 2/2',
     });
-    expect(releaseButtons.length).toBeGreaterThan(1);
-    await user.click(releaseButtons[0]!);
+    await user.click(releaseButton);
     const confirmDialog = await screen.findByRole('dialog', {
       name: 'Libérer les placements du tirage ?',
     });
@@ -663,12 +691,14 @@ describe('StructureDrawDialog', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Exécution #2 · 8 équipes')).toBeInTheDocument();
+      expect(
+        screen.getByRole('heading', { name: 'Exécution #2' }),
+      ).toBeInTheDocument();
     });
     expect(
       screen.queryByText('Résultat généré, prêt à être publié.'),
     ).not.toBeInTheDocument();
-    expect(screen.getByText('Exécutions précédentes (1)')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /#1/ })).toBeInTheDocument();
     expect(
       screen.queryByLabelText('Historique des exécutions'),
     ).not.toBeInTheDocument();
@@ -732,8 +762,10 @@ describe('StructureDrawDialog', () => {
     renderDialog();
 
     expect(
-      await screen.findByText('Exécution #1 · 8 équipes'),
+      await screen.findByRole('heading', { name: 'Exécution #1' }),
     ).toBeInTheDocument();
+    expect(screen.getByText('8')).toBeInTheDocument();
+    expect(screen.getByText('équipes')).toBeInTheDocument();
     expect(screen.getByText('Brouillon')).toBeInTheDocument();
     expect(
       screen.queryByText('Résultat généré, prêt à être publié.'),
@@ -750,6 +782,17 @@ describe('StructureDrawDialog', () => {
     });
     expect(publishAndApply).toBeInTheDocument();
     expect(publishAndApply.className).toContain('ds-btn--primary');
+    const abandon = screen.getByRole('button', { name: 'Abandonner' });
+    const rerun = screen.getByRole('button', { name: 'Relancer' });
+    expect(abandon.className).toContain('ds-btn--destructive');
+    expect(abandon.compareDocumentPosition(rerun)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(rerun.compareDocumentPosition(publishAndApply)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
+    expect(screen.getByText('groupes')).toBeInTheDocument();
   });
 
   it('lists group placements as dense rows', async () => {
@@ -961,17 +1004,22 @@ describe('StructureDrawDialog', () => {
     renderDialog();
 
     expect(
-      await screen.findByText('Exécution #2 · 8 équipes'),
+      await screen.findByRole('heading', { name: 'Exécution #2' }),
     ).toBeInTheDocument();
-    expect(screen.getByText('Brouillon')).toBeInTheDocument();
+    expect(screen.getAllByText('Brouillon').length).toBeGreaterThan(0);
     expect(document.querySelector('.ds-panel .ds-panel')).toBeNull();
     expect(
       screen.queryByLabelText('Historique des exécutions'),
     ).not.toBeInTheDocument();
-    expect(screen.getByText('Exécutions précédentes (1)')).toBeInTheDocument();
+    expect(
+      screen.getByRole('tablist', { name: 'Exécutions' }),
+    ).toBeInTheDocument();
 
-    await user.click(screen.getByText('Exécutions précédentes (1)'));
-    expect(screen.getByText('#1 · Annulée · libérée')).toBeInTheDocument();
+    await user.click(screen.getByRole('tab', { name: /#1/ }));
+    expect(
+      screen.getByRole('heading', { name: 'Exécution #1' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Libérée')).toBeInTheDocument();
     expect(
       screen.queryByText(
         'Exécution annulée. Un nouveau tirage est nécessaire pour recommencer.',
@@ -1111,7 +1159,7 @@ describe('StructureDrawDialog', () => {
     renderDialog(groupsStage(), true, 'Completed');
 
     expect(
-      await screen.findByText('Exécution #1 · 8 équipes'),
+      await screen.findByRole('heading', { name: 'Exécution #1' }),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: 'Abandonner' }),
@@ -1126,7 +1174,7 @@ describe('StructureDrawDialog', () => {
     renderDialog(groupsStage({ status: 'Running' }), true, 'Running');
 
     expect(
-      await screen.findByText('Exécution #1 · 8 équipes'),
+      await screen.findByRole('heading', { name: 'Exécution #1' }),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: 'Abandonner' }),
@@ -1180,27 +1228,16 @@ describe('StructureDrawDialog', () => {
 
     renderDialog(cupStage());
 
-    expect(
-      await screen.findByText('#1 · Annulée · 1/2 placements non libérés'),
-    ).toBeInTheDocument();
-    const releaseButtons = screen.getAllByRole('button', {
+    expect(await screen.findByText('1/2 non libérés')).toBeInTheDocument();
+    const releaseButton = screen.getByRole('button', {
       name: 'Libérer 1/2',
     });
-    expect(releaseButtons).toHaveLength(2);
-    const rowRelease = releaseButtons.find((button) =>
-      button.closest('.structure-draw-history-row'),
-    );
-    expect(rowRelease).toBeTruthy();
-    expect(rowRelease?.closest('summary')).toBeNull();
-    const toggle = screen.getByRole('button', { name: /#1 · Annulée/ });
-    expect(toggle).toHaveAttribute('aria-expanded', 'false');
-    expect(rowRelease?.compareDocumentPosition(toggle)).toBe(
-      Node.DOCUMENT_POSITION_PRECEDING,
-    );
+    expect(releaseButton.closest('.structure-draw-footer')).not.toBeNull();
+    expect(releaseButton.closest('summary')).toBeNull();
     expect(
       screen.queryByText(/placements encore présents/),
     ).not.toBeInTheDocument();
-    await user.click(releaseButtons[0]!);
+    await user.click(releaseButton);
     const confirm = await screen.findByRole('dialog', {
       name: 'Libérer les placements du tirage ?',
     });
@@ -1266,7 +1303,11 @@ describe('StructureDrawDialog', () => {
 
     renderDialog(cupStage());
 
-    await screen.findByText('Exécutions précédentes (2)');
+    await screen.findByRole('tab', { name: /#2/ });
+    expect(screen.getByRole('tab', { name: /#2/ })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
     const footer = document.querySelector('.structure-draw-footer');
     expect(footer).not.toBeNull();
     const footerRelease = within(footer as HTMLElement).getByRole('button', {
@@ -1328,7 +1369,7 @@ describe('StructureDrawDialog', () => {
     renderDialog(cupStage());
 
     expect(
-      await screen.findByText('Exécutions précédentes (1)'),
+      await screen.findByRole('heading', { name: 'Exécution #1' }),
     ).toBeInTheDocument();
     expect(
       screen.queryByText(/placements encore présents/),
@@ -1572,6 +1613,8 @@ describe('StructureDrawDialog', () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
       overview([
         groupDraw({
+          status: 'Published',
+          isApplied: true,
           isObsoleteForConsumption: true,
         }),
       ]),
@@ -1738,7 +1781,7 @@ describe('StructureDrawDialog', () => {
     renderDialog(cupStage({ status: 'Running' }), true, 'Running');
 
     expect(
-      await screen.findByText('Exécutions précédentes (1)'),
+      await screen.findByRole('heading', { name: 'Exécution #1' }),
     ).toBeInTheDocument();
     expect(
       screen.queryByText('Annulé, placements non libérés'),
@@ -1808,12 +1851,10 @@ describe('StructureDrawDialog', () => {
       within(confirm).getByRole('button', { name: 'Refaire le tirage' }),
     );
 
+    expect(await screen.findByText('1/1 non libérés')).toBeInTheDocument();
     expect(
-      await screen.findByText('#1 · Annulée · 1/1 placements non libérés'),
+      screen.getByRole('button', { name: 'Libérer 1/1' }),
     ).toBeInTheDocument();
-    expect(
-      screen.getAllByRole('button', { name: 'Libérer 1/1' }).length,
-    ).toBeGreaterThan(0);
     const main = screen
       .getByRole('heading', { name: /Exécutions de tirage/ })
       .closest('[role="dialog"]') as HTMLElement;
@@ -1878,7 +1919,7 @@ describe('StructureDrawDialog', () => {
     });
   });
 
-  it('focuses Annuler when Refaire is blocked', async () => {
+  it('focuses the header close when Refaire is blocked', async () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
       overview(
         [
@@ -1926,11 +1967,15 @@ describe('StructureDrawDialog', () => {
     await waitFor(() => {
       expect(
         screen.getByRole('button', { name: 'Annuler le tirage' }),
-      ).toHaveFocus();
+      ).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Fermer' })).toHaveFocus();
     });
+    expect(
+      screen.getByRole('button', { name: 'Annuler le tirage' }),
+    ).not.toHaveFocus();
   });
 
-  it('opens only one cancelled row at a time', async () => {
+  it('moves the run selector with arrows, Home, and End', async () => {
     const user = userEvent.setup();
     vi.mocked(fetchStageOverview).mockResolvedValue(
       overview([
@@ -1948,7 +1993,7 @@ describe('StructureDrawDialog', () => {
         }),
         groupDraw({
           id: 'draw-b',
-          status: 'Cancelled',
+          status: 'Draft',
           groupPlacements: [
             {
               groupId: 'g-b',
@@ -1961,21 +2006,269 @@ describe('StructureDrawDialog', () => {
       ]),
     );
     renderDialog();
-    const older = await screen.findByRole('button', { name: /#1 · Annulée/ });
-    const newer = screen.getByRole('button', { name: /#2 · Annulée/ });
-    await user.click(older);
-    expect(older).toHaveAttribute('aria-expanded', 'true');
-    expect(newer).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.getByText(/Alpha/).closest('ul')).not.toHaveAttribute(
-      'hidden',
+    const activeTab = await screen.findByRole('tab', { name: /#2/ });
+    const cancelledTab = screen.getByRole('tab', { name: /#1/ });
+    expect(activeTab).toHaveAttribute('aria-selected', 'true');
+    expect(activeTab).toHaveAttribute('tabindex', '0');
+    expect(cancelledTab).toHaveAttribute('tabindex', '-1');
+    expect(screen.getByText('Beta')).toBeInTheDocument();
+    expect(screen.queryByText('Alpha')).not.toBeInTheDocument();
+
+    activeTab.focus();
+    await user.keyboard('{ArrowRight}');
+    expect(cancelledTab).toHaveAttribute('aria-selected', 'true');
+    expect(cancelledTab).toHaveFocus();
+    expect(screen.getByText('Alpha')).toBeInTheDocument();
+    expect(screen.queryByText('Beta')).not.toBeInTheDocument();
+
+    await user.keyboard('{Home}');
+    expect(activeTab).toHaveAttribute('aria-selected', 'true');
+    expect(activeTab).toHaveFocus();
+
+    await user.keyboard('{End}');
+    expect(cancelledTab).toHaveFocus();
+    expect(cancelledTab).toHaveAttribute('aria-selected', 'true');
+
+    await user.keyboard('{ArrowRight}');
+    expect(activeTab).toHaveFocus();
+  });
+
+  it('does not move focus when a run tile is selected', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([
+        groupDraw({ id: 'draw-a', status: 'Cancelled' }),
+        groupDraw({ id: 'draw-b', status: 'Draft' }),
+      ]),
     );
-    await user.click(newer);
-    expect(older).toHaveAttribute('aria-expanded', 'false');
-    expect(newer).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByText(/Alpha/).closest('ul')).toHaveAttribute('hidden');
-    expect(screen.getByText(/Beta/).closest('ul')).not.toHaveAttribute(
-      'hidden',
+    renderDialog();
+    const validate = await screen.findByRole('button', {
+      name: 'Valider le tirage',
+    });
+    await waitFor(() => {
+      expect(validate).toHaveFocus();
+    });
+    const cancelledTab = screen.getByRole('tab', { name: /#1/ });
+    await user.click(cancelledTab);
+    expect(cancelledTab).toHaveFocus();
+    expect(
+      screen.queryByRole('button', { name: 'Lancer le tirage' }),
+    ).not.toBeInTheDocument();
+    expect(validate).not.toHaveFocus();
+  });
+
+  it('returns focus when Libérer disappears', async () => {
+    const user = userEvent.setup();
+    const placement = {
+      slotKey: 'S1',
+      entryId: 'e1',
+      displayName: 'Belgium',
+    };
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview(
+        [
+          slotDraw({
+            id: 'draw-old',
+            status: 'Cancelled',
+            slotPlacements: [placement],
+          }),
+        ],
+        {
+          slots: [
+            {
+              slotKey: 'S1',
+              entryId: 'e1',
+              displayName: 'Belgium',
+              coveredByCompleteFixture: false,
+            },
+          ],
+        },
+      ),
     );
+    vi.mocked(releaseDrawAlignedPlacements).mockImplementation(async () => {
+      vi.mocked(fetchStageOverview).mockResolvedValue(
+        overview(
+          [
+            slotDraw({
+              id: 'draw-old',
+              status: 'Cancelled',
+              slotPlacements: [placement],
+            }),
+          ],
+          {
+            slots: [
+              {
+                slotKey: 'S1',
+                entryId: null,
+                displayName: null,
+                coveredByCompleteFixture: false,
+              },
+            ],
+          },
+        ),
+      );
+      return { releasedCount: 1, skippedCount: 0 };
+    });
+    renderDialog(cupStage());
+    const release = await screen.findByRole('button', { name: 'Libérer 1/1' });
+    release.focus();
+    await user.click(release);
+    const confirm = await screen.findByRole('dialog', {
+      name: 'Libérer les placements du tirage ?',
+    });
+    await user.click(
+      within(confirm).getByRole('button', {
+        name: 'Libérer les placements du tirage',
+      }),
+    );
+    await waitFor(() => {
+      expect(
+        screen.queryByRole('button', { name: /Libérer/ }),
+      ).not.toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(screen.getByRole('tab', { name: /#1/ })).toHaveFocus();
+    });
+    expect(screen.getByRole('button', { name: 'Fermer' })).not.toHaveFocus();
+  });
+
+  it('disables Libérer and blocks Refaire when a Ready group has matches', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview(
+        [
+          groupDraw({
+            id: 'draw-live',
+            status: 'Published',
+            isApplied: true,
+          }),
+          groupDraw({
+            id: 'draw-old',
+            status: 'Cancelled',
+            groupPlacements: [
+              {
+                groupId: 'g-a',
+                groupDisplayName: 'A',
+                entryId: 'e1',
+                displayName: 'Alpha',
+              },
+            ],
+          }),
+        ],
+        {
+          status: 'Ready',
+          groups: [{ id: 'g-a', name: 'A', entryIds: ['e1'] }],
+        },
+      ),
+    );
+    renderDialog(groupsStage({ status: 'Ready', matchCount: 2 }));
+    expect(
+      await screen.findByText(/ne peut pas être refait : des matchs/),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Refaire le tirage' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Annuler le tirage' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Libérer/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('keeps Libérer visible and disabled when a cancelled group is Ready with matches', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview(
+        [
+          groupDraw({
+            id: 'draw-old',
+            status: 'Cancelled',
+            groupPlacements: [
+              {
+                groupId: 'g-a',
+                groupDisplayName: 'A',
+                entryId: 'e1',
+                displayName: 'Alpha',
+              },
+            ],
+          }),
+        ],
+        {
+          status: 'Ready',
+          groups: [{ id: 'g-a', name: 'A', entryIds: ['e1'] }],
+        },
+      ),
+    );
+    renderDialog(groupsStage({ status: 'Ready', matchCount: 2 }));
+    const release = await screen.findByRole('button', { name: 'Libérer 1/1' });
+    expect(release).toBeDisabled();
+    expect(
+      screen.getByText(
+        'Libérer est indisponible : des matchs sont déjà rattachés à cette phase.',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Refaire le tirage' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows the server 409 ahead of the client release reason', async () => {
+    const user = userEvent.setup();
+    const placement = {
+      groupId: 'g-a',
+      groupDisplayName: 'A',
+      entryId: 'e1',
+      displayName: 'Alpha',
+    };
+    const groups = [{ id: 'g-a', name: 'A', entryIds: ['e1'] }];
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview(
+        [
+          groupDraw({
+            status: 'Cancelled',
+            groupPlacements: [placement],
+          }),
+        ],
+        { groups },
+      ),
+    );
+    vi.mocked(releaseDrawAlignedPlacements).mockImplementation(async () => {
+      vi.mocked(fetchStageOverview).mockResolvedValue(
+        overview(
+          [
+            groupDraw({
+              status: 'Cancelled',
+              groupPlacements: [placement],
+            }),
+          ],
+          { status: 'Ready', groups },
+        ),
+      );
+      throw new ApiError(
+        409,
+        'Conflict',
+        'release failed',
+        'Application.DrawReleaseBlockedByAttachedMatches',
+      );
+    });
+    renderDialog(groupsStage({ matchCount: 2 }));
+    await user.click(
+      await screen.findByRole('button', { name: 'Libérer 1/1' }),
+    );
+    const confirm = await screen.findByRole('dialog', {
+      name: 'Libérer les placements du tirage ?',
+    });
+    await user.click(
+      within(confirm).getByRole('button', {
+        name: 'Libérer les placements du tirage',
+      }),
+    );
+    const main = screen
+      .getByRole('heading', { name: /Exécutions de tirage/ })
+      .closest('[role="dialog"]') as HTMLElement;
+    expect(await within(main).findByText(/Détachez-les/)).toBeInTheDocument();
+    expect(
+      within(main).queryByText(/Libérer est indisponible/),
+    ).not.toBeInTheDocument();
   });
 
   it('prefers a mutation error over the Refaire blocked reason', async () => {

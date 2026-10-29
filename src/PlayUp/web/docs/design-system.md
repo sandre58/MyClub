@@ -57,9 +57,22 @@ Public **`--color-*`** roles on `.ds-root` (see `tokens/colors.css`). Sole produ
 
 - Canonical: `components/Dialog.tsx` + `foundations/dialog.css`.
 - **Close = icon X**; accessible name via `closeLabel` (default « Fermer »). Do **not** replace with a text « Fermer » button.
-- **Initial focus.** Default `initialFocus="body"` focuses the first control in the body, then the footer. `initialFocus="footer"` focuses the footer first so a body control does not take the primary action. Footer order: enabled `.ds-btn--primary`, then enabled `.ds-btn--destructive`, then the last focusable control. Pass `focusKey` to apply that focus again when the dialog stays open and the product state changes.
+- **Footer actions.** One right-aligned group. Order: destructive (`.ds-btn--destructive`) first, then a `--space-16` gap, then secondary actions, then the primary (`.ds-btn--primary`) last. Close stays the header X.
+- **Initial focus.** Default `initialFocus="body"` focuses the first control in the body, then the footer rule below. `initialFocus="footer"` uses that footer rule only: focus never lands in the body. `pickFooterInitialFocus` order: enabled `.ds-btn--primary`, then the first enabled footer button that is neither primary nor destructive, then the header close X. Never a destructive button. Never the body. Pass `focusKey` to apply that focus again while the dialog stays open. The Structure draw dialog is the only product surface that sets `initialFocus="footer"`. `ConfirmDialog` keeps the default body path; its message is not focusable, so a danger confirm follows the same footer rule and focuses the ghost cancel (then X), not the destructive confirm.
 - Interactive specimen: Design Lab surface **Dialog** only.
 - `AttentionDrawer` is Shell triage — not Dialog.
+
+## Hero facts
+
+- Shared classes: `.structure-qualification__facts`, `.structure-qualification__fact`, `--primary` / `--secondary`, and `.structure-qualification__fact-rule` between facts.
+- Order is secondary, then the rule, then primary. The container sets `aria-live="polite"`.
+- The draw dialog uses the same pattern: groups show the group count then the team count; a cup shows places then the team count. The facts stay the same whichever execution is selected.
+
+## Match row
+
+- Canonical: `components/MatchRow.tsx` + `foundations/match.css`.
+- Optional `density?: 'compact'` sets `data-density="compact"`. Compact rows use `--text-label` on `.ds-match-row__team`, `--text-meta` on the muted score and the aside, and `min-height: 2rem`.
+- Omitting `density` leaves the default row unchanged. Crest size stays a design-system size (`TeamCrest` `size="sm"`).
 
 ## Popover
 

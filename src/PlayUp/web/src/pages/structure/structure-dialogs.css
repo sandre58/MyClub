@@ -18,59 +18,63 @@
   min-height: 0;
 }
 
-.structure-draw-cancelled {
+.structure-draw-chrome {
+  display: flex;
   flex: none;
+  flex-direction: column;
+  gap: var(--space-16);
   min-width: 0;
 }
 
-.structure-draw-cancelled__summary {
+.structure-draw-runs {
   display: flex;
-  align-items: center;
   gap: var(--space-8);
-  padding: var(--space-12) var(--space-16);
-  color: var(--color-text-primary);
-  font-size: var(--text-body);
-  font-weight: var(--font-weight-bold);
-  line-height: var(--leading-tight);
-  cursor: pointer;
-  list-style: none;
+  overflow-x: auto;
+  min-width: 0;
 }
 
-.structure-draw-cancelled__summary::marker {
-  content: '';
-}
-
-.structure-draw-cancelled__summary .ds-icon {
+.structure-draw-run__tile {
+  display: flex;
   flex: none;
-  color: var(--color-text-secondary);
-  transition: transform var(--motion-duration) var(--motion-easing);
-}
-
-.structure-draw-cancelled[open] > .structure-draw-cancelled__summary .ds-icon {
-  transform: rotate(180deg);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .structure-draw-cancelled__summary .ds-icon {
-    transition: none;
-  }
-}
-
-.structure-draw-cancelled__body {
-  display: flex;
   flex-direction: column;
-  gap: var(--space-8);
-  padding: 0;
+  align-items: flex-start;
+  gap: var(--space-4);
+  text-align: start;
 }
 
-.structure-draw-status {
+.structure-draw-run__line {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-8) var(--space-12);
+  gap: var(--space-8);
 }
 
-.structure-draw-status__line {
+.structure-draw-run__meta {
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+  line-height: var(--leading-tight);
+}
+
+.structure-draw-run__meta[data-tone='attention'] {
+  color: var(--color-attention);
+}
+
+.structure-draw-execution {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.structure-draw-title {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-8);
+  margin-block-end: var(--space-16);
+}
+
+.structure-draw-title__heading {
   margin: 0;
   color: var(--color-text-primary);
   font-size: var(--text-body);
@@ -78,68 +82,26 @@
   line-height: var(--leading-tight);
 }
 
-.structure-draw-history-row {
-  min-width: 0;
-}
-
-.structure-draw-history-row__head {
+.structure-draw-view {
   display: flex;
-  align-items: center;
-  gap: var(--space-8);
-  min-width: 0;
-}
-
-.structure-draw-history-row__summary {
   flex: 1 1 auto;
-  min-width: 0;
-  margin: 0;
-  padding: var(--space-8) 0;
-  border: none;
-  background: transparent;
-  color: var(--color-text-primary);
-  font: inherit;
-  font-size: var(--text-body);
-  line-height: var(--leading-tight);
-  text-align: start;
-  cursor: pointer;
-}
-
-.structure-draw-history-row__detail {
-  display: flex;
   flex-direction: column;
-  gap: var(--space-4);
-  margin: 0 0 var(--space-8);
-  padding: 0;
-  list-style: none;
-  color: var(--color-text-secondary);
-  font-size: var(--text-label);
-  line-height: var(--leading-normal);
+  gap: var(--space-16);
+  min-height: 0;
+  overflow: auto;
 }
 
 .structure-draw-footer {
-  display: flex;
-  align-items: center;
-  gap: var(--space-8);
-  width: 100%;
-  min-width: 0;
-}
-
-.structure-draw-footer__start {
-  display: flex;
-  flex: none;
-  margin-inline-end: auto;
-}
-
-.structure-draw-footer__end {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
   gap: var(--space-8);
+  min-width: 0;
 }
 
-.ds-dialog:has(.structure-draw-dialog) .ds-dialog__footer-actions {
-  flex: 1 1 auto;
+.structure-draw-footer .ds-btn--destructive {
+  margin-inline-end: var(--space-8);
 }
 
 .structure-draw-dialog .regulation-schematic--groups {
@@ -240,17 +202,32 @@
 
 /* Fixed chrome while editing — only viewport resize changes dialog size. */
 .ds-dialog:has(.structure-qualification) .ds-dialog__panel,
-.ds-dialog:has(.structure-progression) .ds-dialog__panel {
+.ds-dialog:has(.structure-progression) .ds-dialog__panel,
+.ds-dialog:has(.structure-draw-dialog) .ds-dialog__panel {
   height: min(92vh, 52rem);
   max-height: min(92vh, 52rem);
 }
 
 .ds-dialog:has(.structure-qualification) .ds-dialog__body,
-.ds-dialog:has(.structure-progression) .ds-dialog__body {
+.ds-dialog:has(.structure-progression) .ds-dialog__body,
+.ds-dialog:has(.structure-draw-dialog) .ds-dialog__body {
   overflow: hidden;
   display: flex;
   flex-direction: column;
   min-height: 0;
+}
+
+/* Short viewports: the shared panel height can leave the draw body shorter
+   than the fixed chrome. Let the dialog body scroll and keep the result
+   view in normal flow so facts, the selector, and the title stay reachable. */
+@media (max-height: 36rem) {
+  .ds-dialog:has(.structure-draw-dialog) .ds-dialog__body {
+    overflow: auto;
+  }
+
+  .structure-draw-view {
+    overflow: visible;
+  }
 }
 
 /* Attribution: fixed size — height independent of row count. */

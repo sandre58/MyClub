@@ -223,6 +223,19 @@ button.ds-match-row {
   min-width: 0;
 }
 
+.ds-match-row[data-density='compact'] {
+  min-height: 2rem;
+}
+
+.ds-match-row[data-density='compact'] .ds-match-row__team {
+  font-size: var(--text-label);
+}
+
+.ds-match-row[data-density='compact'] .ds-match-row__score[data-muted='true'],
+.ds-match-row[data-density='compact'] .ds-match-row__aside {
+  font-size: var(--text-meta);
+}
+
 /* --- Timeline (faits de match) ------------------------------------------- */
 
 .ds-match-timeline {

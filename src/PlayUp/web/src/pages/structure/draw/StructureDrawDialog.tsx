@@ -1,6 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useOpenEdge } from '../../../design-system/useRenderSync';
-import { useMemo, useState, type ReactElement } from 'react';
+import { useOpenEdge, useSyncWhen } from '../../../design-system/useRenderSync';
+import {
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type ReactElement,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import {
@@ -18,6 +26,7 @@ import { ConfirmDialog } from '../../../design-system/components/ConfirmDialog';
 import { WaitMark } from '../../../design-system/components/WaitMark';
 import { Status } from '../../../design-system/components/Status';
 import { Dialog } from '../../../design-system/components/Dialog';
+import { SelectableTile } from '../../../design-system/components/SelectableTile';
 import { Tooltip } from '../../../design-system/components/Tooltip';
 import {
   CheckIcon,
@@ -25,10 +34,7 @@ import {
   UndoIcon,
   UnlockIcon,
 } from '../../../design-system/icons/contentIcons';
-import {
-  ChevronDownIcon,
-  CloseIcon,
-} from '../../../design-system/icons/shellIcons';
+import { CloseIcon } from '../../../design-system/icons/shellIcons';
 import { notify } from '../../../design-system/toastStore';
 import { useClearMutationsOnOpen } from '../../../design-system/useClearMutationsOnOpen';
 import { queryKeys } from '../../../queryKeys';
@@ -48,6 +54,7 @@ import {
   drawResolutionPlacementCount,
   getDrawUiProjection,
   pickActiveDraw,
+  pickDefaultDrawId,
   projectSlotDrawResult,
   resolveDrawCreateBlockPresentation,
   resolveDrawDetailGuidance,
@@ -60,6 +67,8 @@ import { DrawRedoStoppedError, resolveAppliedDrawRedo } from './drawRedo';
 import {
   canCancelDrawExecution,
   canReleaseDrawAlignedPlacements,
+  groupReleaseBlockedByAttachedMatches,
+  showReleaseDrawPlacements,
 } from '../../stage/lifecycleGates';
 import { scheduleStructureRefresh } from '../structureInvalidation';
 import { resolvePlacesN } from '../composition/structurePlaces';
@@ -100,7 +109,7 @@ function stickyMutationError(error: unknown): unknown {
   return error;
 }
 
-/** Work dialog — one current execution, cancelled history folded away. */
+/** Work dialog — one selected execution, with a run selector when history exists. */
 export type StructureDrawDialogProps = {
   open: boolean;
   onClose: () => void;
@@ -121,8 +130,7 @@ type ConfirmKind = 'apply' | 'abandon' | 'release' | 'redo' | 'cancelApplied';
 
 /**
  * Work dialog — stage draw executions.
- * Current non-cancelled execution is full width. Cancelled runs fold into
- * one disclosure; the releasable one keeps Libérer.
+ * The selected execution fills the view. Cancelled runs stay selectable.
  */
 export function StructureDrawDialog({
   open,
@@ -160,15 +168,19 @@ export function StructureDrawDialog({
 
   const [confirm, setConfirm] = useState<ConfirmKind | null>(null);
   const [confirmDrawId, setConfirmDrawId] = useState<string | null>(null);
-  const [cancelledOpen, setCancelledOpen] = useState(false);
-  const [openHistoryId, setOpenHistoryId] = useState<string | null>(null);
+  const [selectedDrawId, setSelectedDrawId] = useState<string | null>(null);
+  const selectionModeRef = useRef<'keep' | 'default'>('keep');
+  const focusedFooterRef = useRef<HTMLButtonElement | null>(null);
+  const focusTabIdRef = useRef<string | null>(null);
+  const runsDomId = useId();
 
   useOpenEdge(open, {
     onClose: () => {
       setConfirm(null);
       setConfirmDrawId(null);
-      setCancelledOpen(false);
-      setOpenHistoryId(null);
+      setSelectedDrawId(null);
+      selectionModeRef.current = 'keep';
+      focusedFooterRef.current = null;
     },
   });
 
@@ -180,14 +192,57 @@ export function StructureDrawDialog({
       ),
     [drawList],
   );
-  const forceCancelledOpen = activeDraw == null && cancelledDraws.length > 0;
+  const runList = useMemo(
+    () => (activeDraw ? [activeDraw, ...cancelledDraws] : cancelledDraws),
+    [activeDraw, cancelledDraws],
+  );
+
+  function markSelectionDefault() {
+    selectionModeRef.current = 'default';
+    setSelectedDrawId(null);
+  }
+
+  useSyncWhen(
+    open && draws != null,
+    runList.map((draw) => draw.id).join(','),
+    () => {
+      const mode = selectionModeRef.current;
+      selectionModeRef.current = 'keep';
+      setSelectedDrawId((current) => {
+        if (
+          mode !== 'default' &&
+          current != null &&
+          runList.some((draw) => draw.id === current)
+        ) {
+          return current;
+        }
+        return pickDefaultDrawId(drawList);
+      });
+    },
+  );
+
+  const resolvedSelectedId =
+    selectedDrawId != null && runList.some((draw) => draw.id === selectedDrawId)
+      ? selectedDrawId
+      : pickDefaultDrawId(drawList);
+  const displayedDraw =
+    runList.find((draw) => draw.id === resolvedSelectedId) ?? null;
+  const showingActive =
+    displayedDraw != null &&
+    activeDraw != null &&
+    displayedDraw.id === activeDraw.id;
+  const showRunSelector = cancelledDraws.length > 0;
+  const attachedMatchCount = stage.matchCount ?? 0;
 
   function alignedCountFor(draw: StageDraw): number {
     return countAlignedDrawPlacements(draw, slots, overviewGroups);
   }
 
-  function releaseAllowed(draw: StageDraw): boolean {
-    return canReleaseDrawAlignedPlacements({
+  function releaseVisible(draw: StageDraw): boolean {
+    if (draw.kind !== 'Slot' && draw.kind !== 'Group') {
+      return false;
+    }
+    return showReleaseDrawPlacements({
       competitionStatus,
       stageStatus,
       drawStatus: draw.status,
@@ -197,10 +252,20 @@ export function StructureDrawDialog({
     });
   }
 
-  const footerRelease =
-    activeDraw == null
-      ? (cancelledDraws.find((draw) => releaseAllowed(draw)) ?? null)
-      : null;
+  function releaseEnabled(draw: StageDraw): boolean {
+    if (draw.kind !== 'Slot' && draw.kind !== 'Group') {
+      return false;
+    }
+    return canReleaseDrawAlignedPlacements({
+      competitionStatus,
+      stageStatus,
+      drawStatus: draw.status,
+      drawKind: draw.kind,
+      stageHasPublishedAppliedDraw: stageHasAppliedDraw,
+      alignedPlacementCount: alignedCountFor(draw),
+      attachedMatchCount,
+    });
+  }
 
   const confirmDraw =
     drawList.find((draw) => draw.id === confirmDrawId) ?? null;
@@ -285,6 +350,7 @@ export function StructureDrawDialog({
       return createAndGenerateDraw(stageId, drawKind);
     },
     onSuccess: (result) => {
+      markSelectionDefault();
       scheduleDrawOverviewRefresh();
       if (result.isNoSolution) {
         notify.attention(tDraw('toastCreatedNoSolution'));
@@ -312,6 +378,7 @@ export function StructureDrawDialog({
   const rerunMutation = useMutation({
     mutationFn: (drawId: string) => rerunDrawGeneration(stageId, drawId),
     onSuccess: (result) => {
+      markSelectionDefault();
       scheduleDrawOverviewRefresh();
       if (result.isNoSolution) {
         notify.attention(tDraw('toastCreatedNoSolution'));
@@ -342,6 +409,7 @@ export function StructureDrawDialog({
   const cancelMutation = useMutation({
     mutationFn: (drawId: string) => cancelDraw(stageId, drawId),
     onSuccess: () => {
+      markSelectionDefault();
       closeConfirm();
       scheduleDrawHubRefresh();
       notify.success(tDraw('toastCancelled'));
@@ -352,6 +420,7 @@ export function StructureDrawDialog({
     mutationFn: (drawId: string) =>
       releaseDrawAlignedPlacements(stageId, drawId),
     onSuccess: (result) => {
+      markSelectionDefault();
       closeConfirm();
       scheduleDrawHubRefresh();
       notify.success(tDraw('toastReleased', { count: result.releasedCount }));
@@ -390,6 +459,7 @@ export function StructureDrawDialog({
       }
     },
     onSuccess: (result) => {
+      markSelectionDefault();
       closeConfirm();
       scheduleDrawHubRefresh();
       if (result.isNoSolution) {
@@ -455,6 +525,7 @@ export function StructureDrawDialog({
           slots,
           bracketPairs,
           rounds,
+          attachedMatchCount,
         })
       : { kind: 'hidden' as const };
 
@@ -494,6 +565,19 @@ export function StructureDrawDialog({
       drawStatus: activeDraw.status,
     });
 
+  const selectedRelease =
+    displayedDraw != null && !showingActive && releaseVisible(displayedDraw)
+      ? displayedDraw
+      : null;
+  const releaseBlocked =
+    selectedRelease != null &&
+    selectedRelease.kind === 'Group' &&
+    groupReleaseBlockedByAttachedMatches({
+      drawKind: 'Group',
+      stageStatus,
+      attachedMatchCount,
+    });
+
   const focusKey = [
     overviewQuery.isLoading ? 'loading' : 'ready',
     activeDraw?.id ?? 'none',
@@ -501,9 +585,80 @@ export function StructureDrawDialog({
     activeDraw?.resolutionState ?? '',
     activeUi?.isApplied ? 'applied' : 'open',
     activeRedo.kind,
-    footerRelease?.id ?? '',
     canLaunch ? 'launch' : 'wait',
   ].join('|');
+
+  const footerSignature = [
+    showingActive ? 'active' : (displayedDraw?.id ?? 'none'),
+    canAbandon && showingActive ? 'abandon' : '',
+    canCancelApplied && showingActive ? 'cancelApplied' : '',
+    selectedRelease ? `release:${releaseBlocked ? 'blocked' : 'on'}` : '',
+    canRerun && showingActive ? 'rerun' : '',
+    showLaunch ? 'launch' : '',
+    canValidate && showingActive ? 'validate' : '',
+    canApplyResume && showingActive ? 'apply' : '',
+    canRedo && showingActive ? 'redo' : '',
+  ].join('|');
+
+  useLayoutEffect(() => {
+    const tabId = focusTabIdRef.current;
+    if (!tabId) {
+      return;
+    }
+    focusTabIdRef.current = null;
+    document.getElementById(tabId)?.focus();
+  }, [resolvedSelectedId]);
+
+  useLayoutEffect(() => {
+    if (!open) {
+      focusedFooterRef.current = null;
+      return;
+    }
+    if (confirm != null) {
+      return;
+    }
+    const previous = focusedFooterRef.current;
+    const lost =
+      previous != null && (!previous.isConnected || previous.disabled);
+    const dialog = document
+      .querySelector('.structure-draw-dialog')
+      ?.closest('[role="dialog"]');
+    const active = document.activeElement;
+    const landedElsewhere =
+      active instanceof HTMLElement &&
+      active !== previous &&
+      active.isConnected &&
+      dialog?.contains(active) === true;
+    if (lost && dialog && !landedElsewhere) {
+      const footer = dialog.querySelector('.structure-draw-footer');
+      const primary = footer?.querySelector<HTMLElement>(
+        '.ds-btn--primary:not(:disabled)',
+      );
+      const neutral = footer
+        ? [...footer.querySelectorAll<HTMLButtonElement>('button')].find(
+            (button) =>
+              !button.disabled &&
+              !button.classList.contains('ds-btn--primary') &&
+              !button.classList.contains('ds-btn--destructive'),
+          )
+        : undefined;
+      const tab = dialog.querySelector<HTMLElement>(
+        '[role="tab"][aria-selected="true"]',
+      );
+      const closeButton = dialog.querySelector<HTMLElement>(
+        'button.ds-icon-button:not(:disabled)',
+      );
+      (primary ?? neutral ?? tab ?? closeButton)?.focus({
+        preventScroll: true,
+      });
+    }
+    if (
+      active instanceof HTMLButtonElement &&
+      active.closest('.structure-draw-footer')
+    ) {
+      focusedFooterRef.current = active;
+    }
+  }, [open, confirm, footerSignature]);
 
   const footerStatus = overviewQuery.isError ? (
     <Alert tone="danger" role="alert">
@@ -515,9 +670,13 @@ export function StructureDrawDialog({
       structureStages={structureStages}
       sotHref={persistentStructureMutationSotHref(mutationError, competitionId)}
     />
-  ) : activeRedo.kind === 'blocked' ? (
+  ) : showingActive && activeRedo.kind === 'blocked' ? (
     <Alert tone="info" role="status">
       {tDraw(`redoBlocked.${activeRedo.reason}`)}
+    </Alert>
+  ) : releaseBlocked ? (
+    <Alert tone="info" role="status">
+      {tDraw('releaseBlockedAttachedMatches')}
     </Alert>
   ) : !overviewQuery.isLoading &&
     createBlockedDetail != null &&
@@ -553,181 +712,242 @@ export function StructureDrawDialog({
         initialFocus="footer"
         focusKey={focusKey}
         footer={
-          <div className="structure-draw-footer">
-            <div className="structure-draw-footer__start">
-              {canAbandon ? (
-                <button
-                  type="button"
-                  className="ds-btn ds-btn--destructive"
-                  disabled={busy}
-                  onClick={() => openConfirm('abandon', activeDraw!.id)}
-                >
-                  {cancelMutation.isPending ? (
-                    <PendingLabel>{tDraw('abandoning')}</PendingLabel>
-                  ) : (
-                    <>
-                      <CloseIcon size="sm" />
-                      {tDraw('abandon')}
-                    </>
-                  )}
-                </button>
-              ) : null}
-              {canCancelApplied ? (
-                <button
-                  type="button"
-                  className="ds-btn ds-btn--destructive"
-                  disabled={busy}
-                  onClick={() => openConfirm('cancelApplied', activeDraw!.id)}
-                >
-                  {cancelMutation.isPending ? (
-                    <PendingLabel>{tDraw('cancelling')}</PendingLabel>
-                  ) : (
-                    <>
-                      <CloseIcon size="sm" />
-                      {tDraw('cancelAppliedDraw')}
-                    </>
-                  )}
-                </button>
-              ) : null}
-            </div>
-            <div className="structure-draw-footer__end">
-              {footerRelease ? (
-                <button
-                  type="button"
-                  className="ds-btn ds-btn--secondary"
-                  disabled={busy}
-                  onClick={() => openConfirm('release', footerRelease.id)}
-                >
-                  {releaseMutation.isPending ? (
-                    <PendingLabel>{tDraw('releasingPlacements')}</PendingLabel>
-                  ) : (
-                    <>
-                      <UnlockIcon size="sm" />
-                      {tDraw('releasePlacementsCount', {
-                        aligned: alignedCountFor(footerRelease),
-                        total: drawResolutionPlacementCount(footerRelease),
-                      })}
-                    </>
-                  )}
-                </button>
-              ) : null}
-              {canRerun ? (
-                <button
-                  type="button"
-                  className="ds-btn ds-btn--secondary"
-                  disabled={busy}
-                  onClick={() => rerunMutation.mutate(activeDraw!.id)}
-                >
-                  {rerunMutation.isPending ? (
-                    <PendingLabel>{tDraw('rerunning')}</PendingLabel>
-                  ) : (
-                    <>
-                      <RandomIcon size="sm" />
-                      {tDraw('rerun')}
-                    </>
-                  )}
-                </button>
-              ) : null}
-              {showLaunch ? (
-                createBlockedShort != null ? (
-                  <Tooltip content={createBlockedShort}>
-                    <button
-                      type="button"
-                      className="ds-btn ds-btn--primary"
-                      disabled
-                      aria-label={t('fiche.drawWorkflow.create')}
-                    >
-                      <RandomIcon size="sm" />
-                      {t('fiche.drawWorkflow.create')}
-                    </button>
-                  </Tooltip>
+          <div
+            className="structure-draw-footer"
+            onFocus={(event) => {
+              const target = event.target;
+              if (
+                target instanceof HTMLButtonElement &&
+                target.closest('.structure-draw-footer')
+              ) {
+                focusedFooterRef.current = target;
+              }
+            }}
+          >
+            {showingActive && canAbandon ? (
+              <button
+                type="button"
+                className="ds-btn ds-btn--destructive"
+                disabled={busy}
+                onClick={() => openConfirm('abandon', activeDraw!.id)}
+              >
+                {cancelMutation.isPending ? (
+                  <PendingLabel>{tDraw('abandoning')}</PendingLabel>
                 ) : (
+                  <>
+                    <CloseIcon size="sm" />
+                    {tDraw('abandon')}
+                  </>
+                )}
+              </button>
+            ) : null}
+            {showingActive && canCancelApplied ? (
+              <button
+                type="button"
+                className="ds-btn ds-btn--destructive"
+                disabled={busy}
+                onClick={() => openConfirm('cancelApplied', activeDraw!.id)}
+              >
+                {cancelMutation.isPending ? (
+                  <PendingLabel>{tDraw('cancelling')}</PendingLabel>
+                ) : (
+                  <>
+                    <CloseIcon size="sm" />
+                    {tDraw('cancelAppliedDraw')}
+                  </>
+                )}
+              </button>
+            ) : null}
+            {selectedRelease ? (
+              <button
+                type="button"
+                className="ds-btn ds-btn--secondary"
+                disabled={busy || !releaseEnabled(selectedRelease)}
+                onClick={() => openConfirm('release', selectedRelease.id)}
+              >
+                {releaseMutation.isPending ? (
+                  <PendingLabel>{tDraw('releasingPlacements')}</PendingLabel>
+                ) : (
+                  <>
+                    <UnlockIcon size="sm" />
+                    {tDraw('releasePlacementsCount', {
+                      aligned: alignedCountFor(selectedRelease),
+                      total: drawResolutionPlacementCount(selectedRelease),
+                    })}
+                  </>
+                )}
+              </button>
+            ) : null}
+            {showingActive && canRerun ? (
+              <button
+                type="button"
+                className="ds-btn ds-btn--secondary"
+                disabled={busy}
+                onClick={() => rerunMutation.mutate(activeDraw!.id)}
+              >
+                {rerunMutation.isPending ? (
+                  <PendingLabel>{tDraw('rerunning')}</PendingLabel>
+                ) : (
+                  <>
+                    <RandomIcon size="sm" />
+                    {tDraw('rerun')}
+                  </>
+                )}
+              </button>
+            ) : null}
+            {showLaunch ? (
+              createBlockedShort != null ? (
+                <Tooltip content={createBlockedShort}>
                   <button
                     type="button"
                     className="ds-btn ds-btn--primary"
-                    disabled={busy || !canLaunch}
-                    onClick={() => {
-                      if (!canLaunch) return;
-                      createMutation.mutate(undefined, {
-                        onSettled: () => {
-                          createMutation.reset();
-                        },
-                      });
-                    }}
+                    disabled
+                    aria-label={t('fiche.drawWorkflow.create')}
                   >
-                    {createMutation.isPending ? (
-                      <PendingLabel>
-                        {t('fiche.drawWorkflow.creating')}
-                      </PendingLabel>
-                    ) : (
-                      <>
-                        <RandomIcon size="sm" />
-                        {t('fiche.drawWorkflow.create')}
-                      </>
-                    )}
+                    <RandomIcon size="sm" />
+                    {t('fiche.drawWorkflow.create')}
                   </button>
-                )
-              ) : null}
-              {canValidate ? (
+                </Tooltip>
+              ) : (
                 <button
                   type="button"
                   className="ds-btn ds-btn--primary"
-                  disabled={busy}
+                  disabled={busy || !canLaunch}
                   onClick={() => {
-                    applyMutation.reset();
-                    publishAndApplyMutation.mutate(activeDraw!);
+                    if (!canLaunch) return;
+                    createMutation.mutate(undefined, {
+                      onSettled: () => {
+                        createMutation.reset();
+                      },
+                    });
                   }}
                 >
-                  {publishAndApplyMutation.isPending ? (
-                    <PendingLabel>{tDraw('validating')}</PendingLabel>
+                  {createMutation.isPending ? (
+                    <PendingLabel>
+                      {t('fiche.drawWorkflow.creating')}
+                    </PendingLabel>
                   ) : (
                     <>
-                      <CheckIcon size="sm" />
-                      {tDraw('validate')}
+                      <RandomIcon size="sm" />
+                      {t('fiche.drawWorkflow.create')}
                     </>
                   )}
                 </button>
-              ) : null}
-              {canApplyResume ? (
-                <button
-                  type="button"
-                  className="ds-btn ds-btn--primary"
-                  disabled={busy}
-                  onClick={() => openConfirm('apply', activeDraw!.id)}
-                >
-                  {applyMutation.isPending ? (
-                    <PendingLabel>{tDraw('applying')}</PendingLabel>
-                  ) : (
-                    <>
-                      <CheckIcon size="sm" />
-                      {tDraw('apply')}
-                    </>
-                  )}
-                </button>
-              ) : null}
-              {canRedo ? (
-                <button
-                  type="button"
-                  className="ds-btn ds-btn--primary"
-                  disabled={busy}
-                  onClick={() => openConfirm('redo', activeDraw!.id)}
-                >
-                  {redoMutation.isPending ? (
-                    <PendingLabel>{tDraw('redoing')}</PendingLabel>
-                  ) : (
-                    <>
-                      <UndoIcon size="sm" />
-                      {tDraw('redo')}
-                    </>
-                  )}
-                </button>
-              ) : null}
-            </div>
+              )
+            ) : null}
+            {showingActive && canValidate ? (
+              <button
+                type="button"
+                className="ds-btn ds-btn--primary"
+                disabled={busy}
+                onClick={() => {
+                  applyMutation.reset();
+                  publishAndApplyMutation.mutate(activeDraw!);
+                }}
+              >
+                {publishAndApplyMutation.isPending ? (
+                  <PendingLabel>{tDraw('validating')}</PendingLabel>
+                ) : (
+                  <>
+                    <CheckIcon size="sm" />
+                    {tDraw('validate')}
+                  </>
+                )}
+              </button>
+            ) : null}
+            {showingActive && canApplyResume ? (
+              <button
+                type="button"
+                className="ds-btn ds-btn--primary"
+                disabled={busy}
+                onClick={() => openConfirm('apply', activeDraw!.id)}
+              >
+                {applyMutation.isPending ? (
+                  <PendingLabel>{tDraw('applying')}</PendingLabel>
+                ) : (
+                  <>
+                    <CheckIcon size="sm" />
+                    {tDraw('apply')}
+                  </>
+                )}
+              </button>
+            ) : null}
+            {showingActive && canRedo ? (
+              <button
+                type="button"
+                className="ds-btn ds-btn--primary"
+                disabled={busy}
+                onClick={() => openConfirm('redo', activeDraw!.id)}
+              >
+                {redoMutation.isPending ? (
+                  <PendingLabel>{tDraw('redoing')}</PendingLabel>
+                ) : (
+                  <>
+                    <UndoIcon size="sm" />
+                    {tDraw('redo')}
+                  </>
+                )}
+              </button>
+            ) : null}
           </div>
         }
         footerStatus={footerStatus}
       >
         <div className="structure-draw-dialog">
+          <div className="structure-draw-chrome">
+            <DrawHeroFacts
+              formatKind={stage.formatKind}
+              groupCount={stage.groupCount ?? 0}
+              teamCount={poolCount}
+              placesCount={placesN ?? 0}
+            />
+            {showRunSelector ? (
+              <div
+                className="structure-draw-runs"
+                role="tablist"
+                aria-label={tDraw('runsLabel')}
+                onKeyDown={(event) =>
+                  onRunKeyDown(event, runList, resolvedSelectedId, (drawId) => {
+                    focusTabIdRef.current = runTabId(runsDomId, drawId);
+                    setSelectedDrawId(drawId);
+                  })
+                }
+              >
+                {runList.map((draw) => {
+                  const selected = draw.id === resolvedSelectedId;
+                  return (
+                    <SelectableTile
+                      key={draw.id}
+                      id={runTabId(runsDomId, draw.id)}
+                      type="button"
+                      className="structure-draw-run__tile"
+                      role="tab"
+                      selected={selected}
+                      aria-selected={selected}
+                      aria-controls={runPanelId(runsDomId, draw.id)}
+                      tabIndex={selected ? 0 : -1}
+                      onClick={() => setSelectedDrawId(draw.id)}
+                    >
+                      <span className="structure-draw-run__line">
+                        <span>#{drawExecutionNumber(drawList, draw.id)}</span>
+                        <DrawStatusBadge
+                          status={draw.status}
+                          density="compact"
+                        />
+                      </span>
+                      <DrawRunMeta
+                        draw={draw}
+                        isActive={activeDraw?.id === draw.id}
+                        aligned={alignedCountFor(draw)}
+                        total={drawResolutionPlacementCount(draw)}
+                      />
+                    </SelectableTile>
+                  );
+                })}
+              </div>
+            ) : null}
+          </div>
+
           {overviewQuery.isLoading ? (
             <WaitMark size="region">{t('fiche.drawWorkflow.loading')}</WaitMark>
           ) : null}
@@ -748,61 +968,24 @@ export function StructureDrawDialog({
             </EmptyState>
           ) : null}
 
-          {activeDraw ? (
-            <DrawActiveBody
-              draw={activeDraw}
-              executionNumber={drawExecutionNumber(drawList, activeDraw.id)}
-              teamCount={poolCount}
+          {displayedDraw ? (
+            <DrawExecutionView
+              draw={displayedDraw}
+              executionNumber={drawExecutionNumber(drawList, displayedDraw.id)}
+              readOnly={displayedDraw.status === 'Cancelled'}
+              showObsolete={
+                showingActive &&
+                displayedDraw.status === 'Published' &&
+                displayedDraw.isObsoleteForConsumption === true
+              }
+              tabbed={showRunSelector}
+              panelId={runPanelId(runsDomId, displayedDraw.id)}
+              labelledBy={runTabId(runsDomId, displayedDraw.id)}
               slots={slots}
               groups={overviewGroups}
               placesPerGroup={placesPerGroup}
               bracketPairs={bracketPairs}
             />
-          ) : null}
-
-          {cancelledDraws.length > 0 ? (
-            <details
-              className="structure-draw-cancelled"
-              open={forceCancelledOpen || cancelledOpen}
-              onToggle={(event) => {
-                if (forceCancelledOpen) {
-                  return;
-                }
-                setCancelledOpen(event.currentTarget.open);
-              }}
-            >
-              <summary className="structure-draw-cancelled__summary">
-                <ChevronDownIcon size="sm" />
-                {tDraw('previousExecutions', { count: cancelledDraws.length })}
-              </summary>
-              <div className="structure-draw-cancelled__body">
-                {cancelledDraws.map((draw) => (
-                  <CancelledDrawRow
-                    key={draw.id}
-                    draw={draw}
-                    executionNumber={drawExecutionNumber(drawList, draw.id)}
-                    aligned={alignedCountFor(draw)}
-                    total={drawResolutionPlacementCount(draw)}
-                    canRelease={releaseAllowed(draw)}
-                    open={openHistoryId === draw.id}
-                    busy={busy}
-                    releasePending={
-                      releaseMutation.isPending && confirmDrawId === draw.id
-                    }
-                    slots={slots}
-                    groups={overviewGroups}
-                    placesPerGroup={placesPerGroup}
-                    bracketPairs={bracketPairs}
-                    onToggle={() =>
-                      setOpenHistoryId((current) =>
-                        current === draw.id ? null : draw.id,
-                      )
-                    }
-                    onRelease={() => openConfirm('release', draw.id)}
-                  />
-                ))}
-              </div>
-            </details>
           ) : null}
         </div>
       </Dialog>
@@ -1000,10 +1183,144 @@ export function StructureDrawDialog({
   );
 }
 
-function DrawActiveBody({
+function runTabId(prefix: string, drawId: string): string {
+  return `${prefix}-tab-${drawId}`;
+}
+
+function runPanelId(prefix: string, drawId: string): string {
+  return `${prefix}-panel-${drawId}`;
+}
+
+function onRunKeyDown(
+  event: KeyboardEvent<HTMLDivElement>,
+  runs: readonly StageDraw[],
+  selectedId: string | null,
+  select: (drawId: string) => void,
+): void {
+  if (
+    event.key !== 'ArrowLeft' &&
+    event.key !== 'ArrowRight' &&
+    event.key !== 'Home' &&
+    event.key !== 'End'
+  ) {
+    return;
+  }
+  if (runs.length === 0) {
+    return;
+  }
+  event.preventDefault();
+  const index = Math.max(
+    0,
+    runs.findIndex((draw) => draw.id === selectedId),
+  );
+  let next = index;
+  if (event.key === 'ArrowRight') {
+    next = (index + 1) % runs.length;
+  } else if (event.key === 'ArrowLeft') {
+    next = (index - 1 + runs.length) % runs.length;
+  } else if (event.key === 'Home') {
+    next = 0;
+  } else {
+    next = runs.length - 1;
+  }
+  const draw = runs[next];
+  if (draw) {
+    select(draw.id);
+  }
+}
+
+function DrawHeroFacts({
+  formatKind,
+  groupCount,
+  teamCount,
+  placesCount,
+}: {
+  formatKind: StructureFormatKind | null | undefined;
+  groupCount: number;
+  teamCount: number;
+  placesCount: number;
+}): ReactElement {
+  const { t } = useTranslation('draw');
+  const secondary =
+    formatKind === 'Groups'
+      ? { value: groupCount, label: t('heroGroups') }
+      : { value: placesCount, label: t('heroPlaces') };
+  const primary = { value: teamCount, label: t('heroTeams') };
+  return (
+    <div className="structure-qualification__facts" aria-live="polite">
+      <span
+        className="structure-qualification__fact structure-qualification__fact--secondary"
+        data-fact="secondary"
+      >
+        <span className="structure-qualification__fact-value">
+          {secondary.value}
+        </span>
+        <span className="structure-qualification__fact-label">
+          {secondary.label}
+        </span>
+      </span>
+      <span className="structure-qualification__fact-rule" aria-hidden="true" />
+      <span
+        className="structure-qualification__fact structure-qualification__fact--primary"
+        data-fact="primary"
+      >
+        <span className="structure-qualification__fact-value">
+          {primary.value}
+        </span>
+        <span className="structure-qualification__fact-label">
+          {primary.label}
+        </span>
+      </span>
+    </div>
+  );
+}
+
+function DrawRunMeta({
+  draw,
+  isActive,
+  aligned,
+  total,
+}: {
+  draw: StageDraw;
+  isActive: boolean;
+  aligned: number;
+  total: number;
+}): ReactElement {
+  const { t } = useTranslation('draw');
+  if (
+    isActive &&
+    draw.status === 'Published' &&
+    draw.isObsoleteForConsumption
+  ) {
+    return (
+      <span className="structure-draw-run__meta">{t('runMetaObsolete')}</span>
+    );
+  }
+  if (isActive) {
+    return (
+      <span className="structure-draw-run__meta">{t('runMetaActive')}</span>
+    );
+  }
+  if (aligned > 0) {
+    return (
+      <span className="structure-draw-run__meta" data-tone="attention">
+        {t('runMetaUnreleased', { aligned, total })}
+      </span>
+    );
+  }
+  return (
+    <span className="structure-draw-run__meta">{t('runMetaReleased')}</span>
+  );
+}
+
+function DrawExecutionView({
   draw,
   executionNumber,
-  teamCount,
+  readOnly,
+  showObsolete,
+  tabbed,
+  panelId,
+  labelledBy,
   slots,
   groups,
   placesPerGroup,
@@ -1011,7 +1328,11 @@ function DrawActiveBody({
 }: {
   draw: StageDraw;
   executionNumber: number;
-  teamCount: number;
+  readOnly: boolean;
+  showObsolete: boolean;
+  tabbed: boolean;
+  panelId: string;
+  labelledBy: string;
   slots: StageSlot[];
   groups: StageGroupOverview[];
   placesPerGroup: number | null;
@@ -1021,7 +1342,7 @@ function DrawActiveBody({
   const { t: tCommon } = useTranslation('common');
   const { t: tStructure } = useTranslation('structure');
   const ui = getDrawUiProjection(draw, slots);
-  const guidance = resolveDrawDetailGuidance(ui);
+  const guidance = readOnly ? null : resolveDrawDetailGuidance(ui);
   const showPhrase =
     guidance?.kind === 'phrase' && guidance.messageKey !== 'draftResolved';
   const groupModel = useMemo(() => {
@@ -1054,226 +1375,70 @@ function DrawActiveBody({
   const showEmptyResult = !showResults && guidance?.kind !== 'alert';
 
   return (
-    <div className="structure-draw-active">
-      <div className="structure-draw-status">
+    <div
+      className="structure-draw-execution"
+      role={tabbed ? 'tabpanel' : undefined}
+      id={tabbed ? panelId : undefined}
+      aria-labelledby={tabbed ? labelledBy : undefined}
+    >
+      <div className="structure-draw-title">
+        <h4 className="structure-draw-title__heading">
+          {t('executionTitle', { n: executionNumber })}
+        </h4>
         <DrawStatusBadge status={draw.status} density="compact" />
-        <p className="structure-draw-status__line">
-          {t('executionStatus', { count: teamCount, n: executionNumber })}
-        </p>
-        {draw.isObsoleteForConsumption ? (
+        {showObsolete ? (
           <Status density="compact" tone="attention">
             {t('obsolete')}
           </Status>
         ) : null}
       </div>
-      {showPhrase ? (
-        <p className="structure-draw-detail__phrase" role="status">
-          {t(guidance.messageKey)}
-        </p>
-      ) : null}
-      {guidance?.kind === 'alert' ? (
-        <Alert tone={guidance.tone} role="status">
-          {guidance.bodyMessageKey ? (
-            <>
-              <p className="ds-body">
-                <strong>{t(guidance.messageKey)}</strong>
-              </p>
-              <p className="ds-body">{t(guidance.bodyMessageKey)}</p>
-            </>
-          ) : (
-            t(guidance.messageKey)
-          )}
-        </Alert>
-      ) : null}
-      {showEmptyResult ? (
-        <EmptyState
-          variant="idle"
-          icon={<RandomIcon size="lg" />}
-          title={t('noResultTitle')}
-        >
-          {t('noResultBody')}
-        </EmptyState>
-      ) : null}
-      {hasGroups ? (
-        <div className="structure-schematic-viewport">
-          <GroupsSchematicView
-            groups={groupModel}
-            ariaLabel={t('result')}
-            ghostLabel={t('ghostPlace')}
-          />
-        </div>
-      ) : null}
-      {hasSlots ? (
-        <DrawSlotConfrontationGrid
-          rows={slotResult.confrontations}
-          unpaired={slotResult.unpaired}
-          ariaLabel={t('result')}
-          unpairedLabel={t('placements')}
-        />
-      ) : null}
-    </div>
-  );
-}
-
-function CancelledDrawRow({
-  draw,
-  executionNumber,
-  aligned,
-  total,
-  canRelease,
-  open,
-  busy,
-  releasePending,
-  slots,
-  groups,
-  placesPerGroup,
-  bracketPairs,
-  onToggle,
-  onRelease,
-}: {
-  draw: StageDraw;
-  executionNumber: number;
-  aligned: number;
-  total: number;
-  canRelease: boolean;
-  open: boolean;
-  busy: boolean;
-  releasePending: boolean;
-  slots: StageSlot[];
-  groups: StageGroupOverview[];
-  placesPerGroup: number | null;
-  bracketPairs: StageBracketPair[];
-  onToggle: () => void;
-  onRelease: () => void;
-}): ReactElement {
-  const { t } = useTranslation('draw');
-  const { t: tCommon } = useTranslation('common');
-  const { t: tStructure } = useTranslation('structure');
-  const lines = cancelledHistoryLines({
-    draw,
-    slots,
-    groups,
-    placesPerGroup,
-    bracketPairs,
-    unknownEntry: tCommon('unknownEntry'),
-    unknownGroup: t('unknownGroup'),
-    groupLabel: (name) => tStructure('place.group', { name }),
-    format: t,
-  });
-  const summary =
-    aligned > 0
-      ? t('historyRowUnreleased', {
-          n: executionNumber,
-          aligned,
-          total,
-        })
-      : t('historyRowReleased', { n: executionNumber });
-
-  const detailId = `draw-history-${draw.id}`;
-
-  return (
-    <div className="structure-draw-history-row">
-      <div className="structure-draw-history-row__head">
-        <button
-          type="button"
-          className="structure-draw-history-row__summary"
-          aria-expanded={open}
-          aria-controls={detailId}
-          onClick={onToggle}
-        >
-          {summary}
-        </button>
-        {canRelease ? (
-          <button
-            type="button"
-            className="ds-btn ds-btn--secondary"
-            disabled={busy}
-            onClick={onRelease}
-          >
-            {releasePending ? (
-              <PendingLabel>{t('releasingPlacements')}</PendingLabel>
-            ) : (
+      <div className="structure-draw-view">
+        {showPhrase ? (
+          <p className="structure-draw-detail__phrase" role="status">
+            {t(guidance.messageKey)}
+          </p>
+        ) : null}
+        {guidance?.kind === 'alert' ? (
+          <Alert tone={guidance.tone} role="status">
+            {guidance.bodyMessageKey ? (
               <>
-                <UnlockIcon size="sm" />
-                {t('releasePlacementsCount', { aligned, total })}
+                <p className="ds-body">
+                  <strong>{t(guidance.messageKey)}</strong>
+                </p>
+                <p className="ds-body">{t(guidance.bodyMessageKey)}</p>
               </>
+            ) : (
+              t(guidance.messageKey)
             )}
-          </button>
+          </Alert>
+        ) : null}
+        {showEmptyResult ? (
+          <EmptyState
+            variant="idle"
+            icon={<RandomIcon size="lg" />}
+            title={t('noResultTitle')}
+          >
+            {t('noResultBody')}
+          </EmptyState>
+        ) : null}
+        {hasGroups ? (
+          <div className="structure-schematic-viewport">
+            <GroupsSchematicView
+              groups={groupModel}
+              ariaLabel={t('result')}
+              ghostLabel={t('ghostPlace')}
+            />
+          </div>
+        ) : null}
+        {hasSlots ? (
+          <DrawSlotConfrontationGrid
+            rows={slotResult.confrontations}
+            unpaired={slotResult.unpaired}
+            ariaLabel={t('result')}
+            unpairedLabel={t('placements')}
+          />
         ) : null}
       </div>
-      {lines.length > 0 ? (
-        <ul
-          id={detailId}
-          className="structure-draw-history-row__detail"
-          hidden={!open}
-        >
-          {lines.map((line) => (
-            <li key={line}>{line}</li>
-          ))}
-        </ul>
-      ) : null}
     </div>
   );
-}
-
-function cancelledHistoryLines(input: {
-  draw: StageDraw;
-  slots: StageSlot[];
-  groups: StageGroupOverview[];
-  placesPerGroup: number | null;
-  bracketPairs: StageBracketPair[];
-  unknownEntry: string;
-  unknownGroup: string;
-  groupLabel: (name: string) => string;
-  format: (key: string, options?: Record<string, unknown>) => string;
-}): string[] {
-  if (
-    input.draw.kind === 'Group' &&
-    (input.draw.groupPlacements?.length ?? 0) > 0
-  ) {
-    return groupsSchematicFromDrawDraft({
-      placements: input.draw.groupPlacements ?? [],
-      stageGroups: input.groups.map((group) => ({
-        id: group.id,
-        name: group.name,
-      })),
-      placesPerGroup: input.placesPerGroup,
-      unknownEntry: input.unknownEntry,
-      unknownGroup: input.unknownGroup,
-      groupLabel: input.groupLabel,
-    })
-      .filter((group) => group.entries.length > 0)
-      .map((group) =>
-        input.format('historyGroupLine', {
-          group: group.name,
-          teams: group.entries.map((entry) => entry.displayName).join(', '),
-        }),
-      );
-  }
-
-  if (input.draw.kind !== 'Slot' || input.draw.slotPlacements.length === 0) {
-    return [];
-  }
-
-  const result = projectSlotDrawResult(
-    input.draw.slotPlacements,
-    input.bracketPairs,
-    input.unknownEntry,
-  );
-  return [
-    ...result.confrontations.map((row) =>
-      input.format('historyPairLine', {
-        pair: row.key,
-        slots: `${row.sideA.slotKey} vs ${row.sideB.slotKey}`,
-        home: row.sideA.displayName,
-        away: row.sideB.displayName,
-      }),
-    ),
-    ...result.unpaired.map((side) =>
-      input.format('historyPlaceLine', {
-        slot: side.slotKey,
-        team: side.displayName,
-      }),
-    ),
-  ];
 }

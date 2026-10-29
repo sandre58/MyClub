@@ -129,6 +129,54 @@ describe('resolveAppliedDrawRedo', () => {
     ).toEqual({ kind: 'available' });
   });
 
+  it('blocks Group Refaire in Ready when matches are attached', () => {
+    expect(
+      resolveAppliedDrawRedo({
+        formatKind: 'Groups',
+        competitionStatus: 'Running',
+        stageStatus: 'Ready',
+        isApplied: true,
+        draw: appliedGroup(),
+        slots: [],
+        bracketPairs: [],
+        rounds: [],
+        attachedMatchCount: 2,
+      }),
+    ).toEqual({ kind: 'blocked', reason: 'groupMatchesAttached' });
+  });
+
+  it('allows Group Refaire in Ready when no match is attached', () => {
+    expect(
+      resolveAppliedDrawRedo({
+        formatKind: 'Groups',
+        competitionStatus: 'Running',
+        stageStatus: 'Ready',
+        isApplied: true,
+        draw: appliedGroup(),
+        slots: [],
+        bracketPairs: [],
+        rounds: [],
+        attachedMatchCount: 0,
+      }),
+    ).toEqual({ kind: 'available' });
+  });
+
+  it('allows Group Refaire in Draft even when matches are attached', () => {
+    expect(
+      resolveAppliedDrawRedo({
+        formatKind: 'Groups',
+        competitionStatus: 'Draft',
+        stageStatus: 'Draft',
+        isApplied: true,
+        draw: appliedGroup(),
+        slots: [],
+        bracketPairs: [],
+        rounds: [],
+        attachedMatchCount: 4,
+      }),
+    ).toEqual({ kind: 'available' });
+  });
+
   it('does not offer Refaire before the draw is applied', () => {
     expect(
       resolveAppliedDrawRedo({

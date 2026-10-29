@@ -242,4 +242,89 @@ describe('Dialog', () => {
       ).toHaveFocus();
     });
   });
+
+  it('focuses a neutral footer action before a destructive one', async () => {
+    const user = userEvent.setup();
+
+    function NeutralBeforeDestructive() {
+      const [open, setOpen] = useState(false);
+      return (
+        <div className="ds-root" data-font="plex" data-palette="slate">
+          <button type="button" onClick={() => setOpen(true)}>
+            Ouvrir
+          </button>
+          <Dialog
+            open={open}
+            onClose={() => setOpen(false)}
+            title="Confirmer"
+            footer={
+              <>
+                <button type="button" className="ds-btn ds-btn--ghost">
+                  Annuler
+                </button>
+                <button type="button" className="ds-btn ds-btn--destructive">
+                  Supprimer
+                </button>
+              </>
+            }
+          >
+            <p>Message seulement</p>
+          </Dialog>
+        </div>
+      );
+    }
+
+    render(<NeutralBeforeDestructive />);
+    await user.click(screen.getByRole('button', { name: 'Ouvrir' }));
+    const dialog = await screen.findByRole('dialog');
+    await waitFor(() => {
+      expect(
+        within(dialog).getByRole('button', { name: 'Annuler' }),
+      ).toHaveFocus();
+    });
+  });
+
+  it('focuses the header close when the footer action is only destructive', async () => {
+    const user = userEvent.setup();
+
+    function DestructiveOnly() {
+      const [open, setOpen] = useState(false);
+      return (
+        <div className="ds-root" data-font="plex" data-palette="slate">
+          <button type="button" onClick={() => setOpen(true)}>
+            Ouvrir
+          </button>
+          <Dialog
+            open={open}
+            onClose={() => setOpen(false)}
+            title="Confirmer"
+            closeLabel="Fermer"
+            initialFocus="footer"
+            footer={
+              <button type="button" className="ds-btn ds-btn--destructive">
+                Supprimer
+              </button>
+            }
+          >
+            <button type="button">Dans le corps</button>
+          </Dialog>
+        </div>
+      );
+    }
+
+    render(<DestructiveOnly />);
+    await user.click(screen.getByRole('button', { name: 'Ouvrir' }));
+    const dialog = await screen.findByRole('dialog');
+    await waitFor(() => {
+      expect(
+        within(dialog).getByRole('button', { name: 'Fermer' }),
+      ).toHaveFocus();
+    });
+    expect(
+      within(dialog).getByRole('button', { name: 'Dans le corps' }),
+    ).not.toHaveFocus();
+    expect(
+      within(dialog).getByRole('button', { name: 'Supprimer' }),
+    ).not.toHaveFocus();
+  });
 });

@@ -10,6 +10,7 @@ import type {
 import {
   allowsCompetitionLifecycleMutation,
   allowsStageDraftOrReadyMutation,
+  groupReleaseBlockedByAttachedMatches,
 } from '../../stage/lifecycleGates';
 
 /** Cancel succeeded and a later Refaire step did not. The draw id is unchanged. */
@@ -30,7 +31,8 @@ export class DrawRedoStoppedError extends Error {
 }
 
 /** Why « Refaire le tirage » stays hidden after an applied draw. */
-export type DrawRedoBlockReason = 'cupFixtureAttached' | 'lifecycle';
+export type DrawRedoBlockReason =
+  'cupFixtureAttached' | 'groupMatchesAttached' | 'lifecycle';
 
 export type AppliedDrawRedo =
   | { kind: 'hidden' }
@@ -126,6 +128,8 @@ export function resolveAppliedDrawRedo(input: {
   slots: readonly StageSlot[];
   bracketPairs: readonly StageBracketPair[];
   rounds: readonly StageRound[];
+  /** Host stage.matchCount. Group + Ready + matches blocks Refaire. */
+  attachedMatchCount?: number;
 }): AppliedDrawRedo {
   if (!input.isApplied || input.draw.status !== 'Published') {
     return { kind: 'hidden' };
@@ -140,6 +144,17 @@ export function resolveAppliedDrawRedo(input: {
 
   const groupDraw =
     input.formatKind === 'Groups' || input.draw.kind === 'Group';
+  if (
+    groupDraw &&
+    groupReleaseBlockedByAttachedMatches({
+      drawKind: 'Group',
+      stageStatus: input.stageStatus,
+      attachedMatchCount: input.attachedMatchCount ?? 0,
+    })
+  ) {
+    return { kind: 'blocked', reason: 'groupMatchesAttached' };
+  }
+
   const cupDraw = input.formatKind === 'Cup' || input.draw.kind === 'Slot';
   if (
     cupDraw &&

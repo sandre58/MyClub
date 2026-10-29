@@ -48,5 +48,8 @@ describe('DrawSlotConfrontationGrid', () => {
     ).toBeInTheDocument();
     expect(screen.getAllByText('S9')).toHaveLength(1);
     expect(screen.queryByText('—')).not.toBeInTheDocument();
+    expect(container.querySelectorAll('[data-density="compact"]')).toHaveLength(
+      3,
+    );
   });
 });
