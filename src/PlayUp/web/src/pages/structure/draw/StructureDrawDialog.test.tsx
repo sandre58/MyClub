@@ -251,19 +251,11 @@ describe('structure draw dialog height', () => {
     expect(drawDialogCss).not.toMatch(/structure-draw-cancelled/);
     expect(drawDialogCss).not.toMatch(/structure-draw-history-row/);
     expect(drawDialogCss).toMatch(
-      /\.structure-draw-previous__tile\.ds-selectable-tile\[data-tone='error'\]\s*\{[\s\S]*opacity:\s*0\.85/,
+      /\.structure-draw-previous__item\s*\{[^}]*opacity:\s*0\.7/,
     );
-    expect(drawDialogCss).toMatch(
-      /\.structure-draw-previous__tile\.ds-selectable-tile\[data-tone='error'\]:hover[\s\S]*opacity:\s*1/,
+    expect(drawDialogCss).not.toMatch(
+      /structure-draw-previous__tile[\s\S]*data-tone/,
     );
-    expect(drawDialogCss).toMatch(
-      /\.structure-draw-previous__tile\.ds-selectable-tile\[data-tone='error'\]:has\(\.ds-selectable-tile__trigger:focus-visible\)[\s\S]*opacity:\s*1/,
-    );
-    expect(
-      drawDialogCss.match(
-        /\.structure-draw-previous__tile\.ds-selectable-tile\[data-tone='error'\]\[data-selected='true'\]\s*\{[^}]*opacity:\s*1[^}]*\}/,
-      ),
-    ).toBeNull();
     expect(drawDialogCss).toMatch(/\.structure-draw-previous__meta\s*\{/);
     expect(drawDialogCss).toMatch(/\.structure-draw-previous__lead\s*\{/);
     expect(drawDialogCss).toMatch(
@@ -1089,9 +1081,9 @@ describe('StructureDrawDialog', () => {
     const cancelledTile = screen.getByRole('button', {
       name: /Exécution #1/,
     });
-    expect(cancelledTile.closest('.ds-selectable-tile')).toHaveAttribute(
+    expect(cancelledTile.closest('.structure-draw-previous__item')).not.toBeNull();
+    expect(cancelledTile.closest('.ds-selectable-tile')).not.toHaveAttribute(
       'data-tone',
-      'error',
     );
     expect(cancelledTile).toHaveAttribute('aria-expanded', 'false');
     expect(cancelledTile).not.toHaveAttribute('aria-controls');
