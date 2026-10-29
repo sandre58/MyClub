@@ -14,8 +14,8 @@ namespace MyClub.PlayUp.Development.Tests.Diagnostics;
 /// </summary>
 internal sealed class SqlCommandCounterInterceptor : DbCommandInterceptor
 {
-    private int _commandCount;
     private readonly List<string> _commandTexts = [];
+    private int _commandCount;
 
     public int CommandCount => Volatile.Read(ref _commandCount);
 

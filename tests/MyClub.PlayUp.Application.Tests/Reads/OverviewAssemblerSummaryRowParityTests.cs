@@ -24,6 +24,20 @@ namespace MyClub.PlayUp.Application.Tests.Reads;
 /// </summary>
 public sealed class OverviewAssemblerSummaryRowParityTests
 {
+    private static void AssertParity(Competition competition, Stage stage, IReadOnlyList<Match> matches)
+    {
+        var byMatch = new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = matches };
+        var bySummary = new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>
+        {
+            [stage.Id] = StageStartReadinessGuard.ToSummaryRows([.. matches])
+        };
+
+        var fromMatches = OverviewAssembler.Assemble(competition, [stage], byMatch);
+        var fromSummaryRows = OverviewAssembler.Assemble(competition, [stage], bySummary);
+
+        fromSummaryRows.Should().BeEquivalentTo(fromMatches);
+    }
+
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 9, 12, 18, 0, 0, TimeSpan.Zero));
 
     [Fact]
@@ -120,19 +134,5 @@ public sealed class OverviewAssemblerSummaryRowParityTests
             _clock);
 
         return (competition, stage, [match]);
-    }
-
-    private static void AssertParity(Competition competition, Stage stage, IReadOnlyList<Match> matches)
-    {
-        var byMatch = new Dictionary<StageId, IReadOnlyList<Match>> { [stage.Id] = matches };
-        var bySummary = new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>
-        {
-            [stage.Id] = StageStartReadinessGuard.ToSummaryRows([.. matches])
-        };
-
-        var fromMatches = OverviewAssembler.Assemble(competition, [stage], byMatch);
-        var fromSummaryRows = OverviewAssembler.Assemble(competition, [stage], bySummary);
-
-        fromSummaryRows.Should().BeEquivalentTo(fromMatches);
     }
 }

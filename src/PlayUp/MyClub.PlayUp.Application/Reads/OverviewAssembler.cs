@@ -1895,17 +1895,12 @@ public static class OverviewAssembler
         }
 
         occupiedSlotCount = stage.Slots.Count(slot => slot.EntryId is not null);
-        var matchSummariesByStage = ToMatchSummariesByStage(matchesByStage);
         return MaterializeCupFromOccupiedSlots.CountEligiblePairs(
             stage,
             competition,
             competitionStages,
-            matchSummariesByStage) > 0;
+            matchesByStage) > 0;
     }
-
-    private static Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>? ToMatchSummariesByStage(
-        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>>? matchesByStage) =>
-        matchesByStage is null ? null : new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>(matchesByStage);
 
     private static Dictionary<string, string> MaterializeCommandParams(
         Stage stage,

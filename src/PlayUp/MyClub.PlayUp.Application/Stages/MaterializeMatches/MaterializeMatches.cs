@@ -91,26 +91,12 @@ public static class MaterializeMatches
         IReadOnlyList<Match> existingMatches,
         IReadOnlyList<Stage>? competitionStages = null)
     {
-        ArgumentNullException.ThrowIfNull(competition);
-        ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(existingMatches);
-
-        var stages = competitionStages ?? [stage];
-
-        if (!stage.CompetitionId.Equals(competition.Id))
-        {
-            return 0;
-        }
-
-        var format = StructureSkeleton.InferFormat(stage);
-        var existingByPair = IndexExistingDirectedPairs(stage, existingMatches);
-        return format switch
-        {
-            StructureFormatKind.Championship => CountUncoveredChampionship(competition, stage, stages, existingByPair),
-            StructureFormatKind.Groups => CountUncoveredGroups(stage, existingByPair),
-            StructureFormatKind.Cup or StructureFormatKind.Swiss or null => 0,
-            _ => 0
-        };
+        return CountUncoveredDeterminedPairs(
+            competition,
+            stage,
+            StageStartReadinessGuard.ToSummaryRows(existingMatches),
+            competitionStages);
     }
 
     /// <summary>
@@ -134,7 +120,7 @@ public static class MaterializeMatches
         }
 
         var format = StructureSkeleton.InferFormat(stage);
-        var existingByPair = IndexExistingDirectedPairs(stage, existingMatches);
+        var existingByPair = IndexExistingDirectedPairKeys(stage, existingMatches);
         return format switch
         {
             StructureFormatKind.Championship => CountUncoveredChampionship(competition, stage, stages, existingByPair),
@@ -148,7 +134,7 @@ public static class MaterializeMatches
         Competition competition,
         Stage stage,
         IReadOnlyList<Stage> competitionStages,
-        IReadOnlyDictionary<(EntryId Home, EntryId Away), Match> existingByPair)
+        HashSet<(EntryId Home, EntryId Away)> existingByPair)
     {
         if (!ChampionshipSwissPhasePlaces.IsRosterComplete(competition, stage, competitionStages))
         {
@@ -163,21 +149,21 @@ public static class MaterializeMatches
 
     private static int CountUncoveredGroups(
         Stage stage,
-        IReadOnlyDictionary<(EntryId Home, EntryId Away), Match> existingByPair) =>
+        HashSet<(EntryId Home, EntryId Away)> existingByPair) =>
         stage.Groups.Count == 0 || stage.Groups.Any(group => group.EntryIds.Count < 2)
             ? 0
             : stage.Groups.Sum(group => CountMissingPairs(BuildRoundRobinRounds([.. group.EntryIds], stage.MatchGenerationFormat), existingByPair));
 
     private static int CountMissingPairs(
         IReadOnlyList<IReadOnlyList<(EntryId Home, EntryId Away)>> rounds,
-        IReadOnlyDictionary<(EntryId Home, EntryId Away), Match> existingByPair)
+        HashSet<(EntryId Home, EntryId Away)> existingByPair)
     {
         var missing = 0;
         foreach (var round in rounds)
         {
             foreach (var (home, away) in round)
             {
-                if (!existingByPair.ContainsKey(DirectedPair(home, away)))
+                if (!existingByPair.Contains(DirectedPair(home, away)))
                 {
                     missing++;
                 }
@@ -187,48 +173,21 @@ public static class MaterializeMatches
         return missing;
     }
 
-    private static int CountMissingPairs(
-        IReadOnlyList<IReadOnlyList<(EntryId Home, EntryId Away)>> rounds,
-        IReadOnlyDictionary<(EntryId Home, EntryId Away), MatchSummaryRow> existingByPair)
+    private static HashSet<(EntryId Home, EntryId Away)> IndexExistingDirectedPairKeys(
+        Stage stage,
+        IReadOnlyList<MatchSummaryRow> existingMatches)
     {
-        var missing = 0;
-        foreach (var round in rounds)
+        var keys = new HashSet<(EntryId Home, EntryId Away)>();
+        foreach (var match in existingMatches)
         {
-            foreach (var (home, away) in round)
+            if (stage.HasMatch(match.Id))
             {
-                if (!existingByPair.ContainsKey(DirectedPair(home, away)))
-                {
-                    missing++;
-                }
+                keys.Add(DirectedPair(match.HomeEntryId, match.AwayEntryId));
             }
         }
 
-        return missing;
+        return keys;
     }
-
-    private static int CountUncoveredChampionship(
-        Competition competition,
-        Stage stage,
-        IReadOnlyList<Stage> competitionStages,
-        IReadOnlyDictionary<(EntryId Home, EntryId Away), MatchSummaryRow> existingByPair)
-    {
-        if (!ChampionshipSwissPhasePlaces.IsRosterComplete(competition, stage, competitionStages))
-        {
-            return 0;
-        }
-
-        var entries = ChampionshipSwissPhasePlaces.ResolveCompositionRoster(competition, stage);
-        return entries.Count < 2
-            ? 0
-            : CountMissingPairs(BuildRoundRobinRounds(entries, stage.MatchGenerationFormat), existingByPair);
-    }
-
-    private static int CountUncoveredGroups(
-        Stage stage,
-        IReadOnlyDictionary<(EntryId Home, EntryId Away), MatchSummaryRow> existingByPair) =>
-        stage.Groups.Count == 0 || stage.Groups.Any(group => group.EntryIds.Count < 2)
-            ? 0
-            : stage.Groups.Sum(group => CountMissingPairs(BuildRoundRobinRounds([.. group.EntryIds], stage.MatchGenerationFormat), existingByPair));
 
     private static MaterializeMatchesResult MaterializeChampionship(
         Competition competition,
@@ -498,15 +457,6 @@ public static class MaterializeMatches
     private static Dictionary<(EntryId Home, EntryId Away), Match> IndexExistingDirectedPairs(
         Stage stage,
         IReadOnlyList<Match> existingMatches) =>
-        existingMatches
-            .Where(match => stage.HasMatch(match.Id))
-            .ToDictionary(
-                match => DirectedPair(match.HomeEntryId, match.AwayEntryId),
-                match => match);
-
-    private static Dictionary<(EntryId Home, EntryId Away), MatchSummaryRow> IndexExistingDirectedPairs(
-        Stage stage,
-        IReadOnlyList<MatchSummaryRow> existingMatches) =>
         existingMatches
             .Where(match => stage.HasMatch(match.Id))
             .ToDictionary(

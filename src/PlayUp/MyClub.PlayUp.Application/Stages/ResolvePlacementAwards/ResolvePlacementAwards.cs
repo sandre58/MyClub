@@ -114,8 +114,17 @@ public static class ResolvePlacementAwards
             return [];
         }
 
-        var slices = matches.Select(MatchAttentionSlice.FromMatch).ToArray();
-        return !TryResolveSourcePairKey(stage, fixture, out var sourcePairKey) ? [] : TryResolveSourceAwards(stage, sourcePairKey, slices, rules, out var instructions) ? instructions : [];
+        if (!TryResolveSourcePairKey(stage, fixture, out var sourcePairKey))
+        {
+            return [];
+        }
+
+        var attachedIds = fixture.Attachments.Select(attachment => attachment.MatchId).ToHashSet();
+        var slices = matches
+            .Where(match => attachedIds.Contains(match.Id))
+            .Select(MatchAttentionSlice.FromMatch)
+            .ToArray();
+        return TryResolveSourceAwards(stage, sourcePairKey, slices, rules, out var instructions) ? instructions : [];
     }
 
     private static bool TryResolveSourceAwards(
