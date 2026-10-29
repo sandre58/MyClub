@@ -37,4 +37,4 @@ public sealed class InfrastructurePostgresFixture : IAsyncLifetime
 }
 
 [CollectionDefinition("InfrastructurePostgres")]
-public sealed class InfrastructurePostgresCollection : ICollectionFixture<InfrastructurePostgresFixture>;
+public sealed class InfrastructurePostgresCollectionDefinition : ICollectionFixture<InfrastructurePostgresFixture>;
