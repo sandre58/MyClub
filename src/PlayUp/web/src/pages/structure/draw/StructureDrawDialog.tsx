@@ -174,6 +174,7 @@ export function StructureDrawDialog({
   const [expandedDrawId, setExpandedDrawId] = useState<string | null>(null);
   const focusedFooterRef = useRef<HTMLButtonElement | null>(null);
   const pendingReleaseFocusRef = useRef(false);
+  const dialogBodyRef = useRef<HTMLDivElement>(null);
   const runsDomId = useId();
   const previousRunsSectionId = `${runsDomId}-previous-runs`;
 
@@ -612,8 +613,10 @@ export function StructureDrawDialog({
     if (expandedDrawId == null) {
       return;
     }
-    document
-      .querySelector<HTMLElement>(`[data-draw-run-trigger="${expandedDrawId}"]`)
+    dialogBodyRef.current
+      ?.querySelector<HTMLElement>(
+        `[data-draw-run-trigger="${expandedDrawId}"]`,
+      )
       ?.scrollIntoView?.({ block: 'nearest' });
   }, [expandedDrawId]);
 
@@ -936,7 +939,7 @@ export function StructureDrawDialog({
         }
         footerStatus={footerStatus}
       >
-        <div className="structure-draw-dialog">
+        <div className="structure-draw-dialog" ref={dialogBodyRef}>
           <DrawHeroFacts
             formatKind={stage.formatKind}
             groupCount={stage.groupCount ?? 0}
@@ -984,9 +987,7 @@ export function StructureDrawDialog({
               icon={<RandomIcon size="lg" />}
               title={tDraw('noActiveTitle')}
             >
-              {releaseFooterBlocked ? (
-                <p className="ds-body">{tDraw('noActiveBody')}</p>
-              ) : releaseTarget != null ? (
+              {releaseTarget != null && !releaseFooterBlocked ? (
                 <p className="ds-body">
                   {tDraw('noActiveReleaseFirst', {
                     n: drawExecutionNumber(drawList, releaseTarget.id),

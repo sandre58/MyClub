@@ -62,10 +62,17 @@ describe('SelectableTile', () => {
       /\[data-tone='error'\]\[data-selected='true'\][\s\S]*--color-error/,
     );
     expect(selectableTileCss).toMatch(
-      /:has\(\.ds-selectable-tile__trigger:focus-visible\)/,
+      /\[data-tone='error'\]\[data-selected='true'\]:hover[\s\S]*--color-error/,
+    );
+    expect(selectableTileCss).toMatch(
+      /\.ds-root \.ds-selectable-tile__trigger:focus-visible[\s\S]*box-shadow:\s*none/,
+    );
+    expect(selectableTileCss).toMatch(
+      /\.ds-root \.ds-selectable-tile:has\(\.ds-selectable-tile__trigger:focus-visible\)/,
     );
     expect(selectableTileCss).not.toMatch(
       /\.ds-selectable-tile[\s\S]*opacity:/,
     );
+    expect(selectableTileCss).not.toMatch(/\.ds-selectable-tile__body/);
   });
 });

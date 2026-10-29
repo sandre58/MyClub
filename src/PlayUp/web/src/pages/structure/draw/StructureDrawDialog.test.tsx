@@ -14,6 +14,7 @@ import {
   vi,
   beforeAll,
   afterEach,
+  afterAll,
 } from 'vitest';
 import {
   cancelDraw,
@@ -38,9 +39,14 @@ import { StructureDrawDialog } from './StructureDrawDialog';
 import { scheduleStructureRefresh } from '../structureInvalidation';
 
 const scrollIntoViewMock = vi.fn();
+const originalScrollIntoView = Element.prototype.scrollIntoView;
 
 beforeAll(() => {
   Element.prototype.scrollIntoView = scrollIntoViewMock;
+});
+
+afterAll(() => {
+  Element.prototype.scrollIntoView = originalScrollIntoView;
 });
 
 vi.mock('../structureInvalidation', async (importOriginal) => {
@@ -244,6 +250,21 @@ describe('structure draw dialog height', () => {
     expect(drawDialogCss).not.toMatch(/structure-draw-previous__grid/);
     expect(drawDialogCss).not.toMatch(/structure-draw-cancelled/);
     expect(drawDialogCss).not.toMatch(/structure-draw-history-row/);
+    expect(drawDialogCss).toMatch(
+      /\.structure-draw-previous__tile\.ds-selectable-tile\[data-tone='error'\]:not\(\[data-selected='true'\]\)[\s\S]*opacity:\s*0\.85/,
+    );
+    expect(drawDialogCss).toMatch(
+      /\.structure-draw-previous__tile\.ds-selectable-tile\[data-tone='error'\]:hover[\s\S]*opacity:\s*1/,
+    );
+    expect(drawDialogCss).toMatch(
+      /\.structure-draw-previous__tile\.ds-selectable-tile\[data-tone='error'\]:has\(\.ds-selectable-tile__trigger:focus-visible\)[\s\S]*opacity:\s*1/,
+    );
+    expect(drawDialogCss).toMatch(
+      /\.structure-draw-previous__tile\.ds-selectable-tile\[data-tone='error'\]\[data-selected='true'\][\s\S]*opacity:\s*1/,
+    );
+    expect(drawDialogCss).toMatch(
+      /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*\.structure-draw-previous__panel[\s\S]*animation:\s*none/,
+    );
     const attribution = drawDialogCss.match(
       /\.ds-dialog:has\(\.structure-attribution\) \.ds-dialog__panel \{[^}]*\}/,
     );
@@ -1079,6 +1100,44 @@ describe('StructureDrawDialog', () => {
     expect(
       screen.getByRole('button', { name: 'Valider le tirage' }),
     ).toBeInTheDocument();
+  });
+
+  it('structures previous-run tiles with header badge, Libérée meta, and disclosure state', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview(
+        [
+          groupDraw({
+            id: 'draw-aaa',
+            status: 'Cancelled',
+            groupPlacements: [
+              {
+                groupId: 'g-a',
+                groupDisplayName: 'A',
+                entryId: 'e1',
+                displayName: 'Alpha',
+              },
+            ],
+          }),
+          groupDraw({ id: 'draw-zzz', status: 'Draft' }),
+        ],
+        { groups: [{ id: 'g-a', name: 'A', entryIds: ['e2'] }] },
+      ),
+    );
+    renderDialog();
+    expect(
+      screen.queryByRole('button', { name: /exécutions précédentes/i }),
+    ).not.toBeInTheDocument();
+    const trigger = await screen.findByRole('button', { name: /Exécution #1/ });
+    const tile = trigger.closest('.ds-selectable-tile') as HTMLElement;
+    const header = trigger.closest('.structure-draw-previous__header');
+    expect(header?.tagName).toBe('H5');
+    expect(header?.querySelector(':scope > button')).toBe(trigger);
+    expect(within(tile).getByText('Annulé')).toBeInTheDocument();
+    expect(within(tile).getByText('Libérée')).toBeInTheDocument();
+    expect(tile).toHaveAttribute('data-selected', 'false');
+    await user.click(trigger);
+    expect(tile).toHaveAttribute('data-selected', 'true');
   });
 
   it('clears sticky publish-and-apply error when the dialog reopens', async () => {
@@ -2443,6 +2502,14 @@ describe('StructureDrawDialog', () => {
           }),
         ).not.toBeInTheDocument();
       });
+      const main = screen
+        .getByRole('heading', { name: /Exécutions de tirage/ })
+        .closest('[role="dialog"]') as HTMLElement;
+      const dialogBody = main.querySelector('.structure-draw-dialog');
+      expect(dialogBody).not.toBeNull();
+      expect(
+        within(dialogBody as HTMLElement).getByRole('alert'),
+      ).toBeInTheDocument();
       await vi.advanceTimersByTimeAsync(160);
       await waitFor(() => {
         expect(
