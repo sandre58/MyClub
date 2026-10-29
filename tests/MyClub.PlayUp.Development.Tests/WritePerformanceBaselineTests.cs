@@ -38,7 +38,7 @@ public sealed class WritePerformanceBaselineTests(
         var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
         var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
         var competition = (await competitions.ListAsync()).Should().ContainSingle().Subject;
-        var qfStageId = await FindRunningStageIdAsync(competition.StageIds, stages);
+        var qfStageId = await FindNonOperationalExitStageIdAsync(competition.StageIds, stages);
         qfStageId.Should().NotBeNull();
         var qfStage = await stages.GetByIdForUpdateAsync(qfStageId!.Value);
         qfStage.Should().NotBeNull();
@@ -74,14 +74,16 @@ public sealed class WritePerformanceBaselineTests(
             "refusal on Running upstream must stay under product latency budget on seed");
     }
 
-    private static async Task<StageId?> FindRunningStageIdAsync(
+    private static async Task<StageId?> FindNonOperationalExitStageIdAsync(
         IReadOnlyList<StageId> stageIds,
         IStageRepository stages)
     {
         foreach (var stageId in stageIds)
         {
             var stage = await stages.GetByIdForUpdateAsync(stageId);
-            if (stage?.Status == StageStatus.Running)
+            if (stage is not null
+                && stage.Status is not StageStatus.Draft
+                && stage.Status is not StageStatus.Ready)
             {
                 return stageId;
             }

@@ -18,10 +18,14 @@ internal sealed class MatchRepository(PlayUpDbContext context) : IMatchRepositor
 {
     private static IQueryable<Match> ApplyListGraph(IQueryable<Match> query) =>
         query
-            .Include(match => match.DeclaredParticipations)
-            .Include(match => match.RecordedGoals)
-            .Include(match => match.RecordedSubstitutions)
-            .Include(match => match.RecordedDisciplinaryEvents);
+            .Include(match => match.DeclaredParticipations
+                .OrderBy(participation => EF.Property<int>(participation, "SortOrder")))
+            .Include(match => match.RecordedGoals
+                .OrderBy(goal => EF.Property<int>(goal, "SortOrder")))
+            .Include(match => match.RecordedSubstitutions
+                .OrderBy(substitution => EF.Property<int>(substitution, "SortOrder")))
+            .Include(match => match.RecordedDisciplinaryEvents
+                .OrderBy(evt => EF.Property<int>(evt, "SortOrder")));
 
     /// <inheritdoc />
     public Task<Match?> GetByIdForUpdateAsync(MatchId id, CancellationToken cancellationToken = default) =>
