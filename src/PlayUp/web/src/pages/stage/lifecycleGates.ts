@@ -58,7 +58,8 @@ export function groupReleaseBlockedByAttachedMatches(input: {
   );
 }
 
-function releaseDrawPlacementsVisible(input: {
+/** True when Libérer should be offered, before the attached-match disable. */
+export function releaseDrawPlacementsVisible(input: {
   competitionStatus: CompetitionStatus;
   stageStatus: StageStatus;
   drawStatus: DrawStatus;
@@ -74,13 +75,6 @@ function releaseDrawPlacementsVisible(input: {
     (input.drawKind === 'Slot' || input.drawKind === 'Group') &&
     input.alignedPlacementCount > 0
   );
-}
-
-/** True when Libérer should be offered (before the attached-match disable). */
-export function showReleaseDrawPlacements(
-  input: Parameters<typeof releaseDrawPlacementsVisible>[0],
-): boolean {
-  return releaseDrawPlacementsVisible(input);
 }
 
 /**

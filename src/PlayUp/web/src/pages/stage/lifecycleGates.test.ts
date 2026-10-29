@@ -5,7 +5,7 @@ import {
   canCancelDrawExecution,
   canReleaseDrawAlignedPlacements,
   isDrawExecutionCancellable,
-  showReleaseDrawPlacements,
+  releaseDrawPlacementsVisible,
 } from './lifecycleGates';
 
 describe('lifecycleGates', () => {
@@ -170,7 +170,7 @@ describe('lifecycleGates', () => {
     ).toBe(false);
 
     expect(
-      showReleaseDrawPlacements({
+      releaseDrawPlacementsVisible({
         competitionStatus: 'Running',
         stageStatus: 'Ready',
         drawStatus: 'Cancelled',

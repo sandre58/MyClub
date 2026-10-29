@@ -48,6 +48,7 @@
   "runMetaUnreleased": "{{aligned}}/{{total}} not released",
   "runMetaReleased": "Released",
   "releaseBlockedAttachedMatches": "Release is unavailable: matches are already attached to this phase.",
+  "releaseBlockedByPublishedDraw": "Release is impossible: a published draw occupies the phase.",
   "obsolete": "Obsolete",
   "ghostPlace": "Open place",
   "apply": "Apply",

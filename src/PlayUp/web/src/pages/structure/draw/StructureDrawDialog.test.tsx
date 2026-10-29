@@ -3,6 +3,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
+import { useState } from 'react';
 import { ApiError } from '../../../api/http';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -698,7 +699,14 @@ describe('StructureDrawDialog', () => {
     expect(
       screen.queryByText('Résultat généré, prêt à être publié.'),
     ).not.toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /#1/ })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /#1/ })).toHaveAttribute(
+      'aria-selected',
+      'false',
+    );
+    expect(screen.getByRole('tab', { name: /#2/ })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
     expect(
       screen.queryByLabelText('Historique des exécutions'),
     ).not.toBeInTheDocument();
@@ -1386,18 +1394,27 @@ describe('StructureDrawDialog', () => {
 
   it('reruns generation on the same draw and does not create an execution', async () => {
     const user = userEvent.setup();
-    vi.mocked(fetchStageOverview).mockResolvedValue(overview([groupDraw()]));
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([
+        groupDraw({ id: 'draw-aaa', status: 'Cancelled' }),
+        groupDraw({ id: 'draw-zzz', status: 'Draft' }),
+      ]),
+    );
     vi.mocked(rerunDrawGeneration).mockResolvedValue({
-      drawId: 'draw-1',
+      drawId: 'draw-zzz',
       isResolved: true,
       isNoSolution: false,
     });
 
     renderDialog();
-    await user.click(await screen.findByRole('button', { name: 'Relancer' }));
+    const cancelled = await screen.findByRole('tab', { name: /#1/ });
+    await user.click(cancelled);
+    expect(cancelled).toHaveAttribute('aria-selected', 'true');
+    await user.click(screen.getByRole('tab', { name: /#2/ }));
+    await user.click(screen.getByRole('button', { name: 'Relancer' }));
 
     await waitFor(() => {
-      expect(rerunDrawGeneration).toHaveBeenCalledWith(stageId, 'draw-1');
+      expect(rerunDrawGeneration).toHaveBeenCalledWith(stageId, 'draw-zzz');
     });
     expect(createAndGenerateDraw).not.toHaveBeenCalled();
     await waitFor(() => {
@@ -1405,6 +1422,13 @@ describe('StructureDrawDialog', () => {
         'Tirage relancé.',
       );
     });
+    expect(screen.getByRole('tab', { name: /#2/ })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    expect(
+      screen.getByRole('heading', { name: 'Exécution #2' }),
+    ).toBeInTheDocument();
   });
 
   it('keeps the same draw when a rerun hits the launch guard', async () => {
@@ -2201,11 +2225,12 @@ describe('StructureDrawDialog', () => {
     renderDialog(groupsStage({ status: 'Ready', matchCount: 2 }));
     const release = await screen.findByRole('button', { name: 'Libérer 1/1' });
     expect(release).toBeDisabled();
-    expect(
-      screen.getByText(
-        'Libérer est indisponible : des matchs sont déjà rattachés à cette phase.',
-      ),
-    ).toBeInTheDocument();
+    const reason =
+      'Libérer est indisponible : des matchs sont déjà rattachés à cette phase.';
+    const tile = screen.getByRole('tab', { name: /non libérés/ });
+    expect(within(tile).getByText('1/1 non libérés')).toBeInTheDocument();
+    expect(within(tile).getByText(reason)).toBeInTheDocument();
+    expect(screen.getAllByText(reason)).toHaveLength(2);
     expect(
       screen.queryByRole('button', { name: 'Refaire le tirage' }),
     ).not.toBeInTheDocument();
@@ -2346,5 +2371,171 @@ describe('StructureDrawDialog', () => {
     expect(
       within(main).queryByText(/un match est rattaché/),
     ).not.toBeInTheDocument();
+  });
+
+  it('explains a cancelled tile when a published draw occupies the phase', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview(
+        [
+          groupDraw({
+            id: 'draw-live',
+            status: 'Published',
+            isApplied: true,
+          }),
+          groupDraw({
+            id: 'draw-old',
+            status: 'Cancelled',
+            groupPlacements: [
+              {
+                groupId: 'g-a',
+                groupDisplayName: 'A',
+                entryId: 'e1',
+                displayName: 'Alpha',
+              },
+            ],
+          }),
+        ],
+        { groups: [{ id: 'g-a', name: 'A', entryIds: ['e1'] }] },
+      ),
+    );
+    renderDialog();
+    const reason = 'Libération impossible : un tirage publié occupe la phase.';
+    const cancelled = await screen.findByRole('tab', { name: /non libérés/ });
+    expect(within(cancelled).getByText('1/1 non libérés')).toBeInTheDocument();
+    expect(within(cancelled).getByText(reason)).toBeInTheDocument();
+    expect(screen.getAllByText(reason)).toHaveLength(1);
+    expect(
+      screen.queryByRole('button', { name: /Libérer/ }),
+    ).not.toBeInTheDocument();
+
+    await user.click(cancelled);
+    expect(screen.getAllByText(reason)).toHaveLength(2);
+    expect(
+      screen.queryByRole('button', { name: /Libérer/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('does not mark a cancelled execution as obsolete', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([
+        groupDraw({
+          id: 'draw-live',
+          status: 'Published',
+          isApplied: true,
+          isObsoleteForConsumption: true,
+        }),
+        groupDraw({
+          id: 'draw-old',
+          status: 'Cancelled',
+          isObsoleteForConsumption: true,
+        }),
+      ]),
+    );
+    renderDialog();
+    const cancelled = await screen.findByRole('tab', { name: /Annulé/ });
+    expect(cancelled).not.toHaveTextContent('Obsolète');
+    await user.click(cancelled);
+    const panel = screen.getByRole('tabpanel');
+    expect(within(panel).queryByText('Obsolète')).not.toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Publié/ })).toHaveTextContent(
+      'Obsolète',
+    );
+  });
+
+  it('resets the selected execution when the dialog reopens', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([
+        groupDraw({ id: 'draw-aaa', status: 'Cancelled' }),
+        groupDraw({ id: 'draw-zzz', status: 'Draft' }),
+      ]),
+    );
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+    function Harness() {
+      const [open, setOpen] = useState(true);
+      return (
+        <QueryClientProvider client={queryClient}>
+          <button type="button" onClick={() => setOpen(false)}>
+            Fermer le dialogue
+          </button>
+          <button type="button" onClick={() => setOpen(true)}>
+            Rouvrir
+          </button>
+          <StructureDrawDialog
+            open={open}
+            onClose={() => setOpen(false)}
+            competitionId={competitionId}
+            competitionStatus="Draft"
+            stage={groupsStage()}
+            structureStages={[groupsStage()]}
+          />
+        </QueryClientProvider>
+      );
+    }
+    render(<Harness />);
+    const cancelled = await screen.findByRole('tab', { name: /#1/ });
+    await user.click(cancelled);
+    expect(cancelled).toHaveAttribute('aria-selected', 'true');
+    await user.click(
+      screen.getByRole('button', { name: 'Fermer le dialogue' }),
+    );
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+    await user.click(screen.getByRole('button', { name: 'Rouvrir' }));
+    expect(await screen.findByRole('tab', { name: /#2/ })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    expect(screen.getByRole('tab', { name: /#1/ })).toHaveAttribute(
+      'aria-selected',
+      'false',
+    );
+  });
+
+  it('restores footer focus after Relancer when focus falls back to the body', async () => {
+    const user = userEvent.setup();
+    let finish: (value: {
+      drawId: string;
+      isResolved: boolean;
+      isNoSolution: boolean;
+    }) => void = () => undefined;
+    vi.mocked(fetchStageOverview).mockResolvedValue(overview([groupDraw()]));
+    vi.mocked(rerunDrawGeneration).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    renderDialog();
+    const rerun = await screen.findByRole('button', { name: 'Relancer' });
+    await user.click(rerun);
+    await waitFor(() => {
+      expect(rerun).toBeDisabled();
+    });
+    document.body.tabIndex = -1;
+    document.body.focus();
+    expect(document.body).toHaveFocus();
+    finish({
+      drawId: 'draw-1',
+      isResolved: true,
+      isNoSolution: false,
+    });
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: 'Valider le tirage' }),
+      ).toHaveFocus();
+    });
+    expect(screen.getByRole('button', { name: 'Relancer' })).not.toHaveFocus();
+    expect(
+      screen.getByRole('button', { name: 'Abandonner' }),
+    ).not.toHaveFocus();
   });
 });

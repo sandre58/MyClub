@@ -68,7 +68,7 @@ import {
   canCancelDrawExecution,
   canReleaseDrawAlignedPlacements,
   groupReleaseBlockedByAttachedMatches,
-  showReleaseDrawPlacements,
+  releaseDrawPlacementsVisible,
 } from '../../stage/lifecycleGates';
 import { scheduleStructureRefresh } from '../structureInvalidation';
 import { resolvePlacesN } from '../composition/structurePlaces';
@@ -169,7 +169,6 @@ export function StructureDrawDialog({
   const [confirm, setConfirm] = useState<ConfirmKind | null>(null);
   const [confirmDrawId, setConfirmDrawId] = useState<string | null>(null);
   const [selectedDrawId, setSelectedDrawId] = useState<string | null>(null);
-  const selectionModeRef = useRef<'keep' | 'default'>('keep');
   const focusedFooterRef = useRef<HTMLButtonElement | null>(null);
   const focusTabIdRef = useRef<string | null>(null);
   const runsDomId = useId();
@@ -179,7 +178,6 @@ export function StructureDrawDialog({
       setConfirm(null);
       setConfirmDrawId(null);
       setSelectedDrawId(null);
-      selectionModeRef.current = 'keep';
       focusedFooterRef.current = null;
     },
   });
@@ -198,7 +196,6 @@ export function StructureDrawDialog({
   );
 
   function markSelectionDefault() {
-    selectionModeRef.current = 'default';
     setSelectedDrawId(null);
   }
 
@@ -206,14 +203,8 @@ export function StructureDrawDialog({
     open && draws != null,
     runList.map((draw) => draw.id).join(','),
     () => {
-      const mode = selectionModeRef.current;
-      selectionModeRef.current = 'keep';
       setSelectedDrawId((current) => {
-        if (
-          mode !== 'default' &&
-          current != null &&
-          runList.some((draw) => draw.id === current)
-        ) {
+        if (current != null && runList.some((draw) => draw.id === current)) {
           return current;
         }
         return pickDefaultDrawId(drawList);
@@ -242,7 +233,7 @@ export function StructureDrawDialog({
     if (draw.kind !== 'Slot' && draw.kind !== 'Group') {
       return false;
     }
-    return showReleaseDrawPlacements({
+    return releaseDrawPlacementsVisible({
       competitionStatus,
       stageStatus,
       drawStatus: draw.status,
@@ -250,6 +241,28 @@ export function StructureDrawDialog({
       stageHasPublishedAppliedDraw: stageHasAppliedDraw,
       alignedPlacementCount: alignedCountFor(draw),
     });
+  }
+
+  function releaseHoldFor(
+    draw: StageDraw,
+  ): 'publishedDraw' | 'attachedMatches' | null {
+    if (draw.status !== 'Cancelled' || alignedCountFor(draw) <= 0) {
+      return null;
+    }
+    if (stageHasAppliedDraw) {
+      return 'publishedDraw';
+    }
+    if (
+      draw.kind === 'Group' &&
+      groupReleaseBlockedByAttachedMatches({
+        drawKind: 'Group',
+        stageStatus,
+        attachedMatchCount,
+      })
+    ) {
+      return 'attachedMatches';
+    }
+    return null;
   }
 
   function releaseEnabled(draw: StageDraw): boolean {
@@ -614,22 +627,27 @@ export function StructureDrawDialog({
       focusedFooterRef.current = null;
       return;
     }
-    if (confirm != null) {
+    if (confirm != null || busy) {
       return;
     }
     const previous = focusedFooterRef.current;
-    const lost =
+    const buttonLost =
       previous != null && (!previous.isConnected || previous.disabled);
     const dialog = document
       .querySelector('.structure-draw-dialog')
       ?.closest('[role="dialog"]');
     const active = document.activeElement;
+    const outsideDialog =
+      !(active instanceof Node) ||
+      active === document.body ||
+      active === document.documentElement ||
+      (dialog != null && !dialog.contains(active));
     const landedElsewhere =
       active instanceof HTMLElement &&
       active !== previous &&
       active.isConnected &&
       dialog?.contains(active) === true;
-    if (lost && dialog && !landedElsewhere) {
+    if (dialog && ((buttonLost && !landedElsewhere) || outsideDialog)) {
       const footer = dialog.querySelector('.structure-draw-footer');
       const primary = footer?.querySelector<HTMLElement>(
         '.ds-btn--primary:not(:disabled)',
@@ -652,13 +670,15 @@ export function StructureDrawDialog({
         preventScroll: true,
       });
     }
+    const now = document.activeElement;
     if (
-      active instanceof HTMLButtonElement &&
-      active.closest('.structure-draw-footer')
+      now instanceof HTMLButtonElement &&
+      !now.disabled &&
+      now.closest('.structure-draw-footer')
     ) {
-      focusedFooterRef.current = active;
+      focusedFooterRef.current = now;
     }
-  }, [open, confirm, footerSignature]);
+  }, [open, confirm, footerSignature, busy]);
 
   const footerStatus = overviewQuery.isError ? (
     <Alert tone="danger" role="alert">
@@ -677,6 +697,12 @@ export function StructureDrawDialog({
   ) : releaseBlocked ? (
     <Alert tone="info" role="status">
       {tDraw('releaseBlockedAttachedMatches')}
+    </Alert>
+  ) : displayedDraw != null &&
+    !showingActive &&
+    releaseHoldFor(displayedDraw) === 'publishedDraw' ? (
+    <Alert tone="info" role="status">
+      {tDraw('releaseBlockedByPublishedDraw')}
     </Alert>
   ) : !overviewQuery.isLoading &&
     createBlockedDetail != null &&
@@ -940,6 +966,7 @@ export function StructureDrawDialog({
                         isActive={activeDraw?.id === draw.id}
                         aligned={alignedCountFor(draw)}
                         total={drawResolutionPlacementCount(draw)}
+                        releaseHold={releaseHoldFor(draw)}
                       />
                     </SelectableTile>
                   );
@@ -1280,11 +1307,13 @@ function DrawRunMeta({
   isActive,
   aligned,
   total,
+  releaseHold,
 }: {
   draw: StageDraw;
   isActive: boolean;
   aligned: number;
   total: number;
+  releaseHold: 'publishedDraw' | 'attachedMatches' | null;
 }): ReactElement {
   const { t } = useTranslation('draw');
   if (
@@ -1302,10 +1331,21 @@ function DrawRunMeta({
     );
   }
   if (aligned > 0) {
+    const reason =
+      releaseHold === 'publishedDraw'
+        ? t('releaseBlockedByPublishedDraw')
+        : releaseHold === 'attachedMatches'
+          ? t('releaseBlockedAttachedMatches')
+          : null;
     return (
-      <span className="structure-draw-run__meta" data-tone="attention">
-        {t('runMetaUnreleased', { aligned, total })}
-      </span>
+      <>
+        <span className="structure-draw-run__meta" data-tone="attention">
+          {t('runMetaUnreleased', { aligned, total })}
+        </span>
+        {reason != null ? (
+          <span className="structure-draw-run__meta">{reason}</span>
+        ) : null}
+      </>
     );
   }
   return (
@@ -1380,6 +1420,7 @@ function DrawExecutionView({
       role={tabbed ? 'tabpanel' : undefined}
       id={tabbed ? panelId : undefined}
       aria-labelledby={tabbed ? labelledBy : undefined}
+      tabIndex={tabbed ? 0 : undefined}
     >
       <div className="structure-draw-title">
         <h4 className="structure-draw-title__heading">

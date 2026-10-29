@@ -48,6 +48,7 @@
   "runMetaUnreleased": "{{aligned}}/{{total}} non libérés",
   "runMetaReleased": "Libérée",
   "releaseBlockedAttachedMatches": "Libérer est indisponible : des matchs sont déjà rattachés à cette phase.",
+  "releaseBlockedByPublishedDraw": "Libération impossible : un tirage publié occupe la phase.",
   "obsolete": "Obsolète",
   "ghostPlace": "Place libre",
   "apply": "Appliquer",
