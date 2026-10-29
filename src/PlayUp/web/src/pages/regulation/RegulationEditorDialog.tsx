@@ -789,6 +789,7 @@ export function RegulationEditorDialog({
                       <ChoiceTile
                         key={type}
                         label={t(`discipline.${type}`)}
+                        layout="inline"
                         selected={(form.allowedTypes ?? []).includes(type)}
                         leading={<ChoiceSwatch color={CARD_SWATCH[type]} />}
                         onChange={() => toggleAllowedType(type)}

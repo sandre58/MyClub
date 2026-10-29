@@ -421,7 +421,10 @@ describe('StructureCompositionDialog', () => {
     });
 
     const selectedTile = teamTile(/Ancien/);
-    expect(selectedTile).toHaveClass('ds-choice-tile');
+    expect(selectedTile).toHaveClass(
+      'ds-choice-tile',
+      'ds-choice-tile--inline',
+    );
     expect(selectedTile).toHaveAttribute('aria-checked', 'true');
     expect(selectedTile.querySelector('.ds-choice-tile__check')).not.toBeNull();
     expect(selectedTile.querySelector('input[type="checkbox"]')).toBeNull();

@@ -64,6 +64,7 @@ export function LabForm() {
   const [drawPoints, setDrawPoints] = useState<number | null>(1);
   const [lossPoints, setLossPoints] = useState<number | null>(0);
   const [cards, setCards] = useState({ yellow: true, red: true, white: false });
+  const [scopeTile, setScopeTile] = useState(true);
   const [themeDemo, setThemeDemo] = useState<'system' | 'light' | 'dark'>(
     'system',
   );
@@ -452,6 +453,7 @@ export function LabForm() {
           <div className="ds-choice-tile-row" role="group" aria-label="Cartons">
             <ChoiceTile
               label="Jaune"
+              layout="inline"
               selected={cards.yellow}
               leading={<ChoiceSwatch color="#F5C518" />}
               onChange={(selected) =>
@@ -460,6 +462,7 @@ export function LabForm() {
             />
             <ChoiceTile
               label="Rouge"
+              layout="inline"
               selected={cards.red}
               leading={<ChoiceSwatch color="#E11D48" />}
               onChange={(selected) =>
@@ -468,6 +471,7 @@ export function LabForm() {
             />
             <ChoiceTile
               label="Blanc"
+              layout="inline"
               selected={cards.white}
               leading={<ChoiceSwatch color="#F8FAFC" />}
               onChange={(selected) =>
@@ -475,6 +479,16 @@ export function LabForm() {
               }
             />
           </div>
+          <p className="dlab-form__hint">
+            inline : une ligne, check centré. stacked : titre et description,
+            check sur la première ligne.
+          </p>
+          <ChoiceTile
+            label="Chaque groupe"
+            description="Le premier de chaque groupe."
+            selected={scopeTile}
+            onChange={setScopeTile}
+          />
         </section>
 
         <section

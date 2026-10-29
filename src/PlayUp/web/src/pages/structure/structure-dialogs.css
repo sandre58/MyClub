@@ -929,13 +929,6 @@
 
 .structure-add-phase__bracket-tiles .ds-choice-tile {
   width: 100%;
-  justify-content: center;
-}
-
-.structure-add-phase__bracket-tiles .ds-choice-tile__check {
-  position: absolute;
-  top: var(--space-8);
-  right: var(--space-8);
 }
 
 .structure-qualification__scope-tiles .ds-choice-tile {

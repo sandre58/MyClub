@@ -49,6 +49,27 @@ describe('ChoiceTile', () => {
     expect(tile).toHaveAttribute('aria-checked', 'true');
     expect(tile).toHaveAttribute('aria-describedby', 'capacity-hint');
     expect(tile.querySelector('.ds-choice-tile__check')).not.toBeNull();
+    expect(tile).toHaveClass('ds-choice-tile');
+    expect(tile).not.toHaveClass('ds-choice-tile--inline');
+  });
+
+  it('adds the inline modifier only when layout is inline', () => {
+    const { rerender } = render(
+      <ChoiceTile label="Amiens" selected={false} onChange={vi.fn()} />,
+    );
+
+    const tile = screen.getByRole('checkbox', { name: 'Amiens' });
+    expect(tile).not.toHaveClass('ds-choice-tile--inline');
+
+    rerender(
+      <ChoiceTile
+        label="Amiens"
+        selected={false}
+        layout="inline"
+        onChange={vi.fn()}
+      />,
+    );
+    expect(tile).toHaveClass('ds-choice-tile', 'ds-choice-tile--inline');
   });
 });
 

@@ -116,6 +116,7 @@ function CompositionTeamRow({
         ) : undefined
       }
       selected={row.selected}
+      layout="inline"
       disabled={disabled}
       aria-describedby={locked ? capacityHintId : undefined}
       onChange={() => onToggle(row.entryId, row.selected)}

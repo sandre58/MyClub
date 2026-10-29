@@ -366,6 +366,7 @@ export function StructureManualPlacementDialog({
                         <ChoiceTile
                           key={team.entryId}
                           label={team.displayName}
+                          layout="inline"
                           leading={
                             <TeamCrest
                               name={team.displayName}
