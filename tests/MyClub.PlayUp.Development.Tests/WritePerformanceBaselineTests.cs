@@ -37,8 +37,10 @@ public sealed class WritePerformanceBaselineTests(
         using var scope = fixture.Services.CreateScope();
         var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
         var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
-        var competition = (await competitions.ListAsync()).Should().ContainSingle().Subject;
-        var stageId = competition.StageIds.Should().ContainSingle().Subject;
+        var competitionId = (await competitions.ListAsync()).Should().ContainSingle().Subject.Id;
+        var competition = await competitions.GetByIdReadOnlyAsync(competitionId);
+        competition.Should().NotBeNull();
+        var stageId = competition!.StageIds.Should().ContainSingle().Subject;
         var executor = scope.ServiceProvider.GetRequiredService<UseCaseExecutor>();
         var stage = await stages.GetByIdForUpdateAsync(stageId);
         stage.Should().NotBeNull();
