@@ -1,39 +1,16 @@
-/** Cancel succeeded and a later Refaire step did not. The draw id is unchanged. */
-export class DrawRedoStoppedError extends Error {
-  readonly step: 'release' | 'preview';
-  readonly cause: unknown;
-
-  constructor(step: 'release' | 'preview', cause: unknown) {
-    super(
-      step === 'release'
-        ? 'Draw redo stopped before placements were released'
-        : 'Draw redo stopped before a new preview',
-    );
-    this.name = 'DrawRedoStoppedError';
-    this.step = step;
-    this.cause = cause;
-  }
-}
+import { redoDraw } from '../../../api';
 
 /**
- * Refaire orchestration: cancel, then release, then preview.
- * Whether those steps are allowed is projected by the server. This function
- * only stops at the first failing step.
+ * Refaire an applied draw.
+ *
+ * Server-atomic (D4B): one `POST …/redo` call runs cancel, release aligned placements, and
+ * preview a new resolution in a single transaction. A failure at any step persists nothing —
+ * there is no longer a partial "cancelled but not released" or "released but no new preview"
+ * state to recover from, so there is no step-specific stopped error.
  */
-export async function redoAppliedDraw<T>(input: {
-  cancel: () => Promise<unknown>;
-  release: () => Promise<unknown>;
-  preview: () => Promise<T>;
-}): Promise<T> {
-  await input.cancel();
-  try {
-    await input.release();
-  } catch (cause) {
-    throw new DrawRedoStoppedError('release', cause);
-  }
-  try {
-    return await input.preview();
-  } catch (cause) {
-    throw new DrawRedoStoppedError('preview', cause);
-  }
+export function redoAppliedDraw(
+  stageId: string,
+  drawId: string,
+): Promise<{ drawId: string; isResolved: boolean; isNoSolution: boolean }> {
+  return redoDraw(stageId, drawId);
 }

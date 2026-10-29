@@ -160,3 +160,16 @@ export function isDrawGenerateFailedError(
 export function applyDraw(stageId: string, drawId: string): Promise<void> {
   return postNoContent(`/stages/${stageId}/draws/${drawId}/apply`);
 }
+
+/**
+ * Refaire — single atomic server transaction: cancel the draw, release its aligned
+ * placements, then preview a new resolution (create → Rerun inputs → generate) for the
+ * same draw kind. All-or-nothing: a failure at any step persists nothing.
+ * POST /stages/{stageId}/draws/{drawId}/redo → 200
+ */
+export function redoDraw(
+  stageId: string,
+  drawId: string,
+): Promise<{ drawId: string; isResolved: boolean; isNoSolution: boolean }> {
+  return sendJson('POST', `/stages/${stageId}/draws/${drawId}/redo`);
+}
