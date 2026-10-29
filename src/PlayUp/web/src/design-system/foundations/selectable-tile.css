@@ -64,7 +64,7 @@
   cursor: pointer;
 }
 
-.ds-root .ds-selectable-tile__trigger:focus-visible {
+.ds-root .ds-selectable-tile .ds-selectable-tile__trigger:focus-visible {
   outline: none;
   box-shadow: none;
 }
