@@ -21,6 +21,9 @@ namespace MyClub.PlayUp.Application.Stages;
 /// already-loaded Stage. Mirrors the former client orchestration (Cancel → Release → Preview);
 /// the caller saves once, so a failure at any step — including one the upfront <see cref="DrawActionEvaluator"/>
 /// projection does not see (e.g. a sibling-stage feed claiming a released slot) — leaves nothing persisted.
+/// The upfront guard rejects any <c>Redo</c> state other than <c>Available</c>: <c>Blocked</c> throws its own
+/// code; <c>Hidden</c> (the draw is not applied — Draft, Published not yet consumed, or already Cancelled)
+/// throws <see cref="ApplicationErrorCodes.DrawRedoRequiresApplied"/>.
 /// </remarks>
 public static class RedoDraw
 {
@@ -48,11 +51,12 @@ public static class RedoDraw
         var redo = DrawActionEvaluator.Evaluate(
             DrawActionEvaluator.ForCommand(stage, stageMatches),
             draw).Redo;
-        if (redo.State == StageDrawActionState.Blocked)
+        if (redo.State != StageDrawActionState.Available)
         {
-            DrawActionFailure.Throw(
-                redo.BlockCode!,
-                $"Cannot redo draw '{draw.Id}' ({redo.BlockCode}).");
+            // Hidden (Draft, Published not yet applied, Cancelled) has no BlockCode — the read
+            // projection just omits the action — so the command needs its own refusal code.
+            var code = redo.BlockCode ?? ApplicationErrorCodes.DrawRedoRequiresApplied;
+            DrawActionFailure.Throw(code, $"Cannot redo draw '{draw.Id}' ({code}).");
         }
 
         var kind = draw.Kind;

@@ -122,6 +122,8 @@ internal sealed partial class PlayUpExceptionHandler(ILogger<PlayUpExceptionHand
                 (StatusCodes.Status409Conflict, "Draw release blocked by attached matches", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.DrawReleaseRequiresCancelled } application =>
                 (StatusCodes.Status409Conflict, "Draw release requires a cancelled draw", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.DrawRedoRequiresApplied } application =>
+                (StatusCodes.Status409Conflict, "Draw redo requires an applied draw", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.MediaNotFound } application =>
                 (StatusCodes.Status400BadRequest, "Media not found", application.Code),
             ApplicationFailureException application =>
