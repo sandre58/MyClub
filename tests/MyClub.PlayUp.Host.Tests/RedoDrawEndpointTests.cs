@@ -77,8 +77,8 @@ public sealed class RedoDrawEndpointTests(HostPostgresFixture fixture)
         var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(seed.StageId);
         stage.Should().NotBeNull();
         stage!.GetDraw(seed.DrawId).Status.Should().Be(DrawStatus.Published);
-        stage.FindSlot("S1")!.EntryId.Should().Be(seed.EntryA);
-        stage.FindSlot("S2")!.EntryId.Should().Be(seed.EntryB);
+        stage.FindSlot("S1")!.EntryId.Should().Be(seed.SlotS1Entry);
+        stage.FindSlot("S2")!.EntryId.Should().Be(seed.SlotS2Entry);
         stage.Draws.Should().ContainSingle();
     }
 
@@ -151,8 +151,11 @@ public sealed class RedoDrawEndpointTests(HostPostgresFixture fixture)
         stages.Add(stage);
         await unitOfWork.SaveChangesAsync();
 
-        return new SlotDrawSeed(stage.Id, draw.Id, entryA, entryB);
+        // DrawMode.Random: capture the actual occupancy rather than assuming entryA -> S1.
+        var slotS1Entry = stage.FindSlot("S1")!.EntryId!.Value;
+        var slotS2Entry = stage.FindSlot("S2")!.EntryId!.Value;
+        return new SlotDrawSeed(stage.Id, draw.Id, slotS1Entry, slotS2Entry);
     }
 
-    private sealed record SlotDrawSeed(StageId StageId, DrawId DrawId, EntryId EntryA, EntryId EntryB);
+    private sealed record SlotDrawSeed(StageId StageId, DrawId DrawId, EntryId SlotS1Entry, EntryId SlotS2Entry);
 }
