@@ -51,6 +51,18 @@ public static class DrawConsumptionConformance
             return false;
         }
 
+        return ResolutionEntriesDiverge(draw, stage);
+    }
+
+    /// <summary>
+    /// Pool and fixed-placement divergence, ignoring draw status.
+    /// Publish-and-apply evaluates this on a Draft draw because Apply runs only after Publish.
+    /// </summary>
+    internal static bool ResolutionEntriesDiverge(Draw draw, Stage stage)
+    {
+        ArgumentNullException.ThrowIfNull(draw);
+        ArgumentNullException.ThrowIfNull(stage);
+
         if (draw.Inputs is null)
         {
             return true;

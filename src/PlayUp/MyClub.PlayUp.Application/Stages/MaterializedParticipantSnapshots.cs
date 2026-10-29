@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
 
@@ -24,5 +25,17 @@ internal static class MaterializedParticipantSnapshots
             match.Id,
             match.HomeEntryId,
             match.AwayEntryId))];
+    }
+
+    /// <summary>
+    /// Maps slim match rows to the same participant snapshots (Group Draft coherence on a read).
+    /// </summary>
+    internal static IReadOnlyList<MatchParticipantSnapshot> FromSummaryRows(IEnumerable<MatchSummaryRow> rows)
+    {
+        ArgumentNullException.ThrowIfNull(rows);
+        return [.. rows.Select(row => new MatchParticipantSnapshot(
+            row.Id,
+            row.HomeEntryId,
+            row.AwayEntryId))];
     }
 }

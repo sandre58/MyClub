@@ -1,194 +1,53 @@
-import { describe, expect, it } from 'vitest';
-import type { StageDraw, StageRound, StageSlot } from '../../../types';
-import { resolveAppliedDrawRedo } from './drawRedo';
+import { describe, expect, it, vi } from 'vitest';
+import { DrawRedoStoppedError, redoAppliedDraw } from './drawRedo';
 
-function appliedGroup(overrides: Partial<StageDraw> = {}): StageDraw {
-  return {
-    id: 'draw-1',
-    kind: 'Group',
-    status: 'Published',
-    resolutionState: 'Resolved',
-    slotPlacements: [],
-    isApplied: true,
-    groupPlacements: [
-      {
-        groupId: 'g-a',
-        groupDisplayName: 'A',
-        entryId: 'e1',
-        displayName: 'Alpha',
+describe('redoAppliedDraw', () => {
+  it('runs cancel, then release, then preview', async () => {
+    const order: string[] = [];
+    const result = await redoAppliedDraw({
+      cancel: async () => {
+        order.push('cancel');
       },
-    ],
-    ...overrides,
-  };
-}
-
-function appliedCup(): StageDraw {
-  return {
-    id: 'draw-cup',
-    kind: 'Slot',
-    status: 'Published',
-    resolutionState: 'Resolved',
-    isApplied: true,
-    slotPlacements: [
-      { slotKey: 'S1', entryId: 'e1', displayName: 'Alpha' },
-      { slotKey: 'S2', entryId: 'e2', displayName: 'Beta' },
-    ],
-  };
-}
-
-const alignedSlots: StageSlot[] = [
-  {
-    slotKey: 'S1',
-    entryId: 'e1',
-    displayName: 'Alpha',
-    coveredByCompleteFixture: true,
-  },
-  {
-    slotKey: 'S2',
-    entryId: 'e2',
-    displayName: 'Beta',
-    coveredByCompleteFixture: true,
-  },
-];
-
-function rounds(attached: boolean): StageRound[] {
-  return [
-    {
-      id: 'r1',
-      name: 'Tour',
-      fixtures: [
-        {
-          id: 'f1',
-          slotAKey: 'S1',
-          slotBKey: 'S2',
-          attachments: attached ? [{ matchId: 'm1', legIndex: 0 }] : [],
-        },
-      ],
-    },
-  ];
-}
-
-describe('resolveAppliedDrawRedo', () => {
-  it('allows Refaire for an applied group draw while the phase is Draft', () => {
-    expect(
-      resolveAppliedDrawRedo({
-        formatKind: 'Groups',
-        competitionStatus: 'Running',
-        stageStatus: 'Draft',
-        isApplied: true,
-        draw: appliedGroup(),
-        slots: [],
-        bracketPairs: [],
-        rounds: [],
-      }),
-    ).toEqual({ kind: 'available' });
+      release: async () => {
+        order.push('release');
+      },
+      preview: async () => {
+        order.push('preview');
+        return 'previewed';
+      },
+    });
+    expect(order).toEqual(['cancel', 'release', 'preview']);
+    expect(result).toBe('previewed');
   });
 
-  it('allows Refaire for an applied group draw while the phase is Ready', () => {
-    expect(
-      resolveAppliedDrawRedo({
-        formatKind: 'Groups',
-        competitionStatus: 'Running',
-        stageStatus: 'Ready',
-        isApplied: true,
-        draw: appliedGroup(),
-        slots: [],
-        bracketPairs: [],
-        rounds: [],
-      }),
-    ).toEqual({ kind: 'available' });
+  it('stops at release and keeps the cause', async () => {
+    const preview = vi.fn();
+    const cause = new Error('release refused');
+    const act = redoAppliedDraw({
+      cancel: async () => undefined,
+      release: async () => {
+        throw cause;
+      },
+      preview,
+    });
+    await expect(act).rejects.toMatchObject({
+      name: 'DrawRedoStoppedError',
+      step: 'release',
+      cause,
+    });
+    expect(preview).not.toHaveBeenCalled();
   });
 
-  it('blocks Cup Refaire when a touched pair has a fixture attachment', () => {
-    expect(
-      resolveAppliedDrawRedo({
-        formatKind: 'Cup',
-        competitionStatus: 'Draft',
-        stageStatus: 'Ready',
-        isApplied: true,
-        draw: appliedCup(),
-        slots: alignedSlots,
-        bracketPairs: [{ pairKey: 'P1', slotAKey: 'S1', slotBKey: 'S2' }],
-        rounds: rounds(true),
-      }),
-    ).toEqual({ kind: 'blocked', reason: 'cupFixtureAttached' });
-  });
-
-  it('allows Cup Refaire when the touched pair has no attached match', () => {
-    expect(
-      resolveAppliedDrawRedo({
-        formatKind: 'Cup',
-        competitionStatus: 'Draft',
-        stageStatus: 'Ready',
-        isApplied: true,
-        draw: appliedCup(),
-        slots: alignedSlots,
-        bracketPairs: [{ pairKey: 'P1', slotAKey: 'S1', slotBKey: 'S2' }],
-        rounds: rounds(false),
-      }),
-    ).toEqual({ kind: 'available' });
-  });
-
-  it('blocks Group Refaire in Ready when matches are attached', () => {
-    expect(
-      resolveAppliedDrawRedo({
-        formatKind: 'Groups',
-        competitionStatus: 'Running',
-        stageStatus: 'Ready',
-        isApplied: true,
-        draw: appliedGroup(),
-        slots: [],
-        bracketPairs: [],
-        rounds: [],
-        attachedMatchCount: 2,
-      }),
-    ).toEqual({ kind: 'blocked', reason: 'groupMatchesAttached' });
-  });
-
-  it('allows Group Refaire in Ready when no match is attached', () => {
-    expect(
-      resolveAppliedDrawRedo({
-        formatKind: 'Groups',
-        competitionStatus: 'Running',
-        stageStatus: 'Ready',
-        isApplied: true,
-        draw: appliedGroup(),
-        slots: [],
-        bracketPairs: [],
-        rounds: [],
-        attachedMatchCount: 0,
-      }),
-    ).toEqual({ kind: 'available' });
-  });
-
-  it('allows Group Refaire in Draft even when matches are attached', () => {
-    expect(
-      resolveAppliedDrawRedo({
-        formatKind: 'Groups',
-        competitionStatus: 'Draft',
-        stageStatus: 'Draft',
-        isApplied: true,
-        draw: appliedGroup(),
-        slots: [],
-        bracketPairs: [],
-        rounds: [],
-        attachedMatchCount: 4,
-      }),
-    ).toEqual({ kind: 'available' });
-  });
-
-  it('does not offer Refaire before the draw is applied', () => {
-    expect(
-      resolveAppliedDrawRedo({
-        formatKind: 'Groups',
-        competitionStatus: 'Draft',
-        stageStatus: 'Draft',
-        isApplied: false,
-        draw: appliedGroup({ status: 'Draft', isApplied: false }),
-        slots: [],
-        bracketPairs: [],
-        rounds: [],
-      }),
-    ).toEqual({ kind: 'hidden' });
+  it('stops at preview after release succeeded', async () => {
+    const cause = new Error('preview refused');
+    const act = redoAppliedDraw({
+      cancel: async () => undefined,
+      release: async () => undefined,
+      preview: async () => {
+        throw cause;
+      },
+    });
+    await expect(act).rejects.toBeInstanceOf(DrawRedoStoppedError);
+    await expect(act).rejects.toMatchObject({ step: 'preview', cause });
   });
 });

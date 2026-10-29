@@ -1,204 +1,75 @@
 import { describe, expect, it } from 'vitest';
+import type { StageDraw } from '../../types';
 import {
-  allowsCompetitionLifecycleMutation,
-  allowsStageDraftOrReadyMutation,
-  canCancelDrawExecution,
-  canReleaseDrawAlignedPlacements,
-  isDrawExecutionCancellable,
-  releaseDrawPlacementsVisible,
-} from './lifecycleGates';
+  drawActionsOf,
+  isDrawActionAvailable,
+  resolveServerReleaseCta,
+} from '../structure/draw/drawActions';
 
-describe('lifecycleGates', () => {
-  it('allowsCompetitionLifecycleMutation mirrors Host (blocks Completed|Archived)', () => {
-    expect(allowsCompetitionLifecycleMutation('Draft')).toBe(true);
-    expect(allowsCompetitionLifecycleMutation('Ready')).toBe(true);
-    expect(allowsCompetitionLifecycleMutation('Running')).toBe(true);
-    expect(allowsCompetitionLifecycleMutation('Suspended')).toBe(true);
-    expect(allowsCompetitionLifecycleMutation('Completed')).toBe(false);
-    expect(allowsCompetitionLifecycleMutation('Archived')).toBe(false);
+function draw(overrides: Partial<StageDraw> = {}): StageDraw {
+  return {
+    id: 'draw-1',
+    kind: 'Group',
+    status: 'Cancelled',
+    resolutionState: 'Resolved',
+    slotPlacements: [],
+    ...overrides,
+  };
+}
+
+describe('draw action projection', () => {
+  it('treats a missing actions payload as Hidden', () => {
+    const actions = drawActionsOf(draw());
+    expect(actions.cancel.state).toBe('Hidden');
+    expect(actions.release.state).toBe('Hidden');
+    expect(actions.release.releasableCount).toBe(0);
+    expect(isDrawActionAvailable(actions.apply)).toBe(false);
   });
 
-  it('allowsStageDraftOrReadyMutation mirrors Domain EnsureDraftOrReady', () => {
-    expect(allowsStageDraftOrReadyMutation('Draft')).toBe(true);
-    expect(allowsStageDraftOrReadyMutation('Ready')).toBe(true);
-    expect(allowsStageDraftOrReadyMutation('Running')).toBe(false);
-    expect(allowsStageDraftOrReadyMutation('Suspended')).toBe(false);
-    expect(allowsStageDraftOrReadyMutation('Completed')).toBe(false);
+  it('reads Available and Blocked from the server payload', () => {
+    const actions = drawActionsOf(
+      draw({
+        actions: {
+          cancel: { state: 'Available' },
+          release: {
+            state: 'Blocked',
+            blockCode: 'Application.DrawReleaseBlockedByAttachedMatches',
+            releasableCount: 2,
+          },
+          apply: { state: 'Hidden' },
+          publishAndApply: { state: 'Hidden' },
+          redo: { state: 'Hidden' },
+        },
+      }),
+    );
+    expect(isDrawActionAvailable(actions.cancel)).toBe(true);
+    expect(actions.release.state).toBe('Blocked');
+    expect(actions.release.blockCode).toBe(
+      'Application.DrawReleaseBlockedByAttachedMatches',
+    );
+    expect(actions.release.releasableCount).toBe(2);
   });
 
-  it('isDrawExecutionCancellable accepts Draft|Published only', () => {
-    expect(isDrawExecutionCancellable('Draft')).toBe(true);
-    expect(isDrawExecutionCancellable('Published')).toBe(true);
-    expect(isDrawExecutionCancellable('Cancelled')).toBe(false);
-  });
-
-  it('canCancelDrawExecution requires all three gates (D); keeps post-Apply (A)', () => {
-    expect(
-      canCancelDrawExecution({
-        competitionStatus: 'Running',
-        stageStatus: 'Draft',
-        drawStatus: 'Published',
-      }),
-    ).toBe(true);
-
-    expect(
-      canCancelDrawExecution({
-        competitionStatus: 'Completed',
-        stageStatus: 'Draft',
-        drawStatus: 'Draft',
-      }),
-    ).toBe(false);
-
-    expect(
-      canCancelDrawExecution({
-        competitionStatus: 'Running',
-        stageStatus: 'Running',
-        drawStatus: 'Draft',
-      }),
-    ).toBe(false);
-
-    expect(
-      canCancelDrawExecution({
-        competitionStatus: 'Running',
-        stageStatus: 'Draft',
-        drawStatus: 'Cancelled',
-      }),
-    ).toBe(false);
-  });
-
-  it('canReleaseDrawAlignedPlacements requires Cancelled Slot|Group with aligned count (D)', () => {
-    expect(
-      canReleaseDrawAlignedPlacements({
-        competitionStatus: 'Running',
-        stageStatus: 'Draft',
-        drawStatus: 'Cancelled',
-        drawKind: 'Slot',
-        alignedPlacementCount: 2,
-      }),
-    ).toBe(true);
-
-    expect(
-      canReleaseDrawAlignedPlacements({
-        competitionStatus: 'Running',
-        stageStatus: 'Draft',
-        drawStatus: 'Cancelled',
-        drawKind: 'Slot',
-        alignedPlacementCount: 0,
-      }),
-    ).toBe(false);
-
-    expect(
-      canReleaseDrawAlignedPlacements({
-        competitionStatus: 'Running',
-        stageStatus: 'Draft',
-        drawStatus: 'Published',
-        drawKind: 'Slot',
-        alignedPlacementCount: 2,
-      }),
-    ).toBe(false);
-
-    expect(
-      canReleaseDrawAlignedPlacements({
-        competitionStatus: 'Running',
-        stageStatus: 'Draft',
-        drawStatus: 'Cancelled',
-        drawKind: 'Group',
-        alignedPlacementCount: 2,
-      }),
-    ).toBe(true);
-
-    expect(
-      canReleaseDrawAlignedPlacements({
-        competitionStatus: 'Running',
-        stageStatus: 'Ready',
-        drawStatus: 'Cancelled',
-        drawKind: 'Group',
-        alignedPlacementCount: 2,
-      }),
-    ).toBe(true);
-
-    expect(
-      canReleaseDrawAlignedPlacements({
-        competitionStatus: 'Running',
-        stageStatus: 'Ready',
-        drawStatus: 'Cancelled',
-        drawKind: 'Slot',
-        alignedPlacementCount: 1,
-      }),
-    ).toBe(true);
-
-    expect(
-      canReleaseDrawAlignedPlacements({
-        competitionStatus: 'Completed',
-        stageStatus: 'Draft',
-        drawStatus: 'Cancelled',
-        drawKind: 'Slot',
-        alignedPlacementCount: 1,
-      }),
-    ).toBe(false);
-
-    expect(
-      canReleaseDrawAlignedPlacements({
-        competitionStatus: 'Running',
-        stageStatus: 'Running',
-        drawStatus: 'Cancelled',
-        drawKind: 'Slot',
-        alignedPlacementCount: 1,
-      }),
-    ).toBe(false);
-
-    expect(
-      canReleaseDrawAlignedPlacements({
-        competitionStatus: 'Running',
-        stageStatus: 'Draft',
-        drawStatus: 'Cancelled',
-        drawKind: 'Group',
-        alignedPlacementCount: 6,
-        stageHasPublishedAppliedDraw: true,
-      }),
-    ).toBe(false);
-
-    expect(
-      canReleaseDrawAlignedPlacements({
-        competitionStatus: 'Running',
-        stageStatus: 'Ready',
-        drawStatus: 'Cancelled',
-        drawKind: 'Group',
-        alignedPlacementCount: 2,
-        attachedMatchCount: 3,
-      }),
-    ).toBe(false);
-
-    expect(
-      releaseDrawPlacementsVisible({
-        competitionStatus: 'Running',
-        stageStatus: 'Ready',
-        drawStatus: 'Cancelled',
-        drawKind: 'Group',
-        alignedPlacementCount: 2,
-      }),
-    ).toBe(true);
-
-    expect(
-      canReleaseDrawAlignedPlacements({
-        competitionStatus: 'Running',
-        stageStatus: 'Draft',
-        drawStatus: 'Cancelled',
-        drawKind: 'Group',
-        alignedPlacementCount: 2,
-        attachedMatchCount: 3,
-      }),
-    ).toBe(true);
-
-    expect(
-      canReleaseDrawAlignedPlacements({
-        competitionStatus: 'Running',
-        stageStatus: 'Ready',
-        drawStatus: 'Cancelled',
-        drawKind: 'Slot',
-        alignedPlacementCount: 2,
-        attachedMatchCount: 3,
-      }),
-    ).toBe(true);
+  it('offers a disabled release CTA from the release candidate', () => {
+    const candidate = draw({
+      actions: {
+        cancel: { state: 'Hidden' },
+        release: {
+          state: 'Blocked',
+          blockCode: 'Application.DrawReleaseBlockedByAttachedMatches',
+          releasableCount: 1,
+        },
+        apply: { state: 'Hidden' },
+        publishAndApply: { state: 'Hidden' },
+        redo: { state: 'Hidden' },
+      },
+    });
+    const cta = resolveServerReleaseCta({
+      draws: [candidate],
+      releaseCandidateDrawId: candidate.id,
+    });
+    expect(cta.draw?.id).toBe(candidate.id);
+    expect(cta.aligned).toBe(1);
+    expect(cta.disabled).toBe(true);
   });
 });

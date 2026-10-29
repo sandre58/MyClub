@@ -17,6 +17,10 @@ import {
   afterAll,
 } from 'vitest';
 import {
+  stampStageOverviewDrawActions,
+  type StampDrawActionsContext,
+} from '../../../test/stampDrawActions';
+import {
   cancelDraw,
   createAndGenerateDraw,
   DrawGenerateFailedError,
@@ -120,18 +124,22 @@ function groupsStage(
 function overview(
   draws: StageOverview['draws'],
   overrides: Partial<StageOverview> = {},
+  context?: StampDrawActionsContext,
 ): StageOverview {
-  return {
-    id: stageId,
-    competitionId,
-    name: 'Groupes',
-    status: 'Draft',
-    slots: [],
-    rounds: [],
-    draws,
-    bracketPairs: [],
-    ...overrides,
-  };
+  return stampStageOverviewDrawActions(
+    {
+      id: stageId,
+      competitionId,
+      name: 'Groupes',
+      status: 'Draft',
+      slots: [],
+      rounds: [],
+      draws,
+      bracketPairs: [],
+      ...overrides,
+    },
+    context,
+  );
 }
 
 function groupDraw(overrides: Partial<StageDraw> = {}): StageDraw {
@@ -1291,7 +1299,13 @@ describe('StructureDrawDialog', () => {
 
   it('hides Abandonner when competition is Completed (D)', async () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
-      overview([groupDraw({ status: 'Draft' })]),
+      overview(
+        [groupDraw({ status: 'Draft' })],
+        {},
+        {
+          competitionStatus: 'Completed',
+        },
+      ),
     );
 
     renderDialog(groupsStage(), true, 'Completed');
@@ -2571,6 +2585,7 @@ describe('StructureDrawDialog', () => {
           status: 'Ready',
           groups: [{ id: 'g-a', name: 'A', entryIds: ['e1'] }],
         },
+        { attachedMatchCount: 2 },
       ),
     );
     renderDialog(groupsStage({ status: 'Ready', matchCount: 2 }));
@@ -2609,6 +2624,7 @@ describe('StructureDrawDialog', () => {
           status: 'Ready',
           groups: [{ id: 'g-a', name: 'A', entryIds: ['e1'] }],
         },
+        { attachedMatchCount: 2 },
       ),
     );
     renderDialog(groupsStage({ status: 'Ready', matchCount: 2 }));
@@ -2911,6 +2927,7 @@ describe('StructureDrawDialog', () => {
           status: 'Ready',
           groups: [{ id: 'g-a', name: 'A', entryIds: ['e1'] }],
         },
+        { attachedMatchCount: 2 },
       ),
     );
     renderDialog(groupsStage({ status: 'Ready', matchCount: 2 }));
@@ -3160,5 +3177,80 @@ describe('StructureDrawDialog', () => {
     expect(
       screen.getByRole('button', { name: 'Abandonner' }),
     ).not.toHaveFocus();
+  });
+
+  it('renders Abandonner from server actions when the phase is Running', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview(
+        [
+          groupDraw({
+            status: 'Draft',
+            actions: {
+              cancel: { state: 'Available' },
+              release: { state: 'Hidden', releasableCount: 0 },
+              apply: { state: 'Hidden' },
+              publishAndApply: { state: 'Hidden' },
+              redo: { state: 'Hidden' },
+            },
+          }),
+        ],
+        { status: 'Running' },
+      ),
+    );
+
+    renderDialog(groupsStage({ status: 'Running' }), true, 'Running');
+
+    expect(
+      await screen.findByRole('button', { name: 'Abandonner' }),
+    ).toBeInTheDocument();
+  });
+
+  it('keeps Libérer visible and disabled from a Blocked release action', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview(
+        [
+          groupDraw({
+            id: 'draw-old',
+            status: 'Cancelled',
+            groupPlacements: [
+              {
+                groupId: 'g-a',
+                groupDisplayName: 'A',
+                entryId: 'e1',
+                displayName: 'Alpha',
+              },
+            ],
+            actions: {
+              cancel: { state: 'Hidden' },
+              release: {
+                state: 'Blocked',
+                blockCode: 'Application.DrawReleaseBlockedByAttachedMatches',
+                releasableCount: 1,
+              },
+              apply: { state: 'Hidden' },
+              publishAndApply: { state: 'Hidden' },
+              redo: { state: 'Hidden' },
+            },
+          }),
+        ],
+        {
+          status: 'Draft',
+          groups: [{ id: 'g-a', name: 'A', entryIds: ['e1'] }],
+          releaseCandidateDrawId: 'draw-old',
+        },
+      ),
+    );
+
+    renderDialog(groupsStage());
+
+    const release = await screen.findByRole('button', {
+      name: 'Libérer #1 (1/1)',
+    });
+    expect(release).toBeDisabled();
+    expect(
+      screen.getByText(
+        'Libérer est indisponible : des matchs sont déjà rattachés à cette phase.',
+      ),
+    ).toBeInTheDocument();
   });
 });

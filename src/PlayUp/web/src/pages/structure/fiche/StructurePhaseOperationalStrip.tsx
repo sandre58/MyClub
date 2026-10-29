@@ -937,7 +937,8 @@ function DrawColumn(
             <button
               type="button"
               className={secondaryBtn}
-              disabled={props.releasePending}
+              disabled={props.releasePending || props.releaseDisabled}
+              title={props.releaseDisabledReason ?? undefined}
               onClick={props.onReleasePlacements}
             >
               {props.releasePending ? (
@@ -1088,7 +1089,8 @@ function DrawColumn(
             <button
               type="button"
               className={secondaryBtn}
-              disabled={props.releasePending}
+              disabled={props.releasePending || props.releaseDisabled}
+              title={props.releaseDisabledReason ?? undefined}
               onClick={props.onReleasePlacements}
             >
               {props.releasePending ? (

@@ -3,9 +3,7 @@ import type { StageBracketPair, StageDraw, StageSlot } from '../../../types';
 import {
   areDrawRulesLockedByExecution,
   canAuthorStageDrawRules,
-  countAlignedDrawPlacements,
   countBracketPlacesBlockingDraw,
-  pickReleasableCancelledDraw,
   drawExecutionNumber,
   getDrawUiProjection,
   groupPlacementRows,
@@ -539,117 +537,6 @@ describe('resolveDrawCreateGate', () => {
         ]),
       }),
     ).toEqual({ ok: true });
-  });
-
-  it('countAlignedDrawPlacements uses schematic GroupPlace for groups', () => {
-    const draw: StageDraw = {
-      id: 'd1',
-      kind: 'Group',
-      status: 'Cancelled',
-      resolutionState: 'Resolved',
-      slotPlacements: [],
-      groupPlacements: [
-        { groupId: 'GA', entryId: 'E1', displayName: 'A' },
-        { groupId: 'GA', entryId: 'E2', displayName: 'B' },
-      ],
-    };
-    expect(
-      countAlignedDrawPlacements(
-        draw,
-        [],
-        [],
-        [
-          {
-            formPosition: {
-              kind: 'GroupPlace',
-              groupId: 'ga',
-              groupName: 'A',
-              index: 1,
-            },
-            entry: { entryId: 'e1', displayName: 'A' },
-            assignment: { entryId: 'e1', displayName: 'A' },
-          },
-          {
-            formPosition: {
-              kind: 'GroupPlace',
-              groupId: 'ga',
-              groupName: 'A',
-              index: 2,
-            },
-            entry: { entryId: 'e2', displayName: 'B' },
-            assignment: { entryId: 'e2', displayName: 'B' },
-          },
-        ],
-      ),
-    ).toBe(2);
-  });
-
-  it('pickReleasableCancelledDraw prefers highest aligned count', () => {
-    const pick = pickReleasableCancelledDraw({
-      draws: [
-        {
-          id: 'partial',
-          kind: 'Slot',
-          status: 'Cancelled',
-          resolutionState: 'Resolved',
-          slotPlacements: [{ slotKey: 'A', entryId: 'e1', displayName: 'T' }],
-        },
-        {
-          id: 'full',
-          kind: 'Slot',
-          status: 'Cancelled',
-          resolutionState: 'Resolved',
-          slotPlacements: [
-            { slotKey: 'A', entryId: 'e1', displayName: 'T' },
-            { slotKey: 'B', entryId: 'e2', displayName: 'T' },
-          ],
-        },
-      ],
-      slots: [
-        {
-          slotKey: 'A',
-          entryId: 'e1',
-          displayName: 'T',
-          coveredByCompleteFixture: false,
-        },
-        {
-          slotKey: 'B',
-          entryId: 'e2',
-          displayName: 'T',
-          coveredByCompleteFixture: false,
-        },
-      ],
-      groups: [],
-      competitionStatus: 'Draft',
-      stageStatus: 'Draft',
-      stageHasPublishedAppliedDraw: false,
-    });
-    expect(pick?.draw.id).toBe('full');
-    expect(pick?.aligned).toBe(2);
-  });
-
-  it('countAlignedDrawPlacements matches group membership from overview', () => {
-    const draw: StageDraw = {
-      id: 'd1',
-      kind: 'Group',
-      status: 'Cancelled',
-      resolutionState: 'Resolved',
-      slotPlacements: [],
-      groupPlacements: [
-        { groupId: 'ga', entryId: 'e1', displayName: 'A' },
-        { groupId: 'gb', entryId: 'e2', displayName: 'B' },
-      ],
-    };
-    expect(
-      countAlignedDrawPlacements(
-        draw,
-        [],
-        [
-          { id: 'ga', name: 'A', entryIds: ['e1', 'e3'] },
-          { id: 'gb', name: 'B', entryIds: [] },
-        ],
-      ),
-    ).toBe(1);
   });
 
   it('checklist bracket line uses schematic qual feeds', () => {

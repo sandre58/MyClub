@@ -67,14 +67,13 @@ import { countSchematicOccupiedPlaces } from '../schematic/structurePlaceOccupan
 import {
   areDrawRulesLockedByExecution,
   canAuthorStageDrawRules,
-  drawResolutionPlacementCount,
-  pickReleasableCancelledDraw,
   stageHasPublishedAppliedDraw,
   pickActiveDraw,
   resolveDrawCreateBlockPresentation,
   resolveDrawReadinessChecklist,
   resolveStageDrawCreateGate,
 } from '../draw/drawUi';
+import { resolveServerReleaseCta } from '../draw/drawActions';
 import {
   isSlotFeedAwaitingDraw,
   structureIssueBannersForTile,
@@ -512,10 +511,8 @@ export function StructurePhaseFiche({
     !isCompletedStage && showDrawCta && placesN != null && placesN > 0;
   const overviewSlots = drawOverviewQuery.data?.slots ?? [];
   const overviewDraws = drawOverviewQuery.data?.draws ?? [];
-  const overviewGroups = drawOverviewQuery.data?.groups ?? [];
   const drawBracketLaunchFacts =
     drawOverviewQuery.data?.drawBracketLaunchFacts ?? undefined;
-  const schematicCases = schematicQuery.data?.cases;
   const drawGateReady =
     drawOverviewQuery.isSuccess ||
     stage.formatKind === 'Groups' ||
@@ -565,17 +562,12 @@ export function StructurePhaseFiche({
       ? t(`fiche.drawWorkflow.createBlocked.short.${createBlockedReason}`)
       : null;
   const stageHasAppliedDraw = stageHasPublishedAppliedDraw(overviewDraws);
-  const releasablePick = pickReleasableCancelledDraw({
+  const releaseCta = resolveServerReleaseCta({
     draws: overviewDraws,
-    slots: overviewSlots,
-    groups: overviewGroups,
-    schematicCases,
-    competitionStatus: data.status,
-    stageStatus: stage.status,
-    stageHasPublishedAppliedDraw: stageHasAppliedDraw,
+    releaseCandidateDrawId: drawOverviewQuery.data?.releaseCandidateDrawId,
   });
-  const releasableDraw = releasablePick?.draw ?? null;
-  const releasableAlignedCount = releasablePick?.aligned ?? 0;
+  const releasableDraw = releaseCta.draw;
+  const releasableAlignedCount = releaseCta.aligned;
   const showReleaseCta = releasableDraw != null && releasableAlignedCount > 0;
   /** Nouveau path blocked with nothing to manage in the dialog → disable primary CTA. */
   const blockPerformDrawCta =
@@ -1033,10 +1025,11 @@ export function StructurePhaseFiche({
         showCreateBlockedCaption,
         showPoolHint,
         releasableAlignedCount,
-        releasableTotal:
-          releasableDraw != null
-            ? drawResolutionPlacementCount(releasableDraw)
-            : 0,
+        releasableTotal: releaseCta.total,
+        releaseDisabled: releaseCta.disabled,
+        releaseDisabledReason: releaseCta.disabled
+          ? tDraw('releaseBlockedAttachedMatches')
+          : null,
         releasePending: releaseMutation.isPending,
         deactivateDrawPending: deactivateDrawMutation.isPending,
         onOpenDrawWorkflow: () => setDrawWorkflowOpen(true),

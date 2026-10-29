@@ -149,8 +149,60 @@ public sealed class ReleaseDrawAlignedPlacementsTests
         var act = () => ReleaseDrawAlignedPlacements.Execute(stage, draw.Id, _clock);
 
         act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.DrawReleaseRequiresCancelled);
+        stage.DomainEvents.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Execute_rejects_cancelled_draw_that_is_not_resolved()
+    {
+        var stage = CreateStage();
+        stage.AddSlot("S1");
+        var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([EntryId.New()]));
+        stage.CancelDraw(draw.Id, _clock);
+        stage.ClearDomainEvents();
+
+        var act = () => ReleaseDrawAlignedPlacements.Execute(stage, draw.Id, _clock);
+
+        act.Should().Throw<ApplicationFailureException>()
             .Which.Code.Should().Be(ApplicationErrorCodes.DrawReleaseFailure);
         stage.DomainEvents.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Execute_slot_Running_is_refused()
+    {
+        var stage = CreateStage();
+        stage.AddRound("Tour", _clock);
+        var (draw, _) = PublishAndApplySlot(stage, "S1");
+        stage.CancelDraw(draw.Id, _clock);
+        stage.Prepare(_clock);
+        stage.Start(_clock);
+
+        var act = () => ReleaseDrawAlignedPlacements.Execute(stage, draw.Id, _clock);
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
+        stage.FindSlot("S1")!.EntryId.Should().NotBeNull();
+        stage.Status.Should().Be(StageStatus.Running);
+    }
+
+    [Fact]
+    public void Execute_slot_Suspended_is_refused()
+    {
+        var stage = CreateStage();
+        stage.AddRound("Tour", _clock);
+        var (draw, _) = PublishAndApplySlot(stage, "S1");
+        stage.CancelDraw(draw.Id, _clock);
+        stage.Prepare(_clock);
+        stage.Start(_clock);
+        stage.Suspend(_clock);
+
+        var act = () => ReleaseDrawAlignedPlacements.Execute(stage, draw.Id, _clock);
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
+        stage.FindSlot("S1")!.EntryId.Should().NotBeNull();
+        stage.Status.Should().Be(StageStatus.Suspended);
     }
 
     [Fact]

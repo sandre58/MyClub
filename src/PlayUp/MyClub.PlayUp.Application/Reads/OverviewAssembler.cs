@@ -1445,13 +1445,18 @@ public static class OverviewAssembler
                     throw new ArgumentOutOfRangeException(nameof(stages));
             }
 
-            foreach (var draw in stage.Draws.Where(candidate => candidate.Status != DrawStatus.Cancelled))
+            var stageRows = matchesByStage.TryGetValue(stage.Id, out var loadedStageRows)
+                ? loadedStageRows
+                : [];
+            var drawContext = new DrawActionContext(
+                stage,
+                stages,
+                MaterializedParticipantSnapshots.FromSummaryRows(stageRows),
+                StageAttachedProduction.HasAttachedMatches(stage, stageRows));
+            foreach (var draw in stage.Draws)
             {
-                if (draw is
-                    {
-                        Status: DrawStatus.Draft, Resolution.State: DrawResolutionState.Resolved,
-                        Kind: DrawResolutionKind.Slot or DrawResolutionKind.Group
-                    })
+                var projected = DrawActionEvaluator.Evaluate(drawContext, draw);
+                if (projected.PublishAndApply.State == StageDrawActionState.Available)
                 {
                     actions.Add(new OverviewActionDto(
                         ActionPublishAndApplyDraw,
@@ -1460,12 +1465,7 @@ public static class OverviewAssembler
                         draw.Id.Value));
                 }
 
-                if (draw is
-                    {
-                        Status: DrawStatus.Published, Resolution.State: DrawResolutionState.Resolved,
-                        Kind: DrawResolutionKind.Slot or DrawResolutionKind.Group
-                    }
-                    && !DrawAppliedState.IsApplied(draw, stage))
+                if (projected.Apply.State == StageDrawActionState.Available)
                 {
                     actions.Add(new OverviewActionDto(
                         ActionApplyDraw,

@@ -135,6 +135,12 @@ public static class ApplicationErrorCodes
     public const string DrawReleaseBlockedByAttachedMatches = "Application.DrawReleaseBlockedByAttachedMatches";
 
     /// <summary>
+    /// Gets the code when Release targets a draw that is not Cancelled.
+    /// Mapped to HTTP 409. Distinct from <see cref="DrawReleaseFailure"/> (400).
+    /// </summary>
+    public const string DrawReleaseRequiresCancelled = "Application.DrawReleaseRequiresCancelled";
+
+    /// <summary>
     /// Gets the code when GenerateSchedule cannot run (e.g. target match not attached to the Stage).
     /// Distinct from Domain <c>SchedulingResult.InvalidRequest</c> / <c>NoSolution</c>.
     /// </summary>

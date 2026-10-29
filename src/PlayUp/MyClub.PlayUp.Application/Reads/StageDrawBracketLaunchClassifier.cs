@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Application.Stages;
+using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Reads;
@@ -32,18 +33,25 @@ public static class StageDrawBracketLaunchClassifier
     /// <summary>
     /// Classifies for a specific draw resolution kind (Rerun guard).
     /// </summary>
+    /// <param name="stage">Stage whose places are classified.</param>
+    /// <param name="competitionStages">Competition stages used for inbound feed resolution.</param>
+    /// <param name="kind">Draw resolution kind.</param>
+    /// <param name="slotKeysTreatedAsVacant">Normalized slot keys treated as vacant before feed resolution.</param>
+    /// <param name="groupEntriesTreatedAsRemoved">Pool entries omitted from group occupancy.</param>
     public static StageDrawBracketLaunchFactsDto ClassifyForDrawKind(
         Stage stage,
         IReadOnlyList<Stage> competitionStages,
-        DrawResolutionKind kind)
+        DrawResolutionKind kind,
+        IReadOnlySet<string>? slotKeysTreatedAsVacant = null,
+        IReadOnlySet<EntryId>? groupEntriesTreatedAsRemoved = null)
     {
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(competitionStages);
 
         return kind switch
         {
-            DrawResolutionKind.Slot => ClassifySlots(stage, competitionStages),
-            DrawResolutionKind.Group => ClassifyGroups(stage),
+            DrawResolutionKind.Slot => ClassifySlots(stage, competitionStages, slotKeysTreatedAsVacant),
+            DrawResolutionKind.Group => ClassifyGroups(stage, groupEntriesTreatedAsRemoved),
             _ => throw new ApplicationFailureException(
                 $"Draw bracket launch classification does not support kind '{kind}'.",
                 ApplicationErrorCodes.DrawKindNotSupported)
@@ -52,7 +60,8 @@ public static class StageDrawBracketLaunchClassifier
 
     private static StageDrawBracketLaunchFactsDto ClassifySlots(
         Stage stage,
-        IReadOnlyList<Stage> competitionStages)
+        IReadOnlyList<Stage> competitionStages,
+        IReadOnlySet<string>? slotKeysTreatedAsVacant = null)
     {
         var pool = stage.CompositionEntries.Select(entry => entry.EntryId).ToHashSet();
         var snapshot = SlotFeedSnapshotAssembler.Assemble(stage, competitionStages);
@@ -64,7 +73,8 @@ public static class StageDrawBracketLaunchClassifier
 
         foreach (var slot in stage.Slots)
         {
-            if (slot.EntryId is { } entryId && pool.Contains(entryId))
+            var treatedVacant = slotKeysTreatedAsVacant?.Contains(slot.SlotKey) == true;
+            if (!treatedVacant && slot.EntryId is { } entryId && pool.Contains(entryId))
             {
                 occupiedByEntry++;
                 continue;
@@ -95,11 +105,14 @@ public static class StageDrawBracketLaunchClassifier
             vacant);
     }
 
-    private static StageDrawBracketLaunchFactsDto ClassifyGroups(Stage stage)
+    private static StageDrawBracketLaunchFactsDto ClassifyGroups(
+        Stage stage,
+        IReadOnlySet<EntryId>? groupEntriesTreatedAsRemoved = null)
     {
         var pool = stage.CompositionEntries.Select(entry => entry.EntryId).ToHashSet();
         var occupiedByEntry = stage.Groups.Sum(group =>
-            group.EntryIds.Count(pool.Contains));
+            group.EntryIds.Count(entryId =>
+                pool.Contains(entryId) && groupEntriesTreatedAsRemoved?.Contains(entryId) != true));
 
         var entryPlaceCount = pool.Count;
         var vacant = entryPlaceCount - occupiedByEntry;

@@ -13,6 +13,7 @@ import {
   publishAndApplyDraw,
   startStage,
 } from '../../api';
+import { stampStageOverviewDrawActions } from '../../test/stampDrawActions';
 import type {
   StageDraw,
   StageOverview,
@@ -48,7 +49,7 @@ const entryA = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
 const entryB = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
 
 function baseOverview(overrides: Partial<StageOverview> = {}): StageOverview {
-  return {
+  return stampStageOverviewDrawActions({
     id: stageId,
     competitionId,
     name: 'QF',
@@ -58,7 +59,7 @@ function baseOverview(overrides: Partial<StageOverview> = {}): StageOverview {
     draws: [],
     bracketPairs: [],
     ...overrides,
-  };
+  });
 }
 
 function baseSchematic(overrides?: Partial<StageSchematic>): StageSchematic {

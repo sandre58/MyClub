@@ -4,8 +4,11 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Application.Competitions;
+using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
+using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Reads;
@@ -21,16 +24,25 @@ public static class StageOverviewAssembler
     /// <param name="stage">Loaded stage (with relations).</param>
     /// <param name="competition">Owning competition for entry display names.</param>
     /// <param name="competitionStages">Competition stages for inbound feed classification (defaults to target only).</param>
+    /// <param name="participantSnapshots">Participant rows for Group Draft release coherence. Empty when not needed.</param>
+    /// <param name="hasAttachedMatches">When set, overrides skeleton attachment detection for action projection.</param>
     /// <returns>The assembled overview.</returns>
     public static StageOverviewDto Assemble(
         Stage stage,
         Competition competition,
-        IReadOnlyList<Stage>? competitionStages = null)
+        IReadOnlyList<Stage>? competitionStages = null,
+        IReadOnlyList<MatchParticipantSnapshot>? participantSnapshots = null,
+        bool? hasAttachedMatches = null)
     {
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(competition);
 
         var stagesForFeeds = competitionStages ?? [stage];
+        var actionContext = new DrawActionContext(
+            stage,
+            stagesForFeeds,
+            participantSnapshots ?? [],
+            hasAttachedMatches ?? StructureSkeleton.CountAttachedMatches(stage) > 0);
 
         var names = EntryDisplayNames.ToMap(competition);
         var entries = EntryDisplayNames.ToEntries(competition);
@@ -52,7 +64,9 @@ public static class StageOverviewAssembler
                 covered.Contains(slot.SlotKey)))
             .ToArray();
 
-        var draws = stage.Draws.Select(draw => MapDraw(draw, stage, entries)).ToArray();
+        var draws = stage.Draws
+            .Select(draw => MapDraw(draw, stage, entries, actionContext, competition.Status))
+            .ToArray();
 
         var bracketPairs = stage.BracketPairs
             .Select(pair => new StageBracketPairDto(pair.PairKey, pair.SlotAKey, pair.SlotBKey))
@@ -78,7 +92,8 @@ public static class StageOverviewAssembler
             draws,
             bracketPairs,
             groups,
-            drawBracketLaunchFacts);
+            drawBracketLaunchFacts,
+            DrawActionEvaluator.ReleaseCandidateDrawId(actionContext, stage));
     }
 
     private static StageFixtureDto MapFixture(Fixture fixture) =>
@@ -95,9 +110,12 @@ public static class StageOverviewAssembler
     private static StageDrawDto MapDraw(
         Draw draw,
         Stage stage,
-        IReadOnlyDictionary<EntryId, CompetitionEntry> entries)
+        IReadOnlyDictionary<EntryId, CompetitionEntry> entries,
+        DrawActionContext actionContext,
+        CompetitionStatus competitionStatus)
     {
         var resolution = draw.Resolution;
+        var actions = ToActionsDto(DrawActionEvaluator.EvaluateForRead(actionContext, draw, competitionStatus));
         IReadOnlyList<StageDrawSlotPlacementDto> slotPlacements = [];
         IReadOnlyList<StageDrawGroupPlacementDto> groupPlacements = [];
 
@@ -111,7 +129,8 @@ public static class StageOverviewAssembler
                 slotPlacements,
                 groupPlacements,
                 IsApplied: false,
-                IsObsoleteForConsumption: DrawConsumptionConformance.IsObsoleteForConsumption(draw, stage));
+                IsObsoleteForConsumption: DrawConsumptionConformance.IsObsoleteForConsumption(draw, stage),
+                actions);
         }
 
         slotPlacements =
@@ -159,6 +178,18 @@ public static class StageOverviewAssembler
             slotPlacements,
             groupPlacements,
             DrawAppliedState.IsApplied(draw, stage),
-            DrawConsumptionConformance.IsObsoleteForConsumption(draw, stage));
+            DrawConsumptionConformance.IsObsoleteForConsumption(draw, stage),
+            actions);
     }
+
+    private static StageDrawActionsDto ToActionsDto(DrawActionsAssessment assessment) =>
+        new(
+            new StageDrawActionDto(assessment.Cancel.State, assessment.Cancel.BlockCode),
+            new StageDrawReleaseActionDto(
+                assessment.Release.State,
+                assessment.Release.BlockCode,
+                assessment.Release.ReleasableCount),
+            new StageDrawActionDto(assessment.Apply.State, assessment.Apply.BlockCode),
+            new StageDrawActionDto(assessment.PublishAndApply.State, assessment.PublishAndApply.BlockCode),
+            new StageDrawActionDto(assessment.Redo.State, assessment.Redo.BlockCode));
 }

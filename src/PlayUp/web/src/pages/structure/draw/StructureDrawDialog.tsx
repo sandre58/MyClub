@@ -52,7 +52,6 @@ import type {
 } from '../../../types';
 import { resolveLifecycleMutationMessage } from '../problems/resolveStructureProblemMessage';
 import {
-  countAlignedDrawPlacements,
   drawExecutionNumber,
   drawResolutionPlacementCount,
   getDrawUiProjection,
@@ -63,16 +62,16 @@ import {
   resolveDrawDetailGuidance,
   resolveStageDrawCreateGate,
   sortDrawsNewestFirst,
-  stageHasPublishedAppliedDraw,
 } from './drawUi';
 import { DrawSlotConfrontationGrid } from './DrawSlotConfrontationGrid';
-import { DrawRedoStoppedError, resolveAppliedDrawRedo } from './drawRedo';
+import { DrawRedoStoppedError, redoAppliedDraw } from './drawRedo';
 import {
-  canCancelDrawExecution,
-  canReleaseDrawAlignedPlacements,
-  groupReleaseBlockedByAttachedMatches,
-  releaseDrawPlacementsVisible,
-} from '../../stage/lifecycleGates';
+  drawActionsOf,
+  isDrawActionAvailable,
+  redoPresentation,
+  releaseFooterMode,
+  releaseHoldForDraw,
+} from './drawActions';
 import { scheduleStructureRefresh } from '../structureInvalidation';
 import { resolvePlacesN } from '../composition/structurePlaces';
 import { functionalProblemPresentation } from '../../../shell/functionalProblemPresentation';
@@ -117,7 +116,7 @@ export type StructureDrawDialogProps = {
   open: boolean;
   onClose: () => void;
   competitionId: string;
-  /** Host lifecycle gate — Completed|Archived → Cancel hidden. */
+  /** Callers still pass host status; draw CTAs are projected on the stage overview. */
   competitionStatus: CompetitionStatus;
   /** Competition EntryRules.MinimumTeams — gate belowMinimumTeams. */
   minimumTeams?: number | null;
@@ -140,7 +139,6 @@ export function StructureDrawDialog({
   onClose,
   competitionId,
   structureStages,
-  competitionStatus,
   minimumTeams = null,
   stage,
 }: StructureDrawDialogProps) {
@@ -161,10 +159,7 @@ export function StructureDrawDialog({
   const slots = overviewQuery.data?.slots ?? EMPTY_SLOTS;
   const overviewGroups = overviewQuery.data?.groups ?? EMPTY_GROUPS;
   const bracketPairs = overviewQuery.data?.bracketPairs ?? [];
-  const rounds = overviewQuery.data?.rounds ?? [];
   const drawList = draws ?? EMPTY_DRAWS;
-  const stageStatus = overviewQuery.data?.status ?? stage.status;
-  const stageHasAppliedDraw = stageHasPublishedAppliedDraw(drawList);
   const poolCount = stage.compositionEntryCount ?? 0;
   const placesN = stage.compositionCapacity ?? resolvePlacesN(stage);
   const placesPerGroup = stage.placesPerGroup ?? stage.numberOfPots ?? null;
@@ -212,61 +207,8 @@ export function StructureDrawDialog({
     },
   );
 
-  const attachedMatchCount = stage.matchCount ?? 0;
-
   function alignedCountFor(draw: StageDraw): number {
-    return countAlignedDrawPlacements(draw, slots, overviewGroups);
-  }
-
-  function releaseVisible(draw: StageDraw): boolean {
-    if (draw.kind !== 'Slot' && draw.kind !== 'Group') {
-      return false;
-    }
-    return releaseDrawPlacementsVisible({
-      competitionStatus,
-      stageStatus,
-      drawStatus: draw.status,
-      drawKind: draw.kind,
-      stageHasPublishedAppliedDraw: stageHasAppliedDraw,
-      alignedPlacementCount: alignedCountFor(draw),
-    });
-  }
-
-  function releaseHoldFor(
-    draw: StageDraw,
-  ): 'publishedDraw' | 'attachedMatches' | null {
-    if (draw.status !== 'Cancelled' || alignedCountFor(draw) <= 0) {
-      return null;
-    }
-    if (stageHasAppliedDraw) {
-      return 'publishedDraw';
-    }
-    if (
-      draw.kind === 'Group' &&
-      groupReleaseBlockedByAttachedMatches({
-        drawKind: 'Group',
-        stageStatus,
-        attachedMatchCount,
-      })
-    ) {
-      return 'attachedMatches';
-    }
-    return null;
-  }
-
-  function releaseEnabled(draw: StageDraw): boolean {
-    if (draw.kind !== 'Slot' && draw.kind !== 'Group') {
-      return false;
-    }
-    return canReleaseDrawAlignedPlacements({
-      competitionStatus,
-      stageStatus,
-      drawStatus: draw.status,
-      drawKind: draw.kind,
-      stageHasPublishedAppliedDraw: stageHasAppliedDraw,
-      alignedPlacementCount: alignedCountFor(draw),
-      attachedMatchCount,
-    });
+    return drawActionsOf(draw).release.releasableCount;
   }
 
   const confirmDraw =
@@ -401,6 +343,11 @@ export function StructureDrawDialog({
     onSuccess: () => {
       notify.success(tDraw('toastPublishedAndApplied'));
     },
+    onError: (error) => {
+      if (error instanceof ApiError && error.status === 409) {
+        scheduleDrawHubRefresh();
+      }
+    },
     onSettled: () => {
       scheduleDrawHubRefresh();
     },
@@ -413,6 +360,11 @@ export function StructureDrawDialog({
       scheduleDrawHubRefresh();
       notify.success(tDraw('toastCancelled'));
     },
+    onError: (error) => {
+      if (error instanceof ApiError && error.status === 409) {
+        scheduleDrawHubRefresh();
+      }
+    },
   });
 
   const releaseMutation = useMutation({
@@ -422,6 +374,11 @@ export function StructureDrawDialog({
       closeConfirm();
       scheduleDrawHubRefresh();
       notify.success(tDraw('toastReleased', { count: result.releasedCount }));
+    },
+    onError: (error) => {
+      if (error instanceof ApiError && error.status === 409) {
+        scheduleDrawHubRefresh();
+      }
     },
     onSettled: () => {
       pendingReleaseFocusRef.current = true;
@@ -437,27 +394,26 @@ export function StructureDrawDialog({
       scheduleDrawHubRefresh();
       notify.success(tDraw('toastApplied'));
     },
+    onError: (error) => {
+      if (error instanceof ApiError && error.status === 409) {
+        scheduleDrawHubRefresh();
+      }
+    },
   });
 
   const redoMutation = useMutation({
     mutationFn: async (draw: StageDraw) => {
-      await cancelDraw(stageId, draw.id);
-      try {
-        await releaseDrawAlignedPlacements(stageId, draw.id);
-      } catch (cause) {
-        throw new DrawRedoStoppedError('release', cause);
-      }
       if (!drawKind) {
         throw new DrawRedoStoppedError(
           'preview',
           new Error('Draw kind unavailable for this format.'),
         );
       }
-      try {
-        return await createAndGenerateDraw(stageId, drawKind);
-      } catch (cause) {
-        throw new DrawRedoStoppedError('preview', cause);
-      }
+      return redoAppliedDraw({
+        cancel: () => cancelDraw(stageId, draw.id),
+        release: () => releaseDrawAlignedPlacements(stageId, draw.id),
+        preview: () => createAndGenerateDraw(stageId, drawKind),
+      });
     },
     onSuccess: (result) => {
       closeConfirm();
@@ -517,31 +473,15 @@ export function StructureDrawDialog({
     activeDraw != null ? getDrawUiProjection(activeDraw, slots) : null;
   const activeRedo =
     activeDraw != null
-      ? resolveAppliedDrawRedo({
-          formatKind: stage.formatKind,
-          competitionStatus,
-          stageStatus,
-          isApplied: activeUi?.isApplied === true,
-          draw: activeDraw,
-          slots,
-          bracketPairs,
-          rounds,
-          attachedMatchCount,
-        })
+      ? redoPresentation(activeDraw)
       : { kind: 'hidden' as const };
 
   const canValidate =
     activeDraw != null &&
-    activeDraw.status === 'Draft' &&
-    activeDraw.resolutionState === 'Resolved' &&
-    (activeDraw.kind === 'Slot' || activeDraw.kind === 'Group');
+    isDrawActionAvailable(drawActionsOf(activeDraw).publishAndApply);
   const canApplyResume =
     activeDraw != null &&
-    activeUi != null &&
-    activeDraw.status === 'Published' &&
-    activeDraw.resolutionState === 'Resolved' &&
-    !activeUi.isApplied &&
-    (activeDraw.kind === 'Slot' || activeDraw.kind === 'Group');
+    isDrawActionAvailable(drawActionsOf(activeDraw).apply);
   const canRerun =
     activeDraw != null &&
     activeDraw.status === 'Draft' &&
@@ -550,42 +490,28 @@ export function StructureDrawDialog({
     activeDraw != null &&
     activeUi != null &&
     !activeUi.isApplied &&
-    canCancelDrawExecution({
-      competitionStatus,
-      stageStatus,
-      drawStatus: activeDraw.status,
-    });
+    isDrawActionAvailable(drawActionsOf(activeDraw).cancel);
   const canRedo = activeRedo.kind === 'available';
   const canCancelApplied =
     activeDraw != null &&
     activeUi?.isApplied === true &&
     activeRedo.kind === 'blocked' &&
-    canCancelDrawExecution({
-      competitionStatus,
-      stageStatus,
-      drawStatus: activeDraw.status,
-    });
+    isDrawActionAvailable(drawActionsOf(activeDraw).cancel);
 
   const releaseTarget = (() => {
     if (activeDraw != null) {
       return null;
     }
-    for (const draw of cancelledDraws) {
-      if (releaseVisible(draw)) {
-        return draw;
-      }
+    const candidateId = overviewQuery.data?.releaseCandidateDrawId;
+    if (candidateId == null) {
+      return null;
     }
-    return null;
+    const draw = cancelledDraws.find((item) => item.id === candidateId) ?? null;
+    return draw != null && releaseFooterMode(draw) !== 'hidden' ? draw : null;
   })();
 
   const releaseFooterBlocked =
-    releaseTarget != null &&
-    releaseTarget.kind === 'Group' &&
-    groupReleaseBlockedByAttachedMatches({
-      drawKind: 'Group',
-      stageStatus,
-      attachedMatchCount,
-    });
+    releaseTarget != null && releaseFooterMode(releaseTarget) === 'disabled';
 
   const focusKey = [
     overviewQuery.isLoading ? 'loading' : 'ready',
@@ -807,7 +733,7 @@ export function StructureDrawDialog({
                 type="button"
                 className="ds-btn ds-btn--secondary"
                 data-action="release-draw-placements"
-                disabled={busy || !releaseEnabled(releaseTarget)}
+                disabled={busy || releaseFooterBlocked}
                 onClick={() => openConfirm('release', releaseTarget.id)}
               >
                 {releaseMutation.isPending ? (
@@ -1134,7 +1060,7 @@ export function StructureDrawDialog({
                               executionNumber={executionNumber}
                               activeDraw={activeDraw}
                               aligned={aligned}
-                              releaseHold={releaseHoldFor(draw)}
+                              releaseHold={releaseHoldForDraw(draw)}
                               slots={slots}
                               groups={overviewGroups}
                               placesPerGroup={placesPerGroup}

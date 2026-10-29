@@ -110,6 +110,10 @@ function expandScope(
       return [
         ...expandScope('competitionReads', competitionId, stageId),
         {
+          kind: 'key',
+          queryKey: ['stages'],
+        },
+        {
           kind: 'predicate',
           predicate: (query) =>
             Array.isArray(query.queryKey) &&
@@ -144,6 +148,22 @@ export function collectStructureInvalidationDescriptors(
     }
   }
   return out;
+}
+
+const STAGE_READ_OVERVIEW_ACTIONS = new Set([
+  'MaterializeMatches',
+  'MaterializeFromOccupiedSlots',
+  'PrepareStage',
+  'StartStage',
+  'ApplyDraw',
+  'PublishAndApplyDraw',
+  'ApplyQualification',
+  'ApplyProgression',
+]);
+
+/** Overview commands whose success changes stage draw actions. */
+export function overviewActionInvalidatesStageReads(code: string): boolean {
+  return STAGE_READ_OVERVIEW_ACTIONS.has(code);
 }
 
 export async function invalidateStructureQueries(

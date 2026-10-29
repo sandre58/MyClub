@@ -5,6 +5,8 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Application.Abstractions;
+using MyClub.PlayUp.Application.Competitions;
+using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Stages;
@@ -100,7 +102,7 @@ public static class StructureHubNextStepResolver
             return true;
         }
 
-        if (TryApplyDraw(stage, out decision))
+        if (TryApplyDraw(stage, competitionStages, summaries, out decision))
         {
             tier = HubNextStepTier.ApplyDraw;
             return true;
@@ -161,18 +163,22 @@ public static class StructureHubNextStepResolver
         return false;
     }
 
-    private static bool TryApplyDraw(Stage stage, out StructureHubNextStepDto decision)
+    private static bool TryApplyDraw(
+        Stage stage,
+        IReadOnlyList<Stage> competitionStages,
+        IReadOnlyList<MatchSummaryRow>? summaries,
+        out StructureHubNextStepDto decision)
     {
-        foreach (var draw in stage.Draws.Where(candidate => candidate.Status != DrawStatus.Cancelled))
+        var snapshots = summaries is null
+            ? []
+            : MaterializedParticipantSnapshots.FromSummaryRows(summaries);
+        var hasAttached = summaries is not null
+            ? StageAttachedProduction.HasAttachedMatches(stage, summaries)
+            : StructureSkeleton.CountAttachedMatches(stage) > 0;
+        var context = new DrawActionContext(stage, competitionStages, snapshots, hasAttached);
+        foreach (var draw in stage.Draws)
         {
-            if (draw is
-                    not
-                    {
-                        Status: DrawStatus.Published,
-                        Resolution.State: DrawResolutionState.Resolved,
-                        Kind: DrawResolutionKind.Slot or DrawResolutionKind.Group
-                    }
-                || DrawAppliedState.IsApplied(draw, stage))
+            if (DrawActionEvaluator.Evaluate(context, draw).Apply.State != StageDrawActionState.Available)
             {
                 continue;
             }

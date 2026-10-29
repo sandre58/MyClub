@@ -37,26 +37,40 @@ internal static class StructureOperationalExitEditGuard
     {
         ArgumentNullException.ThrowIfNull(upstream);
 
-        if (upstream.Status is StageStatus.Draft)
+        var attached = upstreamMatches is not null
+            && StageAttachedProduction.HasAttachedMatches(upstream, upstreamMatches);
+        if (DenialCode(upstream, attached) is not { } code)
         {
             return;
         }
 
-        if (upstream.Status is not StageStatus.Ready)
+        var message = upstream.Status is not StageStatus.Ready
+            ? $"{ruleKind} cannot be replaced while stage status is '{upstream.Status}'."
+            : $"{ruleKind} cannot be replaced while matches are attached to stage '{upstream.Id}'.";
+        throw new ApplicationFailureException(message, code);
+    }
+
+    /// <summary>
+    /// Same predicate as <see cref="Ensure"/>, as a block code for draw-action projection.
+    /// </summary>
+    /// <returns><see cref="ApplicationErrorCodes.StructureNotMutable"/> or <see langword="null"/>.</returns>
+    internal static string? DenialCode(Stage stage, bool hasAttachedMatches)
+    {
+        ArgumentNullException.ThrowIfNull(stage);
+
+        if (stage.Status is StageStatus.Draft)
         {
-            throw new ApplicationFailureException(
-                $"{ruleKind} cannot be replaced while stage status is '{upstream.Status}'.",
-                ApplicationErrorCodes.StructureNotMutable);
+            return null;
         }
 
-        if (upstreamMatches is not null
-            && StageAttachedProduction.HasAttachedMatches(upstream, upstreamMatches)
-            && !AllowsOperationalEditsDespiteAttachedProduction(upstream))
+        if (stage.Status is not StageStatus.Ready)
         {
-            throw new ApplicationFailureException(
-                $"{ruleKind} cannot be replaced while matches are attached to stage '{upstream.Id}'.",
-                ApplicationErrorCodes.StructureNotMutable);
+            return ApplicationErrorCodes.StructureNotMutable;
         }
+
+        return hasAttachedMatches && !AllowsOperationalEditsDespiteAttachedProduction(stage)
+            ? ApplicationErrorCodes.StructureNotMutable
+            : null;
     }
 
     /// <summary>

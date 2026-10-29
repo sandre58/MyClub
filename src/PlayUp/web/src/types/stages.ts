@@ -73,6 +73,27 @@ export interface StageDraw {
   isApplied?: boolean;
   /** Resolution obsolete for Apply / Materialize consumption. */
   isObsoleteForConsumption?: boolean;
+  /** Server projection. Missing actions are Hidden. Available is not a success guarantee. */
+  actions?: StageDrawActions;
+}
+
+export type StageDrawActionState = 'Hidden' | 'Available' | 'Blocked';
+
+export interface StageDrawAction {
+  state: StageDrawActionState;
+  blockCode?: string | null;
+}
+
+export interface StageDrawReleaseAction extends StageDrawAction {
+  releasableCount: number;
+}
+
+export interface StageDrawActions {
+  cancel: StageDrawAction;
+  release: StageDrawReleaseAction;
+  apply: StageDrawAction;
+  publishAndApply: StageDrawAction;
+  redo: StageDrawAction;
 }
 
 export interface StageGroupOverview {
@@ -104,6 +125,8 @@ export interface StageOverview {
   groups?: StageGroupOverview[];
   /** Bracket occupancy for Tirage launch; from Application classifier when DrawRules engaged. */
   drawBracketLaunchFacts?: StageDrawBracketLaunchFacts | null;
+  /** Most recent Cancelled draw with at least one aligned placement. */
+  releaseCandidateDrawId?: string | null;
 }
 
 /** Structural Cup pair from StageOverview — drives Slot draw A vs B (not Fixture #). */

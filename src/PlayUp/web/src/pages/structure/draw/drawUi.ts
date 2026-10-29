@@ -1,5 +1,4 @@
 import type {
-  CompetitionStatus,
   DrawResolutionState,
   DrawStatus,
   SchematicCase,
@@ -8,13 +7,11 @@ import type {
   StageDraw,
   StageDrawGroupPlacement,
   StageDrawSlotPlacement,
-  StageGroupOverview,
   StageSlot,
   StageStatus,
   StructureFormatKind,
   StageDrawBracketLaunchFacts,
 } from '../../../types';
-import { canReleaseDrawAlignedPlacements } from '../../stage/lifecycleGates';
 
 export type GroupPlacementEntry = {
   entryId: string;
@@ -875,140 +872,6 @@ export function drawResolutionPlacementCount(draw: StageDraw): number {
     return draw.groupPlacements?.length ?? 0;
   }
   return draw.slotPlacements.length;
-}
-
-function entityIdsEqual(
-  a: string | null | undefined,
-  b: string | null | undefined,
-): boolean {
-  if (a == null || b == null) {
-    return false;
-  }
-  return a.trim().toLowerCase() === b.trim().toLowerCase();
-}
-
-function countAlignedGroupPlacements(
-  draw: StageDraw,
-  groups: ReadonlyArray<StageGroupOverview>,
-  schematicCases: ReadonlyArray<SchematicCase> | undefined,
-): number {
-  const placements = draw.groupPlacements ?? [];
-  if (placements.length === 0) {
-    return 0;
-  }
-
-  if (schematicCases != null && schematicCases.length > 0) {
-    let count = 0;
-    for (const placement of placements) {
-      const aligned = schematicCases.some((c) => {
-        if (c.formPosition.kind !== 'GroupPlace') {
-          return false;
-        }
-        if (!entityIdsEqual(c.formPosition.groupId, placement.groupId)) {
-          return false;
-        }
-        const occupant = c.assignment?.entryId ?? c.entry?.entryId;
-        return entityIdsEqual(occupant, placement.entryId);
-      });
-      if (aligned) {
-        count += 1;
-      }
-    }
-    return count;
-  }
-
-  const byGroup = new Map(
-    groups.map((group) => [
-      group.id.trim().toLowerCase(),
-      new Set((group.entryIds ?? []).map((id) => id.trim().toLowerCase())),
-    ]),
-  );
-  let count = 0;
-  for (const placement of placements) {
-    const members = byGroup.get(placement.groupId.trim().toLowerCase());
-    if (members?.has(placement.entryId.trim().toLowerCase())) {
-      count += 1;
-    }
-  }
-  return count;
-}
-
-/** Placements on stage that still match a cancelled draw resolution (Slot or Group). */
-export function countAlignedDrawPlacements(
-  draw: StageDraw,
-  slots: StageSlot[],
-  groups: ReadonlyArray<StageGroupOverview> = [],
-  schematicCases?: ReadonlyArray<SchematicCase>,
-): number {
-  if (draw.resolutionState !== 'Resolved') {
-    return 0;
-  }
-
-  if (draw.kind === 'Slot') {
-    const byKey = new Map(slots.map((slot) => [slot.slotKey, slot]));
-    let count = 0;
-    for (const placement of draw.slotPlacements) {
-      const slot = byKey.get(placement.slotKey);
-      if (
-        slot?.entryId != null &&
-        entityIdsEqual(slot.entryId, placement.entryId)
-      ) {
-        count += 1;
-      }
-    }
-    return count;
-  }
-
-  if (draw.kind === 'Group') {
-    return countAlignedGroupPlacements(draw, groups, schematicCases);
-  }
-
-  return 0;
-}
-
-/** Cancelled execution with the most aligned placements (then newest id). */
-export function pickReleasableCancelledDraw(input: {
-  draws: ReadonlyArray<StageDraw>;
-  slots: StageSlot[];
-  groups: ReadonlyArray<StageGroupOverview>;
-  schematicCases?: ReadonlyArray<SchematicCase>;
-  competitionStatus: CompetitionStatus;
-  stageStatus: StageStatus;
-  stageHasPublishedAppliedDraw: boolean;
-}): { draw: StageDraw; aligned: number } | null {
-  if (input.stageHasPublishedAppliedDraw) {
-    return null;
-  }
-
-  let best: { draw: StageDraw; aligned: number } | null = null;
-  for (const draw of input.draws) {
-    const aligned = countAlignedDrawPlacements(
-      draw,
-      input.slots,
-      input.groups,
-      input.schematicCases,
-    );
-    if (
-      !canReleaseDrawAlignedPlacements({
-        competitionStatus: input.competitionStatus,
-        stageStatus: input.stageStatus,
-        drawStatus: draw.status,
-        drawKind: draw.kind,
-        stageHasPublishedAppliedDraw: input.stageHasPublishedAppliedDraw,
-        alignedPlacementCount: aligned,
-      })
-    ) {
-      continue;
-    }
-    if (
-      !best ||
-      aligned > best.aligned ||
-      (aligned === best.aligned && draw.id > best.draw.id)
-    ) {
-      best = { draw, aligned };
-    }
-  }
-  return best;
 }
 
 /** Footer focus after Libérer — enabled release secondary, else primary, else header X. */
