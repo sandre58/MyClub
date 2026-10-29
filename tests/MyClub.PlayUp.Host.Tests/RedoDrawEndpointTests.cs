@@ -126,17 +126,7 @@ public sealed class RedoDrawEndpointTests(HostPostgresFixture fixture)
         ReplaceStageDrawRules.Execute(stage, competition, new DrawRules(DrawMode.Random), _clock);
         var entryA = EntryId.New();
         var entryB = EntryId.New();
-        var authoredEntries = new List<EntryId> { entryA, entryB };
-
-        EntryId? directEntry = null;
-        if (withUnrelatedDirectAssignment)
-        {
-            stage.AddSlot("S3");
-            directEntry = EntryId.New();
-            authoredEntries.Add(directEntry.Value);
-        }
-
-        stage.ReplaceAffectationAuthoring(authoredEntries, _clock);
+        stage.ReplaceAffectationAuthoring([entryA, entryB], _clock);
 
         var draw = CreateDraw.Execute(stage, DrawResolutionKind.Slot, _clock);
         ConfigureDrawInputs.Execute(stage, draw.Id, DrawInputsFactory.CreateDefault(stage, DrawResolutionKind.Slot));
@@ -145,9 +135,15 @@ public sealed class RedoDrawEndpointTests(HostPostgresFixture fixture)
         PublishDraw.Execute(stage, draw.Id, _clock);
         ApplyDraw.Execute(stage, draw.Id, _clock);
 
-        if (directEntry is { } entry)
+        if (withUnrelatedDirectAssignment)
         {
-            stage.AssignEntryToSlot("S3", entry);
+            // Added after this draw is generated and applied so the draw's own entry pool stays
+            // [entryA, entryB] (matching its 2 slot targets); the direct assignment on a brand new
+            // slot is unrelated to this draw, which is exactly the scenario being exercised.
+            stage.AddSlot("S3");
+            var directEntry = EntryId.New();
+            stage.ReplaceAffectationAuthoring([entryA, entryB, directEntry], _clock);
+            stage.AssignEntryToSlot("S3", directEntry);
         }
 
         competition.AddStage(stage.Id, _clock);
