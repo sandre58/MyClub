@@ -259,9 +259,11 @@ describe('structure draw dialog height', () => {
     expect(drawDialogCss).toMatch(
       /\.structure-draw-previous__tile\.ds-selectable-tile\[data-tone='error'\]:has\(\.ds-selectable-tile__trigger:focus-visible\)[\s\S]*opacity:\s*1/,
     );
-    expect(drawDialogCss).not.toMatch(
-      /\.structure-draw-previous__tile\.ds-selectable-tile\[data-tone='error'\]\[data-selected='true'\][\s\S]*opacity:\s*1/,
-    );
+    expect(
+      drawDialogCss.match(
+        /\.structure-draw-previous__tile\.ds-selectable-tile\[data-tone='error'\]\[data-selected='true'\]\s*\{[^}]*opacity:\s*1[^}]*\}/,
+      ),
+    ).toBeNull();
     expect(drawDialogCss).toMatch(/\.structure-draw-previous__meta\s*\{/);
     expect(drawDialogCss).toMatch(
       /\.structure-draw-previous__panel\s*\{[^}]*\}/,

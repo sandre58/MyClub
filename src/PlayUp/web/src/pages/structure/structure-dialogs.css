@@ -102,12 +102,6 @@
   margin-inline-start: 0;
 }
 
-@media (max-width: 24.375rem) {
-  .structure-draw-previous__title {
-    flex: 1 1 100%;
-  }
-}
-
 .structure-draw-previous__panel {
   padding: 0 var(--space-12) var(--space-12);
   animation: structure-qualification-panel-in var(--motion-duration) var(--motion-easing);
