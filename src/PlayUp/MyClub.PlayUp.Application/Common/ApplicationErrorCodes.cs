@@ -129,6 +129,12 @@ public static class ApplicationErrorCodes
     public const string DrawReleaseFailure = "Application.DrawReleaseFailure";
 
     /// <summary>
+    /// Gets the code when a Group release is refused because the stage is Ready and matches are attached.
+    /// Draft keeps the per-entry opponent coherence check. Manual group removal stays Draft-only.
+    /// </summary>
+    public const string DrawReleaseBlockedByAttachedMatches = "Application.DrawReleaseBlockedByAttachedMatches";
+
+    /// <summary>
     /// Gets the code when GenerateSchedule cannot run (e.g. target match not attached to the Stage).
     /// Distinct from Domain <c>SchedulingResult.InvalidRequest</c> / <c>NoSolution</c>.
     /// </summary>

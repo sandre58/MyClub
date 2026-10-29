@@ -6,6 +6,7 @@
 
 using FluentAssertions;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Domain.Stages.Events;
 using MyClub.PlayUp.Domain.Tests.Common;
@@ -98,6 +99,65 @@ public sealed class StageGroupsTests
 
         act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
         group.EntryIds.Should().Contain(entryId);
+        stage.Status.Should().Be(StageStatus.Ready);
+    }
+
+    [Fact]
+    public void RemoveDrawEntryFromGroup_in_Ready_is_allowed()
+    {
+        var stage = Stage.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
+        var group = stage.AddGroup("A", _clock);
+        var entryId = EntryId.New();
+        stage.AssignEntryToGroup(group.Id, entryId);
+        stage.AssignEntryToGroup(group.Id, EntryId.New());
+        stage.AddMatchday(1, _clock);
+        stage.Prepare(_clock);
+
+        stage.RemoveDrawEntryFromGroup(group.Id, entryId);
+
+        group.EntryIds.Should().NotContain(entryId);
+        stage.Status.Should().Be(StageStatus.Ready);
+    }
+
+    [Fact]
+    public void RemoveDrawEntryFromGroup_in_Running_is_rejected()
+    {
+        var stage = Stage.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
+        var group = stage.AddGroup("A", _clock);
+        var entryId = EntryId.New();
+        stage.AssignEntryToGroup(group.Id, entryId);
+        stage.AssignEntryToGroup(group.Id, EntryId.New());
+        stage.AddMatchday(1, _clock);
+        stage.Prepare(_clock);
+        stage.Start(_clock);
+
+        var act = () => stage.RemoveDrawEntryFromGroup(group.Id, entryId);
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
+        group.EntryIds.Should().Contain(entryId);
+        stage.Status.Should().Be(StageStatus.Running);
+    }
+
+    [Fact]
+    public void RemoveDrawEntryFromGroup_entry_on_attached_match_is_rejected()
+    {
+        var stage = Stage.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
+        var group = stage.AddGroup("A", _clock);
+        var matchday = stage.AddMatchday(1, _clock);
+        var entryA = EntryId.New();
+        var entryB = EntryId.New();
+        stage.AssignEntryToGroup(group.Id, entryA);
+        stage.AssignEntryToGroup(group.Id, entryB);
+        var fixture = stage.AddFixture(matchday.Id, _clock);
+        var match = Match.Create(_competitionId, stage.Id, entryA, entryB, _clock);
+        stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
+        var snapshots = new[] { new MatchParticipantSnapshot(match.Id, entryA, entryB) };
+        stage.Prepare(_clock);
+
+        var act = () => stage.RemoveDrawEntryFromGroup(group.Id, entryA, snapshots);
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.MaterializedOpponentConflict);
+        group.EntryIds.Should().Contain(entryA);
         stage.Status.Should().Be(StageStatus.Ready);
     }
 

@@ -418,7 +418,7 @@ public sealed partial class UseCaseExecutor
     /// Loads a stage, runs <see cref="ReleaseDrawAlignedPlacements"/>, and saves once.
     /// </summary>
     /// <param name="stageId">Stage that owns the draw.</param>
-    /// <param name="drawId">Draw whose SlotResults define aligned pairs.</param>
+    /// <param name="drawId">Draw whose resolution defines aligned placements.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Released vs skipped counts.</returns>
     public async Task<ReleaseDrawAlignedPlacementsDto> ReleaseDrawAlignedPlacementsAsync(

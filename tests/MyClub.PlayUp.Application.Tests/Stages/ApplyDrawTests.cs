@@ -502,6 +502,51 @@ public sealed class ApplyDrawTests
         stage.Status.Should().Be(StageStatus.Suspended);
     }
 
+    [Fact]
+    public void Execute_group_move_in_Ready_without_attached_matches_succeeds()
+    {
+        var stage = CreateStage();
+        var groupA = stage.AddGroup("A", _clock);
+        var groupB = stage.AddGroup("B", _clock);
+        var entry = EntryId.New();
+        var draw = PublishGroupDraw(stage, entry, groupA.Id);
+        stage.AssignEntryToGroup(groupB.Id, entry);
+        stage.AddMatchday(1, _clock);
+        stage.Prepare(_clock);
+
+        ApplyDraw.Execute(stage, draw.Id, _clock);
+
+        groupA.EntryIds.Should().ContainSingle().Which.Should().Be(entry);
+        groupB.EntryIds.Should().BeEmpty();
+        stage.Status.Should().Be(StageStatus.Ready);
+    }
+
+    [Fact]
+    public void Execute_group_move_in_Ready_with_attached_matches_is_refused()
+    {
+        var stage = CreateStage();
+        var groupA = stage.AddGroup("A", _clock);
+        var groupB = stage.AddGroup("B", _clock);
+        var matchday = stage.AddMatchday(1, _clock);
+        var entry = EntryId.New();
+        var other = EntryId.New();
+        var draw = PublishGroupDraw(stage, entry, groupA.Id);
+        stage.AssignEntryToGroup(groupB.Id, entry);
+        stage.AssignEntryToGroup(groupB.Id, other);
+        var fixture = stage.AddFixture(matchday.Id, _clock);
+        var match = Match.Create(_competitionId, stage.Id, entry, other, _clock);
+        stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
+        stage.Prepare(_clock);
+
+        var act = () => ApplyDraw.Execute(stage, draw.Id, _clock, [match]);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.StructureNotMutable);
+        groupB.EntryIds.Should().Contain(entry);
+        groupA.EntryIds.Should().BeEmpty();
+        stage.Status.Should().Be(StageStatus.Ready);
+    }
+
     private (Stage Stage, DrawId DrawId, EntryId[] EntryIds) CreateGroupStageWithPublishedDraw()
     {
         var competition = CreateCompetition.Execute("apply-c-enf", _clock);

@@ -673,7 +673,7 @@ These DTOs live in `MyClub.PlayUp.Host/Contracts`. They expose Guids only — no
 
 ### `POST /stages/{stageId}/draws/{drawId}/release-aligned-placements` → `ReleaseDrawAlignedPlacementsDto`
 
-Decision D — explicit liberate: clears Place occupants that still exactly match this **Slot** draw’s `SlotResults` (`EntryId` match, no DirectAssignment). Does **not** cancel the draw and does **not** replace divergent occupants. Group draws → `DrawKindNotSupported`. Not Resolved → `DrawReleaseFailure`.
+Decision D — explicit liberate: clears occupants that still exactly match this draw’s resolution. Slot: `SlotResults` (`EntryId` match, no DirectAssignment). Group: `GroupResults` when the entry is still in that group, via the draw removal path (Draft or Ready). Does **not** cancel the draw, does **not** replace divergent occupants, and does **not** revert Ready to Draft. Not Resolved, or a published draw still applied on the stage → `DrawReleaseFailure`. Group release on a Ready stage with attached matches → `Application.DrawReleaseBlockedByAttachedMatches` (409). Running, Suspended, and Completed stay `Stage.StructureLocked`. Draft Group release keeps the per-entry opponent coherence check.
 
 ```json
 {
@@ -685,8 +685,9 @@ Decision D — explicit liberate: clears Place occupants that still exactly matc
 | Gate | Allowed |
 | :--- | :--- |
 | Competition | Not `Completed` \| `Archived` (same lifecycle mutation gate as Cancel) |
-| Draw | Slot + Resolved |
-| Per placement | Skip when DA, vacant, or divergent occupant |
+| Draw | Slot or Group, Resolved |
+| Stage | Draft or Ready. Ready Group release is refused when matches are attached (`DrawReleaseBlockedByAttachedMatches`, 409) |
+| Per placement | Skip when direct assignment (Slot), vacant, or divergent occupant |
 
 ## Error contract (`ProblemDetails`)
 
@@ -717,6 +718,7 @@ ProblemDetails extensions:
 - `Application.CompletionNotAllowed`
 - `Application.StageCompletionBlocked`
 - `Application.CompetitionClosed`
+- `Application.DrawReleaseBlockedByAttachedMatches`
 
 ### Application codes mapped to 404
 

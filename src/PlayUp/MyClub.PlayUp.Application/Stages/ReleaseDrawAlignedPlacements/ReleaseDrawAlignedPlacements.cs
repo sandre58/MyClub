@@ -19,7 +19,10 @@ namespace MyClub.PlayUp.Application.Stages;
 /// Slot: for each <c>(SlotKey, EntryId)</c> in <see cref="DrawResolution.SlotResults"/>,
 /// release via <see cref="Stage.ClearResolvedEntry"/> when aligned (skips DirectAssignment).
 /// Group: for each group placement in <see cref="DrawResolution.GroupResults"/>,
-/// <see cref="Stage.RemoveEntryFromGroup"/> when the entry is still in that group.
+/// <see cref="Stage.RemoveDrawEntryFromGroup"/> when the entry is still in that group.
+/// A Ready stage with attached matches refuses the whole Group release
+/// (<see cref="ApplicationErrorCodes.DrawReleaseBlockedByAttachedMatches"/>).
+/// Draft keeps the per-entry opponent coherence check.
 /// Persistence: caller loads the Stage, invokes this use case, then saves once.
 /// </remarks>
 public static class ReleaseDrawAlignedPlacements
@@ -49,7 +52,7 @@ public static class ReleaseDrawAlignedPlacements
         return draw.Kind switch
         {
             DrawResolutionKind.Slot => ReleaseSlotPlacements(stage, draw, clock, snapshots),
-            DrawResolutionKind.Group => ReleaseGroupPlacements(stage, draw, snapshots),
+            DrawResolutionKind.Group => ReleaseGroupPlacements(stage, draw, snapshots, stageMatches ?? []),
             _ => throw new ApplicationFailureException(
                 $"ReleaseDrawAlignedPlacements does not support draw kind '{draw.Kind}'.",
                 ApplicationErrorCodes.DrawKindNotSupported)
@@ -91,8 +94,17 @@ public static class ReleaseDrawAlignedPlacements
     private static ReleaseDrawAlignedPlacementsResult ReleaseGroupPlacements(
         Stage stage,
         Draw draw,
-        IReadOnlyList<MatchParticipantSnapshot> snapshots)
+        IReadOnlyList<MatchParticipantSnapshot> snapshots,
+        IReadOnlyList<Match> stageMatches)
     {
+        if (stage.Status == StageStatus.Ready
+            && StageAttachedProduction.HasAttachedMatches(stage, stageMatches))
+        {
+            throw new ApplicationFailureException(
+                $"Cannot release group placements while matches are attached to Ready stage '{stage.Id}'.",
+                ApplicationErrorCodes.DrawReleaseBlockedByAttachedMatches);
+        }
+
         var released = 0;
         var skipped = 0;
 
@@ -105,7 +117,7 @@ public static class ReleaseDrawAlignedPlacements
                 continue;
             }
 
-            stage.RemoveEntryFromGroup(placement.GroupId, placement.EntryId, snapshots);
+            stage.RemoveDrawEntryFromGroup(placement.GroupId, placement.EntryId, snapshots);
             released++;
         }
 

@@ -35,6 +35,7 @@
     "DrawApplyFailure": "Impossible d’appliquer le tirage.",
     "DrawKindNotSupported": "Ce type de tirage n’est pas supporté.",
     "DrawGenerationFailure": "Impossible de générer le tirage.",
+    "DrawReleaseBlockedByAttachedMatches": "Impossible de libérer les placements : des matchs sont déjà rattachés à cette phase. Détachez-les ou repassez la phase en brouillon.",
     "DrawReleaseFailure": "Impossible de libérer les placements du tirage.",
     "ScheduleGenerationFailure": "Impossible de générer le calendrier.",
     "ScheduleApplyFailure": "Impossible d’appliquer le calendrier.",
