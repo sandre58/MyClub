@@ -14,8 +14,6 @@ using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
-using MyClub.PlayUp.Infrastructure.Persistence;
-using MyClub.PlayUp.Infrastructure.Persistence.Repositories;
 using MyClub.PlayUp.Infrastructure.DependencyInjection;
 using MyClub.PlayUp.Infrastructure.Tests.Common;
 using Xunit;
