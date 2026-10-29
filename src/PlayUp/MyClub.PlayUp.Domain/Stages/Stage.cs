@@ -1347,6 +1347,37 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
+    /// Removes an entry from a group on behalf of a draw (apply move or release). Draft or Ready.
+    /// </summary>
+    /// <param name="groupId">The group identity.</param>
+    /// <param name="entryId">The entry identity.</param>
+    /// <param name="materializedParticipants">
+    /// Participant snapshots of matches attached on this stage (empty when none). Required for group determination coherence.
+    /// </param>
+    public void RemoveDrawEntryFromGroup(
+        GroupId groupId,
+        EntryId entryId,
+        IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants = null)
+    {
+        EnsureOperationalExitRulesMutable();
+
+        var group = GetGroup(groupId);
+        if (!group.Contains(entryId))
+        {
+            throw new DomainException(
+                $"Entry '{entryId}' was not found in group '{groupId}'.",
+                StageErrorCodes.EntryNotFound);
+        }
+
+        MaterializedOpponentCoherence.EnsureEntryNotBoundToAttachedMatch(
+            this,
+            entryId,
+            materializedParticipants ?? []);
+
+        group.Remove(entryId);
+    }
+
+    /// <summary>
     /// Adds a positional slot. Draft only.
     /// </summary>
     /// <param name="slotKey">Business slot key unique within the stage.</param>

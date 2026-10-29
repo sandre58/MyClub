@@ -35,6 +35,7 @@
     "DrawApplyFailure": "Unable to apply the draw.",
     "DrawKindNotSupported": "This draw type is not supported.",
     "DrawGenerationFailure": "Unable to generate the draw.",
+    "DrawReleaseBlockedByAttachedMatches": "Cannot release placements: matches are already attached to this stage. Detach them or revert the stage to draft.",
     "DrawReleaseFailure": "Unable to release draw placements.",
     "ScheduleGenerationFailure": "Unable to generate the schedule.",
     "ScheduleApplyFailure": "Unable to apply the schedule.",

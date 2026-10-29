@@ -108,6 +108,26 @@ describe('lifecycleGates', () => {
 
     expect(
       canReleaseDrawAlignedPlacements({
+        competitionStatus: 'Running',
+        stageStatus: 'Ready',
+        drawStatus: 'Cancelled',
+        drawKind: 'Group',
+        alignedPlacementCount: 2,
+      }),
+    ).toBe(true);
+
+    expect(
+      canReleaseDrawAlignedPlacements({
+        competitionStatus: 'Running',
+        stageStatus: 'Ready',
+        drawStatus: 'Cancelled',
+        drawKind: 'Slot',
+        alignedPlacementCount: 1,
+      }),
+    ).toBe(true);
+
+    expect(
+      canReleaseDrawAlignedPlacements({
         competitionStatus: 'Completed',
         stageStatus: 'Draft',
         drawStatus: 'Cancelled',

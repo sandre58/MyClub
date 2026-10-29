@@ -118,6 +118,8 @@ internal sealed partial class PlayUpExceptionHandler(ILogger<PlayUpExceptionHand
                 (StatusCodes.Status409Conflict, "Draw launch grid not vacant", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.DrawLaunchDirectAssignmentPresent } application =>
                 (StatusCodes.Status409Conflict, "Draw launch blocked by direct assignment", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.DrawReleaseBlockedByAttachedMatches } application =>
+                (StatusCodes.Status409Conflict, "Draw release blocked by attached matches", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.MediaNotFound } application =>
                 (StatusCodes.Status400BadRequest, "Media not found", application.Code),
             ApplicationFailureException application =>

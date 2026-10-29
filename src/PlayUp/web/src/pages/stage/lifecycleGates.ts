@@ -43,8 +43,10 @@ export function canCancelDrawExecution(input: {
 }
 
 /**
- * Release CTA: Cancelled Slot draw still aligning with stage occupancy,
- * under the same competition × stage gates as Cancel.
+ * Release CTA: Cancelled Slot or Group draw still aligning with stage
+ * occupancy, under the same competition × stage gates as Cancel
+ * (Draft or Ready). The server may still refuse a Group release while
+ * the stage is Ready and matches are attached.
  */
 export function canReleaseDrawAlignedPlacements(input: {
   competitionStatus: CompetitionStatus;

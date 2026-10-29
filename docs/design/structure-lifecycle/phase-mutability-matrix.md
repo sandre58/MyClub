@@ -224,7 +224,7 @@ Domain default: `EnsureStructureMutable()` ⇒ **Draft only** unless noted. Appl
 | `PublishDrawAsync` | `PublishDraw` | lifecycle mutation | `EnsureStructureMutable` | `ReplaceDrawRules` ecosystem | Operational draw |
 | `PublishAndApplyDrawAsync` | orchestration | same | same | — | Operational draw |
 | `CancelDrawAsync` | `CancelDraw` | lifecycle mutation | `EnsureStructureMutable` | — | Operational draw |
-| `ReleaseDrawAlignedPlacementsAsync` | `ReleaseDrawAlignedPlacements` | lifecycle mutation | draw state + F1 snapshots | — | Operational draw |
+| `ReleaseDrawAlignedPlacementsAsync` | `ReleaseDrawAlignedPlacements` | lifecycle mutation | draw state + opponent snapshots; Group uses `RemoveDrawEntryFromGroup` (Draft\|Ready). Ready + attached matches → `DrawReleaseBlockedByAttachedMatches` | — | Operational draw |
 | `ApplyDrawAsync` | `ApplyDraw` | lifecycle mutation | **App** `StageStructureEditGuard` + F1 | — | Operational draw |
 | `AddStageRoundAsync` | `AddStageRound` | — | **App** `StageStructureEditGuard` | `AddRound` | Forme |
 | `AddStageSlotAsync` | `AddStageSlot` | — | App guard | `AddSlot` | Forme |

@@ -186,7 +186,7 @@ public static class ApplyDraw
             var owningGroup = stage.Groups.FirstOrDefault(g => g.EntryIds.Contains(placement.EntryId));
             if (owningGroup?.Id.Equals(placement.GroupId) == false)
             {
-                stage.RemoveEntryFromGroup(owningGroup.Id, placement.EntryId, snapshots);
+                stage.RemoveDrawEntryFromGroup(owningGroup.Id, placement.EntryId, snapshots);
             }
 
             stage.AssignEntryToGroup(placement.GroupId, placement.EntryId);
