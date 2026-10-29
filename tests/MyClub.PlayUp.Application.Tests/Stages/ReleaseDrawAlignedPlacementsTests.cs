@@ -8,6 +8,7 @@ using FluentAssertions;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
 using Xunit;
 
@@ -152,6 +153,95 @@ public sealed class ReleaseDrawAlignedPlacementsTests
         stage.DomainEvents.Should().BeEmpty();
     }
 
+    [Fact]
+    public void Execute_group_aligned_membership_in_Ready_is_cleared_and_stage_stays_Ready()
+    {
+        var stage = CreateStage();
+        var (draw, group, _) = PublishApplyCancelGroup(stage, withMatchday: true);
+        stage.Prepare(_clock);
+
+        var result = ReleaseDrawAlignedPlacements.Execute(stage, draw.Id, _clock);
+
+        result.ReleasedCount.Should().Be(1);
+        result.SkippedCount.Should().Be(0);
+        group.EntryIds.Should().BeEmpty();
+        stage.Status.Should().Be(StageStatus.Ready);
+    }
+
+    [Fact]
+    public void Execute_group_Ready_with_attached_matches_is_refused()
+    {
+        var stage = CreateStage();
+        var (draw, group, entry) = PublishApplyCancelGroup(stage, withMatchday: true);
+        var home = EntryId.New();
+        var away = EntryId.New();
+        stage.AssignEntryToGroup(group.Id, home);
+        stage.AssignEntryToGroup(group.Id, away);
+        var fixture = stage.AddFixture(stage.Matchdays[0].Id, _clock);
+        var match = Match.Create(_competitionId, stage.Id, home, away, _clock);
+        stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
+        stage.Prepare(_clock);
+
+        var act = () => ReleaseDrawAlignedPlacements.Execute(stage, draw.Id, _clock, [match]);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.DrawReleaseBlockedByAttachedMatches);
+        group.EntryIds.Should().Contain(entry);
+        stage.Status.Should().Be(StageStatus.Ready);
+    }
+
+    [Fact]
+    public void Execute_group_Draft_entry_on_attached_match_keeps_opponent_coherence()
+    {
+        var stage = CreateStage();
+        var matchday = stage.AddMatchday(1, _clock);
+        var (draw, group, entry) = PublishApplyCancelGroup(stage);
+        var other = EntryId.New();
+        stage.AssignEntryToGroup(group.Id, other);
+        var fixture = stage.AddFixture(matchday.Id, _clock);
+        var match = Match.Create(_competitionId, stage.Id, entry, other, _clock);
+        stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
+
+        var act = () => ReleaseDrawAlignedPlacements.Execute(stage, draw.Id, _clock, [match]);
+
+        act.Should().Throw<DomainException>()
+            .Which.Code.Should().Be(StageErrorCodes.MaterializedOpponentConflict);
+        group.EntryIds.Should().Contain(entry);
+        stage.Status.Should().Be(StageStatus.Draft);
+    }
+
+    [Fact]
+    public void Execute_group_Running_is_refused()
+    {
+        var stage = CreateStage();
+        var (draw, group, entry) = PublishApplyCancelGroup(stage, withMatchday: true);
+        stage.Prepare(_clock);
+        stage.Start(_clock);
+
+        var act = () => ReleaseDrawAlignedPlacements.Execute(stage, draw.Id, _clock);
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
+        group.EntryIds.Should().Contain(entry);
+        stage.Status.Should().Be(StageStatus.Running);
+    }
+
+    [Fact]
+    public void Execute_slot_aligned_occupant_in_Ready_is_cleared_and_stage_stays_Ready()
+    {
+        var stage = CreateStage();
+        stage.AddRound("Tour", _clock);
+        var (draw, _) = PublishAndApplySlot(stage, "S1");
+        stage.CancelDraw(draw.Id, _clock);
+        stage.Prepare(_clock);
+
+        var result = ReleaseDrawAlignedPlacements.Execute(stage, draw.Id, _clock);
+
+        result.ReleasedCount.Should().Be(1);
+        result.SkippedCount.Should().Be(0);
+        stage.FindSlot("S1")!.EntryId.Should().BeNull();
+        stage.Status.Should().Be(StageStatus.Ready);
+    }
+
     private Stage CreateStage() =>
         Stage.Create(_competitionId, new StageName("Phase"), SampleRegulations.Standard(), _clock);
 
@@ -169,5 +259,27 @@ public sealed class ReleaseDrawAlignedPlacementsTests
         stage.PublishDraw(draw.Id, _clock);
         ApplyDraw.Execute(stage, draw.Id, _clock);
         return (draw, entry);
+    }
+
+    private (Draw Draw, Group Group, EntryId Entry) PublishApplyCancelGroup(Stage stage, bool withMatchday = false)
+    {
+        if (withMatchday)
+        {
+            stage.AddMatchday(1, _clock);
+        }
+
+        var group = stage.AddGroup("A", _clock);
+        var entry = EntryId.New();
+        stage.ReplaceAffectationAuthoring([entry], _clock);
+        var draw = stage.CreateDraw(DrawResolutionKind.Group, _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForGroup([entry]));
+        stage.RecordDrawResolution(
+            draw.Id,
+            DrawResolution.ResolvedGroups([new GroupDrawPlacement(entry, group.Id)]),
+            _clock);
+        stage.PublishDraw(draw.Id, _clock);
+        ApplyDraw.Execute(stage, draw.Id, _clock);
+        stage.CancelDraw(draw.Id, _clock);
+        return (draw, group, entry);
     }
 }
