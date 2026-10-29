@@ -26,10 +26,10 @@ public sealed record CompetitionReadBundleSpec(
             IncludePenalties: true),
         MatchLoadProfile.AttentionSlice);
 
-    /// <summary>Gets overview (unchanged heavy read).</summary>
+    /// <summary>Gets overview — full stage graph, projected match rows.</summary>
     public static CompetitionReadBundleSpec Overview { get; } = new(
         StageReadCapabilities.FromProfile(StageLoadProfile.Full),
-        MatchLoadProfile.Full);
+        MatchLoadProfile.SummaryRow);
 
     /// <summary>Gets consultation — full stage graph, projected match rows.</summary>
     public static CompetitionReadBundleSpec Consultation { get; } = new(
