@@ -126,7 +126,10 @@ describe('SelectableTile', () => {
     );
   });
 
-  it('documents error-tone destructive chrome and hover only when selected', () => {
+  it('documents error-tone rest chrome, hover at rest, and destructive chrome when selected', () => {
+    expect(selectableTileCss).toMatch(
+      /\.ds-selectable-tile\[data-tone='error'\]\s*\{[\s\S]*color-mix\(in srgb, var\(--color-error\) 4%/,
+    );
     expect(selectableTileCss).toMatch(
       /\.ds-selectable-tile\[data-tone='error'\]\[data-selected='true'\]\s*\{[\s\S]*border-color:\s*var\(--color-error\)/,
     );
@@ -137,13 +140,13 @@ describe('SelectableTile', () => {
       /\.ds-root \.ds-selectable-tile\[data-tone='error'\]\[data-selected='true'\]:has\(\.ds-selectable-tile__trigger:focus-visible\)\s*\{[\s\S]*box-shadow:\s*var\(--focus-halo\)/,
     );
     expect(selectableTileCss).toMatch(
-      /\.ds-selectable-tile\[data-tone='error'\]\[data-selected='true'\]:hover:not\(:disabled\):not\(\[aria-disabled='true'\]\)\s*\{[\s\S]*color-mix\(in srgb, var\(--color-error\) 8%/,
+      /\.ds-selectable-tile\[data-tone='error'\]:hover:not\(:disabled\):not\(\[aria-disabled='true'\]\)\s*\{[\s\S]*color-mix\(in srgb, var\(--color-error\) 6%/,
     );
     expect(selectableTileCss).not.toMatch(
-      /\.ds-selectable-tile\[data-tone='error'\]:hover/,
+      /\.ds-selectable-tile\[data-tone='error'\]\[data-selected='true'\]:hover/,
     );
     expect(selectableTileCss).not.toMatch(
-      /\.ds-selectable-tile[\s\S]*opacity:/,
+      /\.ds-selectable-tile[\s\S]*opacity:\s*[\d.]/,
     );
     expect(selectableTileCss).not.toMatch(/\.ds-selectable-tile__body/);
     expect(selectableTileCss).toMatch(
