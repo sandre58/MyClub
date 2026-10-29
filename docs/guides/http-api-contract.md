@@ -696,9 +696,11 @@ Atomic "Refaire le tirage": in one `UseCaseExecutor` command (single `SaveChange
 
 The guard reuses the `DrawActionEvaluator` `Redo` action (the same evaluator backing the stage projection) before running the sequence:
 
-| Check | Block code (409 unless noted) |
+The command rejects any `Redo` state other than `Available`, not just `Blocked`:
+
+| Check | Code (409) |
 | :--- | :--- |
-| Draw not applied on the stage | Hidden — `Application.DrawReleaseRequiresCancelled` is unreachable; the sequence is not entered |
+| Draw not applied on the stage (Hidden on the read projection — Draft, Published not yet consumed, or already Cancelled) | `Application.DrawRedoRequiresApplied` |
 | Release guard (same as explicit Release, evaluated as if the draw were already cancelled) | `Application.DrawReleaseBlockedByAttachedMatches`, `Stage.StructureLocked`, `Stage.MaterializedOpponentConflict` |
 | Any stage `DirectAssignment` present | `Application.DrawLaunchDirectAssignmentPresent` |
 | Target slots/groups not vacant once this draw's own placements are excluded (sibling feeds, other draws) | `Application.DrawLaunchGridNotVacant` |
@@ -718,7 +720,7 @@ This upfront check runs against a single-stage `DrawActionContext` (`ForCommand`
 | Gate | Allowed |
 | :--- | :--- |
 | Competition | Not `Completed` \| `Archived` (same lifecycle mutation gate as Cancel) |
-| Draw | Applied (Published and consumed) Slot or Group draw. Not applied → action is Hidden |
+| Draw | Applied (Published and consumed) Slot or Group draw. Not applied (Hidden on the read projection) → `Application.DrawRedoRequiresApplied` (409) |
 | Stage | Draft or Ready. Running, Suspended, and Completed → `Stage.StructureLocked` (409) |
 
 ## Error contract (`ProblemDetails`)
@@ -752,6 +754,7 @@ ProblemDetails extensions:
 - `Application.CompetitionClosed`
 - `Application.DrawReleaseBlockedByAttachedMatches`
 - `Application.DrawReleaseRequiresCancelled`
+- `Application.DrawRedoRequiresApplied`
 - `Application.DrawLaunchDirectAssignmentPresent`
 - `Application.DrawLaunchGridNotVacant`
 
