@@ -406,10 +406,10 @@ export function StructureDrawDialog({
         notify.success(tDraw('toastCreated'));
       }
     },
-    onError: (error) => {
-      if (error instanceof ApiError && error.status === 409) {
-        scheduleDrawHubRefresh();
-      }
+    onError: () => {
+      // Atomic redo: any failure (409 refusal or otherwise) leaves the server state ahead of what
+      // the dialog last fetched, so refresh regardless of status code.
+      scheduleDrawHubRefresh();
     },
   });
 
