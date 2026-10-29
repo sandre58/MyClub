@@ -179,6 +179,7 @@ There is **no** generic `Card` foundation (see `foundations/surfaces.css`). New 
 - React: `SelectableTile` sets `data-selected` and merges page layout classes.
 - Compose: `className="<page-layout>"` + `selected` prop, or manual `ds-selectable-tile` + `data-selected="true|false"`.
 - Hover / selected recipes live only in the foundation file.
+- A native `disabled` tile keeps that same border and fill. The foundation blocks the user-agent button surface (`opacity` stays 1).
 - CI guard: `npm run tile:check`.
 
 ## Attention rows (two models — do not merge)

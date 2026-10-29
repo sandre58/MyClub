@@ -29,3 +29,19 @@
 .ds-selectable-tile--selected:hover:not(:disabled):not([aria-disabled='true']) {
   background: color-mix(in srgb, var(--color-brand) 9%, var(--color-surface));
 }
+
+/* Native disabled buttons otherwise fall back to the user-agent control. */
+
+.ds-selectable-tile:disabled {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+  color: inherit;
+  opacity: 1;
+  cursor: not-allowed;
+}
+
+.ds-selectable-tile[data-selected='true']:disabled,
+.ds-selectable-tile--selected:disabled {
+  border-color: var(--color-brand);
+  background: color-mix(in srgb, var(--color-brand) 6%, var(--color-surface));
+}

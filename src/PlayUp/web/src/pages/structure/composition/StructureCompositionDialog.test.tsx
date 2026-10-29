@@ -129,6 +129,10 @@ function fact(key: string): HTMLElement {
   return node;
 }
 
+function teamTile(name: RegExp): HTMLElement {
+  return screen.getByRole('button', { name });
+}
+
 const amiens = '11111111-1111-1111-1111-111111111111';
 const bordeaux = '22222222-2222-2222-2222-222222222222';
 const caen = '33333333-3333-3333-3333-333333333333';
@@ -173,7 +177,7 @@ describe('StructureCompositionDialog', () => {
     });
     renderDialog({ onClose });
 
-    await user.click(screen.getByRole('checkbox', { name: /Olympique/ }));
+    await user.click(teamTile(/Olympique/));
     await user.click(screen.getByRole('button', { name: 'Enregistrer' }));
 
     await waitFor(() => {
@@ -210,27 +214,51 @@ describe('StructureCompositionDialog', () => {
     ]);
     expect(fact('places')).toHaveTextContent('8');
     expect(fact('places')).toHaveTextContent('places');
+    expect(fact('places')).toHaveClass(
+      'structure-qualification__fact--secondary',
+    );
+    expect(fact('places')).not.toHaveClass(
+      'structure-qualification__fact--primary',
+    );
     expect(fact('selected')).toHaveTextContent('1');
     expect(fact('selected')).toHaveTextContent('sélectionnée');
+    expect(fact('selected')).toHaveClass(
+      'structure-qualification__fact--primary',
+    );
     expect(fact('remaining')).toHaveTextContent('4');
     expect(fact('remaining')).toHaveTextContent('restantes');
+    expect(fact('remaining')).toHaveClass(
+      'structure-qualification__fact--secondary',
+    );
     expect(fact('reserved')).toHaveTextContent('3');
     expect(fact('reserved')).toHaveTextContent('réservées par les sources');
+    expect(fact('reserved')).toHaveClass(
+      'structure-qualification__fact--secondary',
+    );
+    expect(fact('reserved')).not.toHaveClass(
+      'structure-qualification__fact--primary',
+    );
     expect(screen.queryByText('Complet')).not.toBeInTheDocument();
     expect(
       document.querySelector('.structure-composition__facts'),
-    ).toHaveAttribute('data-tone', 'short');
+    ).toHaveAttribute('data-tone', 'attention');
   });
 
-  it('tones Restantes short when more than one place is open and near on the last place', () => {
+  it('tones Restantes attention while places remain and keeps Sélectionnées secondary at zero', () => {
     renderDialog({
       compositionCapacity: 4,
       entryList: [entry(amiens, 'Amiens')],
     });
     expect(
       document.querySelector('.structure-composition__facts'),
-    ).toHaveAttribute('data-tone', 'short');
+    ).toHaveAttribute('data-tone', 'attention');
     expect(fact('remaining')).toHaveTextContent('4');
+    expect(fact('selected')).toHaveClass(
+      'structure-qualification__fact--secondary',
+    );
+    expect(fact('selected')).not.toHaveClass(
+      'structure-qualification__fact--primary',
+    );
     cleanup();
 
     renderDialog({
@@ -244,13 +272,16 @@ describe('StructureCompositionDialog', () => {
     });
     expect(
       document.querySelector('.structure-composition__facts'),
-    ).toHaveAttribute('data-tone', 'near');
+    ).toHaveAttribute('data-tone', 'attention');
     expect(fact('remaining')).toHaveTextContent('1');
     expect(fact('remaining')).toHaveTextContent('restante');
+    expect(fact('selected')).toHaveClass(
+      'structure-qualification__fact--primary',
+    );
     expect(screen.queryByText('Complet')).not.toBeInTheDocument();
   });
 
-  it('marks a full affectation exact and an over-cap set as attention, never Complet', () => {
+  it('tones a full affectation secondary and an over-cap set attention, never Complet or green', () => {
     renderDialog({
       compositionCapacity: 2,
       affectationEntryIds: [amiens, bordeaux],
@@ -258,8 +289,14 @@ describe('StructureCompositionDialog', () => {
     });
     expect(
       document.querySelector('.structure-composition__facts'),
-    ).toHaveAttribute('data-tone', 'exact');
+    ).toHaveAttribute('data-tone', 'secondary');
     expect(fact('remaining')).toHaveTextContent('0');
+    expect(fact('remaining')).toHaveClass(
+      'structure-qualification__fact--secondary',
+    );
+    expect(fact('selected')).toHaveClass(
+      'structure-qualification__fact--primary',
+    );
     expect(screen.queryByText('Complet')).not.toBeInTheDocument();
     cleanup();
 
@@ -274,10 +311,16 @@ describe('StructureCompositionDialog', () => {
     });
     expect(
       document.querySelector('.structure-composition__facts'),
-    ).toHaveAttribute('data-tone', 'over');
+    ).toHaveAttribute('data-tone', 'attention');
     expect(fact('remaining')).toHaveTextContent('-1');
     expect(screen.queryByText('Complet')).not.toBeInTheDocument();
     expect(document.querySelector('.ds-alert')).toBeNull();
+    expect(compositionCss).not.toMatch(/--color-success/);
+    expect(compositionCss).not.toMatch(/data-tone='exact'/);
+    expect(compositionCss).not.toMatch(/data-tone='short'/);
+    expect(compositionCss).not.toMatch(/data-tone='near'/);
+    expect(compositionCss).not.toMatch(/data-tone='over'/);
+    expect(compositionCss).toMatch(/data-tone='attention'/);
   });
 
   it('does not render an occupancy meter inside the dialog', () => {
@@ -318,12 +361,13 @@ describe('StructureCompositionDialog', () => {
     await user.click(selectAll);
 
     for (const name of ['Amiens', 'Bordeaux', 'Caen']) {
-      expect(
-        screen.getByRole('checkbox', { name: new RegExp(name) }),
-      ).toBeChecked();
+      const tile = teamTile(new RegExp(name));
+      expect(tile).toHaveAttribute('data-selected', 'true');
+      expect(tile).toHaveAttribute('aria-pressed', 'true');
     }
-    const locked = screen.getByRole('checkbox', { name: /Dijon/ });
-    expect(locked).not.toBeChecked();
+    const locked = teamTile(/Dijon/);
+    expect(locked).toHaveAttribute('data-selected', 'false');
+    expect(locked).toHaveAttribute('aria-pressed', 'false');
     expect(locked).toBeDisabled();
     expect(fact('remaining')).toHaveTextContent('0');
     expect(
@@ -342,33 +386,30 @@ describe('StructureCompositionDialog', () => {
       ],
     });
 
-    const selectedBox = screen.getByRole('checkbox', { name: /Ancien/ });
-    expect(selectedBox).toBeChecked();
-    expect(selectedBox.closest('.ds-selectable-tile')).toHaveAttribute(
-      'data-selected',
-      'true',
+    const selectedTile = teamTile(/Ancien/);
+    expect(selectedTile).toHaveAttribute('data-selected', 'true');
+    expect(selectedTile).toHaveAttribute('aria-pressed', 'true');
+    expect(selectedTile).toHaveClass('ds-selectable-tile');
+    expect(selectedTile.querySelector('.ds-choice-tile__check')).toBeNull();
+    expect(selectedTile.querySelector('input[type="checkbox"]')).toBeNull();
+    expect(within(selectedTile).getByText('Plus éligible')).toHaveClass(
+      'ds-chip',
     );
+    expect(selectedTile.querySelector('.team-crest')).not.toBeNull();
     expect(
-      within(selectedBox.closest('li') as HTMLElement).getByText(
-        'Plus éligible',
-      ),
-    ).toHaveClass('ds-chip');
+      selectedTile.querySelector('.structure-composition__name'),
+    ).toHaveTextContent('Ancien');
 
-    const locked = screen.getByRole('checkbox', { name: /Amiens/ });
+    const locked = teamTile(/Amiens/);
     expect(locked).toBeDisabled();
     expect(locked).toHaveAccessibleDescription(
       'Plus de place pour des équipes (1 max).',
     );
-    expect(locked.closest('.structure-composition__row')).toHaveClass(
-      'structure-composition__row--locked',
-    );
-    expect(locked.closest('.ds-selectable-tile')).toHaveAttribute(
-      'data-selected',
-      'false',
-    );
-    expect(
-      within(locked.closest('li') as HTMLElement).queryByText('Plus éligible'),
-    ).not.toBeInTheDocument();
+    expect(locked).toHaveClass('structure-composition__row--locked');
+    expect(locked).toHaveAttribute('data-selected', 'false');
+    expect(within(locked).queryByText('Plus éligible')).not.toBeInTheDocument();
+    expect(document.querySelector('input[type="checkbox"]')).toBeNull();
+    expect(document.querySelector('.ds-choice-tile__check')).toBeNull();
 
     const lockedRule = compositionCss.match(
       /\.structure-composition__row--locked\s*\{([^}]*)\}/,
@@ -377,7 +418,7 @@ describe('StructureCompositionDialog', () => {
     expect(lockedRule?.[1]).not.toMatch(/opacity/);
   });
 
-  it('scrolls only the team list and uses two columns, one at 36rem', () => {
+  it('scrolls only the team list and fills columns from 12rem', () => {
     renderDialog({
       entryList: [entry(amiens, 'Amiens'), entry(bordeaux, 'Bordeaux')],
       affectationEntryIds: [amiens],
@@ -399,20 +440,50 @@ describe('StructureCompositionDialog', () => {
     );
     expect(listRule?.[1]).toMatch(/overflow:\s*auto/);
     expect(listRule?.[1]).toMatch(
-      /grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/,
+      /grid-template-columns:\s*repeat\(auto-fill,\s*minmax\(12rem,\s*1fr\)\)/,
     );
+    expect(compositionCss).not.toMatch(/@media \(max-width: 36rem\)/);
+    expect(compositionCss).not.toMatch(/structure-composition__check/);
     expect(compositionCss).toMatch(
       /\.ds-dialog:has\(\.structure-composition\) \.ds-dialog__body\s*\{[^}]*overflow:\s*hidden/,
     );
     expect(compositionCss).toMatch(
       /\.structure-composition\s*\{[^}]*overflow:\s*hidden/,
     );
-    const narrow = compositionCss.slice(
-      compositionCss.indexOf('@media (max-width: 36rem)'),
+  });
+
+  it('toggles a team tile with click and keyboard and drops Sélectionnées to secondary at zero', async () => {
+    const user = userEvent.setup();
+    renderDialog({
+      entryList: [entry(amiens, 'Amiens')],
+    });
+
+    const tile = teamTile(/Amiens/);
+    expect(tile.tagName).toBe('BUTTON');
+    expect(tile).toHaveAttribute('data-selected', 'false');
+    expect(tile).toHaveAttribute('aria-pressed', 'false');
+    expect(fact('selected')).toHaveClass(
+      'structure-qualification__fact--secondary',
     );
-    expect(narrow).toMatch(
-      /\.structure-composition__list\s*\{[^}]*grid-template-columns:\s*1fr/,
+
+    await user.click(tile);
+    expect(tile).toHaveAttribute('data-selected', 'true');
+    expect(tile).toHaveAttribute('aria-pressed', 'true');
+    expect(fact('selected')).toHaveClass(
+      'structure-qualification__fact--primary',
     );
+
+    tile.focus();
+    await user.keyboard('{Enter}');
+    expect(tile).toHaveAttribute('data-selected', 'false');
+    expect(tile).toHaveAttribute('aria-pressed', 'false');
+    expect(fact('selected')).toHaveClass(
+      'structure-qualification__fact--secondary',
+    );
+
+    tile.focus();
+    await user.keyboard(' ');
+    expect(tile).toHaveAttribute('data-selected', 'true');
   });
 
   it('shows a dedicated empty state when the search matches nothing', async () => {
@@ -430,6 +501,9 @@ describe('StructureCompositionDialog', () => {
       screen.getByText('Aucune équipe ne correspond à cette recherche'),
     ).toBeInTheDocument();
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Amiens/ }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('list', { name: 'Équipes' }),
     ).not.toBeInTheDocument();

@@ -36,22 +36,10 @@
   width: 100%;
 }
 
-/* Restantes only. Near and over share the attention token; over also colors the label. */
+/* Restantes only. Open and over-cap counts use attention; zero stays secondary. */
 
-.structure-composition__facts[data-tone='short'] [data-fact='remaining'] .structure-qualification__fact-value {
-  color: var(--color-brand);
-}
-
-.structure-composition__facts[data-tone='near'] [data-fact='remaining'] .structure-qualification__fact-value {
-  color: var(--color-attention);
-}
-
-.structure-composition__facts[data-tone='exact'] [data-fact='remaining'] .structure-qualification__fact-value {
-  color: var(--color-success);
-}
-
-.structure-composition__facts[data-tone='over'] [data-fact='remaining'] .structure-qualification__fact-value,
-.structure-composition__facts[data-tone='over'] [data-fact='remaining'] .structure-qualification__fact-label {
+.structure-composition__facts[data-tone='attention'] [data-fact='remaining'] .structure-qualification__fact-value,
+.structure-composition__facts[data-tone='attention'] [data-fact='remaining'] .structure-qualification__fact-label {
   color: var(--color-attention);
 }
 
@@ -76,7 +64,7 @@
   list-style: none;
   display: grid;
   flex: 1 1 auto;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
   gap: var(--space-8);
   align-content: start;
   min-height: 0;
@@ -98,6 +86,7 @@
   margin: 0;
   padding: var(--space-8);
   font: inherit;
+  color: inherit;
   text-align: start;
   cursor: pointer;
   min-width: 0;
@@ -118,6 +107,19 @@
   cursor: not-allowed;
 }
 
+/* Beat user-agent and family B disabled surfaces for the locked and withdrawn states. */
+
+.ds-selectable-tile.structure-composition__row--locked:disabled {
+  border-color: var(--color-border-strong);
+  background: var(--color-surface-secondary);
+  color: var(--color-text-secondary);
+  cursor: not-allowed;
+}
+
+.ds-selectable-tile.structure-composition__row--ineligible:disabled {
+  color: var(--color-text-secondary);
+}
+
 .structure-composition__name {
   flex: 1;
   min-width: 0;
@@ -133,11 +135,6 @@
   flex: none;
 }
 
-.structure-composition__check {
-  flex: none;
-  margin-inline-start: auto;
-}
-
 .structure-composition__empty {
   display: flex;
   flex: 1 1 auto;
@@ -151,10 +148,4 @@
 
 .structure-composition__empty p {
   margin: 0;
-}
-
-@media (max-width: 36rem) {
-  .structure-composition__list {
-    grid-template-columns: 1fr;
-  }
 }

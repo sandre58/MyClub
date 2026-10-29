@@ -61,14 +61,11 @@ type CompositionFact = {
   label: string;
 };
 
-/** Restantes tone. Near is the last open affectation place. */
-type CompositionRemainingTone = 'short' | 'near' | 'exact' | 'over';
+/** Restantes tone. Zero stays secondary; any other count is attention. */
+type CompositionRemainingTone = 'attention' | 'secondary';
 
 function compositionRemainingTone(remaining: number): CompositionRemainingTone {
-  if (remaining < 0) return 'over';
-  if (remaining === 0) return 'exact';
-  if (remaining === 1) return 'near';
-  return 'short';
+  return remaining === 0 ? 'secondary' : 'attention';
 }
 
 function sameIdSet(a: Set<string>, b: ReadonlySet<string>): boolean {
@@ -98,11 +95,15 @@ function CompositionTeamRow({
   withdrawnTip,
   onToggle,
 }: CompositionTeamRowProps) {
+  const disabled = pending || (!row.eligible && !row.selected) || locked;
+
   return (
     <SelectableTile
-      as="label"
+      type="button"
       selected={row.selected}
-      aria-disabled={locked ? true : undefined}
+      disabled={disabled}
+      aria-pressed={row.selected}
+      aria-describedby={locked ? capacityHintId : undefined}
       className={[
         'structure-composition__row',
         !row.eligible ? 'structure-composition__row--ineligible' : null,
@@ -110,6 +111,7 @@ function CompositionTeamRow({
       ]
         .filter(Boolean)
         .join(' ')}
+      onClick={() => onToggle(row.entryId, row.selected)}
     >
       <TeamCrest
         name={row.displayName}
@@ -125,14 +127,6 @@ function CompositionTeamRow({
           </Chip>
         </Tooltip>
       ) : null}
-      <input
-        type="checkbox"
-        className="structure-composition__check"
-        checked={row.selected}
-        disabled={pending || (!row.eligible && !row.selected) || locked}
-        aria-describedby={locked ? capacityHintId : undefined}
-        onChange={() => onToggle(row.entryId, row.selected)}
-      />
     </SelectableTile>
   );
 }
@@ -408,7 +402,12 @@ export function StructureCompositionDialog({
                     />
                   ) : null}
                   <span
-                    className="structure-qualification__fact structure-qualification__fact--secondary"
+                    className={[
+                      'structure-qualification__fact',
+                      fact.key === 'selected' && k > 0
+                        ? 'structure-qualification__fact--primary'
+                        : 'structure-qualification__fact--secondary',
+                    ].join(' ')}
                     data-fact={fact.key}
                   >
                     <span className="structure-qualification__fact-value">
