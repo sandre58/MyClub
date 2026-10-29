@@ -32,7 +32,7 @@
   "cancelAppliedDraw": "Annuler le tirage",
   "confirmCancelAppliedTitle": "Annuler le tirage ?",
   "confirmRedoTitle": "Refaire le tirage ?",
-  "confirmRedo": "Cela annule l’exécution, tente de libérer les placements encore alignés, puis lance un nouvel aperçu. L’annulation peut aboutir même si la libération échoue : ces étapes ne forment pas une seule opération.",
+  "confirmRedo": "Cela annule l’exécution, libère les placements encore alignés, puis lance un nouvel aperçu, en une seule opération : si une étape échoue, rien n’est modifié.",
   "redoBlocked": {
     "cupFixtureAttached": "Le tirage ne peut pas être refait : un match est rattaché à une confrontation concernée.",
     "groupMatchesAttached": "Le tirage ne peut pas être refait : des matchs sont déjà rattachés à cette phase.",
