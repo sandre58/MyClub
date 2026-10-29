@@ -146,7 +146,14 @@ public sealed class ReadPerformanceBaselineTests(
     [Fact]
     public async Task Baseline_ligue_1_running_overview_uses_summary_rows_not_sheet_tablesAsync()
     {
-        var competitionId = await SeedAsync("ligue-1:running");
+        var templates = fixture.Services.GetRequiredService<TemplateRunner>();
+        await templates.ResetAndRunAsync([SeedSpec.Parse("ligue-1:running")]);
+
+        using var scope = fixture.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var competitionId = (await competitions.ListAsync()).Should().ContainSingle().Subject.Id;
+
+        _ = await MeasureOverviewWithDiagnosticsAsync(competitionId);
 
         var (overviewSql, elapsedMs, sqlTexts) = await MeasureOverviewWithDiagnosticsAsync(competitionId);
 
