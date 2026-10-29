@@ -265,6 +265,10 @@ describe('structure draw dialog height', () => {
       ),
     ).toBeNull();
     expect(drawDialogCss).toMatch(/\.structure-draw-previous__meta\s*\{/);
+    expect(drawDialogCss).toMatch(/\.structure-draw-previous__lead\s*\{/);
+    expect(drawDialogCss).toMatch(
+      /\.structure-draw-previous__trigger > \.ds-selectable-tile__chevron\s*\{[^}]*flex:\s*none[^}]*align-self:\s*flex-start/,
+    );
     expect(drawDialogCss).toMatch(
       /\.structure-draw-previous__panel\s*\{[^}]*\}/,
     );
@@ -1142,19 +1146,24 @@ describe('StructureDrawDialog', () => {
     const header = trigger.closest('.structure-draw-previous__header');
     expect(header?.tagName).toBe('H5');
     expect(header?.querySelector(':scope > button')).toBe(trigger);
-    const meta = trigger.querySelector('.structure-draw-previous__meta');
+    const lead = trigger.querySelector('.structure-draw-previous__lead');
+    expect(lead).not.toBeNull();
+    const meta = lead!.querySelector('.structure-draw-previous__meta');
     expect(meta).not.toBeNull();
+    expect(
+      lead!.querySelector('.structure-draw-previous__title'),
+    ).toBeInTheDocument();
     expect(within(meta as HTMLElement).getByText('Annulé')).toBeInTheDocument();
     expect(
       within(meta as HTMLElement).getByText('Libérée'),
     ).toBeInTheDocument();
-    expect(
-      trigger.querySelector('.structure-draw-previous__title'),
-    ).toBeTruthy();
-    const chevron = trigger.querySelector('.ds-selectable-tile__chevron');
+    const chevron = trigger.querySelector(
+      ':scope > .ds-selectable-tile__chevron',
+    );
     expect(chevron).toBeTruthy();
+    expect(lead!.contains(chevron)).toBe(false);
     expect(
-      meta!.compareDocumentPosition(chevron!) &
+      lead!.compareDocumentPosition(chevron!) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     expect(tile).toHaveAttribute('data-selected', 'false');
