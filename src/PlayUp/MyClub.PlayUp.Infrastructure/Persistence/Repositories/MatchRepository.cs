@@ -16,6 +16,13 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.Repositories;
 /// </summary>
 internal sealed class MatchRepository(PlayUpDbContext context) : IMatchRepository
 {
+    private static IQueryable<Match> ApplyListGraph(IQueryable<Match> query) =>
+        query
+            .Include(match => match.DeclaredParticipations)
+            .Include(match => match.RecordedGoals)
+            .Include(match => match.RecordedSubstitutions)
+            .Include(match => match.RecordedDisciplinaryEvents);
+
     /// <inheritdoc />
     public Task<Match?> GetByIdForUpdateAsync(MatchId id, CancellationToken cancellationToken = default) =>
         LoadByIdAsync(id, trackChanges: true, cancellationToken);
@@ -247,13 +254,6 @@ internal sealed class MatchRepository(PlayUpDbContext context) : IMatchRepositor
         ArgumentNullException.ThrowIfNull(match);
         context.Set<Match>().Remove(match);
     }
-
-    private static IQueryable<Match> ApplyListGraph(IQueryable<Match> query) =>
-        query
-            .Include(match => match.DeclaredParticipations)
-            .Include(match => match.RecordedGoals)
-            .Include(match => match.RecordedSubstitutions)
-            .Include(match => match.RecordedDisciplinaryEvents);
 
     private async Task<Match?> LoadByIdAsync(
         MatchId id,
