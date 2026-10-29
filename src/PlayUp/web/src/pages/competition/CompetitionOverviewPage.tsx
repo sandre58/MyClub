@@ -34,6 +34,7 @@ import { actionLabel } from '../../i18n/actionLabels';
 import { structureFormatKindLabel } from '../../i18n/enumLabels';
 import { toIntlLocale } from '../../i18n/intlLocale';
 import { queryKeys } from '../../queryKeys';
+import { overviewActionInvalidatesStageReads } from '../structure/structureInvalidation';
 import type {
   OverviewAction,
   OverviewCalendarSummary,
@@ -548,6 +549,10 @@ function useOverviewActionRunner(data: OverviewView) {
       await queryClient.invalidateQueries({
         queryKey: queryKeys.competitions.attention(data.competitionId),
       });
+
+      if (overviewActionInvalidatesStageReads(action.code)) {
+        await queryClient.invalidateQueries({ queryKey: ['stages'] });
+      }
 
       if (
         action.code === 'MaterializeMatches' ||

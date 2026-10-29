@@ -28,6 +28,9 @@ export type StructurePlacementOperationalSectionProps = {
   releasableAlignedCount: number;
   releasableTotal: number;
   releasePending: boolean;
+  /** Server release action is Blocked (attached matches). Button stays visible. */
+  releaseDisabled?: boolean;
+  releaseDisabledReason?: string | null;
   deactivateDrawPending: boolean;
   /** Host reports SlotFeedMissing — strip meter copy carries the gap (not the banner). */
   slotFeedMissingActive?: boolean;

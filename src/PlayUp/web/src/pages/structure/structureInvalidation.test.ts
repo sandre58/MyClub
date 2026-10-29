@@ -5,6 +5,7 @@ import { queryKeys } from '../../queryKeys';
 import {
   collectStructureInvalidationDescriptors,
   invalidateStructureQueries,
+  overviewActionInvalidatesStageReads,
   scheduleStructureRefresh,
 } from './structureInvalidation';
 
@@ -135,18 +136,31 @@ describe('structureInvalidation', () => {
     });
   });
 
-  it('graph scope adds schematic predicate', async () => {
+  it('graph scope invalidates the stages prefix and schematic predicate', async () => {
     const queryClient = new QueryClient();
     const spy = vi.spyOn(queryClient, 'invalidateQueries');
 
     await invalidateStructureQueries(queryClient, competitionId, ['graph']);
 
+    expect(spy).toHaveBeenCalledWith({
+      queryKey: ['stages'],
+      refetchType: 'active',
+    });
     expect(spy).toHaveBeenCalledWith(
       expect.objectContaining({
         refetchType: 'active',
         predicate: expect.any(Function),
       }),
     );
+  });
+
+  it('overview commands that change stage reads invalidate the stages prefix', () => {
+    expect(overviewActionInvalidatesStageReads('ApplyDraw')).toBe(true);
+    expect(overviewActionInvalidatesStageReads('PublishAndApplyDraw')).toBe(
+      true,
+    );
+    expect(overviewActionInvalidatesStageReads('PrepareStage')).toBe(true);
+    expect(overviewActionInvalidatesStageReads('AddEntry')).toBe(false);
   });
 
   it('scheduleStructureRefresh absorbs rejected invalidation', async () => {

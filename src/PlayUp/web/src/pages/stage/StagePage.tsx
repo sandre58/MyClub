@@ -705,7 +705,6 @@ function DrawCard({
 function DrawActions({
   stageId,
   draw,
-  isApplied,
   structureStages,
 }: {
   stageId: string;
@@ -718,15 +717,9 @@ function DrawActions({
   const queryClient = useQueryClient();
   const [applyConfirmOpen, setApplyConfirmOpen] = useState(false);
 
-  const canPublishAndApply =
-    draw.status === 'Draft' &&
-    draw.resolutionState === 'Resolved' &&
-    (draw.kind === 'Slot' || draw.kind === 'Group');
-  const canApply =
-    draw.status === 'Published' &&
-    draw.resolutionState === 'Resolved' &&
-    !isApplied &&
-    (draw.kind === 'Slot' || draw.kind === 'Group');
+  const actions = draw.actions;
+  const canPublishAndApply = actions?.publishAndApply.state === 'Available';
+  const canApply = actions?.apply.state === 'Available';
 
   const publishAndApplyMutation = useMutation({
     mutationFn: () => publishAndApplyDraw(stageId, draw.id),
