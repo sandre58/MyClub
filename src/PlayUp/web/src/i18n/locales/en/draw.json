@@ -28,7 +28,9 @@
   "confirmAbandonTitle": "Discard this draw?",
   "confirmAbandon": "The preview is discarded. Places in the phase are not changed.",
   "redo": "Redo the draw",
-  "redoing": "Redoing…",
+  "redoing": "New draw…",
+  "cancelAppliedDraw": "Cancel the draw",
+  "confirmCancelAppliedTitle": "Cancel the draw?",
   "confirmRedoTitle": "Redo the draw?",
   "confirmRedo": "This cancels the execution, releases placements that still match it, then starts a new preview. These steps are not one transaction.",
   "redoBlocked": {

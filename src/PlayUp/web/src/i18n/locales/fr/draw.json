@@ -28,7 +28,9 @@
   "confirmAbandonTitle": "Abandonner le tirage ?",
   "confirmAbandon": "L’aperçu est abandonné. Les places de la phase ne sont pas modifiées.",
   "redo": "Refaire le tirage",
-  "redoing": "Refaire…",
+  "redoing": "Nouveau tirage…",
+  "cancelAppliedDraw": "Annuler le tirage",
+  "confirmCancelAppliedTitle": "Annuler le tirage ?",
   "confirmRedoTitle": "Refaire le tirage ?",
   "confirmRedo": "Cela annule l’exécution, libère les placements encore alignés, puis lance un nouvel aperçu. Ces étapes ne forment pas une seule transaction.",
   "redoBlocked": {

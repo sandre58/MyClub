@@ -1091,6 +1091,9 @@ describe('StructureDrawDialog', () => {
     expect(
       screen.queryByRole('button', { name: 'Abandonner' }),
     ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Annuler le tirage' }),
+    ).not.toBeInTheDocument();
   });
 
   it('hides Abandonner when competition is Completed (D)', async () => {
@@ -1404,6 +1407,11 @@ describe('StructureDrawDialog', () => {
     expect(
       screen.queryByRole('button', { name: 'Refaire le tirage' }),
     ).not.toBeInTheDocument();
+    const cancelApplied = screen.getByRole('button', {
+      name: 'Annuler le tirage',
+    });
+    expect(cancelApplied.className).toContain('ds-btn--secondary');
+    expect(cancelApplied.className).not.toContain('ds-btn--primary');
   });
 
   it('redoes an applied draw as cancel, release, then a new preview', async () => {
@@ -1522,5 +1530,183 @@ describe('StructureDrawDialog', () => {
     expect(
       screen.queryByRole('dialog', { name: 'Appliquer le tirage ?' }),
     ).not.toBeInTheDocument();
+  });
+
+  it('cancels an applied draw from a confirmation when Refaire is blocked', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview(
+        [
+          groupDraw({
+            status: 'Published',
+            isApplied: true,
+          }),
+        ],
+        { status: 'Ready' },
+      ),
+    );
+    vi.mocked(cancelDraw).mockResolvedValue(undefined);
+
+    renderDialog(groupsStage({ status: 'Ready' }));
+
+    const cancelApplied = await screen.findByRole('button', {
+      name: 'Annuler le tirage',
+    });
+    expect(cancelApplied.className).toContain('ds-btn--secondary');
+    expect(cancelApplied.className).not.toContain('ds-btn--primary');
+    expect(
+      screen.queryByRole('button', { name: 'Refaire le tirage' }),
+    ).not.toBeInTheDocument();
+
+    await user.click(cancelApplied);
+    expect(cancelDraw).not.toHaveBeenCalled();
+    const confirm = await screen.findByRole('dialog', {
+      name: 'Annuler le tirage ?',
+    });
+    expect(confirm).toHaveTextContent(/ne retire pas les placements/);
+    await user.click(
+      within(confirm).getByRole('button', { name: 'Annuler le tirage' }),
+    );
+
+    await waitFor(() => {
+      expect(cancelDraw).toHaveBeenCalledWith(stageId, 'draw-1');
+    });
+  });
+
+  it('hides Annuler le tirage when the phase can no longer cancel', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview(
+        [
+          groupDraw({
+            status: 'Published',
+            isApplied: true,
+          }),
+        ],
+        { status: 'Running' },
+      ),
+    );
+
+    renderDialog(groupsStage({ status: 'Running' }), true, 'Running');
+
+    expect(
+      await screen.findByText(/dans l’état actuel de la phase/),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Annuler le tirage' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Refaire le tirage' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('omits the unreleased alert when a cancelled draw cannot be released', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview(
+        [
+          slotDraw({
+            status: 'Cancelled',
+            resolutionState: 'Resolved',
+            slotPlacements: [
+              {
+                slotKey: 'R16-1-A',
+                entryId: 'e1',
+                displayName: 'Belgium',
+              },
+            ],
+          }),
+        ],
+        {
+          status: 'Running',
+          slots: [
+            {
+              slotKey: 'R16-1-A',
+              entryId: 'e1',
+              displayName: 'Belgium',
+              coveredByCompleteFixture: false,
+            },
+          ],
+        },
+      ),
+    );
+
+    renderDialog(cupStage({ status: 'Running' }), true, 'Running');
+
+    expect(
+      await screen.findByText('Exécutions précédentes (1)'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText('Annulé, placements non libérés'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Libérer/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows the unreleased recovery when Refaire stops at release', async () => {
+    const user = userEvent.setup();
+    const placement = {
+      groupId: 'g-a',
+      groupDisplayName: 'A',
+      entryId: 'e1',
+      displayName: 'Équipe 1',
+    };
+    const groups = [{ id: 'g-a', name: 'A', entryIds: ['e1'] }];
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview(
+        [
+          groupDraw({
+            status: 'Published',
+            isApplied: true,
+            groupPlacements: [placement],
+          }),
+        ],
+        { groups },
+      ),
+    );
+    vi.mocked(cancelDraw).mockResolvedValue(undefined);
+    vi.mocked(releaseDrawAlignedPlacements).mockImplementation(async () => {
+      vi.mocked(fetchStageOverview).mockResolvedValue(
+        overview(
+          [
+            groupDraw({
+              status: 'Cancelled',
+              resolutionState: 'Resolved',
+              isApplied: false,
+              groupPlacements: [placement],
+            }),
+          ],
+          { groups },
+        ),
+      );
+      throw new ApiError(
+        409,
+        'Conflict',
+        'release failed',
+        'Application.DrawReleaseFailure',
+      );
+    });
+
+    renderDialog();
+    await user.click(
+      await screen.findByRole('button', { name: 'Refaire le tirage' }),
+    );
+    const confirm = await screen.findByRole('dialog', {
+      name: 'Refaire le tirage ?',
+    });
+    await user.click(
+      within(confirm).getByRole('button', { name: 'Refaire le tirage' }),
+    );
+
+    expect(
+      await screen.findByText('Annulé, placements non libérés'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Libérer 1/1' }),
+    ).toBeInTheDocument();
+    expect(createAndGenerateDraw).not.toHaveBeenCalled();
+    expect(releaseDrawAlignedPlacements).toHaveBeenCalledWith(
+      stageId,
+      'draw-1',
+    );
   });
 });

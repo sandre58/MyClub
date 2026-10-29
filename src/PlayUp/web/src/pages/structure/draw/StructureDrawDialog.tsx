@@ -127,7 +127,7 @@ const EMPTY_DRAWS: StageDraw[] = [];
 const EMPTY_SLOTS: StageSlot[] = [];
 const EMPTY_GROUPS: StageGroupOverview[] = [];
 
-type ConfirmKind = 'apply' | 'abandon' | 'release' | 'redo';
+type ConfirmKind = 'apply' | 'abandon' | 'release' | 'redo' | 'cancelApplied';
 
 /**
  * Work dialog — stage draw executions.
@@ -437,6 +437,7 @@ export function StructureDrawDialog({
   );
   useClearMutationsOnOpen(confirm === 'apply', applyMutation);
   useClearMutationsOnOpen(confirm === 'abandon', cancelMutation);
+  useClearMutationsOnOpen(confirm === 'cancelApplied', cancelMutation);
   useClearMutationsOnOpen(confirm === 'release', releaseMutation);
   useClearMutationsOnOpen(confirm === 'redo', redoMutation);
 
@@ -650,11 +651,17 @@ export function StructureDrawDialog({
               onAbandon={() => openConfirm('abandon', activeDraw.id)}
               onApply={() => openConfirm('apply', activeDraw.id)}
               onRedo={() => openConfirm('redo', activeDraw.id)}
+              onCancelApplied={() =>
+                openConfirm('cancelApplied', activeDraw.id)
+              }
               validatePending={publishAndApplyMutation.isPending}
               rerunPending={rerunMutation.isPending}
               abandonPending={cancelMutation.isPending}
               applyPending={applyMutation.isPending}
               redoPending={redoMutation.isPending}
+              cancelAppliedPending={
+                cancelMutation.isPending && confirm === 'cancelApplied'
+              }
             />
           ) : null}
 
@@ -707,7 +714,7 @@ export function StructureDrawDialog({
                       busy={busy}
                       stale={draw.isObsoleteForConsumption === true}
                       redo={{ kind: 'hidden' }}
-                      cancelledRecovery={alignedCount > 0}
+                      cancelledRecovery={canRelease}
                       onRelease={
                         canRelease
                           ? () => openConfirm('release', draw.id)
@@ -775,6 +782,44 @@ export function StructureDrawDialog({
         confirmDisabled={cancelMutation.isPending}
         confirmPending={cancelMutation.isPending}
         confirmPendingLabel={tDraw('abandoning')}
+        footerStatus={
+          cancelMutation.isError ? (
+            <MutationError
+              error={cancelMutation.error}
+              structureStages={structureStages}
+              sotHref={persistentStructureMutationSotHref(
+                cancelMutation.error,
+                competitionId,
+              )}
+            />
+          ) : null
+        }
+        onCancel={() => {
+          if (cancelMutation.isPending) {
+            return;
+          }
+          closeConfirm();
+        }}
+        onConfirm={() => {
+          if (!confirmDraw || cancelMutation.isPending) {
+            return;
+          }
+          cancelMutation.mutate(confirmDraw.id);
+        }}
+      />
+
+      <ConfirmDialog
+        open={confirm === 'cancelApplied'}
+        title={tDraw('confirmCancelAppliedTitle')}
+        message={tDraw('confirmCancelApplied')}
+        confirmLabel={tDraw('cancelAppliedDraw')}
+        confirmIcon={<CloseIcon size="sm" />}
+        cancelLabel={tCommon('close')}
+        closeLabel={tCommon('close')}
+        danger
+        confirmDisabled={cancelMutation.isPending}
+        confirmPending={cancelMutation.isPending}
+        confirmPendingLabel={tDraw('cancelling')}
         footerStatus={
           cancelMutation.isError ? (
             <MutationError
@@ -984,12 +1029,14 @@ function DrawExecutionPanel({
   onAbandon,
   onApply,
   onRedo,
+  onCancelApplied,
   onRelease,
   validatePending = false,
   rerunPending = false,
   abandonPending = false,
   applyPending = false,
   redoPending = false,
+  cancelAppliedPending = false,
   releasePending = false,
   alignedCount: alignedCountProp,
 }: {
@@ -1011,12 +1058,14 @@ function DrawExecutionPanel({
   onAbandon?: () => void;
   onApply?: () => void;
   onRedo?: () => void;
+  onCancelApplied?: () => void;
   onRelease?: () => void;
   validatePending?: boolean;
   rerunPending?: boolean;
   abandonPending?: boolean;
   applyPending?: boolean;
   redoPending?: boolean;
+  cancelAppliedPending?: boolean;
   releasePending?: boolean;
   alignedCount?: number;
 }): ReactElement {
@@ -1050,6 +1099,15 @@ function DrawExecutionPanel({
     draw.status === 'Draft' &&
     (draw.kind === 'Slot' || draw.kind === 'Group');
   const canRedo = redo.kind === 'available' && onRedo != null;
+  const canCancelApplied =
+    onCancelApplied != null &&
+    redo.kind === 'blocked' &&
+    ui.isApplied &&
+    canCancelDrawExecution({
+      competitionStatus,
+      stageStatus,
+      drawStatus: draw.status,
+    });
   const canRelease =
     onRelease != null &&
     canReleaseDrawAlignedPlacements({
@@ -1103,6 +1161,7 @@ function DrawExecutionPanel({
     canRerun ||
     canAbandon ||
     canRedo ||
+    canCancelApplied ||
     canRelease ? (
       <div className="button-row" aria-busy={busy}>
         {canPublishAndApply ? (
@@ -1152,6 +1211,23 @@ function DrawExecutionPanel({
               <>
                 <UndoIcon size="sm" />
                 {t('redo')}
+              </>
+            )}
+          </button>
+        ) : null}
+        {canCancelApplied ? (
+          <button
+            type="button"
+            className="ds-btn ds-btn--secondary"
+            disabled={busy}
+            onClick={onCancelApplied}
+          >
+            {cancelAppliedPending ? (
+              <PendingLabel>{t('cancelling')}</PendingLabel>
+            ) : (
+              <>
+                <CloseIcon size="sm" />
+                {t('cancelAppliedDraw')}
               </>
             )}
           </button>
