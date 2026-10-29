@@ -12,6 +12,8 @@ describe('redoAppliedDraw', () => {
       drawId: 'draw-next',
       isResolved: true,
       isNoSolution: false,
+      status: 'Draft',
+      resolutionState: 'Resolved',
     });
 
     const result = await redoAppliedDraw('stage-1', 'draw-1');
@@ -22,6 +24,8 @@ describe('redoAppliedDraw', () => {
       drawId: 'draw-next',
       isResolved: true,
       isNoSolution: false,
+      status: 'Draft',
+      resolutionState: 'Resolved',
     });
   });
 
@@ -30,6 +34,8 @@ describe('redoAppliedDraw', () => {
       drawId: 'draw-next',
       isResolved: false,
       isNoSolution: true,
+      status: 'Draft',
+      resolutionState: 'NoSolution',
     });
 
     const result = await redoAppliedDraw('stage-1', 'draw-1');

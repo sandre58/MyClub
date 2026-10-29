@@ -1732,6 +1732,8 @@ describe('StructureDrawDialog', () => {
       drawId: 'draw-next',
       isResolved: true,
       isNoSolution: false,
+      status: 'Draft',
+      resolutionState: 'Resolved',
     });
 
     renderDialog();

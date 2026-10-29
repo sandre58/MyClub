@@ -1,4 +1,5 @@
 import { redoDraw } from '../../../api';
+import type { DrawResolutionState, DrawStatus } from '../../../types/enums';
 
 /**
  * Refaire an applied draw.
@@ -11,6 +12,12 @@ import { redoDraw } from '../../../api';
 export function redoAppliedDraw(
   stageId: string,
   drawId: string,
-): Promise<{ drawId: string; isResolved: boolean; isNoSolution: boolean }> {
+): Promise<{
+  drawId: string;
+  isResolved: boolean;
+  isNoSolution: boolean;
+  status: DrawStatus;
+  resolutionState: DrawResolutionState;
+}> {
   return redoDraw(stageId, drawId);
 }

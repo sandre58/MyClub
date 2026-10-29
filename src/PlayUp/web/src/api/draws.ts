@@ -1,6 +1,7 @@
 /**
  * Draw create / generate / publish / apply orchestration.
  */
+import type { DrawResolutionState, DrawStatus } from '../types/enums';
 import { ApiError, postNoContent, sendJson } from './http';
 
 /** ConfigureDrawInputs refuses Rerun when the launch grid is not vacant. */
@@ -170,6 +171,12 @@ export function applyDraw(stageId: string, drawId: string): Promise<void> {
 export function redoDraw(
   stageId: string,
   drawId: string,
-): Promise<{ drawId: string; isResolved: boolean; isNoSolution: boolean }> {
+): Promise<{
+  drawId: string;
+  isResolved: boolean;
+  isNoSolution: boolean;
+  status: DrawStatus;
+  resolutionState: DrawResolutionState;
+}> {
   return sendJson('POST', `/stages/${stageId}/draws/${drawId}/redo`);
 }
