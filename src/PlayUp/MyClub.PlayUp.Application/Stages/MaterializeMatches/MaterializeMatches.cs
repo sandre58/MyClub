@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Domain.Common;
@@ -90,6 +91,23 @@ public static class MaterializeMatches
         IReadOnlyList<Match> existingMatches,
         IReadOnlyList<Stage>? competitionStages = null)
     {
+        ArgumentNullException.ThrowIfNull(existingMatches);
+        return CountUncoveredDeterminedPairs(
+            competition,
+            stage,
+            StageStartReadinessGuard.ToSummaryRows(existingMatches),
+            competitionStages);
+    }
+
+    /// <summary>
+    /// Count of determined Home/Away pairs not yet attached — projected match rows only.
+    /// </summary>
+    public static int CountUncoveredDeterminedPairs(
+        Competition competition,
+        Stage stage,
+        IReadOnlyList<MatchSummaryRow> existingMatches,
+        IReadOnlyList<Stage>? competitionStages = null)
+    {
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(existingMatches);
@@ -102,7 +120,7 @@ public static class MaterializeMatches
         }
 
         var format = StructureSkeleton.InferFormat(stage);
-        var existingByPair = IndexExistingDirectedPairs(stage, existingMatches);
+        var existingByPair = IndexExistingDirectedPairKeys(stage, existingMatches);
         return format switch
         {
             StructureFormatKind.Championship => CountUncoveredChampionship(competition, stage, stages, existingByPair),
@@ -116,7 +134,7 @@ public static class MaterializeMatches
         Competition competition,
         Stage stage,
         IReadOnlyList<Stage> competitionStages,
-        IReadOnlyDictionary<(EntryId Home, EntryId Away), Match> existingByPair)
+        HashSet<(EntryId Home, EntryId Away)> existingByPair)
     {
         if (!ChampionshipSwissPhasePlaces.IsRosterComplete(competition, stage, competitionStages))
         {
@@ -131,21 +149,21 @@ public static class MaterializeMatches
 
     private static int CountUncoveredGroups(
         Stage stage,
-        IReadOnlyDictionary<(EntryId Home, EntryId Away), Match> existingByPair) =>
+        HashSet<(EntryId Home, EntryId Away)> existingByPair) =>
         stage.Groups.Count == 0 || stage.Groups.Any(group => group.EntryIds.Count < 2)
             ? 0
             : stage.Groups.Sum(group => CountMissingPairs(BuildRoundRobinRounds([.. group.EntryIds], stage.MatchGenerationFormat), existingByPair));
 
     private static int CountMissingPairs(
         IReadOnlyList<IReadOnlyList<(EntryId Home, EntryId Away)>> rounds,
-        IReadOnlyDictionary<(EntryId Home, EntryId Away), Match> existingByPair)
+        HashSet<(EntryId Home, EntryId Away)> existingByPair)
     {
         var missing = 0;
         foreach (var round in rounds)
         {
             foreach (var (home, away) in round)
             {
-                if (!existingByPair.ContainsKey(DirectedPair(home, away)))
+                if (!existingByPair.Contains(DirectedPair(home, away)))
                 {
                     missing++;
                 }
@@ -153,6 +171,22 @@ public static class MaterializeMatches
         }
 
         return missing;
+    }
+
+    private static HashSet<(EntryId Home, EntryId Away)> IndexExistingDirectedPairKeys(
+        Stage stage,
+        IReadOnlyList<MatchSummaryRow> existingMatches)
+    {
+        var keys = new HashSet<(EntryId Home, EntryId Away)>();
+        foreach (var match in existingMatches)
+        {
+            if (stage.HasMatch(match.Id))
+            {
+                keys.Add(DirectedPair(match.HomeEntryId, match.AwayEntryId));
+            }
+        }
+
+        return keys;
     }
 
     private static MaterializeMatchesResult MaterializeChampionship(

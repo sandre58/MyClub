@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using System.Diagnostics;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using MyClub.PlayUp.Application.Abstractions;
@@ -84,7 +85,9 @@ public sealed class ReadPerformanceBaselineTests(
         matchHubSql.Should().BeLessThan(matchHubFanOutTotalSql, "unified Match Hub should beat 1+N fan-out");
         attentionSql.Should().BeLessThanOrEqualTo(overviewSql, "attention bundle must not exceed overview load");
         attentionSql.Should().BeLessThanOrEqualTo(20, "D2-B lot 2 multi-stage hydration batch (baseline was 21 SQL)");
-        overviewSql.Should().BeLessThanOrEqualTo(20, "overview bundle uses batched GetByIds hydration (baseline was 21 SQL)");
+        overviewSql.Should().BeLessThanOrEqualTo(
+            24,
+            "overview bundle may load match list graphs via split queries (+4 SQL vs pre-split baseline 20 on cup-qf-sf)");
         consultationSql.Should().BeLessThanOrEqualTo(overviewSql, "consultation bundle must not exceed overview load");
         structureSql.Should().BeLessThanOrEqualTo(
             overviewSql,
@@ -140,6 +143,43 @@ public sealed class ReadPerformanceBaselineTests(
         stageSchematicSql.Should().BeLessThanOrEqualTo(
             21,
             "single-stage schematic pays the competition-id projection and has no second hydration to remove (baseline was 20 SQL)");
+    }
+
+    [Fact]
+    public async Task Baseline_ligue_1_running_overview_uses_summary_rows_not_sheet_tablesAsync()
+    {
+        var templates = fixture.Services.GetRequiredService<TemplateRunner>();
+        await templates.ResetAndRunAsync([SeedSpec.Parse("ligue-1:running")]);
+
+        using var scope = fixture.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var competitionId = (await competitions.ListAsync()).Should().ContainSingle().Subject.Id;
+
+        _ = await MeasureOverviewWithDiagnosticsAsync(competitionId);
+
+        var (overviewSql, elapsedMs, sqlTexts) = await MeasureOverviewWithDiagnosticsAsync(competitionId);
+
+        WriteScenario(
+            """
+            Scenario: ligue-1:running (18 clubs, partial championship results, seeded match sheets on finished matches)
+            Overview bundle: SummaryRow match projection (F3.1)
+            """,
+            new Dictionary<string, int>
+            {
+                ["GET /overview (GetOverviewViewAsync)"] = overviewSql,
+            },
+            $"Warm elapsed (informational, not asserted): {elapsedMs} ms");
+
+        overviewSql.Should().BeGreaterThan(3, "overview still loads competition, stages, and match rows");
+        overviewSql.Should().BeLessThanOrEqualTo(
+            21,
+            "ligue-1:running warm overview measured 20 SQL on CI (SummaryRow; small margin over observed count)");
+
+        var combinedSql = string.Join('\n', sqlTexts);
+        combinedSql.Should().NotContain("match_declared_participations");
+        combinedSql.Should().NotContain("match_recorded_goals");
+        combinedSql.Should().NotContain("match_recorded_substitutions");
+        combinedSql.Should().NotContain("match_recorded_disciplinary_events");
     }
 
     [Fact]
@@ -200,6 +240,21 @@ public sealed class ReadPerformanceBaselineTests(
         await action(executor);
 
         return counter.CommandCount;
+    }
+
+    private async Task<(int SqlCount, long ElapsedMs, IReadOnlyList<string> SqlTexts)> MeasureOverviewWithDiagnosticsAsync(
+        CompetitionId competitionId)
+    {
+        using var scope = fixture.Services.CreateScope();
+        var counter = scope.ServiceProvider.GetRequiredService<SqlCommandCounterInterceptor>();
+        counter.Reset();
+
+        var executor = scope.ServiceProvider.GetRequiredService<UseCaseExecutor>();
+        var stopwatch = Stopwatch.StartNew();
+        await executor.GetOverviewViewAsync(competitionId);
+        stopwatch.Stop();
+
+        return (counter.CommandCount, stopwatch.ElapsedMilliseconds, counter.CommandTexts);
     }
 
     private void WriteScenario(string header, IReadOnlyDictionary<string, int> rows, params string[] details)

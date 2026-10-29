@@ -4,9 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
-using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Pipeline;
@@ -16,13 +16,8 @@ namespace MyClub.PlayUp.Application.Pipeline;
 /// </summary>
 /// <param name="Competition">Loaded competition.</param>
 /// <param name="Stages">Competition stages in canonical order.</param>
-/// <param name="MatchesByStage">Matches keyed by stage.</param>
+/// <param name="MatchesByStage">Projected match rows keyed by stage.</param>
 internal sealed record CompetitionReadBundle(
     Competition Competition,
     IReadOnlyList<Stage> Stages,
-    IReadOnlyDictionary<StageId, IReadOnlyList<Match>> MatchesByStage)
-{
-    /// <summary>Gets flattens <see cref="MatchesByStage"/> for structure-style assemblers.</summary>
-    public IReadOnlyList<Match> AllMatches { get; } =
-        [.. MatchesByStage.Values.SelectMany(stageMatches => stageMatches)];
-}
+    IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>> MatchesByStage);

@@ -39,6 +39,30 @@ public sealed record MatchAttentionSlice(
             match.Result);
     }
 
+    /// <summary>Maps a projected summary row to the attention read slice.</summary>
+    public static MatchAttentionSlice FromSummaryRow(MatchSummaryRow row)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+        return new MatchAttentionSlice(
+            row.Id,
+            row.StageId,
+            row.Status,
+            row.HomeEntryId,
+            row.AwayEntryId,
+            row.Result);
+    }
+
+    /// <summary>Maps summary rows keyed by stage.</summary>
+    public static IReadOnlyDictionary<StageId, IReadOnlyList<MatchAttentionSlice>> FromSummaryRows(
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>> matchesByStage)
+    {
+        ArgumentNullException.ThrowIfNull(matchesByStage);
+        return matchesByStage.ToDictionary(
+            pair => pair.Key,
+            pair => (IReadOnlyList<MatchAttentionSlice>)[
+                .. pair.Value.Select(FromSummaryRow)]);
+    }
+
     /// <summary>Maps full aggregates keyed by stage.</summary>
     public static IReadOnlyDictionary<StageId, IReadOnlyList<MatchAttentionSlice>> FromMatchesByStage(
         IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage)

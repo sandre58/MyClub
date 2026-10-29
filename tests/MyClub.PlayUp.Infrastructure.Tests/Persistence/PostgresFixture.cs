@@ -22,6 +22,8 @@ public sealed class PostgresFixture : IAsyncLifetime
 
     private ServiceProvider? _provider;
 
+    public string ConnectionString => _container.GetConnectionString();
+
     public IServiceScope CreateScope() => _provider is null ? throw new InvalidOperationException("PostgreSQL fixture is not initialized.") : _provider.CreateScope();
 
     public async Task InitializeAsync()

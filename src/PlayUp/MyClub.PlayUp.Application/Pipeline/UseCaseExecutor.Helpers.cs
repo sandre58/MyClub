@@ -196,18 +196,18 @@ public sealed partial class UseCaseExecutor
         EnsureCompetitionAllowsLifecycleMutation(competition);
     }
 
-    private async Task<Dictionary<StageId, IReadOnlyList<Match>>> LoadMatchesByStageReadOnlyAsync(
+    private async Task<Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>> LoadMatchesByStageReadOnlyAsync(
         List<Stage> competitionStages,
         MatchLoadProfile profile,
         CancellationToken cancellationToken) =>
         competitionStages.Count == 0
             ? []
-            : profile != MatchLoadProfile.Full
-                ? throw new ArgumentOutOfRangeException(
+            : profile == MatchLoadProfile.SummaryRow
+                ? await LoadSummaryRowsByStageReadOnlyAsync(competitionStages, cancellationToken).ConfigureAwait(false)
+                : throw new ArgumentOutOfRangeException(
                     nameof(profile),
                     profile,
-                    "CompetitionReadBundle currently supports Full match loads only.")
-                : await LoadMatchesByStageReadOnlyAsync(competitionStages, cancellationToken).ConfigureAwait(false);
+                    "CompetitionReadBundle supports SummaryRow match loads only.");
 
     private async Task<Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>> LoadSummaryRowsByStageReadOnlyAsync(
         List<Stage> competitionStages,
@@ -471,19 +471,18 @@ public sealed partial class UseCaseExecutor
         IReadOnlyList<Stage> competitionStages,
         CancellationToken cancellationToken)
     {
-        var map = new Dictionary<StageId, IReadOnlyList<Match>>();
-        foreach (var stage in competitionStages)
-        {
-            if (stage.Id.Equals(upstreamStageId))
-            {
-                continue;
-            }
+        var destinationStageIds = competitionStages
+            .Where(stage => !stage.Id.Equals(upstreamStageId))
+            .Select(stage => stage.Id)
+            .ToArray();
 
-            var stageMatches = await matches.ListByStageForUpdateAsync(stage.Id, cancellationToken)
-                .ConfigureAwait(false);
-            map[stage.Id] = stageMatches;
+        if (destinationStageIds.Length == 0)
+        {
+            return [];
         }
 
-        return map;
+        return new Dictionary<StageId, IReadOnlyList<Match>>(
+            await matches.ListByStageIdsForUpdateAsync(destinationStageIds, cancellationToken)
+                .ConfigureAwait(false));
     }
 }
