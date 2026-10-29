@@ -190,7 +190,7 @@ There is **no** generic `Card` foundation (see `foundations/surfaces.css`). New 
 ### Selectable tile (family B) recipe
 
 - Canonical: `foundations/selectable-tile.css` (`.ds-selectable-tile`).
-- React: `SelectableTile` sets `data-selected` and merges page layout classes.
+- React: `SelectableTile` sets `data-selected`, optional `tone="error"` (`data-tone="error"`) for disclosure-style cancelled runs (red border/focus/hover recipes in the foundation file; chevron rotates when `selected`), and merges page layout classes.
 - Compose: `className="<page-layout>"` + `selected` prop, or manual `ds-selectable-tile` + `data-selected="true|false"`.
 - Hover / selected recipes live only in the foundation file.
 - CI guard: `npm run tile:check`.

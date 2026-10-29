@@ -26,4 +26,23 @@ describe('SelectableTile', () => {
     expect(tile.tagName).toBe('ARTICLE');
     expect(tile).toHaveAttribute('data-selected', 'false');
   });
+
+  it('sets data-tone on error tiles and keeps the disclosure chevron hidden from assistive tech', () => {
+    render(
+      <SelectableTile tone="error" selected aria-label="Tile">
+        Body
+      </SelectableTile>,
+    );
+    const tile = screen.getByLabelText('Tile');
+    expect(tile).toHaveAttribute('data-tone', 'error');
+    expect(tile.querySelector('.ds-selectable-tile__chevron')).toHaveAttribute(
+      'aria-hidden',
+      'true',
+    );
+  });
+
+  it('leaves the default tile without data-tone', () => {
+    render(<SelectableTile>Plain</SelectableTile>);
+    expect(screen.getByText('Plain')).not.toHaveAttribute('data-tone');
+  });
 });

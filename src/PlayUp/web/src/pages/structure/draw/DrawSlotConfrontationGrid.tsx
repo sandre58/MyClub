@@ -64,13 +64,16 @@ export function DrawSlotConfrontationGrid({
 }: {
   rows: readonly SlotConfrontationRow[];
   unpaired?: readonly SlotConfrontationSide[];
-  ariaLabel: string;
+  ariaLabel?: string;
   unpairedLabel?: string;
 }): ReactElement {
   return (
     <div className="draw-slot-results">
       {rows.length > 0 ? (
-        <ul className="draw-slot-rows" aria-label={ariaLabel}>
+        <ul
+          className="draw-slot-rows"
+          {...(ariaLabel ? { 'aria-label': ariaLabel } : {})}
+        >
           {rows.map((row) => (
             <ConfrontationMatchRow key={row.key} row={row} />
           ))}
@@ -79,7 +82,9 @@ export function DrawSlotConfrontationGrid({
       {unpaired.length > 0 ? (
         <ul
           className="draw-slot-rows draw-slot-rows__unpaired"
-          aria-label={unpairedLabel ?? ariaLabel}
+          {...((unpairedLabel ?? ariaLabel)
+            ? { 'aria-label': unpairedLabel ?? ariaLabel }
+            : {})}
         >
           {unpaired.map((side) => (
             <UnpairedMatchRow key={side.slotKey} side={side} />

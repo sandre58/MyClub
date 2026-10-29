@@ -208,9 +208,23 @@ describe('structure draw dialog height', () => {
       /\.ds-dialog:has\(\.structure-qualification\) \.ds-dialog__panel,\s*\.ds-dialog:has\(\.structure-progression\) \.ds-dialog__panel,\s*\.ds-dialog:has\(\.structure-draw-dialog\) \.ds-dialog__panel \{[^}]*max-height:\s*min\(92vh,\s*52rem\)/,
     );
     expect(drawDialogCss).toMatch(
-      /\.ds-dialog:has\(\.structure-qualification\) \.ds-dialog__body,\s*\.ds-dialog:has\(\.structure-progression\) \.ds-dialog__body,\s*\.ds-dialog:has\(\.structure-draw-dialog\) \.ds-dialog__body \{[^}]*overflow:\s*hidden/,
+      /\.ds-dialog:has\(\.structure-draw-dialog\) \.ds-dialog__body \{[^}]*overflow:\s*auto/,
     );
-    expect(drawDialogCss).toMatch(/@media \(max-height:\s*36rem\)/);
+    expect(drawDialogCss).not.toMatch(
+      /\.ds-dialog:has\(\.structure-draw-dialog\) \.ds-dialog__body \{[^}]*overflow:\s*hidden/,
+    );
+    expect(drawDialogCss).not.toMatch(
+      /@media \(max-height:\s*36rem\)[\s\S]*structure-draw-dialog/,
+    );
+    expect(drawDialogCss).toMatch(
+      /\.structure-draw-dialog \{[^}]*flex:\s*none/,
+    );
+    expect(drawDialogCss).toMatch(
+      /\.structure-draw-execution \{[^}]*flex:\s*none/,
+    );
+    expect(drawDialogCss).toMatch(
+      /\.structure-draw-dialog \.ds-empty--idle \{[^}]*flex:\s*none/,
+    );
     expect(drawDialogCss).not.toMatch(/structure-draw-footer__start/);
     expect(drawDialogCss).not.toMatch(/structure-draw-cancelled/);
     expect(drawDialogCss).not.toMatch(/structure-draw-history-row/);
@@ -427,10 +441,14 @@ describe('StructureDrawDialog', () => {
     renderDialog();
 
     expect(
-      await screen.findByRole('heading', { name: 'Exécution #1' }),
+      await screen.findByText('Aucun tirage en cours'),
     ).toBeInTheDocument();
     expect(screen.getByText('Libérée')).toBeInTheDocument();
-    expect(screen.getByText('Aucun résultat')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', {
+        name: 'Exécution #1, annulée, Libérée',
+      }),
+    ).toHaveAttribute('aria-expanded', 'false');
     expect(
       screen.queryByText(
         'Exécution annulée. Un nouveau tirage est nécessaire pour recommencer.',
@@ -636,7 +654,7 @@ describe('StructureDrawDialog', () => {
     ).toBeDisabled();
 
     const releaseButton = await screen.findByRole('button', {
-      name: 'Libérer 2/2',
+      name: 'Libérer #1 (2/2)',
     });
     await user.click(releaseButton);
     const confirmDialog = await screen.findByRole('dialog', {
@@ -699,14 +717,11 @@ describe('StructureDrawDialog', () => {
     expect(
       screen.queryByText('Résultat généré, prêt à être publié.'),
     ).not.toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /#1/ })).toHaveAttribute(
-      'aria-selected',
-      'false',
-    );
-    expect(screen.getByRole('tab', { name: /#2/ })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
+    expect(
+      screen.getByRole('button', {
+        name: 'Exécution #1, annulée, Libérée',
+      }),
+    ).toHaveAttribute('aria-expanded', 'false');
     expect(
       screen.queryByLabelText('Historique des exécutions'),
     ).not.toBeInTheDocument();
@@ -994,7 +1009,7 @@ describe('StructureDrawDialog', () => {
     ).toContain('ds-btn--primary');
   });
 
-  it('keeps the current execution full width and folds cancelled runs', async () => {
+  it('keeps the active execution primary and discloses cancelled runs below', async () => {
     const user = userEvent.setup();
     vi.mocked(fetchStageOverview).mockResolvedValue(
       overview([
@@ -1020,12 +1035,20 @@ describe('StructureDrawDialog', () => {
       screen.queryByLabelText('Historique des exécutions'),
     ).not.toBeInTheDocument();
     expect(
-      screen.getByRole('tablist', { name: 'Exécutions' }),
+      screen.getByRole('heading', { name: 'Exécutions précédentes (1)' }),
     ).toBeInTheDocument();
+    const cancelledTile = screen.getByRole('button', {
+      name: 'Exécution #1, annulée, Libérée',
+    });
+    expect(cancelledTile).toHaveAttribute('data-tone', 'error');
+    expect(cancelledTile).toHaveAttribute('aria-expanded', 'false');
+    expect(cancelledTile).not.toHaveAttribute('aria-controls');
 
-    await user.click(screen.getByRole('tab', { name: /#1/ }));
+    await user.click(cancelledTile);
+    expect(cancelledTile).toHaveAttribute('aria-expanded', 'true');
+    expect(cancelledTile).toHaveAttribute('aria-controls');
     expect(
-      screen.getByRole('heading', { name: 'Exécution #1' }),
+      screen.getByRole('heading', { level: 5, name: /^Exécution #1/ }),
     ).toBeInTheDocument();
     expect(screen.getByText('Libérée')).toBeInTheDocument();
     expect(
@@ -1033,6 +1056,9 @@ describe('StructureDrawDialog', () => {
         'Exécution annulée. Un nouveau tirage est nécessaire pour recommencer.',
       ),
     ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Valider le tirage' }),
+    ).toBeInTheDocument();
   });
 
   it('clears sticky publish-and-apply error when the dialog reopens', async () => {
@@ -1238,7 +1264,7 @@ describe('StructureDrawDialog', () => {
 
     expect(await screen.findByText('1/2 non libérés')).toBeInTheDocument();
     const releaseButton = screen.getByRole('button', {
-      name: 'Libérer 1/2',
+      name: 'Libérer #1 (1/2)',
     });
     expect(releaseButton.closest('.structure-draw-footer')).not.toBeNull();
     expect(releaseButton.closest('summary')).toBeNull();
@@ -1311,19 +1337,15 @@ describe('StructureDrawDialog', () => {
 
     renderDialog(cupStage());
 
-    await screen.findByRole('tab', { name: /#2/ });
-    expect(screen.getByRole('tab', { name: /#2/ })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
     const footer = document.querySelector('.structure-draw-footer');
     expect(footer).not.toBeNull();
-    const footerRelease = within(footer as HTMLElement).getByRole('button', {
-      name: 'Libérer 1/1',
-    });
+    const footerRelease = await within(footer as HTMLElement).findByRole(
+      'button',
+      { name: 'Libérer #2 (1/1)' },
+    );
     expect(
       within(footer as HTMLElement).queryByRole('button', {
-        name: 'Libérer 2/2',
+        name: 'Libérer #1 (2/2)',
       }),
     ).not.toBeInTheDocument();
 
@@ -1377,7 +1399,7 @@ describe('StructureDrawDialog', () => {
     renderDialog(cupStage());
 
     expect(
-      await screen.findByRole('heading', { name: 'Exécution #1' }),
+      await screen.findByText('Aucun tirage en cours'),
     ).toBeInTheDocument();
     expect(
       screen.queryByText(/placements encore présents/),
@@ -1407,11 +1429,7 @@ describe('StructureDrawDialog', () => {
     });
 
     renderDialog();
-    const cancelled = await screen.findByRole('tab', { name: /#1/ });
-    await user.click(cancelled);
-    expect(cancelled).toHaveAttribute('aria-selected', 'true');
-    await user.click(screen.getByRole('tab', { name: /#2/ }));
-    await user.click(screen.getByRole('button', { name: 'Relancer' }));
+    await user.click(await screen.findByRole('button', { name: 'Relancer' }));
 
     await waitFor(() => {
       expect(rerunDrawGeneration).toHaveBeenCalledWith(stageId, 'draw-zzz');
@@ -1422,10 +1440,6 @@ describe('StructureDrawDialog', () => {
         'Tirage relancé.',
       );
     });
-    expect(screen.getByRole('tab', { name: /#2/ })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
     expect(
       screen.getByRole('heading', { name: 'Exécution #2' }),
     ).toBeInTheDocument();
@@ -1805,7 +1819,7 @@ describe('StructureDrawDialog', () => {
     renderDialog(cupStage({ status: 'Running' }), true, 'Running');
 
     expect(
-      await screen.findByRole('heading', { name: 'Exécution #1' }),
+      await screen.findByText('Aucun tirage en cours'),
     ).toBeInTheDocument();
     expect(
       screen.queryByText('Annulé, placements non libérés'),
@@ -1877,7 +1891,7 @@ describe('StructureDrawDialog', () => {
 
     expect(await screen.findByText('1/1 non libérés')).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: 'Libérer 1/1' }),
+      screen.getByRole('button', { name: 'Libérer #1 (1/1)' }),
     ).toBeInTheDocument();
     const main = screen
       .getByRole('heading', { name: /Exécutions de tirage/ })
@@ -1999,7 +2013,7 @@ describe('StructureDrawDialog', () => {
     ).not.toHaveFocus();
   });
 
-  it('moves the run selector with arrows, Home, and End', async () => {
+  it('opens and closes a single cancelled disclosure tile', async () => {
     const user = userEvent.setup();
     vi.mocked(fetchStageOverview).mockResolvedValue(
       overview([
@@ -2030,34 +2044,23 @@ describe('StructureDrawDialog', () => {
       ]),
     );
     renderDialog();
-    const activeTab = await screen.findByRole('tab', { name: /#2/ });
-    const cancelledTab = screen.getByRole('tab', { name: /#1/ });
-    expect(activeTab).toHaveAttribute('aria-selected', 'true');
-    expect(activeTab).toHaveAttribute('tabindex', '0');
-    expect(cancelledTab).toHaveAttribute('tabindex', '-1');
-    expect(screen.getByText('Beta')).toBeInTheDocument();
+    expect(await screen.findByText('Beta')).toBeInTheDocument();
     expect(screen.queryByText('Alpha')).not.toBeInTheDocument();
 
-    activeTab.focus();
-    await user.keyboard('{ArrowRight}');
-    expect(cancelledTab).toHaveAttribute('aria-selected', 'true');
-    expect(cancelledTab).toHaveFocus();
+    const cancelledTile = screen.getByRole('button', {
+      name: /Exécution #1, annulée/,
+    });
+    await user.click(cancelledTile);
+    expect(cancelledTile).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByText('Alpha')).toBeInTheDocument();
-    expect(screen.queryByText('Beta')).not.toBeInTheDocument();
+    expect(screen.getByText('Beta')).toBeInTheDocument();
 
-    await user.keyboard('{Home}');
-    expect(activeTab).toHaveAttribute('aria-selected', 'true');
-    expect(activeTab).toHaveFocus();
-
-    await user.keyboard('{End}');
-    expect(cancelledTab).toHaveFocus();
-    expect(cancelledTab).toHaveAttribute('aria-selected', 'true');
-
-    await user.keyboard('{ArrowRight}');
-    expect(activeTab).toHaveFocus();
+    await user.click(cancelledTile);
+    expect(cancelledTile).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByText('Alpha')).not.toBeInTheDocument();
   });
 
-  it('does not move focus when a run tile is selected', async () => {
+  it('does not move focus when a cancelled tile is toggled', async () => {
     const user = userEvent.setup();
     vi.mocked(fetchStageOverview).mockResolvedValue(
       overview([
@@ -2072,16 +2075,18 @@ describe('StructureDrawDialog', () => {
     await waitFor(() => {
       expect(validate).toHaveFocus();
     });
-    const cancelledTab = screen.getByRole('tab', { name: /#1/ });
-    await user.click(cancelledTab);
-    expect(cancelledTab).toHaveFocus();
+    const cancelledTile = screen.getByRole('button', {
+      name: /Exécution #1, annulée/,
+    });
+    await user.click(cancelledTile);
+    expect(cancelledTile).toHaveFocus();
     expect(
       screen.queryByRole('button', { name: 'Lancer le tirage' }),
     ).not.toBeInTheDocument();
     expect(validate).not.toHaveFocus();
   });
 
-  it('returns focus when Libérer disappears', async () => {
+  it('returns focus to Lancer after Libérer succeeds', async () => {
     const user = userEvent.setup();
     const placement = {
       slotKey: 'S1',
@@ -2133,8 +2138,15 @@ describe('StructureDrawDialog', () => {
       );
       return { releasedCount: 1, skippedCount: 0 };
     });
-    renderDialog(cupStage());
-    const release = await screen.findByRole('button', { name: 'Libérer 1/1' });
+    renderDialog(
+      cupStage({
+        compositionEntryCount: 16,
+        compositionCapacity: 16,
+      }),
+    );
+    const release = await screen.findByRole('button', {
+      name: 'Libérer #1 (1/1)',
+    });
     release.focus();
     await user.click(release);
     const confirm = await screen.findByRole('dialog', {
@@ -2151,8 +2163,18 @@ describe('StructureDrawDialog', () => {
       ).not.toBeInTheDocument();
     });
     await waitFor(() => {
-      expect(screen.getByRole('tab', { name: /#1/ })).toHaveFocus();
+      expect(
+        screen.getByRole('button', { name: 'Lancer le tirage' }),
+      ).toBeEnabled();
     });
+    await waitFor(
+      () => {
+        expect(
+          screen.getByRole('button', { name: 'Lancer le tirage' }),
+        ).toHaveFocus();
+      },
+      { timeout: 500 },
+    );
     expect(screen.getByRole('button', { name: 'Fermer' })).not.toHaveFocus();
   });
 
@@ -2199,7 +2221,7 @@ describe('StructureDrawDialog', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('keeps Libérer visible and disabled when a cancelled group is Ready with matches', async () => {
+  it('keeps Libérer visible and disabled when a cancelled-only group is Ready with matches', async () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
       overview(
         [
@@ -2223,14 +2245,18 @@ describe('StructureDrawDialog', () => {
       ),
     );
     renderDialog(groupsStage({ status: 'Ready', matchCount: 2 }));
-    const release = await screen.findByRole('button', { name: 'Libérer 1/1' });
+    const release = await screen.findByRole('button', {
+      name: 'Libérer #1 (1/1)',
+    });
     expect(release).toBeDisabled();
     const reason =
       'Libérer est indisponible : des matchs sont déjà rattachés à cette phase.';
-    const tile = screen.getByRole('tab', { name: /non libérés/ });
+    const tile = screen.getByRole('button', {
+      name: 'Exécution #1, annulée, 1/1 non libérés',
+    });
     expect(within(tile).getByText('1/1 non libérés')).toBeInTheDocument();
-    expect(within(tile).getByText(reason)).toBeInTheDocument();
-    expect(screen.getAllByText(reason)).toHaveLength(2);
+    expect(within(tile).queryByText(reason)).not.toBeInTheDocument();
+    expect(screen.getAllByText(reason)).toHaveLength(1);
     expect(
       screen.queryByRole('button', { name: 'Refaire le tirage' }),
     ).not.toBeInTheDocument();
@@ -2277,7 +2303,7 @@ describe('StructureDrawDialog', () => {
     });
     renderDialog(groupsStage({ matchCount: 2 }));
     await user.click(
-      await screen.findByRole('button', { name: 'Libérer 1/1' }),
+      await screen.findByRole('button', { name: 'Libérer #1 (1/1)' }),
     );
     const confirm = await screen.findByRole('dialog', {
       name: 'Libérer les placements du tirage ?',
@@ -2373,7 +2399,7 @@ describe('StructureDrawDialog', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('explains a cancelled tile when a published draw occupies the phase', async () => {
+  it('explains release is blocked when a published draw occupies the phase', async () => {
     const user = userEvent.setup();
     vi.mocked(fetchStageOverview).mockResolvedValue(
       overview(
@@ -2401,16 +2427,24 @@ describe('StructureDrawDialog', () => {
     );
     renderDialog();
     const reason = 'Libération impossible : un tirage publié occupe la phase.';
-    const cancelled = await screen.findByRole('tab', { name: /non libérés/ });
-    expect(within(cancelled).getByText('1/1 non libérés')).toBeInTheDocument();
-    expect(within(cancelled).getByText(reason)).toBeInTheDocument();
-    expect(screen.getAllByText(reason)).toHaveLength(1);
+    const cancelled = await screen.findByRole('button', {
+      name: /Exécution #2, annulée/,
+    });
+    expect(
+      within(cancelled).getByText(/non libérés|Libérée/),
+    ).toBeInTheDocument();
+    expect(within(cancelled).queryByText(reason)).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Libérer/ }),
     ).not.toBeInTheDocument();
 
     await user.click(cancelled);
-    expect(screen.getAllByText(reason)).toHaveLength(2);
+    expect(screen.queryByText(reason)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        'Abandonnez l’exécution active pour libérer ces placements',
+      ),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Libérer/ }),
     ).not.toBeInTheDocument();
@@ -2434,14 +2468,12 @@ describe('StructureDrawDialog', () => {
       ]),
     );
     renderDialog();
-    const cancelled = await screen.findByRole('tab', { name: /Annulé/ });
+    const cancelled = await screen.findByRole('button', {
+      name: /Exécution #2, annulée/,
+    });
     expect(cancelled).not.toHaveTextContent('Obsolète');
     await user.click(cancelled);
-    const panel = screen.getByRole('tabpanel');
-    expect(within(panel).queryByText('Obsolète')).not.toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /Publié/ })).toHaveTextContent(
-      'Obsolète',
-    );
+    expect(screen.getAllByText('Obsolète')).toHaveLength(1);
   });
 
   it('resets the selected execution when the dialog reopens', async () => {
@@ -2480,9 +2512,11 @@ describe('StructureDrawDialog', () => {
       );
     }
     render(<Harness />);
-    const cancelled = await screen.findByRole('tab', { name: /#1/ });
+    const cancelled = await screen.findByRole('button', {
+      name: /Exécution #1, annulée/,
+    });
     await user.click(cancelled);
-    expect(cancelled).toHaveAttribute('aria-selected', 'true');
+    expect(cancelled).toHaveAttribute('aria-expanded', 'true');
     await user.click(
       screen.getByRole('button', { name: 'Fermer le dialogue' }),
     );
@@ -2490,14 +2524,9 @@ describe('StructureDrawDialog', () => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
     await user.click(screen.getByRole('button', { name: 'Rouvrir' }));
-    expect(await screen.findByRole('tab', { name: /#2/ })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
-    expect(screen.getByRole('tab', { name: /#1/ })).toHaveAttribute(
-      'aria-selected',
-      'false',
-    );
+    expect(
+      screen.getByRole('button', { name: /Exécution #1, annulée/ }),
+    ).toHaveAttribute('aria-expanded', 'false');
   });
 
   it('restores footer focus after Relancer when focus falls back to the body', async () => {

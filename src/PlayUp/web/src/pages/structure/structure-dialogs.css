@@ -7,15 +7,15 @@
 
 .structure-draw-dialog {
   display: flex;
-  flex: 1 1 auto;
+  flex: none;
   flex-direction: column;
   gap: var(--space-16);
-  min-height: 0;
+  min-height: auto;
 }
 
 .structure-draw-dialog .ds-empty--idle {
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: none;
+  min-height: auto;
 }
 
 .structure-draw-chrome {
@@ -26,43 +26,79 @@
   min-width: 0;
 }
 
-.structure-draw-runs {
-  display: flex;
-  gap: var(--space-8);
-  overflow-x: auto;
-  min-width: 0;
-}
-
-.structure-draw-run__tile {
+.structure-draw-previous {
   display: flex;
   flex: none;
   flex-direction: column;
+  gap: var(--space-8);
+  min-height: auto;
+}
+
+.structure-draw-previous__heading {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
+}
+
+.structure-draw-previous__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+  gap: var(--space-8);
+  min-width: 0;
+}
+
+.structure-draw-previous__tile {
+  display: flex;
+  flex-direction: column;
   align-items: flex-start;
   gap: var(--space-4);
+  width: 100%;
   text-align: start;
 }
 
-.structure-draw-run__line {
-  display: flex;
-  align-items: center;
-  gap: var(--space-8);
+.structure-draw-previous__number {
+  font-weight: var(--font-weight-semibold);
 }
 
-.structure-draw-run__meta {
+.structure-draw-previous__meta {
   color: var(--color-text-secondary);
   font-size: var(--text-meta);
   line-height: var(--leading-tight);
 }
 
-.structure-draw-run__meta[data-tone='attention'] {
-  color: var(--color-attention);
+.structure-draw-previous__detail {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: var(--space-16);
+  min-height: auto;
+  padding-block-start: var(--space-16);
+  border-block-start: var(--border-width) solid var(--color-border);
+}
+
+.structure-draw-previous__detail-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8);
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
+}
+
+.structure-draw-title__jump {
+  margin-inline-start: auto;
 }
 
 .structure-draw-execution {
   display: flex;
-  flex: 1 1 auto;
+  flex: none;
   flex-direction: column;
-  min-height: 0;
+  min-height: auto;
   min-width: 0;
 }
 
@@ -84,11 +120,10 @@
 
 .structure-draw-view {
   display: flex;
-  flex: 1 1 auto;
+  flex: none;
   flex-direction: column;
   gap: var(--space-16);
-  min-height: 0;
-  overflow: auto;
+  min-height: auto;
 }
 
 .structure-draw-footer {
@@ -209,25 +244,18 @@
 }
 
 .ds-dialog:has(.structure-qualification) .ds-dialog__body,
-.ds-dialog:has(.structure-progression) .ds-dialog__body,
-.ds-dialog:has(.structure-draw-dialog) .ds-dialog__body {
+.ds-dialog:has(.structure-progression) .ds-dialog__body {
   overflow: hidden;
   display: flex;
   flex-direction: column;
   min-height: 0;
 }
 
-/* Short viewports: the shared panel height can leave the draw body shorter
-   than the fixed chrome. Let the dialog body scroll and keep the result
-   view in normal flow so facts, the selector, and the title stay reachable. */
-@media (max-height: 36rem) {
-  .ds-dialog:has(.structure-draw-dialog) .ds-dialog__body {
-    overflow: auto;
-  }
-
-  .structure-draw-view {
-    overflow: visible;
-  }
+.ds-dialog:has(.structure-draw-dialog) .ds-dialog__body {
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 /* Attribution: fixed size — height independent of row count. */

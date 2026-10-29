@@ -6,8 +6,8 @@ import {
   useMemo,
   useRef,
   useState,
-  type KeyboardEvent,
   type ReactElement,
+  type RefObject,
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
@@ -54,7 +54,6 @@ import {
   drawResolutionPlacementCount,
   getDrawUiProjection,
   pickActiveDraw,
-  pickDefaultDrawId,
   projectSlotDrawResult,
   resolveDrawCreateBlockPresentation,
   resolveDrawDetailGuidance,
@@ -109,7 +108,7 @@ function stickyMutationError(error: unknown): unknown {
   return error;
 }
 
-/** Work dialog — one selected execution, with a run selector when history exists. */
+/** Work dialog — active execution is primary; cancelled runs disclose below. */
 export type StructureDrawDialogProps = {
   open: boolean;
   onClose: () => void;
@@ -130,7 +129,7 @@ type ConfirmKind = 'apply' | 'abandon' | 'release' | 'redo' | 'cancelApplied';
 
 /**
  * Work dialog — stage draw executions.
- * The selected execution fills the view. Cancelled runs stay selectable.
+ * Footer actions always target the active execution; cancelled runs disclose inline.
  */
 export function StructureDrawDialog({
   open,
@@ -168,17 +167,21 @@ export function StructureDrawDialog({
 
   const [confirm, setConfirm] = useState<ConfirmKind | null>(null);
   const [confirmDrawId, setConfirmDrawId] = useState<string | null>(null);
-  const [selectedDrawId, setSelectedDrawId] = useState<string | null>(null);
+  const [expandedDrawId, setExpandedDrawId] = useState<string | null>(null);
   const focusedFooterRef = useRef<HTMLButtonElement | null>(null);
-  const focusTabIdRef = useRef<string | null>(null);
+  const pendingReleaseFocusRef = useRef(false);
+  const previousRunsTitleRef = useRef<HTMLHeadingElement | null>(null);
+  const detailTitleRef = useRef<HTMLHeadingElement | null>(null);
   const runsDomId = useId();
+  const previousRunsSectionId = `${runsDomId}-previous-runs`;
 
   useOpenEdge(open, {
     onClose: () => {
       setConfirm(null);
       setConfirmDrawId(null);
-      setSelectedDrawId(null);
+      setExpandedDrawId(null);
       focusedFooterRef.current = null;
+      pendingReleaseFocusRef.current = false;
     },
   });
 
@@ -190,39 +193,26 @@ export function StructureDrawDialog({
       ),
     [drawList],
   );
-  const runList = useMemo(
-    () => (activeDraw ? [activeDraw, ...cancelledDraws] : cancelledDraws),
-    [activeDraw, cancelledDraws],
-  );
-
-  function markSelectionDefault() {
-    setSelectedDrawId(null);
-  }
 
   useSyncWhen(
     open && draws != null,
-    runList.map((draw) => draw.id).join(','),
+    cancelledDraws.map((draw) => draw.id).join(','),
     () => {
-      setSelectedDrawId((current) => {
-        if (current != null && runList.some((draw) => draw.id === current)) {
-          return current;
+      setExpandedDrawId((current) => {
+        if (current == null) {
+          return null;
         }
-        return pickDefaultDrawId(drawList);
+        return cancelledDraws.some((draw) => draw.id === current)
+          ? current
+          : null;
       });
     },
   );
 
-  const resolvedSelectedId =
-    selectedDrawId != null && runList.some((draw) => draw.id === selectedDrawId)
-      ? selectedDrawId
-      : pickDefaultDrawId(drawList);
-  const displayedDraw =
-    runList.find((draw) => draw.id === resolvedSelectedId) ?? null;
-  const showingActive =
-    displayedDraw != null &&
-    activeDraw != null &&
-    displayedDraw.id === activeDraw.id;
-  const showRunSelector = cancelledDraws.length > 0;
+  const expandedDraw =
+    expandedDrawId != null
+      ? (cancelledDraws.find((draw) => draw.id === expandedDrawId) ?? null)
+      : null;
   const attachedMatchCount = stage.matchCount ?? 0;
 
   function alignedCountFor(draw: StageDraw): number {
@@ -363,7 +353,6 @@ export function StructureDrawDialog({
       return createAndGenerateDraw(stageId, drawKind);
     },
     onSuccess: (result) => {
-      markSelectionDefault();
       scheduleDrawOverviewRefresh();
       if (result.isNoSolution) {
         notify.attention(tDraw('toastCreatedNoSolution'));
@@ -391,7 +380,6 @@ export function StructureDrawDialog({
   const rerunMutation = useMutation({
     mutationFn: (drawId: string) => rerunDrawGeneration(stageId, drawId),
     onSuccess: (result) => {
-      markSelectionDefault();
       scheduleDrawOverviewRefresh();
       if (result.isNoSolution) {
         notify.attention(tDraw('toastCreatedNoSolution'));
@@ -422,7 +410,6 @@ export function StructureDrawDialog({
   const cancelMutation = useMutation({
     mutationFn: (drawId: string) => cancelDraw(stageId, drawId),
     onSuccess: () => {
-      markSelectionDefault();
       closeConfirm();
       scheduleDrawHubRefresh();
       notify.success(tDraw('toastCancelled'));
@@ -433,7 +420,7 @@ export function StructureDrawDialog({
     mutationFn: (drawId: string) =>
       releaseDrawAlignedPlacements(stageId, drawId),
     onSuccess: (result) => {
-      markSelectionDefault();
+      pendingReleaseFocusRef.current = true;
       closeConfirm();
       scheduleDrawHubRefresh();
       notify.success(tDraw('toastReleased', { count: result.releasedCount }));
@@ -472,7 +459,6 @@ export function StructureDrawDialog({
       }
     },
     onSuccess: (result) => {
-      markSelectionDefault();
       closeConfirm();
       scheduleDrawHubRefresh();
       if (result.isNoSolution) {
@@ -517,10 +503,11 @@ export function StructureDrawDialog({
     applyMutation.isPending ||
     redoMutation.isPending;
 
+  const releaseBodyError = stickyMutationError(releaseMutation.error);
+
   const mutationError =
     stickyMutationError(publishAndApplyMutation.error) ??
     stickyMutationError(cancelMutation.error) ??
-    stickyMutationError(releaseMutation.error) ??
     stickyMutationError(applyMutation.error) ??
     stickyMutationError(rerunMutation.error) ??
     stickyMutationError(redoMutation.error);
@@ -578,13 +565,21 @@ export function StructureDrawDialog({
       drawStatus: activeDraw.status,
     });
 
-  const selectedRelease =
-    displayedDraw != null && !showingActive && releaseVisible(displayedDraw)
-      ? displayedDraw
-      : null;
-  const releaseBlocked =
-    selectedRelease != null &&
-    selectedRelease.kind === 'Group' &&
+  const releaseTarget = (() => {
+    if (activeDraw != null) {
+      return null;
+    }
+    for (const draw of cancelledDraws) {
+      if (releaseVisible(draw)) {
+        return draw;
+      }
+    }
+    return null;
+  })();
+
+  const releaseFooterBlocked =
+    releaseTarget != null &&
+    releaseTarget.kind === 'Group' &&
     groupReleaseBlockedByAttachedMatches({
       drawKind: 'Group',
       stageStatus,
@@ -602,32 +597,65 @@ export function StructureDrawDialog({
   ].join('|');
 
   const footerSignature = [
-    showingActive ? 'active' : (displayedDraw?.id ?? 'none'),
-    canAbandon && showingActive ? 'abandon' : '',
-    canCancelApplied && showingActive ? 'cancelApplied' : '',
-    selectedRelease ? `release:${releaseBlocked ? 'blocked' : 'on'}` : '',
-    canRerun && showingActive ? 'rerun' : '',
+    activeDraw?.id ?? 'none',
+    canAbandon ? 'abandon' : '',
+    canCancelApplied ? 'cancelApplied' : '',
+    releaseTarget ? `release:${releaseFooterBlocked ? 'blocked' : 'on'}` : '',
+    canRerun ? 'rerun' : '',
     showLaunch ? 'launch' : '',
-    canValidate && showingActive ? 'validate' : '',
-    canApplyResume && showingActive ? 'apply' : '',
-    canRedo && showingActive ? 'redo' : '',
+    canValidate ? 'validate' : '',
+    canApplyResume ? 'apply' : '',
+    canRedo ? 'redo' : '',
   ].join('|');
 
   useLayoutEffect(() => {
-    const tabId = focusTabIdRef.current;
-    if (!tabId) {
+    if (expandedDrawId == null) {
       return;
     }
-    focusTabIdRef.current = null;
-    document.getElementById(tabId)?.focus();
-  }, [resolvedSelectedId]);
+    detailTitleRef.current?.scrollIntoView?.({ block: 'nearest' });
+  }, [expandedDrawId, expandedDraw?.id]);
+
+  useLayoutEffect(() => {
+    if (!open || !pendingReleaseFocusRef.current) {
+      return;
+    }
+    if (confirm != null || busy || releaseTarget != null) {
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      pendingReleaseFocusRef.current = false;
+      const dialog = document
+        .querySelector('.structure-draw-dialog')
+        ?.closest('[role="dialog"]');
+      if (!dialog) {
+        return;
+      }
+      const footer = dialog.querySelector('.structure-draw-footer');
+      const primary = footer?.querySelector<HTMLElement>(
+        '.ds-btn--primary:not(:disabled)',
+      );
+      const closeButton = dialog.querySelector<HTMLElement>(
+        'button.ds-icon-button:not(:disabled)',
+      );
+      (primary ?? closeButton)?.focus({ preventScroll: true });
+      const now = document.activeElement;
+      if (
+        now instanceof HTMLButtonElement &&
+        !now.disabled &&
+        now.closest('.structure-draw-footer')
+      ) {
+        focusedFooterRef.current = now;
+      }
+    }, 160);
+    return () => window.clearTimeout(timer);
+  }, [open, confirm, busy, releaseTarget, footerSignature]);
 
   useLayoutEffect(() => {
     if (!open) {
       focusedFooterRef.current = null;
       return;
     }
-    if (confirm != null || busy) {
+    if (confirm != null || busy || pendingReleaseFocusRef.current) {
       return;
     }
     const previous = focusedFooterRef.current;
@@ -660,13 +688,10 @@ export function StructureDrawDialog({
               !button.classList.contains('ds-btn--destructive'),
           )
         : undefined;
-      const tab = dialog.querySelector<HTMLElement>(
-        '[role="tab"][aria-selected="true"]',
-      );
       const closeButton = dialog.querySelector<HTMLElement>(
         'button.ds-icon-button:not(:disabled)',
       );
-      (primary ?? neutral ?? tab ?? closeButton)?.focus({
+      (primary ?? neutral ?? closeButton)?.focus({
         preventScroll: true,
       });
     }
@@ -690,19 +715,13 @@ export function StructureDrawDialog({
       structureStages={structureStages}
       sotHref={persistentStructureMutationSotHref(mutationError, competitionId)}
     />
-  ) : showingActive && activeRedo.kind === 'blocked' ? (
+  ) : activeDraw != null && activeRedo.kind === 'blocked' ? (
     <Alert tone="info" role="status">
       {tDraw(`redoBlocked.${activeRedo.reason}`)}
     </Alert>
-  ) : releaseBlocked ? (
+  ) : releaseFooterBlocked ? (
     <Alert tone="info" role="status">
       {tDraw('releaseBlockedAttachedMatches')}
-    </Alert>
-  ) : displayedDraw != null &&
-    !showingActive &&
-    releaseHoldFor(displayedDraw) === 'publishedDraw' ? (
-    <Alert tone="info" role="status">
-      {tDraw('releaseBlockedByPublishedDraw')}
     </Alert>
   ) : !overviewQuery.isLoading &&
     createBlockedDetail != null &&
@@ -750,7 +769,7 @@ export function StructureDrawDialog({
               }
             }}
           >
-            {showingActive && canAbandon ? (
+            {activeDraw != null && canAbandon ? (
               <button
                 type="button"
                 className="ds-btn ds-btn--destructive"
@@ -767,7 +786,7 @@ export function StructureDrawDialog({
                 )}
               </button>
             ) : null}
-            {showingActive && canCancelApplied ? (
+            {activeDraw != null && canCancelApplied ? (
               <button
                 type="button"
                 className="ds-btn ds-btn--destructive"
@@ -784,27 +803,28 @@ export function StructureDrawDialog({
                 )}
               </button>
             ) : null}
-            {selectedRelease ? (
+            {releaseTarget ? (
               <button
                 type="button"
                 className="ds-btn ds-btn--secondary"
-                disabled={busy || !releaseEnabled(selectedRelease)}
-                onClick={() => openConfirm('release', selectedRelease.id)}
+                disabled={busy || !releaseEnabled(releaseTarget)}
+                onClick={() => openConfirm('release', releaseTarget.id)}
               >
                 {releaseMutation.isPending ? (
                   <PendingLabel>{tDraw('releasingPlacements')}</PendingLabel>
                 ) : (
                   <>
                     <UnlockIcon size="sm" />
-                    {tDraw('releasePlacementsCount', {
-                      aligned: alignedCountFor(selectedRelease),
-                      total: drawResolutionPlacementCount(selectedRelease),
+                    {tDraw('releaseRun', {
+                      n: drawExecutionNumber(drawList, releaseTarget.id),
+                      aligned: alignedCountFor(releaseTarget),
+                      total: drawResolutionPlacementCount(releaseTarget),
                     })}
                   </>
                 )}
               </button>
             ) : null}
-            {showingActive && canRerun ? (
+            {activeDraw != null && canRerun ? (
               <button
                 type="button"
                 className="ds-btn ds-btn--secondary"
@@ -861,7 +881,7 @@ export function StructureDrawDialog({
                 </button>
               )
             ) : null}
-            {showingActive && canValidate ? (
+            {activeDraw != null && canValidate ? (
               <button
                 type="button"
                 className="ds-btn ds-btn--primary"
@@ -881,7 +901,7 @@ export function StructureDrawDialog({
                 )}
               </button>
             ) : null}
-            {showingActive && canApplyResume ? (
+            {activeDraw != null && canApplyResume ? (
               <button
                 type="button"
                 className="ds-btn ds-btn--primary"
@@ -898,7 +918,7 @@ export function StructureDrawDialog({
                 )}
               </button>
             ) : null}
-            {showingActive && canRedo ? (
+            {activeDraw != null && canRedo ? (
               <button
                 type="button"
                 className="ds-btn ds-btn--primary"
@@ -920,63 +940,26 @@ export function StructureDrawDialog({
         footerStatus={footerStatus}
       >
         <div className="structure-draw-dialog">
-          <div className="structure-draw-chrome">
-            <DrawHeroFacts
-              formatKind={stage.formatKind}
-              groupCount={stage.groupCount ?? 0}
-              teamCount={poolCount}
-              placesCount={placesN ?? 0}
-            />
-            {showRunSelector ? (
-              <div
-                className="structure-draw-runs"
-                role="tablist"
-                aria-label={tDraw('runsLabel')}
-                onKeyDown={(event) =>
-                  onRunKeyDown(event, runList, resolvedSelectedId, (drawId) => {
-                    focusTabIdRef.current = runTabId(runsDomId, drawId);
-                    setSelectedDrawId(drawId);
-                  })
-                }
-              >
-                {runList.map((draw) => {
-                  const selected = draw.id === resolvedSelectedId;
-                  return (
-                    <SelectableTile
-                      key={draw.id}
-                      id={runTabId(runsDomId, draw.id)}
-                      type="button"
-                      className="structure-draw-run__tile"
-                      role="tab"
-                      selected={selected}
-                      aria-selected={selected}
-                      aria-controls={runPanelId(runsDomId, draw.id)}
-                      tabIndex={selected ? 0 : -1}
-                      onClick={() => setSelectedDrawId(draw.id)}
-                    >
-                      <span className="structure-draw-run__line">
-                        <span>#{drawExecutionNumber(drawList, draw.id)}</span>
-                        <DrawStatusBadge
-                          status={draw.status}
-                          density="compact"
-                        />
-                      </span>
-                      <DrawRunMeta
-                        draw={draw}
-                        isActive={activeDraw?.id === draw.id}
-                        aligned={alignedCountFor(draw)}
-                        total={drawResolutionPlacementCount(draw)}
-                        releaseHold={releaseHoldFor(draw)}
-                      />
-                    </SelectableTile>
-                  );
-                })}
-              </div>
-            ) : null}
-          </div>
+          <DrawHeroFacts
+            formatKind={stage.formatKind}
+            groupCount={stage.groupCount ?? 0}
+            teamCount={poolCount}
+            placesCount={placesN ?? 0}
+          />
 
           {overviewQuery.isLoading ? (
             <WaitMark size="region">{t('fiche.drawWorkflow.loading')}</WaitMark>
+          ) : null}
+
+          {!overviewQuery.isLoading && releaseBodyError ? (
+            <MutationError
+              error={releaseBodyError}
+              structureStages={structureStages}
+              sotHref={persistentStructureMutationSotHref(
+                releaseBodyError,
+                competitionId,
+              )}
+            />
           ) : null}
 
           {!overviewQuery.isLoading &&
@@ -995,24 +978,164 @@ export function StructureDrawDialog({
             </EmptyState>
           ) : null}
 
-          {displayedDraw ? (
-            <DrawExecutionView
-              draw={displayedDraw}
-              executionNumber={drawExecutionNumber(drawList, displayedDraw.id)}
-              readOnly={displayedDraw.status === 'Cancelled'}
-              showObsolete={
-                showingActive &&
-                displayedDraw.status === 'Published' &&
-                displayedDraw.isObsoleteForConsumption === true
-              }
-              tabbed={showRunSelector}
-              panelId={runPanelId(runsDomId, displayedDraw.id)}
-              labelledBy={runTabId(runsDomId, displayedDraw.id)}
-              slots={slots}
-              groups={overviewGroups}
-              placesPerGroup={placesPerGroup}
-              bracketPairs={bracketPairs}
-            />
+          {!overviewQuery.isLoading &&
+          !overviewQuery.isError &&
+          activeDraw == null &&
+          cancelledDraws.length > 0 ? (
+            <EmptyState
+              variant="idle"
+              icon={<RandomIcon size="lg" />}
+              title={tDraw('noActiveTitle')}
+            >
+              {releaseTarget != null &&
+              releaseHoldFor(releaseTarget) !== 'publishedDraw' ? (
+                <p className="ds-body">
+                  {tDraw('noActiveReleaseFirst', {
+                    n: drawExecutionNumber(drawList, releaseTarget.id),
+                  })}
+                </p>
+              ) : (
+                <p className="ds-body">{tDraw('noActiveBody')}</p>
+              )}
+              {releaseTarget != null &&
+              releaseHoldFor(releaseTarget) === 'publishedDraw' ? (
+                <Alert tone="info" role="status">
+                  {tDraw('releaseBlockedByPublishedDraw')}
+                </Alert>
+              ) : null}
+            </EmptyState>
+          ) : null}
+
+          {activeDraw != null ? (
+            <>
+              <div className="structure-draw-title">
+                <h4 className="structure-draw-title__heading">
+                  {tDraw('executionTitle', {
+                    n: drawExecutionNumber(drawList, activeDraw.id),
+                  })}
+                </h4>
+                <DrawStatusBadge status={activeDraw.status} density="compact" />
+                {activeDraw.status === 'Published' &&
+                activeDraw.isObsoleteForConsumption === true ? (
+                  <Status density="compact" tone="attention">
+                    {tDraw('obsolete')}
+                  </Status>
+                ) : null}
+                {cancelledDraws.length > 0 ? (
+                  <button
+                    type="button"
+                    className="ds-btn ds-btn--ghost structure-draw-title__jump"
+                    onClick={() => {
+                      document
+                        .getElementById(previousRunsSectionId)
+                        ?.scrollIntoView?.({ block: 'nearest' });
+                      previousRunsTitleRef.current?.focus({
+                        preventScroll: true,
+                      });
+                    }}
+                  >
+                    {tDraw('previousRunsJump', {
+                      count: cancelledDraws.length,
+                    })}
+                  </button>
+                ) : null}
+              </div>
+              <DrawExecutionView
+                draw={activeDraw}
+                executionNumber={drawExecutionNumber(drawList, activeDraw.id)}
+                readOnly={false}
+                showTitle={false}
+                showObsolete={false}
+                slots={slots}
+                groups={overviewGroups}
+                placesPerGroup={placesPerGroup}
+                bracketPairs={bracketPairs}
+              />
+            </>
+          ) : null}
+
+          {cancelledDraws.length > 0 ? (
+            <section
+              className="structure-draw-previous"
+              id={previousRunsSectionId}
+              aria-labelledby={`${previousRunsSectionId}-title`}
+            >
+              <h4
+                className="structure-draw-previous__heading"
+                id={`${previousRunsSectionId}-title`}
+                ref={previousRunsTitleRef}
+                tabIndex={-1}
+              >
+                {tDraw('previousRunsTitle', { count: cancelledDraws.length })}
+              </h4>
+              <div className="structure-draw-previous__grid">
+                {cancelledDraws.map((draw) => {
+                  const expanded = draw.id === expandedDrawId;
+                  const meta = runTileMetaLabel(
+                    alignedCountFor(draw),
+                    drawResolutionPlacementCount(draw),
+                    tDraw,
+                  );
+                  const detailId = previousRunDetailId(runsDomId, draw.id);
+                  return (
+                    <SelectableTile
+                      key={draw.id}
+                      type="button"
+                      tone="error"
+                      className="structure-draw-previous__tile"
+                      selected={expanded}
+                      aria-expanded={expanded}
+                      aria-controls={expanded ? detailId : undefined}
+                      aria-label={tDraw('runTileLabel', {
+                        n: drawExecutionNumber(drawList, draw.id),
+                        meta,
+                      })}
+                      onClick={() =>
+                        setExpandedDrawId((current) =>
+                          current === draw.id ? null : draw.id,
+                        )
+                      }
+                    >
+                      <span
+                        className="structure-draw-previous__number"
+                        aria-hidden="true"
+                      >
+                        #{drawExecutionNumber(drawList, draw.id)}
+                      </span>
+                      <span
+                        className="structure-draw-previous__meta"
+                        aria-hidden="true"
+                      >
+                        {meta}
+                      </span>
+                    </SelectableTile>
+                  );
+                })}
+              </div>
+              {expandedDraw != null ? (
+                <div
+                  className="structure-draw-previous__detail"
+                  id={previousRunDetailId(runsDomId, expandedDraw.id)}
+                >
+                  <CancelledDrawDetail
+                    draw={expandedDraw}
+                    executionNumber={drawExecutionNumber(
+                      drawList,
+                      expandedDraw.id,
+                    )}
+                    detailTitleRef={detailTitleRef}
+                    activeDraw={activeDraw}
+                    aligned={alignedCountFor(expandedDraw)}
+                    total={drawResolutionPlacementCount(expandedDraw)}
+                    releaseVisible={releaseVisible(expandedDraw)}
+                    slots={slots}
+                    groups={overviewGroups}
+                    placesPerGroup={placesPerGroup}
+                    bracketPairs={bracketPairs}
+                  />
+                </div>
+              ) : null}
+            </section>
           ) : null}
         </div>
       </Dialog>
@@ -1210,50 +1333,82 @@ export function StructureDrawDialog({
   );
 }
 
-function runTabId(prefix: string, drawId: string): string {
-  return `${prefix}-tab-${drawId}`;
+function previousRunDetailId(prefix: string, drawId: string): string {
+  return `${prefix}-detail-${drawId}`;
 }
 
-function runPanelId(prefix: string, drawId: string): string {
-  return `${prefix}-panel-${drawId}`;
+function runTileMetaLabel(
+  aligned: number,
+  total: number,
+  tDraw: (key: string, options?: Record<string, unknown>) => string,
+): string {
+  if (aligned > 0) {
+    return tDraw('runMetaUnreleased', { aligned, total });
+  }
+  return tDraw('runMetaReleased');
 }
 
-function onRunKeyDown(
-  event: KeyboardEvent<HTMLDivElement>,
-  runs: readonly StageDraw[],
-  selectedId: string | null,
-  select: (drawId: string) => void,
-): void {
-  if (
-    event.key !== 'ArrowLeft' &&
-    event.key !== 'ArrowRight' &&
-    event.key !== 'Home' &&
-    event.key !== 'End'
-  ) {
-    return;
-  }
-  if (runs.length === 0) {
-    return;
-  }
-  event.preventDefault();
-  const index = Math.max(
-    0,
-    runs.findIndex((draw) => draw.id === selectedId),
+function CancelledDrawDetail({
+  draw,
+  executionNumber,
+  detailTitleRef,
+  activeDraw,
+  aligned,
+  total,
+  releaseVisible,
+  slots,
+  groups,
+  placesPerGroup,
+  bracketPairs,
+}: {
+  draw: StageDraw;
+  executionNumber: number;
+  detailTitleRef: RefObject<HTMLHeadingElement | null>;
+  activeDraw: StageDraw | null;
+  aligned: number;
+  total: number;
+  releaseVisible: boolean;
+  slots: StageSlot[];
+  groups: StageGroupOverview[];
+  placesPerGroup: number | null;
+  bracketPairs: StageBracketPair[];
+}): ReactElement {
+  const { t: tDraw } = useTranslation('draw');
+  const titleId = `draw-detail-${draw.id}-title`;
+  const showHeldByActive = activeDraw != null && releaseVisible && aligned > 0;
+
+  return (
+    <section aria-labelledby={titleId}>
+      <h5
+        className="structure-draw-previous__detail-title"
+        id={titleId}
+        ref={detailTitleRef}
+      >
+        {tDraw('executionTitle', { n: executionNumber })}
+        <DrawStatusBadge status="Cancelled" density="compact" />
+      </h5>
+      {showHeldByActive ? (
+        <Alert tone="info" role="status">
+          <p className="ds-body">
+            {tDraw('runMetaUnreleased', { aligned, total })}
+          </p>
+          <p className="ds-body">{tDraw('releaseHeldByActive')}</p>
+        </Alert>
+      ) : null}
+      <DrawExecutionView
+        draw={draw}
+        executionNumber={executionNumber}
+        readOnly
+        showTitle={false}
+        showObsolete={false}
+        omitResultAriaLabel={Boolean(activeDraw)}
+        slots={slots}
+        groups={groups}
+        placesPerGroup={placesPerGroup}
+        bracketPairs={bracketPairs}
+      />
+    </section>
   );
-  let next = index;
-  if (event.key === 'ArrowRight') {
-    next = (index + 1) % runs.length;
-  } else if (event.key === 'ArrowLeft') {
-    next = (index - 1 + runs.length) % runs.length;
-  } else if (event.key === 'Home') {
-    next = 0;
-  } else {
-    next = runs.length - 1;
-  }
-  const draw = runs[next];
-  if (draw) {
-    select(draw.id);
-  }
 }
 
 function DrawHeroFacts({
@@ -1302,65 +1457,13 @@ function DrawHeroFacts({
   );
 }
 
-function DrawRunMeta({
-  draw,
-  isActive,
-  aligned,
-  total,
-  releaseHold,
-}: {
-  draw: StageDraw;
-  isActive: boolean;
-  aligned: number;
-  total: number;
-  releaseHold: 'publishedDraw' | 'attachedMatches' | null;
-}): ReactElement {
-  const { t } = useTranslation('draw');
-  if (
-    isActive &&
-    draw.status === 'Published' &&
-    draw.isObsoleteForConsumption
-  ) {
-    return (
-      <span className="structure-draw-run__meta">{t('runMetaObsolete')}</span>
-    );
-  }
-  if (isActive) {
-    return (
-      <span className="structure-draw-run__meta">{t('runMetaActive')}</span>
-    );
-  }
-  if (aligned > 0) {
-    const reason =
-      releaseHold === 'publishedDraw'
-        ? t('releaseBlockedByPublishedDraw')
-        : releaseHold === 'attachedMatches'
-          ? t('releaseBlockedAttachedMatches')
-          : null;
-    return (
-      <>
-        <span className="structure-draw-run__meta" data-tone="attention">
-          {t('runMetaUnreleased', { aligned, total })}
-        </span>
-        {reason != null ? (
-          <span className="structure-draw-run__meta">{reason}</span>
-        ) : null}
-      </>
-    );
-  }
-  return (
-    <span className="structure-draw-run__meta">{t('runMetaReleased')}</span>
-  );
-}
-
 function DrawExecutionView({
   draw,
   executionNumber,
   readOnly,
   showObsolete,
-  tabbed,
-  panelId,
-  labelledBy,
+  showTitle = true,
+  omitResultAriaLabel = false,
   slots,
   groups,
   placesPerGroup,
@@ -1370,9 +1473,8 @@ function DrawExecutionView({
   executionNumber: number;
   readOnly: boolean;
   showObsolete: boolean;
-  tabbed: boolean;
-  panelId: string;
-  labelledBy: string;
+  showTitle?: boolean;
+  omitResultAriaLabel?: boolean;
   slots: StageSlot[];
   groups: StageGroupOverview[];
   placesPerGroup: number | null;
@@ -1415,24 +1517,20 @@ function DrawExecutionView({
   const showEmptyResult = !showResults && guidance?.kind !== 'alert';
 
   return (
-    <div
-      className="structure-draw-execution"
-      role={tabbed ? 'tabpanel' : undefined}
-      id={tabbed ? panelId : undefined}
-      aria-labelledby={tabbed ? labelledBy : undefined}
-      tabIndex={tabbed ? 0 : undefined}
-    >
-      <div className="structure-draw-title">
-        <h4 className="structure-draw-title__heading">
-          {t('executionTitle', { n: executionNumber })}
-        </h4>
-        <DrawStatusBadge status={draw.status} density="compact" />
-        {showObsolete ? (
-          <Status density="compact" tone="attention">
-            {t('obsolete')}
-          </Status>
-        ) : null}
-      </div>
+    <div className="structure-draw-execution">
+      {showTitle ? (
+        <div className="structure-draw-title">
+          <h4 className="structure-draw-title__heading">
+            {t('executionTitle', { n: executionNumber })}
+          </h4>
+          <DrawStatusBadge status={draw.status} density="compact" />
+          {showObsolete ? (
+            <Status density="compact" tone="attention">
+              {t('obsolete')}
+            </Status>
+          ) : null}
+        </div>
+      ) : null}
       <div className="structure-draw-view">
         {showPhrase ? (
           <p className="structure-draw-detail__phrase" role="status">
@@ -1466,7 +1564,7 @@ function DrawExecutionView({
           <div className="structure-schematic-viewport">
             <GroupsSchematicView
               groups={groupModel}
-              ariaLabel={t('result')}
+              ariaLabel={omitResultAriaLabel ? undefined : t('result')}
               ghostLabel={t('ghostPlace')}
             />
           </div>
@@ -1475,7 +1573,7 @@ function DrawExecutionView({
           <DrawSlotConfrontationGrid
             rows={slotResult.confrontations}
             unpaired={slotResult.unpaired}
-            ariaLabel={t('result')}
+            ariaLabel={omitResultAriaLabel ? undefined : t('result')}
             unpairedLabel={t('placements')}
           />
         ) : null}

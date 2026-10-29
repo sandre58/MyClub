@@ -1,8 +1,10 @@
 import type { ComponentPropsWithoutRef, ElementType, ReactNode } from 'react';
+import { ChevronDownIcon } from '../icons/shellIcons';
 
 type SelectableTileOwnProps<T extends ElementType> = {
   as?: T;
   selected?: boolean;
+  tone?: 'error';
   className?: string;
   children: ReactNode;
 };
@@ -18,6 +20,7 @@ export type SelectableTileProps<T extends ElementType = 'button'> =
 export function SelectableTile<T extends ElementType = 'button'>({
   as,
   selected = false,
+  tone,
   className = '',
   children,
   ...rest
@@ -29,9 +32,19 @@ export function SelectableTile<T extends ElementType = 'button'>({
     <Tag
       className={classes}
       data-selected={selected ? 'true' : 'false'}
+      data-tone={tone}
       {...rest}
     >
-      {children}
+      {tone === 'error' ? (
+        <>
+          <span className="ds-selectable-tile__body">{children}</span>
+          <span className="ds-selectable-tile__chevron" aria-hidden="true">
+            <ChevronDownIcon size="sm" />
+          </span>
+        </>
+      ) : (
+        children
+      )}
     </Tag>
   );
 }

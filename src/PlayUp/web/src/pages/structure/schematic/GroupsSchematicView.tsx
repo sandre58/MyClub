@@ -17,7 +17,7 @@ export function GroupsSchematicView({
   renderSeat,
 }: {
   groups: readonly GroupsSchematicGroup[];
-  ariaLabel: string;
+  ariaLabel?: string;
   ghostLabel?: string;
   renderSeat?: (
     group: GroupsSchematicGroup,
@@ -27,7 +27,8 @@ export function GroupsSchematicView({
   return (
     <div
       className="regulation-schematic regulation-schematic--groups"
-      aria-label={ariaLabel}
+      role="group"
+      {...(ariaLabel ? { 'aria-label': ariaLabel } : {})}
     >
       <div className="regulation-schematic__cards">
         {groups.map((group, index) => {
