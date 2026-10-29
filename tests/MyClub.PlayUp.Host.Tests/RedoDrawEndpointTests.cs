@@ -83,6 +83,28 @@ public sealed class RedoDrawEndpointTests(HostPostgresFixture fixture)
     }
 
     [IntegrationFact]
+    public async Task Redo_when_the_draw_is_not_applied_returns_409_and_changes_nothingAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var seed = await SeedDraftSlotDrawAsync(factory);
+
+        using var client = factory.CreateClient();
+        using var response = await client.PostAsync(RedoUri(seed.StageId, seed.DrawId), content: null);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
+        GetCode(problem!).Should().Be(ApplicationErrorCodes.DrawRedoRequiresApplied);
+
+        using var scope = factory.Services.CreateScope();
+        var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(seed.StageId);
+        stage.Should().NotBeNull();
+        stage!.GetDraw(seed.DrawId).Status.Should().Be(DrawStatus.Draft);
+        stage.Draws.Should().ContainSingle();
+        stage.FindSlot("S1")!.EntryId.Should().BeNull();
+        stage.FindSlot("S2")!.EntryId.Should().BeNull();
+    }
+
+    [IntegrationFact]
     public async Task Redo_when_stage_missing_returns_404Async()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
@@ -157,5 +179,34 @@ public sealed class RedoDrawEndpointTests(HostPostgresFixture fixture)
         return new SlotDrawSeed(stage.Id, draw.Id, slotS1Entry, slotS2Entry);
     }
 
-    private sealed record SlotDrawSeed(StageId StageId, DrawId DrawId, EntryId SlotS1Entry, EntryId SlotS2Entry);
+    private async Task<SlotDrawSeed> SeedDraftSlotDrawAsync(PlayUpWebApplicationFactory factory)
+    {
+        using var scope = factory.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+
+        var competition = Competition.Create(new CompetitionName("Redo Draw Cup"), SampleRegulations.Standard(), _clock);
+        var stage = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
+        stage.AddRound("R1", _clock);
+        stage.AddSlot("S1");
+        stage.AddSlot("S2");
+        stage.SeedEntryRoundBracketPairs();
+        ReplaceStageDrawRules.Execute(stage, competition, new DrawRules(DrawMode.Random), _clock);
+        var entryA = EntryId.New();
+        var entryB = EntryId.New();
+        stage.ReplaceAffectationAuthoring([entryA, entryB], _clock);
+
+        // Left Draft on purpose: never published nor applied, so the grid stays vacant.
+        var draw = CreateDraw.Execute(stage, DrawResolutionKind.Slot, _clock);
+
+        competition.AddStage(stage.Id, _clock);
+        competitions.Add(competition);
+        stages.Add(stage);
+        await unitOfWork.SaveChangesAsync();
+
+        return new SlotDrawSeed(stage.Id, draw.Id, SlotS1Entry: null, SlotS2Entry: null);
+    }
+
+    private sealed record SlotDrawSeed(StageId StageId, DrawId DrawId, EntryId? SlotS1Entry, EntryId? SlotS2Entry);
 }
