@@ -404,13 +404,18 @@ export function StructureCompositionDialog({
                   <span
                     className={[
                       'structure-qualification__fact',
-                      fact.key === 'selected' && k > 0
+                      fact.key === 'selected'
                         ? 'structure-qualification__fact--primary'
                         : 'structure-qualification__fact--secondary',
                     ].join(' ')}
                     data-fact={fact.key}
                   >
-                    <span className="structure-qualification__fact-value">
+                    <span
+                      className="structure-qualification__fact-value"
+                      data-zero={
+                        fact.key === 'selected' && k === 0 ? 'true' : undefined
+                      }
+                    >
                       {fact.value}
                     </span>
                     <span className="structure-qualification__fact-label">

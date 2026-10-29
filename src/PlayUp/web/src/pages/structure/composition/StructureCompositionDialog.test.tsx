@@ -129,6 +129,16 @@ function fact(key: string): HTMLElement {
   return node;
 }
 
+function factPart(key: string, part: 'value' | 'label'): HTMLElement {
+  const node = fact(key).querySelector(
+    `.structure-qualification__fact-${part}`,
+  );
+  if (!(node instanceof HTMLElement)) {
+    throw new Error(`missing fact ${part} ${key}`);
+  }
+  return node;
+}
+
 function teamTile(name: RegExp): HTMLElement {
   return screen.getByRole('button', { name });
 }
@@ -225,6 +235,10 @@ describe('StructureCompositionDialog', () => {
     expect(fact('selected')).toHaveClass(
       'structure-qualification__fact--primary',
     );
+    expect(fact('selected')).not.toHaveClass(
+      'structure-qualification__fact--secondary',
+    );
+    expect(factPart('selected', 'value')).not.toHaveAttribute('data-zero');
     expect(fact('remaining')).toHaveTextContent('4');
     expect(fact('remaining')).toHaveTextContent('restantes');
     expect(fact('remaining')).toHaveClass(
@@ -244,7 +258,7 @@ describe('StructureCompositionDialog', () => {
     ).toHaveAttribute('data-tone', 'attention');
   });
 
-  it('tones Restantes attention while places remain and keeps Sélectionnées secondary at zero', () => {
+  it('keeps Sélectionnées primary at zero and tones only its value secondary', () => {
     renderDialog({
       compositionCapacity: 4,
       entryList: [entry(amiens, 'Amiens')],
@@ -254,10 +268,21 @@ describe('StructureCompositionDialog', () => {
     ).toHaveAttribute('data-tone', 'attention');
     expect(fact('remaining')).toHaveTextContent('4');
     expect(fact('selected')).toHaveClass(
-      'structure-qualification__fact--secondary',
+      'structure-qualification__fact--primary',
     );
     expect(fact('selected')).not.toHaveClass(
-      'structure-qualification__fact--primary',
+      'structure-qualification__fact--secondary',
+    );
+    expect(factPart('selected', 'value')).toHaveAttribute('data-zero', 'true');
+    expect(factPart('selected', 'value')).toHaveTextContent('0');
+    expect(factPart('selected', 'label')).not.toHaveAttribute('data-zero');
+    const zeroRule = compositionCss.match(
+      /\.structure-composition__facts \[data-fact='selected'\] \.structure-qualification__fact-value\[data-zero='true'\]\s*\{([^}]*)\}/,
+    );
+    expect(zeroRule?.[1]).toMatch(/color:\s*var\(--color-text-secondary\)/);
+    expect(zeroRule?.[1]).not.toMatch(/font-size|font-weight|letter-spacing/);
+    expect(compositionCss).not.toMatch(
+      /\[data-fact='selected'\].*structure-qualification__fact-label/,
     );
     cleanup();
 
@@ -297,6 +322,8 @@ describe('StructureCompositionDialog', () => {
     expect(fact('selected')).toHaveClass(
       'structure-qualification__fact--primary',
     );
+    expect(factPart('selected', 'value')).not.toHaveAttribute('data-zero');
+    expect(factPart('remaining', 'value')).not.toHaveAttribute('data-zero');
     expect(screen.queryByText('Complet')).not.toBeInTheDocument();
     cleanup();
 
@@ -321,6 +348,13 @@ describe('StructureCompositionDialog', () => {
     expect(compositionCss).not.toMatch(/data-tone='near'/);
     expect(compositionCss).not.toMatch(/data-tone='over'/);
     expect(compositionCss).toMatch(/data-tone='attention'/);
+    const attentionRule = compositionCss.match(
+      /\.structure-composition__facts\[data-tone='attention'\] \[data-fact='remaining'\] \.structure-qualification__fact-value\s*\{([^}]*)\}/,
+    );
+    expect(attentionRule?.[1]).toMatch(/color:\s*var\(--color-attention\)/);
+    expect(compositionCss).not.toMatch(
+      /\[data-fact='remaining'\].*structure-qualification__fact-label/,
+    );
   });
 
   it('does not render an occupancy meter inside the dialog', () => {
@@ -452,7 +486,7 @@ describe('StructureCompositionDialog', () => {
     );
   });
 
-  it('toggles a team tile with click and keyboard and drops Sélectionnées to secondary at zero', async () => {
+  it('toggles a team tile with click and keyboard and keeps Sélectionnées primary', async () => {
     const user = userEvent.setup();
     renderDialog({
       entryList: [entry(amiens, 'Amiens')],
@@ -463,8 +497,9 @@ describe('StructureCompositionDialog', () => {
     expect(tile).toHaveAttribute('data-selected', 'false');
     expect(tile).toHaveAttribute('aria-pressed', 'false');
     expect(fact('selected')).toHaveClass(
-      'structure-qualification__fact--secondary',
+      'structure-qualification__fact--primary',
     );
+    expect(factPart('selected', 'value')).toHaveAttribute('data-zero', 'true');
 
     await user.click(tile);
     expect(tile).toHaveAttribute('data-selected', 'true');
@@ -472,14 +507,16 @@ describe('StructureCompositionDialog', () => {
     expect(fact('selected')).toHaveClass(
       'structure-qualification__fact--primary',
     );
+    expect(factPart('selected', 'value')).not.toHaveAttribute('data-zero');
 
     tile.focus();
     await user.keyboard('{Enter}');
     expect(tile).toHaveAttribute('data-selected', 'false');
     expect(tile).toHaveAttribute('aria-pressed', 'false');
     expect(fact('selected')).toHaveClass(
-      'structure-qualification__fact--secondary',
+      'structure-qualification__fact--primary',
     );
+    expect(factPart('selected', 'value')).toHaveAttribute('data-zero', 'true');
 
     tile.focus();
     await user.keyboard(' ');

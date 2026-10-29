@@ -36,10 +36,15 @@
   width: 100%;
 }
 
-/* Restantes only. Open and over-cap counts use attention; zero stays secondary. */
+/* Sélectionnées stays primary. At zero only the number uses the secondary color. */
 
-.structure-composition__facts[data-tone='attention'] [data-fact='remaining'] .structure-qualification__fact-value,
-.structure-composition__facts[data-tone='attention'] [data-fact='remaining'] .structure-qualification__fact-label {
+.structure-composition__facts [data-fact='selected'] .structure-qualification__fact-value[data-zero='true'] {
+  color: var(--color-text-secondary);
+}
+
+/* Restantes number only. Open and over-cap counts use attention; zero stays secondary. */
+
+.structure-composition__facts[data-tone='attention'] [data-fact='remaining'] .structure-qualification__fact-value {
   color: var(--color-attention);
 }
 
