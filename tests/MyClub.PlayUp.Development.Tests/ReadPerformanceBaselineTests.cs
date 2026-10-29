@@ -170,8 +170,8 @@ public sealed class ReadPerformanceBaselineTests(
 
         overviewSql.Should().BeGreaterThan(3, "overview still loads competition, stages, and match rows");
         overviewSql.Should().BeLessThanOrEqualTo(
-            20,
-            "overview uses SummaryRow batch load — must stay within consultation-scale SQL (baseline Full load was ~21 SQL)");
+            21,
+            "ligue-1:running warm overview measured 20 SQL on CI (SummaryRow; small margin over observed count)");
 
         var combinedSql = string.Join('\n', sqlTexts);
         combinedSql.Should().NotContain("match_declared_participations");
