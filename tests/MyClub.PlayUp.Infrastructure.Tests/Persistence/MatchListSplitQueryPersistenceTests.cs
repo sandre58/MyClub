@@ -11,9 +11,9 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
-using MyClub.PlayUp.Infrastructure.DependencyInjection;
 using MyClub.PlayUp.Infrastructure.Persistence;
 using MyClub.PlayUp.Infrastructure.Persistence.Repositories;
 using MyClub.PlayUp.Infrastructure.Tests.Common;
@@ -24,9 +24,9 @@ namespace MyClub.PlayUp.Infrastructure.Tests.Persistence;
 /// <summary>
 /// Guards split-query list loads: no cartesian Include warning, owned collection order preserved.
 /// </summary>
-[Collection("InfrastructurePostgres")]
+[Collection("postgres")]
 [Trait("Category", "Integration")]
-public sealed class MatchListSplitQueryPersistenceTests(InfrastructurePostgresFixture fixture)
+public sealed class MatchListSplitQueryPersistenceTests(PostgresFixture fixture)
 {
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 10, 29, 12, 0, 0, TimeSpan.Zero));
 
@@ -109,12 +109,18 @@ public sealed class MatchListSplitQueryPersistenceTests(InfrastructurePostgresFi
 
     private async Task<StageId> SeedMatchWithSheetFactsAsync()
     {
-        using var scope = CreateScope();
-        var repository = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
+        using var scope = fixture.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
         var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
-        var stageId = StageId.New();
-        var competitionId = CompetitionId.New();
-        SeedMatchWithSheetFacts(competitionId, stageId, repository);
+
+        var competition = Competition.Create(new CompetitionName("Split guard"), SampleRegulations.Standard(), _clock);
+        competitions.Add(competition);
+        var stage = StageSeed.CreateDraft(competition.Id, _clock);
+        var stageId = stage.Id;
+        stages.Add(stage);
+        SeedMatchWithSheetFacts(competition.Id, stageId, matches);
         await unitOfWork.SaveChangesAsync();
         return stageId;
     }
@@ -122,13 +128,19 @@ public sealed class MatchListSplitQueryPersistenceTests(InfrastructurePostgresFi
     private async Task<(StageId StageId, MatchId MatchId, GoalId FirstGoal, GoalId SecondGoal, SubstitutionId FirstSub, SubstitutionId SecondSub)>
         SeedOrderedSheetFactsAsync()
     {
-        using var scope = CreateScope();
-        var repository = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
+        using var scope = fixture.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
         var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
-        var stageId = StageId.New();
-        var competitionId = CompetitionId.New();
 
-        var match = Match.Create(competitionId, stageId, EntryId.New(), EntryId.New(), _clock);
+        var competition = Competition.Create(new CompetitionName("Split order"), SampleRegulations.Standard(), _clock);
+        competitions.Add(competition);
+        var stage = StageSeed.CreateDraft(competition.Id, _clock);
+        var stageId = stage.Id;
+        stages.Add(stage);
+
+        var match = Match.Create(competition.Id, stageId, EntryId.New(), EntryId.New(), _clock);
         var homeA = MemberId.New();
         var homeB = MemberId.New();
         var awayA = MemberId.New();
@@ -143,7 +155,7 @@ public sealed class MatchListSplitQueryPersistenceTests(InfrastructurePostgresFi
         var firstSub = match.RecordSubstitution(homeA, homeB, Side.Home, _clock).Id;
         var secondSub = match.RecordSubstitution(awayA, awayB, Side.Away, _clock).Id;
         var matchId = match.Id;
-        repository.Add(match);
+        matches.Add(match);
         await unitOfWork.SaveChangesAsync();
         return (stageId, matchId, firstGoal, secondGoal, firstSub, secondSub);
     }
@@ -153,24 +165,26 @@ public sealed class MatchListSplitQueryPersistenceTests(InfrastructurePostgresFi
         SqlCommandCounterInterceptor? sqlCounter = null)
     {
         var services = new ServiceCollection();
-        services.AddPlayUpInfrastructure(fixture.ConnectionString, options =>
-        {
-            if (throwOnCartesianInclude)
+        services.AddPlayUpInfrastructure(
+            fixture.ConnectionString,
+            options =>
             {
-                options.ConfigureWarnings(builder =>
-                    builder.Throw(RelationalEventId.MultipleCollectionIncludeWarning));
-            }
+                if (throwOnCartesianInclude)
+                {
+                    options.ConfigureWarnings(builder =>
+                        builder.Throw(RelationalEventId.MultipleCollectionIncludeWarning));
+                }
 
-            if (sqlCounter is not null)
-            {
-                options.AddInterceptors(sqlCounter);
-            }
-        });
+                if (sqlCounter is not null)
+                {
+                    options.AddInterceptors(sqlCounter);
+                }
+            });
 
         return services.BuildServiceProvider(validateScopes: true).CreateScope();
     }
 
-    private void SeedMatchWithSheetFacts(CompetitionId competitionId, StageId stageId, IMatchRepository repository)
+    private static void SeedMatchWithSheetFacts(CompetitionId competitionId, StageId stageId, IMatchRepository repository)
     {
         var match = Match.Create(competitionId, stageId, EntryId.New(), EntryId.New(), _clock);
         var homeStarter = MemberId.New();

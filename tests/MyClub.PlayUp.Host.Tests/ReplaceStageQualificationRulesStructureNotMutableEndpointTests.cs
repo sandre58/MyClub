@@ -8,9 +8,14 @@ using System.Net;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using MyClub.PlayUp.Application;
-using MyClub.PlayUp.Application.Reads;
+using MyClub.PlayUp.Application.Abstractions;
+using MyClub.PlayUp.Application.Stages;
+using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Host.Contracts;
+using MyClub.PlayUp.TestKit;
 using Xunit;
 
 namespace MyClub.PlayUp.Host.Tests;
@@ -19,42 +24,22 @@ namespace MyClub.PlayUp.Host.Tests;
 [Trait("Category", "Integration")]
 public sealed class ReplaceStageQualificationRulesStructureNotMutableEndpointTests(HostPostgresFixture fixture)
 {
+    private readonly FakeClock _clock = new(new DateTimeOffset(2026, 10, 29, 12, 0, 0, TimeSpan.Zero));
+
     [IntegrationFact]
     public async Task Put_qualification_rules_on_running_stage_returns_StructureNotMutableAsync()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var stageId = await SeedReadyChampionshipAsync(factory);
+
         using var client = factory.CreateClient();
-        var competitionId = await CreateCompetitionAsync(client);
-        using (var entry = await client.PostAsJsonAsync(
-            $"/competitions/{competitionId}/entries",
-            new AddEntryRequest("Alpha")))
-        {
-            entry.StatusCode.Should().Be(HttpStatusCode.OK);
-        }
-
-        using var stageResponse = await client.PostAsJsonAsync(
-            $"/competitions/{competitionId}/stages",
-            new AddCompetitionStageRequest("Championship", "Only"));
-        stageResponse.StatusCode.Should().Be(HttpStatusCode.Created);
-        var stage = (await stageResponse.Content.ReadFromJsonAsync<AddCompetitionStageResponse>(HostJson.Options))!;
-
-        using (var prepare = await client.PostAsync($"/competitions/{competitionId}/prepare", content: null))
-        {
-            prepare.StatusCode.Should().Be(HttpStatusCode.NoContent);
-        }
-
-        using (var startCompetition = await client.PostAsync($"/competitions/{competitionId}/start", content: null))
-        {
-            startCompetition.StatusCode.Should().Be(HttpStatusCode.NoContent);
-        }
-
-        using (var startStage = await client.PostAsync($"/stages/{stage.StageId}/start", content: null))
+        using (var startStage = await client.PostAsync($"/stages/{stageId.Value}/start", content: null))
         {
             startStage.StatusCode.Should().Be(HttpStatusCode.NoContent);
         }
 
         using var response = await client.PutAsJsonAsync(
-            $"/stages/{stage.StageId}/qualification-rules",
+            $"/stages/{stageId.Value}/qualification-rules",
             new ReplaceStageQualificationRulesRequest([]),
             HostJson.Options);
 
@@ -63,14 +48,22 @@ public sealed class ReplaceStageQualificationRulesStructureNotMutableEndpointTes
         GetCode(problem!).Should().Be(ApplicationErrorCodes.StructureNotMutable);
     }
 
-    private static async Task<Guid> CreateCompetitionAsync(HttpClient client)
+    private async Task<StageId> SeedReadyChampionshipAsync(PlayUpWebApplicationFactory factory)
     {
-        using var response = await client.PostAsJsonAsync(
-            "/competitions",
-            new CreateCompetitionRequest($"Qual guard {Guid.CreateVersion7():N}"));
-        response.StatusCode.Should().Be(HttpStatusCode.Created);
-        var created = await response.Content.ReadFromJsonAsync<WorkspaceSummaryDto>(HostJson.Options);
-        return created!.Id;
+        using var scope = factory.Services.CreateScope();
+        var situation = TestCompetition.Create("Qual guard running", _clock)
+            .WithTeams("A", "B", "C", "D")
+            .WithStructure(StructureIntent.Championship(stageName: "League"))
+            .PreparePrimaryStage();
+        var stage = situation.RequirePrimaryStage();
+        var materialized = MaterializeMatches.Execute(situation.Competition, stage, [], _clock);
+        foreach (var match in materialized.CreatedMatches)
+        {
+            situation.TrackMatch(match);
+        }
+
+        await HostTestPersist.PersistAsync(scope.ServiceProvider, situation);
+        return stage.Id;
     }
 
     private static string? GetCode(ProblemDetails problem) =>

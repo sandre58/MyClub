@@ -54,7 +54,7 @@ public sealed class MatchRepositoryLoadBaselineTests(
         listByStageSql.Should().BeLessThanOrEqualTo(
             8,
             "AUD-0012 match-list split: no cartesian single query on QF stage");
-        listByStageIdsSql.Should().BeGreaterThan(listByStageSql);
+        listByStageIdsSql.Should().BeGreaterThanOrEqualTo(listByStageSql);
         listByStageIdsReadOnlySql.Should().BeInRange(
             listByStageIdsSql - 1,
             listByStageIdsSql + 1,

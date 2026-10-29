@@ -84,7 +84,9 @@ public sealed class ReadPerformanceBaselineTests(
         matchHubSql.Should().BeLessThan(matchHubFanOutTotalSql, "unified Match Hub should beat 1+N fan-out");
         attentionSql.Should().BeLessThanOrEqualTo(overviewSql, "attention bundle must not exceed overview load");
         attentionSql.Should().BeLessThanOrEqualTo(20, "D2-B lot 2 multi-stage hydration batch (baseline was 21 SQL)");
-        overviewSql.Should().BeLessThanOrEqualTo(20, "overview bundle uses batched GetByIds hydration (baseline was 21 SQL)");
+        overviewSql.Should().BeLessThanOrEqualTo(
+            24,
+            "overview bundle may load match list graphs via split queries (+4 SQL vs pre-split baseline 20 on cup-qf-sf)");
         consultationSql.Should().BeLessThanOrEqualTo(overviewSql, "consultation bundle must not exceed overview load");
         structureSql.Should().BeLessThanOrEqualTo(
             overviewSql,

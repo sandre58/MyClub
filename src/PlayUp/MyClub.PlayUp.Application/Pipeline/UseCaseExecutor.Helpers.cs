@@ -485,11 +485,4 @@ public sealed partial class UseCaseExecutor
             await matches.ListByStageIdsForUpdateAsync(destinationStageIds, cancellationToken)
                 .ConfigureAwait(false));
     }
-
-    private async Task<IReadOnlyList<Match>> LoadStageMatchesForExitRuleReplaceAsync(
-        Stage stage,
-        CancellationToken cancellationToken) =>
-        stage.Status is StageStatus.Ready
-            ? await matches.ListByStageForUpdateAsync(stage.Id, cancellationToken).ConfigureAwait(false)
-            : [];
 }

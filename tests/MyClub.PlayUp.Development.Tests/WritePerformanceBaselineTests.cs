@@ -38,8 +38,9 @@ public sealed class WritePerformanceBaselineTests(
         var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
         var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
         var competition = (await competitions.ListAsync()).Should().ContainSingle().Subject;
-        var qfStageId = competition.StageIds[0];
-        var qfStage = await stages.GetByIdForUpdateAsync(qfStageId);
+        var qfStageId = await FindRunningStageIdAsync(competition.StageIds, stages);
+        qfStageId.Should().NotBeNull();
+        var qfStage = await stages.GetByIdForUpdateAsync(qfStageId!.Value);
         qfStage.Should().NotBeNull();
         qfStage!.Status.Should().Be(StageStatus.Running);
 
@@ -49,7 +50,7 @@ public sealed class WritePerformanceBaselineTests(
         var stopwatch = Stopwatch.StartNew();
 
         var act = async () => await executor.ReplaceStageQualificationRulesAsync(
-            qfStageId,
+            qfStageId!.Value,
             paths: null);
 
         await act.Should().ThrowAsync<ApplicationFailureException>()
@@ -71,6 +72,22 @@ public sealed class WritePerformanceBaselineTests(
         stopwatch.ElapsedMilliseconds.Should().BeLessThan(
             150,
             "refusal on Running upstream must stay under product latency budget on seed");
+    }
+
+    private static async Task<StageId?> FindRunningStageIdAsync(
+        IReadOnlyList<StageId> stageIds,
+        IStageRepository stages)
+    {
+        foreach (var stageId in stageIds)
+        {
+            var stage = await stages.GetByIdForUpdateAsync(stageId);
+            if (stage?.Status == StageStatus.Running)
+            {
+                return stageId;
+            }
+        }
+
+        return null;
     }
 
     private void WriteBlock(string header, IReadOnlyDictionary<string, object> rows)
