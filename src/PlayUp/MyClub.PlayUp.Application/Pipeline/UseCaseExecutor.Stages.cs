@@ -630,6 +630,7 @@ public sealed partial class UseCaseExecutor
         CancellationToken cancellationToken = default)
     {
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        StructureOperationalExitEditGuard.EnsureStatusAllowsExitEditWithoutMatches(stage, "Progression rules");
         var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
             .ConfigureAwait(false);
         var competitionStages = await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken)
@@ -660,6 +661,7 @@ public sealed partial class UseCaseExecutor
         CancellationToken cancellationToken = default)
     {
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        StructureOperationalExitEditGuard.EnsureStatusAllowsExitEditWithoutMatches(stage, "Progression rules");
         var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
             .ConfigureAwait(false);
         var competitionStages = await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken)
@@ -690,6 +692,7 @@ public sealed partial class UseCaseExecutor
         CancellationToken cancellationToken = default)
     {
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        StructureOperationalExitEditGuard.EnsureStatusAllowsExitEditWithoutMatches(stage, "Qualification rules");
         var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
             .ConfigureAwait(false);
         var competitionStages = await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken)
@@ -709,6 +712,7 @@ public sealed partial class UseCaseExecutor
         CancellationToken cancellationToken = default)
     {
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        StructureOperationalExitEditGuard.EnsureStatusAllowsExitEditWithoutMatches(stage, "Qualification rules");
         var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
             .ConfigureAwait(false);
         var competitionStages = await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken)
