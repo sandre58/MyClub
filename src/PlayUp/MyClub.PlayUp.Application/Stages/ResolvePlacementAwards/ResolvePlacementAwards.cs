@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Placement;
@@ -27,7 +28,26 @@ public static class ResolvePlacementAwards
     /// <returns>Determined placements ordered by rank; empty when none can be derived.</returns>
     public static IReadOnlyList<FinalPlacementInstruction> Execute(
         IReadOnlyList<Stage> stages,
-        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage)
+        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage) =>
+        Execute(stages, MatchAttentionSlice.FromMatchesByStage(matchesByStage));
+
+    /// <summary>
+    /// Resolves all determinable final placements from projected match summary rows.
+    /// </summary>
+    /// <param name="stages">Competition stages (canonical instances).</param>
+    /// <param name="matchesByStage">Summary rows keyed by owning stage.</param>
+    /// <returns>Determined placements ordered by rank; empty when none can be derived.</returns>
+    public static IReadOnlyList<FinalPlacementInstruction> Execute(
+        IReadOnlyList<Stage> stages,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>> matchesByStage) =>
+        Execute(stages, MatchAttentionSlice.FromSummaryRows(matchesByStage));
+
+    /// <summary>
+    /// Resolves all determinable final placements from attention read slices.
+    /// </summary>
+    private static IReadOnlyList<FinalPlacementInstruction> Execute(
+        IReadOnlyList<Stage> stages,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchAttentionSlice>> matchesByStage)
     {
         ArgumentNullException.ThrowIfNull(stages);
         ArgumentNullException.ThrowIfNull(matchesByStage);
@@ -94,13 +114,14 @@ public static class ResolvePlacementAwards
             return [];
         }
 
-        return !TryResolveSourcePairKey(stage, fixture, out var sourcePairKey) ? [] : TryResolveSourceAwards(stage, sourcePairKey, matches, rules, out var instructions) ? instructions : [];
+        var slices = matches.Select(MatchAttentionSlice.FromMatch).ToArray();
+        return !TryResolveSourcePairKey(stage, fixture, out var sourcePairKey) ? [] : TryResolveSourceAwards(stage, sourcePairKey, slices, rules, out var instructions) ? instructions : [];
     }
 
     private static bool TryResolveSourceAwards(
         Stage stage,
         string sourcePairKey,
-        IReadOnlyList<Match> matches,
+        IReadOnlyList<MatchAttentionSlice> matches,
         PlacementAwardRules rules,
         out IReadOnlyList<FinalPlacementInstruction> instructions)
     {
@@ -155,7 +176,7 @@ public static class ResolvePlacementAwards
     }
 
     /// <summary>
-    /// Requires <see cref="Fixture.BracketPairKey"/> (structural PairKey).
+    /// Requires <see cref="Fixture.BracketPairKey"/>.
     /// </summary>
     private static bool TryResolveSourcePairKey(Stage stage, Fixture fixture, out string sourcePairKey)
     {
@@ -173,7 +194,7 @@ public static class ResolvePlacementAwards
     private static Fixture? ResolveFixtureFromSourcePairKey(Stage stage, string sourcePairKey) =>
         stage.FindFixtureByBracketPairKey(sourcePairKey);
 
-    private static bool AllLegsFinished(Fixture fixture, IReadOnlyList<Match> matches)
+    private static bool AllLegsFinished(Fixture fixture, IReadOnlyList<MatchAttentionSlice> matches)
     {
         if (fixture.Attachments.Count == 0)
         {

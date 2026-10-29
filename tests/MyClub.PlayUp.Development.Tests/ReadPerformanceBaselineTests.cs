@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using System.Diagnostics;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using MyClub.PlayUp.Application.Abstractions;
@@ -143,6 +144,36 @@ public sealed class ReadPerformanceBaselineTests(
     }
 
     [Fact]
+    public async Task Baseline_ligue_1_running_overview_uses_summary_rows_not_sheet_tablesAsync()
+    {
+        var competitionId = await SeedAsync("ligue-1:running");
+
+        var (overviewSql, elapsedMs, sqlTexts) = await MeasureOverviewWithDiagnosticsAsync(competitionId);
+
+        WriteScenario(
+            """
+            Scenario: ligue-1:running (18 clubs, partial championship results, seeded match sheets on finished matches)
+            Overview bundle: SummaryRow match projection (F3.1)
+            """,
+            new Dictionary<string, int>
+            {
+                ["GET /overview (GetOverviewViewAsync)"] = overviewSql,
+            },
+            $"Warm elapsed (informational, not asserted): {elapsedMs} ms");
+
+        overviewSql.Should().BeGreaterThan(3, "overview still loads competition, stages, and match rows");
+        overviewSql.Should().BeLessThanOrEqualTo(
+            20,
+            "overview uses SummaryRow batch load — must stay within consultation-scale SQL (baseline Full load was ~21 SQL)");
+
+        var combinedSql = string.Join('\n', sqlTexts);
+        combinedSql.Should().NotContain("match_declared_participations");
+        combinedSql.Should().NotContain("match_recorded_goals");
+        combinedSql.Should().NotContain("match_recorded_substitutions");
+        combinedSql.Should().NotContain("match_recorded_disciplinary_events");
+    }
+
+    [Fact]
     public async Task Baseline_champions_league_running_heavy_single_stageAsync()
     {
         var templates = fixture.Services.GetRequiredService<TemplateRunner>();
@@ -200,6 +231,21 @@ public sealed class ReadPerformanceBaselineTests(
         await action(executor);
 
         return counter.CommandCount;
+    }
+
+    private async Task<(int SqlCount, long ElapsedMs, IReadOnlyList<string> SqlTexts)> MeasureOverviewWithDiagnosticsAsync(
+        CompetitionId competitionId)
+    {
+        using var scope = fixture.Services.CreateScope();
+        var counter = scope.ServiceProvider.GetRequiredService<SqlCommandCounterInterceptor>();
+        counter.Reset();
+
+        var executor = scope.ServiceProvider.GetRequiredService<UseCaseExecutor>();
+        var stopwatch = Stopwatch.StartNew();
+        await executor.GetOverviewViewAsync(competitionId);
+        stopwatch.Stop();
+
+        return (counter.CommandCount, stopwatch.ElapsedMilliseconds, counter.CommandTexts);
     }
 
     private void WriteScenario(string header, IReadOnlyDictionary<string, int> rows, params string[] details)
