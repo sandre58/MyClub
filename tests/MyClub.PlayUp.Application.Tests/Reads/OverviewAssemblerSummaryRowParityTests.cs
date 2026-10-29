@@ -194,5 +194,4 @@ public sealed class OverviewAssemblerSummaryRowParityTests
 
         return (competition, stage, draw, [match]);
     }
-
 }
