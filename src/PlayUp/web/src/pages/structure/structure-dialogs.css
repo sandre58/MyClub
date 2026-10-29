@@ -67,7 +67,16 @@
 .structure-draw-previous__trigger {
   width: 100%;
   padding: var(--space-12);
+  align-items: flex-start;
+}
+
+.structure-draw-previous__lead {
+  display: flex;
+  flex: 1 1 auto;
   flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8);
+  min-width: 0;
   row-gap: var(--space-4);
 }
 
@@ -90,6 +99,7 @@
 
 .structure-draw-previous__trigger > .ds-selectable-tile__chevron {
   flex: none;
+  align-self: flex-start;
   margin-inline-start: 0;
 }
 
