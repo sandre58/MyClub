@@ -35,7 +35,6 @@ import type {
   StructureStageHubSummary,
 } from '../../../types';
 import { StructureDrawDialog } from './StructureDrawDialog';
-import { pickDrawFooterFocusAfterRelease } from './drawUi';
 import { scheduleStructureRefresh } from '../structureInvalidation';
 
 const scrollIntoViewMock = vi.fn();
@@ -241,6 +240,8 @@ describe('structure draw dialog height', () => {
       /\.structure-draw-dialog \.ds-empty--idle \{[^}]*flex:\s*none/,
     );
     expect(drawDialogCss).not.toMatch(/structure-draw-footer__start/);
+    expect(drawDialogCss).not.toMatch(/structure-draw-title__jump/);
+    expect(drawDialogCss).not.toMatch(/structure-draw-previous__grid/);
     expect(drawDialogCss).not.toMatch(/structure-draw-cancelled/);
     expect(drawDialogCss).not.toMatch(/structure-draw-history-row/);
     const attribution = drawDialogCss.match(
@@ -459,12 +460,10 @@ describe('StructureDrawDialog', () => {
     expect(
       await screen.findByText('Aucun tirage en cours'),
     ).toBeInTheDocument();
-    expect(screen.getByText('Libérée')).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', {
-        name: 'Exécution #1, annulée, Libérée',
-      }),
-    ).toHaveAttribute('aria-expanded', 'false');
+    const cancelledTrigger = screen.getByRole('button', {
+      name: /Exécution #1/,
+    });
+    expect(cancelledTrigger).toHaveAttribute('aria-expanded', 'false');
     expect(
       screen.queryByText(
         'Exécution annulée. Un nouveau tirage est nécessaire pour recommencer.',
@@ -735,7 +734,7 @@ describe('StructureDrawDialog', () => {
     ).not.toBeInTheDocument();
     expect(
       screen.getByRole('button', {
-        name: 'Exécution #1, annulée, Libérée',
+        name: /Exécution #1/,
       }),
     ).toHaveAttribute('aria-expanded', 'false');
     expect(
@@ -1054,9 +1053,12 @@ describe('StructureDrawDialog', () => {
       screen.getByRole('heading', { name: 'Exécutions précédentes (1)' }),
     ).toBeInTheDocument();
     const cancelledTile = screen.getByRole('button', {
-      name: 'Exécution #1, annulée, Libérée',
+      name: /Exécution #1/,
     });
-    expect(cancelledTile).toHaveAttribute('data-tone', 'error');
+    expect(cancelledTile.closest('.ds-selectable-tile')).toHaveAttribute(
+      'data-tone',
+      'error',
+    );
     expect(cancelledTile).toHaveAttribute('aria-expanded', 'false');
     expect(cancelledTile).not.toHaveAttribute('aria-controls');
 
@@ -1064,9 +1066,11 @@ describe('StructureDrawDialog', () => {
     expect(cancelledTile).toHaveAttribute('aria-expanded', 'true');
     expect(cancelledTile).toHaveAttribute('aria-controls');
     expect(
-      screen.getByRole('heading', { level: 5, name: /^Exécution #1/ }),
-    ).toBeInTheDocument();
-    expect(screen.getByText('Libérée')).toBeInTheDocument();
+      within(cancelledTile).queryByText('Libérée'),
+    ).not.toBeInTheDocument();
+    expect(
+      within(cancelledTile).queryByText(/non libérés/),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByText(
         'Exécution annulée. Un nouveau tirage est nécessaire pour recommencer.',
@@ -2064,7 +2068,7 @@ describe('StructureDrawDialog', () => {
     expect(screen.queryByText('Alpha')).not.toBeInTheDocument();
 
     const cancelledTile = screen.getByRole('button', {
-      name: /Exécution #1, annulée/,
+      name: /Exécution #1/,
     });
     await user.click(cancelledTile);
     expect(cancelledTile).toHaveAttribute('aria-expanded', 'true');
@@ -2092,7 +2096,7 @@ describe('StructureDrawDialog', () => {
       expect(validate).toHaveFocus();
     });
     const cancelledTile = screen.getByRole('button', {
-      name: /Exécution #1, annulée/,
+      name: /Exécution #1/,
     });
     await user.click(cancelledTile);
     expect(cancelledTile).toHaveFocus();
@@ -2441,11 +2445,9 @@ describe('StructureDrawDialog', () => {
       });
       await vi.advanceTimersByTimeAsync(160);
       await waitFor(() => {
-        const dialog = screen
-          .getByRole('heading', { name: /Exécutions de tirage/ })
-          .closest('[role="dialog"]') as HTMLElement;
-        const target = pickDrawFooterFocusAfterRelease(dialog);
-        expect(target).toHaveFocus();
+        expect(
+          screen.getByRole('button', { name: 'Libérer #1 (1/1)' }),
+        ).toHaveFocus();
         expect(document.body).not.toHaveFocus();
       });
     });
@@ -2525,11 +2527,11 @@ describe('StructureDrawDialog', () => {
     const reason =
       'Libérer est indisponible : des matchs sont déjà rattachés à cette phase.';
     const tile = screen.getByRole('button', {
-      name: 'Exécution #1, annulée, 1/1 non libérés',
+      name: /Exécution #1/,
     });
     expect(within(tile).getByText('1/1 non libérés')).toBeInTheDocument();
     expect(within(tile).queryByText(reason)).not.toBeInTheDocument();
-    expect(screen.getAllByText(reason)).toHaveLength(2);
+    expect(screen.getAllByText(reason)).toHaveLength(1);
     expect(
       screen.queryByRole('button', { name: 'Refaire le tirage' }),
     ).not.toBeInTheDocument();
@@ -2701,7 +2703,7 @@ describe('StructureDrawDialog', () => {
     renderDialog();
     const reason = 'Libération impossible : un tirage publié occupe la phase.';
     const cancelled = await screen.findByRole('button', {
-      name: /Exécution #2, annulée/,
+      name: /Exécution #2/,
     });
     expect(within(cancelled).getByText('1/1 non libérés')).toBeInTheDocument();
     expect(within(cancelled).queryByText(reason)).not.toBeInTheDocument();
@@ -2736,7 +2738,7 @@ describe('StructureDrawDialog', () => {
     );
     renderDialog();
     const cancelled = await screen.findByRole('button', {
-      name: /Exécution #2, annulée/,
+      name: /Exécution #2/,
     });
     expect(cancelled).not.toHaveTextContent('Obsolète');
     await user.click(cancelled);
@@ -2780,7 +2782,7 @@ describe('StructureDrawDialog', () => {
     }
     render(<Harness />);
     const cancelled = await screen.findByRole('button', {
-      name: /Exécution #1, annulée/,
+      name: /Exécution #1/,
     });
     await user.click(cancelled);
     expect(cancelled).toHaveAttribute('aria-expanded', 'true');
@@ -2792,7 +2794,7 @@ describe('StructureDrawDialog', () => {
     });
     await user.click(screen.getByRole('button', { name: 'Rouvrir' }));
     expect(
-      screen.getByRole('button', { name: /Exécution #1, annulée/ }),
+      screen.getByRole('button', { name: /Exécution #1/ }),
     ).toHaveAttribute('aria-expanded', 'false');
   });
 
@@ -2826,8 +2828,8 @@ describe('StructureDrawDialog', () => {
     expect(
       screen.getAllByText(
         'Libérer est indisponible : des matchs sont déjà rattachés à cette phase.',
-      ).length,
-    ).toBeGreaterThanOrEqual(1);
+      ),
+    ).toHaveLength(1);
     expect(
       screen.queryByText(/Libérez d'abord les placements/),
     ).not.toBeInTheDocument();
@@ -2847,7 +2849,7 @@ describe('StructureDrawDialog', () => {
     expect(footer).not.toBeNull();
     const before = (footer as HTMLElement).innerHTML;
     await user.click(
-      await screen.findByRole('button', { name: /Exécution #1, annulée/ }),
+      await screen.findByRole('button', { name: /Exécution #1/ }),
     );
     expect((footer as HTMLElement).innerHTML).toBe(before);
   });
@@ -2863,10 +2865,10 @@ describe('StructureDrawDialog', () => {
     );
     renderDialog();
     const first = await screen.findByRole('button', {
-      name: /Exécution #1, annulée/,
+      name: /Exécution #1/,
     });
     const second = await screen.findByRole('button', {
-      name: /Exécution #2, annulée/,
+      name: /Exécution #2/,
     });
     await user.click(first);
     expect(first).toHaveAttribute('aria-expanded', 'true');
@@ -2918,6 +2920,115 @@ describe('StructureDrawDialog', () => {
         "Libérez d'abord les placements de l'exécution #1",
       ),
     ).toBeInTheDocument();
+  });
+
+  it('shows releaseHeldByActive in cancelled detail when an active draft blocks release', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview(
+        [
+          groupDraw({
+            id: 'draw-aaa',
+            status: 'Cancelled',
+            groupPlacements: [
+              {
+                groupId: 'g-a',
+                groupDisplayName: 'A',
+                entryId: 'e1',
+                displayName: 'Alpha',
+              },
+            ],
+          }),
+          groupDraw({ id: 'draw-zzz', status: 'Draft' }),
+        ],
+        { groups: [{ id: 'g-a', name: 'A', entryIds: ['e1'] }] },
+      ),
+    );
+    renderDialog();
+    await user.click(
+      await screen.findByRole('button', { name: /Exécution #1/ }),
+    );
+    expect(
+      screen.getByText(
+        "Abandonnez l'exécution active pour libérer ces placements",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('returns focus to Lancer after Libérer without leaving focus on the body', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview(
+        [
+          groupDraw({
+            id: 'draw-old',
+            status: 'Cancelled',
+            groupPlacements: [
+              {
+                groupId: 'g-a',
+                groupDisplayName: 'A',
+                entryId: 'e1',
+                displayName: 'Alpha',
+              },
+            ],
+          }),
+        ],
+        { groups: [{ id: 'g-a', name: 'A', entryIds: ['e1'] }] },
+      ),
+    );
+    vi.mocked(releaseDrawAlignedPlacements).mockImplementation(async () => {
+      vi.mocked(fetchStageOverview).mockResolvedValue(
+        overview(
+          [
+            groupDraw({
+              id: 'draw-old',
+              status: 'Cancelled',
+              groupPlacements: [
+                {
+                  groupId: 'g-a',
+                  groupDisplayName: 'A',
+                  entryId: 'e1',
+                  displayName: 'Alpha',
+                },
+              ],
+            }),
+          ],
+          { groups: [{ id: 'g-a', name: 'A', entryIds: [] }] },
+        ),
+      );
+      return { releasedCount: 1, skippedCount: 0 };
+    });
+    renderDialog(groupsStage());
+    await user.click(
+      await screen.findByRole('button', { name: 'Libérer #1 (1/1)' }),
+    );
+    const confirm = await screen.findByRole('dialog', {
+      name: 'Libérer les placements du tirage ?',
+    });
+    await user.click(
+      within(confirm).getByRole('button', {
+        name: 'Libérer les placements du tirage',
+      }),
+    );
+    await waitFor(() => {
+      expect(
+        screen.queryByRole('dialog', {
+          name: 'Libérer les placements du tirage ?',
+        }),
+      ).not.toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: 'Lancer le tirage' }),
+      ).toBeEnabled();
+    });
+    await vi.advanceTimersByTimeAsync(160);
+    expect(
+      screen.getByRole('button', { name: 'Lancer le tirage' }),
+    ).toHaveFocus();
+    expect(document.body).not.toHaveFocus();
+    vi.useRealTimers();
   });
 
   it('restores footer focus after Relancer when focus falls back to the body', async () => {

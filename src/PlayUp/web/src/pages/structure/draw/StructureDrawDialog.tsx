@@ -7,7 +7,6 @@ import {
   useRef,
   useState,
   type ReactElement,
-  type RefObject,
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
@@ -34,7 +33,11 @@ import {
   UndoIcon,
   UnlockIcon,
 } from '../../../design-system/icons/contentIcons';
-import { CloseIcon } from '../../../design-system/icons/shellIcons';
+import {
+  CloseIcon,
+  ChevronDownIcon,
+} from '../../../design-system/icons/shellIcons';
+import { ToastToneIcon } from '../../../design-system/icons/toastIcons';
 import { notify } from '../../../design-system/toastStore';
 import { useClearMutationsOnOpen } from '../../../design-system/useClearMutationsOnOpen';
 import { queryKeys } from '../../../queryKeys';
@@ -171,8 +174,6 @@ export function StructureDrawDialog({
   const [expandedDrawId, setExpandedDrawId] = useState<string | null>(null);
   const focusedFooterRef = useRef<HTMLButtonElement | null>(null);
   const pendingReleaseFocusRef = useRef(false);
-  const previousRunsTitleRef = useRef<HTMLHeadingElement | null>(null);
-  const detailTitleRef = useRef<HTMLHeadingElement | null>(null);
   const runsDomId = useId();
   const previousRunsSectionId = `${runsDomId}-previous-runs`;
 
@@ -210,10 +211,6 @@ export function StructureDrawDialog({
     },
   );
 
-  const expandedDraw =
-    expandedDrawId != null
-      ? (cancelledDraws.find((draw) => draw.id === expandedDrawId) ?? null)
-      : null;
   const attachedMatchCount = stage.matchCount ?? 0;
 
   function alignedCountFor(draw: StageDraw): number {
@@ -615,8 +612,10 @@ export function StructureDrawDialog({
     if (expandedDrawId == null) {
       return;
     }
-    detailTitleRef.current?.scrollIntoView?.({ block: 'nearest' });
-  }, [expandedDrawId, expandedDraw?.id]);
+    document
+      .querySelector<HTMLElement>(`[data-draw-run-trigger="${expandedDrawId}"]`)
+      ?.scrollIntoView?.({ block: 'nearest' });
+  }, [expandedDrawId]);
 
   useLayoutEffect(() => {
     if (!open || !pendingReleaseFocusRef.current) {
@@ -804,6 +803,7 @@ export function StructureDrawDialog({
               <button
                 type="button"
                 className="ds-btn ds-btn--secondary"
+                data-action="release-draw-placements"
                 disabled={busy || !releaseEnabled(releaseTarget)}
                 onClick={() => openConfirm('release', releaseTarget.id)}
               >
@@ -985,11 +985,8 @@ export function StructureDrawDialog({
               title={tDraw('noActiveTitle')}
             >
               {releaseFooterBlocked ? (
-                <Alert tone="info" role="status">
-                  {tDraw('releaseBlockedAttachedMatches')}
-                </Alert>
-              ) : releaseTarget != null &&
-                releaseHoldFor(releaseTarget) !== 'publishedDraw' ? (
+                <p className="ds-body">{tDraw('noActiveBody')}</p>
+              ) : releaseTarget != null ? (
                 <p className="ds-body">
                   {tDraw('noActiveReleaseFirst', {
                     n: drawExecutionNumber(drawList, releaseTarget.id),
@@ -998,12 +995,6 @@ export function StructureDrawDialog({
               ) : (
                 <p className="ds-body">{tDraw('noActiveBody')}</p>
               )}
-              {releaseTarget != null &&
-              releaseHoldFor(releaseTarget) === 'publishedDraw' ? (
-                <Alert tone="info" role="status">
-                  {tDraw('releaseBlockedByPublishedDraw')}
-                </Alert>
-              ) : null}
             </EmptyState>
           ) : null}
 
@@ -1021,24 +1012,6 @@ export function StructureDrawDialog({
                   <Status density="compact" tone="attention">
                     {tDraw('obsolete')}
                   </Status>
-                ) : null}
-                {cancelledDraws.length > 0 ? (
-                  <button
-                    type="button"
-                    className="ds-btn ds-btn--ghost structure-draw-title__jump"
-                    onClick={() => {
-                      document
-                        .getElementById(previousRunsSectionId)
-                        ?.scrollIntoView?.({ block: 'nearest' });
-                      previousRunsTitleRef.current?.focus({
-                        preventScroll: true,
-                      });
-                    }}
-                  >
-                    {tDraw('previousRunsJump', {
-                      count: cancelledDraws.length,
-                    })}
-                  </button>
                 ) : null}
               </div>
               <DrawExecutionView
@@ -1061,78 +1034,112 @@ export function StructureDrawDialog({
               <h4
                 className="structure-draw-previous__heading"
                 id={`${previousRunsSectionId}-title`}
-                ref={previousRunsTitleRef}
-                tabIndex={-1}
               >
                 {tDraw('previousRunsTitle', { count: cancelledDraws.length })}
               </h4>
-              <div className="structure-draw-previous__grid">
+              <ul className="structure-draw-previous__list">
                 {cancelledDraws.map((draw) => {
                   const expanded = draw.id === expandedDrawId;
-                  const meta = runTileMetaLabel(
-                    alignedCountFor(draw),
-                    drawResolutionPlacementCount(draw),
-                    tDraw,
+                  const aligned = alignedCountFor(draw);
+                  const total = drawResolutionPlacementCount(draw);
+                  const panelId = previousRunDetailId(runsDomId, draw.id);
+                  const executionNumber = drawExecutionNumber(
+                    drawList,
+                    draw.id,
                   );
-                  const detailId = previousRunDetailId(runsDomId, draw.id);
                   return (
-                    <SelectableTile
-                      key={draw.id}
-                      type="button"
-                      tone="error"
-                      className="structure-draw-previous__tile"
-                      selected={expanded}
-                      aria-expanded={expanded}
-                      aria-controls={expanded ? detailId : undefined}
-                      aria-label={tDraw('runTileLabel', {
-                        n: drawExecutionNumber(drawList, draw.id),
-                        meta,
-                      })}
-                      onClick={() =>
-                        setExpandedDrawId((current) =>
-                          current === draw.id ? null : draw.id,
-                        )
-                      }
-                    >
-                      <span
-                        className="structure-draw-previous__number"
-                        aria-hidden="true"
+                    <li key={draw.id} className="structure-draw-previous__item">
+                      <SelectableTile
+                        as="div"
+                        tone="error"
+                        selected={expanded}
+                        className="structure-draw-previous__tile"
                       >
-                        #{drawExecutionNumber(drawList, draw.id)}
-                      </span>
-                      <span
-                        className="structure-draw-previous__meta"
-                        aria-hidden="true"
-                      >
-                        {meta}
-                      </span>
-                    </SelectableTile>
+                        <h5 className="structure-draw-previous__header">
+                          <button
+                            type="button"
+                            className="ds-selectable-tile__trigger structure-draw-previous__trigger"
+                            data-draw-run-trigger={draw.id}
+                            aria-expanded={expanded}
+                            aria-controls={expanded ? panelId : undefined}
+                            onClick={() =>
+                              setExpandedDrawId((current) =>
+                                current === draw.id ? null : draw.id,
+                              )
+                            }
+                          >
+                            <span className="structure-draw-previous__title">
+                              {tDraw('executionTitle', {
+                                n: executionNumber,
+                              })}
+                            </span>
+                            <DrawStatusBadge
+                              status="Cancelled"
+                              density="compact"
+                              variant="outline"
+                            />
+                            {total > 0 && aligned === 0 ? (
+                              <Status
+                                density="compact"
+                                tone="success"
+                                variant="outline"
+                                shape="pill"
+                              >
+                                <span className="ds-status-inline">
+                                  <span
+                                    className="ds-status-inline__icon"
+                                    aria-hidden="true"
+                                  >
+                                    <ToastToneIcon tone="success" size="sm" />
+                                  </span>
+                                  {tDraw('runMetaReleased')}
+                                </span>
+                              </Status>
+                            ) : null}
+                            {aligned > 0 ? (
+                              <Status
+                                density="compact"
+                                tone="neutral"
+                                variant="outline"
+                                shape="pill"
+                              >
+                                {tDraw('runMetaUnreleased', {
+                                  aligned,
+                                  total,
+                                })}
+                              </Status>
+                            ) : null}
+                            <span
+                              className="ds-selectable-tile__chevron"
+                              aria-hidden="true"
+                            >
+                              <ChevronDownIcon size="sm" />
+                            </span>
+                          </button>
+                        </h5>
+                        {expanded ? (
+                          <div
+                            id={panelId}
+                            className="structure-draw-previous__panel"
+                          >
+                            <CancelledDrawDetail
+                              draw={draw}
+                              executionNumber={executionNumber}
+                              activeDraw={activeDraw}
+                              aligned={aligned}
+                              releaseHold={releaseHoldFor(draw)}
+                              slots={slots}
+                              groups={overviewGroups}
+                              placesPerGroup={placesPerGroup}
+                              bracketPairs={bracketPairs}
+                            />
+                          </div>
+                        ) : null}
+                      </SelectableTile>
+                    </li>
                   );
                 })}
-              </div>
-              {expandedDraw != null ? (
-                <div
-                  className="structure-draw-previous__detail"
-                  id={previousRunDetailId(runsDomId, expandedDraw.id)}
-                >
-                  <CancelledDrawDetail
-                    draw={expandedDraw}
-                    executionNumber={drawExecutionNumber(
-                      drawList,
-                      expandedDraw.id,
-                    )}
-                    detailTitleRef={detailTitleRef}
-                    activeDraw={activeDraw}
-                    aligned={alignedCountFor(expandedDraw)}
-                    total={drawResolutionPlacementCount(expandedDraw)}
-                    releaseHold={releaseHoldFor(expandedDraw)}
-                    slots={slots}
-                    groups={overviewGroups}
-                    placesPerGroup={placesPerGroup}
-                    bracketPairs={bracketPairs}
-                  />
-                </div>
-              ) : null}
+              </ul>
             </section>
           ) : null}
         </div>
@@ -1335,24 +1342,29 @@ function previousRunDetailId(prefix: string, drawId: string): string {
   return `${prefix}-detail-${drawId}`;
 }
 
-function runTileMetaLabel(
-  aligned: number,
-  total: number,
+function cancelledDrawReleaseReason(
+  executionNumber: number,
+  activeDraw: StageDraw | null,
+  releaseHold: 'publishedDraw' | 'attachedMatches' | null,
   tDraw: (key: string, options?: Record<string, unknown>) => string,
 ): string {
-  if (aligned > 0) {
-    return tDraw('runMetaUnreleased', { aligned, total });
+  if (releaseHold === 'publishedDraw') {
+    return tDraw('releaseBlockedByPublishedDraw');
   }
-  return tDraw('runMetaReleased');
+  if (releaseHold === 'attachedMatches') {
+    return tDraw('releaseBlockedAttachedMatches');
+  }
+  if (activeDraw != null) {
+    return tDraw('releaseHeldByActive');
+  }
+  return tDraw('noActiveReleaseFirst', { n: executionNumber });
 }
 
 function CancelledDrawDetail({
   draw,
   executionNumber,
-  detailTitleRef,
   activeDraw,
   aligned,
-  total,
   releaseHold,
   slots,
   groups,
@@ -1361,10 +1373,8 @@ function CancelledDrawDetail({
 }: {
   draw: StageDraw;
   executionNumber: number;
-  detailTitleRef: RefObject<HTMLHeadingElement | null>;
   activeDraw: StageDraw | null;
   aligned: number;
-  total: number;
   releaseHold: 'publishedDraw' | 'attachedMatches' | null;
   slots: StageSlot[];
   groups: StageGroupOverview[];
@@ -1372,31 +1382,19 @@ function CancelledDrawDetail({
   bracketPairs: StageBracketPair[];
 }): ReactElement {
   const { t: tDraw } = useTranslation('draw');
-  const titleId = `draw-detail-${draw.id}-title`;
-  const blockedByActive = activeDraw != null && aligned > 0;
-  const blockReason =
-    releaseHold === 'publishedDraw'
-      ? tDraw('releaseBlockedByPublishedDraw')
-      : releaseHold === 'attachedMatches'
-        ? tDraw('releaseBlockedAttachedMatches')
-        : tDraw('releaseHeldByActive');
 
   return (
-    <section aria-labelledby={titleId}>
-      <h5
-        className="structure-draw-previous__detail-title"
-        id={titleId}
-        ref={detailTitleRef}
-      >
-        {tDraw('executionTitle', { n: executionNumber })}
-        <DrawStatusBadge status="Cancelled" density="compact" />
-      </h5>
-      {blockedByActive ? (
+    <div className="structure-draw-previous__body">
+      {aligned > 0 ? (
         <Alert tone="info" role="status">
           <p className="ds-body">
-            {tDraw('runMetaUnreleased', { aligned, total })}
+            {cancelledDrawReleaseReason(
+              executionNumber,
+              activeDraw,
+              releaseHold,
+              tDraw,
+            )}
           </p>
-          <p className="ds-body">{blockReason}</p>
         </Alert>
       ) : null}
       <DrawExecutionView
@@ -1408,7 +1406,7 @@ function CancelledDrawDetail({
         placesPerGroup={placesPerGroup}
         bracketPairs={bracketPairs}
       />
-    </section>
+    </div>
   );
 }
 

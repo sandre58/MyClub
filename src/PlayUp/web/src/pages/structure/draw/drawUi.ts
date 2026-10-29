@@ -1019,14 +1019,8 @@ export function pickDrawFooterFocusAfterRelease(
   if (!footer) {
     return undefined;
   }
-  const release = [
-    ...footer.querySelectorAll<HTMLButtonElement>('button'),
-  ].find(
-    (button) =>
-      !button.disabled &&
-      button.classList.contains('ds-btn--secondary') &&
-      (button.textContent?.includes('Libérer') ||
-        button.textContent?.includes('Release')),
+  const release = footer.querySelector<HTMLButtonElement>(
+    'button[data-action="release-draw-placements"]:not(:disabled)',
   );
   const primary = footer.querySelector<HTMLElement>(
     '.ds-btn--primary:not(:disabled)',

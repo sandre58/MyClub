@@ -43,8 +43,6 @@
   "heroGroups": "groups",
   "heroPlaces": "places",
   "previousRunsTitle": "Previous executions ({{count}})",
-  "previousRunsJump": "↓ {{count}} previous executions",
-  "runTileLabel": "Execution #{{n}}, cancelled, {{meta}}",
   "noActiveTitle": "No draw in progress",
   "noActiveBody": "Start a new draw",
   "noActiveReleaseFirst": "Release placements from execution #{{n}} first",

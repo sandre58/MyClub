@@ -1,5 +1,4 @@
 import type { ComponentPropsWithoutRef, ElementType, ReactNode } from 'react';
-import { ChevronDownIcon } from '../icons/shellIcons';
 
 type SelectableTileOwnProps<T extends ElementType> = {
   as?: T;
@@ -35,16 +34,7 @@ export function SelectableTile<T extends ElementType = 'button'>({
       data-tone={tone}
       {...rest}
     >
-      {tone === 'error' ? (
-        <>
-          <span className="ds-selectable-tile__body">{children}</span>
-          <span className="ds-selectable-tile__chevron" aria-hidden="true">
-            <ChevronDownIcon size="sm" />
-          </span>
-        </>
-      ) : (
-        children
-      )}
+      {children}
     </Tag>
   );
 }

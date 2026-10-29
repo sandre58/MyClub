@@ -43,8 +43,6 @@
   "heroGroups": "groupes",
   "heroPlaces": "places",
   "previousRunsTitle": "Exécutions précédentes ({{count}})",
-  "previousRunsJump": "↓ {{count}} exécutions précédentes",
-  "runTileLabel": "Exécution #{{n}}, annulée, {{meta}}",
   "noActiveTitle": "Aucun tirage en cours",
   "noActiveBody": "Lancez un nouveau tirage",
   "noActiveReleaseFirst": "Libérez d'abord les placements de l'exécution #{{n}}",

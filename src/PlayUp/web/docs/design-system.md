@@ -190,10 +190,21 @@ There is **no** generic `Card` foundation (see `foundations/surfaces.css`). New 
 ### Selectable tile (family B) recipe
 
 - Canonical: `foundations/selectable-tile.css` (`.ds-selectable-tile`).
-- React: `SelectableTile` sets `data-selected`, optional `tone="error"` (`data-tone="error"`) for disclosure-style cancelled runs (red border/focus/hover recipes in the foundation file; chevron rotates when `selected`), and merges page layout classes.
+- React: `SelectableTile` sets `data-selected` and optional `tone="error"` (`data-tone="error"` only — no injected layout). Page classes supply triggers, chevrons, and panels.
 - Compose: `className="<page-layout>"` + `selected` prop, or manual `ds-selectable-tile` + `data-selected="true|false"`.
-- Hover / selected recipes live only in the foundation file.
+- Hover / selected recipes live only in the foundation file (brand default; `[data-tone='error'][data-selected='true']` uses destructive error chrome, never brand).
 - CI guard: `npm run tile:check`.
+
+#### Tuile repliable (B)
+
+Structure qualification, progression, and draw **previous runs** share one anatomy (implemented inline per dialog today):
+
+- **Container** — `.ds-selectable-tile` with `data-selected="true"` when open; optional `data-tone="error"` for cancelled / obsolete history (base chrome at rest, destructive tint when open).
+- **Trigger** — `<button class="ds-selectable-tile__trigger">` inside a heading (`h5`), with `aria-expanded` and `aria-controls` pointing at the panel id; chevron `.ds-selectable-tile__chevron` at the end (`aria-hidden`), rotates when open.
+- **Panel** — sibling block inside the tile (page class e.g. `structure-draw-previous__panel`), shown only when open; page CSS handles padding and entry animation (`prefers-reduced-motion: reduce` disables animation).
+- **Focus** — focus ring on the tile via `.ds-selectable-tile:has(.ds-selectable-tile__trigger:focus-visible)`; trigger itself has no box-shadow (avoids clipping under `overflow: hidden`).
+- **Retired runs (draw)** — page may apply light `opacity` on the whole collapsed tile (~0.85); open / hover / focus-visible return to opacity 1. Prefer `variant="outline"` badges on tinted headers. Do not use brand selection on `tone="error"` tiles.
+- **Debt** — extract a shared `DisclosureTile` and migrate Qual / Prog / Draw in a follow-up (not required for parity).
 
 ## Attention rows (two models — do not merge)
 

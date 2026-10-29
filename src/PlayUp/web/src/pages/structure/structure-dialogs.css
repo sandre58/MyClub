@@ -34,56 +34,73 @@
   line-height: var(--leading-tight);
 }
 
-.structure-draw-previous__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+.structure-draw-previous__list {
+  display: flex;
+  flex-direction: column;
   gap: var(--space-8);
-  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.structure-draw-previous__item {
+  margin: 0;
+  padding: 0;
 }
 
 .structure-draw-previous__tile {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-4);
+  gap: 0;
   width: 100%;
-  text-align: start;
+  padding: 0;
+  overflow: hidden;
 }
 
-.structure-draw-previous__number {
+.structure-draw-previous__tile.ds-selectable-tile[data-tone='error']:not([data-selected='true']) {
+  opacity: 0.85;
+}
+
+.structure-draw-previous__tile.ds-selectable-tile[data-tone='error']:hover,
+.structure-draw-previous__tile.ds-selectable-tile[data-tone='error']:has(.ds-selectable-tile__trigger:focus-visible),
+.structure-draw-previous__tile.ds-selectable-tile[data-tone='error'][data-selected='true'] {
+  opacity: 1;
+}
+
+.structure-draw-previous__header {
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.structure-draw-previous__trigger {
+  width: 100%;
+  padding: var(--space-12);
+}
+
+.structure-draw-previous__title {
   font-weight: var(--font-weight-semibold);
-}
-
-.structure-draw-previous__meta {
-  color: var(--color-text-secondary);
-  font-size: var(--text-meta);
+  color: var(--color-text-primary);
   line-height: var(--leading-tight);
 }
 
-.structure-draw-previous__detail {
+.structure-draw-previous__panel {
+  padding: 0 var(--space-12) var(--space-12);
+  border-block-start: var(--border-width) solid var(--color-border);
+  animation: structure-qualification-panel-in var(--motion-duration) var(--motion-easing);
+}
+
+.structure-draw-previous__body {
   display: flex;
-  flex: none;
   flex-direction: column;
   gap: var(--space-16);
-  min-height: auto;
-  padding-block-start: var(--space-16);
-  border-block-start: var(--border-width) solid var(--color-border);
+  padding-block-start: var(--space-12);
 }
 
-.structure-draw-previous__detail-title {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-8);
-  margin: 0;
-  color: var(--color-text-primary);
-  font-size: var(--text-body);
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--leading-tight);
-}
-
-.structure-draw-title__jump {
-  margin-inline-start: auto;
+@media (prefers-reduced-motion: reduce) {
+  .structure-draw-previous__panel {
+    animation: none;
+  }
 }
 
 .structure-draw-execution {
