@@ -1028,7 +1028,7 @@ export function StructurePhaseFiche({
         releasableTotal: releaseCta.total,
         releaseDisabled: releaseCta.disabled,
         releaseDisabledReason: releaseCta.disabled
-          ? tDraw('releaseBlockedAttachedMatches')
+          ? releaseCta.disabledReason
           : null,
         releasePending: releaseMutation.isPending,
         deactivateDrawPending: deactivateDrawMutation.isPending,

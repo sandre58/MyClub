@@ -54,6 +54,28 @@ public sealed class OverviewAssemblerSummaryRowParityTests
         AssertParity(competition, stage, matches);
     }
 
+    [Fact]
+    public void Assemble_summary_rows_projects_draw_apply_actions_like_command_evaluator()
+    {
+        var (competition, stage, draw, matches) = CreateDraftGroupWithAttachedMatchAndDraw();
+        var bySummary = new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>
+        {
+            [stage.Id] = StageStartReadinessGuard.ToSummaryRows([.. matches])
+        };
+
+        var overview = OverviewAssembler.Assemble(competition, [stage], bySummary);
+        var assessment = DrawActionEvaluator.Evaluate(
+            DrawActionEvaluator.ForCommand(stage, matches),
+            draw);
+
+        HasOverviewDrawAction(overview.AvailableActions, OverviewAssembler.ActionApplyDraw, stage, draw)
+            .Should()
+            .Be(assessment.Apply.State == StageDrawActionState.Available);
+        HasOverviewDrawAction(overview.AvailableActions, OverviewAssembler.ActionPublishAndApplyDraw, stage, draw)
+            .Should()
+            .Be(assessment.PublishAndApply.State == StageDrawActionState.Available);
+    }
+
     private (Competition Competition, Stage Stage, IReadOnlyList<Match> Matches) CreateRunningChampionshipWithSheets()
     {
         var competition = Competition.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
@@ -135,4 +157,41 @@ public sealed class OverviewAssemblerSummaryRowParityTests
 
         return (competition, stage, [match]);
     }
+
+    private (Competition Competition, Stage Stage, Draw Draw, IReadOnlyList<Match> Matches) CreateDraftGroupWithAttachedMatchAndDraw()
+    {
+        var competition = Competition.Create(new CompetitionName("Groups"), SampleRegulations.Standard(), _clock);
+        var alpha = competition.AddEntry(TeamId.New(), "Alpha", _clock).Id;
+        var beta = competition.AddEntry(TeamId.New(), "Beta", _clock).Id;
+
+        var stage = Stage.Create(competition.Id, new StageName("Group Draft"), SampleRegulations.Standard(), _clock);
+        var matchday = stage.AddMatchday(1, _clock);
+        var group = stage.AddGroup("A", _clock);
+        competition.AddStage(stage.Id, _clock);
+        stage.ReplaceAffectationAuthoring([alpha, beta], _clock);
+        stage.AssignEntryToGroup(group.Id, beta);
+
+        var fixture = stage.AddFixture(matchday.Id, _clock);
+        var match = Match.Create(competition.Id, stage.Id, alpha, beta, _clock);
+        stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
+
+        var draw = stage.CreateDraw(DrawResolutionKind.Group, _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForGroup([alpha]));
+        stage.RecordDrawResolution(
+            draw.Id,
+            DrawResolution.ResolvedGroups([new GroupDrawPlacement(alpha, group.Id)]),
+            _clock);
+
+        return (competition, stage, draw, [match]);
+    }
+
+    private static bool HasOverviewDrawAction(
+        IReadOnlyList<OverviewActionDto> actions,
+        string code,
+        Stage stage,
+        Draw draw) =>
+        actions.Any(action =>
+            action.Code == code
+            && action.StageId == stage.Id.Value
+            && action.DrawId == draw.Id.Value);
 }
