@@ -72,6 +72,19 @@ public static class NeedsAttentionAssembler
         Assemble(competition, stages, MatchAttentionSlice.FromMatchesByStage(matchesByStage));
 
     /// <summary>
+    /// Builds Needs Attention from projected match summary rows.
+    /// </summary>
+    /// <param name="competition">Loaded competition.</param>
+    /// <param name="stages">Competition stages (canonical).</param>
+    /// <param name="matchesByStage">Summary rows keyed by stage id.</param>
+    /// <returns>Needs Attention DTO.</returns>
+    public static NeedsAttentionDto Assemble(
+        Competition competition,
+        IReadOnlyList<Stage> stages,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>> matchesByStage) =>
+        Assemble(competition, stages, MatchAttentionSlice.FromSummaryRows(matchesByStage));
+
+    /// <summary>
     /// Builds Needs Attention from projected match slices.
     /// </summary>
     /// <param name="competition">Loaded competition.</param>

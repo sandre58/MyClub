@@ -1,7 +1,23 @@
 /**
  * Draw create / generate / publish / apply orchestration.
  */
-import { postNoContent, sendJson } from './http';
+import { ApiError, postNoContent, sendJson } from './http';
+
+/** ConfigureDrawInputs refuses Rerun when the launch grid is not vacant. */
+const STAGE_DRAW_RERUN_LAUNCH_GUARD_CODES = new Set([
+  'Application.DrawLaunchGridNotVacant',
+  'Application.DrawLaunchDirectAssignmentPresent',
+]);
+
+export function isStageDrawRerunLaunchGuardError(
+  error: unknown,
+): error is ApiError {
+  return (
+    error instanceof ApiError &&
+    error.code != null &&
+    STAGE_DRAW_RERUN_LAUNCH_GUARD_CODES.has(error.code)
+  );
+}
 
 /** POST /stages/{stageId}/draws/{drawId}/publish → 204 */
 export function publishDraw(stageId: string, drawId: string): Promise<void> {
@@ -94,6 +110,30 @@ export async function createAndGenerateDraw(
     };
   } catch (cause) {
     throw new DrawGenerateFailedError(created.drawId, cause);
+  }
+}
+
+/**
+ * Relance a draft on the same draw id: inputs (Rerun) then Generate.
+ * Does not create another execution. Launch-guard refusals stay {@link ApiError}.
+ * Any other failure is wrapped as {@link DrawGenerateFailedError} for that id.
+ */
+export async function rerunDrawGeneration(
+  stageId: string,
+  drawId: string,
+): Promise<{
+  drawId: string;
+  isResolved: boolean;
+  isNoSolution: boolean;
+}> {
+  try {
+    await configureDrawInputs(stageId, drawId, 'Rerun');
+    return await generateDraw(stageId, drawId);
+  } catch (cause) {
+    if (isStageDrawRerunLaunchGuardError(cause)) {
+      throw cause;
+    }
+    throw new DrawGenerateFailedError(drawId, cause);
   }
 }
 

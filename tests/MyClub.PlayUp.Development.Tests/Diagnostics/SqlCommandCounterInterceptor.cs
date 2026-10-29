@@ -14,18 +14,46 @@ namespace MyClub.PlayUp.Development.Tests.Diagnostics;
 /// </summary>
 internal sealed class SqlCommandCounterInterceptor : DbCommandInterceptor
 {
+    private readonly List<string> _commandTexts = [];
     private int _commandCount;
 
     public int CommandCount => Volatile.Read(ref _commandCount);
 
-    public void Reset() => Interlocked.Exchange(ref _commandCount, 0);
+    public IReadOnlyList<string> CommandTexts
+    {
+        get
+        {
+            lock (_commandTexts)
+            {
+                return [.. _commandTexts];
+            }
+        }
+    }
+
+    public void Reset()
+    {
+        Interlocked.Exchange(ref _commandCount, 0);
+        lock (_commandTexts)
+        {
+            _commandTexts.Clear();
+        }
+    }
+
+    private void Record(DbCommand command)
+    {
+        Interlocked.Increment(ref _commandCount);
+        lock (_commandTexts)
+        {
+            _commandTexts.Add(command.CommandText);
+        }
+    }
 
     public override InterceptionResult<int> NonQueryExecuting(
         DbCommand command,
         CommandEventData eventData,
         InterceptionResult<int> result)
     {
-        Interlocked.Increment(ref _commandCount);
+        Record(command);
         return base.NonQueryExecuting(command, eventData, result);
     }
 
@@ -35,7 +63,7 @@ internal sealed class SqlCommandCounterInterceptor : DbCommandInterceptor
         InterceptionResult<int> result,
         CancellationToken cancellationToken = default)
     {
-        Interlocked.Increment(ref _commandCount);
+        Record(command);
         return base.NonQueryExecutingAsync(command, eventData, result, cancellationToken);
     }
 
@@ -44,7 +72,7 @@ internal sealed class SqlCommandCounterInterceptor : DbCommandInterceptor
         CommandEventData eventData,
         InterceptionResult<DbDataReader> result)
     {
-        Interlocked.Increment(ref _commandCount);
+        Record(command);
         return base.ReaderExecuting(command, eventData, result);
     }
 
@@ -54,7 +82,7 @@ internal sealed class SqlCommandCounterInterceptor : DbCommandInterceptor
         InterceptionResult<DbDataReader> result,
         CancellationToken cancellationToken = default)
     {
-        Interlocked.Increment(ref _commandCount);
+        Record(command);
         return base.ReaderExecutingAsync(command, eventData, result, cancellationToken);
     }
 
@@ -63,7 +91,7 @@ internal sealed class SqlCommandCounterInterceptor : DbCommandInterceptor
         CommandEventData eventData,
         InterceptionResult<object> result)
     {
-        Interlocked.Increment(ref _commandCount);
+        Record(command);
         return base.ScalarExecuting(command, eventData, result);
     }
 
@@ -73,7 +101,7 @@ internal sealed class SqlCommandCounterInterceptor : DbCommandInterceptor
         InterceptionResult<object> result,
         CancellationToken cancellationToken = default)
     {
-        Interlocked.Increment(ref _commandCount);
+        Record(command);
         return base.ScalarExecutingAsync(command, eventData, result, cancellationToken);
     }
 }

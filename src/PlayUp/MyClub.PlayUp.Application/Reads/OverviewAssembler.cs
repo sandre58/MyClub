@@ -203,12 +203,34 @@ public static class OverviewAssembler
     /// </summary>
     /// <param name="competition">Loaded competition.</param>
     /// <param name="stages">Stages in competition order.</param>
-    /// <param name="matchesByStage">Matches keyed by stage.</param>
+    /// <param name="matchesByStage">Summary rows keyed by stage.</param>
     /// <returns>Overview projection DTO.</returns>
     public static OverviewViewDto Assemble(
         Competition competition,
         IReadOnlyList<Stage> stages,
         IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage)
+    {
+        ArgumentNullException.ThrowIfNull(competition);
+        ArgumentNullException.ThrowIfNull(stages);
+        ArgumentNullException.ThrowIfNull(matchesByStage);
+
+        var summaryByStage = matchesByStage.ToDictionary(
+            pair => pair.Key,
+            pair => (IReadOnlyList<MatchSummaryRow>)StageStartReadinessGuard.ToSummaryRows(pair.Value));
+        return Assemble(competition, stages, summaryByStage);
+    }
+
+    /// <summary>
+    /// Builds the Overview view from projected match summary rows.
+    /// </summary>
+    /// <param name="competition">Loaded competition.</param>
+    /// <param name="stages">Stages in competition order.</param>
+    /// <param name="matchesByStage">Summary rows keyed by stage.</param>
+    /// <returns>Overview projection DTO.</returns>
+    public static OverviewViewDto Assemble(
+        Competition competition,
+        IReadOnlyList<Stage> stages,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>> matchesByStage)
     {
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(stages);
@@ -303,7 +325,7 @@ public static class OverviewAssembler
     internal static OverviewCalendarSummaryDto BuildCalendarSummary(
         Competition competition,
         IReadOnlyList<Stage> stages,
-        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>> matchesByStage,
         int matchTotal,
         Guid? primaryStageId)
     {
@@ -425,7 +447,7 @@ public static class OverviewAssembler
         StructureViewDto structureView,
         IReadOnlyList<Stage> stages,
         OverviewMatchCountsDto matchCounts,
-        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage)
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>> matchesByStage)
     {
         var inConstruction = competition.Status is CompetitionStatus.Draft or CompetitionStatus.Ready;
         var running = competition.Status is CompetitionStatus.Running or CompetitionStatus.Suspended;
@@ -536,7 +558,7 @@ public static class OverviewAssembler
         Competition competition,
         StructureViewDto structureView,
         IReadOnlyList<Stage> stages,
-        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>> matchesByStage,
         string prominence,
         bool inConstruction)
     {
@@ -621,7 +643,7 @@ public static class OverviewAssembler
         Competition competition,
         StructureViewDto structureView,
         IReadOnlyList<Stage> stages,
-        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>> matchesByStage,
         List<OverviewTransitionReadinessDto> readiness)
     {
         if (structureView.Format.Kind is not StructureFormatKind.Swiss)
@@ -662,7 +684,7 @@ public static class OverviewAssembler
     private static void AppendFromSlotsTransitionReadiness(
         Competition competition,
         IReadOnlyList<Stage> stages,
-        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>> matchesByStage,
         List<OverviewTransitionReadinessDto> readiness)
     {
         if (competition.Status is not (CompetitionStatus.Draft or CompetitionStatus.Ready or CompetitionStatus.Running))
@@ -695,7 +717,7 @@ public static class OverviewAssembler
     private static OverviewOperationalFocusDto BuildOperationalFocus(
         Competition competition,
         IReadOnlyList<Stage> stages,
-        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>> matchesByStage,
         OverviewMatchCountsDto matchCounts,
         StructureFormatKind? formatKind)
     {
@@ -796,7 +818,7 @@ public static class OverviewAssembler
     internal static (OverviewSportUnitDto? Recent, OverviewSportUnitDto? Next) BuildTemporalSportUnits(
         Competition competition,
         IReadOnlyList<Stage> stages,
-        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>> matchesByStage,
         IReadOnlyDictionary<EntryId, string>? names = null)
     {
         var reference = ResolveReferenceStage(competition, stages);
@@ -835,7 +857,7 @@ public static class OverviewAssembler
 
     private static List<SportUnitSlice> EnumerateSportUnits(
         Stage stage,
-        IReadOnlyDictionary<MatchId, Match> matchesById)
+        IReadOnlyDictionary<MatchId, MatchSummaryRow> matchesById)
     {
         if (stage.Matchdays.Count > 0)
         {
@@ -863,11 +885,11 @@ public static class OverviewAssembler
         return slices;
     }
 
-    private static List<Match> CollectUnitMatches(
+    private static List<MatchSummaryRow> CollectUnitMatches(
         IReadOnlyList<Fixture> fixtures,
-        IReadOnlyDictionary<MatchId, Match> matchesById)
+        IReadOnlyDictionary<MatchId, MatchSummaryRow> matchesById)
     {
-        var collected = new List<Match>();
+        var collected = new List<MatchSummaryRow>();
         foreach (var fixture in fixtures)
         {
             foreach (var matchId in fixture.MatchIds)
@@ -935,7 +957,7 @@ public static class OverviewAssembler
         string UnitKey,
         int? MatchdayNumber,
         string? RoundName,
-        List<Match> Matches);
+        List<MatchSummaryRow> Matches);
 
     /// <summary>
     /// Projects CompetitionOutcome for the Completed Result surface.
@@ -946,7 +968,7 @@ public static class OverviewAssembler
     internal static CompetitionOutcomeDto? BuildCompetitionOutcome(
         Competition competition,
         IReadOnlyList<Stage> stages,
-        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>> matchesByStage,
         StructureFormatKind? formatKind)
     {
         if (competition.Status is not (CompetitionStatus.Completed or CompetitionStatus.Archived))
@@ -1017,7 +1039,7 @@ public static class OverviewAssembler
 
     private static IReadOnlyList<FinalPlacementDto> ProjectPlacementAwardPlaces(
         IReadOnlyList<Stage> stages,
-        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>> matchesByStage,
         IReadOnlyDictionary<EntryId, string> names)
     {
         var instructions = ResolvePlacementAwards.Execute(stages, matchesByStage);
@@ -1031,7 +1053,7 @@ public static class OverviewAssembler
     private static IReadOnlyList<FinalPlacementDto>? ProjectStandingOutcomePlaces(
         Competition competition,
         IReadOnlyList<Stage> stages,
-        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage)
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>> matchesByStage)
     {
         var reference = ResolveReferenceStage(competition, stages);
         if (reference is null)
@@ -1054,7 +1076,7 @@ public static class OverviewAssembler
     private static OverviewStandingCompactDto? BuildStandingCompact(
         Competition competition,
         IReadOnlyList<Stage> stages,
-        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage)
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>> matchesByStage)
     {
         // Operational In-progress / Completed — not useful during construction.
         if (competition.Status is not (
@@ -1130,7 +1152,7 @@ public static class OverviewAssembler
     }
 
     private static OverviewMatchCountsDto BuildMatchCounts(
-        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage)
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>> matchesByStage)
     {
         var live = 0;
         var scheduled = 0;
@@ -1352,7 +1374,7 @@ public static class OverviewAssembler
     private static IReadOnlyList<OverviewActionDto> BuildActions(
         Competition competition,
         IReadOnlyList<Stage> stages,
-        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>> matchesByStage,
         StructureViewDto structureView,
         NeedsAttentionDto attention,
         CompletionAnalysis? completion,
@@ -1753,7 +1775,7 @@ public static class OverviewAssembler
         Competition competition,
         StructureViewDto structureView,
         IReadOnlyList<Stage> stages,
-        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>> matchesByStage,
         out Guid? stageId,
         out IReadOnlyList<string> blockers)
     {
@@ -1814,7 +1836,7 @@ public static class OverviewAssembler
     private static bool IsSwissRoundFullyFinished(
         Stage stage,
         int roundIndex,
-        IReadOnlyDictionary<StageId, IReadOnlyList<Match>> matchesByStage)
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>> matchesByStage)
     {
         var matchday = stage.Matchdays.FirstOrDefault(candidate => candidate.Number == roundIndex);
         if (matchday is null)
@@ -1853,7 +1875,7 @@ public static class OverviewAssembler
         Competition competition,
         Stage stage,
         IReadOnlyList<Stage> competitionStages,
-        IReadOnlyDictionary<StageId, IReadOnlyList<Match>>? matchesByStage,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>>? matchesByStage,
         out int occupiedSlotCount)
     {
         occupiedSlotCount = 0;
@@ -1873,19 +1895,12 @@ public static class OverviewAssembler
         }
 
         occupiedSlotCount = stage.Slots.Count(slot => slot.EntryId is not null);
-        var matchSummariesByStage = ToMatchSummariesByStage(matchesByStage);
         return MaterializeCupFromOccupiedSlots.CountEligiblePairs(
             stage,
             competition,
             competitionStages,
-            matchSummariesByStage) > 0;
+            matchesByStage) > 0;
     }
-
-    private static Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>? ToMatchSummariesByStage(
-        IReadOnlyDictionary<StageId, IReadOnlyList<Match>>? matchesByStage) =>
-        matchesByStage?.ToDictionary(
-            kvp => kvp.Key,
-            kvp => StageStartReadinessGuard.ToSummaryRows(kvp.Value));
 
     private static Dictionary<string, string> MaterializeCommandParams(
         Stage stage,

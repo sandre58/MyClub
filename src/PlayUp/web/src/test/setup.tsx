@@ -34,3 +34,7 @@ afterEach(() => {
   document.documentElement.style.colorScheme = '';
   cleanup();
 });
+
+if (typeof Element.prototype.scrollIntoView !== 'function') {
+  Element.prototype.scrollIntoView = () => undefined;
+}

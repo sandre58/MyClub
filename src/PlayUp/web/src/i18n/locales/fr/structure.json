@@ -710,7 +710,7 @@
       "emptyTitle": "Aucune exécution",
       "emptyBody": "Lancez un premier tirage pour placer les équipes de cette phase.",
       "kindUnsupported": "Ce format de phase ne propose pas encore de création de tirage depuis Structure.",
-      "create": "Nouveau tirage",
+      "create": "Lancer le tirage",
       "createBlocked": {
         "short": {
           "unsupported": "Tirage non disponible pour ce format.",

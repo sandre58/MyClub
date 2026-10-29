@@ -45,6 +45,19 @@ public static class CompletionAnalyzer
         Analyze(competition, stages, MatchAttentionSlice.FromMatchesByStage(matchesByStage));
 
     /// <summary>
+    /// Analyzes sporting completeness from projected match summary rows.
+    /// </summary>
+    /// <param name="competition">Loaded competition.</param>
+    /// <param name="stages">Competition stages.</param>
+    /// <param name="matchesByStage">Summary rows keyed by stage.</param>
+    /// <returns>Derived completion analysis.</returns>
+    public static CompletionAnalysis Analyze(
+        Competition competition,
+        IReadOnlyList<Stage> stages,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>> matchesByStage) =>
+        Analyze(competition, stages, MatchAttentionSlice.FromSummaryRows(matchesByStage));
+
+    /// <summary>
     /// Analyzes sporting completeness from projected match slices (status-only for unresolved matches).
     /// </summary>
     /// <param name="competition">Loaded competition.</param>

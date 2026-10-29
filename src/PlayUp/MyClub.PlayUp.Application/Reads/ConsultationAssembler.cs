@@ -6,6 +6,7 @@
 
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
+using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Standings;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
@@ -139,6 +140,20 @@ public static class ConsultationAssembler
         Competition competition,
         Stage stage,
         IReadOnlyList<Match> matches)
+    {
+        ArgumentNullException.ThrowIfNull(competition);
+        ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(matches);
+        return ProjectStandingsForStage(competition, stage, StageStartReadinessGuard.ToSummaryRows(matches));
+    }
+
+    /// <summary>
+    /// Projects standing tables for a single stage from projected match rows.
+    /// </summary>
+    public static ConsultationStandingsSectionDto ProjectStandingsForStage(
+        Competition competition,
+        Stage stage,
+        IReadOnlyList<MatchSummaryRow> matches)
     {
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(stage);

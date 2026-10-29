@@ -100,7 +100,9 @@ export {
   configureDrawInputs,
   generateDraw,
   createAndGenerateDraw,
+  rerunDrawGeneration,
   DrawGenerateFailedError,
   isDrawGenerateFailedError,
+  isStageDrawRerunLaunchGuardError,
   applyDraw,
 } from './api/draws';
