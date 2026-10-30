@@ -36,3 +36,5 @@ Cloud Agent `start` brings up the local stack. Contributor setup stays in `CONTR
 - `GET /health/ready` checks Host readiness. `POST /competitions` with `{"name":"..."}` creates a competition.
 - `dotnet test --filter Category!=Integration` does not need Docker or the Compose database. Tests tagged `Category=PerformanceBaseline` are also `Category=Integration` (Testcontainers). Full `dotnet test` needs Docker the same way.
 - Web checks from `src/PlayUp/web`: `npm run format:check`, `npm run lint`, `npm run lint:css`, `npm run typecheck`, `npm run test:run`, `npm run build`.
+- Backend checks before each push: `dotnet build MyClub.slnx -c Release`, `dotnet test`, `.github/scripts/verify-dotnet-warnings-baseline.sh`.
+- Always open PRs as draft; never mark ready or merge (the owner does). Fix review nits on the same branch, no separate "Nits" PR.
