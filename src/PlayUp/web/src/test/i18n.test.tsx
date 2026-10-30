@@ -7,12 +7,13 @@ import {
   matchGenerationFormatLabel,
   matchStatusLabel,
 } from '../i18n/enumLabels';
-import i18n from '../i18n';
+import i18n, { i18nReady } from '../i18n';
 import { ErrorState, LoadingState, MutationError } from '../ui';
 import { renderWithI18n } from './renderWithI18n';
 
 describe('i18n foundation', () => {
-  it('uses French as the default locale', () => {
+  it('uses French as the default locale', async () => {
+    await i18nReady;
     expect(i18n.language).toBe('fr');
     expect(document.documentElement.lang).toBe('fr');
   });

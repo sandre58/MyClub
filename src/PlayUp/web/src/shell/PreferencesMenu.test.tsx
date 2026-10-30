@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import i18n from '../i18n';
@@ -36,7 +36,9 @@ describe('PreferencesMenu', () => {
     await user.click(within(dialog).getByRole('combobox'));
     await user.click(screen.getByRole('option', { name: 'English' }));
 
-    expect(i18n.language).toBe('en');
+    await waitFor(() => {
+      expect(i18n.language).toBe('en');
+    });
     expect(document.documentElement.lang).toBe('en');
     expect(window.localStorage.getItem(LOCALE_STORAGE_KEY)).toBe('en');
   });

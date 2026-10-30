@@ -1,11 +1,15 @@
 import '@testing-library/jest-dom/vitest';
 import { cleanup, configure } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import { afterEach } from 'vitest';
-import '../i18n';
+import { afterEach, beforeAll } from 'vitest';
+import { i18nReady } from '../i18n';
 import { THEME_STORAGE_KEY } from '../theme/config';
 import { resetThemeState } from '../theme/setThemePreference';
 import { I18nTestProvider } from './renderWithI18n';
+
+beforeAll(async () => {
+  await i18nReady;
+});
 
 if (typeof window.matchMedia !== 'function') {
   window.matchMedia = (query: string) => ({
