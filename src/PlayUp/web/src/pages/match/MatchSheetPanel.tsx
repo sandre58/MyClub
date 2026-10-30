@@ -37,6 +37,7 @@ import type {
   MatchSide,
   StructureEntry,
 } from '../../types';
+import { invalidateAfterMatchMutation } from './matchInvalidation';
 
 function canMutateMatchSheet(match: MatchDetail): boolean {
   if (match.status === 'Scheduled' || match.status === 'Postponed') {
@@ -122,23 +123,6 @@ function playersOf(entry: StructureEntry | undefined): DeclaredMember[] {
   );
 }
 
-async function invalidateMatchSheet(
-  queryClient: QueryClient,
-  match: MatchDetail,
-) {
-  await Promise.all([
-    queryClient.invalidateQueries({
-      queryKey: queryKeys.matches.detail(match.matchId),
-    }),
-    queryClient.invalidateQueries({
-      queryKey: queryKeys.matches.byStage(match.stageId),
-    }),
-    queryClient.invalidateQueries({
-      queryKey: queryKeys.competitions.structure(match.competitionId),
-    }),
-  ]);
-}
-
 function SheetSideColumn({
   match,
   side,
@@ -197,7 +181,7 @@ function SheetSideColumn({
       setMemberId('');
       setJerseyDraft('');
       setCompositionStatus('Starter');
-      await invalidateMatchSheet(queryClient, match);
+      await invalidateAfterMatchMutation(queryClient, match);
     },
   });
 
@@ -205,7 +189,7 @@ function SheetSideColumn({
     mutationFn: ({ id, status }: { id: string; status: CompositionStatus }) =>
       changeDeclaredParticipationCompositionStatus(match.matchId, id, status),
     onSuccess: async () => {
-      await invalidateMatchSheet(queryClient, match);
+      await invalidateAfterMatchMutation(queryClient, match);
     },
   });
 
@@ -220,7 +204,7 @@ function SheetSideColumn({
     onSuccess: async () => {
       setJerseyEditId(null);
       setJerseyEditValue('');
-      await invalidateMatchSheet(queryClient, match);
+      await invalidateAfterMatchMutation(queryClient, match);
     },
   });
 
@@ -228,7 +212,7 @@ function SheetSideColumn({
     mutationFn: (id: string) => removeDeclaredParticipation(match.matchId, id),
     onSuccess: async () => {
       setPendingRemoveId(null);
-      await invalidateMatchSheet(queryClient, match);
+      await invalidateAfterMatchMutation(queryClient, match);
     },
     onError: () => {
       setPendingRemoveId(null);

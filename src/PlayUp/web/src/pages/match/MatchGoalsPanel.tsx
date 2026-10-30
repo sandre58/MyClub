@@ -1,8 +1,4 @@
-import {
-  useMutation,
-  useQueryClient,
-  type QueryClient,
-} from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useId, useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -11,7 +7,6 @@ import {
   removeRecordedGoal,
   setRunningScore,
 } from '../../api';
-import { queryKeys } from '../../queryKeys';
 import { Field } from '../../design-system/components/Field';
 import { PanelHead } from '../../design-system/components/PanelHead';
 import {
@@ -33,6 +28,7 @@ import {
   adjustRunningScore,
   canMutateRecordedGoals,
 } from './matchGoalsHelpers';
+import { invalidateAfterMatchMutation } from './matchInvalidation';
 
 /**
  * Nominative goals panel — facts ≠ RunningScore ≠ Finish.
@@ -72,7 +68,7 @@ export function MatchGoalsPanel({ match }: { match: MatchDetail }) {
     },
     onSuccess: async () => {
       resetCreateForm();
-      await invalidateMatchGoals(queryClient, match);
+      await invalidateAfterMatchMutation(queryClient, match);
     },
   });
 
@@ -105,7 +101,7 @@ export function MatchGoalsPanel({ match }: { match: MatchDetail }) {
     onSuccess: async () => {
       setEditingGoalId(null);
       resetCreateForm();
-      await invalidateMatchGoals(queryClient, match);
+      await invalidateAfterMatchMutation(queryClient, match);
     },
   });
 
@@ -126,7 +122,7 @@ export function MatchGoalsPanel({ match }: { match: MatchDetail }) {
     },
     onSuccess: async () => {
       setPendingRemoveId(null);
-      await invalidateMatchGoals(queryClient, match);
+      await invalidateAfterMatchMutation(queryClient, match);
     },
     onError: () => {
       setPendingRemoveId(null);
@@ -338,26 +334,6 @@ export function MatchGoalsPanel({ match }: { match: MatchDetail }) {
       )}
     </section>
   );
-}
-
-async function invalidateMatchGoals(
-  queryClient: QueryClient,
-  match: MatchDetail,
-) {
-  await Promise.all([
-    queryClient.invalidateQueries({
-      queryKey: queryKeys.matches.detail(match.matchId),
-    }),
-    queryClient.invalidateQueries({
-      queryKey: queryKeys.matches.byStage(match.stageId),
-    }),
-    queryClient.invalidateQueries({
-      queryKey: queryKeys.competitions.overview(match.competitionId),
-    }),
-    queryClient.invalidateQueries({
-      queryKey: queryKeys.competitions.consultation(match.competitionId),
-    }),
-  ]);
 }
 
 function GoalForm({

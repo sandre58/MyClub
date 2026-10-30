@@ -1,9 +1,4 @@
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-  type QueryClient,
-} from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useId, useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
@@ -45,6 +40,7 @@ import {
   type MatchScore,
   type MatchStatus,
 } from '../../types';
+import { invalidateAfterMatchMutation } from './matchInvalidation';
 import { formatKickoffParts } from './matchListMeta';
 import { MatchDisciplinaryPanel } from './MatchDisciplinaryPanel';
 import { adjustRunningScore } from './matchGoalsHelpers';
@@ -86,29 +82,6 @@ export function MatchPage() {
       )}
     </main>
   );
-}
-
-async function invalidateAfterMatchMutation(
-  queryClient: QueryClient,
-  data: MatchDetail,
-) {
-  await Promise.all([
-    queryClient.invalidateQueries({
-      queryKey: queryKeys.matches.detail(data.matchId),
-    }),
-    queryClient.invalidateQueries({
-      queryKey: queryKeys.matches.byStage(data.stageId),
-    }),
-    queryClient.invalidateQueries({
-      queryKey: queryKeys.competitions.overview(data.competitionId),
-    }),
-    queryClient.invalidateQueries({
-      queryKey: queryKeys.competitions.attention(data.competitionId),
-    }),
-    queryClient.invalidateQueries({
-      queryKey: queryKeys.competitions.consultation(data.competitionId),
-    }),
-  ]);
 }
 
 function championshipFinish(
