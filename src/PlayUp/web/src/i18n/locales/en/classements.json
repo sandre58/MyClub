@@ -44,7 +44,7 @@
   },
   "regulation": {
     "title": "Standings regulations",
-    "lede": "Points and match settings from structure — the table above is calculated by the domain engine.",
+    "lede": "Points and match settings from structure — the table above is calculated from the competition rules.",
     "pointsHeading": "Points scale",
     "pointsValue": "{{value}} pts",
     "pointsWin": "Win",
@@ -54,7 +54,7 @@
     "matchValue": "{{periods}} × {{duration}} min",
     "teams": "Expected squad size",
     "teamsValue": "{{min}} – {{max}} teams",
-    "rankingHint": "Tie-break criteria (goal difference, etc.) remain those of the Domain; they are not recalculated here.",
+    "rankingHint": "Tie-break criteria (goal difference, etc.) remain those set by the competition rules; they are not recalculated here.",
     "loading": "Loading regulations…",
     "unavailable": "Regulation details are not available at the moment.",
     "openStructure": "View structure"

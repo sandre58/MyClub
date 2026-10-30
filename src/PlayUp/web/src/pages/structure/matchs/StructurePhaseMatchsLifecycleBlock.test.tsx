@@ -98,7 +98,7 @@ describe('StructurePhaseMatchsLifecycleBlock', () => {
       screen.queryByText(/des matchs ne sont pas terminés/i),
     ).not.toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: /terminer la phase/i }),
+      screen.getByRole('button', { name: /clôturer la phase/i }),
     ).toBeDisabled();
   });
 

@@ -44,7 +44,7 @@
   },
   "regulation": {
     "title": "Règlement du classement",
-    "lede": "Barème et paramètres de match issus de la structure — le classement affiché ci-dessus est calculé par le moteur métier.",
+    "lede": "Barème et paramètres de match issus de la structure — le classement affiché ci-dessus est calculé selon les règles de la compétition.",
     "pointsHeading": "Barème de points",
     "pointsValue": "{{value}} pts",
     "pointsWin": "Victoire",
@@ -54,7 +54,7 @@
     "matchValue": "{{periods}} × {{duration}} min",
     "teams": "Effectif prévu",
     "teamsValue": "{{min}} – {{max}} équipes",
-    "rankingHint": "Les critères de départage (différence de buts, etc.) restent ceux du Domain ; ils ne sont pas recalculés ici.",
+    "rankingHint": "Les critères de départage (différence de buts, etc.) restent ceux des règles de la compétition ; ils ne sont pas recalculés ici.",
     "loading": "Chargement du règlement…",
     "unavailable": "Le détail du règlement n’est pas disponible pour le moment.",
     "openStructure": "Voir la structure"

@@ -101,7 +101,7 @@
       "RunDraw": "Lancer le tirage au sort",
       "ApplyDraw": "Appliquer le tirage publié",
       "BuildSchedule": "Construire le calendrier des matchs",
-      "RunSwissRounds": "Générer la prochaine ronde suisse"
+      "RunSwissRounds": "Générer le prochain tour du système suisse"
     }
   },
   "roster": {
@@ -189,11 +189,11 @@
     "configureLegend": "Créer la structure",
     "format": "Format",
     "matchGenerationFormat": "Génération des confrontations",
-    "matchGenerationHint": "Championnat / groupes uniquement. Coupe et Swiss ignorent ce réglage.",
+    "matchGenerationHint": "Championnat / groupes uniquement. La coupe et le système suisse ignorent ce réglage.",
     "stageName": "Nom de la phase (optionnel)",
     "stageNamePlaceholder": "ex. Saison régulière",
     "swissRoundCount": "Nombre de tours",
-    "swissRoundHint": "Nombre de rondes prévues. Les journées se créent au fil de la compétition, ronde après ronde.",
+    "swissRoundHint": "Nombre de tours prévus. Les journées se créent au fil de la compétition, tour après tour.",
     "groupCount": "Nombre de groupes",
     "participantsPerGroup": "Participants par groupe",
     "bracketSize": "Taille du tableau",
@@ -219,7 +219,7 @@
       "Championship": "Un groupe unique, des journées, un classement.",
       "Groups": "Plusieurs groupes avec une capacité de places définie.",
       "Cup": "Un tableau à élimination directe.",
-      "Swiss": "Des rondes avec des appariements au fil des résultats."
+      "Swiss": "Des tours avec des appariements au fil des résultats."
     },
     "editTitle": "Modifier la structure — {{phase}}",
     "editLede": "Reconstruit la structure de la phase (même type). Aucun tirage ni relation n’est créé."
@@ -353,7 +353,7 @@
     "actions": {
       "prepare": "Marquer comme prête",
       "start": "Démarrer la phase",
-      "complete": "Terminer la phase",
+      "complete": "Clôturer la phase",
       "revertToDraft": "Revenir en brouillon",
       "cancelStart": "Annuler le démarrage",
       "revertToReady": "Suspendre la phase",
@@ -361,7 +361,7 @@
       "resume": "Reprendre la phase",
       "preparing": "Préparation…",
       "starting": "Démarrage…",
-      "completing": "Finalisation…",
+      "completing": "Clôture…",
       "revertingToDraft": "Retour en brouillon…",
       "cancelStarting": "Annulation…",
       "revertingToReady": "Suspension…",
@@ -371,7 +371,7 @@
     "toast": {
       "prepared": "La phase est prête pour les opérations sportives.",
       "started": "La phase est en cours.",
-      "completed": "Phase terminée.",
+      "completed": "Phase clôturée.",
       "revertedToDraft": "La phase est de nouveau en brouillon.",
       "cancelledStart": "La phase est de nouveau prête.",
       "revertedToReady": "Phase suspendue — les matchs sont conservés.",
@@ -395,7 +395,7 @@
       },
       "Suspended": {
         "lead": "Suspendue",
-        "detail": "Reprenez les matchs, puis terminez la phase une fois tout clos."
+        "detail": "Reprenez les matchs, puis clôturez la phase une fois tous les matchs terminés."
       },
       "Completed": {
         "lead": "Terminée",
@@ -560,7 +560,7 @@
     },
     "dematerialize": {
       "hintFullPhase": "Retire les matchs produits sur cette phase. La structure est conservée.",
-      "hintLastSwissRound": "Retire uniquement le dernier tour Swiss produit (matchs, confrontations et éventuel bye).",
+      "hintLastSwissRound": "Retire uniquement le dernier tour produit du système suisse (matchs, confrontations et éventuel bye).",
       "blockedGeneric": "Le retrait des matchs n’est pas disponible pour le moment.",
       "submitting": "Retrait…",
       "successRemoved": "{{count}} match(s) retiré(s).",
@@ -1041,7 +1041,7 @@
     "kindPopulationHint": "Alimente les entrées d’une autre phase",
     "kindPlace": "Place",
     "kindPlaceHint": "Emplacement précis dans la phase",
-    "kindPlaceUnavailable": "Aucune phase aval n’expose de places adressables (Coupe, Groupes, Championnat ou Swiss). Utilisez Entrées, ou configurez une phase aval.",
+    "kindPlaceUnavailable": "Aucune phase aval n’expose de places adressables (Coupe, Groupes, Championnat ou Système suisse). Utilisez Entrées, ou configurez une phase aval.",
     "placeSelectPending": "Choisissez une place libellée de la phase de destination.",
     "placeEmpty": "Aucune place libellée dans cette phase de destination.",
     "placeMapAria": "Associer chaque sélection à une place",

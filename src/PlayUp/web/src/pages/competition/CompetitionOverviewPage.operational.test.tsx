@@ -313,7 +313,7 @@ describe('CompetitionOverviewPage — En cours / Terminée', () => {
       await screen.findByRole('heading', { name: 'Prochaine action' }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/Générez le prochain tour Swiss/),
+      screen.getByText(/Générez le prochain tour du système suisse/),
     ).toBeInTheDocument();
   });
 
@@ -1000,7 +1000,9 @@ describe('CompetitionOverviewPage — En cours / Terminée', () => {
       within(closure).getByRole('button', { name: 'Archiver la compétition' }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: /Générer le tour Swiss/i }),
+      screen.getByRole('button', {
+        name: /Générer le tour .* du système suisse/i,
+      }),
     ).toBeInTheDocument();
 
     await user.click(
@@ -1116,7 +1118,7 @@ describe('CompetitionOverviewPage — En cours / Terminée', () => {
     );
     expect(
       within(progression).getByRole('button', {
-        name: /Générer le tour Swiss/i,
+        name: /Générer le tour .* du système suisse/i,
       }),
     ).toBeInTheDocument();
     const suspend = within(progression).getByRole('button', {

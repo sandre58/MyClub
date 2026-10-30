@@ -21,7 +21,7 @@
       "rounds_other": "{{count}} rounds",
       "matchdays_one": "{{count}} matchday",
       "matchdays_other": "{{count}} matchdays",
-      "swissRounds": "Swiss · {{generated}} / {{planned}} rounds generated",
+      "swissRounds": "Swiss system · {{generated}} / {{planned}} rounds generated",
       "swissByes_one": "{{count}} bye (pairing event)",
       "swissByes_other": "{{count}} byes (pairing events)",
       "swissByesHint": "Not a match — the team is exempt for the round.",

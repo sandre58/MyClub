@@ -212,7 +212,7 @@ describe('PhaseSchematic', () => {
     expect(
       container.querySelector('.regulation-schematic--swiss'),
     ).not.toBeNull();
-    expect(screen.getByText(/5\s*rondes/i)).toBeInTheDocument();
+    expect(screen.getByText(/5\s*tours/i)).toBeInTheDocument();
     expect(
       container.querySelector('.regulation-schematic__league-rank'),
     ).toBeNull();

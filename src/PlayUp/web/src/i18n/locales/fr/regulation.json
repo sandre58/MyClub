@@ -156,7 +156,7 @@
     "bracketRounds": "Tableau éliminatoire · {{rounds}} tours",
     "groups": "{{count}} groupes",
     "championship": "Championnat · {{teams}} équipes",
-    "swiss": "Système suisse · {{rounds}} rondes",
+    "swiss": "Système suisse · {{rounds}} tours",
     "swissGeneric": "Système suisse"
   },
   "title": "Règlement",

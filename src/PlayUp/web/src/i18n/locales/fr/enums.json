@@ -43,7 +43,7 @@
     "Championship": "Championnat",
     "Groups": "Groupes",
     "Cup": "Coupe",
-    "Swiss": "Swiss"
+    "Swiss": "Système suisse"
   },
   "matchGenerationFormat": {
     "SingleRoundRobin": "Aller simple",
@@ -94,10 +94,10 @@
     "SourcePopulationShortfall": "Population source insuffisante",
     "AuthoredAwardUnreachable": "Attribution source introuvable",
     "ExpectedRankUnreachable": "Rang de classement inaccessible",
-    "SwissStageNotRunning": "Phase Swiss pas encore démarrée",
-    "SwissAwaitingRoundResults": "En attente des résultats du tour Swiss en cours",
+    "SwissStageNotRunning": "Phase en système suisse pas encore démarrée",
+    "SwissAwaitingRoundResults": "En attente des résultats du tour en cours (système suisse)",
     "SwissRoundsComplete": "Tous les tours planifiés sont générés",
-    "SwissInsufficientParticipants": "Participants insuffisants pour un tour Swiss",
+    "SwissInsufficientParticipants": "Participants insuffisants pour un tour du système suisse",
     "CompetitionSuspended": "Compétition suspendue"
   },
   "attentionDescription": {
