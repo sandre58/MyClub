@@ -652,14 +652,17 @@ export function FoundationsPlayground() {
               </span>
             </Status>
           </div>
-          <p className="ds-label">Déjà placée · compact · neutral · outline</p>
+          <p className="ds-label">
+            Déjà placée · compact · neutral · outline · tooltip
+          </p>
           <div className="ds-row">
-            <AlreadyPlacedStatus>Déjà placée</AlreadyPlacedStatus>
+            <AlreadyPlacedStatus label="Déjà placée" />
           </div>
           <p className="ds-meta">
-            Encre secondaire sur lavis outline 10 %. Repère non chromatique :
-            épingle et libellé. Contraste du texte ≥ 4,5:1 sur surface et canvas
-            (schéma clair).
+            Épingle seule au survol / focus ; libellé dans le tooltip. Dans le
+            tirage, le nom d&apos;équipe porte le style « déjà placée »
+            (secondaire, semi-gras). Contraste outline ≥ 4,5:1 sur surface et
+            canvas (schéma clair).
           </p>
           <p className="ds-label">Dense (texte secondaire, sans fill)</p>
           <div className="ds-row">

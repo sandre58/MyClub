@@ -95,7 +95,10 @@ describe('DrawSlotConfrontationGrid', () => {
     expect(item.closest('[dir="rtl"]')).toHaveAttribute('dir', 'rtl');
     expect(item).toHaveAccessibleName(/Déjà placée/);
     expect(item).toHaveAccessibleName(/Place libre/);
-    expect(screen.getByText('Déjà placée')).toBeInTheDocument();
+    expect(screen.queryByText('Déjà placée')).not.toBeInTheDocument();
+    expect(screen.getByText('Belgium')).toHaveClass(
+      'structure-draw-slot__name--placed',
+    );
     expect(screen.getByText('Place libre')).toBeInTheDocument();
   });
 });

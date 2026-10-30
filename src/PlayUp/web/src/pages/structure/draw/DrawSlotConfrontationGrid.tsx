@@ -22,6 +22,13 @@ function sideName(side: SlotConfrontationSide): ReactNode {
   if (side.muted) {
     return <span className="ds-meta">{side.displayName}</span>;
   }
+  if (side.alreadyPlacedLabel) {
+    return (
+      <span className="structure-draw-slot__name structure-draw-slot__name--placed">
+        {side.displayName}
+      </span>
+    );
+  }
   return side.displayName;
 }
 
@@ -29,7 +36,7 @@ function sideMark(side: SlotConfrontationSide): ReactNode {
   if (!side.alreadyPlacedLabel) {
     return null;
   }
-  return <AlreadyPlacedStatus>{side.alreadyPlacedLabel}</AlreadyPlacedStatus>;
+  return <AlreadyPlacedStatus label={side.alreadyPlacedLabel} />;
 }
 
 function rowAria(row: SlotConfrontationRow): string {
