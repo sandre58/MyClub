@@ -574,6 +574,7 @@ public static class StructureViewAssembler
             SchematicOccupiedPlaceCount: schematicOccupiedPlaceCount,
             MatchProductionPresentation: matchProductionPresentation);
 
+        // DrawCreateLaunch on summary is provisional until Evaluate runs here.
         return summary with
         {
             DrawCreateLaunch = StructureDrawCreateLaunchGate.Evaluate(

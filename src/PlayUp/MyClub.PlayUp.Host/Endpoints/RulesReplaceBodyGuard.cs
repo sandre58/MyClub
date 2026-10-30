@@ -24,7 +24,7 @@ internal static class RulesReplaceBodyGuard
         if ((clear && hasNonEmptyList) || (!clear && !hasNonEmptyList))
         {
             throw new ApplicationFailureException(
-                "Rules replace requires a non-empty list or clear: true, and not both.",
+                "A body with neither a non-empty list nor clear: true, or with both, is not allowed.",
                 ApplicationErrorCodes.RulesReplaceRequiresListOrClear);
         }
     }
