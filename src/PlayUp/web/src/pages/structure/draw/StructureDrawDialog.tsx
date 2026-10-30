@@ -50,8 +50,9 @@ import type {
   StructureFormatKind,
   StructureStageHubSummary,
 } from '../../../types';
-import { resolveLifecycleMutationMessage } from '../problems/resolveStructureProblemMessage';
+import { resolveLifecycleMutationMessage } from '../problems';
 import {
+  buildCupDrawDisplayFromDto,
   drawExecutionNumber,
   drawResolutionPlacementCount,
   getDrawUiProjection,
@@ -61,7 +62,10 @@ import {
   slotsHaveOccupants,
   projectSlotDrawResult,
   resolveDrawDetailGuidance,
+  resolveDrawHeroModel,
   sortDrawsNewestFirst,
+  type DrawHeroLabel,
+  type CupDrawCellLabels,
 } from './drawUi';
 import { DrawSlotConfrontationGrid } from './DrawSlotConfrontationGrid';
 import { redoAppliedDraw } from './drawRedo';
@@ -176,6 +180,25 @@ export function StructureDrawDialog({
   });
 
   const activeDraw = useMemo(() => pickActiveDraw(drawList), [drawList]);
+  const stageDrawMetrics = overviewQuery.data?.slotDrawDisplayMetrics ?? null;
+  // Group draws ignore cup metrics. A slot draft prefers its displayMetrics.
+  // When that field is absent, stage metrics are used. When both are absent,
+  // resolveDrawHeroModel falls back to the stage team and place counts.
+  const heroMetrics =
+    activeDraw?.kind === 'Group'
+      ? null
+      : activeDraw?.kind === 'Slot'
+        ? (activeDraw.displayMetrics ?? stageDrawMetrics)
+        : stageDrawMetrics;
+  const heroModel = resolveDrawHeroModel({
+    formatKind: stage.formatKind,
+    groupCount: stage.groupCount ?? 0,
+    teamCount: poolCount,
+    placesCount: placesN ?? 0,
+    metrics: heroMetrics,
+    inputsIntent: activeDraw?.inputsIntent ?? null,
+    hasActiveDraw: activeDraw != null,
+  });
   const cancelledDraws = useMemo(
     () =>
       sortDrawsNewestFirst(drawList).filter(
@@ -712,11 +735,15 @@ export function StructureDrawDialog({
                 ) : (
                   <>
                     <UnlockIcon size="sm" />
-                    {tDraw('releaseRun', {
-                      n: drawExecutionNumber(drawList, releaseTarget.id),
-                      aligned: alignedCountFor(releaseTarget),
-                      total: drawResolutionPlacementCount(releaseTarget),
-                    })}
+                    {releaseTarget.kind === 'Slot'
+                      ? tDraw('releaseDrawnTeams', {
+                          n: alignedCountFor(releaseTarget),
+                        })
+                      : tDraw('releaseRun', {
+                          n: drawExecutionNumber(drawList, releaseTarget.id),
+                          aligned: alignedCountFor(releaseTarget),
+                          total: drawResolutionPlacementCount(releaseTarget),
+                        })}
                   </>
                 )}
               </button>
@@ -837,14 +864,18 @@ export function StructureDrawDialog({
         footerStatus={footerStatus}
       >
         <div className="structure-draw-dialog" ref={dialogBodyRef}>
-          <DrawHeroFacts
-            formatKind={stage.formatKind}
-            groupCount={stage.groupCount ?? 0}
-            teamCount={poolCount}
-            placesCount={placesN ?? 0}
-          />
+          <DrawHeroFacts model={heroModel} />
 
-          {canLaunch && drawKind === 'Slot' && slotsHaveOccupants(slots) ? (
+          {/*
+            slotDrawDisplayMetrics is the server count. When that payload is
+            absent, the hint falls back to whether any slot already has an occupant.
+          */}
+          {canLaunch &&
+          drawKind === 'Slot' &&
+          (stageDrawMetrics
+            ? stageDrawMetrics.alreadyPlacedEntryCount > 0 &&
+              stageDrawMetrics.vacantSlotKeyCount > 0
+            : slotsHaveOccupants(slots)) ? (
             <Alert tone="info" role="status">
               <p className="ds-body">
                 {t('fiche.drawWorkflow.partialFillHint')}
@@ -892,15 +923,11 @@ export function StructureDrawDialog({
               icon={<RandomIcon size="lg" />}
               title={tDraw('noActiveTitle')}
             >
-              {releaseTarget != null && !releaseFooterBlocked ? (
-                <p className="ds-body">
-                  {tDraw('noActiveReleaseFirst', {
+              {releaseTarget != null && !releaseFooterBlocked
+                ? tDraw('noActiveReleaseFirst', {
                     n: drawExecutionNumber(drawList, releaseTarget.id),
-                  })}
-                </p>
-              ) : (
-                <p className="ds-body">{tDraw('noActiveBody')}</p>
-              )}
+                  })
+                : tDraw('noActiveBody')}
             </EmptyState>
           ) : null}
 
@@ -1174,7 +1201,13 @@ export function StructureDrawDialog({
         open={confirm === 'release'}
         title={tDraw('confirmReleaseTitle')}
         message={tDraw('confirmRelease')}
-        confirmLabel={tDraw('releasePlacements')}
+        confirmLabel={
+          confirmDraw?.kind === 'Slot'
+            ? tDraw('releaseDrawnTeams', {
+                n: alignedCountFor(confirmDraw),
+              })
+            : tDraw('releasePlacements')
+        }
         confirmIcon={<UnlockIcon size="sm" />}
         cancelLabel={tCommon('close')}
         closeLabel={tCommon('close')}
@@ -1322,48 +1355,54 @@ function CancelledDrawDetail({
   );
 }
 
+function drawHeroFactClass(label: DrawHeroLabel): string {
+  const base = 'structure-qualification__fact';
+  const emphasis =
+    label === 'heroTeams' || label === 'heroToPlace'
+      ? `${base}--primary`
+      : `${base}--secondary`;
+  return `${base} ${emphasis}`;
+}
+
 function DrawHeroFacts({
-  formatKind,
-  groupCount,
-  teamCount,
-  placesCount,
+  model,
 }: {
-  formatKind: StructureFormatKind | null | undefined;
-  groupCount: number;
-  teamCount: number;
-  placesCount: number;
+  model: ReturnType<typeof resolveDrawHeroModel>;
 }): ReactElement {
   const { t } = useTranslation('draw');
-  const secondary =
-    formatKind === 'Groups'
-      ? { value: groupCount, label: t('heroGroups') }
-      : { value: placesCount, label: t('heroPlaces') };
-  const primary = { value: teamCount, label: t('heroTeams') };
   return (
-    <div className="structure-qualification__facts" aria-live="polite">
-      <span
-        className="structure-qualification__fact structure-qualification__fact--secondary"
-        data-fact="secondary"
-      >
-        <span className="structure-qualification__fact-value">
-          {secondary.value}
-        </span>
-        <span className="structure-qualification__fact-label">
-          {secondary.label}
-        </span>
-      </span>
-      <span className="structure-qualification__fact-rule" aria-hidden="true" />
-      <span
-        className="structure-qualification__fact structure-qualification__fact--primary"
-        data-fact="primary"
-      >
-        <span className="structure-qualification__fact-value">
-          {primary.value}
-        </span>
-        <span className="structure-qualification__fact-label">
-          {primary.label}
-        </span>
-      </span>
+    <div
+      className="structure-qualification__summary structure-draw-dialog__facts"
+      aria-live="polite"
+    >
+      <div className="structure-qualification__facts">
+        <div
+          className={drawHeroFactClass(model.secondary.label)}
+          data-fact={model.secondary.label}
+        >
+          <span className="structure-qualification__fact-value">
+            {model.secondary.value}
+          </span>
+          <span className="structure-qualification__fact-label">
+            {t(model.secondary.label)}
+          </span>
+        </div>
+        <span
+          className="structure-qualification__fact-rule"
+          aria-hidden="true"
+        />
+        <div
+          className={drawHeroFactClass(model.primary.label)}
+          data-fact={model.primary.label}
+        >
+          <span className="structure-qualification__fact-value">
+            {model.primary.value}
+          </span>
+          <span className="structure-qualification__fact-label">
+            {t(model.primary.label)}
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
@@ -1406,14 +1445,33 @@ function DrawExecutionView({
     });
   }, [draw, groups, placesPerGroup, t, tCommon, tStructure]);
 
+  const cellLabels: CupDrawCellLabels = {
+    unknownEntry: tCommon('unknownEntry'),
+    alreadyPlaced: t('alreadyPlaced'),
+    freePlace: t('freePlace'),
+    reserved: t('reserved'),
+    withdrawn: t('withdrawn'),
+    outsideDraw: t('outsideDraw'),
+    originManualHint: t('originManualHint'),
+  };
+  // Cells are the cup read model. projectSlotDrawResult stays for payloads
+  // that only carry resolution placements (no slotDisplayCells).
   const slotResult =
-    draw.kind === 'Slot' && draw.slotPlacements.length > 0
-      ? projectSlotDrawResult(
-          draw.slotPlacements,
-          bracketPairs,
-          tCommon('unknownEntry'),
-        )
-      : { confrontations: [], unpaired: [] };
+    draw.kind !== 'Slot'
+      ? { confrontations: [], unpaired: [] }
+      : draw.slotDisplayCells && draw.slotDisplayCells.length > 0
+        ? buildCupDrawDisplayFromDto(
+            draw.slotDisplayCells,
+            bracketPairs,
+            cellLabels,
+          )
+        : draw.slotPlacements.length > 0
+          ? projectSlotDrawResult(
+              draw.slotPlacements,
+              bracketPairs,
+              tCommon('unknownEntry'),
+            )
+          : { confrontations: [], unpaired: [] };
   const hasGroups = ui.showResults && groupModel.length > 0;
   const hasSlots =
     ui.showResults &&

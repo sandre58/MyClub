@@ -111,6 +111,53 @@ public sealed class StructureDrawCreateLaunchGateContractTests
     }
 
     [Fact]
+    public void Withdrawn_occupant_on_a_full_phase_is_not_a_free_place()
+    {
+        var (competition, stage) = CupWithPopulation(4, 4);
+        var withdrawnKey = stage.Slots[0].SlotKey;
+        var withdrawnEntry = stage.CompositionEntries[0].EntryId;
+        for (var index = 0; index < stage.Slots.Count; index++)
+        {
+            stage.ApplyResolvedEntry(
+                stage.Slots[index].SlotKey,
+                stage.CompositionEntries[index].EntryId,
+                _clock);
+        }
+
+        stage.RemoveCompositionEntryIfPresent(withdrawnEntry, _clock);
+
+        var snapshot = SlotFeedSnapshotAssembler.Assemble(stage, [stage]);
+        SlotPartialDraw.Classify(stage, snapshot)
+            .Single(fact => fact.SlotKey == withdrawnKey).Occupancy
+            .Should().Be(SlotDrawPlaceOccupancy.Withdrawn);
+        var scope = SlotPartialDraw.Compose(stage, snapshot);
+        scope.Refusal.Should().Be(SlotPartialDrawRefusal.NoFreeSlot);
+        scope.VacantSlotKeys.Should().BeEmpty();
+        scope.VacantSlotKeys.Should().NotContain(withdrawnKey);
+
+        var facts = StageDrawBracketLaunchClassifier.ClassifyForDrawKind(
+            stage,
+            [stage],
+            DrawResolutionKind.Slot);
+        facts.VacantForDrawLaunchCount.Should().Be(0);
+        facts.OccupiedByEntryCount.Should().Be(stage.Slots.Count);
+        facts.BlockingPlaceCount.Should().Be(stage.Slots.Count);
+
+        var metrics = StageOverviewAssembler.Assemble(stage, competition).SlotDrawDisplayMetrics!;
+        metrics.VacantSlotKeyCount.Should().Be(0);
+        metrics.VacantSlotKeys.Should().NotContain(withdrawnKey);
+        metrics.UnplacedEntryCount.Should().Be(0);
+        metrics.AlreadyPlacedEntryCount.Should().Be(3);
+        metrics.EntryCount.Should().Be(3);
+        metrics.PlaceCount.Should().Be(4);
+
+        // Launch is refused here. Generate is not called, so this is not a later 409 DrawNoFreeSlot.
+        var hub = StructureViewAssembler.Assemble(competition, [stage]).Stages.Single();
+        hub.DrawCreateLaunch.Allowed.Should().BeFalse();
+        hub.DrawCreateLaunch.BlockReasonCode.Should().Be(StructureDrawCreateLaunchGate.BlockNoFreeSlot);
+    }
+
+    [Fact]
     public void Slot_launch_refuses_when_unplaced_teams_do_not_fill_free_places()
     {
         var (competition, stage) = CupWithPopulation(4, 2);

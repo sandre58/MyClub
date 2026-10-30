@@ -13,6 +13,20 @@
   min-height: auto;
 }
 
+.structure-draw-dialog__facts.structure-qualification__summary {
+  padding: 0;
+  justify-content: flex-start;
+}
+
+.structure-draw-dialog__facts .structure-qualification__facts {
+  width: 100%;
+}
+
+.structure-draw-slot__name--placed {
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-semibold);
+}
+
 .structure-draw-dialog .ds-empty--idle {
   flex: none;
   min-height: auto;

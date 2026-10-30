@@ -1,4 +1,6 @@
 import type { HTMLAttributes, ReactNode } from 'react';
+import { PlacedIcon } from '../icons/contentIcons';
+import { Tooltip } from './Tooltip';
 
 export type StatusDensity = 'context' | 'compact' | 'dense';
 export type StatusVariant = 'soft' | 'outline' | 'plain';
@@ -52,5 +54,20 @@ export function Status({
     <span className={classes} {...rest}>
       {children}
     </span>
+  );
+}
+
+/**
+ * « Déjà placée » — pin icon + tooltip only (no Status chip).
+ * Team name styling lives on the confrontation row.
+ */
+export function AlreadyPlacedStatus({ label }: { label: ReactNode }) {
+  const ariaLabel = typeof label === 'string' ? label : undefined;
+  return (
+    <Tooltip content={label}>
+      <span className="ds-placed-hint" role="img" aria-label={ariaLabel}>
+        <PlacedIcon size="sm" />
+      </span>
+    </Tooltip>
   );
 }

@@ -64,8 +64,16 @@ public static class StageOverviewAssembler
                 covered.Contains(slot.SlotKey)))
             .ToArray();
 
+        var slotDrawDisplayMetrics = StageDrawDisplay.MetricsForStage(stage, stagesForFeeds);
+
         var draws = stage.Draws
-            .Select(draw => MapDraw(draw, stage, entries, actionContext, competition.Status))
+            .Select(draw => MapDraw(
+                draw,
+                stage,
+                entries,
+                actionContext,
+                competition.Status,
+                slotDrawDisplayMetrics))
             .ToArray();
 
         var bracketPairs = stage.BracketPairs
@@ -93,7 +101,8 @@ public static class StageOverviewAssembler
             bracketPairs,
             groups,
             drawBracketLaunchFacts,
-            DrawActionEvaluator.ReleaseCandidateDrawId(actionContext, stage));
+            DrawActionEvaluator.ReleaseCandidateDrawId(actionContext, stage),
+            slotDrawDisplayMetrics);
     }
 
     private static StageFixtureDto MapFixture(Fixture fixture) =>
@@ -112,10 +121,17 @@ public static class StageOverviewAssembler
         Stage stage,
         IReadOnlyDictionary<EntryId, CompetitionEntry> entries,
         DrawActionContext actionContext,
-        CompetitionStatus competitionStatus)
+        CompetitionStatus competitionStatus,
+        StageDrawDisplayMetricsDto? slotDrawDisplayMetrics)
     {
         var resolution = draw.Resolution;
         var actions = ToActionsDto(DrawActionEvaluator.EvaluateForRead(actionContext, draw, competitionStatus));
+        var display = StageDrawDisplay.Project(
+            draw,
+            stage,
+            actionContext.CompetitionStages,
+            entries,
+            slotDrawDisplayMetrics);
         IReadOnlyList<StageDrawSlotPlacementDto> slotPlacements = [];
         IReadOnlyList<StageDrawGroupPlacementDto> groupPlacements = [];
 
@@ -130,7 +146,10 @@ public static class StageOverviewAssembler
                 groupPlacements,
                 IsApplied: false,
                 IsObsoleteForConsumption: DrawConsumptionConformance.IsObsoleteForConsumption(draw, stage),
-                actions);
+                actions,
+                draw.InputsIntent,
+                display.Metrics,
+                display.Cells);
         }
 
         slotPlacements =
@@ -145,7 +164,8 @@ public static class StageOverviewAssembler
                         side.DisplayName,
                         side.ShortName,
                         side.LogoMediaId,
-                        side.PrimaryColor);
+                        side.PrimaryColor,
+                        DrawPlacementOrigin.Draw);
                 })
         ];
 
@@ -179,7 +199,10 @@ public static class StageOverviewAssembler
             groupPlacements,
             DrawAppliedState.IsApplied(draw, stage),
             DrawConsumptionConformance.IsObsoleteForConsumption(draw, stage),
-            actions);
+            actions,
+            draw.InputsIntent,
+            display.Metrics,
+            display.Cells);
     }
 
     private static StageDrawActionsDto ToActionsDto(DrawActionsAssessment assessment) =>

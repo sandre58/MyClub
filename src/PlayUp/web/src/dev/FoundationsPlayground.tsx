@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
+  AlreadyPlacedStatus,
   Status,
   type StatusShape,
   type StatusTone,
@@ -651,6 +652,15 @@ export function FoundationsPlayground() {
               </span>
             </Status>
           </div>
+          <p className="ds-label">Déjà placée · icône + tooltip</p>
+          <div className="ds-row">
+            <AlreadyPlacedStatus label="Déjà placée" />
+          </div>
+          <p className="ds-meta">
+            Épingle seule (classe <code>ds-placed-hint</code>, pas de badge
+            Status). Libellé au survol / focus. Dans le tirage, le nom
+            d&apos;équipe est secondaire semi-gras.
+          </p>
           <p className="ds-label">Dense (texte secondaire, sans fill)</p>
           <div className="ds-row">
             {statusTones.map((tone) => (
