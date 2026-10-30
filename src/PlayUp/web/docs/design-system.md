@@ -184,7 +184,6 @@ There is **no** generic `Card` foundation (see `foundations/surfaces.css`). New 
 | Schematic pots           | `.regulation-schematic__card*`         | Diagram cells — naming historical; not family B                            |
 | Disciplinary tokens      | `.regulation-card-token*`              | Literal “carton” glyphs — keep `card` in the name                          |
 | Overview config height   | `.overview-config-card` on `.ds-panel` | Layout helper on family **C**, not a card system                           |
-| Stage draw block         | `.stage-draw-tile`                     | Page-local Stage content (family C-like block, not selection tile)         |
 
 ### Rules
 

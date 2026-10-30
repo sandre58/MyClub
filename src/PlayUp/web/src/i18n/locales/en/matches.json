@@ -52,7 +52,7 @@
     "eyebrow": "Matches",
     "titleNamed": "{{name}} · matches",
     "titleFallback": "Stage matches",
-    "back": "Back to stage",
+    "back": "Back to structure",
     "emptyTitle": "No matches for this stage",
     "emptyBody": "The structure can exist without attached matches. Prepare the draw on the stage to create them.",
     "vs": "vs",

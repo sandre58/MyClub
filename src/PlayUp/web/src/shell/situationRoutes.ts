@@ -26,10 +26,14 @@ export function overviewTargetHref(target: {
 
   switch (targetType) {
     case 'Stage':
-      return `/stages/${targetId}`;
+      return competitionId
+        ? structureDeepLink({ competitionId, stageId: targetId })
+        : null;
     case 'Slot': {
       const stageFromSlot = targetId.split(':')[0];
-      return stageFromSlot ? `/stages/${stageFromSlot}` : null;
+      return stageFromSlot && competitionId
+        ? structureDeepLink({ competitionId, stageId: stageFromSlot })
+        : null;
     }
     case 'Fixture':
       // Without resolved matchId, fall back to stage matches or competition hub.
@@ -48,8 +52,8 @@ export function overviewTargetHref(target: {
         return null;
       }
       return competitionId
-        ? `/competitions/${competitionId}/structure?stage=${encodeURIComponent(stageId)}`
-        : `/stages/${stageId}`;
+        ? structureDeepLink({ competitionId, stageId })
+        : null;
     default:
       return null;
   }

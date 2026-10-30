@@ -52,7 +52,7 @@
     "eyebrow": "Matchs",
     "titleNamed": "{{name}} · matchs",
     "titleFallback": "Matchs de la phase",
-    "back": "Retour à la phase",
+    "back": "Retour à la structure",
     "emptyTitle": "Aucun match pour cette phase",
     "emptyBody": "La structure peut exister sans matchs attachés. Préparez le tirage sur la phase pour les créer.",
     "vs": "vs",

@@ -43,9 +43,9 @@ const StageMatchesPage = lazyNamedPage(
   () => import('./pages/stage/StageMatchesPage'),
   'StageMatchesPage',
 );
-const StagePage = lazyNamedPage(
-  () => import('./pages/stage/StagePage'),
-  'StagePage',
+const StageLegacyRedirect = lazyNamedPage(
+  () => import('./pages/stage/StageLegacyRedirect'),
+  'StageLegacyRedirect',
 );
 const StructurePage = lazyNamedPage(
   () => import('./pages/structure/StructurePage'),
@@ -137,8 +137,8 @@ export default function App() {
           path="/competitions/:competitionId/matches"
           element={<MatchHubPage />}
         />
-        <Route path="/stages/:stageId" element={<StagePage />} />
         <Route path="/stages/:stageId/matches" element={<StageMatchesPage />} />
+        <Route path="/stages/:stageId" element={<StageLegacyRedirect />} />
         <Route path="/matches/:matchId" element={<MatchPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>

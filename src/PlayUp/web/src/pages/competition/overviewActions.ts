@@ -18,6 +18,7 @@ import {
   suspendCompetition,
 } from '../../api';
 import type { OverviewAction, OverviewView } from '../../types';
+import { structureDeepLink } from '../structure/structureNavigation';
 
 /**
  * Outcome of a Overview action click.
@@ -33,8 +34,18 @@ export type OverviewActionIntent =
 /**
  * Map a backend-projected action to execute vs navigate.
  * Availability is decided by the Read; this only chooses how to carry it out.
- * Cup materialize executes all eligible pairs (empty pairKeys) — StagePage remains a technical fallback.
+ * Cup materialize executes all eligible pairs (empty pairKeys) — Structure hub when draw params are incomplete.
  */
+function navigateToStageStructure(
+  competitionId: string,
+  stageId: string,
+): OverviewActionIntent {
+  return {
+    kind: 'navigate',
+    to: structureDeepLink({ competitionId, stageId }),
+  };
+}
+
 export function resolveOverviewActionIntent(
   action: OverviewAction,
   view: OverviewView,
@@ -60,13 +71,13 @@ export function resolveOverviewActionIntent(
       return stageId && drawId
         ? { kind: 'execute', run: () => publishDraw(stageId, drawId) }
         : stageId
-          ? { kind: 'navigate', to: `/stages/${stageId}` }
+          ? navigateToStageStructure(competitionId, stageId)
           : { kind: 'unsupported' };
 
     case 'PublishAndApplyDraw': {
       if (!stageId || !drawId) {
         return stageId
-          ? { kind: 'navigate', to: `/stages/${stageId}` }
+          ? navigateToStageStructure(competitionId, stageId)
           : { kind: 'unsupported' };
       }
       return {
@@ -78,7 +89,7 @@ export function resolveOverviewActionIntent(
     case 'ApplyDraw': {
       if (!stageId || !drawId) {
         return stageId
-          ? { kind: 'navigate', to: `/stages/${stageId}` }
+          ? navigateToStageStructure(competitionId, stageId)
           : { kind: 'unsupported' };
       }
       return {
@@ -124,7 +135,7 @@ export function resolveOverviewActionIntent(
         : matchId
           ? { kind: 'navigate', to: `/matches/${matchId}` }
           : stageId
-            ? { kind: 'navigate', to: `/stages/${stageId}` }
+            ? navigateToStageStructure(competitionId, stageId)
             : { kind: 'unsupported' };
 
     case 'ApplyQualification':
@@ -188,7 +199,7 @@ export function resolveOverviewActionIntent(
     case 'GenerateSchedule':
     case 'ApplySchedule':
       return stageId
-        ? { kind: 'navigate', to: `/stages/${stageId}` }
+        ? navigateToStageStructure(competitionId, stageId)
         : { kind: 'navigate', to: `/competitions/${competitionId}/matches` };
 
     case 'OpenMatches':
