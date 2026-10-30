@@ -300,6 +300,7 @@ public sealed record StructureStageHubSummaryDto(
     bool HasTieFormat,
     int? NumberOfLegs,
     bool? AggregateScoring,
+    StructureDrawCreateLaunchDto DrawCreateLaunch,
     bool HasAwayGoalsRule = false,
     bool HasTieExtraTime = false,
     bool HasTiePenaltyShootout = false,
@@ -343,8 +344,7 @@ public sealed record StructureStageHubSummaryDto(
     StructureInboundCompositionDto? InboundComposition = null,
     int CompositionBandResolvedCount = 0,
     int? SchematicOccupiedPlaceCount = null,
-    StructureMatchProductionPresentationDto? MatchProductionPresentation = null,
-    StructureDrawCreateLaunchDto DrawCreateLaunch);
+    StructureMatchProductionPresentationDto? MatchProductionPresentation = null);
 
 /// <summary>
 /// Read-side decision for starting a new draw execution on a phase hub row.
