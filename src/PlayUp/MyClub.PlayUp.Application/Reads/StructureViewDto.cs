@@ -206,6 +206,10 @@ public sealed record StructureReadinessDto(
 /// <param name="HasTieFormat">TieFormat present (stage default or round).</param>
 /// <param name="NumberOfLegs">TieFormat legs when present (default one-leg if none).</param>
 /// <param name="AggregateScoring">TieFormat aggregate scoring when multi-leg.</param>
+/// <param name="DrawCreateLaunch">
+/// Whether a new draw execution may be launched on this phase. <see cref="StructureDrawCreateLaunchDto.BlockReasonCode"/>
+/// is set when <see cref="StructureDrawCreateLaunchDto.Allowed"/> is false.
+/// </param>
 /// <param name="HasAwayGoalsRule">Away-goals rule on the effective TieFormat.</param>
 /// <param name="HasTieExtraTime">Extra-time rule on the effective TieFormat (confrontation).</param>
 /// <param name="HasTiePenaltyShootout">Penalty-shootout rule on the effective TieFormat.</param>
@@ -264,10 +268,6 @@ public sealed record StructureReadinessDto(
 /// Null when Places N is unknown or the format is out of scope.
 /// </param>
 /// <param name="MatchProductionPresentation">Shared Matchs production projection for strip and aside tile.</param>
-/// <param name="DrawCreateLaunch">
-/// Whether a new draw execution may be launched on this phase. <see cref="StructureDrawCreateLaunchDto.BlockReasonCode"/>
-/// is set when <see cref="StructureDrawCreateLaunchDto.Allowed"/> is false.
-/// </param>
 public sealed record StructureStageHubSummaryDto(
     Guid StageId,
     string Name,
