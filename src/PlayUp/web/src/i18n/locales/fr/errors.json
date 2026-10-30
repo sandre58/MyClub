@@ -226,6 +226,7 @@
     "PlacesPerGroupNotApplicable": "Les places par groupe ne s’appliquent pas à ce type de phase.",
     "ProgressionApplyFixtureMismatch": "Le chemin de progression ne correspond pas à cette confrontation.",
     "RoundNotFound": "Tour introuvable.",
+    "ResolutionProvenanceInvalid": "La provenance de résolution est invalide.",
     "SlotFeedConflict": "L’affectation directe entre en conflit avec l’alimentation configurée.",
     "SlotKeyInvalid": "La clé d’emplacement est invalide.",
     "SlotNotFound": "Emplacement introuvable.",

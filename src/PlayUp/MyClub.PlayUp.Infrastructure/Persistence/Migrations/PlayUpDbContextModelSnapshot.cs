@@ -16,7 +16,7 @@ partial class PlayUpDbContextModelSnapshot : ModelSnapshot
     // If you encounter a merge conflict in the line below, it means you need to
     // discard one of the migration branches and recreate its migrations on top of
     // the other branch. See https://aka.ms/efcore-docs-migrations-conflicts for more info.
-    public override string LastMigrationId => "20261030120346_AddDrawInputsIntent";
+    public override string LastMigrationId => "20261030200141_AddResolutionProvenance";
 
     protected override void BuildModel(ModelBuilder modelBuilder)
     {
@@ -336,6 +336,20 @@ partial class PlayUpDbContextModelSnapshot : ModelSnapshot
                 b.Property<Guid?>("EntryId")
                     .HasColumnType("uuid")
                     .HasColumnName("entry_id");
+
+                b.Property<int?>("ResolutionProvenanceKind")
+                    .HasColumnType("integer")
+                    .HasColumnName("resolution_provenance_kind");
+
+                b.Property<string>("ResolutionSourcePathId")
+                    .HasMaxLength(512)
+                    .HasColumnType("character varying(512)")
+                    .HasColumnName("resolution_source_path_id");
+
+                b.Property<string>("ResolutionUpstreamFingerprint")
+                    .HasMaxLength(2048)
+                    .HasColumnType("character varying(2048)")
+                    .HasColumnName("resolution_upstream_fingerprint");
 
                 b.HasKey("stage_id", "SlotKey");
 
@@ -862,6 +876,43 @@ partial class PlayUpDbContextModelSnapshot : ModelSnapshot
                             .HasForeignKey("stage_id");
                     });
 
+                b.OwnsMany("MyClub.PlayUp.Domain.Stages.GroupResolutionProvenance", "GroupResolutionProvenances", b1 =>
+                    {
+                        b1.Property<Guid>("stage_id")
+                            .HasColumnType("uuid");
+
+                        b1.Property<Guid>("GroupId")
+                            .HasColumnType("uuid")
+                            .HasColumnName("group_id");
+
+                        b1.Property<Guid>("EntryId")
+                            .HasColumnType("uuid")
+                            .HasColumnName("entry_id");
+
+                        b1.Property<int>("ProvenanceKind")
+                            .HasColumnType("integer")
+                            .HasColumnName("resolution_provenance_kind");
+
+                        b1.Property<string>("SourcePathId")
+                            .IsRequired()
+                            .HasMaxLength(512)
+                            .HasColumnType("character varying(512)")
+                            .HasColumnName("resolution_source_path_id");
+
+                        b1.Property<string>("UpstreamResultFingerprint")
+                            .IsRequired()
+                            .HasMaxLength(2048)
+                            .HasColumnType("character varying(2048)")
+                            .HasColumnName("resolution_upstream_fingerprint");
+
+                        b1.HasKey("stage_id", "GroupId", "EntryId");
+
+                        b1.ToTable("stage_group_resolution_provenances");
+
+                        b1.WithOwner()
+                            .HasForeignKey("stage_id");
+                    });
+
                 b.OwnsMany("MyClub.PlayUp.Domain.Stages.MatchPlacement", "MatchPlacements", b1 =>
                     {
                         b1.Property<Guid>("stage_id")
@@ -904,6 +955,20 @@ partial class PlayUpDbContextModelSnapshot : ModelSnapshot
                             .HasColumnType("uuid")
                             .HasColumnName("entry_id");
 
+                        b1.Property<int?>("ResolutionProvenanceKind")
+                            .HasColumnType("integer")
+                            .HasColumnName("resolution_provenance_kind");
+
+                        b1.Property<string>("ResolutionSourcePathId")
+                            .HasMaxLength(512)
+                            .HasColumnType("character varying(512)")
+                            .HasColumnName("resolution_source_path_id");
+
+                        b1.Property<string>("ResolutionUpstreamFingerprint")
+                            .HasMaxLength(2048)
+                            .HasColumnType("character varying(2048)")
+                            .HasColumnName("resolution_upstream_fingerprint");
+
                         b1.HasKey("stage_id", "EntryId");
 
                         b1.ToTable("stage_affectation_entries");
@@ -920,6 +985,20 @@ partial class PlayUpDbContextModelSnapshot : ModelSnapshot
                         b1.Property<Guid>("EntryId")
                             .HasColumnType("uuid")
                             .HasColumnName("entry_id");
+
+                        b1.Property<int?>("ResolutionProvenanceKind")
+                            .HasColumnType("integer")
+                            .HasColumnName("resolution_provenance_kind");
+
+                        b1.Property<string>("ResolutionSourcePathId")
+                            .HasMaxLength(512)
+                            .HasColumnType("character varying(512)")
+                            .HasColumnName("resolution_source_path_id");
+
+                        b1.Property<string>("ResolutionUpstreamFingerprint")
+                            .HasMaxLength(2048)
+                            .HasColumnType("character varying(2048)")
+                            .HasColumnName("resolution_upstream_fingerprint");
 
                         b1.HasKey("stage_id", "EntryId");
 
@@ -959,6 +1038,8 @@ partial class PlayUpDbContextModelSnapshot : ModelSnapshot
                 b.Navigation("DirectAssignments");
 
                 b.Navigation("FormPathResolutions");
+
+                b.Navigation("GroupResolutionProvenances");
 
                 b.Navigation("MatchPlacements");
 

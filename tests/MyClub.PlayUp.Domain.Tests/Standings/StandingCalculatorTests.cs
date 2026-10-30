@@ -310,6 +310,40 @@ public sealed class StandingCalculatorTests
         withEmpty.Rows.Select(r => (r.EntryId, r.Points)).Should().Equal(baseline.Rows.Select(r => (r.EntryId, r.Points)));
     }
 
+    [Fact]
+    public void Calculate_final_tie_break_uses_regulation_criteria_then_entry_id_over_20_runs()
+    {
+        var matches = new[]
+        {
+            new StandingMatch(_a, _b, 1, 1),
+            new StandingMatch(_a, _c, 3, 0),
+            new StandingMatch(_b, _c, 2, 0)
+        };
+
+        Standing? firstWithGoalDifference = null;
+        var rulesWithGoalDifference = Rules(RankingCriterion.Points, RankingCriterion.GoalDifference);
+        for (var run = 0; run < 20; run++)
+        {
+            var standing = StandingCalculator.Calculate([_a, _b, _c], matches, rulesWithGoalDifference);
+            firstWithGoalDifference ??= standing;
+            standing.Rows.Select(r => r.EntryId).Should().Equal(firstWithGoalDifference.Rows.Select(r => r.EntryId));
+            standing.Rows[0].EntryId.Should().Be(_a);
+            standing.Rows[1].EntryId.Should().Be(_b);
+        }
+
+        Standing? firstPointsOnly = null;
+        var rulesPointsOnly = Rules(RankingCriterion.Points);
+        for (var run = 0; run < 20; run++)
+        {
+            var standing = StandingCalculator.Calculate([_a, _b, _c], matches, rulesPointsOnly);
+            firstPointsOnly ??= standing;
+            standing.Rows.Select(r => r.EntryId).Should().Equal(firstPointsOnly.Rows.Select(r => r.EntryId));
+            standing.Rows[0].EntryId.Value.CompareTo(standing.Rows[1].EntryId.Value)
+                .Should()
+                .BeLessThan(0, "EntryId is the last-resort tie-break when points stay tied");
+        }
+    }
+
     private static StandingRules Rules(params RankingCriterion[] criteria) =>
         new(new PointsPolicy(3, 1, 0), criteria);
 }

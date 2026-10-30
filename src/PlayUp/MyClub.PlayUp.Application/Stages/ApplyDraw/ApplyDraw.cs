@@ -174,7 +174,12 @@ public static class ApplyDraw
 
         foreach (var instruction in pending)
         {
-            stage.ApplyResolvedEntry(instruction.SlotKey, instruction.EntryId, clock, snapshots);
+            stage.ApplyResolvedEntry(
+                instruction.SlotKey,
+                instruction.EntryId,
+                clock,
+                ResolutionProvenance.Tirage(draw.Id, instruction.SlotKey, instruction.EntryId),
+                snapshots);
         }
 
         return instructions;
