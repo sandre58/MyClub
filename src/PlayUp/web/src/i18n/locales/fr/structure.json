@@ -219,7 +219,7 @@
       "Championship": "Un groupe unique, des journées, un classement.",
       "Groups": "Plusieurs groupes avec une capacité de places définie.",
       "Cup": "Un tableau à élimination directe.",
-      "Swiss": "Des rondes avec des appariements au fil des résultats."
+      "Swiss": "Des tours avec des appariements au fil des résultats."
     },
     "editTitle": "Modifier la structure — {{phase}}",
     "editLede": "Reconstruit la structure de la phase (même type). Aucun tirage ni relation n’est créé."

@@ -46,6 +46,20 @@ describe('i18n glossary guard', () => {
     expect(violations).toEqual([]);
   });
 
+  it('FR locale values do not use “ronde” (prefer “tour”)', () => {
+    const violations: string[] = [];
+    for (const file of localeJsonFiles('fr')) {
+      const leaves: string[] = [];
+      collectStringLeaves(parseJson(file), leaves);
+      for (const text of leaves) {
+        if (/\brondes?\b/i.test(text)) {
+          violations.push(`${file}: ${text}`);
+        }
+      }
+    }
+    expect(violations).toEqual([]);
+  });
+
   it('FR and EN locale values do not expose “Domain”', () => {
     const violations: string[] = [];
     for (const locale of ['fr', 'en'] as const) {
