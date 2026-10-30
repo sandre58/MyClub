@@ -1,8 +1,4 @@
-import {
-  useMutation,
-  useQueryClient,
-  type QueryClient,
-} from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useId, useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -10,7 +6,6 @@ import {
   recordSubstitution,
   removeRecordedSubstitution,
 } from '../../api';
-import { queryKeys } from '../../queryKeys';
 import {
   CheckIcon,
   PlusIcon,
@@ -26,6 +21,7 @@ import type {
   RecordedSubstitution,
   RecordSubstitutionRequest,
 } from '../../types';
+import { invalidateAfterMatchMutation } from './matchInvalidation';
 import {
   canMutateRecordedSubstitutions,
   deriveOnFieldMembers,
@@ -55,7 +51,7 @@ export function MatchSubstitutionsPanel({ match }: { match: MatchDetail }) {
       recordSubstitution(match.matchId, request),
     onSuccess: async () => {
       resetForm();
-      await invalidateMatchSubs(queryClient, match);
+      await invalidateAfterMatchMutation(queryClient, match);
     },
   });
 
@@ -70,7 +66,7 @@ export function MatchSubstitutionsPanel({ match }: { match: MatchDetail }) {
     onSuccess: async () => {
       setEditingId(null);
       resetForm();
-      await invalidateMatchSubs(queryClient, match);
+      await invalidateAfterMatchMutation(queryClient, match);
     },
   });
 
@@ -79,7 +75,7 @@ export function MatchSubstitutionsPanel({ match }: { match: MatchDetail }) {
       removeRecordedSubstitution(match.matchId, substitutionId),
     onSuccess: async () => {
       setPendingRemoveId(null);
-      await invalidateMatchSubs(queryClient, match);
+      await invalidateAfterMatchMutation(queryClient, match);
     },
     onError: () => {
       setPendingRemoveId(null);
@@ -303,26 +299,6 @@ export function MatchSubstitutionsPanel({ match }: { match: MatchDetail }) {
       )}
     </section>
   );
-}
-
-async function invalidateMatchSubs(
-  queryClient: QueryClient,
-  match: MatchDetail,
-) {
-  await Promise.all([
-    queryClient.invalidateQueries({
-      queryKey: queryKeys.matches.detail(match.matchId),
-    }),
-    queryClient.invalidateQueries({
-      queryKey: queryKeys.matches.byStage(match.stageId),
-    }),
-    queryClient.invalidateQueries({
-      queryKey: queryKeys.competitions.overview(match.competitionId),
-    }),
-    queryClient.invalidateQueries({
-      queryKey: queryKeys.competitions.consultation(match.competitionId),
-    }),
-  ]);
 }
 
 function SubstitutionForm({
