@@ -38,6 +38,14 @@ public interface ICompetitionRepository
     Task<IReadOnlyList<Competition>> ListAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Counts ordered stage rows for a competition without loading the aggregate.
+    /// </summary>
+    /// <param name="id">The competition identity.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>The number of stage references. Zero when the competition has none.</returns>
+    Task<int> CountStagesReadOnlyAsync(CompetitionId id, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Adds a new competition to the current unit of work.
     /// </summary>
     /// <param name="competition">The competition to add.</param>

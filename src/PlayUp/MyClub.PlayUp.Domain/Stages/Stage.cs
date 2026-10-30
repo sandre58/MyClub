@@ -715,6 +715,25 @@ public sealed class Stage : AggregateRoot<StageId>
         ApplyQualificationRulesReplacement(qualificationRules, clock);
     }
 
+    /// <summary>
+    /// Replaces qualification rules on a non-completed stage after a qualification Apply.
+    /// Caller proves the Apply and still enforces downstream-consumer and applied-draw guards.
+    /// </summary>
+    /// <param name="qualificationRules">The new qualification rules, or <see langword="null"/>.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ReplaceQualificationRulesAfterAppliedResolution(QualificationRules? qualificationRules, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        if (Status is StageStatus.Completed)
+        {
+            throw new DomainException(
+                $"Operational structure authoring cannot be modified when status is '{Status}'.",
+                StageErrorCodes.StructureLocked);
+        }
+
+        ApplyQualificationRulesReplacement(qualificationRules, clock);
+    }
+
     private void ApplyQualificationRulesReplacement(QualificationRules? qualificationRules, IClock clock)
     {
         if (qualificationRules is not null)

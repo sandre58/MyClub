@@ -84,4 +84,40 @@ public static class FixtureConfrontationSnapshotAssembler
 
         return new FixtureConfrontationSnapshot(fixture.Id, legs);
     }
+
+    /// <summary>
+    /// Maps fixture attachments and match summary rows into an immutable confrontation snapshot.
+    /// </summary>
+    public static FixtureConfrontationSnapshot Assemble(
+        Fixture fixture,
+        IReadOnlyList<MatchSummaryRow> matches)
+    {
+        ArgumentNullException.ThrowIfNull(fixture);
+        ArgumentNullException.ThrowIfNull(matches);
+
+        var byId = matches.ToDictionary(match => match.Id);
+        var legs = new List<FixtureLegSnapshot>(fixture.Attachments.Count);
+        foreach (var attachment in fixture.Attachments)
+        {
+            if (!byId.TryGetValue(attachment.MatchId, out var match))
+            {
+                throw new ApplicationFailureException(
+                    $"Match '{attachment.MatchId}' attached to fixture '{fixture.Id}' was not provided.",
+                    ApplicationErrorCodes.FixtureInvalid);
+            }
+
+            legs.Add(
+                new FixtureLegSnapshot(
+                    attachment.LegIndex,
+                    match.Id,
+                    match.HomeEntryId,
+                    match.AwayEntryId,
+                    match.Status,
+                    match.Result?.Score,
+                    match.Result?.ExtraTimePlayed ?? false,
+                    match.Result?.PenaltyShootoutScore));
+        }
+
+        return new FixtureConfrontationSnapshot(fixture.Id, legs);
+    }
 }

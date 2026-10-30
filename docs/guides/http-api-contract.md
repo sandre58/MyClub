@@ -301,6 +301,23 @@ Server decision for starting a new draw execution on that phase. The SPA display
 | `allowed` | boolean | True when a new draw may be launched |
 | `blockReasonCode` | string \| null | Stable code when `allowed` is false. Slot: `NoFreeSlot`, `NotEnoughTeams`, `TooManyTeams` (free places must match unplaced teams). Group: `BracketPlacesOccupied` when a place is taken. Also `DrawRulesMissing`, `MissingPots`, `GroupShapeInvalid`, …. Null when allowed |
 
+#### `stages[].resolutionOccupants`
+
+Optional. Present when the phase stores resolution provenance (slot, group membership, or population). Null or omitted when the phase has none. Computed on this Structure read only; the server does not rewrite occupants.
+
+| Field | Type | Notes |
+| :--- | :--- | :--- |
+| `target` | string | `Slot` \| `Group` \| `Population` |
+| `entryId` | guid | Stored occupant |
+| `provenanceKind` | string | `Qualification` \| `Progression` \| `Directe` \| `Tirage` \| `NonVerifiee` |
+| `sourcePathId` | string | Persisted path identifier (qualification rule identity lives here) |
+| `state` | string | `AJour` \| `Perime` \| `Indetermine` \| `NonVerifiee` |
+| `slotKey` | string \| null | Set when `target` is `Slot` |
+| `groupId` | guid \| null | Set when `target` is `Group` |
+| `stalenessCause` | string \| null | When `state` is `Perime`: `ResultatAmont` \| `RegleQualification` \| `AmontPerime`. Otherwise null |
+
+`Directe` stays `AJour`. `NonVerifiee` stays `NonVerifiee`. An unresolved selection is `Indetermine`. `AmontPerime` means an upstream occupant this resolution depends on is already `Perime`.
+
 ### Stage lifecycle commands
 
 Distinct from **competition** Prepare/Start/Complete. No request body on these routes.
