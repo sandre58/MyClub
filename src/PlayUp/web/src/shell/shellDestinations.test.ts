@@ -86,6 +86,10 @@ describe('resolveActiveDestination', () => {
     ).toBe('regulation');
   });
 
+  it('maps legacy stage URLs to Structure while redirecting', () => {
+    expect(resolveActiveDestination(`/stages/${stageId}`)).toBe('structure');
+  });
+
   it('maps match hub and stage routes to Matchs', () => {
     expect(
       resolveActiveDestination(`/competitions/${competitionId}/matches`),
@@ -94,7 +98,6 @@ describe('resolveActiveDestination', () => {
       'matches',
     );
     expect(resolveActiveDestination(`/matches/${matchId}`)).toBe('matches');
-    expect(resolveActiveDestination(`/stages/${stageId}`)).toBe('matches');
   });
 
   it('maps classements routes to Classements', () => {

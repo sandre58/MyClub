@@ -64,7 +64,7 @@ If Rider does not list the shared configs after pull: **File | Invalidate Caches
 
 ```text
 /competitions/:competitionId
-  → /stages/:stageId
+  → /competitions/:competitionId/structure?stage=:stageId
     → /stages/:stageId/matches
       → /matches/:matchId
 ```

@@ -22,12 +22,13 @@ import {
   matchScheduledLabel,
   matchSportingContext,
 } from '../match/matchListMeta';
+import { structureDeepLink } from '../structure/structureNavigation';
 
 export function StageMatchesPage() {
   const { stageId = '' } = useParams();
   const { t } = useTranslation('matches');
 
-  // Stage overview shares queryKeys.stages.detail with StagePage (cache when coming from there).
+  // Stage overview shares queryKeys.stages.detail with Structure / legacy redirect.
   const stageQuery = useQuery({
     queryKey: queryKeys.stages.detail(stageId),
     queryFn: () => fetchStageOverview(stageId),
@@ -53,8 +54,15 @@ export function StageMatchesPage() {
             : t('stageList.titleFallback')
         }
         back={
-          stageId ? (
-            <BackLink to={`/stages/${stageId}`}>{t('stageList.back')}</BackLink>
+          stageQuery.data?.competitionId ? (
+            <BackLink
+              to={structureDeepLink({
+                competitionId: stageQuery.data.competitionId,
+                stageId,
+              })}
+            >
+              {t('stageList.back')}
+            </BackLink>
           ) : undefined
         }
       />

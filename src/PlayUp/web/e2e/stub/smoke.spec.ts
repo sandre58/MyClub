@@ -56,6 +56,16 @@ test.describe('Play’Up smoke (stub API)', () => {
     await expect(page.getByRole('heading', { name: /^Match$/i })).toBeVisible();
   });
 
+  test('Legacy /stages/:id redirige vers Structure', async ({ page }) => {
+    await page.goto(`/stages/${IDS.stageId}`);
+
+    await expect(page).toHaveURL(
+      new RegExp(
+        `/competitions/${IDS.competitionId}/structure\\?stage=${IDS.stageId}`,
+      ),
+    );
+  });
+
   test('Match — démarrer puis terminer', async ({ page }) => {
     await page.goto(`/matches/${IDS.matchId}`);
 

@@ -6,7 +6,7 @@ Do **not** big-bang migrate all pages. Apply this list when a product task alrea
 
 ## Checklist
 
-1. **Strings** — every new or touched user-facing string goes through `useTranslation` / `t()` (`common`, `shell`, `enums`, `actions`, `matches`, `draw`, `overview`, `structure`, `stage`, `home`, `competitions`, `errors`). Prefer **wire codes → i18n** (`source`, `nextActionCode`, `blockers`, ProblemDetails `code`). See [i18n.md](./i18n.md).
+1. **Strings** — every new or touched user-facing string goes through `useTranslation` / `t()` (`common`, `shell`, `enums`, `actions`, `matches`, `draw`, `overview`, `structure`, `home`, `competitions`, `errors`). Prefer **wire codes → i18n** (`source`, `nextActionCode`, `blockers`, ProblemDetails `code`). See [i18n.md](./i18n.md).
 2. **Visual** — replace 13.5 classes (`.btn`, `.card`, `.page`, …) with Design System foundations (`.ds-btn`, `.ds-group`, `.ds-heading`, …) under `.ds-root` (already provided by the Shell).
 3. **Layout** — prefer `.shell-page` (narrow) or reuse foundations; co-locate `PageName.css` only for page-specific rules that cannot live in foundations.
 4. **Data** — use `queryKeys` from `src/queryKeys.ts` for all `useQuery` / `invalidateQueries` keys.
@@ -25,7 +25,7 @@ Admin-only literals (page width, pad, mono stack, 140ms transitions, gauge `999p
 
 **Phase 6 (CSS cleanup):** removed orphaned `.row__aside`, `.form--inline`, `.form--wide`. Match score forms use `.ds-form` + page chrome; Match panel forms drop redundant `.form` when page CSS already owns layout. Structure/Teams/Regulation keep page CSS for domain chrome; dead Structure legacy blocks (band/points/entry/old phase/roster/detail/drill/overview/graph…) removed after TSX confirmation (watch dynamic `class--${tone}` modifiers).
 
-**Phase C (follow-ups):** removed invalidate-only `queryKeys.competitions.workspace`. Structure configure + AddPhase Groups row use `.ds-form` / `.ds-form--inline`. Stage-only helpers (`.muted`, `.stack`, `.section-stack`, `.id-chip`, lists, `.mono`, `.badge-row`) relocated to `StagePage.css`; orphaned `.form` / `.hint` dropped from `index.css`.
+**Phase C (follow-ups):** removed invalidate-only `queryKeys.competitions.workspace`. Structure configure + AddPhase Groups row use `.ds-form` / `.ds-form--inline`. Legacy Stage page helpers were removed with `StagePage`; orphaned `.form` / `.hint` dropped from `index.css`.
 
 **Phase 6 (P6):** removed unused global `.field` (Match uses `Field` DS). Match-only `.form-row` / `.fieldset` / `.fieldset__legend` live in `matches.css`. Shared `.button-row` stays in `index.css` (Match, Stage, Structure draw). Confirmed-dead Structure CSS removed from `structure-operational.css` and `structure-fiche.css` (legacy tirage/regulation tile wrappers). Keep `.structure-assembly__gap` / `--deficit` / `--over` (Population meter shortfall/surplus — dropped in P0 occupancy extract, restored). Residual `1px solid` borders on touched pages use `var(--border-width)`. Heuristic unused-class report (Structure fiche scope): `npm run css:audit` (`scripts/audit-structure-fiche-css.mjs`).
 
