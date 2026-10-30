@@ -2059,7 +2059,7 @@ public sealed class Stage : AggregateRoot<StageId>
     /// Clears a dynamically resolved slot occupant without affecting <see cref="DirectAssignment"/>.
     /// </summary>
     /// <remarks>
-    /// Same mutability rules as <see cref="ApplyResolvedEntry"/>. No-op when already vacant.
+    /// Same mutability rules as slot resolution apply. No-op when already vacant.
     /// A DirectAssignment on the target slot yields <see cref="StageErrorCodes.SlotFeedConflict"/>.
     /// </remarks>
     /// <param name="slotKey">Target slot key.</param>

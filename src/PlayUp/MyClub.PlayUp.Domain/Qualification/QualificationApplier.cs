@@ -60,6 +60,14 @@ public static class QualificationApplier
         ArgumentNullException.ThrowIfNull(path);
         ArgumentNullException.ThrowIfNull(standing);
 
+        var selected = SelectEntries(standing, path.Selection);
+        if (selected.Count > 1)
+        {
+            throw new DomainException(
+                "Qualification path must resolve to exactly one entry.",
+                QualificationErrorCodes.PathMultiEntry);
+        }
+
         return PathOccupantSelector.SelectQualification(path, standing) switch
         {
             { Status: PathOccupantSelectionStatus.Skipped } => null,

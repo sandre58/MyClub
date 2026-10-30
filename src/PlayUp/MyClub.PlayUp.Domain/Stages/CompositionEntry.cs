@@ -24,7 +24,7 @@ public sealed record CompositionEntry
     public CompositionEntry(EntryId entryId) => EntryId = entryId;
 
     /// <summary>
-    /// Initializes a new instance with persisted provenance columns.
+    /// Initializes a new instance of the <see cref="CompositionEntry"/> class with persisted provenance columns.
     /// </summary>
     public CompositionEntry(
         EntryId entryId,

@@ -4,11 +4,14 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace MyClub.PlayUp.Domain.Stages;
 
 /// <summary>
 /// Persisted provenance category for a team resolution (slot, group, or population).
 /// </summary>
+[SuppressMessage("Design", "CA1008:Enums should have zero value", Justification = "Explicit vocabulary without unknown sentinel (T1).")]
 public enum ResolutionProvenanceKind
 {
     /// <summary>

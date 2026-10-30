@@ -31,7 +31,7 @@ public sealed record GroupResolutionProvenance
     }
 
     /// <summary>
-    /// Initializes a new instance from a provenance value object.
+    /// Initializes a new instance of the <see cref="GroupResolutionProvenance"/> class from a provenance value object.
     /// </summary>
     public GroupResolutionProvenance(GroupId groupId, EntryId entryId, ResolutionProvenance provenance)
         : this(

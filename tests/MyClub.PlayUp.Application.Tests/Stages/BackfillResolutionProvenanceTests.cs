@@ -5,8 +5,8 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
-using MyClub.PlayUp.Application.Standings;
 using MyClub.PlayUp.Application.Stages;
+using MyClub.PlayUp.Application.Standings;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
@@ -117,7 +117,7 @@ public sealed class BackfillResolutionProvenanceTests
         terminal.FindSlot("Champ")!.EntryId.Should().Be(occupantBefore);
     }
 
-    private BackfillResolutionProvenanceReport RunBackfill(
+    private static BackfillResolutionProvenanceReport RunBackfill(
         Competition competition,
         IReadOnlyList<Stage> stages,
         IReadOnlyList<Match>? matches = null)

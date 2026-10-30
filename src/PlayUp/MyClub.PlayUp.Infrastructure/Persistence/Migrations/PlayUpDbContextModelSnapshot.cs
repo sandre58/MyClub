@@ -956,13 +956,18 @@ partial class PlayUpDbContextModelSnapshot : ModelSnapshot
                             .HasColumnName("entry_id");
 
                         b1.Property<int?>("ResolutionProvenanceKind")
-                            .HasColumnType("integer");
+                            .HasColumnType("integer")
+                            .HasColumnName("resolution_provenance_kind");
 
                         b1.Property<string>("ResolutionSourcePathId")
-                            .HasColumnType("text");
+                            .HasMaxLength(512)
+                            .HasColumnType("character varying(512)")
+                            .HasColumnName("resolution_source_path_id");
 
                         b1.Property<string>("ResolutionUpstreamFingerprint")
-                            .HasColumnType("text");
+                            .HasMaxLength(2048)
+                            .HasColumnType("character varying(2048)")
+                            .HasColumnName("resolution_upstream_fingerprint");
 
                         b1.HasKey("stage_id", "EntryId");
 

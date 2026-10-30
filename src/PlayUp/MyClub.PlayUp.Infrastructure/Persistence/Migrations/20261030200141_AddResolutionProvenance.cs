@@ -32,21 +32,23 @@ public partial class _20261030200141_AddResolutionProvenance : Migration
             nullable: true);
 
         migrationBuilder.AddColumn<int>(
-            name: "ResolutionProvenanceKind",
+            name: "resolution_provenance_kind",
             table: "stage_affectation_entries",
             type: "integer",
             nullable: true);
 
         migrationBuilder.AddColumn<string>(
-            name: "ResolutionSourcePathId",
+            name: "resolution_source_path_id",
             table: "stage_affectation_entries",
-            type: "text",
+            type: "character varying(512)",
+            maxLength: 512,
             nullable: true);
 
         migrationBuilder.AddColumn<string>(
-            name: "ResolutionUpstreamFingerprint",
+            name: "resolution_upstream_fingerprint",
             table: "stage_affectation_entries",
-            type: "text",
+            type: "character varying(2048)",
+            maxLength: 2048,
             nullable: true);
 
         migrationBuilder.AddColumn<int>(
@@ -111,15 +113,15 @@ public partial class _20261030200141_AddResolutionProvenance : Migration
             table: "stage_composition_entries");
 
         migrationBuilder.DropColumn(
-            name: "ResolutionProvenanceKind",
+            name: "resolution_provenance_kind",
             table: "stage_affectation_entries");
 
         migrationBuilder.DropColumn(
-            name: "ResolutionSourcePathId",
+            name: "resolution_source_path_id",
             table: "stage_affectation_entries");
 
         migrationBuilder.DropColumn(
-            name: "ResolutionUpstreamFingerprint",
+            name: "resolution_upstream_fingerprint",
             table: "stage_affectation_entries");
 
         migrationBuilder.DropColumn(

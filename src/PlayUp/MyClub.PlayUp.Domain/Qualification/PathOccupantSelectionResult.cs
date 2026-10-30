@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using System.Diagnostics.CodeAnalysis;
 using MyClub.PlayUp.Domain.Common;
 
 namespace MyClub.PlayUp.Domain.Qualification;
@@ -11,6 +12,7 @@ namespace MyClub.PlayUp.Domain.Qualification;
 /// <summary>
 /// Outcome status for a pure path occupant selection.
 /// </summary>
+[SuppressMessage("Design", "CA1008:Enums should have zero value", Justification = "Explicit selection outcomes without unknown sentinel.")]
 public enum PathOccupantSelectionStatus
 {
     /// <summary>

@@ -230,6 +230,21 @@ internal sealed class StageConfiguration : IEntityTypeConfiguration<Stage>
             .HasColumnType("uuid")
             .IsRequired()
             .HasConversion(new GuidTypedIdConverter<EntryId>());
+
+        entries.Property(entry => entry.ResolutionProvenanceKind)
+            .HasColumnName("resolution_provenance_kind")
+            .HasConversion<int>()
+            .IsRequired(false);
+
+        entries.Property(entry => entry.ResolutionSourcePathId)
+            .HasColumnName("resolution_source_path_id")
+            .HasMaxLength(ResolutionProvenanceConfiguration.SourcePathIdMaxLength)
+            .IsRequired(false);
+
+        entries.Property(entry => entry.ResolutionUpstreamFingerprint)
+            .HasColumnName("resolution_upstream_fingerprint")
+            .HasMaxLength(ResolutionProvenanceConfiguration.UpstreamFingerprintMaxLength)
+            .IsRequired(false);
     }
 
     private static void ConfigureCompositionEntries(OwnedNavigationBuilder<Stage, CompositionEntry> entries)

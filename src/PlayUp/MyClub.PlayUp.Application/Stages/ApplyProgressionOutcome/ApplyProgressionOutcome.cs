@@ -18,8 +18,8 @@ namespace MyClub.PlayUp.Application.Stages;
 /// </summary>
 /// <remarks>
 /// Preflights destinations before any mutation (known orchestration failures → zero writes).
-/// Population targets call <see cref="Stage.AddResolvedPopulationEntry"/>;
-/// Place targets dual-write population membership then <see cref="Stage.ApplyResolvedEntry"/>.
+/// Population targets call population resolution apply;
+/// Place targets dual-write population membership then slot resolution apply.
 /// Persistence: caller loads source/destination Stages (and Matches) into one scope, invokes this
 /// use case, then calls <c>IUnitOfWork.SaveChangesAsync</c> once.
 /// </remarks>

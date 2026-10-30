@@ -157,7 +157,7 @@ public sealed class PathOccupantSelectorTests
             outcome,
             ProgressionDestination.ForPopulation(destinationStageId));
 
-    private Standing ManualStanding(IReadOnlyList<(EntryId EntryId, int Position, int Points)> rows) =>
+    private static Standing ManualStanding(IReadOnlyList<(EntryId EntryId, int Position, int Points)> rows) =>
         new(
         [
             ..rows.Select(r => new StandingRow(
