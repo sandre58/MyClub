@@ -652,17 +652,14 @@ export function FoundationsPlayground() {
               </span>
             </Status>
           </div>
-          <p className="ds-label">
-            Déjà placée · compact · neutral · outline · tooltip
-          </p>
+          <p className="ds-label">Déjà placée · icône + tooltip</p>
           <div className="ds-row">
             <AlreadyPlacedStatus label="Déjà placée" />
           </div>
           <p className="ds-meta">
-            Épingle seule au survol / focus ; libellé dans le tooltip. Dans le
-            tirage, le nom d&apos;équipe porte le style « déjà placée »
-            (secondaire, semi-gras). Contraste outline ≥ 4,5:1 sur surface et
-            canvas (schéma clair).
+            Épingle seule (classe <code>ds-placed-hint</code>, pas de badge
+            Status). Libellé au survol / focus. Dans le tirage, le nom
+            d&apos;équipe est secondaire semi-gras.
           </p>
           <p className="ds-label">Dense (texte secondaire, sans fill)</p>
           <div className="ds-row">

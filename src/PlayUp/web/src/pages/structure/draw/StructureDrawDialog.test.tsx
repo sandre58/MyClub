@@ -3439,7 +3439,7 @@ describe('StructureDrawDialog', () => {
     expect(source).not.toMatch(/countVacantBracketPlaces/);
   });
 
-  it('T5 shows the partial triplet, and a duo when no place is free or no team is already placed', async () => {
+  it('T5 shows partial duo stats, and équipes × places when nothing is left to draw', async () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
       overview([], {
         slotDrawDisplayMetrics: {
@@ -3478,7 +3478,7 @@ describe('StructureDrawDialog', () => {
     );
     expect(await screen.findByText('À placer')).toBeInTheDocument();
     expect(screen.getByText('Places libres')).toBeInTheDocument();
-    expect(screen.getByText('Déjà en place')).toBeInTheDocument();
+    expect(screen.queryByText('Déjà en place')).not.toBeInTheDocument();
     expect(screen.queryByText('équipes')).not.toBeInTheDocument();
     unmount();
 

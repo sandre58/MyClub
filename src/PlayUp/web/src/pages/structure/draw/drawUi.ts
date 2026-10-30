@@ -294,19 +294,16 @@ export type DrawHeroLabel =
 
 export type DrawHeroFact = { value: number; label: DrawHeroLabel };
 
-export type DrawHeroModel =
-  | { layout: 'duo'; primary: DrawHeroFact; secondary: DrawHeroFact }
-  | {
-      layout: 'triplet';
-      toPlace: DrawHeroFact;
-      freePlaces: DrawHeroFact;
-      alreadyPlaced: DrawHeroFact;
-    };
+export type DrawHeroModel = {
+  layout: 'duo';
+  primary: DrawHeroFact;
+  secondary: DrawHeroFact;
+};
 
 /**
- * Tirage hero from server metrics. Partial with teams still to place, free
- * places, and occupants already on the grid is a triplet. A complete draw,
- * a partial with no free place, and a partial with no occupant stay a duo.
+ * Tirage hero from server metrics. Before launch, a partial cup with free
+ * places and unplaced teams shows those two counts. Otherwise teams × places
+ * (or groups). Occupants already on the grid are visible in the row, not here.
  */
 export function resolveDrawHeroModel(input: {
   formatKind: StructureFormatKind | null | undefined;
@@ -326,24 +323,19 @@ export function resolveDrawHeroModel(input: {
   }
 
   const metrics = input.metrics;
-  const partialTriplet =
+  const partialScope =
     metrics != null &&
     metrics.vacantSlotKeyCount > 0 &&
     metrics.unplacedEntryCount > 0 &&
-    metrics.alreadyPlacedEntryCount > 0 &&
     (input.inputsIntent === 'Partial' || !input.hasActiveDraw);
 
-  if (partialTriplet && metrics) {
+  if (partialScope && metrics) {
     return {
-      layout: 'triplet',
-      toPlace: { value: metrics.unplacedEntryCount, label: 'heroToPlace' },
-      freePlaces: {
+      layout: 'duo',
+      primary: { value: metrics.unplacedEntryCount, label: 'heroToPlace' },
+      secondary: {
         value: metrics.vacantSlotKeyCount,
         label: 'heroFreePlaces',
-      },
-      alreadyPlaced: {
-        value: metrics.alreadyPlacedEntryCount,
-        label: 'heroAlreadyPlaced',
       },
     };
   }

@@ -58,25 +58,16 @@ export function Status({
 }
 
 /**
- * « Déjà placée » — compact neutral outline pin. Label lives in the tooltip only.
- * Product rows style the team name separately (see draw confrontation grid).
- * Ink/contrast budget: Foundations specimen + AlreadyPlacedStatus.test.ts.
+ * « Déjà placée » — pin icon + tooltip only (no Status chip).
+ * Team name styling lives on the confrontation row.
  */
 export function AlreadyPlacedStatus({ label }: { label: ReactNode }) {
+  const ariaLabel = typeof label === 'string' ? label : undefined;
   return (
     <Tooltip content={label}>
-      <Status
-        density="compact"
-        tone="neutral"
-        variant="outline"
-        aria-label={typeof label === 'string' ? label : undefined}
-      >
-        <span className="ds-status-inline">
-          <span className="ds-status-inline__icon" aria-hidden="true">
-            <PlacedIcon size="sm" />
-          </span>
-        </span>
-      </Status>
+      <span className="ds-placed-hint" role="img" aria-label={ariaLabel}>
+        <PlacedIcon size="sm" />
+      </span>
     </Tooltip>
   );
 }

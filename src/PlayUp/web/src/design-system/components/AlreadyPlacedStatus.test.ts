@@ -26,15 +26,6 @@ function contrast(foreground: string, background: string): number {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
-function composite(ink: string, wash: number, background: string): string {
-  const mixed = [16, 8, 0].map((shift) =>
-    Math.round(
-      channel(ink, shift) * wash + channel(background, shift) * (1 - wash),
-    ),
-  );
-  return `#${mixed.map((value) => value.toString(16).padStart(2, '0')).join('')}`;
-}
-
 function token(css: string, name: string): string {
   const match = css.match(new RegExp(`${name}:\\s*(#[0-9a-fA-F]{6})`));
   if (!match?.[1]) {
@@ -43,8 +34,8 @@ function token(css: string, name: string): string {
   return match[1].toLowerCase();
 }
 
-describe('AlreadyPlacedStatus contrast', () => {
-  it('keeps neutral outline text at or above 4.5:1 on surface and canvas', () => {
+describe('Already placed draw affordances', () => {
+  it('keeps secondary ink at or above 4.5:1 on surface and canvas', () => {
     const slate = readFileSync(
       join(dirname(fileURLToPath(import.meta.url)), '../palettes/slate.css'),
       'utf8',
@@ -52,14 +43,8 @@ describe('AlreadyPlacedStatus contrast', () => {
     const ink = token(slate, '--primitive-text-secondary');
     const surface = token(slate, '--primitive-surface');
     const canvas = token(slate, '--primitive-canvas');
-    const outlineWash = 0.1;
 
-    expect(
-      contrast(ink, composite(ink, outlineWash, surface)),
-    ).toBeGreaterThanOrEqual(4.5);
-    expect(
-      contrast(ink, composite(ink, outlineWash, canvas)),
-    ).toBeGreaterThanOrEqual(4.5);
-    expect(contrast(ink, composite(ink, 0.18, canvas))).toBeLessThan(4.5);
+    expect(contrast(ink, surface)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(ink, canvas)).toBeGreaterThanOrEqual(4.5);
   });
 });

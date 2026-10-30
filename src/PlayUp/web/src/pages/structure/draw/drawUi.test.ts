@@ -928,10 +928,9 @@ describe('draw display golden parity', () => {
         hasActiveDraw: true,
       }),
     ).toEqual({
-      layout: 'triplet',
-      toPlace: { value: 1, label: 'heroToPlace' },
-      freePlaces: { value: 1, label: 'heroFreePlaces' },
-      alreadyPlaced: { value: 1, label: 'heroAlreadyPlaced' },
+      layout: 'duo',
+      primary: { value: 1, label: 'heroToPlace' },
+      secondary: { value: 1, label: 'heroFreePlaces' },
     });
   });
 });
@@ -945,6 +944,24 @@ describe('resolveDrawHeroModel', () => {
     entryCount: 4,
     placeCount: 4,
   };
+
+  it('T5 uses partial duo when free places and unplaced teams remain', () => {
+    expect(
+      resolveDrawHeroModel({
+        formatKind: 'Cup',
+        groupCount: 0,
+        teamCount: 4,
+        placesCount: 4,
+        metrics,
+        inputsIntent: 'Partial',
+        hasActiveDraw: false,
+      }),
+    ).toEqual({
+      layout: 'duo',
+      primary: { value: 2, label: 'heroToPlace' },
+      secondary: { value: 2, label: 'heroFreePlaces' },
+    });
+  });
 
   it('T5 uses a duo when partial has no free place', () => {
     expect(

@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useOpenEdge, useSyncWhen } from '../../../design-system/useRenderSync';
 import {
-  Fragment,
   useId,
   useLayoutEffect,
   useMemo,
@@ -1371,39 +1370,6 @@ function DrawHeroFacts({
   model: ReturnType<typeof resolveDrawHeroModel>;
 }): ReactElement {
   const { t } = useTranslation('draw');
-  if (model.layout === 'triplet') {
-    const facts = [model.toPlace, model.freePlaces, model.alreadyPlaced];
-    return (
-      <div
-        className="structure-qualification__summary structure-draw-dialog__facts"
-        aria-live="polite"
-      >
-        <div className="structure-qualification__facts">
-          {facts.map((fact, index) => (
-            <Fragment key={fact.label}>
-              {index > 0 ? (
-                <span
-                  className="structure-qualification__fact-rule"
-                  aria-hidden="true"
-                />
-              ) : null}
-              <div
-                className={drawHeroFactClass(fact.label)}
-                data-fact={fact.label}
-              >
-                <span className="structure-qualification__fact-value">
-                  {fact.value}
-                </span>
-                <span className="structure-qualification__fact-label">
-                  {t(fact.label)}
-                </span>
-              </div>
-            </Fragment>
-          ))}
-        </div>
-      </div>
-    );
-  }
   return (
     <div
       className="structure-qualification__summary structure-draw-dialog__facts"
@@ -1412,7 +1378,7 @@ function DrawHeroFacts({
       <div className="structure-qualification__facts">
         <div
           className={drawHeroFactClass(model.secondary.label)}
-          data-fact="secondary"
+          data-fact={model.secondary.label}
         >
           <span className="structure-qualification__fact-value">
             {model.secondary.value}
@@ -1427,7 +1393,7 @@ function DrawHeroFacts({
         />
         <div
           className={drawHeroFactClass(model.primary.label)}
-          data-fact="primary"
+          data-fact={model.primary.label}
         >
           <span className="structure-qualification__fact-value">
             {model.primary.value}

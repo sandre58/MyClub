@@ -121,7 +121,8 @@ Do not collapse them: pulse activity ≠ tone chip.
 - Canonical: `components/Status.tsx` + `foundations/status.css`.
 - Icon + label rows: wrap children in `.ds-status-inline` / `.ds-status-inline__icon`.
 - Hub notes (Structure PageHead): `context` · `outline` · `pill`, short nominal label + `.ds-status-inline`; specimen in Design Lab **Structure PageHead**. Use `multiline` + `textBody` only when a longer wrapped label is explicitly required elsewhere.
-- **Déjà placée** (`AlreadyPlacedStatus`): `compact` · `neutral` · `outline`, pin icon only; label in **Tooltip**. Specimen in Design Lab **Foundations** (D2 — Status). In the draw grid, the team name uses `--color-text-secondary` and semibold (`.structure-draw-slot__name--placed`); do not repeat the label beside the name. Outline wash contrast budget unchanged (≥ 4.5:1 on surface/canvas for secondary ink on wash — see test). No extra crest ring.
+- **Déjà placée** (`AlreadyPlacedStatus`): pin icon + **Tooltip** only (class `ds-placed-hint`, no Status chip). Specimen in Foundations (D2). In the draw grid, team name uses `.structure-draw-slot__name--placed` (secondary, semibold). No extra crest ring.
+- **Tirage hero (cup):** before a partial launch with free slots and unplaced teams, the dialog shows a **duo** only — « Places libres » (secondary) and « À placer » (primary). Full grid or nothing left to draw → duo « Places » × « Équipes ». « Déjà en place » is not duplicated in the header (visible on rows via the pin).
 
 ## PageHead
 
