@@ -22,8 +22,8 @@ The SPA gate is a **parity reference**, not the SoT. The SoT is the **stack of r
 | L2 | Format supports draw kind | Cup/Groups with slots or groups form → `DrawResolutionKind.Slot` or `Group`; Championship/Swiss without draw path → **not launchable** |
 | L3 | Composition pool | `CompositionEntryCount > 0`; competition `EntryRules.MinimumTeams` satisfied (hub + `competition.Regulation`) |
 | L4 | **Group shape** (when kind = Group) | `NumberOfPots >= 2`, `GroupCount >= 1`, `CompositionEntryCount == NumberOfPots * GroupCount` (facts on `StructureStageHubSummaryDto`) |
-| L5 | **Slot shape** (when kind = Slot) | `CompositionCapacity` (Places N) > 0, `CompositionEntryCount == CompositionCapacity`, `DirectAssignmentCount == 0` |
-| L6 | **Vacant launch grid** | `StageDrawBracketLaunchClassifier.TryClassify` → `BlockingPlaceCount == 0` (same facts as Overview `DrawBracketLaunchFacts` and `StageDrawRerunLaunchGuard` for occupied/reserved/invalid places) |
+| L5 | **Slot partial scope** (when kind = Slot) | `SlotPartialDraw`: free slots (no occupant, feed Missing) and unplaced composition teams must be a bijection. `NoFreeSlot` when nothing is free (checked first), `NotEnoughTeams` when unplaced teams are fewer, `TooManyTeams` when they are more. Occupants and reserved or invalid feeds are not free targets. |
+| L6 | **Vacant launch grid** (Group only) | `StageDrawBracketLaunchClassifier` → `BlockingPlaceCount == 0`. Slot no longer uses this denial: a partial grid is launchable when L5 passes. Rerun and Redo still require a vacant grid. |
 | L7 | Operational mutability | `StructureOperationalExitEditGuard` would allow draw on stage snapshot (production / exit rules) — mirror read guard used before `CreateDraw` |
 | L8 | No obsolete draw blocking consumption | `!StructureDrawConsumptionGate.StageHasObsoleteDrawForConsumption(stage)` (also disables materialize today) |
 
@@ -47,9 +47,10 @@ The SPA gate is a **parity reference**, not the SoT. The SoT is the **stack of r
 | `emptyPool` / `emptyPoolUpstream` | L3 + inbound composition semantics (`IsRootComposition`, inbound band on hub) |
 | `belowMinimumTeams` | L3 — `competition.Regulation.EntryRules.MinimumTeams` |
 | `missingPots` / `groupShape` | L4 |
-| `countMismatch` | L5 — pool vs Places N |
-| `directAssignment` | L5 — `DirectAssignmentCount` |
-| `occupiedSlots` | L6 — `BlockingPlaceCount > 0` (classifier; supersedes naive slot `entryId` scan) |
+| `countMismatch` | Kept for older payloads. Slot launches no longer emit `PlacesCountMismatch`. |
+| `directAssignment` | Kept for older payloads. Slot launches no longer emit `DirectAssignmentPresent`. Rerun and Redo still refuse a direct assignment. |
+| `occupiedSlots` | L6 — Group `BlockingPlaceCount > 0` (`BracketPlacesOccupied`) |
+| `noFreeSlot` / `notEnoughTeams` / `tooManyTeams` | L5 — Slot partial scope (`NoFreeSlot`, `NotEnoughTeams`, `TooManyTeams`) |
 
 **Do not** re-port `schematicCases` fallback into C# for Structure hub: Structure read path already has `TryClassify` with slot feeds (`SlotFeedSnapshotAssembler` / `SlotFeedResolver`). Overview may still ship schematic for other surfaces; hub gate uses **classifier only**.
 

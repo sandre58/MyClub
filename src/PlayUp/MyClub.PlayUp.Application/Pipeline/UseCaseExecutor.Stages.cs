@@ -912,6 +912,7 @@ public sealed partial class UseCaseExecutor
     /// <param name="intent">
     /// <see cref="DrawInputsIntent.Default"/> keeps Fixed* from occupancy.
     /// <see cref="DrawInputsIntent.Rerun"/> = full redraw, Fixed* empty.
+    /// <see cref="DrawInputsIntent.Partial"/> draws unplaced teams into free slots only.
     /// </param>
     /// <param name="cancellationToken">Cancellation token.</param>
     public async Task<DrawSummaryDto> ConfigureDrawInputsAsync(
@@ -925,13 +926,24 @@ public sealed partial class UseCaseExecutor
         EnsureCompetitionAllowsLifecycleMutation(competition);
         var draw = stage.GetDraw(drawId);
         IReadOnlyList<Stage>? competitionStages = null;
-        if (intent == DrawInputsIntent.Rerun)
+        DrawInputs inputs;
+        if (intent == DrawInputsIntent.Partial)
         {
             competitionStages = await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken)
                 .ConfigureAwait(false);
+            inputs = DrawInputsFactory.CreatePartial(stage, competitionStages, draw.Kind);
+        }
+        else
+        {
+            if (intent == DrawInputsIntent.Rerun)
+            {
+                competitionStages = await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+
+            inputs = DrawInputsFactory.CreateDefault(stage, draw.Kind, intent);
         }
 
-        var inputs = DrawInputsFactory.CreateDefault(stage, draw.Kind, intent);
         ConfigureDrawInputs.Execute(stage, drawId, inputs, intent, competitionStages);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return ToDrawSummary(stage.Id, stage.GetDraw(drawId));
@@ -955,13 +967,22 @@ public sealed partial class UseCaseExecutor
         IReadOnlyList<GroupId>? groupTargets = draw.Kind == DrawResolutionKind.Group
             ? stage.Groups.Select(group => group.Id).ToArray()
             : null;
+        IReadOnlyList<Stage>? competitionStages = null;
+        if (draw.Kind == DrawResolutionKind.Slot)
+        {
+            var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
+                .ConfigureAwait(false);
+            competitionStages = await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken)
+                .ConfigureAwait(false);
+        }
 
         var result = GenerateDrawResolution.Execute(
             stage,
             drawId,
             clock,
             slotTargets,
-            groupTargets);
+            groupTargets,
+            competitionStages: competitionStages);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         var updated = stage.GetDraw(drawId);
         return new DrawGenerationDto(

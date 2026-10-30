@@ -1,6 +1,8 @@
 # Draw bracket place readiness — contract (audit slice)
 
-**Status:** implemented (Application classifier, `StageOverview` facts, Rerun POST guard, SPA consumes overview facts).  
+**Status:** implemented (Application classifier, `StageOverview` facts, Rerun POST guard, SPA consumes overview facts).
+
+**Slot product path:** Cup `createAndGenerateDraw` and a slot Relancer send `DrawInputsIntent.Partial`. Only free slots are filled; occupants stay. The launch gate allows that partial grid when unplaced teams and free slots match (`NoFreeSlot`, `NotEnoughTeams`, `TooManyTeams` otherwise). Groups, `Rerun`, and Redo stay a full reshuffle and still require a vacant grid. The Cup checklist line is met when at least one place is free.  
 **Audience:** Application + HTTP + SPA Tirage checklist / create gate parity.  
 **Related:** [draw-blocked-baseline](./draw-blocked-baseline.md), Notion Structure page (checklist callout 2026-10-16).
 
@@ -17,7 +19,7 @@ Today:
 | `StageOverview` slots | `entryId` only — qual/prog **structural** reservation has no `entryId` |
 | `GET …/schematic` | `feedOrigin` per case (Qual/Prog/Direct/Draw) — used as interim SPA workaround |
 | `DrawInputsFactory` (`Default`) | Fixed slots = slots with `entryId` in composition pool only |
-| `createAndGenerateDraw` | `Create` + `ConfigureDrawInputs(Rerun)` + `Generate` — **Rerun clears Fixed\*** |
+| `createAndGenerateDraw` | Slot: `Create` + `ConfigureDrawInputs(Partial)` + `Generate` (free slots only). Group: `Create` + `ConfigureDrawInputs(Rerun)` + `Generate` |
 | `CreateDraw` (Application) | No occupancy / feed preflight |
 | Structure hub per stage | `directAssignmentCount`; inbound composition = **seat** resolution, not per bracket slot feed |
 
@@ -52,11 +54,12 @@ Today:
 |------|------------------------|
 | `CreateDraw.Execute` | **No** — only `DrawRules` engaged, operational exit guard, Domain “one non-cancelled draw”. |
 | `ConfigureDrawInputs` + `DrawInputsIntent.Default` | **No** — Encoding F promotes `slot.EntryId` / group seats into Fixed* ([Encoding F decision](https://www.notion.so/3e375fb92d108102880adf41111d6a49)). |
-| `ConfigureDrawInputs` + `DrawInputsIntent.Rerun` | **No** — Fixed* = ∅; full pool shuffle ([Rerun decision](https://www.notion.so/3e475fb92d108141bb0cf04ccd7def06)). |
-| `GenerateDrawResolution` | **No** — generates for all slot/group targets regardless of structural feeds. |
-| SPA `createAndGenerateDraw` | Always **Rerun** after Create; gate is **client-only** (`drawUi.ts`: “Client gate for Create+Generate”). |
+| `ConfigureDrawInputs` + `DrawInputsIntent.Rerun` | **Yes** — vacant grid and no direct assignment. Fixed* stay empty ([Rerun decision](https://www.notion.so/3e475fb92d108141bb0cf04ccd7def06)). |
+| `ConfigureDrawInputs` + `DrawInputsIntent.Partial` | **Yes** — Slot only. Unplaced teams must equal free slots (`DrawNoFreeSlot`, `DrawNotEnoughTeams`, `DrawTooManyTeams`). Occupants are not in the pool. |
+| `GenerateDrawResolution` | A Slot pool that is exactly the unplaced teams is generated onto free slots only. Generate does not write occupants. |
+| SPA `createAndGenerateDraw` | Slot → `Partial`. Group → `Rerun`. Launch allowed/blocked comes from hub `drawCreateLaunch`. |
 
-So the SPA can refuse `occupiedSlots` / `directAssignment` while the API can still run **Create → Inputs(Rerun) → Generate** on a populated or qual-reserved grid.
+`Rerun` and Redo still refuse a populated grid. `Partial` is the Cup path that fills only free slots. `Default` remains Encoding F.
 
 ### What product decisions imply
 

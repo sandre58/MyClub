@@ -29,6 +29,9 @@ public static class GenerateDrawResolution
     /// <param name="seed">Optional RNG seed (Application builds <see cref="SeededRandomSource"/>).</param>
     /// <param name="randomSource">Optional injected source; when null, uses seed or <see cref="SystemRandomSource"/>.</param>
     /// <param name="stageMatches">Matches of stage.</param>
+    /// <param name="competitionStages">
+    /// When set, a Slot pool that is exactly the unplaced teams is drawn into free slots only.
+    /// </param>
     /// <returns>The generation result (also recorded on the Draw; soft violations not persisted).</returns>
     public static DrawGenerationResult Execute(
         Stage stage,
@@ -39,7 +42,8 @@ public static class GenerateDrawResolution
         DrawConstraintContext? constraintContext = null,
         int? seed = null,
         IRandomSource? randomSource = null,
-        IReadOnlyList<Match>? stageMatches = null)
+        IReadOnlyList<Match>? stageMatches = null,
+        IReadOnlyList<Stage>? competitionStages = null)
     {
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(clock);
@@ -55,6 +59,7 @@ public static class GenerateDrawResolution
                 ApplicationErrorCodes.DrawGenerationFailure);
         }
 
+        slotTargets = NarrowPartialSlotTargets(stage, draw, slotTargets, competitionStages);
         EnsureSlotTargetsExistOnStage(stage, draw.Kind, slotTargets);
         EnsureGroupTargetsExistOnStage(stage, draw.Kind, groupTargets);
 
@@ -77,6 +82,33 @@ public static class GenerateDrawResolution
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// When inputs are the unplaced pool, generation targets only free slots.
+    /// Encoding F (fixed placements) and explicit full-pool targets stay as the caller passed them.
+    /// </summary>
+    private static IReadOnlyList<string>? NarrowPartialSlotTargets(
+        Stage stage,
+        Draw draw,
+        IReadOnlyList<string>? slotTargets,
+        IReadOnlyList<Stage>? competitionStages)
+    {
+        if (draw.Kind != DrawResolutionKind.Slot
+            || competitionStages is null
+            || draw.Inputs!.FixedSlots.Count > 0)
+        {
+            return slotTargets;
+        }
+
+        var scope = SlotPartialDrawPlanner.Compose(stage, competitionStages);
+        if (!SlotPartialDrawPlanner.EntriesMatch(draw.Inputs.Entries, scope.UnplacedEntries))
+        {
+            return slotTargets;
+        }
+
+        SlotPartialDrawPlanner.EnsureDrawable(scope);
+        return scope.VacantSlotKeys;
     }
 
     private static void EnsureDraftMutable(Draw draw)
