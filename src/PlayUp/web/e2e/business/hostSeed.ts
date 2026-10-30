@@ -220,6 +220,102 @@ export async function runCupSlotDrawPublishAndApply(
   }
 }
 
+type StageDrawWire = {
+  id: string;
+  status: string;
+};
+
+type StageOverviewWire = {
+  draws?: StageDrawWire[];
+};
+
+/**
+ * API and UI specs share one seeded cup. Cancel any open execution and release
+ * its placements so the next spec starts from the scenario (no draw applied).
+ */
+export async function ensureCupCompositionDrawPending(
+  request: APIRequestContext,
+): Promise<void> {
+  const competition = await findCupCompositionCompleteCompetition(request);
+  const stageId = await getPrimaryStageId(request, competition.id);
+  const overview = await getStageOverview(request, stageId);
+
+  for (const draw of overview.draws ?? []) {
+    if (draw.status === 'Cancelled') {
+      continue;
+    }
+
+    const cancel = await request.post(
+      `${playUpApiBase()}/stages/${stageId}/draws/${draw.id}/cancel`,
+    );
+    if (!cancel.ok()) {
+      const body = await cancel.text();
+      throw new Error(
+        `POST .../draws/${draw.id}/cancel failed (${cancel.status()}): ${body}`,
+      );
+    }
+
+    const release = await request.post(
+      `${playUpApiBase()}/stages/${stageId}/draws/${draw.id}/release-aligned-placements`,
+    );
+    if (!release.ok()) {
+      const body = await release.text();
+      throw new Error(
+        `POST .../draws/${draw.id}/release-aligned-placements failed (${release.status()}): ${body}`,
+      );
+    }
+  }
+}
+
+/**
+ * API and UI specs share RECETTE G1. Drop attached matches so materialize
+ * starts from 0/6 again.
+ */
+export async function ensureGroupsMaterializePending(
+  request: APIRequestContext,
+): Promise<void> {
+  const competition = await findRecetteG1GroupsCompetition(request);
+  const before = await getStructureMaterializationState(
+    request,
+    competition.id,
+  );
+  if (before.attachedMatchCount === 0) {
+    return;
+  }
+
+  const response = await request.post(
+    `${playUpApiBase()}/stages/${before.stageId}/matches/dematerialize`,
+  );
+  if (!response.ok()) {
+    const body = await response.text();
+    throw new Error(
+      `POST /stages/${before.stageId}/matches/dematerialize failed (${response.status()}): ${body}`,
+    );
+  }
+
+  const after = await getStructureMaterializationState(request, competition.id);
+  if (after.attachedMatchCount !== 0) {
+    throw new Error(
+      `Expected 0 attached matches after dematerialize, got ${after.attachedMatchCount}`,
+    );
+  }
+}
+
+async function getStageOverview(
+  request: APIRequestContext,
+  stageId: string,
+): Promise<StageOverviewWire> {
+  const response = await request.get(`${playUpApiBase()}/stages/${stageId}`);
+  if (!response.ok()) {
+    const body = await response.text();
+    throw new Error(
+      `GET /stages/${stageId} failed (${response.status()}): ${body}`,
+    );
+  }
+
+  return (await response.json()) as StageOverviewWire;
+}
+
 export async function expectCupDrawAppliedOnStructure(
   request: APIRequestContext,
   competitionId: string,
