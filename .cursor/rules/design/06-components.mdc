@@ -17,8 +17,7 @@ Search these before building anything new. Reference implementations live in
 | `TrendIcon` | Slanted up/down/flat arrows | `design-system/TrendIcon.tsx` |
 | `LiveStatus` | Pulse dot + live label | `design-system/components/LiveStatus.tsx` |
 | `PanelHead` | Panel title + optional neutral icon + right meta | `design-system/components/PanelHead.tsx` |
-| `PageHead` | Workspace / drill-down page title (`--text-display`); optional actions, note, tools, back | `design-system/components/PageHead.tsx` |
-| `PageHeader` | Thin drill-down adapter (eyebrow + back) over `PageHead` | `ui.tsx` |
+| `PageHead` | Workspace / drill-down page title (`--text-display`); optional actions, note, tools, `back`, `eyebrow` | `design-system/components/PageHead.tsx` |
 | `TextLink` | Cross-surface text CTA + chevron | `design-system/components/TextLink.tsx` |
 | `Meter` | Capsule progress fill (+ optional marker) | `design-system/components/Meter.tsx` |
 | `SelectionBar` | Multi-select count + icon toolbar | `design-system/components/SelectionBar.tsx` |
@@ -36,7 +35,9 @@ Search these before building anything new. Reference implementations live in
 | `Select` | Coque input + liste déroulante, clear optionnel | `design-system/components/Select.tsx` |
 | `Upload` | Picture-card 1 fichier (crest / image, hover retirer, loading) | `design-system/components/Upload.tsx` |
 | `ColorPicker` | Trigger swatch+hex (+ Vider) ; popup HSV HEX/RGB/HSB + pipette | `design-system/components/ColorPicker.tsx` |
-| `LogoMediaField` | Feature adapter Upload + Media API (not DS) | `pages/LogoMediaField.tsx` |
+| `LogoMediaField` | Feature adapter Upload + Media API (not DS) | `pages/teams/LogoMediaField.tsx` |
+| `ChoiceTile` | Family **A** — form option tile, check glyph, `layout="stacked"` \| `"inline"` | `design-system/components/ChoiceTile.tsx` |
+| `SelectableTile` | Family **B** — rich list/grid tile, no check; `selected`, optional `tone="error"` | `design-system/components/SelectableTile.tsx` |
 | Attention drawer | Shell triage (latéral, sous chrome) — pas Dialog | `shell/AttentionDrawer.tsx` |
 | AttentionSituationRow | Product triage row (drawer + overview) | `shell/AttentionSituationRow.tsx` |
 | Buttons | `ds-btn--primary/secondary/ghost` — one primary per surface | design system CSS |
@@ -51,6 +52,12 @@ Search these before building anything new. Reference implementations live in
 | Match round status | Journée state pill / live | `design-system/components/MatchRoundStatus.tsx` |
 | Home brand | Accueil lockup + tagline | `design-system/components/HomeBrand.tsx` |
 | Interactive row | Clickable list row, hover A wash | `foundations/interactive-row.css` |
+
+## Tile families (selection chrome)
+
+- **A — `ChoiceTile`**: checkbox semantics (`role="checkbox"`), check glyph, `layout="stacked"` (default, multi-line) or `"inline"` (single-line entity).
+- **B — `SelectableTile`**: `.ds-selectable-tile` + `data-selected`; no check glyph. Selection colors live in `foundations/selectable-tile.css` only.
+- **C — `.ds-panel`**: content container, not selection. See `docs/design-system.md` § Surfaces / tiles / panels.
 
 ## Rules
 
