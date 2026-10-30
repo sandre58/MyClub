@@ -617,11 +617,14 @@ public sealed class Stage : AggregateRoot<StageId>
     /// <summary>
     /// Configures draw inputs (Draft draw only). Sole entry point for Entries / SeedMap / Pot / fixed placements.
     /// </summary>
-    public void ConfigureDrawInputs(DrawId drawId, DrawInputs inputs)
+    public void ConfigureDrawInputs(
+        DrawId drawId,
+        DrawInputs inputs,
+        DrawInputsIntent inputsIntent = DrawInputsIntent.Default)
     {
         ArgumentNullException.ThrowIfNull(inputs);
         EnsureOperationalExitRulesMutable();
-        GetDraw(drawId).ConfigureInputs(inputs);
+        GetDraw(drawId).ConfigureInputs(inputs, inputsIntent);
     }
 
     /// <summary>

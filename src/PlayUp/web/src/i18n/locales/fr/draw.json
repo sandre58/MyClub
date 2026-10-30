@@ -36,6 +36,8 @@
   "redoBlocked": {
     "cupFixtureAttached": "Le tirage ne peut pas être refait : un match est rattaché à une confrontation concernée.",
     "groupMatchesAttached": "Le tirage ne peut pas être refait : des matchs sont déjà rattachés à cette phase.",
+    "launchGridNotVacant": "Le tirage ne peut pas être refait tant que des places du tableau sont occupées. Libérez ou alignez les places, ou annulez le tirage appliqué avant de relancer un tirage complet.",
+    "launchDirectAssignment": "Le tirage ne peut pas être refait tant qu’une affectation directe occupe un emplacement.",
     "lifecycle": "Le tirage ne peut pas être refait dans l’état actuel de la phase."
   },
   "executionTitle": "Exécution #{{n}}",

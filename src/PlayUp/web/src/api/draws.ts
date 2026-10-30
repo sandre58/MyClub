@@ -16,6 +16,12 @@ const STAGE_DRAW_RERUN_LAUNCH_GUARD_CODES = new Set([
   'Application.DrawTooManyTeams',
 ]);
 
+export const DRAW_LAUNCH_GRID_NOT_VACANT =
+  'Application.DrawLaunchGridNotVacant';
+
+export const DRAW_LAUNCH_DIRECT_ASSIGNMENT =
+  'Application.DrawLaunchDirectAssignmentPresent';
+
 export function isStageDrawRerunLaunchGuardError(
   error: unknown,
 ): error is ApiError {

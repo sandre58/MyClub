@@ -83,6 +83,21 @@ public sealed class StructureDrawCreateLaunchGateContractTests
     }
 
     [Fact]
+    public void Slot_launch_does_not_count_direct_assignment_as_a_free_place()
+    {
+        var (competition, stage) = CupWithPopulation(2, 2);
+        stage.AssignEntryToSlot(stage.Slots[0].SlotKey, stage.CompositionEntries[0].EntryId);
+
+        var scope = SlotPartialDrawPlanner.Compose(stage, [stage]);
+        scope.VacantSlotKeys.Should().Equal(stage.Slots[1].SlotKey);
+        scope.UnplacedEntries.Should().ContainSingle(entry =>
+            entry.Equals(stage.CompositionEntries[1].EntryId));
+
+        var hub = StructureViewAssembler.Assemble(competition, [stage]).Stages.Single();
+        hub.DrawCreateLaunch.Allowed.Should().BeTrue();
+    }
+
+    [Fact]
     public void Slot_launch_refuses_when_no_place_is_free()
     {
         var (competition, stage) = CupWithPopulation(2, 2);

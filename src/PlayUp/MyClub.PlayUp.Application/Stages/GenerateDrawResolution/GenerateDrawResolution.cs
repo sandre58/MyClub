@@ -85,8 +85,8 @@ public static class GenerateDrawResolution
     }
 
     /// <summary>
-    /// When inputs are the unplaced pool, generation targets only free slots.
-    /// Encoding F (fixed placements) and explicit full-pool targets stay as the caller passed them.
+    /// When inputs intent is Partial, generation targets only free slots.
+    /// Default and Rerun keep explicit caller targets even when the pool matches unplaced teams.
     /// </summary>
     private static IReadOnlyList<string>? NarrowPartialSlotTargets(
         Stage stage,
@@ -95,6 +95,7 @@ public static class GenerateDrawResolution
         IReadOnlyList<Stage>? competitionStages)
     {
         if (draw.Kind != DrawResolutionKind.Slot
+            || draw.InputsIntent != DrawInputsIntent.Partial
             || competitionStages is null
             || draw.Inputs!.FixedSlots.Count > 0)
         {

@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
+using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
@@ -18,6 +19,78 @@ namespace MyClub.PlayUp.Application.Tests.Stages;
 public sealed class PartialSlotDrawTests
 {
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 10, 30, 11, 0, 0, TimeSpan.Zero));
+
+    [Fact]
+    public void Default_on_vacant_grid_keeps_explicit_slot_targets_when_competition_stages_are_passed()
+    {
+        var (stage, entries) = Cup(4);
+        var draw = CreateDraw.Execute(stage, DrawResolutionKind.Slot, _clock);
+        var inputs = DrawInputs.ForSlot([entries[2], entries[3]]);
+        ConfigureDrawInputs.Execute(stage, draw.Id, inputs, DrawInputsIntent.Default, [stage]);
+        stage.GetDraw(draw.Id).InputsIntent.Should().Be(DrawInputsIntent.Default);
+
+        var explicitTargets = new[] { stage.Slots[2].SlotKey, stage.Slots[3].SlotKey };
+        GenerateDrawResolution.Execute(
+            stage,
+            draw.Id,
+            _clock,
+            explicitTargets,
+            competitionStages: [stage],
+            randomSource: new SeededRandomSource(7));
+
+        stage.GetDraw(draw.Id).Resolution.SlotResults
+            .Select(placement => placement.SlotKey)
+            .Should().Equal(explicitTargets);
+        stage.GetDraw(draw.Id).Resolution.SlotResults.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public void Partial_records_inputs_intent_and_narrows_targets_to_free_slots()
+    {
+        var (stage, entries) = Cup(4);
+        var occupiedKey = stage.Slots[0].SlotKey;
+        stage.AssignEntryToSlot(occupiedKey, entries[0]);
+        var draw = CreateDraw.Execute(stage, DrawResolutionKind.Slot, _clock);
+        var inputs = DrawInputsFactory.CreatePartial(stage, [stage], DrawResolutionKind.Slot);
+        ConfigureDrawInputs.Execute(stage, draw.Id, inputs, DrawInputsIntent.Partial, [stage]);
+        stage.GetDraw(draw.Id).InputsIntent.Should().Be(DrawInputsIntent.Partial);
+
+        GenerateDrawResolution.Execute(
+            stage,
+            draw.Id,
+            _clock,
+            stage.Slots.Select(slot => slot.SlotKey).ToArray(),
+            competitionStages: [stage],
+            randomSource: new SeededRandomSource(3));
+
+        stage.GetDraw(draw.Id).Resolution.SlotResults
+            .Select(placement => placement.SlotKey)
+            .Should().BeEquivalentTo(stage.Slots.Skip(1).Select(slot => slot.SlotKey));
+    }
+
+    [Fact]
+    public void Redo_after_applied_partial_draw_is_refused_with_vacant_grid_code()
+    {
+        var (stage, entries) = Cup(2);
+        stage.ApplyResolvedEntry(stage.Slots[0].SlotKey, entries[0], _clock);
+        var draw = CreateDraw.Execute(stage, DrawResolutionKind.Slot, _clock);
+        var inputs = DrawInputsFactory.CreatePartial(stage, [stage], DrawResolutionKind.Slot);
+        ConfigureDrawInputs.Execute(stage, draw.Id, inputs, DrawInputsIntent.Partial, [stage]);
+        GenerateDrawResolution.Execute(
+            stage,
+            draw.Id,
+            _clock,
+            stage.Slots.Select(slot => slot.SlotKey).ToArray(),
+            competitionStages: [stage],
+            randomSource: new SeededRandomSource(4));
+        PublishDraw.Execute(stage, draw.Id, _clock);
+        ApplyDraw.Execute(stage, draw.Id, _clock);
+
+        var act = () => RedoDraw.Execute(stage, draw.Id, _clock, [stage]);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.DrawLaunchGridNotVacant);
+    }
 
     [Fact]
     public void Partial_draw_fills_only_free_slots_and_keeps_manual_and_previous_occupants()

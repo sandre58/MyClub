@@ -36,6 +36,8 @@
   "redoBlocked": {
     "cupFixtureAttached": "The draw cannot be redone: a match is attached to a confrontation this release would touch.",
     "groupMatchesAttached": "The draw cannot be redone: matches are already attached to this phase.",
+    "launchGridNotVacant": "The draw cannot be redone while bracket places are occupied. Clear or release places, or cancel the applied draw before starting a full reshuffle.",
+    "launchDirectAssignment": "The draw cannot be redone while a direct assignment occupies a slot.",
     "lifecycle": "The draw cannot be redone in the phase’s current state."
   },
   "executionTitle": "Execution #{{n}}",

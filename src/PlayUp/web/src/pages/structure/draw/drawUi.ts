@@ -239,9 +239,9 @@ export function countBracketPlacesBlockingDraw(
 
 /**
  * Free places for a partial Cup draw. Null when the grid is unknown
- * (no facts, no schematic form, and no overview slots).
+ * (no facts, no schematic form, or only overview slots for Cup/Groups).
  */
-function countVacantBracketPlaces(
+export function countVacantBracketPlaces(
   formatKind: StructureFormatKind | null | undefined,
   slots: ReadonlyArray<{ entryId: string | null | undefined }>,
   drawBracketLaunchFacts?: StageDrawBracketLaunchFacts | null,
@@ -267,6 +267,9 @@ function countVacantBracketPlaces(
     }
   }
   if (slots.length === 0) {
+    return null;
+  }
+  if (formatKind === 'Cup' || formatKind === 'Groups') {
     return null;
   }
   return slots.reduce(

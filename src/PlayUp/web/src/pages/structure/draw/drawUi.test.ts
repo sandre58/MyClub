@@ -4,6 +4,7 @@ import {
   areDrawRulesLockedByExecution,
   canAuthorStageDrawRules,
   countBracketPlacesBlockingDraw,
+  countVacantBracketPlaces,
   drawExecutionNumber,
   getDrawUiProjection,
   groupPlacementRows,
@@ -465,6 +466,34 @@ describe('draw readiness checklist', () => {
       met: false,
       current: 2,
     });
+  });
+
+  it('countVacantBracketPlaces excludes reserved schematic feeds', () => {
+    expect(
+      countVacantBracketPlaces(
+        'Cup',
+        [{ entryId: null }, { entryId: null }],
+        null,
+        [
+          {
+            formPosition: { kind: 'CupSlot', slotKey: 'A' },
+            feedOrigin: { kind: 'Direct' },
+          },
+          { formPosition: { kind: 'CupSlot', slotKey: 'B' } },
+        ],
+      ),
+    ).toBe(1);
+  });
+
+  it('countVacantBracketPlaces does not infer cup vacancy from overview slots alone', () => {
+    expect(
+      countVacantBracketPlaces(
+        'Cup',
+        [{ entryId: null }, { entryId: null }],
+        null,
+        null,
+      ),
+    ).toBeNull();
   });
 
   it('lists three draw readiness criteria with ratios', () => {

@@ -95,6 +95,26 @@ public sealed class SlotPartialDrawTests
     }
 
     [Fact]
+    public void Compose_does_not_treat_a_direct_assignment_feed_as_a_free_slot()
+    {
+        var stage = CreateCup(2);
+        var entries = AddPopulation(stage, 2);
+        var snapshot = new SlotFeedSnapshot(
+            stage.Id,
+            ["S1", "S2"],
+            [new DirectFeedSource("S1", entries[0])],
+            [],
+            [],
+            []);
+
+        var scope = SlotPartialDraw.Compose(stage, snapshot);
+
+        scope.Refusal.Should().Be(SlotPartialDrawRefusal.TooManyTeams);
+        scope.VacantSlotKeys.Should().Equal("S2");
+        scope.UnplacedEntries.Should().Equal(entries[0], entries[1]);
+    }
+
+    [Fact]
     public void Generator_draws_only_the_free_subset_and_omits_preserved_slots()
     {
         var entries = new[] { EntryId.New(), EntryId.New(), EntryId.New(), EntryId.New() };

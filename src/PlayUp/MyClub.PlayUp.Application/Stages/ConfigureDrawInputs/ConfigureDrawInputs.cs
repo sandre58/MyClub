@@ -65,7 +65,7 @@ public static class ConfigureDrawInputs
             EnsurePartialSlotInputs(stage, draw, inputs, competitionStages);
         }
 
-        stage.ConfigureDrawInputs(drawId, inputs);
+        stage.ConfigureDrawInputs(drawId, inputs, configureIntent);
     }
 
     private static void EnsurePartialSlotInputs(

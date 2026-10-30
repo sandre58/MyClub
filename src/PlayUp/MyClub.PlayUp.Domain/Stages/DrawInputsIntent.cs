@@ -4,16 +4,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace MyClub.PlayUp.Application.Stages;
+namespace MyClub.PlayUp.Domain.Stages;
 
 /// <summary>
-/// Application intent when building default <see cref="Domain.Stages.DrawInputs"/>.
+/// Intent recorded when configuring draw inputs on a Draft draw.
 /// </summary>
 /// <remarks>
 /// <see cref="Default"/> uses the composition pool and Fixed* from current form occupancy.
-/// <see cref="Rerun"/> is an explicit full redraw: CompositionEntries only, Fixed* empty —
-/// does not clear stage placements; Cancel remains lifecycle-only.
-/// <see cref="Partial"/> draws only unplaced teams into free slots. Occupants stay outside the resolution.
+/// <see cref="Rerun"/> is an explicit full redraw: CompositionEntries only, Fixed* empty.
+/// <see cref="Partial"/> draws only unplaced teams into free slots. Occupants stay outside the pool.
 /// </remarks>
 public enum DrawInputsIntent
 {
