@@ -1,6 +1,6 @@
 # RunDraw — Application launch gate (design contract)
 
-Status: **implemented** — `StructureDrawCreateLaunchGate` in Application; consumed by `StructureHubNextStepResolver` for `RunDraw` (G2: block codes still **not** on HTTP; PageHead shows nominal step only when gate passes).
+Status: **implemented** — `StructureDrawCreateLaunchGate` in Application. Each hub row exposes `drawCreateLaunch { allowed, blockReasonCode }`. PageHead `RunDraw` uses that same projection (nominal step only when `allowed` is true). The SPA displays the field.
 
 ## Goal
 
@@ -10,8 +10,7 @@ The SPA gate is a **parity reference**, not the SoT. The SoT is the **stack of r
 
 ## Non-goals
 
-- Dedicated `DrawCreateLaunchAllowed` field on `StructureView` (gate is internal to resolver unless product asks for HTTP exposure).
-- Replacing draw UI checklist copy or block-reason presentation in the SPA.
+- Replacing draw UI checklist copy. Block-reason presentation reuses existing fiche labels for the server `blockReasonCode`.
 - Treating `DrawExecutionBadge.ToLaunch` as sufficient for `RunDraw` on PageHead.
 
 ## Layered predicates (evaluate in order)
@@ -54,35 +53,18 @@ The SPA gate is a **parity reference**, not the SoT. The SoT is the **stack of r
 
 **Do not** re-port `schematicCases` fallback into C# for Structure hub: Structure read path already has `TryClassify` with slot feeds (`SlotFeedSnapshotAssembler` / `SlotFeedResolver`). Overview may still ship schematic for other surfaces; hub gate uses **classifier only**.
 
-## Proposed API (step 3 implementation sketch)
+## Implementation
 
-```csharp
-// Reads — internal, called from StructureViewAssembler + StructureHubNextStepResolver
-internal static readonly record struct StructureDrawCreateLaunchGateResult(
-    bool Allowed,
-    string? BlockReasonCode);
+`StructureDrawCreateLaunchGate.Evaluate` returns `StructureDrawCreateLaunchDto` (`Allowed`, `BlockReasonCode`). `StructureViewAssembler` projects that value onto each hub row. `StructureHubNextStepResolver` reads `hub.DrawCreateLaunch.Allowed` and does not evaluate the gate again.
 
-internal static class StructureDrawCreateLaunchGate
-{
-    public static StructureDrawCreateLaunchGateResult Evaluate(
-        Competition competition,
-        Stage stage,
-        IReadOnlyList<Stage> competitionStages,
-        StructureDrawExecutionBadge? badge,
-        IReadOnlyList<MatchSummaryRow>? stageMatches = null);
-}
-```
+## Wire projection
 
-`BlockReasonCode` stable strings for tests/logging (not necessarily exposed on HTTP in v1).
+`StructureStageHubSummaryDto.DrawCreateLaunch` (`drawCreateLaunch` on the wire):
 
-## Wire projection (step 3)
+- `allowed: bool`
+- `blockReasonCode: string | null` when `allowed` is false
 
-Add to `StructureStageHubSummaryDto` (names TBD):
-
-- `DrawCreateLaunchAllowed: bool`
-- optional `DrawCreateLaunchBlockReason: string?` when badge is `ToLaunch` but allowed is false (debug / future drawer only — **not** required on PageHead)
-
-Recompute in `StructureViewAssembler` when building each hub row (same place as badge + classifier inputs).
+Projected in `StructureViewAssembler` when building each hub row. `StructureHubNextStepResolver` emits `RunDraw` only when `allowed` is true.
 
 ## Contract tests (step 2 — in repo)
 
@@ -96,7 +78,7 @@ Recompute in `StructureViewAssembler` when building each hub row (same place as 
 | # | Question | Recommendation |
 | - | -------- | -------------- |
 | G1 | Inbound empty pool blocks launch | **Signed yes** — `!IsRootComposition` + `CompositionEntryCount == 0` or inbound `ResolvedCount < ConfiguredVolume` |
-| G2 | Block reason on HTTP for PageHead | **Signed no** — `Allowed` only for resolver; diagnostics stay in operational UI |
+| G2 | Block reason on the phase hub | **Exposed** — `drawCreateLaunch.blockReasonCode` for the fiche and draw dialog. PageHead still shows `RunDraw` only when `allowed` is true |
 | G3 | `InProgress` hub step in a later iteration? | **Out of scope** — silence on PageHead for step 3 |
 
 ## Related

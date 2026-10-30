@@ -11,9 +11,8 @@ import {
   pickDefaultDrawId,
   pickDrawFooterFocusAfterRelease,
   projectSlotDrawResult,
+  drawCreateLaunchBlockCopy,
   resolveDrawCreateBlockPresentation,
-  resolveDrawCreateGate,
-  resolveStageDrawCreateGate,
   resolveDrawReadinessChecklist,
   resolveDrawDetailGuidance,
   resolveDrawDetailHeaderChips,
@@ -375,102 +374,33 @@ describe('resolveDrawDetailGuidance', () => {
   });
 });
 
-describe('resolveDrawCreateGate', () => {
-  it('blocks empty Slot pools as emptyPool (not countMismatch)', () => {
+describe('drawCreateLaunchBlockCopy', () => {
+  it('maps server block codes onto existing fiche labels', () => {
+    expect(drawCreateLaunchBlockCopy('PlacesCountMismatch')).toMatchObject({
+      reason: 'countMismatch',
+      shortKey: 'fiche.drawWorkflow.createBlocked.short.countMismatch',
+      detailKey: 'fiche.drawWorkflow.createBlocked.detail.countMismatch',
+    });
+    expect(drawCreateLaunchBlockCopy('BracketPlacesOccupied').reason).toBe(
+      'occupiedSlots',
+    );
     expect(
-      resolveDrawCreateGate({
-        kind: 'Slot',
-        hasActiveDraw: false,
-        compositionEntryCount: 0,
-        isRootComposition: true,
-        numberOfPots: null,
-        groupCount: 0,
-        slotCount: 16,
-      }),
-    ).toEqual({ ok: false, reason: 'emptyPool' });
-
+      drawCreateLaunchBlockCopy('UpstreamCompositionPoolEmpty').reason,
+    ).toBe('emptyPoolUpstream');
+    expect(drawCreateLaunchBlockCopy('EmptyCompositionPool').reason).toBe(
+      'emptyPool',
+    );
     expect(
-      resolveDrawCreateGate({
-        kind: 'Slot',
-        hasActiveDraw: false,
-        compositionEntryCount: 0,
-        isRootComposition: false,
-        numberOfPots: null,
-        groupCount: 0,
-        slotCount: 16,
-      }),
-    ).toEqual({ ok: false, reason: 'emptyPoolUpstream' });
+      drawCreateLaunchBlockCopy('DrawObsoleteForConsumption').shortKey,
+    ).toBe('lifecycle.disabled.DrawObsoleteForConsumption');
+    expect(drawCreateLaunchBlockCopy(null)).toMatchObject({
+      reason: null,
+      shortKey: null,
+    });
   });
+});
 
-  it('requires composition == Places for Slot', () => {
-    expect(
-      resolveDrawCreateGate({
-        kind: 'Slot',
-        hasActiveDraw: false,
-        compositionEntryCount: 4,
-        numberOfPots: null,
-        groupCount: 0,
-        slotCount: 4,
-      }),
-    ).toEqual({ ok: true });
-
-    expect(
-      resolveDrawCreateGate({
-        kind: 'Slot',
-        hasActiveDraw: false,
-        compositionEntryCount: 4,
-        numberOfPots: null,
-        groupCount: 0,
-        slotCount: 16,
-      }),
-    ).toEqual({ ok: false, reason: 'countMismatch' });
-  });
-
-  it('requires pots × groups for Group kind', () => {
-    expect(
-      resolveDrawCreateGate({
-        kind: 'Group',
-        hasActiveDraw: false,
-        compositionEntryCount: 8,
-        numberOfPots: null,
-        groupCount: 2,
-      }),
-    ).toEqual({ ok: false, reason: 'missingPots' });
-
-    expect(
-      resolveDrawCreateGate({
-        kind: 'Group',
-        hasActiveDraw: false,
-        compositionEntryCount: 8,
-        numberOfPots: 4,
-        groupCount: 2,
-      }),
-    ).toEqual({ ok: true });
-
-    expect(
-      resolveDrawCreateGate({
-        kind: 'Group',
-        hasActiveDraw: false,
-        compositionEntryCount: 7,
-        numberOfPots: 4,
-        groupCount: 2,
-      }),
-    ).toEqual({ ok: false, reason: 'groupShape' });
-  });
-
-  it('blocks when an active draw already exists', () => {
-    expect(
-      resolveDrawCreateGate({
-        kind: 'Slot',
-        hasActiveDraw: true,
-        compositionEntryCount: 4,
-        numberOfPots: null,
-        groupCount: 0,
-        slotCount: 4,
-      }),
-    ).toEqual({ ok: false, reason: 'active' });
-  });
-
+describe('draw readiness checklist', () => {
   it('counts Qual/Prog schematic feeds as blocking cup draw places', () => {
     const cases = [
       {
@@ -492,26 +422,6 @@ describe('resolveDrawCreateGate', () => {
         cases,
       ),
     ).toBe(1);
-    expect(
-      resolveStageDrawCreateGate({
-        formatKind: 'Cup',
-        draws: [],
-        slots: [{ entryId: null }, { entryId: null }],
-        drawBracketLaunchFacts: {
-          entryPlaceCount: 2,
-          occupiedByEntryCount: 0,
-          reservedByStructuralFeedCount: 1,
-          feedResolutionInvalidCount: 0,
-          blockingPlaceCount: 1,
-          vacantForDrawLaunchCount: 1,
-        },
-        schematicCases: cases,
-        compositionEntryCount: 2,
-        placesN: 2,
-        numberOfPots: null,
-        groupCount: 0,
-      }),
-    ).toEqual({ ok: false, reason: 'occupiedSlots' });
   });
 
   it('does not treat vacant Qual/Prog feeds as occupants on overview slots alone', () => {
@@ -522,21 +432,6 @@ describe('resolveDrawCreateGate', () => {
         { entryId: null },
       ]),
     ).toBe(false);
-
-    expect(
-      resolveDrawCreateGate({
-        kind: 'Slot',
-        hasActiveDraw: false,
-        compositionEntryCount: 16,
-        numberOfPots: null,
-        groupCount: 0,
-        slotCount: 16,
-        hasOccupiedSlots: slotsHaveOccupants([
-          { entryId: null },
-          { entryId: null },
-        ]),
-      }),
-    ).toEqual({ ok: true });
   });
 
   it('checklist bracket line uses schematic qual feeds', () => {

@@ -156,7 +156,7 @@ export function slotConfrontationRows(
 }
 
 /**
- * Why a new-draw gesture cannot run — UI gate to start Rerun only.
+ * Display vocabulary for a server `drawCreateLaunch.blockReasonCode`.
  * Domain Generate/Apply remain the final invariants.
  */
 export type DrawCreateBlockReason =
@@ -170,83 +170,6 @@ export type DrawCreateBlockReason =
   | 'countMismatch'
   | 'directAssignment'
   | 'occupiedSlots';
-
-export type DrawCreateGate =
-  { ok: true } | { ok: false; reason: DrawCreateBlockReason };
-
-/**
- * Client gate for Create+Generate (Rerun workflow start).
- * Pool = CompositionEntries only.
- * Group: pots ≥ 2 and entries = pots × groupCount.
- * Slot (Cup): pool non-empty, composition == Places, no DirectAssignment,
- * all Places free (entryId null). Priority is fixed.
- */
-export function resolveDrawCreateGate(input: {
-  kind: 'Group' | 'Slot' | null;
-  hasActiveDraw: boolean;
-  compositionEntryCount: number;
-  /** False / undefined when the phase is fed by Qual/Prog (teams arrive from upstream). */
-  isRootComposition?: boolean;
-  numberOfPots: number | null | undefined;
-  groupCount: number | null | undefined;
-  /** Cup Places N (compositionCapacity / entry places). Required for Slot equality. */
-  slotCount?: number | null;
-  /** Competition EntryRules.MinimumTeams — blocks when composition is below. */
-  minimumTeams?: number | null;
-  /** True when any Place has a DirectAssignment configured. */
-  hasDirectAssignment?: boolean;
-  /**
-   * True when any Place has entryId set (occupant).
-   * Fed-but-vacant Qual/Prog (entryId null) must NOT set this.
-   */
-  hasOccupiedSlots?: boolean;
-}): DrawCreateGate {
-  if (input.kind == null) {
-    return { ok: false, reason: 'unsupported' };
-  }
-  if (input.hasActiveDraw) {
-    return { ok: false, reason: 'active' };
-  }
-
-  const pool = input.compositionEntryCount;
-  if (pool <= 0) {
-    return {
-      ok: false,
-      reason:
-        input.isRootComposition === false ? 'emptyPoolUpstream' : 'emptyPool',
-    };
-  }
-
-  const minimumTeams = input.minimumTeams ?? null;
-  if (minimumTeams != null && minimumTeams > 0 && pool < minimumTeams) {
-    return { ok: false, reason: 'belowMinimumTeams' };
-  }
-
-  if (input.kind === 'Group') {
-    const pots = input.numberOfPots ?? null;
-    const groups = input.groupCount ?? 0;
-    if (pots == null || pots < 2) {
-      return { ok: false, reason: 'missingPots' };
-    }
-    if (groups < 1 || pool !== pots * groups) {
-      return { ok: false, reason: 'groupShape' };
-    }
-    return { ok: true };
-  }
-
-  // Slot (Cup) — Rerun only on a free Places grid with exact population coverage.
-  const places = input.slotCount ?? null;
-  if (places == null || places <= 0 || pool !== places) {
-    return { ok: false, reason: 'countMismatch' };
-  }
-  if (input.hasDirectAssignment) {
-    return { ok: false, reason: 'directAssignment' };
-  }
-  if (input.hasOccupiedSlots) {
-    return { ok: false, reason: 'occupiedSlots' };
-  }
-  return { ok: true };
-}
 
 /** Occupant = entryId present on StageOverview slots (overview-only; see countBracketPlacesBlockingDraw). */
 export function slotsHaveOccupants(
@@ -341,46 +264,130 @@ export function resolveDrawCreateBlockPresentation(
   }
 }
 
-/** Shared Structure + Draw gate from stage / overview payloads. */
-export function resolveStageDrawCreateGate(input: {
-  formatKind: StructureFormatKind | null | undefined;
-  draws: ReadonlyArray<{ status: string }>;
-  slots: ReadonlyArray<{ entryId: string | null | undefined }>;
-  drawBracketLaunchFacts?: StageDrawBracketLaunchFacts | null;
-  schematicCases?: ReadonlyArray<SchematicCase> | null;
-  compositionEntryCount: number;
-  isRootComposition?: boolean;
-  numberOfPots: number | null | undefined;
-  groupCount: number | null | undefined;
-  /** Places N (compositionCapacity / entry places) — not full bracket slotCount. */
-  placesN: number | null | undefined;
-  minimumTeams?: number | null;
-  directAssignmentCount?: number | null;
-}): DrawCreateGate {
-  const kind =
-    input.formatKind === 'Groups'
-      ? 'Group'
-      : input.formatKind === 'Cup'
-        ? 'Slot'
-        : null;
-  return resolveDrawCreateGate({
-    kind,
-    hasActiveDraw: input.draws.some((d) => d.status !== 'Cancelled'),
-    compositionEntryCount: input.compositionEntryCount,
-    isRootComposition: input.isRootComposition,
-    numberOfPots: input.numberOfPots,
-    groupCount: input.groupCount,
-    slotCount: input.placesN,
-    minimumTeams: input.minimumTeams,
-    hasDirectAssignment: (input.directAssignmentCount ?? 0) > 0,
-    hasOccupiedSlots:
-      countBracketPlacesBlockingDraw(
-        input.formatKind,
-        input.slots,
-        input.drawBracketLaunchFacts,
-        input.schematicCases,
-      ) > 0,
-  });
+/**
+ * Display map from the hub `blockReasonCode` onto existing fiche copy.
+ * The allowed/blocked decision stays on the server field.
+ */
+const DRAW_CREATE_LAUNCH_BLOCK_COPY: Record<
+  string,
+  {
+    reason?: DrawCreateBlockReason;
+    shortKey: string;
+    detailKey: string;
+    presentation?: DrawCreateBlockPresentation;
+  }
+> = {
+  UnsupportedFormat: {
+    reason: 'unsupported',
+    shortKey: 'fiche.drawWorkflow.createBlocked.short.unsupported',
+    detailKey: 'fiche.drawWorkflow.createBlocked.detail.unsupported',
+  },
+  DrawRulesMissing: {
+    reason: 'unsupported',
+    shortKey: 'fiche.drawWorkflow.createBlocked.short.unsupported',
+    detailKey: 'fiche.drawWorkflow.createBlocked.detail.unsupported',
+  },
+  ActiveDrawPresent: {
+    reason: 'active',
+    shortKey: 'fiche.drawWorkflow.createBlocked.short.active',
+    detailKey: 'fiche.drawWorkflow.createBlocked.detail.active',
+  },
+  BadgeNotToLaunch: {
+    reason: 'active',
+    shortKey: 'fiche.drawWorkflow.createBlocked.short.active',
+    detailKey: 'fiche.drawWorkflow.createBlocked.detail.active',
+  },
+  EmptyCompositionPool: {
+    reason: 'emptyPool',
+    shortKey: 'fiche.drawWorkflow.createBlocked.short.emptyPool',
+    detailKey: 'fiche.drawWorkflow.createBlocked.detail.emptyPool',
+  },
+  UpstreamCompositionPoolEmpty: {
+    reason: 'emptyPoolUpstream',
+    shortKey: 'fiche.drawWorkflow.createBlocked.short.emptyPoolUpstream',
+    detailKey: 'fiche.drawWorkflow.createBlocked.detail.emptyPoolUpstream',
+  },
+  BelowMinimumTeams: {
+    reason: 'belowMinimumTeams',
+    shortKey: 'fiche.drawWorkflow.createBlocked.short.belowMinimumTeams',
+    detailKey: 'fiche.drawWorkflow.createBlocked.detail.belowMinimumTeams',
+  },
+  MissingPots: {
+    reason: 'missingPots',
+    shortKey: 'fiche.drawWorkflow.createBlocked.short.missingPots',
+    detailKey: 'fiche.drawWorkflow.createBlocked.detail.missingPots',
+  },
+  GroupShapeInvalid: {
+    reason: 'groupShape',
+    shortKey: 'fiche.drawWorkflow.createBlocked.short.groupShape',
+    detailKey: 'fiche.drawWorkflow.createBlocked.detail.groupShape',
+  },
+  PlacesCountMismatch: {
+    reason: 'countMismatch',
+    shortKey: 'fiche.drawWorkflow.createBlocked.short.countMismatch',
+    detailKey: 'fiche.drawWorkflow.createBlocked.detail.countMismatch',
+  },
+  DirectAssignmentPresent: {
+    reason: 'directAssignment',
+    shortKey: 'fiche.drawWorkflow.createBlocked.short.directAssignment',
+    detailKey: 'fiche.drawWorkflow.createBlocked.detail.directAssignment',
+  },
+  BracketPlacesOccupied: {
+    reason: 'occupiedSlots',
+    shortKey: 'fiche.drawWorkflow.createBlocked.short.occupiedSlots',
+    detailKey: 'fiche.drawWorkflow.createBlocked.detail.occupiedSlots',
+  },
+  DrawObsoleteForConsumption: {
+    shortKey: 'lifecycle.disabled.DrawObsoleteForConsumption',
+    detailKey: 'lifecycle.disabled.DrawObsoleteForConsumption',
+    presentation: { kind: 'inline', tone: 'warning', action: false },
+  },
+  OperationalExitEditBlocked: {
+    shortKey: 'fiche.materialize.disabledReason.StructureNotMutable',
+    detailKey: 'fiche.materialize.disabledReason.StructureNotMutable',
+    presentation: { kind: 'inline', tone: 'warning', action: false },
+  },
+};
+
+export type DrawCreateLaunchBlockCopy = {
+  reason: DrawCreateBlockReason | null;
+  presentation: DrawCreateBlockPresentation | null;
+  shortKey: string | null;
+  detailKey: string | null;
+};
+
+export function drawCreateLaunchBlockCopy(
+  blockReasonCode: string | null | undefined,
+): DrawCreateLaunchBlockCopy {
+  if (blockReasonCode == null || blockReasonCode.length === 0) {
+    return {
+      reason: null,
+      presentation: null,
+      shortKey: null,
+      detailKey: null,
+    };
+  }
+
+  const mapped = DRAW_CREATE_LAUNCH_BLOCK_COPY[blockReasonCode];
+  if (!mapped) {
+    return {
+      reason: null,
+      presentation: { kind: 'quiet' },
+      shortKey: 'lifecycle.disabled._unknown',
+      detailKey: 'lifecycle.disabled._unknown',
+    };
+  }
+
+  return {
+    reason: mapped.reason ?? null,
+    presentation:
+      mapped.presentation ??
+      (mapped.reason != null
+        ? resolveDrawCreateBlockPresentation(mapped.reason)
+        : { kind: 'quiet' }),
+    shortKey: mapped.shortKey,
+    detailKey: mapped.detailKey,
+  };
 }
 
 export type DrawReadinessCriterionId =

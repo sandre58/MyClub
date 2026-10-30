@@ -175,9 +175,9 @@ Answers the three checks requested **before** `StructureHubNextStepDto` / resolv
 | Step | Application today | Gap for `hubNextStep` |
 | ---- | ----------------- | --------------------- |
 | **ApplyDraw** | `DrawExecutionBadge.ToApply` from `ResolveDrawExecutionBadge` (Published + not `DrawAppliedState.IsApplied`). Overview adds `ActionApplyDraw` only for **Resolved** published draws — resolver should **reuse that predicate**, not badge alone. | Small: align hub step with Overview draw-action eligibility + `ApplyDraw` consumability guards. |
-| **RunDraw** | Badge `ToLaunch` / `InProgress` from draw state; `BuildReadiness` treats badge as “draw path open” **without** composition/pot/vacancy gate. Launch **command** guards live in `CreateDraw` / `StageDrawRerunLaunchGuard` (partial SPA parity comment). SPA `resolveStageDrawCreateGate` is **not** exposed on `StructureView`. | **Yes — gap:** introduce a **read-side** `drawLaunchAllowed` (or equivalent) on the hub row, shared with future Overview if needed, **before** emitting `RunDraw` on PageHead. |
+| **RunDraw** | `StructureDrawCreateLaunchGate` projects `stages[].drawCreateLaunch` (`allowed`, `blockReasonCode`). PageHead emits `RunDraw` only when `allowed` is true. The SPA displays that field. | Closed on the hub row. |
 
-**Conclusion:** Apply can be made authoritative with existing Application data + Overview parity. **RunDraw requires new read projection** (or extracted shared gate) — the frontend must **not** recompute it.
+**Conclusion:** Apply can be made authoritative with existing Application data + Overview parity. RunDraw uses the hub `drawCreateLaunch` projection — the frontend displays it.
 
 ## 8. SPA implementation (Structure hub N1)
 

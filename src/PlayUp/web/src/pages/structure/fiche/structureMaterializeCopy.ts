@@ -20,31 +20,6 @@ export function materializeProductionTarget(
   return materialize.determinedCount;
 }
 
-/** Ready Groups: pools incomplete and match production command is off (SPA parity when lifecycle read lags). */
-export function groupsPoolsBlockPhaseStart(
-  stage: Pick<StructureStageHubSummary, 'status' | 'materialize'>,
-): boolean {
-  if (stage.status !== 'Ready') {
-    return false;
-  }
-  const materialize = stage.materialize;
-  if (!materialize || materialize.commandEnabled) {
-    return false;
-  }
-  return isGroupsPoolPlacementIncomplete(materialize);
-}
-
-export function isGroupsPoolPlacementIncomplete(
-  materialize: StructureMaterialize,
-): boolean {
-  if (materialize.disabledReason === 'GroupsNotReady') {
-    return true;
-  }
-  const capacity = materialize.groupsPlacementCapacityCount ?? 0;
-  const filled = materialize.groupsPlacementFilledCount ?? 0;
-  return capacity > 0 && filled < capacity;
-}
-
 /** Mirrors StructureMaterializeAssembler mutability — UI layout only, not a disabled reason. */
 export function isMaterializeStructureMutable(
   commandCode: StructureMaterialize['commandCode'],

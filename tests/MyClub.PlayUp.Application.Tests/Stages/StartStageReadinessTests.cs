@@ -158,6 +158,31 @@ public sealed class StartStageReadinessTests
     }
 
     [Fact]
+    public void Read_Start_disabled_when_groups_pools_are_not_ready()
+    {
+        var competition = CreateCompetition.Execute("Groups not ready", _clock);
+        AddEntry.Execute(competition, "A", _clock);
+        AddEntry.Execute(competition, "B", _clock);
+        var configured = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Groups(2, 2),
+            _clock);
+        var stage = configured.Stage;
+        stage.AssignEntryToGroup(stage.Groups[0].Id, competition.Entries[0].Id);
+        StageMaterializationTestSupport.EnsureReadyForMaterialize(competition, stage, [stage], _clock);
+
+        var hub = StructureViewAssembler.Assemble(competition, [stage]).Stages[0];
+
+        hub.Materialize!.DisabledReason.Should().Be(StructureMaterializeDisabledReasons.GroupsNotReady);
+        hub.Lifecycle!.Transition.Code.Should().Be(OverviewAssembler.ActionStartStage);
+        hub.Lifecycle.Transition.Enabled.Should().BeFalse();
+        StageStartReadinessGuard.TryGetDisabledReasonCode(stage, competition, [], [stage])
+            .Should()
+            .NotBeNull();
+    }
+
+    [Fact]
     public void Start_allowed_for_swiss_without_matches()
     {
         var situation = TestCompetition.Create("Swiss", _clock)

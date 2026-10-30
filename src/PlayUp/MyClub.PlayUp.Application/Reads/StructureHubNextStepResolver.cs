@@ -108,7 +108,7 @@ public static class StructureHubNextStepResolver
             return true;
         }
 
-        if (TryRunDraw(competition, stage, competitionStages, hub, summaries, out decision))
+        if (TryRunDraw(hub, out decision))
         {
             tier = HubNextStepTier.RunDraw;
             return true;
@@ -192,28 +192,17 @@ public static class StructureHubNextStepResolver
     }
 
     private static bool TryRunDraw(
-        Competition competition,
-        Stage stage,
-        IReadOnlyList<Stage> competitionStages,
         StructureStageHubSummaryDto hub,
-        IReadOnlyList<MatchSummaryRow>? summaries,
         out StructureHubNextStepDto decision)
     {
-        var gate = StructureDrawCreateLaunchGate.Evaluate(
-            competition,
-            stage,
-            competitionStages,
-            hub,
-            hub.DrawExecutionBadge,
-            summaries);
-        if (!gate.Allowed)
+        if (hub.DrawCreateLaunch.Allowed)
         {
-            decision = null!;
-            return false;
+            decision = Pack(hub, StructureViewAssembler.NextStepRunDraw);
+            return true;
         }
 
-        decision = Pack(hub, StructureViewAssembler.NextStepRunDraw);
-        return true;
+        decision = null!;
+        return false;
     }
 
     private static bool TryMaterialize(StructureStageHubSummaryDto hub, out StructureHubNextStepDto decision)

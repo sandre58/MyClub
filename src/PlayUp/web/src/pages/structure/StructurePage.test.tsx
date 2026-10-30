@@ -504,6 +504,70 @@ describe('StructurePage Structure hub', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('enables Lancer le tirage when the hub allows it despite a mismatched pool', async () => {
+    const stage = groupesStage({
+      compositionEntryCount: 1,
+      compositionCapacity: 8,
+      groupCount: 2,
+      numberOfPots: 4,
+      drawCreateLaunch: { allowed: true, blockReasonCode: null },
+    });
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
+        format: {
+          kind: 'Groups',
+          primaryStageId: stage.stageId,
+          primaryStageName: 'Groupes',
+          primaryStageStatus: 'Draft',
+        },
+        stages: [stage],
+      }),
+    );
+
+    renderStructurePage();
+
+    expect(
+      await screen.findByRole('button', { name: /Lancer le tirage/i }),
+    ).toBeEnabled();
+    expect(
+      screen.queryByText(/Équipes ≠ pots × groupes/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it('disables Lancer le tirage when the hub blocks it despite a filled pool', async () => {
+    const stage = groupesStage({
+      compositionEntryCount: 8,
+      compositionCapacity: 8,
+      groupCount: 2,
+      numberOfPots: 4,
+      actions: [],
+      drawCreateLaunch: {
+        allowed: false,
+        blockReasonCode: 'GroupShapeInvalid',
+      },
+    });
+    vi.mocked(fetchStructureView).mockResolvedValue(
+      structureView({
+        format: {
+          kind: 'Groups',
+          primaryStageId: stage.stageId,
+          primaryStageName: 'Groupes',
+          primaryStageStatus: 'Draft',
+        },
+        stages: [stage],
+      }),
+    );
+
+    renderStructurePage();
+
+    expect(
+      await screen.findByRole('button', { name: /Lancer le tirage/i }),
+    ).toBeDisabled();
+    expect(
+      await screen.findByText(/Équipes ≠ pots × groupes/i),
+    ).toBeInTheDocument();
+  });
+
   it('shows secondary activate-draw CTA when DrawRules are absent', async () => {
     const groups = groupesStage({
       hasDrawRules: false,
