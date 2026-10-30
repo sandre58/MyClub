@@ -20,6 +20,7 @@ Primitives (`palettes/slate.css`) feed semantic tokens (`tokens/*.css`).
 - Semantic: `success`, `attention`, `error`, `info`, **`live`** (activity ≠ success).
 - Chrome: `--color-chrome` + `on-chrome` + `chrome-accent` (uses brand-bright).
 - Brand angle: `--brand-skew: -12deg` (`tokens/brand.css`).
+- Focus: `--color-focus` (semantic ring color); geometry `--focus-ring-width`, `--focus-ring-offset` in `tokens/geometry.css`. Consumed as `--focus-halo` in `foundations/focus.css` — do not hard-code focus box-shadows on `.ds-*`.
 
 ## Typography (numeric roles)
 
@@ -30,6 +31,6 @@ Primitives (`palettes/slate.css`) feed semantic tokens (`tokens/*.css`).
 
 - No raw hex / abandoned palette values in components; no `color-mix()` improvisations outside token files.
 - No new spacing/radius/shadow values: use the existing scale
-  (`--space-4/8/12/16/24/32`, `--radius-control/panel`, `--shadow-*`).
+  (`--space-4/8/12/16/24/32/48`, `--radius-control/panel`, `--shadow-*`).
 
 If a needed token does not exist, stop and flag it instead of hardcoding.

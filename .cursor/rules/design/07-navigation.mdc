@@ -17,7 +17,7 @@ alwaysApply: false
   and a lockup jump). `overflow-x: hidden` on the rail. Nav `overflow-y: auto`.
   Nav labels: `--font-weight-regular` (groups stay semibold uppercase meta).
 - **Groups**: Pilotage (**Vue d'ensemble**) · Compétition (Structure, Calendrier & matchs,
-  Classements) · Référentiel (Équipes, Stades, Règlement — visible, no routes yet).
+  Classements) · Référentiel (**Équipes**, **Règlement** — routed when a competition is selected).
 - **Current item**: inset chip (`--shell-rail-item-radius` / `--radius-panel`),
   wash `--shell-rail-wash-current`, **straight** 3px `--color-chrome-accent` bar
   flush start, clipped by overflow. **Not** `--brand-skew`. Idle: no wash, full

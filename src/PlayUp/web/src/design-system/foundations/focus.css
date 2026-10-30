@@ -1,9 +1,12 @@
 /*
- * Focus — brand halo (Ant-inspired), not a hard green outline.
+ * Focus — keyboard ring (WCAG 2.2 focus appearance, ≥3:1 vs adjacent colors).
+ * Built from `--focus-ring-*` (geometry) and `--color-focus` (tokens/colors.css).
  * Prefer box-shadow so chrome works on bordered and borderless controls.
  */
 .ds-root {
-  --focus-halo: 0 0 0 2px color-mix(in srgb, var(--color-brand) 22%, transparent);
+  --focus-halo:
+    0 0 0 var(--focus-ring-offset) var(--color-surface),
+    0 0 0 calc(var(--focus-ring-offset) + var(--focus-ring-width)) var(--color-focus);
 }
 
 .ds-root :is(a, button, input, select, textarea, summary, [tabindex]):focus {
