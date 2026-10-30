@@ -22,6 +22,7 @@ updates:
           - "StyleCop.*"
           - "Roslynator.*"
           - "Microsoft.CodeAnalysis.NetAnalyzers"
+        update-types: ["minor", "patch"]
       # EF Core and Npgsql EF must stay on the same train (see Directory.Packages.props).
       ef-core-train:
         patterns:
@@ -30,13 +31,16 @@ updates:
       microsoft-extensions:
         patterns:
           - "Microsoft.Extensions.*"
+        update-types: ["minor", "patch"]
       microsoft-aspnet:
         patterns:
           - "Microsoft.AspNetCore.*"
+        update-types: ["minor", "patch"]
       microsoft-build-tooling:
         patterns:
           - "Microsoft.NET.Test.Sdk"
           - "Microsoft.SourceLink.*"
+        update-types: ["minor", "patch"]
       test-stack:
         patterns:
           - "xunit*"
@@ -45,12 +49,15 @@ updates:
           - "AutoFixture*"
           - "coverlet.*"
           - "GitHubActionsTestLogger"
+        update-types: ["minor", "patch"]
       serilog:
         patterns:
           - "Serilog.*"
+        update-types: ["minor", "patch"]
       testcontainers:
         patterns:
           - "Testcontainers.*"
+        update-types: ["minor", "patch"]
 
   - package-ecosystem: dotnet-sdk
     directory: /
@@ -94,12 +101,14 @@ updates:
           - "@types/react-dom"
           - "react-router-dom"
           - "react-i18next"
+        update-types: ["minor", "patch"]
       app-libraries:
         patterns:
           - "@tanstack/*"
           - "i18next"
           - "lucide-react"
           - "@fontsource/*"
+        update-types: ["minor", "patch"]
       vite-toolchain:
         patterns:
           - "vite"
@@ -108,22 +117,27 @@ updates:
           - "@vitest/*"
           - "typescript"
           - "@types/node"
+        update-types: ["minor", "patch"]
       testing:
         patterns:
           - "@playwright/*"
           - "@testing-library/*"
           - "jsdom"
+        update-types: ["minor", "patch"]
       lint-and-format:
         patterns:
           - "oxlint"
           - "prettier"
           - "stylelint*"
+        update-types: ["minor", "patch"]
       # Any new dependency not listed above still lands in one weekly PR per type.
       npm-production:
         dependency-type: production
         patterns:
           - "*"
+        update-types: ["minor", "patch"]
       npm-development:
         dependency-type: development
         patterns:
           - "*"
+        update-types: ["minor", "patch"]
