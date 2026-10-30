@@ -720,6 +720,9 @@ public sealed partial class UseCaseExecutor
 
     /// <summary>
     /// Replaces qualification rules on a stage from legacy path specs (null/empty clears).
+    /// A <see cref="StageStatus.Running"/> stage with no qualification Apply on its own graph
+    /// issues <see cref="ICompetitionRepository.CountStagesReadOnlyAsync"/> before the refusal.
+    /// That query belongs to this write path, not to Structure reads.
     /// </summary>
     public async Task ReplaceStageQualificationRulesAsync(
         StageId stageId,
@@ -735,6 +738,9 @@ public sealed partial class UseCaseExecutor
 
     /// <summary>
     /// Replaces qualification rules from authoring intents (null/empty clears).
+    /// A <see cref="StageStatus.Running"/> stage with no qualification Apply on its own graph
+    /// issues <see cref="ICompetitionRepository.CountStagesReadOnlyAsync"/> before the refusal.
+    /// That query belongs to this write path, not to Structure reads.
     /// </summary>
     public async Task ReplaceStageQualificationIntentsAsync(
         StageId stageId,
@@ -751,6 +757,8 @@ public sealed partial class UseCaseExecutor
     /// <summary>
     /// Loads the stages needed to see a qualification Apply. A Running or Completed stage with no Apply
     /// on its own graph refuses before the competition aggregate and the match graph when it is the only stage.
+    /// The extra <see cref="ICompetitionRepository.CountStagesReadOnlyAsync"/> query runs on this write path
+    /// when the stage is <see cref="StageStatus.Running"/> and stores no qualification Apply.
     /// </summary>
     private async Task<(List<Stage> Stages, IReadOnlyList<Match> Matches)> LoadQualificationReplaceScopeAsync(
         Stage stage,
@@ -779,6 +787,8 @@ public sealed partial class UseCaseExecutor
 
     /// <summary>
     /// True when status forbids the edit and no sibling stage can hold the qualification Apply witness.
+    /// Calls <see cref="ICompetitionRepository.CountStagesReadOnlyAsync"/> only on this write path,
+    /// for a <see cref="StageStatus.Running"/> stage with no qualification Apply on its own graph.
     /// </summary>
     private async Task<bool> RefuseQualificationReplaceBeforeScopeLoadAsync(
         Stage stage,

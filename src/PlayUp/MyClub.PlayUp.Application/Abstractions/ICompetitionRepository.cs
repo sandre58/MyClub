@@ -39,6 +39,9 @@ public interface ICompetitionRepository
 
     /// <summary>
     /// Counts ordered stage rows for a competition without loading the aggregate.
+    /// The extra query is on the write path: replacing qualification rules on a
+    /// <see cref="StageStatus.Running"/> stage that has no qualification Apply on its own graph.
+    /// Structure reads do not call it.
     /// </summary>
     /// <param name="id">The competition identity.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>

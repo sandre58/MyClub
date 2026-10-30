@@ -18,13 +18,22 @@ namespace MyClub.PlayUp.Application.Reads;
 
 /// <summary>
 /// Replays qualification and progression selection against stored provenance.
+/// Each call recomputes from the stages and match rows of that read.
+/// Nothing is kept from one read to the next, and the call issues no SQL.
 /// Read-only: occupants are never rewritten.
+/// A qualification <c>SourcePathId</c> that matches no current path on the source stage is
+/// <see cref="StructureResolutionFreshness.Perime"/> with
+/// <see cref="StructureResolutionStalenessCause.RegleQualification"/>.
+/// A progression <c>SourcePathId</c> that matches no current path is
+/// <see cref="StructureResolutionFreshness.Indetermine"/>: a missing progression path is not a rule change.
 /// </summary>
 public static class ResolutionFreshnessDetector
 {
     /// <summary>
     /// Evaluates every provenance occupant on <paramref name="stages"/>.
     /// Stages with no provenance are omitted.
+    /// Recomputed on every call from <paramref name="matchSummariesByStage"/>.
+    /// No result is retained for a later read, and no query is added.
     /// </summary>
     /// <param name="competition">Owning competition (active entries for overall standings).</param>
     /// <param name="stages">Competition stages, including destinations that store provenance.</param>
@@ -148,6 +157,13 @@ public static class ResolutionFreshnessDetector
         }
     }
 
+    /// <summary>
+    /// When the source stage is found and no current qualification path matches
+    /// <see cref="WorkingOccupant.SourcePathId"/>, the occupant is
+    /// <see cref="StructureResolutionFreshness.Perime"/> with cause
+    /// <see cref="StructureResolutionStalenessCause.RegleQualification"/>.
+    /// A missing source stage stays <see cref="StructureResolutionFreshness.Indetermine"/>.
+    /// </summary>
     private static void AssessQualification(
         WorkingOccupant occupant,
         Dictionary<Guid, Stage> stagesById,
@@ -204,6 +220,13 @@ public static class ResolutionFreshnessDetector
         MarkIndeterminate(occupant);
     }
 
+    /// <summary>
+    /// When the source stage is found and no current progression path matches
+    /// <see cref="WorkingOccupant.SourcePathId"/>, the occupant is
+    /// <see cref="StructureResolutionFreshness.Indetermine"/>.
+    /// Unlike <see cref="AssessQualification"/>, a missing progression path is not
+    /// <see cref="StructureResolutionFreshness.Perime"/> and has no rule cause.
+    /// </summary>
     private static void AssessProgression(
         WorkingOccupant occupant,
         Dictionary<Guid, Stage> stagesById,
@@ -521,6 +544,10 @@ public static class ResolutionFreshnessDetector
                 Cause);
     }
 
+    /// <summary>
+    /// Standings built during this evaluation only. Discarded when the call returns.
+    /// Not a cache from one Structure read to the next.
+    /// </summary>
     private sealed class StandingCache(
         Competition competition,
         IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>> summaries)
@@ -624,6 +651,10 @@ public static class ResolutionFreshnessDetector
         }
     }
 
+    /// <summary>
+    /// Fixture outcomes built during this evaluation only. Discarded when the call returns.
+    /// Not a cache from one Structure read to the next.
+    /// </summary>
     private sealed class OutcomeCache(IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>> summaries)
     {
         private readonly Dictionary<(Guid StageId, string PairKey), FixtureOutcome?> _outcomes = [];
