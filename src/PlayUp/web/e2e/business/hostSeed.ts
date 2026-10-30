@@ -230,8 +230,12 @@ type StageOverviewWire = {
 };
 
 /**
- * API and UI specs share one seeded cup. Cancel any open execution and release
- * its placements so the next spec starts from the scenario (no draw applied).
+ * API and UI specs share one seeded cup. Reset draw state before each test.
+ *
+ * Cancels every non-cancelled draw on the stage, including draws already
+ * applied (`Applied`), then releases aligned placements. UI specs apply a draw;
+ * without this teardown the next spec (API or UI, in either order) would not
+ * start from the seeded pending-draw scenario.
  */
 export async function ensureCupCompositionDrawPending(
   request: APIRequestContext,
