@@ -219,6 +219,22 @@ describe('StructurePhaseOperationalStrip', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('aside-matchs does not warn about missing React list keys', () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      renderStrip({ layoutVariant: 'aside-matchs' });
+      const keyMessages = [...consoleError.mock.calls, ...consoleWarn.mock.calls]
+        .flat()
+        .map(String)
+        .filter((message) => /unique.*key|key.*unique/i.test(message));
+      expect(keyMessages).toEqual([]);
+    } finally {
+      consoleError.mockRestore();
+      consoleWarn.mockRestore();
+    }
+  });
+
   it('aside-matchs places materialize actions below the production gauge on one row', () => {
     const materialize: StructureMaterialize = {
       commandCode: 'MaterializeMatches',

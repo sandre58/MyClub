@@ -344,14 +344,41 @@ public sealed record StructureStageHubSummaryDto(
     int CompositionBandResolvedCount = 0,
     int? SchematicOccupiedPlaceCount = null,
     StructureMatchProductionPresentationDto? MatchProductionPresentation = null,
-    StructureDrawCreateLaunchDto DrawCreateLaunch = default);
+    StructureDrawCreateLaunchDto DrawCreateLaunch);
 
 /// <summary>
 /// Read-side decision for starting a new draw execution on a phase hub row.
 /// </summary>
-/// <param name="Allowed">True when the launch gate admits a new draw.</param>
-/// <param name="BlockReasonCode">Stable code when <paramref name="Allowed"/> is false; null when launch is allowed.</param>
-public readonly record struct StructureDrawCreateLaunchDto(bool Allowed, string? BlockReasonCode);
+public readonly record struct StructureDrawCreateLaunchDto
+{
+    /// <summary>True when the launch gate admits a new draw.</summary>
+    public bool Allowed { get; }
+
+    /// <summary>Stable code when launch is not allowed; null when <see cref="Allowed"/> is true.</summary>
+    public string? BlockReasonCode { get; }
+
+    public StructureDrawCreateLaunchDto(bool allowed, string? blockReasonCode)
+    {
+        if (allowed)
+        {
+            if (blockReasonCode is not null)
+            {
+                throw new ArgumentException(
+                    "BlockReasonCode must be null when launch is allowed.",
+                    nameof(blockReasonCode));
+            }
+        }
+        else if (string.IsNullOrEmpty(blockReasonCode))
+        {
+            throw new ArgumentException(
+                "BlockReasonCode is required when launch is not allowed.",
+                nameof(blockReasonCode));
+        }
+
+        Allowed = allowed;
+        BlockReasonCode = blockReasonCode;
+    }
+}
 
 /// <summary>
 /// Shared Structure workspace projection for Matchs production (strip + aside tile).
