@@ -7,6 +7,7 @@
 using FluentAssertions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
+using MyClub.PlayUp.Domain.Progression;
 using MyClub.PlayUp.Domain.Qualification;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
@@ -94,6 +95,23 @@ public sealed class PathOccupantSelectorTests
         PathOccupantSelector.SelectQualification(path, standing).Status
             .Should()
             .Be(PathOccupantSelectionStatus.Indeterminate);
+    }
+
+    [Fact]
+    public void SelectProgression_matches_ProgressionApplier_for_resolved_paths()
+    {
+        var winnerPath = ProgressionPath(
+            ProgressionOutcome.Winner,
+            StageId.New(),
+            "P1");
+        var outcome = new FixtureOutcome(_a, _b);
+
+        var selector = PathOccupantSelector.SelectProgression(winnerPath, outcome);
+        var instruction = ProgressionApplier.Apply(winnerPath, "P1", outcome);
+
+        selector.Status.Should().Be(PathOccupantSelectionStatus.Resolved);
+        selector.EntryId.Should().Be(_a);
+        instruction.EntryId.Should().Be(_a);
     }
 
     [Fact]

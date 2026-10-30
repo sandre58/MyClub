@@ -310,6 +310,28 @@ public sealed class StandingCalculatorTests
         withEmpty.Rows.Select(r => (r.EntryId, r.Points)).Should().Equal(baseline.Rows.Select(r => (r.EntryId, r.Points)));
     }
 
+    [Fact]
+    public void Calculate_breaks_point_ties_with_goal_difference_before_entry_id_over_20_runs()
+    {
+        var rules = Rules(RankingCriterion.Points);
+        var matches = new[]
+        {
+            new StandingMatch(_a, _b, 1, 1),
+            new StandingMatch(_a, _c, 3, 0),
+            new StandingMatch(_b, _c, 2, 0)
+        };
+
+        Standing? first = null;
+        for (var run = 0; run < 20; run++)
+        {
+            var standing = StandingCalculator.Calculate([_a, _b, _c], matches, rules);
+            first ??= standing;
+            standing.Rows.Select(r => r.EntryId).Should().Equal(first.Rows.Select(r => r.EntryId));
+            standing.Rows[0].EntryId.Should().Be(_a);
+            standing.Rows[1].EntryId.Should().Be(_b);
+        }
+    }
+
     private static StandingRules Rules(params RankingCriterion[] criteria) =>
         new(new PointsPolicy(3, 1, 0), criteria);
 }

@@ -64,7 +64,9 @@ public static class BackfillResolutionProvenance
             competition.Id,
             tracker.BackfilledExact,
             tracker.NonVerifiee,
-            tracker.Indeterminate);
+            tracker.Indeterminate,
+            tracker.SkippedAlreadyPresent,
+            tracker.Categories);
     }
 
     private static void BackfillDirectAssignments(Stage stage, Tracker tracker)
@@ -638,22 +640,60 @@ public static class BackfillResolutionProvenance
 
     private sealed class Tracker
     {
+        private int _directe;
+
+        private int _qualification;
+
+        private int _progression;
+
+        private int _tirage;
+
+        private int _nonVerifieeCategory;
+
         public int BackfilledExact { get; private set; }
 
         public int NonVerifiee { get; private set; }
 
         public int Indeterminate { get; private set; }
 
+        public int SkippedAlreadyPresent { get; private set; }
+
+        public BackfillResolutionProvenanceCategoryCounts Categories =>
+            new(_directe, _qualification, _progression, _tirage, _nonVerifieeCategory);
+
         public void RecordIndeterminate() => Indeterminate++;
 
         public void WriteSlot(Stage stage, string slotKey, ResolutionProvenance provenance)
         {
+            var slot = stage.FindSlot(slotKey);
+            if (slot?.EntryId is null || ShouldSkipExisting(slot.ResolutionProvenanceKind))
+            {
+                if (slot?.ResolutionProvenanceKind is not null
+                    && ShouldSkipExisting(slot.ResolutionProvenanceKind))
+                {
+                    SkippedAlreadyPresent++;
+                }
+
+                return;
+            }
+
             Count(provenance);
             stage.WriteSlotResolutionProvenance(slotKey, provenance);
         }
 
         public void WriteComposition(Stage stage, EntryId entryId, ResolutionProvenance provenance)
         {
+            var row = stage.CompositionEntries.FirstOrDefault(entry => entry.EntryId.Equals(entryId));
+            if (row is null || ShouldSkipExisting(row.ResolutionProvenanceKind))
+            {
+                if (row?.ResolutionProvenanceKind is not null && ShouldSkipExisting(row.ResolutionProvenanceKind))
+                {
+                    SkippedAlreadyPresent++;
+                }
+
+                return;
+            }
+
             Count(provenance);
             stage.WriteCompositionResolutionProvenance(entryId, provenance);
         }
@@ -664,19 +704,53 @@ public static class BackfillResolutionProvenance
             EntryId entryId,
             ResolutionProvenance provenance)
         {
+            var existing = stage.GroupResolutionProvenances.FirstOrDefault(row =>
+                row.GroupId.Equals(groupId) && row.EntryId.Equals(entryId));
+            if (ShouldSkipExisting(existing?.ProvenanceKind))
+            {
+                if (existing?.ProvenanceKind is not null)
+                {
+                    SkippedAlreadyPresent++;
+                }
+
+                return;
+            }
+
             Count(provenance);
             stage.WriteGroupResolutionProvenance(groupId, entryId, provenance);
         }
 
+        private static bool ShouldSkipExisting(ResolutionProvenanceKind? kind) =>
+            kind is not null && kind != ResolutionProvenanceKind.NonVerifiee;
+
         private void Count(ResolutionProvenance provenance)
         {
-            if (provenance.Kind == ResolutionProvenanceKind.NonVerifiee)
+            switch (provenance.Kind)
             {
-                NonVerifiee++;
-                return;
+                case ResolutionProvenanceKind.Directe:
+                    _directe++;
+                    BackfilledExact++;
+                    break;
+                case ResolutionProvenanceKind.Qualification:
+                    _qualification++;
+                    BackfilledExact++;
+                    break;
+                case ResolutionProvenanceKind.Progression:
+                    _progression++;
+                    BackfilledExact++;
+                    break;
+                case ResolutionProvenanceKind.Tirage:
+                    _tirage++;
+                    BackfilledExact++;
+                    break;
+                case ResolutionProvenanceKind.NonVerifiee:
+                    _nonVerifieeCategory++;
+                    NonVerifiee++;
+                    break;
+                default:
+                    NonVerifiee++;
+                    break;
             }
-
-            BackfilledExact++;
         }
     }
 }

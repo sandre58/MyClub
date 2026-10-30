@@ -15,8 +15,12 @@ namespace MyClub.PlayUp.Application.Stages;
 /// <param name="BackfilledExact">Witnesses written with a verified Qual/Prog/Draw/Direct path.</param>
 /// <param name="NonVerifiee">Witnesses written as explicit non-verified.</param>
 /// <param name="Indeterminate">Qual/Prog replays that did not resolve to exactly one entry.</param>
+/// <param name="SkippedAlreadyPresent">Rows skipped because a non-placeholder provenance was already stored.</param>
+/// <param name="Categories">Breakdown of witnesses written by provenance kind.</param>
 public sealed record BackfillResolutionProvenanceReport(
     CompetitionId CompetitionId,
     int BackfilledExact,
     int NonVerifiee,
-    int Indeterminate);
+    int Indeterminate,
+    int SkippedAlreadyPresent,
+    BackfillResolutionProvenanceCategoryCounts Categories);

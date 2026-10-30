@@ -25,10 +25,11 @@ public sealed class BackfillResolutionProvenanceTests
     [Fact]
     public void Direct_assignment_slot_is_backfilled_as_Directe()
     {
-        var (competition, terminal, entryId) = CreateTerminalWithDirectSlot("A");
+        var (competition, terminal, _) = CreateTerminalWithDirectSlot("A");
         var report = RunBackfill(competition, [terminal]);
 
-        report.BackfilledExact.Should().BeGreaterThan(0);
+        report.SkippedAlreadyPresent.Should().BeGreaterThan(0);
+        report.BackfilledExact.Should().Be(0);
         terminal.FindSlot("A")!.ResolutionProvenance!.Kind.Should().Be(ResolutionProvenanceKind.Directe);
     }
 
@@ -104,17 +105,45 @@ public sealed class BackfillResolutionProvenanceTests
     }
 
     [Fact]
-    public void Second_run_on_same_state_returns_same_report_without_changing_occupants()
+    public void Second_run_on_same_state_preserves_provenance_without_rewriting()
     {
         var (competition, league, terminal, matches, winner) = CreateQualificationSlotScenario();
         terminal.ApplyResolvedEntry("Champ", winner, _clock, ResolutionProvenance.NonVerifiee());
 
         var first = RunBackfill(competition, [league, terminal], matches);
+        var provenanceAfterFirst = terminal.FindSlot("Champ")!.ResolutionProvenance;
+        provenanceAfterFirst!.Kind.Should().Be(ResolutionProvenanceKind.Qualification);
         var occupantBefore = terminal.FindSlot("Champ")!.EntryId;
+
         var second = RunBackfill(competition, [league, terminal], matches);
 
-        second.Should().Be(first);
+        second.BackfilledExact.Should().Be(0);
+        second.SkippedAlreadyPresent.Should().BeGreaterThan(0);
         terminal.FindSlot("Champ")!.EntryId.Should().Be(occupantBefore);
+        terminal.FindSlot("Champ")!.ResolutionProvenance.Should().Be(provenanceAfterFirst);
+        first.Categories.Qualification.Should().BeGreaterThan(0);
+    }
+
+    [Fact]
+    public void Backfill_after_real_apply_qualification_preserves_exact_provenance()
+    {
+        var (competition, league, terminal, matches, _) = CreateQualificationSlotScenario();
+        var standing = CalculateStanding.Execute(
+            [.. competition.Entries.Select(entry => entry.Id)],
+            matches,
+            league.Regulation.StandingRules.OrThrow());
+
+        ApplyQualification.Execute(league, standing, [league, terminal], _clock);
+
+        var before = terminal.FindSlot("Champ")!.ResolutionProvenance;
+        before.Should().NotBeNull();
+        before!.Kind.Should().Be(ResolutionProvenanceKind.Qualification);
+
+        var report = RunBackfill(competition, [league, terminal], matches);
+
+        report.BackfilledExact.Should().Be(0);
+        report.SkippedAlreadyPresent.Should().BeGreaterThan(0);
+        terminal.FindSlot("Champ")!.ResolutionProvenance.Should().Be(before);
     }
 
     private static BackfillResolutionProvenanceReport RunBackfill(
@@ -141,7 +170,6 @@ public sealed class BackfillResolutionProvenanceTests
         var entryId = competition.AddEntry(TeamId.New(), "Team", _clock).Id;
         terminal.AddResolvedPopulationEntry(entryId, _clock, ResolutionProvenance.NonVerifiee());
         terminal.AssignEntryToSlot(slotKey, entryId);
-        terminal.WriteSlotResolutionProvenance(slotKey, ResolutionProvenance.NonVerifiee());
         return (competition, terminal, entryId);
     }
 
