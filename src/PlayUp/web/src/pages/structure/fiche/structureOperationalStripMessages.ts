@@ -25,7 +25,7 @@ export function resolvePlaceOccupancyMeterCopy(input: {
   slotFeedMissingActive: boolean;
   /** Draw rules engaged on this stage — launchability gates 0/N action signal. */
   drawRulesEngaged?: boolean;
-  /** `createGate.ok` when draw rules engaged. */
+  /** Hub `drawCreateLaunch.allowed` when draw rules are engaged. */
   drawLaunchable?: boolean;
   drawExecutionBadge?: TopologyDrawExecutionBadge | null;
   stageStatus?: StageStatus | null;

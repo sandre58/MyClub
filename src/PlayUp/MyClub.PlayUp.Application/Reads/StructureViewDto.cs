@@ -264,6 +264,10 @@ public sealed record StructureReadinessDto(
 /// Null when Places N is unknown or the format is out of scope.
 /// </param>
 /// <param name="MatchProductionPresentation">Shared Matchs production projection for strip and aside tile.</param>
+/// <param name="DrawCreateLaunch">
+/// Whether a new draw execution may be launched on this phase. <see cref="StructureDrawCreateLaunchDto.BlockReasonCode"/>
+/// is set when <see cref="StructureDrawCreateLaunchDto.Allowed"/> is false.
+/// </param>
 public sealed record StructureStageHubSummaryDto(
     Guid StageId,
     string Name,
@@ -339,7 +343,15 @@ public sealed record StructureStageHubSummaryDto(
     StructureInboundCompositionDto? InboundComposition = null,
     int CompositionBandResolvedCount = 0,
     int? SchematicOccupiedPlaceCount = null,
-    StructureMatchProductionPresentationDto? MatchProductionPresentation = null);
+    StructureMatchProductionPresentationDto? MatchProductionPresentation = null,
+    StructureDrawCreateLaunchDto DrawCreateLaunch = default);
+
+/// <summary>
+/// Read-side decision for starting a new draw execution on a phase hub row.
+/// </summary>
+/// <param name="Allowed">True when the launch gate admits a new draw.</param>
+/// <param name="BlockReasonCode">Stable code when <paramref name="Allowed"/> is false; null when launch is allowed.</param>
+public readonly record struct StructureDrawCreateLaunchDto(bool Allowed, string? BlockReasonCode);
 
 /// <summary>
 /// Shared Structure workspace projection for Matchs production (strip + aside tile).

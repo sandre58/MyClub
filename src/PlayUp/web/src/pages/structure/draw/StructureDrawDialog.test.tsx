@@ -114,6 +114,7 @@ function groupsStage(
     progressionPathCount: 0,
     hasTieFormat: false,
     formatKind: 'Groups',
+    drawCreateLaunch: { allowed: true, blockReasonCode: null },
     defaultsBinding: {
       matchDuration: { isBound: true },
       extraTime: { isBound: true },
@@ -365,6 +366,10 @@ describe('StructureDrawDialog', () => {
       groupsStage({
         compositionEntryCount: 0,
         isRootComposition: false,
+        drawCreateLaunch: {
+          allowed: false,
+          blockReasonCode: 'UpstreamCompositionPoolEmpty',
+        },
       }),
     );
 
@@ -384,13 +389,17 @@ describe('StructureDrawDialog', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('disables Nouveau and shows inline info when a root phase has no teams', async () => {
+  it('shows the server empty-pool reason even when the pool count is filled', async () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(overview([]));
 
     renderDialog(
       groupsStage({
-        compositionEntryCount: 0,
+        compositionEntryCount: 8,
         isRootComposition: true,
+        drawCreateLaunch: {
+          allowed: false,
+          blockReasonCode: 'EmptyCompositionPool',
+        },
       }),
     );
 
@@ -583,6 +592,10 @@ describe('StructureDrawDialog', () => {
       cupStage({
         compositionEntryCount: 15,
         compositionCapacity: 16,
+        drawCreateLaunch: {
+          allowed: false,
+          blockReasonCode: 'PlacesCountMismatch',
+        },
       }),
     );
 
@@ -597,7 +610,7 @@ describe('StructureDrawDialog', () => {
     expect(createAndGenerateDraw).not.toHaveBeenCalled();
   });
 
-  it('disables Cup Nouveau when a Place has an occupant', async () => {
+  it('disables Cup Nouveau when the hub says places are occupied', async () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
       overview([], {
         slots: [
@@ -621,6 +634,10 @@ describe('StructureDrawDialog', () => {
       cupStage({
         compositionEntryCount: 16,
         compositionCapacity: 16,
+        drawCreateLaunch: {
+          allowed: false,
+          blockReasonCode: 'BracketPlacesOccupied',
+        },
       }),
     );
 
@@ -634,14 +651,18 @@ describe('StructureDrawDialog', () => {
     ).toBeInTheDocument();
   });
 
-  it('disables Cup Nouveau for DirectAssignment when count matches', async () => {
+  it('shows the server direct-assignment reason even when the hub count is zero', async () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(overview([]));
 
     renderDialog(
       cupStage({
         compositionEntryCount: 16,
         compositionCapacity: 16,
-        directAssignmentCount: 1,
+        directAssignmentCount: 0,
+        drawCreateLaunch: {
+          allowed: false,
+          blockReasonCode: 'DirectAssignmentPresent',
+        },
       }),
     );
 
@@ -655,14 +676,14 @@ describe('StructureDrawDialog', () => {
     ).toBeInTheDocument();
   });
 
-  it('allows Cup Nouveau when Qual/Prog feeds are vacant (entryId null)', async () => {
+  it('enables Cup Nouveau when the hub allows it even if slots have occupants', async () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
       overview([], {
         slots: [
           {
             slotKey: 'R16-1-A',
-            entryId: null,
-            displayName: null,
+            entryId: 'e1',
+            displayName: 'Belgium',
             coveredByCompleteFixture: false,
           },
           {
@@ -679,15 +700,21 @@ describe('StructureDrawDialog', () => {
       cupStage({
         compositionEntryCount: 16,
         compositionCapacity: 16,
+        drawCreateLaunch: { allowed: true, blockReasonCode: null },
       }),
     );
 
     expect(
       await screen.findByRole('button', { name: 'Lancer le tirage' }),
     ).toBeEnabled();
+    expect(
+      screen.queryByText(
+        'Libérez les placements existants avant de lancer un nouveau tirage.',
+      ),
+    ).not.toBeInTheDocument();
   });
 
-  it('enables Cup Nouveau after Libérer clears aligned occupants', async () => {
+  it('keeps Cup launch on the hub decision after Libérer clears occupants', async () => {
     const user = userEvent.setup();
     const occupiedSlots = [
       {
@@ -746,6 +773,10 @@ describe('StructureDrawDialog', () => {
       cupStage({
         compositionEntryCount: 16,
         compositionCapacity: 16,
+        drawCreateLaunch: {
+          allowed: false,
+          blockReasonCode: 'BracketPlacesOccupied',
+        },
       }),
     );
 
@@ -769,8 +800,13 @@ describe('StructureDrawDialog', () => {
     await waitFor(() => {
       expect(
         screen.getByRole('button', { name: 'Lancer le tirage' }),
-      ).toBeEnabled();
+      ).toBeDisabled();
     });
+    expect(
+      screen.getByText(
+        'Libérez les placements existants avant de lancer un nouveau tirage.',
+      ),
+    ).toBeInTheDocument();
   });
 
   it('selects the new draw after Nouveau when history had a cancelled execution', async () => {

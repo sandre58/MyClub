@@ -56,11 +56,10 @@ import {
   drawResolutionPlacementCount,
   getDrawUiProjection,
   pickActiveDraw,
+  drawCreateLaunchBlockCopy,
   pickDrawFooterFocusAfterRelease,
   projectSlotDrawResult,
-  resolveDrawCreateBlockPresentation,
   resolveDrawDetailGuidance,
-  resolveStageDrawCreateGate,
   sortDrawsNewestFirst,
 } from './drawUi';
 import { DrawSlotConfrontationGrid } from './DrawSlotConfrontationGrid';
@@ -113,8 +112,6 @@ export type StructureDrawDialogProps = {
   competitionId: string;
   /** Callers still pass host status; draw CTAs are projected on the stage overview. */
   competitionStatus: CompetitionStatus;
-  /** Competition EntryRules.MinimumTeams — gate belowMinimumTeams. */
-  minimumTeams?: number | null;
   stage: StructureStageHubSummary;
   structureStages: readonly StructureStageHubSummary[];
 };
@@ -134,7 +131,6 @@ export function StructureDrawDialog({
   onClose,
   competitionId,
   structureStages,
-  minimumTeams = null,
   stage,
 }: StructureDrawDialogProps) {
   const { t } = useTranslation('structure');
@@ -209,29 +205,16 @@ export function StructureDrawDialog({
   const confirmDraw =
     drawList.find((draw) => draw.id === confirmDrawId) ?? null;
 
-  const createGateInput = {
-    formatKind: stage.formatKind,
-    draws: drawList,
-    slots,
-    drawBracketLaunchFacts: overviewQuery.data?.drawBracketLaunchFacts,
-    compositionEntryCount: poolCount,
-    isRootComposition: stage.isRootComposition,
-    numberOfPots: stage.numberOfPots,
-    groupCount: stage.groupCount,
-    placesN,
-    minimumTeams,
-    directAssignmentCount: stage.directAssignmentCount,
-  };
-  const createGate = resolveStageDrawCreateGate(createGateInput);
   const showLaunch =
     drawKind != null && !overviewQuery.isLoading && !activeDraw;
-  const canLaunch = showLaunch && createGate.ok;
-  const createBlockedReason =
-    showLaunch && !createGate.ok ? createGate.reason : null;
-  const createBlockPresentation =
-    createBlockedReason != null
-      ? resolveDrawCreateBlockPresentation(createBlockedReason)
+  const launchAllowed = stage.drawCreateLaunch?.allowed === true;
+  const canLaunch = showLaunch && launchAllowed;
+  const launchBlock =
+    showLaunch && !launchAllowed
+      ? drawCreateLaunchBlockCopy(stage.drawCreateLaunch?.blockReasonCode)
       : null;
+  const createBlockedReason = launchBlock?.reason ?? null;
+  const createBlockPresentation = launchBlock?.presentation ?? null;
   const createBlockEcho =
     createBlockedReason != null
       ? functionalProblemPresentation({
@@ -240,18 +223,19 @@ export function StructureDrawDialog({
           stageId: stage.stageId,
         })
       : null;
-  const createBlockedShort =
-    createBlockedReason != null
-      ? t(`fiche.drawWorkflow.createBlocked.short.${createBlockedReason}`)
-      : null;
+  const createBlockedShort = launchBlock?.shortKey
+    ? t(launchBlock.shortKey)
+    : null;
   const createBlockedDetail =
-    createBlockedReason != null && createBlockPresentation?.kind === 'inline'
+    createBlockedReason != null &&
+    createBlockPresentation?.kind === 'inline' &&
+    launchBlock?.detailKey
       ? createBlockedReason === 'countMismatch'
-        ? t('fiche.drawWorkflow.createBlocked.detail.countMismatch', {
+        ? t(launchBlock.detailKey, {
             count: poolCount,
             places: placesN ?? 0,
           })
-        : t(`fiche.drawWorkflow.createBlocked.detail.${createBlockedReason}`)
+        : t(launchBlock.detailKey)
       : null;
 
   /** Draft create / generate — hub + schematic unchanged until publish/apply. */
@@ -282,9 +266,10 @@ export function StructureDrawDialog({
       if (!drawKind) {
         throw new Error('Draw kind unavailable for this format.');
       }
-      const gate = resolveStageDrawCreateGate(createGateInput);
-      if (!gate.ok) {
-        throw new Error(`Draw create blocked: ${gate.reason}`);
+      if (stage.drawCreateLaunch?.allowed !== true) {
+        throw new Error(
+          `Draw create blocked: ${stage.drawCreateLaunch?.blockReasonCode ?? 'denied'}`,
+        );
       }
       return createAndGenerateDraw(stageId, drawKind);
     },

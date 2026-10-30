@@ -283,9 +283,22 @@ Example (Draft championship):
     },
     "matchProgress": null,
     "revertTransition": null
+  },
+  "drawCreateLaunch": {
+    "allowed": false,
+    "blockReasonCode": "DrawRulesMissing"
   }
 }
 ```
+
+#### `stages[].drawCreateLaunch`
+
+Server decision for starting a new draw execution on that phase. The SPA displays it; it does not recompute the gate.
+
+| Field | Type | Notes |
+| :--- | :--- | :--- |
+| `allowed` | boolean | True when a new draw may be launched |
+| `blockReasonCode` | string \| null | Stable code when `allowed` is false (`DrawRulesMissing`, `MissingPots`, `PlacesCountMismatch`, `BracketPlacesOccupied`, …); null when allowed |
 
 ### Stage lifecycle commands
 

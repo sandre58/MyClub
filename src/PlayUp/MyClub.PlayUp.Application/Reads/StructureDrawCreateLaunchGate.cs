@@ -37,7 +37,7 @@ public static class StructureDrawCreateLaunchGate
     /// <summary>
     /// Evaluates whether a new draw may be launched on this phase snapshot.
     /// </summary>
-    public static StructureDrawCreateLaunchGateResult Evaluate(
+    public static StructureDrawCreateLaunchDto Evaluate(
         Competition competition,
         Stage stage,
         IReadOnlyList<Stage> competitionStages,
@@ -151,14 +151,9 @@ public static class StructureDrawCreateLaunchGate
         }
     }
 
-    private static StructureDrawCreateLaunchGateResult Allow() =>
+    private static StructureDrawCreateLaunchDto Allow() =>
         new(true, null);
 
-    private static StructureDrawCreateLaunchGateResult Deny(string code) =>
+    private static StructureDrawCreateLaunchDto Deny(string code) =>
         new(false, code);
 }
-
-/// <summary>Result of <see cref="StructureDrawCreateLaunchGate.Evaluate"/>.</summary>
-/// <param name="Allowed">Whether launch is permitted.</param>
-/// <param name="BlockReasonCode">Stable internal code when blocked (not exposed on HTTP for PageHead).</param>
-public readonly record struct StructureDrawCreateLaunchGateResult(bool Allowed, string? BlockReasonCode);

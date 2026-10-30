@@ -68,10 +68,9 @@ import {
   areDrawRulesLockedByExecution,
   canAuthorStageDrawRules,
   stageHasPublishedAppliedDraw,
+  drawCreateLaunchBlockCopy,
   pickActiveDraw,
-  resolveDrawCreateBlockPresentation,
   resolveDrawReadinessChecklist,
-  resolveStageDrawCreateGate,
 } from '../draw/drawUi';
 import { resolveServerReleaseCta } from '../draw/drawActions';
 import {
@@ -517,24 +516,13 @@ export function StructurePhaseFiche({
     drawOverviewQuery.isSuccess ||
     stage.formatKind === 'Groups' ||
     !showDrawCta;
-  const createGate =
-    drawGateReady && showDrawCta
-      ? resolveStageDrawCreateGate({
-          formatKind: stage.formatKind,
-          draws: overviewDraws,
-          slots: overviewSlots,
-          drawBracketLaunchFacts,
-          compositionEntryCount: poolFilled,
-          isRootComposition: stage.isRootComposition,
-          numberOfPots: stage.numberOfPots,
-          groupCount: stage.groupCount,
-          placesN,
-          minimumTeams: data.regulation.minimumTeams,
-          directAssignmentCount: stage.directAssignmentCount,
-        })
+  const launchRead = showDrawCta ? stage.drawCreateLaunch : undefined;
+  const launchAllowed = launchRead?.allowed === true;
+  const launchBlock =
+    showDrawCta && launchRead != null && !launchRead.allowed
+      ? drawCreateLaunchBlockCopy(launchRead.blockReasonCode)
       : null;
-  const createBlockedReason =
-    createGate != null && !createGate.ok ? createGate.reason : null;
+  const createBlockedReason = launchBlock?.reason ?? null;
   const qualifiersConfiguredVolume =
     stage.inboundComposition?.configuredVolume ??
     feedGroups.reduce((sum, group) => sum + group.volume, 0);
@@ -553,14 +541,10 @@ export function StructurePhaseFiche({
         })
       : null;
   const qualifiersInboundReady = stage.inboundComposition != null;
-  const createBlockPresentation =
-    createBlockedReason != null
-      ? resolveDrawCreateBlockPresentation(createBlockedReason)
-      : null;
-  const createBlockedShort =
-    createBlockedReason != null
-      ? t(`fiche.drawWorkflow.createBlocked.short.${createBlockedReason}`)
-      : null;
+  const createBlockPresentation = launchBlock?.presentation ?? null;
+  const createBlockedShort = launchBlock?.shortKey
+    ? t(launchBlock.shortKey)
+    : null;
   const stageHasAppliedDraw = stageHasPublishedAppliedDraw(overviewDraws);
   const releaseCta = resolveServerReleaseCta({
     draws: overviewDraws,
@@ -571,7 +555,7 @@ export function StructurePhaseFiche({
   const showReleaseCta = releasableDraw != null && releasableAlignedCount > 0;
   /** Nouveau path blocked with nothing to manage in the dialog → disable primary CTA. */
   const blockPerformDrawCta =
-    createBlockedShort != null && !activeDraw && overviewDraws.length === 0;
+    showDrawCta && !launchAllowed && !activeDraw && overviewDraws.length === 0;
   /** Inline short caption on the stage card — skip when Release is the unblock action, and
    * skip countMismatch when the filled/capacity ratio already carries the signal. */
   const showCreateBlockedCaption =
@@ -1050,7 +1034,7 @@ export function StructurePhaseFiche({
         onReleasePlacements: () => setReleaseConfirmOpen(true),
         onDeactivateDraw: () => setDeactivateDrawOpen(true),
         slotFeedMissingActive,
-        drawLaunchable: showDrawCta && drawGateReady && createGate?.ok === true,
+        drawLaunchable: showDrawCta && launchAllowed,
         drawExecutionBadge: stage.drawExecutionBadge ?? null,
         stageStatus: stage.status,
         slotFeedPresentationContext: {
@@ -1462,7 +1446,6 @@ export function StructurePhaseFiche({
       <StructureDrawDialogHost
         competitionId={data.competitionId}
         competitionStatus={data.status}
-        minimumTeams={data.regulation.minimumTeams}
         stage={stage}
         structureStages={data.stages}
         open={drawWorkflowOpen}

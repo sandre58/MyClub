@@ -34,7 +34,7 @@ export type StructurePlacementOperationalSectionProps = {
   deactivateDrawPending: boolean;
   /** Host reports SlotFeedMissing — strip meter copy carries the gap (not the banner). */
   slotFeedMissingActive?: boolean;
-  /** Same predicate as Create + Generate (`resolveStageDrawCreateGate`). Only when `showDrawCta`. */
+  /** Hub `drawCreateLaunch.allowed`. Only when `showDrawCta`. */
   drawLaunchable?: boolean;
   drawExecutionBadge?: 'ToLaunch' | 'InProgress' | 'ToApply' | 'Applied' | null;
   stageStatus?: StageStatus;

@@ -102,6 +102,67 @@ describe('StructurePhaseMatchsLifecycleBlock', () => {
     ).toBeDisabled();
   });
 
+  it('enables start when the server allows it even if group pools look incomplete', async () => {
+    const user = userEvent.setup();
+    vi.mocked(startStage).mockResolvedValue(undefined);
+
+    renderBlock({
+      ...baseStage,
+      status: 'Ready',
+      formatKind: 'Groups',
+      materialize: {
+        commandCode: 'MaterializeMatches',
+        labelVariant: 'idle',
+        determinedCount: 0,
+        eligibleCount: 0,
+        materializedCount: 0,
+        commandEnabled: false,
+        confrontations: [],
+        disabledReason: 'GroupsNotReady',
+        groupsPlacementFilledCount: 1,
+        groupsPlacementCapacityCount: 4,
+      },
+      lifecycle: {
+        transition: { code: 'StartStage', enabled: true },
+      },
+    });
+
+    const start = screen.getByRole('button', { name: /démarrer la phase/i });
+    expect(start).toBeEnabled();
+    await user.click(start);
+    expect(startStage).toHaveBeenCalledWith(baseStage.stageId);
+  });
+
+  it('disables start when the server disables it', () => {
+    renderBlock({
+      ...baseStage,
+      status: 'Ready',
+      formatKind: 'Groups',
+      materialize: {
+        commandCode: 'MaterializeMatches',
+        labelVariant: 'create',
+        determinedCount: 2,
+        eligibleCount: 2,
+        materializedCount: 0,
+        commandEnabled: true,
+        confrontations: [],
+        groupsPlacementFilledCount: 4,
+        groupsPlacementCapacityCount: 4,
+      },
+      lifecycle: {
+        transition: {
+          code: 'StartStage',
+          enabled: false,
+          disabledReasonCode: 'UnmaterializedConfrontations',
+        },
+      },
+    });
+
+    expect(
+      screen.getByRole('button', { name: /démarrer la phase/i }),
+    ).toBeDisabled();
+  });
+
   it('calls startStage when start is enabled', async () => {
     const user = userEvent.setup();
     vi.mocked(startStage).mockResolvedValue(undefined);

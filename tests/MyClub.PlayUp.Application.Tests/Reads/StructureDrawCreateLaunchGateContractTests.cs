@@ -17,9 +17,8 @@ using Xunit;
 namespace MyClub.PlayUp.Application.Tests.Reads;
 
 /// <summary>
-/// Precursors for <c>StructureDrawCreateLaunchGate</c> (see
+/// Hub projection of <see cref="StructureDrawCreateLaunchGate"/> (see
 /// docs/design/structure-lifecycle/structure-draw-create-launch-gate.md).
-/// These tests run today; they do not call the gate type (not implemented yet).
 /// </summary>
 public sealed class StructureDrawCreateLaunchGateContractTests
 {
@@ -61,12 +60,12 @@ public sealed class StructureDrawCreateLaunchGateContractTests
     {
         var competition = CreateCompetition.Execute("Cup", _clock);
         var e1 = AddEntry.Execute(competition, "A", _clock);
-        _ = AddEntry.Execute(competition, "B", _clock);
+        var e2 = AddEntry.Execute(competition, "B", _clock);
         var configured = ConfigureStructure.Execute(competition, null, StructureIntent.Cup(2), _clock);
         var stage = configured.Stage;
         ReplaceStageDrawRules.Execute(stage, new DrawRules(DrawMode.Random), _clock);
-        stage.ReplaceAffectationAuthoring([e1.Id], _clock);
-        stage.AssignEntryToSlot(stage.Slots[0].SlotKey, e1.Id);
+        stage.ReplaceAffectationAuthoring([e1.Id, e2.Id], _clock);
+        stage.ApplyResolvedEntry(stage.Slots[0].SlotKey, e1.Id, _clock);
 
         var facts = StageDrawBracketLaunchClassifier.ClassifyForDrawKind(
             stage,
@@ -77,7 +76,9 @@ public sealed class StructureDrawCreateLaunchGateContractTests
         StructureViewAssembler.GetDrawExecutionBadge(stage, hasDrawRules: true)
             .Should().Be(StructureDrawExecutionBadge.ToLaunch);
 
-        // Contract: RunDraw hub step must not use badge alone .
+        var hub = StructureViewAssembler.Assemble(competition, [stage]).Stages.Single();
+        hub.DrawCreateLaunch.Allowed.Should().BeFalse();
+        hub.DrawCreateLaunch.BlockReasonCode.Should().Be(StructureDrawCreateLaunchGate.BlockBracketPlacesOccupied);
     }
 
     [Fact]
@@ -103,8 +104,8 @@ public sealed class StructureDrawCreateLaunchGateContractTests
         hub.CompositionEntryCount.Should().Be(4);
         hub.CompositionCapacity.Should().Be(4);
         hub.DrawExecutionBadge.Should().Be(StructureDrawExecutionBadge.ToLaunch);
-
-        // Contract: later gate layers satisfied — RunDraw eligible after priority rules (not yet implemented).
+        hub.DrawCreateLaunch.Allowed.Should().BeTrue();
+        hub.DrawCreateLaunch.BlockReasonCode.Should().BeNull();
     }
 
     [Fact]
@@ -145,7 +146,28 @@ public sealed class StructureDrawCreateLaunchGateContractTests
         var hub = StructureViewAssembler.Assemble(situation.Competition, situation.Stages).Stages.Single();
         hub.HasDrawRules.Should().BeFalse();
         hub.DrawExecutionBadge.Should().BeNull();
+        hub.DrawCreateLaunch.Allowed.Should().BeFalse();
+        hub.DrawCreateLaunch.BlockReasonCode.Should().Be(StructureDrawCreateLaunchGate.BlockDrawRulesMissing);
+    }
 
-        // Contract: not launchable for RunDraw.
+    [Fact]
+    public void Hub_exposes_group_shape_block_when_pool_does_not_match_pots_times_groups()
+    {
+        var situation = TestCompetition.Create("Groups shape block", _clock)
+            .WithTeams("A", "B", "C")
+            .WithStructure(StructureIntent.Groups(2, 2));
+        var stage = situation.PrimaryStage!;
+        ReplaceStageDrawRules.Execute(
+            stage,
+            new DrawRules(DrawMode.Random, potRules: new PotRules(2)),
+            _clock);
+        stage.ReplaceAffectationAuthoring(
+            [.. situation.Competition.Entries.Select(entry => entry.Id)],
+            _clock);
+
+        var hub = StructureViewAssembler.Assemble(situation.Competition, situation.Stages).Stages.Single();
+
+        hub.DrawCreateLaunch.Allowed.Should().BeFalse();
+        hub.DrawCreateLaunch.BlockReasonCode.Should().Be(StructureDrawCreateLaunchGate.BlockGroupShapeInvalid);
     }
 }

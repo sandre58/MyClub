@@ -496,7 +496,7 @@ public static class StructureViewAssembler
                 inboundComposition,
                 matchSummariesByStage));
 
-        return new StructureStageHubSummaryDto(
+        var summary = new StructureStageHubSummaryDto(
             stage.Id.Value,
             stage.Name.Value,
             stage.Status,
@@ -572,6 +572,17 @@ public static class StructureViewAssembler
             CompositionBandResolvedCount: compositionBandResolved,
             SchematicOccupiedPlaceCount: schematicOccupiedPlaceCount,
             MatchProductionPresentation: matchProductionPresentation);
+
+        return summary with
+        {
+            DrawCreateLaunch = StructureDrawCreateLaunchGate.Evaluate(
+                competition,
+                stage,
+                competitionStages,
+                summary,
+                drawExecutionBadge,
+                summaries),
+        };
     }
 
     private static int? ResolveSchematicOccupiedPlaceCount(

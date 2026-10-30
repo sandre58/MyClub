@@ -265,6 +265,14 @@ export interface StructureStageHubSummary {
   matchProductionPresentation?: StructureMatchProductionPresentation | null;
   /** Phase lifecycle band (Prepare / Start / Complete). */
   lifecycle?: StructureStageLifecycle | null;
+  /**
+   * Server decision for starting a new draw execution.
+   * `blockReasonCode` is set when `allowed` is false.
+   */
+  drawCreateLaunch?: {
+    allowed: boolean;
+    blockReasonCode: string | null;
+  } | null;
   /** Inbound Qual/Prog resolution for Composition Qualifiés; omitted when root composition. */
   inboundComposition?: StructureInboundComposition | null;
 }
