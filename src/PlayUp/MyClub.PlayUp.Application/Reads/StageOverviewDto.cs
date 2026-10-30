@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using System.Text.Json.Serialization;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Stages;
 
@@ -172,10 +173,9 @@ public enum SlotDrawCellState
     /// <summary>Composition occupant preserved beside the draw. Draft only.</summary>
     AlreadyPlaced = 1,
 
-    /// <summary>Filled structural feed. Not drawable. Draft only.</summary>
-#pragma warning disable CA1700 // Product cell state name. Not an unused reserved slot.
-    Reserved = 2,
-#pragma warning restore CA1700
+    /// <summary>Filled structural feed. Not drawable. Draft only. JSON name is <c>Reserved</c>.</summary>
+    [JsonStringEnumMemberName("Reserved")]
+    HeldByFeed = 2,
 
     /// <summary>Occupant outside composition. Not a free place. Draft only.</summary>
     Withdrawn = 3,

@@ -181,6 +181,9 @@ export function StructureDrawDialog({
 
   const activeDraw = useMemo(() => pickActiveDraw(drawList), [drawList]);
   const stageDrawMetrics = overviewQuery.data?.slotDrawDisplayMetrics ?? null;
+  // Group draws ignore cup metrics. A slot draft prefers its displayMetrics.
+  // When that field is absent, stage metrics are used. When both are absent,
+  // resolveDrawHeroModel falls back to the stage team and place counts.
   const heroMetrics =
     activeDraw?.kind === 'Group'
       ? null
@@ -863,6 +866,10 @@ export function StructureDrawDialog({
         <div className="structure-draw-dialog" ref={dialogBodyRef}>
           <DrawHeroFacts model={heroModel} />
 
+          {/*
+            slotDrawDisplayMetrics is the server count. When that payload is
+            absent, the hint falls back to whether any slot already has an occupant.
+          */}
           {canLaunch &&
           drawKind === 'Slot' &&
           (stageDrawMetrics
@@ -1462,6 +1469,8 @@ function DrawExecutionView({
     outsideDraw: t('outsideDraw'),
     originManualHint: t('originManualHint'),
   };
+  // Cells are the cup read model. projectSlotDrawResult stays for payloads
+  // that only carry resolution placements (no slotDisplayCells).
   const slotResult =
     draw.kind !== 'Slot'
       ? { confrontations: [], unpaired: [] }

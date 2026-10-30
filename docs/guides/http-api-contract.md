@@ -758,11 +758,11 @@ A free slot has no occupant and a missing feed. An occupant **outside compositio
 | :--- | :--- | :--- |
 | `Drawn` | `Draw` | Slot is in this draw's resolution |
 | `AlreadyPlaced` | `Manual` | Composition occupant preserved beside the draw (direct assignment, resolved occupant, or an occupant left by a previous Published draw after that draw was cancelled) |
-| `Reserved` | `Feed` | Filled structural feed and the slot is not in this resolution. Qualification, progression, draw-target, and non-unique feeds. A qualification feed with an occupant is `Reserved`, not `Withdrawn` |
-| `Withdrawn` | `Manual` | Occupant outside composition, no structural feed. Not `Reserved` |
+| `Reserved` | `Feed` | Filled structural feed and the slot is not in this resolution. Qualification, progression, draw-target, and non-unique feeds. A qualification feed with an occupant is `Reserved`, not `Withdrawn`. A unique direct feed with no team on the slot is `Reserved` / `Feed`: not free, and not `AlreadyPlaced`. The JSON name is `Reserved`; the C# member is `HeldByFeed` |
+| `Withdrawn` | `Manual` | Occupant outside composition, no structural feed. Not `Reserved`. Not a free place |
 | `Free` | omitted / null | No occupant, feed missing |
 
-A **unique direct assignment** (`AssignEntryToSlot`) is `Manual` / `AlreadyPlaced`, not `Feed`. It is the manual placement. Structural feeds reserve the slot.
+A **unique direct assignment with the team on the slot** (`AssignEntryToSlot`) is `Manual` / `AlreadyPlaced` (« Déjà placée »), not `Feed`. That placement is the manual one. A unique direct feed **without** a team on the slot is not a free place and not « Déjà placée »: `Reserved` / `Feed`.
 
 Published and Cancelled Slot draws do not use the current phase. Each structural slot is either `Drawn` (in **that** draw's resolution, team and `origin: Draw` from the resolution) or `OutsideDraw` (absent from that resolution, no team, no origin). They are not `AlreadyPlaced`, `Reserved`, `Free`, or `Withdrawn` derived from the present. Releasing an occupant on the phase does not change those cells.
 

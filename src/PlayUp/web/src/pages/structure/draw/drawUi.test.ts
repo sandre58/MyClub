@@ -1,5 +1,15 @@
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import type { StageBracketPair, StageDraw, StageSlot } from '../../../types';
+import type {
+  DrawInputsIntent,
+  StageBracketPair,
+  StageDraw,
+  StageDrawDisplayMetrics,
+  StageDrawSlotDisplayCell,
+  StageSlot,
+} from '../../../types';
 import {
   areDrawRulesLockedByExecution,
   canAuthorStageDrawRules,
@@ -884,55 +894,25 @@ describe('buildCupDrawDisplayFromDto', () => {
 });
 
 describe('draw display golden parity', () => {
-  it('T4 projects a golden DTO payload without recomputing counts', () => {
-    const golden = JSON.parse(`{
-      "inputsIntent": "Partial",
-      "displayMetrics": {
-        "unplacedEntryCount": 1,
-        "vacantSlotKeyCount": 1,
-        "vacantSlotKeys": ["S2"],
-        "alreadyPlacedEntryCount": 1,
-        "entryCount": 2,
-        "placeCount": 2
-      },
-      "slotDisplayCells": [
-        {
-          "slotKey": "S1",
-          "cellState": "AlreadyPlaced",
-          "entryId": "e1",
-          "displayName": "Belgium",
-          "origin": "Manual"
-        },
-        {
-          "slotKey": "S2",
-          "cellState": "Drawn",
-          "entryId": "e2",
-          "displayName": "Poland",
-          "origin": "Draw"
-        }
-      ]
-    }`) as {
-      inputsIntent: 'Partial';
-      displayMetrics: {
-        unplacedEntryCount: number;
-        vacantSlotKeyCount: number;
-        vacantSlotKeys: string[];
-        alreadyPlacedEntryCount: number;
-        entryCount: number;
-        placeCount: number;
-      };
-      slotDisplayCells: Array<{
-        slotKey: string;
-        cellState: 'AlreadyPlaced' | 'Drawn';
-        entryId: string;
-        displayName: string;
-        origin: 'Manual' | 'Draw';
-      }>;
+  it('T4 projects the server golden without recomputing counts', () => {
+    const golden = JSON.parse(
+      readFileSync(
+        join(
+          dirname(fileURLToPath(import.meta.url)),
+          'fixtures/stage-draw-display-t4.json',
+        ),
+        'utf8',
+      ),
+    ) as {
+      inputsIntent: DrawInputsIntent;
+      displayMetrics: StageDrawDisplayMetrics;
+      slotDisplayCells: StageDrawSlotDisplayCell[];
+      bracketPairs: StageBracketPair[];
     };
 
     const grid = buildCupDrawDisplayFromDto(
       golden.slotDisplayCells,
-      [{ pairKey: 'P1', slotAKey: 'S1', slotBKey: 'S2' }],
+      golden.bracketPairs,
       cupLabels,
     );
     expect(grid.confrontations[0]?.sideA.origin).toBe('Manual');

@@ -124,6 +124,11 @@ export type SlotDrawResultProjection = {
   unpaired: SlotConfrontationSide[];
 };
 
+/**
+ * Legacy slot grid from resolution placements when `slotDisplayCells` is absent
+ * (the draw is not a cup slot draw, or the payload predates the cell contract).
+ * Cup drafts that carry cells use {@link buildCupDrawDisplayFromDto}.
+ */
 export function projectSlotDrawResult(
   placements: StageDrawSlotPlacement[],
   bracketPairs: ReadonlyArray<StageBracketPair>,
@@ -343,6 +348,8 @@ export function resolveDrawHeroModel(input: {
     };
   }
 
+  // displayMetrics is absent on older payloads, group draws, and non-draft reads.
+  // The duo then uses the stage team count and place count.
   return {
     layout: 'duo',
     primary: {

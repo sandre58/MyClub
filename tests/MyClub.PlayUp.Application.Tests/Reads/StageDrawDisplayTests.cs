@@ -4,6 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using FluentAssertions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
@@ -79,7 +82,7 @@ public sealed class StageDrawDisplayTests
         var cell = overview.Draws.Single(item => item.Id == draw.Id.Value)
             .SlotDisplayCells!.Single(item => item.SlotKey == fed);
 
-        cell.CellState.Should().Be(SlotDrawCellState.Reserved);
+        cell.CellState.Should().Be(SlotDrawCellState.HeldByFeed);
         cell.Origin.Should().Be(DrawPlacementOrigin.Feed);
         cell.CellState.Should().NotBe(SlotDrawCellState.Withdrawn);
         cell.EntryId.Should().Be(home.Value);
@@ -101,6 +104,47 @@ public sealed class StageDrawDisplayTests
         cell.Origin.Should().Be(DrawPlacementOrigin.Manual);
         cell.Origin.Should().NotBe(DrawPlacementOrigin.Draw);
         cell.Origin.Should().NotBe(DrawPlacementOrigin.Feed);
+    }
+
+    [Fact]
+    public void Unique_direct_feed_without_an_occupant_is_reserved_not_already_placed()
+    {
+        var (competition, stage, entries) = Cup(2);
+        var key = stage.Slots[0].SlotKey;
+        stage.AssignEntryToSlot(key, entries[0]);
+
+        // AssignEntryToSlot writes the assignment and the occupant together.
+        // ClearResolvedEntry refuses a direct assignment, and ClearSlotAssignment removes both.
+        // The feed snapshot still represents a unique direct feed with an empty slot.
+        var slot = stage.FindSlot(key)!;
+        typeof(Slot).GetMethod("ClearEntry", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .Invoke(slot, null);
+
+        slot.EntryId.Should().BeNull();
+        stage.DirectAssignments.Should().ContainSingle(assignment => assignment.SlotKey == key);
+        var draw = CreateDraw.Execute(stage, DrawResolutionKind.Slot, _clock);
+
+        var cell = StageOverviewAssembler.Assemble(stage, competition)
+            .Draws.Single(item => item.Id == draw.Id.Value)
+            .SlotDisplayCells!.Single(item => item.SlotKey == key);
+
+        cell.CellState.Should().Be(SlotDrawCellState.HeldByFeed);
+        cell.Origin.Should().Be(DrawPlacementOrigin.Feed);
+        cell.CellState.Should().NotBe(SlotDrawCellState.Free);
+        cell.CellState.Should().NotBe(SlotDrawCellState.AlreadyPlaced);
+        cell.EntryId.Should().BeNull();
+    }
+
+    [Fact]
+    public void HeldByFeed_serializes_as_Reserved()
+    {
+        var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+        options.Converters.Add(new JsonStringEnumConverter());
+        var json = JsonSerializer.Serialize(SlotDrawCellState.HeldByFeed, options);
+
+        json.Should().Be("\"Reserved\"");
+        JsonSerializer.Deserialize<SlotDrawCellState>(json, options)
+            .Should().Be(SlotDrawCellState.HeldByFeed);
     }
 
     [Fact]
@@ -161,7 +205,7 @@ public sealed class StageDrawDisplayTests
 
         cell.CellState.Should().Be(SlotDrawCellState.Withdrawn);
         cell.Origin.Should().Be(DrawPlacementOrigin.Manual);
-        cell.CellState.Should().NotBe(SlotDrawCellState.Reserved);
+        cell.CellState.Should().NotBe(SlotDrawCellState.HeldByFeed);
         metrics.VacantSlotKeys.Should().NotContain(withdrawnKey);
         metrics.UnplacedEntryCount.Should().Be(3);
         metrics.AlreadyPlacedEntryCount.Should().Be(0);

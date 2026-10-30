@@ -108,7 +108,13 @@ public sealed class SlotPartialDrawTests
             []);
 
         var scope = SlotPartialDraw.Compose(stage, snapshot);
+        var occupancy = SlotPartialDraw.Classify(stage, snapshot)
+            .Single(fact => fact.SlotKey == "S1").Occupancy;
 
+        occupancy.Should().Be(SlotDrawPlaceOccupancy.StructuralFeed);
+        occupancy.Should().NotBe(SlotDrawPlaceOccupancy.Free);
+        occupancy.Should().NotBe(SlotDrawPlaceOccupancy.AlreadyPlaced);
+        occupancy.Should().NotBe(SlotDrawPlaceOccupancy.Withdrawn);
         scope.Refusal.Should().Be(SlotPartialDrawRefusal.TooManyTeams);
         scope.VacantSlotKeys.Should().Equal("S2");
         scope.UnplacedEntries.Should().Equal(entries[0], entries[1]);

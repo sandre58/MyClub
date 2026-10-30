@@ -101,7 +101,7 @@ internal static class StageDrawDisplay
                 SlotDrawPlaceOccupancy.Free => WithoutTeam(fact.SlotKey, SlotDrawCellState.Free, origin: null),
                 SlotDrawPlaceOccupancy.StructuralFeed => FromOccupant(
                     fact,
-                    SlotDrawCellState.Reserved,
+                    SlotDrawCellState.HeldByFeed,
                     DrawPlacementOrigin.Feed,
                     entries),
                 SlotDrawPlaceOccupancy.Withdrawn => FromOccupant(

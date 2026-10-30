@@ -45,6 +45,7 @@ export type DrawInputsIntent = 'Default' | 'Rerun' | 'Partial';
 
 export type DrawPlacementOrigin = 'Draw' | 'Feed' | 'Manual';
 
+/** Wire names. The C# member for `Reserved` is `HeldByFeed`. */
 export type SlotDrawCellState =
   'Drawn' | 'AlreadyPlaced' | 'Reserved' | 'Withdrawn' | 'Free' | 'OutsideDraw';
 
