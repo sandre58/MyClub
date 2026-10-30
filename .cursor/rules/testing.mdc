@@ -24,7 +24,7 @@ alwaysApply: false
 
 ## Integration
 
-- `Category=Integration` → Testcontainers PostgreSQL (Docker). Skip locally with `--filter Category!=Integration`.
+- `Category=Integration` → Testcontainers PostgreSQL (Docker), including `Category=PerformanceBaseline` in `Development.Tests`. Skip locally with `--filter Category!=Integration`.
 - Do not point those tests at the Compose `myclub` volume.
 
 ## Development.Tests (recette protocols)
