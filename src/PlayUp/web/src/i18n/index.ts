@@ -1,11 +1,6 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import {
-  FALLBACK_LOCALE,
-  I18N_NAMESPACES,
-  SUPPORTED_LOCALES,
-  type SupportedLocale,
-} from './config';
+import { FALLBACK_LOCALE, I18N_NAMESPACES, SUPPORTED_LOCALES } from './config';
 import { localeBackend } from './localeBackend';
 import { resolveInitialLocale } from './resolveLocale';
 
@@ -13,20 +8,6 @@ function syncDocumentLang(locale: string) {
   if (typeof document !== 'undefined') {
     document.documentElement.lang = locale;
   }
-}
-
-function inactiveLocale(language: string): SupportedLocale {
-  return language === 'fr' ? 'en' : 'fr';
-}
-
-/** Captured once after init — false when only the boot locale was loaded. */
-let inactiveLocaleLoadedAtInitialBoot: boolean | null = null;
-
-export function wasInactiveLocaleLoadedAtInitialBoot(): boolean {
-  if (inactiveLocaleLoadedAtInitialBoot === null) {
-    throw new Error('i18n init has not finished');
-  }
-  return inactiveLocaleLoadedAtInitialBoot;
 }
 
 export const i18nReady = i18n
@@ -51,10 +32,6 @@ export const i18nReady = i18n
       : undefined,
   })
   .then(() => {
-    const other = inactiveLocale(i18n.language);
-    inactiveLocaleLoadedAtInitialBoot = I18N_NAMESPACES.some((ns) =>
-      i18n.hasResourceBundle(other, ns),
-    );
     syncDocumentLang(i18n.language);
   });
 

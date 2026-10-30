@@ -16,6 +16,7 @@ public sealed class EfModelPendingChangesTests
     [Fact]
     public void PlayUpDbContext_model_matches_applied_migrations()
     {
+        // Npgsql selects the EF model provider; HasPendingModelChanges() never opens a connection.
         var options = new DbContextOptionsBuilder<PlayUpDbContext>()
             .UseNpgsql("Host=127.0.0.1;Database=myclub_unconnected;Username=x;Password=x")
             .Options;

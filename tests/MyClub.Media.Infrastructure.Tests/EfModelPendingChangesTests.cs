@@ -16,6 +16,7 @@ public sealed class EfModelPendingChangesTests
     [Fact]
     public void MediaDbContext_model_matches_applied_migrations()
     {
+        // Npgsql selects the EF model provider; HasPendingModelChanges() never opens a connection.
         var options = new DbContextOptionsBuilder<MediaDbContext>()
             .UseNpgsql("Host=127.0.0.1;Database=media_unconnected;Username=x;Password=x")
             .Options;
