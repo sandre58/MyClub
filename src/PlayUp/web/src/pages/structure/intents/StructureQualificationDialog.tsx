@@ -228,6 +228,9 @@ export function StructureQualificationDialog({
       const payload = intents.map((intent, index) =>
         toApiIntent(intent, index + 1, groups),
       );
+      if (payload.length === 0) {
+        return replaceStageQualificationRules(stage.stageId, { clear: true });
+      }
       return replaceStageQualificationRules(stage.stageId, {
         intents: payload,
       });

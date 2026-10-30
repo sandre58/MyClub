@@ -260,7 +260,7 @@ describe('StructureProgressionDialog chrome', () => {
 
     await waitFor(() => {
       expect(replaceStageProgressionRules).toHaveBeenCalledWith(sourceId, {
-        intents: null,
+        clear: true,
       });
     });
   });

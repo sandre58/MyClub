@@ -316,7 +316,7 @@ describe('StructureQualificationDialog hydrate / groups (2b)', () => {
 
     await waitFor(() => {
       expect(replaceStageQualificationRules).toHaveBeenCalledWith(sourceId, {
-        intents: [],
+        clear: true,
       });
     });
   });

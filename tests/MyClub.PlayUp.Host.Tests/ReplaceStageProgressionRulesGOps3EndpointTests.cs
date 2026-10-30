@@ -68,7 +68,7 @@ public sealed class ReplaceStageProgressionRulesGOps3EndpointTests(HostPostgresF
         using var client = factory.CreateClient();
         using var response = await client.PutAsJsonAsync(
             ProgressionRulesUri(seed.SourceStageId),
-            new ReplaceStageProgressionRulesRequest(Intents: []),
+            new ReplaceStageProgressionRulesRequest(Clear: true),
             HostJson.Options);
 
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
@@ -85,7 +85,7 @@ public sealed class ReplaceStageProgressionRulesGOps3EndpointTests(HostPostgresF
         using var client = factory.CreateClient();
         using var response = await client.PutAsJsonAsync(
             ProgressionRulesUri(seed.SourceStageId),
-            new ReplaceStageProgressionRulesRequest(Intents: []),
+            new ReplaceStageProgressionRulesRequest(Clear: true),
             HostJson.Options);
 
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);

@@ -189,7 +189,7 @@ describe('StructurePlacementAwardDialog orphan remediation', () => {
 
     await waitFor(() => {
       expect(replaceStagePlacementAwardRules).toHaveBeenCalledWith(stageId, {
-        paths: null,
+        clear: true,
       });
     });
   });
@@ -227,7 +227,7 @@ describe('StructurePlacementAwardDialog orphan remediation', () => {
 
     await waitFor(() => {
       expect(replaceStagePlacementAwardRules).toHaveBeenCalledWith(stageId, {
-        paths: null,
+        clear: true,
       });
     });
   });

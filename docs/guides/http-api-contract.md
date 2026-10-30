@@ -27,7 +27,7 @@ Host configures `JsonStringEnumConverter` via `ConfigureHttpJsonOptions`. Domain
 | `DrawResolutionState` | draw summaries / stage overview / overview draws |
 | `StructureFormatKind` | structure / consultation format (`Championship` \| `Groups` \| `Cup` \| `Swiss`) |
 | `MatchGenerationFormat` | structure `structure.matchGenerationFormat`; `ConfigureStructureRequest.matchGenerationFormat` (`SingleRoundRobin` \| `DoubleRoundRobin`) |
-| `ProgressionOutcome` | progression-rules / placement-award-rules paths (`Winner` \| `Loser`) |
+| `ProgressionOutcome` | progression-rules intents / placement-award-rules paths (`Winner` \| `Loser`) |
 | `RankingCriterion` | standing-rules / competition regulation (`Points` \| `GoalDifference` \| `GoalsFor` \| `GoalsAgainst` \| `Wins` \| `HeadToHead`) |
 
 ## Named response contracts (Phase 12.8)
@@ -541,56 +541,78 @@ Replaces or clears a **Round** TieFormat (same body shape as stage default). Dra
 
 #### `PUT /stages/{stageId}/progression-rules` → 204 No Content
 
+Authoring body is `intents` (Round × outcome → destination). Send `clear: true` to clear. A body with neither a non-empty list nor `clear: true` (or with both) → **400** `Application.RulesReplaceRequiresListOrClear`.
+
 ```json
 {
-  "paths": [
+  "intents": [
     {
-      "sourceFixtureId": "<guid>",
+      "intentId": "<guid or null>",
+      "order": 1,
+      "roundId": "<guid>",
       "outcome": "Winner",
       "destinationStageId": "<guid>",
-      "destinationSlotKey": "SF1-A"
+      "destinationSlotKeys": ["SF1-A"],
+      "destinationGroupIds": null,
+      "destinationForm": false
     }
   ]
 }
 ```
 
-Empty or null `paths` clears rules. Domain validates source fixture ownership and local destinations.
+```json
+{ "clear": true }
+```
+
+Exactly one destination among slot (`destinationSlotKeys`), group (`destinationGroupIds`), form (`destinationForm: true`), or population (none of those three). More than one → **400** `Application.InvalidStructureIntent`.
 
 #### `PUT /stages/{stageId}/qualification-rules` → 204 No Content
 
+Authoring body is `intents`. `sourceKind` is `SingleGroup` | `EachGroup` | `Overall` | `AcrossGroups`. Send `clear: true` to clear. A body with neither a non-empty list nor `clear: true` (or with both) → **400** `Application.RulesReplaceRequiresListOrClear`.
+
 ```json
 {
-  "paths": [
+  "intents": [
     {
+      "intentId": "<guid>",
       "order": 1,
-      "selectionMode": "Top",
-      "selectionValue": 2,
+      "sourceKind": "Overall",
+      "positionFrom": 1,
+      "positionTo": 2,
       "destinationStageId": "<guid>",
-      "destinationSlotKey": "QF1",
-      "rankingScope": "Overall"
+      "groupId": null,
+      "acrossGroupsPosition": null,
+      "minimumPoints": null,
+      "destinationSlotKeys": null,
+      "destinationGroupIds": null,
+      "destinationForm": false
     }
   ]
 }
 ```
 
-Empty or null `paths` clears rules. Optional: `groupId`, `acrossGroupsPosition`, `selectionEndValue`, `minimumPoints`. Rejected while stage is Running / Suspended / Completed (`StructureNotMutable`).
+```json
+{ "clear": true }
+```
+
+Optional: `groupId` (required for `SingleGroup`), `acrossGroupsPosition` (required for `AcrossGroups`), `minimumPoints`, `destinationSlotKeys`, `destinationGroupIds`, `destinationForm`. Exactly one destination among slot, group, form, or population (same exclusivity as progression). More than one → **400** `Application.InvalidStructureIntent`. Rejected while the stage is Running / Suspended / Completed (`StructureNotMutable`).
 
 Structure hub `stages[]` also projects `actions` (per-phase: `ReplaceQualificationRules`, `ReplaceProgressionRules`, `RemoveStage`), `qualificationIntents` / `progressionIntents` (authoring read model; legacy path-list rules are synthesized into intents on GET), `structureIssues` (Draft-persistable graph validity), and `lifecycle` (see above). `qualificationPathCount` / `progressionPathCount` reflect expanded domain path counts for hub summaries. Competition `actions` includes `AddCompetitionStage`. Readiness may include blocker `StructureGraphInvalid`.
 
 #### `PUT /stages/{stageId}/placement-award-rules` → 204 No Content
 
-Configuration only — does **not** resolve awards, mutate slots, or compute `CompetitionOutcome`.
+Configuration only — does **not** resolve awards, mutate slots, or compute `CompetitionOutcome`. `sourcePairKey` is the structural source key (Cup = `BracketPair.PairKey`; see `docs/guides/local-persistence.md`). An empty `sourcePairKey` → **400** `Application.InvalidStructureIntent`. Send `clear: true` to clear. A body with neither a non-empty `paths` list nor `clear: true` (or with both) → **400** `Application.RulesReplaceRequiresListOrClear`.
 
 ```json
 {
   "paths": [
     {
-      "sourceFixtureId": "<guid>",
+      "sourcePairKey": "P1",
       "outcome": "Winner",
       "rank": 1
     },
     {
-      "sourceFixtureId": "<guid>",
+      "sourcePairKey": "P1",
       "outcome": "Loser",
       "rank": 2
     }
@@ -598,7 +620,11 @@ Configuration only — does **not** resolve awards, mutate slots, or compute `Co
 }
 ```
 
-Empty or null `paths` clears rules. Domain validates source fixture ownership, unique `(fixture, outcome)` pairs, and unique ranks (`rank ≥ 1`). Rejected while stage is Running / Suspended / Completed (`StructureNotMutable`).
+```json
+{ "clear": true }
+```
+
+The source pair must exist on the stage. Unique `(sourcePairKey, outcome)` pairs and unique ranks (`rank ≥ 1`). Rejected while the stage is Running / Suspended / Completed (`StructureNotMutable`).
 
 ### `POST /stages/{stageId}/qualification/apply` → `QualificationApplyResponse`
 

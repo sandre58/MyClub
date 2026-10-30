@@ -219,9 +219,7 @@ export function StructureProgressionDialog({
   const mutation = useMutation({
     mutationFn: () => {
       if (intents.length === 0) {
-        return replaceStageProgressionRules(stage.stageId, {
-          intents: null,
-        });
+        return replaceStageProgressionRules(stage.stageId, { clear: true });
       }
       return replaceStageProgressionRules(stage.stageId, {
         intents: intents.map((draft, index) => toApiIntent(draft, index + 1)),

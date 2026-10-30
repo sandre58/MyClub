@@ -41,7 +41,7 @@ public sealed class ReplaceStageQualificationRulesStructureNotMutableEndpointTes
 
         using var response = await client.PutAsJsonAsync(
             $"/stages/{stageId.Value}/qualification-rules",
-            new ReplaceStageQualificationRulesRequest([]),
+            new ReplaceStageQualificationRulesRequest(Clear: true),
             HostJson.Options);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);

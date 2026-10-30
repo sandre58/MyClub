@@ -11,9 +11,15 @@ namespace MyClub.PlayUp.Host.Contracts;
 /// <summary>
 /// HTTP body for replacing qualification rules on a stage (intents authoring SoT).
 /// </summary>
-/// <param name="Intents">Authoring intents; null or empty clears rules.</param>
+/// <param name="Intents">
+/// Authoring intents. A non-empty list replaces rules. Absent, null, or empty is accepted only when <paramref name="Clear"/> is <see langword="true"/>.
+/// </param>
+/// <param name="Clear">
+/// When <see langword="true"/>, clears rules. Mutually exclusive with a non-empty <paramref name="Intents"/> list.
+/// </param>
 public sealed record ReplaceStageQualificationRulesRequest(
-    IReadOnlyList<QualificationIntentRequest>? Intents = null);
+    IReadOnlyList<QualificationIntentRequest>? Intents = null,
+    bool Clear = false);
 
 /// <summary>
 /// One HTTP qualification authoring intent (destination = peer Population or Place).
