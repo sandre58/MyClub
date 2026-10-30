@@ -88,7 +88,7 @@
     "StructureCycleDetected": "Les liaisons entre phases forment un cycle.",
     "StructureFormatImmutable": "Le format de structure ne peut plus être changé.",
     "StructureNotMutable": "La structure ne peut plus être modifiée tant que la compétition est en cours / close.",
-    "SwissRoundGenerationFailure": "Impossible de générer le tour Swiss.",
+    "SwissRoundGenerationFailure": "Impossible de générer le tour du système suisse.",
     "TieFormatRequired": "Un format de confrontation (TieFormat) est requis."
   },
   "Competition": {

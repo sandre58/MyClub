@@ -361,7 +361,7 @@ describe('Phase 3 recette — Matchs aside (O-MAT-VIS-1)', () => {
     const section = matchsSection()!;
     expect(stripHasUsefulProductionBody(section)).toBe(true);
     expect(
-      within(section).queryByRole('button', { name: /Terminer la phase/i }),
+      within(section).queryByRole('button', { name: /Clôturer la phase/i }),
     ).not.toBeInTheDocument();
   });
 

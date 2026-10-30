@@ -43,7 +43,7 @@
     "Championship": "League",
     "Groups": "Groups",
     "Cup": "Cup",
-    "Swiss": "Swiss"
+    "Swiss": "Swiss system"
   },
   "matchGenerationFormat": {
     "SingleRoundRobin": "Single round-robin",

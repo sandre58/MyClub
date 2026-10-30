@@ -189,7 +189,7 @@
     "configureLegend": "Create structure",
     "format": "Format",
     "matchGenerationFormat": "Fixture generation",
-    "matchGenerationHint": "League / groups only. Cup and Swiss ignore this setting.",
+    "matchGenerationHint": "League / groups only. Cup and Swiss system ignore this setting.",
     "stageName": "Stage name (optional)",
     "stageNamePlaceholder": "e.g. Regular season",
     "swissRoundCount": "Number of Swiss rounds",
@@ -395,7 +395,7 @@
       },
       "Suspended": {
         "lead": "Suspended",
-        "detail": "Resume matches, then complete the phase when everything is closed."
+        "detail": "Resume matches, then complete the phase once every match is finished."
       },
       "Completed": {
         "lead": "Completed",
@@ -1041,7 +1041,7 @@
     "kindPopulationHint": "Feed another phase’s entries",
     "kindPlace": "Place",
     "kindPlaceHint": "A specific place in the phase",
-    "kindPlaceUnavailable": "No downstream phase exposes addressable places (Cup, Groups, Championship, or Swiss). Use Entries, or set up a downstream phase.",
+    "kindPlaceUnavailable": "No downstream phase exposes addressable places (Cup, Groups, League, or Swiss system). Use Entries, or set up a downstream phase.",
     "placeSelectPending": "Choose a labeled place on the destination phase.",
     "placeEmpty": "No labeled place on this destination phase.",
     "placeMapAria": "Map each selection to a place",
