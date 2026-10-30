@@ -384,6 +384,13 @@ describe('drawCreateLaunchBlockCopy', () => {
     expect(drawCreateLaunchBlockCopy('BracketPlacesOccupied').reason).toBe(
       'occupiedSlots',
     );
+    expect(drawCreateLaunchBlockCopy('NoFreeSlot').reason).toBe('noFreeSlot');
+    expect(drawCreateLaunchBlockCopy('NotEnoughTeams').reason).toBe(
+      'notEnoughTeams',
+    );
+    expect(drawCreateLaunchBlockCopy('TooManyTeams').reason).toBe(
+      'tooManyTeams',
+    );
     expect(
       drawCreateLaunchBlockCopy('UpstreamCompositionPoolEmpty').reason,
     ).toBe('emptyPoolUpstream');
@@ -484,6 +491,37 @@ describe('draw readiness checklist', () => {
       capacity: 4,
     });
     expect(items[2]).toMatchObject({ met: false, current: 1 });
+  });
+
+  it('treats a cup checklist as met when at least one place stays free', () => {
+    const items = resolveDrawReadinessChecklist({
+      compositionEntryCount: 4,
+      placesN: 4,
+      inboundResolvedCount: 0,
+      inboundConfiguredVolume: 0,
+      isRootComposition: true,
+      formatKind: 'Cup',
+      drawBracketLaunchFacts: {
+        entryPlaceCount: 4,
+        occupiedByEntryCount: 1,
+        reservedByStructuralFeedCount: 0,
+        feedResolutionInvalidCount: 0,
+        blockingPlaceCount: 1,
+        vacantForDrawLaunchCount: 3,
+      },
+      slots: [
+        { entryId: 'e1' },
+        { entryId: null },
+        { entryId: null },
+        { entryId: null },
+      ],
+    });
+    expect(items.find((item) => item.id === 'bracketPlacesFree')).toMatchObject(
+      {
+        met: true,
+        current: 1,
+      },
+    );
   });
 
   it('omits inbound-known line when no qual/prog volume is configured', () => {

@@ -4,10 +4,16 @@
 import type { DrawResolutionState, DrawStatus } from '../types/enums';
 import { ApiError, postNoContent, sendJson } from './http';
 
-/** ConfigureDrawInputs refuses Rerun when the launch grid is not vacant. */
+/**
+ * ConfigureDrawInputs refusals that stay as {@link ApiError}:
+ * Rerun vacant-grid guard, and partial slot refusals (no free slot / count mismatch).
+ */
 const STAGE_DRAW_RERUN_LAUNCH_GUARD_CODES = new Set([
   'Application.DrawLaunchGridNotVacant',
   'Application.DrawLaunchDirectAssignmentPresent',
+  'Application.DrawNoFreeSlot',
+  'Application.DrawNotEnoughTeams',
+  'Application.DrawTooManyTeams',
 ]);
 
 export function isStageDrawRerunLaunchGuardError(
@@ -60,7 +66,7 @@ export function releaseDrawAlignedPlacements(
 export function createDraw(
   stageId: string,
   kind: 'Slot' | 'Group',
-  intent: 'Default' | 'Rerun' = 'Default',
+  intent: 'Default' | 'Rerun' | 'Partial' = 'Default',
 ): Promise<{ drawId: string }> {
   return sendJson('POST', `/stages/${stageId}/draws`, { kind, intent });
 }
@@ -69,7 +75,7 @@ export function createDraw(
 export function configureDrawInputs(
   stageId: string,
   drawId: string,
-  intent: 'Default' | 'Rerun' = 'Default',
+  intent: 'Default' | 'Rerun' | 'Partial' = 'Default',
 ): Promise<{ drawId: string }> {
   return sendJson('POST', `/stages/${stageId}/draws/${drawId}/inputs`, {
     intent,
@@ -89,8 +95,8 @@ export function generateDraw(
 }
 
 /**
- * One UI gesture for a new draw: Create → inputs (Rerun) → Generate.
- * Rerun = full redraw (ignore occupancy Fixed*); Default keeps Fixed* elsewhere.
+ * One UI gesture for a new draw: Create → inputs → Generate.
+ * Slot uses Partial (free slots only). Group uses Rerun (full reshuffle).
  * Generate is not exposed as a separate product action.
  *
  * If Create succeeded but inputs/Generate fail technically, throws
@@ -100,9 +106,10 @@ export async function createAndGenerateDraw(
   stageId: string,
   kind: 'Slot' | 'Group',
 ): Promise<{ drawId: string; isResolved: boolean; isNoSolution: boolean }> {
-  const created = await createDraw(stageId, kind, 'Rerun');
+  const intent = kind === 'Slot' ? 'Partial' : 'Rerun';
+  const created = await createDraw(stageId, kind, intent);
   try {
-    await configureDrawInputs(stageId, created.drawId, 'Rerun');
+    await configureDrawInputs(stageId, created.drawId, intent);
     const generated = await generateDraw(stageId, created.drawId);
     return {
       drawId: created.drawId,
@@ -115,20 +122,23 @@ export async function createAndGenerateDraw(
 }
 
 /**
- * Relance a draft on the same draw id: inputs (Rerun) then Generate.
- * Does not create another execution. Launch-guard refusals stay {@link ApiError}.
+ * Relance a draft on the same draw id: inputs then Generate.
+ * Slot uses Partial; Group uses Rerun. Does not create another execution.
+ * Launch-guard and partial refusals stay {@link ApiError}.
  * Any other failure is wrapped as {@link DrawGenerateFailedError} for that id.
  */
 export async function rerunDrawGeneration(
   stageId: string,
   drawId: string,
+  kind: 'Slot' | 'Group',
 ): Promise<{
   drawId: string;
   isResolved: boolean;
   isNoSolution: boolean;
 }> {
+  const intent = kind === 'Slot' ? 'Partial' : 'Rerun';
   try {
-    await configureDrawInputs(stageId, drawId, 'Rerun');
+    await configureDrawInputs(stageId, drawId, intent);
     return await generateDraw(stageId, drawId);
   } catch (cause) {
     if (isStageDrawRerunLaunchGuardError(cause)) {

@@ -169,7 +169,10 @@ export type DrawCreateBlockReason =
   | 'belowMinimumTeams'
   | 'countMismatch'
   | 'directAssignment'
-  | 'occupiedSlots';
+  | 'occupiedSlots'
+  | 'noFreeSlot'
+  | 'notEnoughTeams'
+  | 'tooManyTeams';
 
 /** Occupant = entryId present on StageOverview slots (overview-only; see countBracketPlacesBlockingDraw). */
 export function slotsHaveOccupants(
@@ -235,6 +238,44 @@ export function countBracketPlacesBlockingDraw(
 }
 
 /**
+ * Free places for a partial Cup draw. Null when the grid is unknown
+ * (no facts, no schematic form, and no overview slots).
+ */
+function countVacantBracketPlaces(
+  formatKind: StructureFormatKind | null | undefined,
+  slots: ReadonlyArray<{ entryId: string | null | undefined }>,
+  drawBracketLaunchFacts?: StageDrawBracketLaunchFacts | null,
+  schematicCases?: ReadonlyArray<SchematicCase> | null,
+): number | null {
+  if (drawBracketLaunchFacts) {
+    return drawBracketLaunchFacts.vacantForDrawLaunchCount;
+  }
+  if (schematicCases && schematicCases.length > 0) {
+    const formKind =
+      formatKind === 'Cup'
+        ? 'CupSlot'
+        : formatKind === 'Groups'
+          ? 'GroupPlace'
+          : null;
+    if (formKind) {
+      const places = schematicCases.filter(
+        (place) => place.formPosition.kind === formKind,
+      );
+      if (places.length > 0) {
+        return places.filter((place) => !schematicCaseBlocksDraw(place)).length;
+      }
+    }
+  }
+  if (slots.length === 0) {
+    return null;
+  }
+  return slots.reduce(
+    (count, slot) => (slot.entryId == null ? count + 1 : count),
+    0,
+  );
+}
+
+/**
  * How to surface a primary DrawCreateBlockReason.
  * Quiet = tooltip only; inline = visible Alert (info|warning). Never danger —
  * these are journey / config / authoring states, not system errors.
@@ -260,6 +301,9 @@ export function resolveDrawCreateBlockPresentation(
       return { kind: 'inline', tone: 'warning', action: false };
     case 'occupiedSlots':
     case 'directAssignment':
+    case 'noFreeSlot':
+    case 'notEnoughTeams':
+    case 'tooManyTeams':
       return { kind: 'inline', tone: 'warning', action: true };
   }
 }
@@ -337,6 +381,21 @@ const DRAW_CREATE_LAUNCH_BLOCK_COPY: Record<
     shortKey: 'fiche.drawWorkflow.createBlocked.short.occupiedSlots',
     detailKey: 'fiche.drawWorkflow.createBlocked.detail.occupiedSlots',
   },
+  NoFreeSlot: {
+    reason: 'noFreeSlot',
+    shortKey: 'fiche.drawWorkflow.createBlocked.short.noFreeSlot',
+    detailKey: 'fiche.drawWorkflow.createBlocked.detail.noFreeSlot',
+  },
+  NotEnoughTeams: {
+    reason: 'notEnoughTeams',
+    shortKey: 'fiche.drawWorkflow.createBlocked.short.notEnoughTeams',
+    detailKey: 'fiche.drawWorkflow.createBlocked.detail.notEnoughTeams',
+  },
+  TooManyTeams: {
+    reason: 'tooManyTeams',
+    shortKey: 'fiche.drawWorkflow.createBlocked.short.tooManyTeams',
+    detailKey: 'fiche.drawWorkflow.createBlocked.detail.tooManyTeams',
+  },
   DrawObsoleteForConsumption: {
     shortKey: 'lifecycle.disabled.DrawObsoleteForConsumption',
     detailKey: 'lifecycle.disabled.DrawObsoleteForConsumption',
@@ -393,7 +452,10 @@ export function drawCreateLaunchBlockCopy(
 export type DrawReadinessCriterionId =
   | 'teamsFillPlaces'
   | 'teamsAllKnown'
-  /** Any bracket place with an occupant (manual, qual/prog, prior draw) — mirrors draw occupiedSlots gate. */
+  /**
+   * Cup: met when at least one place is free for a partial draw.
+   * Groups: met only when no place blocks a full reshuffle.
+   */
   | 'bracketPlacesFree';
 
 export type DrawReadinessChecklistItem = {
@@ -438,7 +500,16 @@ export function resolveDrawReadinessChecklist(input: {
     input.drawBracketLaunchFacts,
     input.schematicCases,
   );
-  const bracketPlacesFree = occupiedBracketPlaces === 0;
+  const vacantBracketPlaces = countVacantBracketPlaces(
+    input.formatKind,
+    input.slots,
+    input.drawBracketLaunchFacts,
+    input.schematicCases,
+  );
+  const bracketPlacesFree =
+    input.formatKind === 'Cup'
+      ? vacantBracketPlaces === null || vacantBracketPlaces > 0
+      : occupiedBracketPlaces === 0;
 
   const items: DrawReadinessChecklistItem[] = [
     {

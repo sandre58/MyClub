@@ -721,6 +721,9 @@
           "countMismatch": "Team count differs from place count.",
           "directAssignment": "Some places still have a direct assignment.",
           "occupiedSlots": "Placements still occupy places.",
+          "noFreeSlot": "No free place.",
+          "notEnoughTeams": "Not enough teams for the free places.",
+          "tooManyTeams": "More teams than free places.",
           "missingPots": "Draw pots not configured.",
           "groupShape": "Teams ≠ pots × groups."
         },
@@ -730,11 +733,15 @@
           "countMismatch": "{{places}} teams are needed for {{places}} places; composition has {{count}}.",
           "directAssignment": "Clear direct assignments before starting a new draw.",
           "occupiedSlots": "Release existing placements before starting a new draw.",
+          "noFreeSlot": "Every place in this phase is already occupied or reserved. The draw does not replace teams already placed.",
+          "notEnoughTeams": "Unplaced teams are not enough to fill the places that are still free.",
+          "tooManyTeams": "There are more unplaced teams than free places. The draw does not leave a place empty and does not overwrite one.",
           "missingPots": "Set the number of pots before generating the draw.",
           "groupShape": "Team count must equal pots × groups."
         },
         "echoTeams": "Open teams"
       },
+      "partialFillHint": "The draw fills only free places. Teams already placed stay where they are.",
       "creating": "Drawing…",
       "historyAria": "Execution history",
       "execution": "Execution #{{n}}",

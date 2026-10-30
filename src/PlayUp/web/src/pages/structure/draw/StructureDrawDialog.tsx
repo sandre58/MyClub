@@ -58,6 +58,7 @@ import {
   pickActiveDraw,
   drawCreateLaunchBlockCopy,
   pickDrawFooterFocusAfterRelease,
+  slotsHaveOccupants,
   projectSlotDrawResult,
   resolveDrawDetailGuidance,
   sortDrawsNewestFirst,
@@ -299,7 +300,12 @@ export function StructureDrawDialog({
   });
 
   const rerunMutation = useMutation({
-    mutationFn: (drawId: string) => rerunDrawGeneration(stageId, drawId),
+    mutationFn: (drawId: string) =>
+      rerunDrawGeneration(
+        stageId,
+        drawId,
+        drawKind === 'Slot' ? 'Slot' : 'Group',
+      ),
     onSuccess: (result) => {
       scheduleDrawOverviewRefresh();
       if (result.isNoSolution) {
@@ -837,6 +843,14 @@ export function StructureDrawDialog({
             teamCount={poolCount}
             placesCount={placesN ?? 0}
           />
+
+          {canLaunch && drawKind === 'Slot' && slotsHaveOccupants(slots) ? (
+            <Alert tone="info" role="status">
+              <p className="ds-body">
+                {t('fiche.drawWorkflow.partialFillHint')}
+              </p>
+            </Alert>
+          ) : null}
 
           {overviewQuery.isLoading ? (
             <WaitMark size="region">{t('fiche.drawWorkflow.loading')}</WaitMark>

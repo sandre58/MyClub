@@ -3,6 +3,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { useState } from 'react';
 import { ApiError } from '../../../api/http';
 import userEvent from '@testing-library/user-event';
@@ -261,16 +262,18 @@ function renderDialog(
   });
   const onClose = vi.fn();
   render(
-    <QueryClientProvider client={queryClient}>
-      <StructureDrawDialog
-        open={open}
-        onClose={onClose}
-        competitionId={competitionId}
-        competitionStatus={competitionStatus}
-        stage={stage}
-        structureStages={[stage]}
-      />
-    </QueryClientProvider>,
+    <MemoryRouter>
+      <QueryClientProvider client={queryClient}>
+        <StructureDrawDialog
+          open={open}
+          onClose={onClose}
+          competitionId={competitionId}
+          competitionStatus={competitionStatus}
+          stage={stage}
+          structureStages={[stage]}
+        />
+      </QueryClientProvider>
+    </MemoryRouter>,
   );
   return { onClose, queryClient };
 }
@@ -636,7 +639,7 @@ describe('StructureDrawDialog', () => {
         compositionCapacity: 16,
         drawCreateLaunch: {
           allowed: false,
-          blockReasonCode: 'BracketPlacesOccupied',
+          blockReasonCode: 'NoFreeSlot',
         },
       }),
     );
@@ -646,8 +649,40 @@ describe('StructureDrawDialog', () => {
     ).toBeDisabled();
     expect(
       screen.getByText(
-        'Libérez les placements existants avant de lancer un nouveau tirage.',
+        'Toutes les places de cette phase sont déjà occupées ou réservées. Le tirage ne remplace pas les équipes déjà placées.',
       ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        'Le tirage remplira uniquement les places libres. Les équipes déjà placées restent en place.',
+      ),
+    ).not.toBeInTheDocument();
+  });
+
+  it('disables Cup Nouveau when unplaced teams do not fill the free places', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(overview([]));
+
+    renderDialog(
+      cupStage({
+        compositionEntryCount: 2,
+        compositionCapacity: 4,
+        drawCreateLaunch: {
+          allowed: false,
+          blockReasonCode: 'NotEnoughTeams',
+        },
+      }),
+    );
+
+    expect(
+      await screen.findByRole('button', { name: 'Lancer le tirage' }),
+    ).toBeDisabled();
+    expect(
+      screen.getByText(
+        'Les équipes non placées ne suffisent pas à remplir les places encore libres.',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'Ouvrir les équipes' }),
     ).toBeInTheDocument();
   });
 
@@ -712,6 +747,11 @@ describe('StructureDrawDialog', () => {
         'Libérez les placements existants avant de lancer un nouveau tirage.',
       ),
     ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Le tirage remplira uniquement les places libres. Les équipes déjà placées restent en place.',
+      ),
+    ).toBeInTheDocument();
   });
 
   it('keeps Cup launch on the hub decision after Libérer clears occupants', async () => {
@@ -1642,7 +1682,11 @@ describe('StructureDrawDialog', () => {
     await user.click(await screen.findByRole('button', { name: 'Relancer' }));
 
     await waitFor(() => {
-      expect(rerunDrawGeneration).toHaveBeenCalledWith(stageId, 'draw-zzz');
+      expect(rerunDrawGeneration).toHaveBeenCalledWith(
+        stageId,
+        'draw-zzz',
+        'Group',
+      );
     });
     expect(createAndGenerateDraw).not.toHaveBeenCalled();
     await waitFor(() => {
@@ -1676,7 +1720,11 @@ describe('StructureDrawDialog', () => {
       ),
     ).toBeInTheDocument();
     expect(createAndGenerateDraw).not.toHaveBeenCalled();
-    expect(rerunDrawGeneration).toHaveBeenCalledWith(stageId, 'draw-1');
+    expect(rerunDrawGeneration).toHaveBeenCalledWith(
+      stageId,
+      'draw-1',
+      'Group',
+    );
   });
 
   it('projects generation failure on rerun without a new execution', async () => {
