@@ -21,6 +21,7 @@ namespace MyClub.PlayUp.Development.Tests;
 /// Isolates <see cref="IMatchRepository"/> list-load SQL cost (split-query owned collections).
 /// </summary>
 [Collection("DevelopmentPostgres")]
+[Trait("Category", "Integration")]
 [Trait("Category", "PerformanceBaseline")]
 public sealed class MatchRepositoryLoadBaselineTests(
     DevelopmentPostgresFixture fixture,
