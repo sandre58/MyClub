@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
+  AlreadyPlacedStatus,
   Status,
   type StatusShape,
   type StatusTone,
@@ -651,6 +652,15 @@ export function FoundationsPlayground() {
               </span>
             </Status>
           </div>
+          <p className="ds-label">Déjà placée · compact · neutral · outline</p>
+          <div className="ds-row">
+            <AlreadyPlacedStatus>Déjà placée</AlreadyPlacedStatus>
+          </div>
+          <p className="ds-meta">
+            Encre secondaire sur lavis outline 10 %. Repère non chromatique :
+            épingle et libellé. Contraste du texte ≥ 4,5:1 sur surface et canvas
+            (schéma clair).
+          </p>
           <p className="ds-label">Dense (texte secondaire, sans fill)</p>
           <div className="ds-row">
             {statusTones.map((tone) => (

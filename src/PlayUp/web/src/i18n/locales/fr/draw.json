@@ -75,5 +75,15 @@
   "releasingPlacements": "Libération…",
   "confirmReleaseTitle": "Libérer les placements du tirage ?",
   "confirmRelease": "Les Places encore peuplées selon ce tirage seront vidées. Les affectations directes et les autres alimentations ne seront pas modifiées.",
-  "toastReleased": "Placements libérés ({{count}})."
+  "toastReleased": "Placements libérés ({{count}}).",
+  "alreadyPlaced": "Déjà placée",
+  "freePlace": "Place libre",
+  "reserved": "Réservée",
+  "withdrawn": "Retirée",
+  "outsideDraw": "Hors de ce tirage",
+  "releaseDrawnTeams": "Libérer les {{n}} équipes tirées",
+  "heroToPlace": "À placer",
+  "heroFreePlaces": "Places libres",
+  "heroAlreadyPlaced": "Déjà en place",
+  "originManualHint": "Origine d’affichage : manuelle ou issue d’un tirage précédent."
 }

@@ -115,6 +115,26 @@ public sealed class SlotPartialDrawTests
     }
 
     [Fact]
+    public void Compose_treats_an_occupant_outside_composition_as_withdrawn_not_vacant_or_unplaced()
+    {
+        var stage = CreateCup(4);
+        var entries = AddPopulation(stage, 4);
+        stage.ApplyResolvedEntry("S1", entries[0], _clock);
+        stage.RemoveCompositionEntryIfPresent(entries[0], _clock);
+
+        var scope = SlotPartialDraw.Compose(stage, EmptySnapshot(stage));
+        var facts = SlotPartialDraw.Classify(stage, EmptySnapshot(stage));
+
+        facts.Should().ContainSingle(fact => fact.SlotKey == "S1")
+            .Which.Occupancy.Should().Be(SlotDrawPlaceOccupancy.Withdrawn);
+        scope.VacantSlotKeys.Should().NotContain("S1");
+        scope.VacantSlotKeys.Should().Equal("S2", "S3", "S4");
+        scope.UnplacedEntries.Should().Equal(entries[1], entries[2], entries[3]);
+        scope.UnplacedEntries.Should().NotContain(entries[0]);
+        scope.IsDrawable.Should().BeTrue();
+    }
+
+    [Fact]
     public void Generator_draws_only_the_free_subset_and_omits_preserved_slots()
     {
         var entries = new[] { EntryId.New(), EntryId.New(), EntryId.New(), EntryId.New() };

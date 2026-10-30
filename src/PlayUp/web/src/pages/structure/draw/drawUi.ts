@@ -1,11 +1,14 @@
 import type {
+  DrawInputsIntent,
   DrawResolutionState,
   DrawStatus,
   SchematicCase,
   SchematicFeedKind,
   StageBracketPair,
   StageDraw,
+  StageDrawDisplayMetrics,
   StageDrawGroupPlacement,
+  StageDrawSlotDisplayCell,
   StageDrawSlotPlacement,
   StageSlot,
   StageStatus,
@@ -33,6 +36,24 @@ export type SlotConfrontationSide = {
   shortName?: string | null;
   logoMediaId?: string | null;
   primaryColor?: string | null;
+  cellState?: StageDrawSlotDisplayCell['cellState'];
+  origin?: StageDrawSlotDisplayCell['origin'];
+  /** Accessible name for this side. Falls back to displayName. */
+  ariaLabel?: string;
+  /** When set, the grid shows the « Déjà placée » status beside the team. */
+  alreadyPlacedLabel?: string;
+  /** State label (free, reserved, withdrawn, outside) — muted, not a team name. */
+  muted?: boolean;
+};
+
+export type CupDrawCellLabels = {
+  unknownEntry: string;
+  alreadyPlaced: string;
+  freePlace: string;
+  reserved: string;
+  withdrawn: string;
+  outsideDraw: string;
+  originManualHint: string;
 };
 
 /** Dense Slot result row — confrontation product, not fixture / Match #. */
@@ -143,6 +164,196 @@ export function projectSlotDrawResult(
     );
 
   return { confrontations, unpaired };
+}
+
+function compareSlotKeys(a: string, b: string): number {
+  return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+}
+
+function sideFromDisplayCell(
+  cell: StageDrawSlotDisplayCell,
+  labels: CupDrawCellLabels,
+): SlotConfrontationSide {
+  const team = cell.displayName?.trim() || labels.unknownEntry;
+  const side: SlotConfrontationSide = {
+    slotKey: cell.slotKey.trim(),
+    entryId: cell.entryId ?? '',
+    displayName: team,
+    shortName: cell.shortName,
+    logoMediaId: cell.logoMediaId,
+    primaryColor: cell.primaryColor,
+    cellState: cell.cellState,
+    origin: cell.origin,
+  };
+
+  switch (cell.cellState) {
+    case 'Drawn':
+      return { ...side, ariaLabel: team };
+    case 'AlreadyPlaced':
+      return {
+        ...side,
+        alreadyPlacedLabel: labels.alreadyPlaced,
+        ariaLabel:
+          cell.origin === 'Manual'
+            ? `${team}, ${labels.alreadyPlaced}, ${labels.originManualHint}`
+            : `${team}, ${labels.alreadyPlaced}`,
+      };
+    case 'Free':
+      return {
+        ...side,
+        entryId: '',
+        displayName: labels.freePlace,
+        muted: true,
+        ariaLabel: labels.freePlace,
+      };
+    case 'Reserved':
+      return {
+        ...side,
+        displayName: labels.reserved,
+        muted: true,
+        ariaLabel: cell.displayName?.trim()
+          ? `${team}, ${labels.reserved}`
+          : labels.reserved,
+      };
+    case 'Withdrawn':
+      return {
+        ...side,
+        displayName: labels.withdrawn,
+        muted: true,
+        ariaLabel: cell.displayName?.trim()
+          ? `${team}, ${labels.withdrawn}`
+          : labels.withdrawn,
+      };
+    case 'OutsideDraw':
+      return {
+        ...side,
+        entryId: '',
+        displayName: labels.outsideDraw,
+        muted: true,
+        ariaLabel: labels.outsideDraw,
+      };
+    default:
+      return side;
+  }
+}
+
+/**
+ * Cup grid from server cells. Pairs come from bracket pairs, including a free
+ * or preserved side. Does not recompute vacancy or origin.
+ */
+export function buildCupDrawDisplayFromDto(
+  cells: readonly StageDrawSlotDisplayCell[],
+  bracketPairs: ReadonlyArray<StageBracketPair>,
+  labels: CupDrawCellLabels,
+): SlotDrawResultProjection {
+  const byKey = new Map(
+    cells.map((cell) => {
+      const side = sideFromDisplayCell(cell, labels);
+      return [side.slotKey, side] as const;
+    }),
+  );
+  const used = new Set<string>();
+  const confrontations: SlotConfrontationRow[] = [];
+
+  for (const pair of bracketPairs) {
+    const aKey = pair.slotAKey.trim();
+    const bKey = pair.slotBKey.trim();
+    const sideA = byKey.get(aKey);
+    const sideB = byKey.get(bKey);
+    if (!sideA || !sideB) {
+      continue;
+    }
+    used.add(aKey);
+    used.add(bKey);
+    confrontations.push({
+      key: pair.pairKey.trim() || `${aKey}|${bKey}`,
+      sideA,
+      sideB,
+    });
+  }
+
+  const unpaired = [...byKey.values()]
+    .filter((side) => !used.has(side.slotKey))
+    .sort((a, b) => compareSlotKeys(a.slotKey, b.slotKey));
+
+  return { confrontations, unpaired };
+}
+
+export type DrawHeroLabel =
+  | 'heroTeams'
+  | 'heroGroups'
+  | 'heroPlaces'
+  | 'heroToPlace'
+  | 'heroFreePlaces'
+  | 'heroAlreadyPlaced';
+
+export type DrawHeroFact = { value: number; label: DrawHeroLabel };
+
+export type DrawHeroModel =
+  | { layout: 'duo'; primary: DrawHeroFact; secondary: DrawHeroFact }
+  | {
+      layout: 'triplet';
+      toPlace: DrawHeroFact;
+      freePlaces: DrawHeroFact;
+      alreadyPlaced: DrawHeroFact;
+    };
+
+/**
+ * Tirage hero from server metrics. Partial with teams still to place, free
+ * places, and occupants already on the grid is a triplet. A complete draw,
+ * a partial with no free place, and a partial with no occupant stay a duo.
+ */
+export function resolveDrawHeroModel(input: {
+  formatKind: StructureFormatKind | null | undefined;
+  groupCount: number;
+  teamCount: number;
+  placesCount: number;
+  metrics?: StageDrawDisplayMetrics | null;
+  inputsIntent?: DrawInputsIntent | null;
+  hasActiveDraw: boolean;
+}): DrawHeroModel {
+  if (input.formatKind === 'Groups') {
+    return {
+      layout: 'duo',
+      primary: { value: input.teamCount, label: 'heroTeams' },
+      secondary: { value: input.groupCount, label: 'heroGroups' },
+    };
+  }
+
+  const metrics = input.metrics;
+  const partialTriplet =
+    metrics != null &&
+    metrics.vacantSlotKeyCount > 0 &&
+    metrics.unplacedEntryCount > 0 &&
+    metrics.alreadyPlacedEntryCount > 0 &&
+    (input.inputsIntent === 'Partial' || !input.hasActiveDraw);
+
+  if (partialTriplet && metrics) {
+    return {
+      layout: 'triplet',
+      toPlace: { value: metrics.unplacedEntryCount, label: 'heroToPlace' },
+      freePlaces: {
+        value: metrics.vacantSlotKeyCount,
+        label: 'heroFreePlaces',
+      },
+      alreadyPlaced: {
+        value: metrics.alreadyPlacedEntryCount,
+        label: 'heroAlreadyPlaced',
+      },
+    };
+  }
+
+  return {
+    layout: 'duo',
+    primary: {
+      value: metrics?.entryCount ?? input.teamCount,
+      label: 'heroTeams',
+    },
+    secondary: {
+      value: metrics?.placeCount ?? input.placesCount,
+      label: 'heroPlaces',
+    },
+  };
 }
 
 /** Confrontations only — prefer {@link projectSlotDrawResult} when unpaired matter. */

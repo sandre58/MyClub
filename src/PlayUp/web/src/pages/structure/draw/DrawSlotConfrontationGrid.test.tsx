@@ -1,7 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { DrawSlotConfrontationGrid } from './DrawSlotConfrontationGrid';
-import type { SlotConfrontationRow } from './drawUi';
+import {
+  buildCupDrawDisplayFromDto,
+  type SlotConfrontationRow,
+} from './drawUi';
 
 const rows: SlotConfrontationRow[] = [
   {
@@ -51,5 +54,48 @@ describe('DrawSlotConfrontationGrid', () => {
     expect(container.querySelectorAll('[data-density="compact"]')).toHaveLength(
       3,
     );
+  });
+
+  it('T2 exposes Déjà placée and Place libre, including under RTL', () => {
+    const projection = buildCupDrawDisplayFromDto(
+      [
+        {
+          slotKey: 'S1',
+          cellState: 'AlreadyPlaced',
+          entryId: 'e1',
+          displayName: 'Belgium',
+          origin: 'Manual',
+        },
+        {
+          slotKey: 'S2',
+          cellState: 'Free',
+          entryId: null,
+          displayName: null,
+          origin: null,
+        },
+      ],
+      [{ pairKey: 'P1', slotAKey: 'S1', slotBKey: 'S2' }],
+      {
+        unknownEntry: 'Équipe',
+        alreadyPlaced: 'Déjà placée',
+        freePlace: 'Place libre',
+        reserved: 'Réservée',
+        withdrawn: 'Retirée',
+        outsideDraw: 'Hors de ce tirage',
+        originManualHint:
+          'Origine d’affichage : manuelle ou issue d’un tirage précédent.',
+      },
+    );
+    render(
+      <div dir="rtl">
+        <DrawSlotConfrontationGrid rows={projection.confrontations} />
+      </div>,
+    );
+    const item = screen.getByRole('listitem');
+    expect(item.closest('[dir="rtl"]')).toHaveAttribute('dir', 'rtl');
+    expect(item).toHaveAccessibleName(/Déjà placée/);
+    expect(item).toHaveAccessibleName(/Place libre/);
+    expect(screen.getByText('Déjà placée')).toBeInTheDocument();
+    expect(screen.getByText('Place libre')).toBeInTheDocument();
   });
 });

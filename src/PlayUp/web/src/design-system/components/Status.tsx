@@ -1,4 +1,5 @@
 import type { HTMLAttributes, ReactNode } from 'react';
+import { PlacedIcon } from '../icons/contentIcons';
 
 export type StatusDensity = 'context' | 'compact' | 'dense';
 export type StatusVariant = 'soft' | 'outline' | 'plain';
@@ -52,5 +53,23 @@ export function Status({
     <span className={classes} {...rest}>
       {children}
     </span>
+  );
+}
+
+/**
+ * « Déjà placée » — compact neutral outline. The pin is the non-chromatic cue.
+ * Ink is `--color-text-secondary` on a 10% outline wash (light scheme ≥ 4.5:1
+ * on surface and canvas). Do not restyle this badge in a page stylesheet.
+ */
+export function AlreadyPlacedStatus({ children }: { children: ReactNode }) {
+  return (
+    <Status density="compact" tone="neutral" variant="outline">
+      <span className="ds-status-inline">
+        <span className="ds-status-inline__icon" aria-hidden="true">
+          <PlacedIcon size="sm" />
+        </span>
+        {children}
+      </span>
+    </Status>
   );
 }

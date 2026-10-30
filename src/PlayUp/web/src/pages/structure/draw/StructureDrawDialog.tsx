@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useOpenEdge, useSyncWhen } from '../../../design-system/useRenderSync';
 import {
+  Fragment,
   useId,
   useLayoutEffect,
   useMemo,
@@ -52,6 +53,7 @@ import type {
 } from '../../../types';
 import { resolveLifecycleMutationMessage } from '../problems/resolveStructureProblemMessage';
 import {
+  buildCupDrawDisplayFromDto,
   drawExecutionNumber,
   drawResolutionPlacementCount,
   getDrawUiProjection,
@@ -61,7 +63,9 @@ import {
   slotsHaveOccupants,
   projectSlotDrawResult,
   resolveDrawDetailGuidance,
+  resolveDrawHeroModel,
   sortDrawsNewestFirst,
+  type CupDrawCellLabels,
 } from './drawUi';
 import { DrawSlotConfrontationGrid } from './DrawSlotConfrontationGrid';
 import { redoAppliedDraw } from './drawRedo';
@@ -176,6 +180,22 @@ export function StructureDrawDialog({
   });
 
   const activeDraw = useMemo(() => pickActiveDraw(drawList), [drawList]);
+  const stageDrawMetrics = overviewQuery.data?.slotDrawDisplayMetrics ?? null;
+  const heroMetrics =
+    activeDraw?.kind === 'Group'
+      ? null
+      : activeDraw?.kind === 'Slot'
+        ? (activeDraw.displayMetrics ?? stageDrawMetrics)
+        : stageDrawMetrics;
+  const heroModel = resolveDrawHeroModel({
+    formatKind: stage.formatKind,
+    groupCount: stage.groupCount ?? 0,
+    teamCount: poolCount,
+    placesCount: placesN ?? 0,
+    metrics: heroMetrics,
+    inputsIntent: activeDraw?.inputsIntent ?? null,
+    hasActiveDraw: activeDraw != null,
+  });
   const cancelledDraws = useMemo(
     () =>
       sortDrawsNewestFirst(drawList).filter(
@@ -712,11 +732,15 @@ export function StructureDrawDialog({
                 ) : (
                   <>
                     <UnlockIcon size="sm" />
-                    {tDraw('releaseRun', {
-                      n: drawExecutionNumber(drawList, releaseTarget.id),
-                      aligned: alignedCountFor(releaseTarget),
-                      total: drawResolutionPlacementCount(releaseTarget),
-                    })}
+                    {releaseTarget.kind === 'Slot'
+                      ? tDraw('releaseDrawnTeams', {
+                          n: alignedCountFor(releaseTarget),
+                        })
+                      : tDraw('releaseRun', {
+                          n: drawExecutionNumber(drawList, releaseTarget.id),
+                          aligned: alignedCountFor(releaseTarget),
+                          total: drawResolutionPlacementCount(releaseTarget),
+                        })}
                   </>
                 )}
               </button>
@@ -837,14 +861,14 @@ export function StructureDrawDialog({
         footerStatus={footerStatus}
       >
         <div className="structure-draw-dialog" ref={dialogBodyRef}>
-          <DrawHeroFacts
-            formatKind={stage.formatKind}
-            groupCount={stage.groupCount ?? 0}
-            teamCount={poolCount}
-            placesCount={placesN ?? 0}
-          />
+          <DrawHeroFacts model={heroModel} />
 
-          {canLaunch && drawKind === 'Slot' && slotsHaveOccupants(slots) ? (
+          {canLaunch &&
+          drawKind === 'Slot' &&
+          (stageDrawMetrics
+            ? stageDrawMetrics.alreadyPlacedEntryCount > 0 &&
+              stageDrawMetrics.vacantSlotKeyCount > 0
+            : slotsHaveOccupants(slots)) ? (
             <Alert tone="info" role="status">
               <p className="ds-body">
                 {t('fiche.drawWorkflow.partialFillHint')}
@@ -1174,7 +1198,13 @@ export function StructureDrawDialog({
         open={confirm === 'release'}
         title={tDraw('confirmReleaseTitle')}
         message={tDraw('confirmRelease')}
-        confirmLabel={tDraw('releasePlacements')}
+        confirmLabel={
+          confirmDraw?.kind === 'Slot'
+            ? tDraw('releaseDrawnTeams', {
+                n: alignedCountFor(confirmDraw),
+              })
+            : tDraw('releasePlacements')
+        }
         confirmIcon={<UnlockIcon size="sm" />}
         cancelLabel={tCommon('close')}
         closeLabel={tCommon('close')}
@@ -1323,22 +1353,39 @@ function CancelledDrawDetail({
 }
 
 function DrawHeroFacts({
-  formatKind,
-  groupCount,
-  teamCount,
-  placesCount,
+  model,
 }: {
-  formatKind: StructureFormatKind | null | undefined;
-  groupCount: number;
-  teamCount: number;
-  placesCount: number;
+  model: ReturnType<typeof resolveDrawHeroModel>;
 }): ReactElement {
   const { t } = useTranslation('draw');
-  const secondary =
-    formatKind === 'Groups'
-      ? { value: groupCount, label: t('heroGroups') }
-      : { value: placesCount, label: t('heroPlaces') };
-  const primary = { value: teamCount, label: t('heroTeams') };
+  if (model.layout === 'triplet') {
+    const facts = [model.toPlace, model.freePlaces, model.alreadyPlaced];
+    return (
+      <div className="structure-qualification__facts" aria-live="polite">
+        {facts.map((fact, index) => (
+          <Fragment key={fact.label}>
+            {index > 0 ? (
+              <span
+                className="structure-qualification__fact-rule"
+                aria-hidden="true"
+              />
+            ) : null}
+            <span
+              className="structure-qualification__fact"
+              data-fact={fact.label}
+            >
+              <span className="structure-qualification__fact-value">
+                {fact.value}
+              </span>
+              <span className="structure-qualification__fact-label">
+                {t(fact.label)}
+              </span>
+            </span>
+          </Fragment>
+        ))}
+      </div>
+    );
+  }
   return (
     <div className="structure-qualification__facts" aria-live="polite">
       <span
@@ -1346,10 +1393,10 @@ function DrawHeroFacts({
         data-fact="secondary"
       >
         <span className="structure-qualification__fact-value">
-          {secondary.value}
+          {model.secondary.value}
         </span>
         <span className="structure-qualification__fact-label">
-          {secondary.label}
+          {t(model.secondary.label)}
         </span>
       </span>
       <span className="structure-qualification__fact-rule" aria-hidden="true" />
@@ -1358,10 +1405,10 @@ function DrawHeroFacts({
         data-fact="primary"
       >
         <span className="structure-qualification__fact-value">
-          {primary.value}
+          {model.primary.value}
         </span>
         <span className="structure-qualification__fact-label">
-          {primary.label}
+          {t(model.primary.label)}
         </span>
       </span>
     </div>
@@ -1406,14 +1453,31 @@ function DrawExecutionView({
     });
   }, [draw, groups, placesPerGroup, t, tCommon, tStructure]);
 
+  const cellLabels: CupDrawCellLabels = {
+    unknownEntry: tCommon('unknownEntry'),
+    alreadyPlaced: t('alreadyPlaced'),
+    freePlace: t('freePlace'),
+    reserved: t('reserved'),
+    withdrawn: t('withdrawn'),
+    outsideDraw: t('outsideDraw'),
+    originManualHint: t('originManualHint'),
+  };
   const slotResult =
-    draw.kind === 'Slot' && draw.slotPlacements.length > 0
-      ? projectSlotDrawResult(
-          draw.slotPlacements,
-          bracketPairs,
-          tCommon('unknownEntry'),
-        )
-      : { confrontations: [], unpaired: [] };
+    draw.kind !== 'Slot'
+      ? { confrontations: [], unpaired: [] }
+      : draw.slotDisplayCells && draw.slotDisplayCells.length > 0
+        ? buildCupDrawDisplayFromDto(
+            draw.slotDisplayCells,
+            bracketPairs,
+            cellLabels,
+          )
+        : draw.slotPlacements.length > 0
+          ? projectSlotDrawResult(
+              draw.slotPlacements,
+              bracketPairs,
+              tCommon('unknownEntry'),
+            )
+          : { confrontations: [], unpaired: [] };
   const hasGroups = ui.showResults && groupModel.length > 0;
   const hasSlots =
     ui.showResults &&

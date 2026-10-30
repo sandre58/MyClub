@@ -23,6 +23,7 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="Groups">Group membership snapshot (empty for non-Groups formats).</param>
 /// <param name="DrawBracketLaunchFacts">Bracket occupancy for Tirage launch; null when draw mechanism not applicable.</param>
 /// <param name="ReleaseCandidateDrawId">Most recent Cancelled draw with at least one aligned placement.</param>
+/// <param name="SlotDrawDisplayMetrics">Current cup partial-draw counts. Null when the stage has no slots. Not a historical snapshot.</param>
 public sealed record StageOverviewDto(
     Guid Id,
     Guid CompetitionId,
@@ -34,7 +35,8 @@ public sealed record StageOverviewDto(
     IReadOnlyList<StageBracketPairDto> BracketPairs,
     IReadOnlyList<StageGroupOverviewDto> Groups,
     StageDrawBracketLaunchFactsDto? DrawBracketLaunchFacts = null,
-    Guid? ReleaseCandidateDrawId = null);
+    Guid? ReleaseCandidateDrawId = null,
+    StageDrawDisplayMetricsDto? SlotDrawDisplayMetrics = null);
 
 /// <summary>
 /// Group membership line for stage overview (draw release / alignment checks).
@@ -108,6 +110,9 @@ public sealed record StageSlotDto(
 /// <param name="IsApplied">Derived occupancy (Publish ≠ Apply) via <c>DrawAppliedState</c>.</param>
 /// <param name="IsObsoleteForConsumption">Draw resolution obsolete for Apply/Materialize consumption.</param>
 /// <param name="Actions">Server projection of cancel, release, apply, publish-and-apply, and redo. Available is not a success guarantee.</param>
+/// <param name="InputsIntent">Intent recorded on the draw. Derived display only; not a stored provenance of each team.</param>
+/// <param name="DisplayMetrics">Draft slot metrics (vacant, unplaced, already placed). Null for group draws and for Published or Cancelled draws.</param>
+/// <param name="SlotDisplayCells">Cup grid. Draft classifies the current phase. Published and Cancelled list only that draw's resolution, plus outside-draw for the other structural slots.</param>
 public sealed record StageDrawDto(
     Guid Id,
     DrawResolutionKind Kind,
@@ -117,7 +122,10 @@ public sealed record StageDrawDto(
     IReadOnlyList<StageDrawGroupPlacementDto> GroupPlacements,
     bool IsApplied,
     bool IsObsoleteForConsumption,
-    StageDrawActionsDto? Actions = null);
+    StageDrawActionsDto? Actions = null,
+    DrawInputsIntent InputsIntent = DrawInputsIntent.Default,
+    StageDrawDisplayMetricsDto? DisplayMetrics = null,
+    IReadOnlyList<StageDrawSlotDisplayCellDto>? SlotDisplayCells = null);
 
 /// <summary>
 /// Slot placement result summary.
@@ -128,13 +136,94 @@ public sealed record StageDrawDto(
 /// <param name="ShortName">Short name when known.</param>
 /// <param name="LogoMediaId">Optional Media Guid for the logo.</param>
 /// <param name="PrimaryColor">Optional primary kit color (#RRGGBB).</param>
+/// <param name="Origin">Display origin of this resolution line for the draw being read. Resolution lines are <see cref="DrawPlacementOrigin.Draw"/>.</param>
 public sealed record StageDrawSlotPlacementDto(
     string SlotKey,
     Guid EntryId,
     string? DisplayName,
     string? ShortName = null,
     Guid? LogoMediaId = null,
-    string? PrimaryColor = null);
+    string? PrimaryColor = null,
+    DrawPlacementOrigin? Origin = null);
+
+/// <summary>
+/// Read-time display origin. Not a stored identity of which draw produced the team.
+/// </summary>
+public enum DrawPlacementOrigin
+{
+    /// <summary>The team is a placement of the resolution of the draw being read.</summary>
+    Draw = 0,
+
+    /// <summary>The slot has a filled structural feed (qualification, progression, draw target, or a non-unique feed).</summary>
+    Feed = 1,
+
+    /// <summary>Manual placement, resolved occupant, or an occupant left by a previous draw. A unique direct assignment is manual.</summary>
+    Manual = 2,
+}
+
+/// <summary>
+/// Cup cell in the Tirage grid.
+/// </summary>
+public enum SlotDrawCellState
+{
+    /// <summary>In the resolution of the draw being read.</summary>
+    Drawn = 0,
+
+    /// <summary>Composition occupant preserved beside the draw. Draft only.</summary>
+    AlreadyPlaced = 1,
+
+    /// <summary>Filled structural feed. Not drawable. Draft only.</summary>
+#pragma warning disable CA1700 // Product cell state name. Not an unused reserved slot.
+    Reserved = 2,
+#pragma warning restore CA1700
+
+    /// <summary>Occupant outside composition. Not a free place. Draft only.</summary>
+    Withdrawn = 3,
+
+    /// <summary>Missing feed and no occupant. Draft only.</summary>
+    Free = 4,
+
+    /// <summary>Structural slot absent from this draw's resolution. Published and Cancelled only.</summary>
+    OutsideDraw = 5,
+}
+
+/// <summary>
+/// One cup cell. Team fields are null when the cell has no team to show.
+/// </summary>
+/// <param name="SlotKey">Slot key.</param>
+/// <param name="CellState">How the cell renders.</param>
+/// <param name="EntryId">Team when the cell shows one.</param>
+/// <param name="DisplayName">Display name when known.</param>
+/// <param name="ShortName">Short name when known.</param>
+/// <param name="LogoMediaId">Optional Media Guid for the logo.</param>
+/// <param name="PrimaryColor">Optional primary kit color (#RRGGBB).</param>
+/// <param name="Origin">Display origin when the cell is a placement or a preserved occupant. Null for a free or outside-draw cell.</param>
+public sealed record StageDrawSlotDisplayCellDto(
+    string SlotKey,
+    SlotDrawCellState CellState,
+    Guid? EntryId,
+    string? DisplayName,
+    string? ShortName,
+    Guid? LogoMediaId,
+    string? PrimaryColor,
+    DrawPlacementOrigin? Origin);
+
+/// <summary>
+/// Partial-draw counts for the Tirage hero. Same classifier as <c>SlotPartialDraw</c>.
+/// </summary>
+/// <param name="UnplacedEntryCount">Composition entries that do not occupy a slot.</param>
+/// <param name="VacantSlotKeyCount">Free slots (no occupant, feed missing). Withdrawn slots are excluded.</param>
+/// <param name="VacantSlotKeys">Those free slot keys, in stage order.</param>
+/// <param name="AlreadyPlacedEntryCount">Composition occupants without a structural feed.</param>
+/// <param name="EntryCount">Composition size. Duo hero team count.</param>
+/// <param name="PlaceCount">Slot count. Duo hero place count.</param>
+public sealed record StageDrawDisplayMetricsDto(
+    int UnplacedEntryCount,
+    int VacantSlotKeyCount,
+    IReadOnlyList<string> VacantSlotKeys,
+    int AlreadyPlacedEntryCount,
+    int EntryCount,
+    int PlaceCount);
 
 /// <summary>
 /// Group placement result summary.

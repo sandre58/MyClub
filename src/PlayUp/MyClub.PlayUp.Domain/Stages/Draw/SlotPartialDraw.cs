@@ -12,12 +12,38 @@ namespace MyClub.PlayUp.Domain.Stages;
 /// Decides which slot-draw places stay untouched and which teams may be drawn into the rest.
 /// </summary>
 /// <remarks>
-/// A free slot has no occupant and a missing feed. Occupants (manual or a previous resolution)
-/// and reserved or invalid feeds stay outside the draw. The draw is a bijection of the unplaced
-/// teams onto those free slots — existing occupants are not targets and are not in the pool.
+/// A free slot has no occupant and a missing feed. Composition occupants (manual or a previous
+/// resolution) and reserved or invalid feeds stay outside the draw. An occupant that is no longer
+/// in <see cref="Stage.CompositionEntries"/> is withdrawn: not free, and not an unplaced team.
+/// The draw is a bijection of the unplaced teams onto the free slots.
 /// </remarks>
 public static class SlotPartialDraw
 {
+    /// <summary>
+    /// Classifies each slot for partial-draw counting and for the draft cup display.
+    /// </summary>
+    /// <param name="stage">Phase whose slots and composition are read.</param>
+    /// <param name="snapshot">Feed snapshot for <paramref name="stage"/> (same slot keys).</param>
+    /// <returns>One fact per slot, in stage order.</returns>
+    public static IReadOnlyList<SlotDrawPlaceFact> Classify(Stage stage, SlotFeedSnapshot snapshot)
+    {
+        ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(snapshot);
+
+        var composition = stage.CompositionEntries.Select(entry => entry.EntryId).ToHashSet();
+        var facts = new List<SlotDrawPlaceFact>(stage.Slots.Count);
+        foreach (var slot in stage.Slots)
+        {
+            var feed = SlotFeedResolver.Resolve(snapshot, slot.SlotKey);
+            facts.Add(new SlotDrawPlaceFact(
+                slot.SlotKey,
+                ClassifyOccupancy(slot.EntryId, composition, feed),
+                slot.EntryId));
+        }
+
+        return facts;
+    }
+
     /// <summary>
     /// Composes the partial slot-draw scope from the stage and its feed snapshot.
     /// </summary>
@@ -29,28 +55,30 @@ public static class SlotPartialDraw
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(snapshot);
 
-        var occupants = new HashSet<EntryId>();
-        var vacant = new List<string>();
+        var composition = stage.CompositionEntries.Select(entry => entry.EntryId).ToHashSet();
+        var facts = Classify(stage, snapshot);
 
-        foreach (var slot in stage.Slots)
+        // Withdrawn occupants are outside composition: they must not shrink the unplaced pool
+        // and their slot is not free. Only composition occupants count as placed.
+        var placed = new HashSet<EntryId>();
+        var vacant = new List<string>();
+        foreach (var fact in facts)
         {
-            if (slot.EntryId is { } occupant)
+            if (fact.Occupancy == SlotDrawPlaceOccupancy.Free)
             {
-                occupants.Add(occupant);
-                continue;
+                vacant.Add(fact.SlotKey);
             }
 
-            var resolution = SlotFeedResolver.Resolve(snapshot, slot.SlotKey);
-            if (resolution.Status == FeedResolutionStatus.Missing)
+            if (fact.EntryId is { } occupant && composition.Contains(occupant))
             {
-                vacant.Add(slot.SlotKey);
+                placed.Add(occupant);
             }
         }
 
         var unplaced = new List<EntryId>();
         foreach (var entry in stage.CompositionEntries)
         {
-            if (!occupants.Contains(entry.EntryId))
+            if (!placed.Contains(entry.EntryId))
             {
                 unplaced.Add(entry.EntryId);
             }
@@ -66,7 +94,66 @@ public static class SlotPartialDraw
 
         return new SlotPartialDrawScope(vacant, unplaced, refusal);
     }
+
+    /// <summary>
+    /// A unique direct assignment is a manual placement. Qualification, progression, draw-target,
+    /// and non-unique feeds reserve the slot (not drawable, not withdrawn).
+    /// </summary>
+    private static bool IsStructuralFeed(SlotFeedResolution feed) =>
+        feed.Status != FeedResolutionStatus.Missing
+        && !(feed.Status == FeedResolutionStatus.Unique && feed.Source?.Kind == FeedKind.Direct);
+
+    private static SlotDrawPlaceOccupancy ClassifyOccupancy(
+        EntryId? occupant,
+        HashSet<EntryId> composition,
+        SlotFeedResolution feed)
+    {
+        if (IsStructuralFeed(feed))
+        {
+            return SlotDrawPlaceOccupancy.StructuralFeed;
+        }
+
+        if (occupant is not { } entryId)
+        {
+            return feed.Status == FeedResolutionStatus.Missing
+                ? SlotDrawPlaceOccupancy.Free
+                : SlotDrawPlaceOccupancy.StructuralFeed;
+        }
+
+        return composition.Contains(entryId)
+            ? SlotDrawPlaceOccupancy.AlreadyPlaced
+            : SlotDrawPlaceOccupancy.Withdrawn;
+    }
 }
+
+/// <summary>
+/// How a slot counts for a partial draw and for the draft cup grid.
+/// </summary>
+public enum SlotDrawPlaceOccupancy
+{
+    /// <summary>No occupant and a missing feed. Counts as vacant.</summary>
+    Free = 0,
+
+    /// <summary>Composition occupant without a structural feed. Not vacant, not unplaced.</summary>
+    AlreadyPlaced = 1,
+
+    /// <summary>Structural feed (or a direct feed with no occupant). Not vacant.</summary>
+    StructuralFeed = 2,
+
+    /// <summary>Occupant outside composition, without a structural feed. Not vacant, not unplaced.</summary>
+    Withdrawn = 3,
+}
+
+/// <summary>
+/// Occupancy of one slot under <see cref="SlotPartialDraw.Classify"/>.
+/// </summary>
+/// <param name="SlotKey">Slot key.</param>
+/// <param name="Occupancy">Counting class. Withdrawn is neither vacant nor unplaced.</param>
+/// <param name="EntryId">Current occupant when the slot has one. Not a feed.</param>
+public sealed record SlotDrawPlaceFact(
+    string SlotKey,
+    SlotDrawPlaceOccupancy Occupancy,
+    EntryId? EntryId);
 
 /// <summary>
 /// Why a slot phase cannot host a partial draw of its free places.

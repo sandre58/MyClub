@@ -11,7 +11,10 @@ import {
   pickActiveDraw,
   pickDefaultDrawId,
   pickDrawFooterFocusAfterRelease,
+  buildCupDrawDisplayFromDto,
   projectSlotDrawResult,
+  resolveDrawHeroModel,
+  type CupDrawCellLabels,
   drawCreateLaunchBlockCopy,
   resolveDrawCreateBlockPresentation,
   resolveDrawReadinessChecklist,
@@ -773,5 +776,238 @@ describe('pickDrawFooterFocusAfterRelease', () => {
     expect(pickDrawFooterFocusAfterRelease(dialog)?.dataset.action).toBe(
       'release-draw-placements',
     );
+  });
+});
+
+const cupLabels: CupDrawCellLabels = {
+  unknownEntry: 'Équipe',
+  alreadyPlaced: 'Déjà placée',
+  freePlace: 'Place libre',
+  reserved: 'Réservée',
+  withdrawn: 'Retirée',
+  outsideDraw: 'Hors de ce tirage',
+  originManualHint:
+    'Origine d’affichage : manuelle ou issue d’un tirage précédent.',
+};
+
+const cupPairs: StageBracketPair[] = [
+  { pairKey: 'P1', slotAKey: 'S1', slotBKey: 'S2' },
+  { pairKey: 'P2', slotAKey: 'S3', slotBKey: 'S4' },
+];
+
+describe('buildCupDrawDisplayFromDto', () => {
+  it('T1 pairs an already placed side with a drawn side', () => {
+    const result = buildCupDrawDisplayFromDto(
+      [
+        {
+          slotKey: 'S1',
+          cellState: 'AlreadyPlaced',
+          entryId: 'e1',
+          displayName: 'Belgium',
+          origin: 'Manual',
+        },
+        {
+          slotKey: 'S2',
+          cellState: 'Drawn',
+          entryId: 'e2',
+          displayName: 'Poland',
+          origin: 'Draw',
+        },
+      ],
+      cupPairs,
+      cupLabels,
+    );
+    expect(result.confrontations).toHaveLength(1);
+    expect(result.confrontations[0]?.key).toBe('P1');
+    expect(result.confrontations[0]?.sideA.cellState).toBe('AlreadyPlaced');
+    expect(result.confrontations[0]?.sideA.alreadyPlacedLabel).toBe(
+      'Déjà placée',
+    );
+    expect(result.confrontations[0]?.sideA.ariaLabel).toContain(
+      'Origine d’affichage',
+    );
+    expect(result.confrontations[0]?.sideB.cellState).toBe('Drawn');
+    expect(result.confrontations[0]?.sideB.displayName).toBe('Poland');
+    expect(result.unpaired).toHaveLength(0);
+  });
+
+  it('T1 keeps reserved, withdrawn, and free distinct', () => {
+    const result = buildCupDrawDisplayFromDto(
+      [
+        {
+          slotKey: 'S1',
+          cellState: 'Reserved',
+          entryId: 'e1',
+          displayName: 'Belgium',
+          origin: 'Feed',
+        },
+        {
+          slotKey: 'S2',
+          cellState: 'Withdrawn',
+          entryId: 'e2',
+          displayName: 'Gone',
+          origin: 'Manual',
+        },
+        {
+          slotKey: 'S3',
+          cellState: 'Free',
+          entryId: null,
+          displayName: null,
+          origin: null,
+        },
+        {
+          slotKey: 'S4',
+          cellState: 'OutsideDraw',
+          entryId: null,
+          displayName: null,
+          origin: null,
+        },
+      ],
+      [],
+      cupLabels,
+    );
+    expect(result.unpaired.map((side) => side.displayName)).toEqual([
+      'Réservée',
+      'Retirée',
+      'Place libre',
+      'Hors de ce tirage',
+    ]);
+    expect(result.unpaired.map((side) => side.cellState)).toEqual([
+      'Reserved',
+      'Withdrawn',
+      'Free',
+      'OutsideDraw',
+    ]);
+    expect(result.unpaired[1]?.ariaLabel).toBe('Gone, Retirée');
+    expect(result.unpaired[2]?.entryId).toBe('');
+  });
+});
+
+describe('draw display golden parity', () => {
+  it('T4 projects a golden DTO payload without recomputing counts', () => {
+    const golden = JSON.parse(`{
+      "inputsIntent": "Partial",
+      "displayMetrics": {
+        "unplacedEntryCount": 1,
+        "vacantSlotKeyCount": 1,
+        "vacantSlotKeys": ["S2"],
+        "alreadyPlacedEntryCount": 1,
+        "entryCount": 2,
+        "placeCount": 2
+      },
+      "slotDisplayCells": [
+        {
+          "slotKey": "S1",
+          "cellState": "AlreadyPlaced",
+          "entryId": "e1",
+          "displayName": "Belgium",
+          "origin": "Manual"
+        },
+        {
+          "slotKey": "S2",
+          "cellState": "Drawn",
+          "entryId": "e2",
+          "displayName": "Poland",
+          "origin": "Draw"
+        }
+      ]
+    }`) as {
+      inputsIntent: 'Partial';
+      displayMetrics: {
+        unplacedEntryCount: number;
+        vacantSlotKeyCount: number;
+        vacantSlotKeys: string[];
+        alreadyPlacedEntryCount: number;
+        entryCount: number;
+        placeCount: number;
+      };
+      slotDisplayCells: Array<{
+        slotKey: string;
+        cellState: 'AlreadyPlaced' | 'Drawn';
+        entryId: string;
+        displayName: string;
+        origin: 'Manual' | 'Draw';
+      }>;
+    };
+
+    const grid = buildCupDrawDisplayFromDto(
+      golden.slotDisplayCells,
+      [{ pairKey: 'P1', slotAKey: 'S1', slotBKey: 'S2' }],
+      cupLabels,
+    );
+    expect(grid.confrontations[0]?.sideA.origin).toBe('Manual');
+    expect(grid.confrontations[0]?.sideB.origin).toBe('Draw');
+    expect(
+      resolveDrawHeroModel({
+        formatKind: 'Cup',
+        groupCount: 0,
+        teamCount: 99,
+        placesCount: 99,
+        metrics: golden.displayMetrics,
+        inputsIntent: golden.inputsIntent,
+        hasActiveDraw: true,
+      }),
+    ).toEqual({
+      layout: 'triplet',
+      toPlace: { value: 1, label: 'heroToPlace' },
+      freePlaces: { value: 1, label: 'heroFreePlaces' },
+      alreadyPlaced: { value: 1, label: 'heroAlreadyPlaced' },
+    });
+  });
+});
+
+describe('resolveDrawHeroModel', () => {
+  const metrics = {
+    unplacedEntryCount: 2,
+    vacantSlotKeyCount: 2,
+    vacantSlotKeys: ['S3', 'S4'],
+    alreadyPlacedEntryCount: 2,
+    entryCount: 4,
+    placeCount: 4,
+  };
+
+  it('T5 uses a duo when partial has no free place', () => {
+    expect(
+      resolveDrawHeroModel({
+        formatKind: 'Cup',
+        groupCount: 0,
+        teamCount: 4,
+        placesCount: 4,
+        metrics: { ...metrics, vacantSlotKeyCount: 0, unplacedEntryCount: 0 },
+        inputsIntent: 'Partial',
+        hasActiveDraw: true,
+      }).layout,
+    ).toBe('duo');
+  });
+
+  it('T5 uses a duo when partial has no occupant', () => {
+    expect(
+      resolveDrawHeroModel({
+        formatKind: 'Cup',
+        groupCount: 0,
+        teamCount: 4,
+        placesCount: 4,
+        metrics: { ...metrics, alreadyPlacedEntryCount: 0 },
+        inputsIntent: 'Partial',
+        hasActiveDraw: true,
+      }).layout,
+    ).toBe('duo');
+  });
+
+  it('T7 keeps a group rerun on the duo and ignores cup metrics', () => {
+    const model = resolveDrawHeroModel({
+      formatKind: 'Groups',
+      groupCount: 2,
+      teamCount: 8,
+      placesCount: 8,
+      metrics,
+      inputsIntent: 'Rerun',
+      hasActiveDraw: true,
+    });
+    expect(model).toEqual({
+      layout: 'duo',
+      primary: { value: 8, label: 'heroTeams' },
+      secondary: { value: 2, label: 'heroGroups' },
+    });
   });
 });

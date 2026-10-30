@@ -189,6 +189,7 @@ Contract notes:
 - Nature V1: `Blocking` | `Informational` only. Richer natures (e.g. Opportunity) remain OPEN — opportunities live in `availableActions` / `naturalProgression`.
 - `draws[].isApplied` is Application-derived (Publish ≠ Apply). Domain has no Applied status.
 - `GET /stages/{stageId}` draw lines include `actions` (`cancel`, `release`, `apply`, `publishAndApply`, `redo`). Each action is `{ state: "Hidden" | "Available" | "Blocked", blockCode? }`. `release` also has `releasableCount` (aligned placements, direct assignments excluded). `releaseCandidateDrawId` is the most recent Cancelled draw with `releasableCount >= 1` (list order, last wins), including when that release is Blocked. `Available` does not guarantee the command succeeds. A closed competition hides every action; the executor still rejects the command.
+- `GET /stages/{stageId}` also carries the Tirage read model below (`inputsIntent`, `origin`, `displayMetrics`, `slotDisplayCells`, `slotDrawDisplayMetrics`). The SPA does not recompute vacant places, unplaced teams, or display origin.
 - `attentionSummary` is a **derived subset** of `situations` where `nature === "Blocking"` — not a second independent list / ranking. That Blocking set is **Needs Attention only** (same ensemble as `GET /attention`): `InsufficientParticipants`, `DrawNoSolution`, `QualificationPending` / `Conflict`, `ProgressionPending` / `Conflict`.
 - Structure readiness / construction blockers (`MissingStage`, `MissingStructure`, `MissingPotRules`, `CupBracketInvalid`, `StructureGraphInvalid`, capacity/execution readiness blockers, …) stay on Structure readiness / Config / Teams surfaces — **not** Overview situations / `attentionSummary`. `InsufficientParticipants` reaches Attention only via Needs Attention (not a second org-blocker merge).
 - `constructionDimensions.regulation` (Phase 16.4): factual Competition summary (`competition`) + optional Stage regulation flags (`stage`) + `competitionRegulationMutable` + `transitionReadiness[]`. **No** global `isValid` / `isSatisfactory`.
@@ -722,6 +723,50 @@ These DTOs live in `MyClub.PlayUp.Host/Contracts`. They expose Guids only — no
 | `Partial` | Slot only. Unplaced teams into free slots (no occupant and feed Missing), exact count | Left out of the pool and the resolution, so a later release of this draw does not clear them |
 
 `Partial` refusals are HTTP 409: `Application.DrawNoFreeSlot` (no free slot, even if extra teams remain), `Application.DrawNotEnoughTeams`, `Application.DrawTooManyTeams`. Generate does not write slot occupants. Publish-and-apply is what fills the free slots. Redo stays a full reshuffle and stays hidden until the draw is applied (`Application.DrawRedoRequiresApplied`).
+
+### Tirage read model — `GET /stages/{stageId}`
+
+Cup draw display is derived at read time. It is not a stored provenance (“this team came from draw #2”).
+
+`draws[]` (every draw):
+
+| Field | Values | Notes |
+| :--- | :--- | :--- |
+| `inputsIntent` | `Default` \| `Rerun` \| `Partial` | Intent recorded when inputs were configured. Omitted configuration stays `Default`. |
+| `slotPlacements[].origin` | `Draw` | Present on resolution lines. A line in **this** draw's resolution is `Draw`. |
+| `displayMetrics` | object \| null | Draft **Slot** draws only. Same counts as `slotDrawDisplayMetrics`. Null for Group draws and for Published / Cancelled draws (those must not mirror the phase's current occupation). |
+| `slotDisplayCells` | array \| null | Cup slots. Null for Group draws (no `alreadyPlaced` on a group rerun). |
+
+`slotDrawDisplayMetrics` on the stage (null when the stage has no slots) is the current partial-draw count. It is **not** a historical snapshot.
+
+`displayMetrics` / `slotDrawDisplayMetrics`:
+
+| Field | Meaning |
+| :--- | :--- |
+| `unplacedEntryCount` | Composition entries that do not occupy a slot |
+| `vacantSlotKeyCount` | Free slots |
+| `vacantSlotKeys` | Those keys, stage order |
+| `alreadyPlacedEntryCount` | Composition occupants without a structural feed |
+| `entryCount` | Composition size (duo hero, teams) |
+| `placeCount` | Slot count (duo hero, places) |
+
+A free slot has no occupant and a missing feed. An occupant **outside composition** is withdrawn: the slot is not in `vacantSlotKeys`, and that entry is not in the unplaced count. Withdrawn does not become a free place until the domain clears the slot.
+
+`slotDisplayCells[]` for a **Draft** Slot draw (`cellState`, team fields, `origin`):
+
+| `cellState` | `origin` | When |
+| :--- | :--- | :--- |
+| `Drawn` | `Draw` | Slot is in this draw's resolution |
+| `AlreadyPlaced` | `Manual` | Composition occupant preserved beside the draw (direct assignment, resolved occupant, or an occupant left by a previous Published draw after that draw was cancelled) |
+| `Reserved` | `Feed` | Filled structural feed and the slot is not in this resolution. Qualification, progression, draw-target, and non-unique feeds. A qualification feed with an occupant is `Reserved`, not `Withdrawn` |
+| `Withdrawn` | `Manual` | Occupant outside composition, no structural feed. Not `Reserved` |
+| `Free` | omitted / null | No occupant, feed missing |
+
+A **unique direct assignment** (`AssignEntryToSlot`) is `Manual` / `AlreadyPlaced`, not `Feed`. It is the manual placement. Structural feeds reserve the slot.
+
+Published and Cancelled Slot draws do not use the current phase. Each structural slot is either `Drawn` (in **that** draw's resolution, team and `origin: Draw` from the resolution) or `OutsideDraw` (absent from that resolution, no team, no origin). They are not `AlreadyPlaced`, `Reserved`, `Free`, or `Withdrawn` derived from the present. Releasing an occupant on the phase does not change those cells.
+
+Contributor copy for a manual origin, when a tooltip is shown: “Display origin: manual or from a previous draw.” The API does not send that sentence.
 
 ### `POST /stages/{stageId}/draws/{drawId}/release-aligned-placements` → `ReleaseDrawAlignedPlacementsDto`
 

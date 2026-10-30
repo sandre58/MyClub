@@ -41,6 +41,13 @@ export interface StageSlot {
   coveredByCompleteFixture: boolean;
 }
 
+export type DrawInputsIntent = 'Default' | 'Rerun' | 'Partial';
+
+export type DrawPlacementOrigin = 'Draw' | 'Feed' | 'Manual';
+
+export type SlotDrawCellState =
+  'Drawn' | 'AlreadyPlaced' | 'Reserved' | 'Withdrawn' | 'Free' | 'OutsideDraw';
+
 export interface StageDrawSlotPlacement {
   slotKey: string;
   entryId: string;
@@ -48,6 +55,28 @@ export interface StageDrawSlotPlacement {
   shortName?: string | null;
   logoMediaId?: string | null;
   primaryColor?: string | null;
+  /** Display origin of this resolution line. Resolution lines are Draw. */
+  origin?: DrawPlacementOrigin | null;
+}
+
+export interface StageDrawSlotDisplayCell {
+  slotKey: string;
+  cellState: SlotDrawCellState;
+  entryId: string | null;
+  displayName: string | null;
+  shortName?: string | null;
+  logoMediaId?: string | null;
+  primaryColor?: string | null;
+  origin?: DrawPlacementOrigin | null;
+}
+
+export interface StageDrawDisplayMetrics {
+  unplacedEntryCount: number;
+  vacantSlotKeyCount: number;
+  vacantSlotKeys?: string[];
+  alreadyPlacedEntryCount: number;
+  entryCount: number;
+  placeCount: number;
 }
 
 export interface StageDrawGroupPlacement {
@@ -75,6 +104,12 @@ export interface StageDraw {
   isObsoleteForConsumption?: boolean;
   /** Server projection. Missing actions are Hidden. Available is not a success guarantee. */
   actions?: StageDrawActions;
+  /** Intent recorded when inputs were configured. Omitted configuration stays Default. */
+  inputsIntent?: DrawInputsIntent;
+  /** Draft slot metrics. Null for group draws and for Published or Cancelled draws. */
+  displayMetrics?: StageDrawDisplayMetrics | null;
+  /** Cup grid. Null for group draws. */
+  slotDisplayCells?: StageDrawSlotDisplayCell[] | null;
 }
 
 export type StageDrawActionState = 'Hidden' | 'Available' | 'Blocked';
@@ -127,6 +162,8 @@ export interface StageOverview {
   drawBracketLaunchFacts?: StageDrawBracketLaunchFacts | null;
   /** Most recent Cancelled draw with at least one aligned placement. */
   releaseCandidateDrawId?: string | null;
+  /** Current cup partial-draw counts. Null when the stage has no slots. */
+  slotDrawDisplayMetrics?: StageDrawDisplayMetrics | null;
 }
 
 /** Structural Cup pair from StageOverview — drives Slot draw A vs B (not Fixture #). */

@@ -75,5 +75,15 @@
   "releasingPlacements": "Releasing…",
   "confirmReleaseTitle": "Release draw placements?",
   "confirmRelease": "Places still populated according to this draw will be cleared. Direct assignments and other feeds will not be modified.",
-  "toastReleased": "Placements released ({{count}})."
+  "toastReleased": "Placements released ({{count}}).",
+  "alreadyPlaced": "Already placed",
+  "freePlace": "Free place",
+  "reserved": "Reserved",
+  "withdrawn": "Withdrawn",
+  "outsideDraw": "Outside this draw",
+  "releaseDrawnTeams": "Release the {{n}} drawn teams",
+  "heroToPlace": "To place",
+  "heroFreePlaces": "Free places",
+  "heroAlreadyPlaced": "Already in place",
+  "originManualHint": "Display origin: manual or from a previous draw."
 }
