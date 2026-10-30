@@ -69,6 +69,7 @@
     "RevertToDraftBlocked": "Remove attached matches before reverting to draft.",
     "RevertToReadyBlocked": "Finish or cancel engaged matches before pausing the phase.",
     "RoutingNondeterminism": "Phase routing is ambiguous.",
+    "RulesReplaceRequiresListOrClear": "Incomplete rules request: send the rules to save, or explicitly request clearing them.",
     "ScheduleApplyFailure": "Unable to apply the schedule.",
     "ScheduleGenerationFailure": "Unable to generate the schedule.",
     "SlotFeedsInvalid": "Slot feeds are invalid.",

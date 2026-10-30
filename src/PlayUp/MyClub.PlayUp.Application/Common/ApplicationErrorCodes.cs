@@ -204,6 +204,12 @@ public static class ApplicationErrorCodes
     public const string InvalidStructureIntent = "Application.InvalidStructureIntent";
 
     /// <summary>
+    /// Gets the code when a PUT rules body carries neither a non-empty list (intents / paths) nor <c>clear: true</c>, or both.
+    /// Mapped to HTTP 400.
+    /// </summary>
+    public const string RulesReplaceRequiresListOrClear = "Application.RulesReplaceRequiresListOrClear";
+
+    /// <summary>
     /// Gets the code when Cup bracket size is not a supported power of two.
     /// </summary>
     public const string CupBracketNotPowerOfTwo = "Application.CupBracketNotPowerOfTwo";

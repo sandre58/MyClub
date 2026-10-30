@@ -182,6 +182,7 @@ internal static class StageEndpoints
                 CancellationToken cancellationToken) =>
             {
                 ArgumentNullException.ThrowIfNull(request);
+                RulesReplaceBodyGuard.EnsureListOrClear(request.Clear, request.Intents?.Count);
                 if (request.Intents is { Count: > 0 })
                 {
                     IReadOnlyList<ProgressionIntentSpec> intents =
@@ -217,6 +218,7 @@ internal static class StageEndpoints
                 CancellationToken cancellationToken) =>
             {
                 ArgumentNullException.ThrowIfNull(request);
+                RulesReplaceBodyGuard.EnsureListOrClear(request.Clear, request.Intents?.Count);
                 if (request.Intents is { Count: > 0 })
                 {
                     IReadOnlyList<QualificationIntentSpec> intents =
@@ -256,6 +258,7 @@ internal static class StageEndpoints
                 CancellationToken cancellationToken) =>
             {
                 ArgumentNullException.ThrowIfNull(request);
+                RulesReplaceBodyGuard.EnsureListOrClear(request.Clear, request.Paths?.Count);
                 IReadOnlyList<PlacementAwardPathSpec>? paths = null;
                 if (request.Paths is { Count: > 0 })
                 {

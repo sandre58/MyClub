@@ -115,7 +115,7 @@ export function StructurePlacementAwardDialog({
   const mutation = useMutation({
     mutationFn: () => {
       if (cards.length === 0) {
-        return replaceStagePlacementAwardRules(stage.stageId, { paths: null });
+        return replaceStagePlacementAwardRules(stage.stageId, { clear: true });
       }
       return replaceStagePlacementAwardRules(stage.stageId, {
         paths: cardsToApiPaths(cards),

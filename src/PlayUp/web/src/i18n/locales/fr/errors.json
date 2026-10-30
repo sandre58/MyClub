@@ -69,6 +69,7 @@
     "RevertToDraftBlocked": "Retirez les matchs attachés avant de revenir en brouillon.",
     "RevertToReadyBlocked": "Terminez ou annulez les matchs engagés avant de mettre la phase en pause.",
     "RoutingNondeterminism": "Le routage entre phases est ambigu.",
+    "RulesReplaceRequiresListOrClear": "Requête de règles incomplète : envoyez les règles à enregistrer, ou demandez explicitement leur suppression.",
     "ScheduleApplyFailure": "Impossible d’appliquer le calendrier.",
     "ScheduleGenerationFailure": "Impossible de générer le calendrier.",
     "SlotFeedsInvalid": "Les alimentations d’emplacements sont invalides.",

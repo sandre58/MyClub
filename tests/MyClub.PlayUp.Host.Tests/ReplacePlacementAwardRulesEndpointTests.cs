@@ -71,7 +71,7 @@ public sealed class ReplacePlacementAwardRulesEndpointTests(HostPostgresFixture 
 
         using var clear = await client.PutAsJsonAsync(
             RulesUri(seed.StageId),
-            new ReplaceStagePlacementAwardRulesRequest([]),
+            new ReplaceStagePlacementAwardRulesRequest(Clear: true),
             HostJson.Options);
 
         clear.StatusCode.Should().Be(HttpStatusCode.NoContent);

@@ -516,20 +516,17 @@ export interface RebuildStageStructureResponse {
   structure: StructureView;
 }
 
-/** PUT /stages/{id}/qualification-rules (intents authoring SoT). */
-export interface ReplaceQualificationRulesRequest {
-  intents?: StructureQualificationIntent[] | null;
-}
+/** PUT /stages/{id}/qualification-rules — non-empty intents, or an explicit clear. */
+export type ReplaceQualificationRulesRequest =
+  { intents: StructureQualificationIntent[] } | { clear: true };
 
-/** PUT /stages/{id}/progression-rules (intents authoring SoT). */
-export interface ReplaceProgressionRulesRequest {
-  intents?: StructureProgressionIntent[] | null;
-}
+/** PUT /stages/{id}/progression-rules — non-empty intents, or an explicit clear. */
+export type ReplaceProgressionRulesRequest =
+  { intents: StructureProgressionIntent[] } | { clear: true };
 
-/** PUT /stages/{id}/placement-award-rules */
-export interface ReplacePlacementAwardRulesRequest {
-  paths: StructurePlacementAward[] | null;
-}
+/** PUT /stages/{id}/placement-award-rules — non-empty paths, or an explicit clear. */
+export type ReplacePlacementAwardRulesRequest =
+  { paths: StructurePlacementAward[] } | { clear: true };
 
 /** PUT /stages/{id}/match-rules */
 export interface ReplaceStageMatchRulesRequest {
