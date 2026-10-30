@@ -3,7 +3,7 @@ import { Fragment, cloneElement, createElement, isValidElement } from 'react';
 
 import { GradientSeparator } from '../../../design-system/components/GradientSeparator';
 
-function withStripChildKey(section: ReactNode, key: string): ReactNode {
+export function withStripChildKey(section: ReactNode, key: string): ReactNode {
   if (!section) {
     return null;
   }

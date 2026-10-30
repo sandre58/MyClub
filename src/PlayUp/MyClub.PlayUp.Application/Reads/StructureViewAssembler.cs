@@ -528,6 +528,7 @@ public static class StructureViewAssembler
             HasTieFormat: hasTie,
             NumberOfLegs: numberOfLegs,
             AggregateScoring: aggregateScoring,
+            DrawCreateLaunch: new StructureDrawCreateLaunchDto(true, null),
             HasAwayGoalsRule: hasAwayGoalsRule,
             HasTieExtraTime: hasTieExtraTime,
             HasTiePenaltyShootout: hasTiePenaltyShootout,

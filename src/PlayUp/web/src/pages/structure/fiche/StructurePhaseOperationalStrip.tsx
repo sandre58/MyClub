@@ -78,6 +78,7 @@ import {
 import {
   joinCompositionPlaceAssignmentSections,
   operationalStripGridColumns,
+  withStripChildKey,
 } from './structureOperationalStripLayout';
 import { CupEntryRoundPlacementGauge } from './CupEntryRoundPlacementGauge';
 import { CompositionInboundResolvedGauge } from '../composition/CompositionInboundResolvedGauge';
@@ -427,7 +428,7 @@ export function StructurePhaseOperationalStrip({
 
   const stripSections =
     layoutVariant === 'aside-matchs'
-      ? [matchesColumn]
+      ? [withStripChildKey(matchesColumn, 'matches')]
       : compositionStack
         ? joinCompositionPlaceAssignmentSections(placesColumn, drawColumn, {
             showPlaces,
