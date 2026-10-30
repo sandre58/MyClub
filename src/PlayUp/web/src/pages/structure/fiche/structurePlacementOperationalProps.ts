@@ -28,7 +28,7 @@ export type StructurePlacementOperationalSectionProps = {
   releasableAlignedCount: number;
   releasableTotal: number;
   releasePending: boolean;
-  /** Server release action is Blocked (attached matches). Button stays visible. */
+  /** Server release action is Blocked. Button stays visible with the block reason. */
   releaseDisabled?: boolean;
   releaseDisabledReason?: string | null;
   deactivateDrawPending: boolean;

@@ -68,6 +68,7 @@ import { DrawRedoStoppedError, redoAppliedDraw } from './drawRedo';
 import {
   drawActionsOf,
   isDrawActionAvailable,
+  releaseBlockReason,
   redoPresentation,
   releaseFooterMode,
   releaseHoldForDraw,
@@ -512,6 +513,8 @@ export function StructureDrawDialog({
 
   const releaseFooterBlocked =
     releaseTarget != null && releaseFooterMode(releaseTarget) === 'disabled';
+  const releaseFooterBlockedReason =
+    releaseTarget != null ? releaseBlockReason(releaseTarget) : null;
 
   const focusKey = [
     overviewQuery.isLoading ? 'loading' : 'ready',
@@ -646,7 +649,7 @@ export function StructureDrawDialog({
     </Alert>
   ) : releaseFooterBlocked ? (
     <Alert tone="info" role="status">
-      {tDraw('releaseBlockedAttachedMatches')}
+      {releaseFooterBlockedReason}
     </Alert>
   ) : !overviewQuery.isLoading &&
     createBlockedDetail != null &&

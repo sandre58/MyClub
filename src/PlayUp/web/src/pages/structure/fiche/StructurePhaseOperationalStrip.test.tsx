@@ -340,6 +340,57 @@ describe('StructurePhaseOperationalStrip', () => {
     ).toBeInTheDocument();
   });
 
+  it('shows enabled release action when the server action is Available', () => {
+    renderStrip({
+      layoutVariant: 'composition',
+      placement: {
+        ...basePlacement,
+        showReleaseCta: true,
+        releasableAlignedCount: 1,
+        releasableTotal: 2,
+        releaseDisabled: false,
+      },
+    });
+
+    expect(screen.getByRole('button', { name: 'Libérer 1/2' })).toBeEnabled();
+  });
+
+  it('keeps blocked release visible and disabled with the server reason', () => {
+    const reason =
+      'Impossible de libérer les placements : des matchs sont déjà rattachés à cette phase.';
+    renderStrip({
+      layoutVariant: 'composition',
+      placement: {
+        ...basePlacement,
+        showReleaseCta: true,
+        releasableAlignedCount: 1,
+        releasableTotal: 1,
+        releaseDisabled: true,
+        releaseDisabledReason: reason,
+      },
+    });
+
+    const release = screen.getByRole('button', { name: 'Libérer 1/1' });
+    expect(release).toBeDisabled();
+    expect(release).toHaveAttribute('title', reason);
+  });
+
+  it('hides release action when the server action is Hidden', () => {
+    renderStrip({
+      layoutVariant: 'composition',
+      placement: {
+        ...basePlacement,
+        showReleaseCta: false,
+        releasableAlignedCount: 0,
+        releasableTotal: 0,
+      },
+    });
+
+    expect(
+      screen.queryByRole('button', { name: /Libérer/i }),
+    ).not.toBeInTheDocument();
+  });
+
   it('shows activate draw empty state when draw is not yet enabled', () => {
     renderStrip({
       placement: {

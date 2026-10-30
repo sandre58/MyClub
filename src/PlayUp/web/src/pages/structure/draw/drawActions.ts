@@ -5,6 +5,7 @@ import type {
   StageDrawActionState,
   StageOverview,
 } from '../../../types';
+import { apiErrorCodeLabel } from '../../../i18n/apiErrorLabel';
 
 const hiddenAction: StageDrawAction = { state: 'Hidden' };
 
@@ -58,13 +59,18 @@ export function releaseFooterMode(
   if (release.state === 'Available') {
     return 'enabled';
   }
-  if (
-    release.state === 'Blocked' &&
-    release.blockCode === DRAW_RELEASE_ATTACHED_MATCHES
-  ) {
+  if (release.state === 'Blocked') {
     return 'disabled';
   }
   return 'hidden';
+}
+
+export function releaseBlockReason(draw: StageDraw): string | null {
+  const release = drawActionsOf(draw).release;
+  if (release.state !== 'Blocked' || !release.blockCode) {
+    return null;
+  }
+  return apiErrorCodeLabel(release.blockCode) ?? release.blockCode;
 }
 
 export function releaseHoldForDraw(
@@ -111,6 +117,7 @@ export interface ServerReleaseCta {
   aligned: number;
   total: number;
   disabled: boolean;
+  disabledReason: string | null;
 }
 
 /** Fiche Libérer from `releaseCandidateDrawId` and that draw's release action. */
@@ -122,6 +129,7 @@ export function resolveServerReleaseCta(
     aligned: 0,
     total: 0,
     disabled: false,
+    disabledReason: null,
   };
   const candidateId = overview.releaseCandidateDrawId;
   if (candidateId == null) {
@@ -141,5 +149,6 @@ export function resolveServerReleaseCta(
     aligned: release.releasableCount,
     total,
     disabled: releaseFooterMode(draw) === 'disabled',
+    disabledReason: releaseBlockReason(draw),
   };
 }

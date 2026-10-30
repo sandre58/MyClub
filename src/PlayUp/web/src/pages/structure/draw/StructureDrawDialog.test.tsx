@@ -17,9 +17,10 @@ import {
   afterAll,
 } from 'vitest';
 import {
-  stampStageOverviewDrawActions,
-  type StampDrawActionsContext,
-} from '../../../test/stampDrawActions';
+  drawActions,
+  hiddenDrawActions,
+  withDrawActions,
+} from '../../../test/withDrawActions';
 import {
   cancelDraw,
   createAndGenerateDraw,
@@ -83,6 +84,8 @@ const drawDialogCss = readFileSync(
 
 const stageId = 'dddddddd-dddd-dddd-dddd-dddddddddddd';
 const competitionId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+const releaseAttachedMatchesError =
+  'Impossible de libérer les placements : des matchs sont déjà rattachés à cette phase. Détachez-les ou repassez la phase en brouillon.';
 
 function groupsStage(
   overrides: Partial<StructureStageHubSummary> = {},
@@ -124,9 +127,9 @@ function groupsStage(
 function overview(
   draws: StageOverview['draws'],
   overrides: Partial<StageOverview> = {},
-  context?: StampDrawActionsContext,
+  releaseCandidateDrawId?: string | null,
 ): StageOverview {
-  return stampStageOverviewDrawActions(
+  return withDrawActions(
     {
       id: stageId,
       competitionId,
@@ -138,8 +141,40 @@ function overview(
       bracketPairs: [],
       ...overrides,
     },
-    context,
+    releaseCandidateDrawId === undefined ? {} : { releaseCandidateDrawId },
   );
+}
+
+function releaseAvailable(releasableCount: number) {
+  return drawActions({
+    release: { state: 'Available', releasableCount },
+  });
+}
+
+function releaseBlocked(releasableCount: number, blockCode: string) {
+  return drawActions({
+    release: { state: 'Blocked', blockCode, releasableCount },
+  });
+}
+
+function appliedDrawActions() {
+  return drawActions({
+    cancel: { state: 'Available' },
+    redo: { state: 'Available' },
+  });
+}
+
+function applyAvailableActions() {
+  return drawActions({
+    apply: { state: 'Available' },
+  });
+}
+
+function redoBlockedActions(blockCode: string) {
+  return drawActions({
+    cancel: { state: 'Available' },
+    redo: { state: 'Blocked', blockCode },
+  });
 }
 
 function groupDraw(overrides: Partial<StageDraw> = {}): StageDraw {
@@ -150,6 +185,10 @@ function groupDraw(overrides: Partial<StageDraw> = {}): StageDraw {
     resolutionState: 'Resolved',
     slotPlacements: [],
     groupPlacements: [],
+    actions: drawActions({
+      cancel: { state: 'Available' },
+      publishAndApply: { state: 'Available' },
+    }),
     ...overrides,
   };
 }
@@ -182,6 +221,10 @@ function slotDraw(overrides: Partial<StageDraw> = {}): StageDraw {
         displayName: 'Denmark',
       },
     ],
+    actions: drawActions({
+      cancel: { state: 'Available' },
+      publishAndApply: { state: 'Available' },
+    }),
     ...overrides,
   };
 }
@@ -406,6 +449,7 @@ describe('StructureDrawDialog', () => {
             status: 'Draft',
             resolutionState: 'NoSolution',
             groupPlacements: [],
+            actions: hiddenDrawActions(),
           }),
         ]),
       );
@@ -661,6 +705,7 @@ describe('StructureDrawDialog', () => {
       id: 'draw-cancelled',
       status: 'Cancelled',
       resolutionState: 'Resolved',
+      actions: releaseAvailable(2),
       slotPlacements: [
         {
           slotKey: 'R16-1-A',
@@ -676,17 +721,21 @@ describe('StructureDrawDialog', () => {
     });
 
     vi.mocked(fetchStageOverview).mockResolvedValue(
-      overview([cancelled], { slots: occupiedSlots }),
+      overview([cancelled], { slots: occupiedSlots }, 'draw-cancelled'),
     );
     vi.mocked(releaseDrawAlignedPlacements).mockImplementation(async () => {
       vi.mocked(fetchStageOverview).mockResolvedValue(
-        overview([cancelled], {
-          slots: occupiedSlots.map((slot) => ({
-            ...slot,
-            entryId: null,
-            displayName: null,
-          })),
-        }),
+        overview(
+          [{ ...cancelled, actions: hiddenDrawActions() }],
+          {
+            slots: occupiedSlots.map((slot) => ({
+              ...slot,
+              entryId: null,
+              displayName: null,
+            })),
+          },
+          null,
+        ),
       );
       return { releasedCount: 2, skippedCount: 0 };
     });
@@ -797,6 +846,7 @@ describe('StructureDrawDialog', () => {
         groupDraw({
           status: 'Published',
           isApplied: true,
+          actions: appliedDrawActions(),
         }),
       ]),
     );
@@ -1006,6 +1056,7 @@ describe('StructureDrawDialog', () => {
         groupDraw({
           resolutionState: 'NoSolution',
           groupPlacements: [],
+          actions: hiddenDrawActions(),
         }),
       ]),
     );
@@ -1033,6 +1084,7 @@ describe('StructureDrawDialog', () => {
           status: 'Published',
           resolutionState: 'Resolved',
           isApplied: true,
+          actions: appliedDrawActions(),
           groupPlacements: [
             {
               groupId: 'g-a',
@@ -1280,6 +1332,7 @@ describe('StructureDrawDialog', () => {
         groupDraw({
           status: 'Published',
           isApplied: true,
+          actions: appliedDrawActions(),
         }),
       ]),
     );
@@ -1299,13 +1352,7 @@ describe('StructureDrawDialog', () => {
 
   it('hides Abandonner when competition is Completed (D)', async () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
-      overview(
-        [groupDraw({ status: 'Draft' })],
-        {},
-        {
-          competitionStatus: 'Completed',
-        },
-      ),
+      overview([groupDraw({ status: 'Draft', actions: hiddenDrawActions() })]),
     );
 
     renderDialog(groupsStage(), true, 'Completed');
@@ -1320,7 +1367,9 @@ describe('StructureDrawDialog', () => {
 
   it('hides Abandonner when stage is Running (D)', async () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
-      overview([groupDraw({ status: 'Draft' })], { status: 'Running' }),
+      overview([groupDraw({ status: 'Draft', actions: hiddenDrawActions() })], {
+        status: 'Running',
+      }),
     );
 
     renderDialog(groupsStage({ status: 'Running' }), true, 'Running');
@@ -1341,6 +1390,7 @@ describe('StructureDrawDialog', () => {
           slotDraw({
             status: 'Cancelled',
             resolutionState: 'Resolved',
+            actions: releaseAvailable(1),
             slotPlacements: [
               {
                 slotKey: 'R16-1-A',
@@ -1371,6 +1421,7 @@ describe('StructureDrawDialog', () => {
             },
           ],
         },
+        'draw-slot-1',
       ),
     );
     vi.mocked(releaseDrawAlignedPlacements).mockResolvedValue({
@@ -1426,6 +1477,7 @@ describe('StructureDrawDialog', () => {
           slotDraw({
             id: 'draw-aaa',
             status: 'Cancelled',
+            actions: releaseAvailable(2),
             slotPlacements: [
               { slotKey: 'S1', entryId: 'e1', displayName: 'Older A' },
               { slotKey: 'S2', entryId: 'e2', displayName: 'Older B' },
@@ -1434,6 +1486,7 @@ describe('StructureDrawDialog', () => {
           slotDraw({
             id: 'draw-zzz',
             status: 'Cancelled',
+            actions: releaseAvailable(1),
             slotPlacements: [
               { slotKey: 'S3', entryId: 'e3', displayName: 'Newer' },
             ],
@@ -1446,6 +1499,7 @@ describe('StructureDrawDialog', () => {
             slot('S3', 'e3', 'Newer'),
           ],
         },
+        'draw-zzz',
       ),
     );
     vi.mocked(releaseDrawAlignedPlacements).mockResolvedValue({
@@ -1613,6 +1667,7 @@ describe('StructureDrawDialog', () => {
           groupDraw({
             status: 'Published',
             isApplied: true,
+            actions: appliedDrawActions(),
           }),
         ],
         { status: 'Ready' },
@@ -1640,6 +1695,7 @@ describe('StructureDrawDialog', () => {
           slotDraw({
             status: 'Published',
             isApplied: true,
+            actions: redoBlockedActions('Stage.MaterializedOpponentConflict'),
           }),
         ],
         {
@@ -1716,6 +1772,7 @@ describe('StructureDrawDialog', () => {
         groupDraw({
           status: 'Published',
           isApplied: true,
+          actions: appliedDrawActions(),
           groupPlacements: [
             {
               groupId: 'g-a',
@@ -1772,6 +1829,7 @@ describe('StructureDrawDialog', () => {
           status: 'Published',
           isApplied: true,
           isObsoleteForConsumption: true,
+          actions: appliedDrawActions(),
         }),
       ]),
     );
@@ -1810,6 +1868,7 @@ describe('StructureDrawDialog', () => {
           slotDraw({
             status: 'Published',
             isApplied: true,
+            actions: redoBlockedActions('Stage.MaterializedOpponentConflict'),
           }),
         ],
         {
@@ -1885,6 +1944,9 @@ describe('StructureDrawDialog', () => {
           groupDraw({
             status: 'Published',
             isApplied: true,
+            actions: drawActions({
+              redo: { state: 'Blocked', blockCode: 'Stage.StructureLocked' },
+            }),
           }),
         ],
         { status: 'Running' },
@@ -1963,6 +2025,7 @@ describe('StructureDrawDialog', () => {
             status: 'Published',
             isApplied: true,
             groupPlacements: [placement],
+            actions: appliedDrawActions(),
           }),
         ],
         { groups },
@@ -1978,9 +2041,11 @@ describe('StructureDrawDialog', () => {
               resolutionState: 'Resolved',
               isApplied: false,
               groupPlacements: [placement],
+              actions: releaseAvailable(1),
             }),
           ],
           { groups },
+          'draw-1',
         ),
       );
       throw new ApiError(
@@ -2049,6 +2114,7 @@ describe('StructureDrawDialog', () => {
           status: 'Published',
           resolutionState: 'Resolved',
           isApplied: false,
+          actions: applyAvailableActions(),
         }),
       ]),
     );
@@ -2064,6 +2130,7 @@ describe('StructureDrawDialog', () => {
         groupDraw({
           status: 'Published',
           isApplied: true,
+          actions: appliedDrawActions(),
         }),
       ]),
     );
@@ -2082,6 +2149,7 @@ describe('StructureDrawDialog', () => {
           slotDraw({
             status: 'Published',
             isApplied: true,
+            actions: redoBlockedActions('Stage.MaterializedOpponentConflict'),
           }),
         ],
         {
@@ -2218,6 +2286,7 @@ describe('StructureDrawDialog', () => {
           slotDraw({
             id: 'draw-old',
             status: 'Cancelled',
+            actions: releaseAvailable(1),
             slotPlacements: [placement],
           }),
         ],
@@ -2231,6 +2300,7 @@ describe('StructureDrawDialog', () => {
             },
           ],
         },
+        'draw-old',
       ),
     );
     vi.mocked(releaseDrawAlignedPlacements).mockImplementation(async () => {
@@ -2240,6 +2310,7 @@ describe('StructureDrawDialog', () => {
             slotDraw({
               id: 'draw-old',
               status: 'Cancelled',
+              actions: hiddenDrawActions(),
               slotPlacements: [placement],
             }),
           ],
@@ -2253,6 +2324,7 @@ describe('StructureDrawDialog', () => {
               },
             ],
           },
+          null,
         ),
       );
       return { releasedCount: 1, skippedCount: 0 };
@@ -2312,6 +2384,7 @@ describe('StructureDrawDialog', () => {
             id: 'draw-aaa',
             status: 'Cancelled',
             groupPlacements: [placementOld],
+            actions: releaseAvailable(1),
           }),
           groupDraw({
             id: 'draw-zzz',
@@ -2325,6 +2398,7 @@ describe('StructureDrawDialog', () => {
             { id: 'g-b', name: 'B', entryIds: [] },
           ],
         },
+        'draw-aaa',
       );
       vi.mocked(fetchStageOverview).mockResolvedValue(payload);
       renderDialog(groupsStage());
@@ -2354,11 +2428,13 @@ describe('StructureDrawDialog', () => {
             id: 'draw-aaa',
             status: 'Cancelled',
             groupPlacements: [placementOld],
+            actions: releaseAvailable(1),
           }),
           groupDraw({
             id: 'draw-zzz',
             status: 'Cancelled',
             groupPlacements: [placementNew],
+            actions: releaseAvailable(1),
           }),
         ],
         {
@@ -2367,6 +2443,7 @@ describe('StructureDrawDialog', () => {
             { id: 'g-b', name: 'B', entryIds: ['e2'] },
           ],
         },
+        'draw-zzz',
       );
       const afterRelease = overview(
         [
@@ -2374,6 +2451,7 @@ describe('StructureDrawDialog', () => {
             id: 'draw-aaa',
             status: 'Cancelled',
             groupPlacements: [placementOld],
+            actions: releaseAvailable(1),
           }),
           groupDraw({
             id: 'draw-zzz',
@@ -2387,6 +2465,7 @@ describe('StructureDrawDialog', () => {
             { id: 'g-b', name: 'B', entryIds: [] },
           ],
         },
+        'draw-aaa',
       );
       vi.mocked(releaseDrawAlignedPlacements).mockResolvedValue({
         releasedCount: 1,
@@ -2438,6 +2517,7 @@ describe('StructureDrawDialog', () => {
           [
             slotDraw({
               status: 'Cancelled',
+              actions: releaseAvailable(1),
               slotPlacements: [
                 { slotKey: 'S1', entryId: 'e1', displayName: 'A' },
                 { slotKey: 'S2', entryId: 'e2', displayName: 'B' },
@@ -2460,6 +2540,7 @@ describe('StructureDrawDialog', () => {
               },
             ],
           },
+          'draw-slot-1',
         ),
       );
       vi.mocked(releaseDrawAlignedPlacements).mockResolvedValue({
@@ -2508,9 +2589,11 @@ describe('StructureDrawDialog', () => {
             groupDraw({
               status: 'Cancelled',
               groupPlacements: [placement],
+              actions: releaseAvailable(1),
             }),
           ],
           { groups: [{ id: 'g-a', name: 'A', entryIds: ['e1'] }] },
+          'draw-1',
         ),
       );
       vi.mocked(releaseDrawAlignedPlacements).mockRejectedValue(
@@ -2567,10 +2650,17 @@ describe('StructureDrawDialog', () => {
             id: 'draw-live',
             status: 'Published',
             isApplied: true,
+            actions: redoBlockedActions(
+              'Application.DrawReleaseBlockedByAttachedMatches',
+            ),
           }),
           groupDraw({
             id: 'draw-old',
             status: 'Cancelled',
+            actions: releaseBlocked(
+              1,
+              'Application.DrawReleaseBlockedByAttachedMatches',
+            ),
             groupPlacements: [
               {
                 groupId: 'g-a',
@@ -2585,7 +2675,7 @@ describe('StructureDrawDialog', () => {
           status: 'Ready',
           groups: [{ id: 'g-a', name: 'A', entryIds: ['e1'] }],
         },
-        { attachedMatchCount: 2 },
+        'draw-old',
       ),
     );
     renderDialog(groupsStage({ status: 'Ready', matchCount: 2 }));
@@ -2610,6 +2700,10 @@ describe('StructureDrawDialog', () => {
           groupDraw({
             id: 'draw-old',
             status: 'Cancelled',
+            actions: releaseBlocked(
+              1,
+              'Application.DrawReleaseBlockedByAttachedMatches',
+            ),
             groupPlacements: [
               {
                 groupId: 'g-a',
@@ -2624,7 +2718,7 @@ describe('StructureDrawDialog', () => {
           status: 'Ready',
           groups: [{ id: 'g-a', name: 'A', entryIds: ['e1'] }],
         },
-        { attachedMatchCount: 2 },
+        'draw-old',
       ),
     );
     renderDialog(groupsStage({ status: 'Ready', matchCount: 2 }));
@@ -2632,8 +2726,7 @@ describe('StructureDrawDialog', () => {
       name: 'Libérer #1 (1/1)',
     });
     expect(release).toBeDisabled();
-    const reason =
-      'Libérer est indisponible : des matchs sont déjà rattachés à cette phase.';
+    const reason = releaseAttachedMatchesError;
     const tile = screen.getByRole('button', {
       name: /Exécution #1/,
     });
@@ -2659,10 +2752,12 @@ describe('StructureDrawDialog', () => {
         [
           groupDraw({
             status: 'Cancelled',
+            actions: releaseAvailable(1),
             groupPlacements: [placement],
           }),
         ],
         { groups },
+        'draw-1',
       ),
     );
     vi.mocked(releaseDrawAlignedPlacements).mockImplementation(async () => {
@@ -2671,10 +2766,15 @@ describe('StructureDrawDialog', () => {
           [
             groupDraw({
               status: 'Cancelled',
+              actions: releaseBlocked(
+                1,
+                'Application.DrawReleaseBlockedByAttachedMatches',
+              ),
               groupPlacements: [placement],
             }),
           ],
           { status: 'Ready', groups },
+          'draw-1',
         ),
       );
       throw new ApiError(
@@ -2699,7 +2799,11 @@ describe('StructureDrawDialog', () => {
     const main = screen
       .getByRole('heading', { name: /Exécutions de tirage/ })
       .closest('[role="dialog"]') as HTMLElement;
-    expect(await within(main).findByText(/Détachez-les/)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(within(main).getAllByText(/Détachez-les/).length).toBeGreaterThan(
+        0,
+      );
+    });
     expect(
       within(main).queryByText(/Libérer est indisponible/),
     ).not.toBeInTheDocument();
@@ -2713,6 +2817,7 @@ describe('StructureDrawDialog', () => {
           slotDraw({
             status: 'Published',
             isApplied: true,
+            actions: redoBlockedActions('Stage.MaterializedOpponentConflict'),
           }),
         ],
         {
@@ -2791,10 +2896,12 @@ describe('StructureDrawDialog', () => {
             id: 'draw-live',
             status: 'Published',
             isApplied: true,
+            actions: appliedDrawActions(),
           }),
           groupDraw({
             id: 'draw-old',
             status: 'Cancelled',
+            actions: releaseBlocked(1, 'Application.DrawReleaseFailure'),
             groupPlacements: [
               {
                 groupId: 'g-a',
@@ -2836,6 +2943,7 @@ describe('StructureDrawDialog', () => {
           status: 'Published',
           isApplied: true,
           isObsoleteForConsumption: true,
+          actions: appliedDrawActions(),
         }),
         groupDraw({
           id: 'draw-old',
@@ -2913,6 +3021,10 @@ describe('StructureDrawDialog', () => {
           groupDraw({
             id: 'draw-old',
             status: 'Cancelled',
+            actions: releaseBlocked(
+              1,
+              'Application.DrawReleaseBlockedByAttachedMatches',
+            ),
             groupPlacements: [
               {
                 groupId: 'g-a',
@@ -2927,18 +3039,14 @@ describe('StructureDrawDialog', () => {
           status: 'Ready',
           groups: [{ id: 'g-a', name: 'A', entryIds: ['e1'] }],
         },
-        { attachedMatchCount: 2 },
+        'draw-old',
       ),
     );
     renderDialog(groupsStage({ status: 'Ready', matchCount: 2 }));
     expect(
       await screen.findByText('Aucun tirage en cours'),
     ).toBeInTheDocument();
-    expect(
-      screen.getAllByText(
-        'Libérer est indisponible : des matchs sont déjà rattachés à cette phase.',
-      ),
-    ).toHaveLength(1);
+    expect(screen.getAllByText(releaseAttachedMatchesError)).toHaveLength(1);
     expect(
       screen.queryByText(/Libérez d'abord les placements/),
     ).not.toBeInTheDocument();
@@ -3010,6 +3118,7 @@ describe('StructureDrawDialog', () => {
           groupDraw({
             id: 'draw-old',
             status: 'Cancelled',
+            actions: releaseAvailable(1),
             groupPlacements: [
               {
                 groupId: 'g-a',
@@ -3021,6 +3130,7 @@ describe('StructureDrawDialog', () => {
           }),
         ],
         { groups: [{ id: 'g-a', name: 'A', entryIds: ['e1'] }] },
+        'draw-old',
       ),
     );
     renderDialog();
@@ -3039,6 +3149,7 @@ describe('StructureDrawDialog', () => {
           groupDraw({
             id: 'draw-aaa',
             status: 'Cancelled',
+            actions: releaseAvailable(1),
             groupPlacements: [
               {
                 groupId: 'g-a',
@@ -3051,6 +3162,7 @@ describe('StructureDrawDialog', () => {
           groupDraw({ id: 'draw-zzz', status: 'Draft' }),
         ],
         { groups: [{ id: 'g-a', name: 'A', entryIds: ['e1'] }] },
+        'draw-aaa',
       ),
     );
     renderDialog();
@@ -3073,6 +3185,7 @@ describe('StructureDrawDialog', () => {
           groupDraw({
             id: 'draw-old',
             status: 'Cancelled',
+            actions: releaseAvailable(1),
             groupPlacements: [
               {
                 groupId: 'g-a',
@@ -3084,6 +3197,7 @@ describe('StructureDrawDialog', () => {
           }),
         ],
         { groups: [{ id: 'g-a', name: 'A', entryIds: ['e1'] }] },
+        'draw-old',
       ),
     );
     vi.mocked(releaseDrawAlignedPlacements).mockImplementation(async () => {
@@ -3093,6 +3207,7 @@ describe('StructureDrawDialog', () => {
             groupDraw({
               id: 'draw-old',
               status: 'Cancelled',
+              actions: hiddenDrawActions(),
               groupPlacements: [
                 {
                   groupId: 'g-a',
@@ -3104,6 +3219,7 @@ describe('StructureDrawDialog', () => {
             }),
           ],
           { groups: [{ id: 'g-a', name: 'A', entryIds: [] }] },
+          null,
         ),
       );
       return { releasedCount: 1, skippedCount: 0 };
@@ -3247,10 +3363,6 @@ describe('StructureDrawDialog', () => {
       name: 'Libérer #1 (1/1)',
     });
     expect(release).toBeDisabled();
-    expect(
-      screen.getByText(
-        'Libérer est indisponible : des matchs sont déjà rattachés à cette phase.',
-      ),
-    ).toBeInTheDocument();
+    expect(screen.getByText(releaseAttachedMatchesError)).toBeInTheDocument();
   });
 });

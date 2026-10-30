@@ -10,14 +10,18 @@ export function apiErrorLabel(error: ApiError): string | undefined {
     return undefined;
   }
 
-  const label = i18n.t(`errors:${error.code}`, { defaultValue: '' });
+  return apiErrorCodeLabel(error.code);
+}
+
+export function apiErrorCodeLabel(code: string): string | undefined {
+  const label = i18n.t(`errors:${code}`, { defaultValue: '' });
   if (label.length > 0) {
     return label;
   }
-  if (error.code.includes('.')) {
+  if (code.includes('.')) {
     return undefined;
   }
-  const stageScoped = i18n.t(`errors:Stage.${error.code}`, {
+  const stageScoped = i18n.t(`errors:Stage.${code}`, {
     defaultValue: '',
   });
   return stageScoped.length > 0 ? stageScoped : undefined;
