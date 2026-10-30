@@ -126,13 +126,20 @@ Do not collapse them: pulse activity ≠ tone chip.
 
 - Canonical: `components/PageHead.tsx` + `foundations/page-head.css`.
 - Workspace Shell destinations (Équipes, Règlement, Structure, Matchs, Classements): **title `--text-display`**, optional `actions` / `note` / `tools`, **no back** (rail is enough).
-- Drill-downs (Stage, fiche match…): `back` + optional `eyebrow` / badges — `PageHeader` in `ui.tsx` is a thin adapter.
+- Drill-downs (Stage, fiche match…): `PageHead` with `back` + optional `eyebrow` / badges.
 - Do **not** confuse with `PanelHead` (panel/section titles, `--text-body`).
 
 ## TextLink / SkipLink
 
 - Cross-surface CTA: `TextLink` + `.ds-text-link` (replaces page-local overview/classements links).
 - Skip to main: `.ds-skip-link` (Accueil) / `.ds-skip-link--on-chrome` (Shell).
+
+## Focus (keyboard)
+
+- Tokens: `--focus-ring-width` and `--focus-ring-offset` in `tokens/geometry.css`; semantic color `--color-focus` in `tokens/colors.css`.
+- Recipe: `foundations/focus.css` defines `--focus-halo` (gap + ring) and applies it on `:focus-visible` for interactive controls inside `.ds-root`, and on `:focus-within` for input shells (`.ds-input`, etc.).
+- Selectable tiles (family **B**) move the halo to the tile container via `:has(.ds-selectable-tile__trigger:focus-visible)` so rings are not clipped — see `foundations/selectable-tile.css`.
+- Do not page-local override focus chrome on `.ds-*` controls; adjust tokens or the foundation recipe instead.
 
 ## Meter
 
@@ -158,11 +165,11 @@ Do not collapse them: pulse activity ≠ tone chip.
 
 There is **no** generic `Card` foundation (see `foundations/surfaces.css`). New UI must pick one of the families below — do not invent a fourth “card” chrome.
 
-| Family                 | Mechanism                                                         | Role                                                                                 | Typical usages                                                               |
-| ---------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
-| **A. Choice tile**     | `ChoiceTile` + `.ds-choice-tile` (`role="checkbox"`, check glyph) | Option inside a form, including a simple entity (crest + name) in a selection dialog | Structure scope, Regulation discipline, AddPhase format, Équipes affectation |
-| **B. Selectable tile** | `.ds-selectable-tile` + page layout classes (no check glyph)      | Rich entity tile in a list or grid                                                   | Teams page, structure topology, qualif/prog rows, draw master                |
-| **C. Panel**           | `.ds-panel` (+ `PanelHead`)                                       | Content container (not decorative card farm)                                         | Overview, Classements, Matches hub, Stage                                    |
+| Family                 | Mechanism                                                               | Role                                                                                 | Typical usages                                                               |
+| ---------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| **A. Choice tile**     | `ChoiceTile` + `.ds-choice-tile` (`role="checkbox"`, check glyph)       | Option inside a form, including a simple entity (crest + name) in a selection dialog | Structure scope, Regulation discipline, AddPhase format, Équipes affectation |
+| **B. Selectable tile** | `SelectableTile` + `.ds-selectable-tile` + page layout (no check glyph) | Rich entity tile in a list or grid                                                   | Teams page, structure topology, qualif/prog rows, draw master                |
+| **C. Panel**           | `.ds-panel` (+ `PanelHead`)                                             | Content container (not decorative card farm)                                         | Overview, Classements, Matches hub, Stage                                    |
 
 **PanelHead** — leading section icon uses `color-brand` (`.ds-panel-head__icon`). Do not recolor section icons to neutral gray.
 
@@ -193,7 +200,7 @@ There is **no** generic `Card` foundation (see `foundations/surfaces.css`). New 
 - React: `SelectableTile` sets `data-selected` and optional `tone="error"` (`data-tone="error"` only — no injected layout). Page classes supply triggers, chevrons, and panels.
 - Compose: `className="<page-layout>"` + `selected` prop, or manual `ds-selectable-tile` + `data-selected="true|false"`.
 - Hover / selected recipes live only in the foundation file (brand default; `[data-tone='error'][data-selected='true']` uses destructive error chrome, never brand).
-- CI guard: `npm run tile:check`.
+- Hygiene audit: `npm run tile:check` (not a CI gate — see `playup-web-quality.mdc`).
 
 #### Tuile repliable (B)
 
