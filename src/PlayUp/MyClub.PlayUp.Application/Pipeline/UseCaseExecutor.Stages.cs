@@ -477,6 +477,41 @@ public sealed partial class UseCaseExecutor
     }
 
     /// <summary>
+    /// Loads a stage, runs <see cref="RedoDraw"/> (cancel → release → preview), and saves once.
+    /// </summary>
+    /// <param name="stageId">Stage that owns the draw.</param>
+    /// <param name="drawId">Applied draw to redo.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The new draw's identity and generation outcome.</returns>
+    public async Task<DrawGenerationDto> RedoDrawAsync(
+        StageId stageId,
+        DrawId drawId,
+        CancellationToken cancellationToken = default)
+    {
+        var stage = await stages.GetByIdForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false)
+                    ?? throw new ApplicationFailureException(
+                        $"Stage '{stageId}' was not found.",
+                        ApplicationErrorCodes.StageNotFound);
+        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken).ConfigureAwait(false);
+        EnsureCompetitionAllowsLifecycleMutation(competition);
+
+        var competitionStages = await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken)
+            .ConfigureAwait(false);
+        var stageMatches = await matches.ListByStageForUpdateAsync(stageId, cancellationToken)
+            .ConfigureAwait(false);
+        var result = RedoDraw.Execute(stage, drawId, clock, competitionStages, stageMatches);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        var newDraw = stage.GetDraw(result.DrawId);
+        LogDrawRedone(logger, stageId.Value, drawId.Value, newDraw.Id.Value, stage.CompetitionId.Value);
+        return new DrawGenerationDto(
+            newDraw.Id.Value,
+            result.IsResolved,
+            result.IsNoSolution,
+            newDraw.Status,
+            newDraw.Resolution.State);
+    }
+
+    /// <summary>
     /// Adds a round (optional TieFormat) to a stage.
     /// </summary>
     public async Task<Round> AddStageRoundAsync(

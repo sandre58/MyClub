@@ -141,6 +141,12 @@ public static class ApplicationErrorCodes
     public const string DrawReleaseRequiresCancelled = "Application.DrawReleaseRequiresCancelled";
 
     /// <summary>
+    /// Gets the code when Redo targets a draw that is not applied (Draft, Published not consumed, Cancelled).
+    /// Mapped to HTTP 409.
+    /// </summary>
+    public const string DrawRedoRequiresApplied = "Application.DrawRedoRequiresApplied";
+
+    /// <summary>
     /// Gets the code when GenerateSchedule cannot run (e.g. target match not attached to the Stage).
     /// Distinct from Domain <c>SchedulingResult.InvalidRequest</c> / <c>NoSolution</c>.
     /// </summary>

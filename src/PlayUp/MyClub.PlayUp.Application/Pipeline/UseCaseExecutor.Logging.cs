@@ -92,6 +92,17 @@ public sealed partial class UseCaseExecutor
         int createdMatchCount);
 
     [LoggerMessage(
+        EventId = 1024,
+        Level = LogLevel.Information,
+        Message = "Draw redone {StageId} {DrawId} {NewDrawId} {CompetitionId}")]
+    private static partial void LogDrawRedone(
+        ILogger logger,
+        Guid stageId,
+        Guid drawId,
+        Guid newDrawId,
+        Guid competitionId);
+
+    [LoggerMessage(
         EventId = 1030,
         Level = LogLevel.Information,
         Message = "Match started {MatchId} {CompetitionId}")]

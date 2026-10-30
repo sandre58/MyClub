@@ -690,6 +690,39 @@ Decision D — explicit liberate: clears occupants that still exactly match this
 | Stage | Draft or Ready. Running, Suspended, and Completed → `Stage.StructureLocked` (409). Ready Group release is refused when matches are attached (`DrawReleaseBlockedByAttachedMatches`, 409) |
 | Per placement | Skip when direct assignment (Slot), vacant, or divergent occupant |
 
+### `POST /stages/{stageId}/draws/{drawId}/redo` → `DrawGenerationDto`
+
+Atomic "Refaire le tirage": in one `UseCaseExecutor` command (single `SaveChanges`), cancels the current draw, releases the placements still aligned with it, then creates, configures, and generates the preview of a new draw of the same kind. No request body. On any guard failure or mid-sequence domain error nothing is persisted — the original draw stays `Published`/applied and its placements stay occupied.
+
+The guard reuses the `DrawActionEvaluator` `Redo` action (the same evaluator backing the stage projection) before running the sequence:
+
+The command rejects any `Redo` state other than `Available`, not just `Blocked`:
+
+| Check | Code (409) |
+| :--- | :--- |
+| Draw not applied on the stage (Hidden on the read projection — Draft, Published not yet consumed, or already Cancelled) | `Application.DrawRedoRequiresApplied` |
+| Release guard (same as explicit Release, evaluated as if the draw were already cancelled) | `Application.DrawReleaseBlockedByAttachedMatches`, `Stage.StructureLocked`, `Stage.MaterializedOpponentConflict` |
+| Any stage `DirectAssignment` present | `Application.DrawLaunchDirectAssignmentPresent` |
+| Target slots/groups not vacant once this draw's own placements are excluded (sibling feeds, other draws) | `Application.DrawLaunchGridNotVacant` |
+
+This upfront check runs against a single-stage `DrawActionContext` (`ForCommand`), same limitation as the stage projection: a sibling stage feeding into this one can still cause `DrawLaunchGridNotVacant` from the real `GenerateDrawResolution` step even when the upfront check reports `Available`. In that case the exception propagates from mid-sequence and, per the single-`SaveChanges` boundary, nothing is persisted (Cancel/Release/new-draw/preview all stay in the uncommitted unit of work).
+
+```json
+{
+  "drawId": "<guid>",
+  "isResolved": true,
+  "isNoSolution": false,
+  "status": "Draft",
+  "resolutionState": "Resolved"
+}
+```
+
+| Gate | Allowed |
+| :--- | :--- |
+| Competition | Not `Completed` \| `Archived` (same lifecycle mutation gate as Cancel) |
+| Draw | Applied (Published and consumed) Slot or Group draw. Not applied (Hidden on the read projection) → `Application.DrawRedoRequiresApplied` (409) |
+| Stage | Draft or Ready. Running, Suspended, and Completed → `Stage.StructureLocked` (409) |
+
 ## Error contract (`ProblemDetails`)
 
 | HTTP | When |
@@ -721,6 +754,9 @@ ProblemDetails extensions:
 - `Application.CompetitionClosed`
 - `Application.DrawReleaseBlockedByAttachedMatches`
 - `Application.DrawReleaseRequiresCancelled`
+- `Application.DrawRedoRequiresApplied`
+- `Application.DrawLaunchDirectAssignmentPresent`
+- `Application.DrawLaunchGridNotVacant`
 
 ### Application codes mapped to 404
 

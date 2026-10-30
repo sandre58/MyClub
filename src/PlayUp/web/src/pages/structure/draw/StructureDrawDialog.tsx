@@ -64,7 +64,7 @@ import {
   sortDrawsNewestFirst,
 } from './drawUi';
 import { DrawSlotConfrontationGrid } from './DrawSlotConfrontationGrid';
-import { DrawRedoStoppedError, redoAppliedDraw } from './drawRedo';
+import { redoAppliedDraw } from './drawRedo';
 import {
   drawActionsOf,
   isDrawActionAvailable,
@@ -102,12 +102,6 @@ function resolveDrawKindForFormat(
 function stickyMutationError(error: unknown): unknown {
   if (error == null || isDrawGenerateFailedError(error)) {
     return null;
-  }
-  if (error instanceof DrawRedoStoppedError) {
-    if (isDrawGenerateFailedError(error.cause)) {
-      return null;
-    }
-    return error.cause ?? error;
   }
   return error;
 }
@@ -403,19 +397,7 @@ export function StructureDrawDialog({
   });
 
   const redoMutation = useMutation({
-    mutationFn: async (draw: StageDraw) => {
-      if (!drawKind) {
-        throw new DrawRedoStoppedError(
-          'preview',
-          new Error('Draw kind unavailable for this format.'),
-        );
-      }
-      return redoAppliedDraw({
-        cancel: () => cancelDraw(stageId, draw.id),
-        release: () => releaseDrawAlignedPlacements(stageId, draw.id),
-        preview: () => createAndGenerateDraw(stageId, drawKind),
-      });
-    },
+    mutationFn: (draw: StageDraw) => redoAppliedDraw(stageId, draw.id),
     onSuccess: (result) => {
       closeConfirm();
       scheduleDrawHubRefresh();
@@ -425,15 +407,10 @@ export function StructureDrawDialog({
         notify.success(tDraw('toastCreated'));
       }
     },
-    onError: (error) => {
-      closeConfirm();
+    onError: () => {
+      // Atomic redo: any failure (409 refusal or otherwise) leaves the server state ahead of what
+      // the dialog last fetched, so refresh regardless of status code.
       scheduleDrawHubRefresh();
-      if (
-        error instanceof DrawRedoStoppedError &&
-        isDrawGenerateFailedError(error.cause)
-      ) {
-        notify.error(tDraw('toastGenerationFailed'));
-      }
     },
   });
 

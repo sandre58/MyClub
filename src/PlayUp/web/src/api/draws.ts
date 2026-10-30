@@ -1,6 +1,7 @@
 /**
  * Draw create / generate / publish / apply orchestration.
  */
+import type { DrawResolutionState, DrawStatus } from '../types/enums';
 import { ApiError, postNoContent, sendJson } from './http';
 
 /** ConfigureDrawInputs refuses Rerun when the launch grid is not vacant. */
@@ -159,4 +160,23 @@ export function isDrawGenerateFailedError(
 /** POST /stages/{stageId}/draws/{drawId}/apply → 204 */
 export function applyDraw(stageId: string, drawId: string): Promise<void> {
   return postNoContent(`/stages/${stageId}/draws/${drawId}/apply`);
+}
+
+/**
+ * Refaire — single atomic server transaction: cancel the draw, release its aligned
+ * placements, then preview a new resolution (create → Rerun inputs → generate) for the
+ * same draw kind. All-or-nothing: a failure at any step persists nothing.
+ * POST /stages/{stageId}/draws/{drawId}/redo → 200
+ */
+export function redoDraw(
+  stageId: string,
+  drawId: string,
+): Promise<{
+  drawId: string;
+  isResolved: boolean;
+  isNoSolution: boolean;
+  status: DrawStatus;
+  resolutionState: DrawResolutionState;
+}> {
+  return sendJson('POST', `/stages/${stageId}/draws/${drawId}/redo`);
 }

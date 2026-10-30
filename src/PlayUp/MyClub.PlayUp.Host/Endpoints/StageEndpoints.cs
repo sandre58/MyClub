@@ -623,6 +623,20 @@ internal static class StageEndpoints
             });
 
         app.MapPost(
+            "/stages/{stageId:guid}/draws/{drawId:guid}/redo",
+            async (
+                Guid stageId,
+                Guid drawId,
+                UseCaseExecutor executor,
+                CancellationToken cancellationToken) =>
+            {
+                var result = await executor
+                    .RedoDrawAsync(new StageId(stageId), new DrawId(drawId), cancellationToken)
+                    .ConfigureAwait(false);
+                return Results.Ok(result);
+            });
+
+        app.MapPost(
             "/stages/{stageId:guid}/draws",
             async (Guid stageId, CreateDrawRequest request, UseCaseExecutor executor, CancellationToken cancellationToken) =>
             {

@@ -73,8 +73,16 @@ public static class StageDrawBracketLaunchClassifier
 
         foreach (var slot in stage.Slots)
         {
-            var treatedVacant = slotKeysTreatedAsVacant?.Contains(slot.SlotKey) == true;
-            if (!treatedVacant && slot.EntryId is { } entryId && pool.Contains(entryId))
+            if (slotKeysTreatedAsVacant?.Contains(slot.SlotKey) == true)
+            {
+                // Treated as vacant ahead of feed resolution: a slot the caller is about to free
+                // (e.g. Redo's own draw being cancelled) must not count itself — via its own
+                // Published resolution feed — as reserving the place it occupies today.
+                vacant++;
+                continue;
+            }
+
+            if (slot.EntryId is { } entryId && pool.Contains(entryId))
             {
                 occupiedByEntry++;
                 continue;

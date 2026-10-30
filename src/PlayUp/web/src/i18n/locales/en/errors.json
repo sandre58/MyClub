@@ -38,6 +38,7 @@
     "DrawReleaseBlockedByAttachedMatches": "Cannot release placements: matches are already attached to this stage. Detach them or revert the stage to draft.",
     "DrawReleaseFailure": "Unable to release draw placements.",
     "DrawReleaseRequiresCancelled": "Release applies only to a cancelled draw.",
+    "DrawRedoRequiresApplied": "Redo applies only to an applied draw.",
     "ScheduleGenerationFailure": "Unable to generate the schedule.",
     "ScheduleApplyFailure": "Unable to apply the schedule.",
     "MaterializationFailure": "Unable to create matches.",

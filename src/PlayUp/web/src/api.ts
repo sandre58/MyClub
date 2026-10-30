@@ -105,4 +105,5 @@ export {
   isDrawGenerateFailedError,
   isStageDrawRerunLaunchGuardError,
   applyDraw,
+  redoDraw,
 } from './api/draws';

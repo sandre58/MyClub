@@ -27,6 +27,7 @@ import {
   DrawGenerateFailedError,
   fetchStageOverview,
   publishAndApplyDraw,
+  redoDraw,
   releaseDrawAlignedPlacements,
   rerunDrawGeneration,
 } from '../../../api';
@@ -74,6 +75,7 @@ vi.mock('../../../api', async (importOriginal) => {
     applyDraw: vi.fn(),
     releaseDrawAlignedPlacements: vi.fn(),
     rerunDrawGeneration: vi.fn(),
+    redoDraw: vi.fn(),
   };
 });
 
@@ -1764,9 +1766,8 @@ describe('StructureDrawDialog', () => {
     expect(cancelApplied.className).not.toContain('ds-btn--primary');
   });
 
-  it('redoes an applied draw as cancel, release, then a new preview', async () => {
+  it('redoes an applied draw through the single atomic redo endpoint', async () => {
     const user = userEvent.setup();
-    const order: string[] = [];
     vi.mocked(fetchStageOverview).mockResolvedValue(
       overview([
         groupDraw({
@@ -1784,20 +1785,12 @@ describe('StructureDrawDialog', () => {
         }),
       ]),
     );
-    vi.mocked(cancelDraw).mockImplementation(async () => {
-      order.push('cancel');
-    });
-    vi.mocked(releaseDrawAlignedPlacements).mockImplementation(async () => {
-      order.push('release');
-      return { releasedCount: 1, skippedCount: 0 };
-    });
-    vi.mocked(createAndGenerateDraw).mockImplementation(async () => {
-      order.push('create');
-      return {
-        drawId: 'draw-next',
-        isResolved: true,
-        isNoSolution: false,
-      };
+    vi.mocked(redoDraw).mockResolvedValue({
+      drawId: 'draw-next',
+      isResolved: true,
+      isNoSolution: false,
+      status: 'Draft',
+      resolutionState: 'Resolved',
     });
 
     renderDialog();
@@ -1812,14 +1805,12 @@ describe('StructureDrawDialog', () => {
     );
 
     await waitFor(() => {
-      expect(order).toEqual(['cancel', 'release', 'create']);
+      expect(redoDraw).toHaveBeenCalledWith(stageId, 'draw-1');
     });
-    expect(cancelDraw).toHaveBeenCalledWith(stageId, 'draw-1');
-    expect(releaseDrawAlignedPlacements).toHaveBeenCalledWith(
-      stageId,
-      'draw-1',
-    );
-    expect(createAndGenerateDraw).toHaveBeenCalledWith(stageId, 'Group');
+    expect(redoDraw).toHaveBeenCalledTimes(1);
+    expect(cancelDraw).not.toHaveBeenCalled();
+    expect(releaseDrawAlignedPlacements).not.toHaveBeenCalled();
+    expect(createAndGenerateDraw).not.toHaveBeenCalled();
   });
 
   it('shows an obsolete badge when the draw result is stale', async () => {
@@ -2009,7 +2000,7 @@ describe('StructureDrawDialog', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('shows the unreleased recovery when Refaire stops at release', async () => {
+  it('keeps the confirm dialog open with an inline error when the atomic redo is refused', async () => {
     const user = userEvent.setup();
     const placement = {
       groupId: 'g-a',
@@ -2031,30 +2022,15 @@ describe('StructureDrawDialog', () => {
         { groups },
       ),
     );
-    vi.mocked(cancelDraw).mockResolvedValue(undefined);
-    vi.mocked(releaseDrawAlignedPlacements).mockImplementation(async () => {
-      vi.mocked(fetchStageOverview).mockResolvedValue(
-        overview(
-          [
-            groupDraw({
-              status: 'Cancelled',
-              resolutionState: 'Resolved',
-              isApplied: false,
-              groupPlacements: [placement],
-              actions: releaseAvailable(1),
-            }),
-          ],
-          { groups },
-          'draw-1',
-        ),
-      );
-      throw new ApiError(
+
+    vi.mocked(redoDraw).mockRejectedValue(
+      new ApiError(
         409,
         'Conflict',
-        'release failed',
+        'redo refused',
         'Application.DrawReleaseBlockedByAttachedMatches',
-      );
-    });
+      ),
+    );
 
     renderDialog();
     await user.click(
@@ -2067,26 +2043,22 @@ describe('StructureDrawDialog', () => {
       within(confirm).getByRole('button', { name: 'Refaire le tirage' })
         .className,
     ).toContain('ds-btn--destructive');
-    expect(confirm).toHaveTextContent(/même si la libération échoue/);
     await user.click(
       within(confirm).getByRole('button', { name: 'Refaire le tirage' }),
     );
 
-    expect(await screen.findByText('1/1 non libérés')).toBeInTheDocument();
+    expect(redoDraw).toHaveBeenCalledWith(stageId, 'draw-1');
+    expect(redoDraw).toHaveBeenCalledTimes(1);
     expect(
-      screen.getByRole('button', { name: 'Libérer #1 (1/1)' }),
+      await within(confirm).findByText(/Détachez-les/),
     ).toBeInTheDocument();
-    const main = screen
-      .getByRole('heading', { name: /Exécutions de tirage/ })
-      .closest('[role="dialog"]') as HTMLElement;
     expect(
-      within(main).getByText(/des matchs sont déjà rattachés/),
+      await screen.findByRole('dialog', { name: 'Refaire le tirage ?' }),
     ).toBeInTheDocument();
+    expect(cancelDraw).not.toHaveBeenCalled();
+    expect(releaseDrawAlignedPlacements).not.toHaveBeenCalled();
     expect(createAndGenerateDraw).not.toHaveBeenCalled();
-    expect(releaseDrawAlignedPlacements).toHaveBeenCalledWith(
-      stageId,
-      'draw-1',
-    );
+    expect(screen.queryByText('1/1 non libérés')).not.toBeInTheDocument();
   });
 
   it('focuses Lancer, then Valider after a draft appears', async () => {
