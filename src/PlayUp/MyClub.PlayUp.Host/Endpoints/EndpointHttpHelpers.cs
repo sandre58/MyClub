@@ -43,8 +43,24 @@ internal static class EndpointHttpHelpers
 
     internal static DrawResolutionKind ParseDrawKind(string kind) => kind.Equals("Slot", StringComparison.OrdinalIgnoreCase) ? DrawResolutionKind.Slot : kind.Equals("Group", StringComparison.OrdinalIgnoreCase) || kind.Equals("Groups", StringComparison.OrdinalIgnoreCase) ? DrawResolutionKind.Group : throw new ApplicationFailureException($"Unknown draw kind '{kind}'. Expected Slot or Group.", ApplicationErrorCodes.DrawKindNotSupported);
 
-    internal static DrawInputsIntent ParseDrawInputsIntent(string? intent) =>
-        string.IsNullOrWhiteSpace(intent) || intent.Equals("Default", StringComparison.OrdinalIgnoreCase)
-            ? DrawInputsIntent.Default
-            : intent.Equals("Rerun", StringComparison.OrdinalIgnoreCase) ? DrawInputsIntent.Rerun : throw new BadHttpRequestException($"Unknown draw inputs intent '{intent}'. Expected Default or Rerun.");
+    internal static DrawInputsIntent ParseDrawInputsIntent(string? intent)
+    {
+        if (string.IsNullOrWhiteSpace(intent) || intent.Equals("Default", StringComparison.OrdinalIgnoreCase))
+        {
+            return DrawInputsIntent.Default;
+        }
+
+        if (intent.Equals("Rerun", StringComparison.OrdinalIgnoreCase))
+        {
+            return DrawInputsIntent.Rerun;
+        }
+
+        if (intent.Equals("Partial", StringComparison.OrdinalIgnoreCase))
+        {
+            return DrawInputsIntent.Partial;
+        }
+
+        throw new BadHttpRequestException(
+            $"Unknown draw inputs intent '{intent}'. Expected Default, Rerun, or Partial.");
+    }
 }

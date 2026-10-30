@@ -56,7 +56,7 @@ public sealed class StructureDrawCreateLaunchGateContractTests
     }
 
     [Fact]
-    public void Precursor_slot_grid_with_blocking_places_forbids_launch_even_when_badge_ToLaunch()
+    public void Precursor_slot_grid_with_one_free_place_allows_partial_launch()
     {
         var competition = CreateCompetition.Execute("Cup", _clock);
         var e1 = AddEntry.Execute(competition, "A", _clock);
@@ -73,10 +73,83 @@ public sealed class StructureDrawCreateLaunchGateContractTests
             DrawResolutionKind.Slot);
 
         facts.BlockingPlaceCount.Should().BeGreaterThan(0);
+        facts.VacantForDrawLaunchCount.Should().Be(1);
         StructureViewAssembler.GetDrawExecutionBadge(stage, hasDrawRules: true)
             .Should().Be(StructureDrawExecutionBadge.ToLaunch);
 
         var hub = StructureViewAssembler.Assemble(competition, [stage]).Stages.Single();
+        hub.DrawCreateLaunch.Allowed.Should().BeTrue();
+        hub.DrawCreateLaunch.BlockReasonCode.Should().BeNull();
+    }
+
+    [Fact]
+    public void Slot_launch_does_not_count_direct_assignment_as_a_free_place()
+    {
+        var (competition, stage) = CupWithPopulation(2, 2);
+        stage.AssignEntryToSlot(stage.Slots[0].SlotKey, stage.CompositionEntries[0].EntryId);
+
+        var scope = SlotPartialDrawPlanner.Compose(stage, [stage]);
+        scope.VacantSlotKeys.Should().Equal(stage.Slots[1].SlotKey);
+        scope.UnplacedEntries.Should().ContainSingle(entry =>
+            entry.Equals(stage.CompositionEntries[1].EntryId));
+
+        var hub = StructureViewAssembler.Assemble(competition, [stage]).Stages.Single();
+        hub.DrawCreateLaunch.Allowed.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Slot_launch_refuses_when_no_place_is_free()
+    {
+        var (competition, stage) = CupWithPopulation(2, 2);
+        stage.ApplyResolvedEntry(stage.Slots[0].SlotKey, stage.CompositionEntries[0].EntryId, _clock);
+        stage.ApplyResolvedEntry(stage.Slots[1].SlotKey, stage.CompositionEntries[1].EntryId, _clock);
+
+        var hub = StructureViewAssembler.Assemble(competition, [stage]).Stages.Single();
+
+        hub.DrawCreateLaunch.Allowed.Should().BeFalse();
+        hub.DrawCreateLaunch.BlockReasonCode.Should().Be(StructureDrawCreateLaunchGate.BlockNoFreeSlot);
+    }
+
+    [Fact]
+    public void Slot_launch_refuses_when_unplaced_teams_do_not_fill_free_places()
+    {
+        var (competition, stage) = CupWithPopulation(4, 2);
+        stage.ApplyResolvedEntry(stage.Slots[0].SlotKey, stage.CompositionEntries[0].EntryId, _clock);
+
+        var hub = StructureViewAssembler.Assemble(competition, [stage]).Stages.Single();
+
+        hub.DrawCreateLaunch.Allowed.Should().BeFalse();
+        hub.DrawCreateLaunch.BlockReasonCode.Should().Be(StructureDrawCreateLaunchGate.BlockNotEnoughTeams);
+    }
+
+    [Fact]
+    public void Slot_launch_refuses_when_unplaced_teams_exceed_free_places()
+    {
+        var (competition, stage) = CupWithPopulation(2, 3);
+
+        var hub = StructureViewAssembler.Assemble(competition, [stage]).Stages.Single();
+
+        hub.DrawCreateLaunch.Allowed.Should().BeFalse();
+        hub.DrawCreateLaunch.BlockReasonCode.Should().Be(StructureDrawCreateLaunchGate.BlockTooManyTeams);
+    }
+
+    [Fact]
+    public void Groups_with_an_occupied_place_still_forbids_launch()
+    {
+        var situation = TestCompetition.Create("Groups occupied", _clock)
+            .WithTeams("A", "B", "C", "D")
+            .WithStructure(StructureIntent.Groups(2, 2));
+        var stage = situation.PrimaryStage!;
+        ReplaceStageDrawRules.Execute(
+            stage,
+            new DrawRules(DrawMode.Random, potRules: new PotRules(2)),
+            _clock);
+        var ids = situation.Competition.Entries.Select(entry => entry.Id).ToArray();
+        stage.ReplaceAffectationAuthoring(ids, _clock);
+        stage.AssignEntryToGroup(stage.Groups[0].Id, ids[0]);
+
+        var hub = StructureViewAssembler.Assemble(situation.Competition, situation.Stages).Stages.Single();
+
         hub.DrawCreateLaunch.Allowed.Should().BeFalse();
         hub.DrawCreateLaunch.BlockReasonCode.Should().Be(StructureDrawCreateLaunchGate.BlockBracketPlacesOccupied);
     }
@@ -169,5 +242,20 @@ public sealed class StructureDrawCreateLaunchGateContractTests
 
         hub.DrawCreateLaunch.Allowed.Should().BeFalse();
         hub.DrawCreateLaunch.BlockReasonCode.Should().Be(StructureDrawCreateLaunchGate.BlockGroupShapeInvalid);
+    }
+
+    private (Domain.Competitions.Competition Competition, Stage Stage) CupWithPopulation(int slots, int teams)
+    {
+        var competition = CreateCompetition.Execute($"Cup {slots}x{teams}", _clock);
+        var ids = new List<Domain.Common.EntryId>();
+        for (var index = 0; index < teams; index++)
+        {
+            ids.Add(AddEntry.Execute(competition, $"T{index}", _clock).Id);
+        }
+
+        var stage = ConfigureStructure.Execute(competition, null, StructureIntent.Cup(slots), _clock).Stage;
+        ReplaceStageDrawRules.Execute(stage, new DrawRules(DrawMode.Random), _clock);
+        stage.ReplaceAffectationAuthoring(ids, _clock);
+        return (competition, stage);
     }
 }

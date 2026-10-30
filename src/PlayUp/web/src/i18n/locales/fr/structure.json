@@ -721,6 +721,9 @@
           "countMismatch": "Nombre d’équipes différent du nombre de places.",
           "directAssignment": "Des places ont encore une affectation directe.",
           "occupiedSlots": "Des placements occupent encore des places.",
+          "noFreeSlot": "Aucune place libre.",
+          "notEnoughTeams": "Pas assez d’équipes pour les places libres.",
+          "tooManyTeams": "Plus d’équipes que de places libres.",
           "missingPots": "Pots de tirage non configurés.",
           "groupShape": "Équipes ≠ pots × groupes."
         },
@@ -730,11 +733,15 @@
           "countMismatch": "Il faut {{places}} équipes pour {{places}} places ; la composition en a {{count}}.",
           "directAssignment": "Libérez les affectations directes avant de lancer un nouveau tirage.",
           "occupiedSlots": "Libérez les placements existants avant de lancer un nouveau tirage.",
+          "noFreeSlot": "Toutes les places de cette phase sont déjà occupées ou réservées. Le tirage ne remplace pas les équipes déjà placées.",
+          "notEnoughTeams": "Les équipes non placées ne suffisent pas à remplir les places encore libres.",
+          "tooManyTeams": "Il y a plus d’équipes non placées que de places libres. Le tirage ne laisse pas de place vide et n’en écrase aucune.",
           "missingPots": "Définissez le nombre de pots avant de générer le tirage.",
           "groupShape": "Le nombre d’équipes doit égaler pots × groupes."
         },
         "echoTeams": "Ouvrir les équipes"
       },
+      "partialFillHint": "Le tirage remplira uniquement les places libres. Les équipes déjà placées restent en place.",
       "creating": "Tirage en cours…",
       "historyAria": "Historique des exécutions",
       "execution": "Exécution #{{n}}",

@@ -298,7 +298,7 @@ Server decision for starting a new draw execution on that phase. The SPA display
 | Field | Type | Notes |
 | :--- | :--- | :--- |
 | `allowed` | boolean | True when a new draw may be launched |
-| `blockReasonCode` | string \| null | Stable code when `allowed` is false (`DrawRulesMissing`, `MissingPots`, `PlacesCountMismatch`, `BracketPlacesOccupied`, …); null when allowed |
+| `blockReasonCode` | string \| null | Stable code when `allowed` is false. Slot: `NoFreeSlot`, `NotEnoughTeams`, `TooManyTeams` (free places must match unplaced teams). Group: `BracketPlacesOccupied` when a place is taken. Also `DrawRulesMissing`, `MissingPots`, `GroupShapeInvalid`, …. Null when allowed |
 
 ### Stage lifecycle commands
 
@@ -711,6 +711,18 @@ Overview (MaterializeFromOccupiedSlots)
 
 These DTOs live in `MyClub.PlayUp.Host/Contracts`. They expose Guids only — no Domain aggregates.
 
+### Slot draw inputs — `Partial`
+
+`POST /stages/{stageId}/draws` and `POST /stages/{stageId}/draws/{drawId}/inputs` accept `intent`: `Default`, `Rerun`, or `Partial` (omitted → `Default`).
+
+| Intent | What is drawn | Occupants |
+| :--- | :--- | :--- |
+| `Default` | Encoding F: composition pool, current occupants as Fixed* | Unchanged until Apply. Apply skips a slot whose occupant is already the instructed team and refuses a different occupant or a move |
+| `Rerun` | Full reshuffle. Refused when the grid is not vacant or a direct assignment exists | Not cleared by configure or generate |
+| `Partial` | Slot only. Unplaced teams into free slots (no occupant and feed Missing), exact count | Left out of the pool and the resolution, so a later release of this draw does not clear them |
+
+`Partial` refusals are HTTP 409: `Application.DrawNoFreeSlot` (no free slot, even if extra teams remain), `Application.DrawNotEnoughTeams`, `Application.DrawTooManyTeams`. Generate does not write slot occupants. Publish-and-apply is what fills the free slots. Redo stays a full reshuffle and stays hidden until the draw is applied (`Application.DrawRedoRequiresApplied`).
+
 ### `POST /stages/{stageId}/draws/{drawId}/release-aligned-placements` → `ReleaseDrawAlignedPlacementsDto`
 
 Decision D — explicit liberate: clears occupants that still exactly match this draw’s resolution. Slot: `SlotResults` (`EntryId` match, no DirectAssignment). Group: `GroupResults` when the entry is still in that group, via the draw removal path (Draft or Ready). Does **not** cancel the draw, does **not** replace divergent occupants, and does **not** revert Ready to Draft. The draw must be Cancelled; otherwise `Application.DrawReleaseRequiresCancelled` (409), including when the draw is also not Resolved. A Cancelled draw that is not Resolved, or a published draw still applied on the stage → `DrawReleaseFailure` (400). Group release on a Ready stage with attached matches → `Application.DrawReleaseBlockedByAttachedMatches` (409). Slot and Group release on Running, Suspended, and Completed → `Stage.StructureLocked` (409). Draft Group release keeps the per-entry opponent coherence check (`Stage.MaterializedOpponentConflict`).
@@ -796,6 +808,9 @@ ProblemDetails extensions:
 - `Application.DrawRedoRequiresApplied`
 - `Application.DrawLaunchDirectAssignmentPresent`
 - `Application.DrawLaunchGridNotVacant`
+- `Application.DrawNoFreeSlot`
+- `Application.DrawNotEnoughTeams`
+- `Application.DrawTooManyTeams`
 
 ### Application codes mapped to 404
 

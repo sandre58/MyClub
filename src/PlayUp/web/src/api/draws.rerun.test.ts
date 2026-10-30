@@ -33,7 +33,9 @@ describe('rerunDrawGeneration', () => {
         isNoSolution: false,
       });
 
-    await expect(rerunDrawGeneration(stageId, drawId)).resolves.toEqual({
+    await expect(
+      rerunDrawGeneration(stageId, drawId, 'Group'),
+    ).resolves.toEqual({
       drawId,
       isResolved: true,
       isNoSolution: false,
@@ -55,6 +57,25 @@ describe('rerunDrawGeneration', () => {
     );
   });
 
+  it('configures Partial inputs when relancing a slot draw', async () => {
+    vi.mocked(sendJson)
+      .mockResolvedValueOnce({ drawId })
+      .mockResolvedValueOnce({
+        drawId,
+        isResolved: true,
+        isNoSolution: false,
+      });
+
+    await rerunDrawGeneration(stageId, drawId, 'Slot');
+
+    expect(sendJson).toHaveBeenNthCalledWith(
+      1,
+      'POST',
+      `/stages/${stageId}/draws/${drawId}/inputs`,
+      { intent: 'Partial' },
+    );
+  });
+
   it('rethrows StageDrawRerunLaunchGuard codes without wrapping them', async () => {
     const guard = new ApiError(
       409,
@@ -64,7 +85,9 @@ describe('rerunDrawGeneration', () => {
     );
     vi.mocked(sendJson).mockRejectedValueOnce(guard);
 
-    await expect(rerunDrawGeneration(stageId, drawId)).rejects.toBe(guard);
+    await expect(rerunDrawGeneration(stageId, drawId, 'Group')).rejects.toBe(
+      guard,
+    );
     expect(isStageDrawRerunLaunchGuardError(guard)).toBe(true);
     expect(sendJson).toHaveBeenCalledTimes(1);
   });
@@ -74,7 +97,7 @@ describe('rerunDrawGeneration', () => {
       .mockResolvedValueOnce({ drawId })
       .mockRejectedValueOnce(new Error('boom'));
 
-    const error = await rerunDrawGeneration(stageId, drawId).catch(
+    const error = await rerunDrawGeneration(stageId, drawId, 'Group').catch(
       (cause: unknown) => cause,
     );
     expect(error).toBeInstanceOf(DrawGenerateFailedError);

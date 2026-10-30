@@ -118,6 +118,9 @@ const DRAW_CREATE_BLOCKS = new Set([
   'countMismatch',
   'directAssignment',
   'occupiedSlots',
+  'noFreeSlot',
+  'notEnoughTeams',
+  'tooManyTeams',
 ]);
 
 function structureHref(competitionId: string, stageId?: string | null): string {
@@ -308,12 +311,15 @@ export function functionalProblemPresentation(
       'missingPots',
       'occupiedSlots',
       'directAssignment',
+      'noFreeSlot',
+      'notEnoughTeams',
+      'tooManyTeams',
     ]);
     // Reuse Structure fiche i18n (no parallel draw.createBlock catalogue).
     const configEcho =
       source === 'missingPots'
         ? { actionCode: 'ConfigureDrawParams' as const }
-        : source === 'belowMinimumTeams'
+        : source === 'belowMinimumTeams' || source === 'notEnoughTeams'
           ? { actionCode: 'AddEntry' as const }
           : null;
     return {
@@ -322,7 +328,7 @@ export function functionalProblemPresentation(
       titleNs: 'structure',
       descriptionParams,
       sotHref:
-        source === 'belowMinimumTeams'
+        source === 'belowMinimumTeams' || source === 'notEnoughTeams'
           ? teamsHref(competitionId)
           : structureHref(competitionId, stageId),
       cta: configEcho,

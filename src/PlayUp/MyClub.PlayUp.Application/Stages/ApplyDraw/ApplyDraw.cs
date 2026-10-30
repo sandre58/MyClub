@@ -113,6 +113,7 @@ public static class ApplyDraw
 
         var instructions = draw.ToSlotAssignmentInstructions(stage.Id);
         var pool = draw.Inputs!.Entries;
+        var pending = new List<SlotAssignmentInstruction>();
 
         foreach (var instruction in instructions)
         {
@@ -135,6 +136,19 @@ public static class ApplyDraw
                     ApplicationErrorCodes.DrawApplyFailure);
             }
 
+            if (slot.EntryId is { } current)
+            {
+                if (!current.Equals(instruction.EntryId))
+                {
+                    throw new ApplicationFailureException(
+                        $"Slot '{slot.SlotKey}' already occupied by '{current}'; draw requires '{instruction.EntryId}'.",
+                        ApplicationErrorCodes.DrawApplyFailure);
+                }
+
+                // Same occupant (manual or a previous draw) stays. Do not rewrite the slot.
+                continue;
+            }
+
             if (stage.DirectAssignments.Any(a =>
                     string.Equals(a.SlotKey, slot.SlotKey, StringComparison.Ordinal)))
             {
@@ -143,17 +157,22 @@ public static class ApplyDraw
                     ApplicationErrorCodes.DrawApplyFailure);
             }
 
-            if (slot.EntryId is { } current && !current.Equals(instruction.EntryId))
+            if (stage.Slots.Any(other =>
+                    !string.Equals(other.SlotKey, slot.SlotKey, StringComparison.Ordinal)
+                    && other.EntryId is { } occupied
+                    && occupied.Equals(instruction.EntryId)))
             {
                 throw new ApplicationFailureException(
-                    $"Slot '{slot.SlotKey}' already occupied by '{current}'; draw requires '{instruction.EntryId}'.",
+                    $"Entry '{instruction.EntryId}' already occupies another slot and a draw must not move it.",
                     ApplicationErrorCodes.DrawApplyFailure);
             }
+
+            pending.Add(instruction);
         }
 
         StructureDrawConsumptionGate.EnsureDrawConsumable(draw, stage);
 
-        foreach (var instruction in instructions)
+        foreach (var instruction in pending)
         {
             stage.ApplyResolvedEntry(instruction.SlotKey, instruction.EntryId, clock, snapshots);
         }

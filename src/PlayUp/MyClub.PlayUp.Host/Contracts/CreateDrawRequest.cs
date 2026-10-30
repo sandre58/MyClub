@@ -11,7 +11,8 @@ namespace MyClub.PlayUp.Host.Contracts;
 /// </summary>
 /// <param name="Kind">Slot | Group (case-insensitive).</param>
 /// <param name="Intent">
-/// Default | Rerun (case-insensitive). Product intent for the following inputs step;
-/// Rerun = full redraw (Fixed* empty). Omitted → Default.
+/// Default | Rerun | Partial (case-insensitive). Product intent for the following inputs step.
+/// Rerun = full redraw (Fixed* empty). Partial = unplaced teams into free slots only.
+/// Omitted → Default.
 /// </param>
 public sealed record CreateDrawRequest(string Kind, string? Intent = null);

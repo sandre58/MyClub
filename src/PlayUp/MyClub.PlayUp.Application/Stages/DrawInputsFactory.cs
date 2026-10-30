@@ -18,6 +18,7 @@ namespace MyClub.PlayUp.Application.Stages;
 /// ( ⊆ Entries ). The generator free pool is Entries \ Fixed*.
 /// <see cref="DrawInputsIntent.Rerun"/>: Fixed* empty — full reshuffle from CompositionEntries
 /// without promoting current occupancy (Cancel does not clear the phase).
+/// <see cref="CreatePartial"/>: unplaced teams only, no Fixed* — occupants stay outside the draw.
 /// </remarks>
 public static class DrawInputsFactory
 {
@@ -50,6 +51,33 @@ public static class DrawInputsFactory
                 $"Unsupported draw kind '{kind}'.",
                 ApplicationErrorCodes.DrawKindNotSupported)
         };
+    }
+
+    /// <summary>
+    /// Builds Slot inputs that draw only unplaced teams. Refuses when free slots and unplaced teams differ.
+    /// </summary>
+    /// <param name="stage">Stage that owns the draw.</param>
+    /// <param name="competitionStages">Competition stages used to resolve inbound feeds.</param>
+    /// <param name="kind">Must be <see cref="DrawResolutionKind.Slot"/>.</param>
+    /// <returns>Inputs whose pool is the unplaced composition entries and whose fixed list is empty.</returns>
+    public static DrawInputs CreatePartial(
+        Stage stage,
+        IReadOnlyList<Stage> competitionStages,
+        DrawResolutionKind kind)
+    {
+        ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(competitionStages);
+
+        if (kind != DrawResolutionKind.Slot)
+        {
+            throw new ApplicationFailureException(
+                $"Partial draw supports Slot only (kind is '{kind}').",
+                ApplicationErrorCodes.DrawKindNotSupported);
+        }
+
+        var scope = SlotPartialDrawPlanner.Compose(stage, competitionStages);
+        SlotPartialDrawPlanner.EnsureDrawable(scope);
+        return DrawInputs.ForSlot(scope.UnplacedEntries);
     }
 
     private static List<EntryId> ResolveComposition(Stage stage) =>
