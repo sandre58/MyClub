@@ -217,15 +217,9 @@ public static class StandingCalculator
                 : ordered.ThenByDescending(r => GlobalKey(r, criterion));
         }
 
-        ordered ??= group.OrderByDescending(r => r.Points);
-        return
-        [
-            .. ordered
-                .ThenByDescending(r => r.GoalDifference)
-                .ThenByDescending(r => r.GoalsFor)
-                .ThenByDescending(r => r.Wins)
-                .ThenBy(r => r.EntryId.Value)
-        ];
+        return ordered is null
+            ? [.. group.OrderBy(r => r.EntryId.Value)]
+            : [.. ordered.ThenBy(r => r.EntryId.Value)];
     }
 
     private static List<List<RankableRow>> PartitionByGlobalCriterion(
