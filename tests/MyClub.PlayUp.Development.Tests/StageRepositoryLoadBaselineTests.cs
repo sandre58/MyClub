@@ -21,6 +21,7 @@ namespace MyClub.PlayUp.Development.Tests;
 /// Run with <c>Category=PerformanceBaseline</c> alongside <see cref="ReadPerformanceBaselineTests"/>.
 /// </summary>
 [Collection("DevelopmentPostgres")]
+[Trait("Category", "Integration")]
 [Trait("Category", "PerformanceBaseline")]
 public sealed class StageRepositoryLoadBaselineTests(
     DevelopmentPostgresFixture fixture,

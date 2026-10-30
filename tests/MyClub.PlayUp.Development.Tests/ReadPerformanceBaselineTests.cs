@@ -23,6 +23,7 @@ namespace MyClub.PlayUp.Development.Tests;
 /// Each endpoint is measured in an isolated scope (one HTTP request ≈ one scope).
 /// </summary>
 [Collection("DevelopmentPostgres")]
+[Trait("Category", "Integration")]
 [Trait("Category", "PerformanceBaseline")]
 public sealed class ReadPerformanceBaselineTests(
     DevelopmentPostgresFixture fixture,
