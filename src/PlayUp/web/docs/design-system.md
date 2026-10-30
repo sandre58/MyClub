@@ -136,8 +136,9 @@ Do not collapse them: pulse activity ≠ tone chip.
 
 ## Focus (keyboard)
 
-- Tokens: `--focus-ring-width` and `--focus-ring-offset` in `tokens/geometry.css`; semantic color `--color-focus` in `tokens/colors.css`.
-- Recipe: `foundations/focus.css` defines `--focus-halo` (gap + ring) and applies it on `:focus-visible` for interactive controls inside `.ds-root`, and on `:focus-within` for input shells (`.ds-input`, etc.).
+- Tokens: `--focus-ring-width` (2px) and `--focus-ring-offset` (2px) in `tokens/geometry.css`; semantic color `--color-focus` (`#1c67c4`, slate palette) in `tokens/colors.css`.
+- Recipe: `foundations/focus.css` defines `--focus-halo` (surface gap + outer ring) and applies it on `:focus-visible` for interactive controls inside `.ds-root`, and on `:focus-within` for input shells (`.ds-input`, etc.).
+- **Measured contrast (WCAG relative luminance, outer ring `#1c67c4` vs adjacent fill):** surface `#ffffff` **5.55:1**; canvas `#f6f7f9` **5.17:1**; surface-secondary `#eff1f4` **4.90:1**; chrome `#0f1728` **3.23:1** (worst product background). All meet WCAG 2.2 focus-appearance **≥ 3:1** against adjacent colors on slate.
 - Selectable tiles (family **B**) move the halo to the tile container via `:has(.ds-selectable-tile__trigger:focus-visible)` so rings are not clipped — see `foundations/selectable-tile.css`.
 - Do not page-local override focus chrome on `.ds-*` controls; adjust tokens or the foundation recipe instead.
 

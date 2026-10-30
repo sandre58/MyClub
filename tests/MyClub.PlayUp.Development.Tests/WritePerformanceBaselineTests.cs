@@ -23,6 +23,7 @@ namespace MyClub.PlayUp.Development.Tests;
 /// Command-path SQL and latency baselines (AUD-0012 write guards).
 /// </summary>
 [Collection("DevelopmentPostgres")]
+[Trait("Category", "Integration")]
 [Trait("Category", "PerformanceBaseline")]
 public sealed class WritePerformanceBaselineTests(
     DevelopmentPostgresFixture fixture,
