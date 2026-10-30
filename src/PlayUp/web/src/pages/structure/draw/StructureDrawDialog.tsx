@@ -51,7 +51,7 @@ import type {
   StructureFormatKind,
   StructureStageHubSummary,
 } from '../../../types';
-import { resolveLifecycleMutationMessage } from '../problems/resolveStructureProblemMessage';
+import { resolveLifecycleMutationMessage } from '../problems';
 import {
   buildCupDrawDisplayFromDto,
   drawExecutionNumber,
@@ -923,15 +923,11 @@ export function StructureDrawDialog({
               icon={<RandomIcon size="lg" />}
               title={tDraw('noActiveTitle')}
             >
-              {releaseTarget != null && !releaseFooterBlocked ? (
-                <p className="ds-body">
-                  {tDraw('noActiveReleaseFirst', {
+              {releaseTarget != null && !releaseFooterBlocked
+                ? tDraw('noActiveReleaseFirst', {
                     n: drawExecutionNumber(drawList, releaseTarget.id),
-                  })}
-                </p>
-              ) : (
-                <p className="ds-body">{tDraw('noActiveBody')}</p>
-              )}
+                  })
+                : tDraw('noActiveBody')}
             </EmptyState>
           ) : null}
 
