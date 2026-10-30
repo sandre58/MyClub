@@ -13,7 +13,7 @@ import {
   publishAndApplyDraw,
   startStage,
 } from '../../api';
-import { stampStageOverviewDrawActions } from '../../test/stampDrawActions';
+import { drawActions, withDrawActions } from '../../test/withDrawActions';
 import type {
   StageDraw,
   StageOverview,
@@ -49,7 +49,7 @@ const entryA = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
 const entryB = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
 
 function baseOverview(overrides: Partial<StageOverview> = {}): StageOverview {
-  return stampStageOverviewDrawActions({
+  return withDrawActions({
     id: stageId,
     competitionId,
     name: 'QF',
@@ -88,8 +88,23 @@ function slotDraw(overrides: Partial<StageDraw> = {}): StageDraw {
         displayName: 'Alpha',
       },
     ],
+    actions: drawActions({
+      cancel: { state: 'Available' },
+      apply: { state: 'Available' },
+    }),
     ...overrides,
   };
+}
+
+function publishableSlotDraw(overrides: Partial<StageDraw> = {}): StageDraw {
+  return slotDraw({
+    status: 'Draft',
+    actions: drawActions({
+      cancel: { state: 'Available' },
+      publishAndApply: { state: 'Available' },
+    }),
+    ...overrides,
+  });
 }
 
 async function confirmApplyInDialog(user: ReturnType<typeof userEvent.setup>) {
@@ -486,7 +501,7 @@ describe('StagePage draws', () => {
 
   it('shows Slot result for draft + resolved without Apply', async () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
-      baseOverview({ draws: [slotDraw({ status: 'Draft' })] }),
+      baseOverview({ draws: [publishableSlotDraw()] }),
     );
 
     renderStagePage();
@@ -517,10 +532,10 @@ describe('StagePage draws', () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
       baseOverview({
         draws: [
-          slotDraw({
-            status: 'Draft',
+          publishableSlotDraw({
             resolutionState: 'NotResolved',
             slotPlacements: [],
+            actions: drawActions(),
           }),
         ],
       }),
@@ -545,10 +560,10 @@ describe('StagePage draws', () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
       baseOverview({
         draws: [
-          slotDraw({
-            status: 'Draft',
+          publishableSlotDraw({
             resolutionState: 'NoSolution',
             slotPlacements: [],
+            actions: drawActions(),
           }),
         ],
       }),
@@ -575,6 +590,7 @@ describe('StagePage draws', () => {
           slotDraw({
             status: 'Cancelled',
             resolutionState: 'Resolved',
+            actions: drawActions(),
           }),
         ],
       }),
@@ -639,7 +655,7 @@ describe('StagePage draws', () => {
             coveredByCompleteFixture: false,
           },
         ],
-        draws: [slotDraw()],
+        draws: [slotDraw({ actions: drawActions() })],
       }),
     );
 
@@ -703,7 +719,7 @@ describe('StagePage draws', () => {
             coveredByCompleteFixture: false,
           },
         ],
-        draws: [slotDraw({ status: published ? 'Published' : 'Draft' })],
+        draws: [published ? slotDraw() : publishableSlotDraw()],
       }),
     );
     vi.mocked(publishAndApplyDraw).mockImplementation(async () => {
@@ -729,7 +745,7 @@ describe('StagePage draws', () => {
     const user = userEvent.setup();
     let resolvePublish!: () => void;
     vi.mocked(fetchStageOverview).mockResolvedValue(
-      baseOverview({ draws: [slotDraw({ status: 'Draft' })] }),
+      baseOverview({ draws: [publishableSlotDraw()] }),
     );
     vi.mocked(publishAndApplyDraw).mockImplementation(
       () =>
@@ -759,7 +775,7 @@ describe('StagePage draws', () => {
   it('shows Publish error message', async () => {
     const user = userEvent.setup();
     vi.mocked(fetchStageOverview).mockResolvedValue(
-      baseOverview({ draws: [slotDraw({ status: 'Draft' })] }),
+      baseOverview({ draws: [publishableSlotDraw()] }),
     );
     vi.mocked(publishAndApplyDraw).mockRejectedValue(
       new Error('Publish blocked'),

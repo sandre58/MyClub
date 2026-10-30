@@ -86,8 +86,8 @@ public sealed class ReadPerformanceBaselineTests(
         attentionSql.Should().BeLessThanOrEqualTo(overviewSql, "attention bundle must not exceed overview load");
         attentionSql.Should().BeLessThanOrEqualTo(20, "D2-B lot 2 multi-stage hydration batch (baseline was 21 SQL)");
         overviewSql.Should().BeLessThanOrEqualTo(
-            24,
-            "overview bundle may load match list graphs via split queries (+4 SQL vs pre-split baseline 20 on cup-qf-sf)");
+            20,
+            "cup-qf-sf warm overview measured 20 SQL on CI");
         consultationSql.Should().BeLessThanOrEqualTo(overviewSql, "consultation bundle must not exceed overview load");
         structureSql.Should().BeLessThanOrEqualTo(
             overviewSql,
@@ -172,8 +172,8 @@ public sealed class ReadPerformanceBaselineTests(
 
         overviewSql.Should().BeGreaterThan(3, "overview still loads competition, stages, and match rows");
         overviewSql.Should().BeLessThanOrEqualTo(
-            21,
-            "ligue-1:running warm overview measured 20 SQL on CI (SummaryRow; small margin over observed count)");
+            20,
+            "ligue-1:running warm overview measured 20 SQL on CI (SummaryRow)");
 
         var combinedSql = string.Join('\n', sqlTexts);
         combinedSql.Should().NotContain("match_declared_participations");
