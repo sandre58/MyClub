@@ -226,6 +226,7 @@
     "PlacesPerGroupNotApplicable": "Places per group do not apply to this phase type.",
     "ProgressionApplyFixtureMismatch": "The progression path does not match this confrontation.",
     "RoundNotFound": "Round not found.",
+    "ResolutionProvenanceInvalid": "The resolution provenance is invalid.",
     "SlotFeedConflict": "The direct assignment conflicts with the configured feed.",
     "SlotKeyInvalid": "The slot key is invalid.",
     "SlotNotFound": "Slot not found.",
