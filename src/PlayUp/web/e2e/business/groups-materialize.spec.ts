@@ -1,5 +1,6 @@
-import { test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import {
+  ensureGroupsMaterializePending,
   findRecetteG1GroupsCompetition,
   getStructureMaterializationState,
   runGroupsMaterializeMatches,
@@ -8,8 +9,15 @@ import {
 /**
  * Host + PostgreSQL E2E — critical path #2 (Prepare / materialize).
  * Seed: structure-materialize-recette (RECETTE G1 — 0/6 matches attached).
+ * API and UI specs share that competition; each one restores 0 attached matches first.
  */
 test.describe('Play’Up business (Host + PostgreSQL)', () => {
+  test.describe.configure({ mode: 'serial' });
+
+  test.beforeEach(async ({ request }) => {
+    await ensureGroupsMaterializePending(request);
+  });
+
   test('Materialize — groupes RECETTE G1 (0 → 6 matchs)', async ({
     request,
   }) => {
@@ -41,5 +49,29 @@ test.describe('Play’Up business (Host + PostgreSQL)', () => {
         `Expected 6 attached matches after full G1 materialize, got ${after.attachedMatchCount}`,
       );
     }
+  });
+
+  test('Materialize — groupes RECETTE G1 depuis l’interface (0 → 6 matchs)', async ({
+    page,
+    request,
+  }) => {
+    const competition = await findRecetteG1GroupsCompetition(request);
+    await page.goto(`/competitions/${competition.id}/structure`);
+
+    const matches = page.getByRole('region', { name: 'Matchs' });
+    await expect(matches.getByText('Il reste 6 matchs à créer.')).toBeVisible();
+    await matches
+      .getByRole('button', { name: 'Créer les matchs', exact: true })
+      .click();
+
+    await expect(
+      matches.getByText('Tous les matchs prévus sont créés.'),
+    ).toBeVisible();
+    await expect(
+      matches.locator('.structure-operational-strip__ratio-filled'),
+    ).toHaveText('6');
+    await expect(
+      matches.locator('.structure-operational-strip__ratio-cap'),
+    ).toHaveText('6');
   });
 });

@@ -118,6 +118,14 @@ jobs:
         env:
           CI: true
 
+      - name: Upload Playwright stub results
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-stub
+          path: src/PlayUp/web/test-results/
+          retention-days: 7
+
   e2e-integration:
     name: E2E — Host and PostgreSQL
     runs-on: ubuntu-24.04
@@ -214,3 +222,11 @@ jobs:
           VITE_API_PROXY_TARGET: http://127.0.0.1:5287
           ConnectionStrings__PlayUp: "Host=localhost;Port=5432;Database=myclub_dev;Username=postgres;Password=postgres"
           ConnectionStrings__Media: "Host=localhost;Port=5432;Database=myclub_dev;Username=postgres;Password=postgres"
+
+      - name: Upload Playwright host results
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-host
+          path: src/PlayUp/web/test-results/
+          retention-days: 7
