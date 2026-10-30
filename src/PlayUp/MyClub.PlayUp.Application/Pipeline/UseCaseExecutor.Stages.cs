@@ -1209,4 +1209,35 @@ public sealed partial class UseCaseExecutor
         ApplySchedule.Execute(stage, result, targets);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
+
+    /// <summary>
+    /// Backfills persisted resolution provenance for all stages of a competition (idempotent rattrapage).
+    /// </summary>
+    /// <param name="competitionId">Competition identity.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Counter report for the run.</returns>
+    public async Task<BackfillResolutionProvenanceReport> BackfillResolutionProvenanceAsync(
+        CompetitionId competitionId,
+        CancellationToken cancellationToken = default)
+    {
+        var competition = await competitions.GetByIdForUpdateAsync(competitionId, cancellationToken)
+                              .ConfigureAwait(false)
+                          ?? throw new ApplicationFailureException(
+                              $"Competition '{competitionId}' was not found.",
+                              ApplicationErrorCodes.CompetitionNotFound);
+
+        var competitionStages =
+            await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken).ConfigureAwait(false);
+        var stageIds = competitionStages.Select(stage => stage.Id).ToArray();
+        var matchesByStage = stageIds.Length == 0
+            ? new Dictionary<StageId, IReadOnlyList<Match>>()
+            : await matches.ListByStageIdsForUpdateAsync(stageIds, cancellationToken).ConfigureAwait(false);
+
+        var report = BackfillResolutionProvenance.Execute(
+            competition,
+            competitionStages,
+            matchesByStage);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return report;
+    }
 }

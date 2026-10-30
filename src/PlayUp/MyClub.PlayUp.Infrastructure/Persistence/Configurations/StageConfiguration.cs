@@ -158,6 +158,11 @@ internal sealed class StageConfiguration : IEntityTypeConfiguration<Stage>
             .HasField("_formPathResolutions")
             .UsePropertyAccessMode(PropertyAccessMode.Field);
 
+        builder.OwnsMany(stage => stage.GroupResolutionProvenances, ConfigureGroupResolutionProvenances);
+        builder.Navigation(stage => stage.GroupResolutionProvenances)
+            .HasField("_groupResolutionProvenances")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+
         builder.OwnsMany(stage => stage.MatchPlacements, ConfigureMatchPlacements);
         builder.Navigation(stage => stage.MatchPlacements)
             .HasField("_matchPlacements")
@@ -238,6 +243,51 @@ internal sealed class StageConfiguration : IEntityTypeConfiguration<Stage>
             .HasColumnType("uuid")
             .IsRequired()
             .HasConversion(new GuidTypedIdConverter<EntryId>());
+
+        entries.Property(entry => entry.ResolutionProvenanceKind)
+            .HasColumnName("resolution_provenance_kind")
+            .HasConversion<int>()
+            .IsRequired(false);
+
+        entries.Property(entry => entry.ResolutionSourcePathId)
+            .HasColumnName("resolution_source_path_id")
+            .HasMaxLength(ResolutionProvenanceConfiguration.SourcePathIdMaxLength)
+            .IsRequired(false);
+
+        entries.Property(entry => entry.ResolutionUpstreamFingerprint)
+            .HasColumnName("resolution_upstream_fingerprint")
+            .HasMaxLength(ResolutionProvenanceConfiguration.UpstreamFingerprintMaxLength)
+            .IsRequired(false);
+    }
+
+    private static void ConfigureGroupResolutionProvenances(
+        OwnedNavigationBuilder<Stage, GroupResolutionProvenance> rows)
+    {
+        rows.ToTable("stage_group_resolution_provenances");
+        rows.WithOwner().HasForeignKey("stage_id");
+        rows.HasKey("stage_id", nameof(GroupResolutionProvenance.GroupId), nameof(GroupResolutionProvenance.EntryId));
+
+        rows.Property(row => row.GroupId)
+            .HasColumnName("group_id")
+            .HasColumnType("uuid")
+            .HasConversion(new GuidTypedIdConverter<GroupId>());
+
+        rows.Property(row => row.EntryId)
+            .HasColumnName("entry_id")
+            .HasColumnType("uuid")
+            .HasConversion(new GuidTypedIdConverter<EntryId>());
+
+        rows.Property(row => row.ProvenanceKind)
+            .HasColumnName("resolution_provenance_kind")
+            .HasConversion<int>();
+
+        rows.Property(row => row.SourcePathId)
+            .HasColumnName("resolution_source_path_id")
+            .HasMaxLength(ResolutionProvenanceConfiguration.SourcePathIdMaxLength);
+
+        rows.Property(row => row.UpstreamResultFingerprint)
+            .HasColumnName("resolution_upstream_fingerprint")
+            .HasMaxLength(ResolutionProvenanceConfiguration.UpstreamFingerprintMaxLength);
     }
 
     private static void ConfigureFormPathResolutions(OwnedNavigationBuilder<Stage, FormPathResolution> resolutions)

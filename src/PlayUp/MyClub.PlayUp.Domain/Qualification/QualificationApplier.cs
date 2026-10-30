@@ -60,37 +60,17 @@ public static class QualificationApplier
         ArgumentNullException.ThrowIfNull(path);
         ArgumentNullException.ThrowIfNull(standing);
 
-        var selected = SelectEntries(standing, path.Selection);
-        return selected.Count switch
+        return PathOccupantSelector.SelectQualification(path, standing) switch
         {
-            0 => throw new DomainException(
+            { Status: PathOccupantSelectionStatus.Skipped } => null,
+            { Status: PathOccupantSelectionStatus.Indeterminate } => throw new DomainException(
                 "Qualification selection did not resolve an entry from the standing.",
                 QualificationErrorCodes.SelectionUnresolved),
-            > 1 => throw new DomainException(
-                "Qualification path must resolve to exactly one entry.",
-                QualificationErrorCodes.PathMultiEntry),
-            _ => ResolveInstruction(path, standing, selected[0])
+            { Status: PathOccupantSelectionStatus.Resolved, EntryId: { } entryId } => new QualificationInstruction(
+                path.Destination.StageId,
+                entryId),
+            _ => throw new InvalidOperationException("Unexpected qualification selection outcome.")
         };
-    }
-
-    private static QualificationInstruction? ResolveInstruction(
-        QualificationPath path,
-        Standing standing,
-        EntryId entryId)
-    {
-        if (path.Condition is null)
-        {
-            return new QualificationInstruction(path.Destination.StageId, entryId);
-        }
-
-        var row = standing.Find(entryId)
-                  ?? throw new DomainException(
-                      "Selected entry was not found in the standing.",
-                      QualificationErrorCodes.SelectionUnresolved);
-
-        return path.Condition.IsSatisfiedBy(row)
-            ? new QualificationInstruction(path.Destination.StageId, entryId)
-            : null;
     }
 
     private static IReadOnlyList<EntryId> SelectPosition(IReadOnlyList<StandingRow> rows, int position)

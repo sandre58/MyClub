@@ -196,7 +196,8 @@ public static class StandingCalculator
             groups = nextGroups;
         }
 
-        return [.. groups.SelectMany(g => g)];
+        return [.. groups.SelectMany<List<RankableRow>, RankableRow>(g =>
+            g.Count <= 1 ? g : [.. g.OrderBy(r => r.EntryId.Value)])];
     }
 
     private static List<List<RankableRow>> PartitionByGlobalCriterion(

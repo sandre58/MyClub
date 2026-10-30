@@ -98,7 +98,7 @@ public static class ApplyQualification
         }
 
         var derivedCache = new Dictionary<int, Standing>();
-        var outcomes = new (QualificationPath Path, QualificationInstruction? Instruction)[paths.Length];
+        var outcomes = new (QualificationPath Path, Standing Standing, QualificationInstruction? Instruction)[paths.Length];
         for (var i = 0; i < paths.Length; i++)
         {
             var path = paths[i];
@@ -109,11 +109,11 @@ public static class ApplyQualification
                 groupStandings,
                 matches,
                 derivedCache);
-            outcomes[i] = (path, QualificationApplier.Apply(path, standing));
+            outcomes[i] = (path, standing, QualificationApplier.Apply(path, standing));
         }
 
         var applied = new List<QualificationInstruction>(outcomes.Length);
-        foreach (var (path, instruction) in outcomes)
+        foreach (var (path, _, instruction) in outcomes)
         {
             var destination = ResolveCanonicalStage(path.Destination.StageId, competitionStages);
             if (destination.Id.Equals(canonicalSource.Id))
@@ -160,7 +160,7 @@ public static class ApplyQualification
                     instruction.EntryId));
         }
 
-        foreach (var (path, instruction) in outcomes)
+        foreach (var (path, standing, instruction) in outcomes)
         {
             if (instruction is null)
             {
@@ -171,7 +171,12 @@ public static class ApplyQualification
 
             // Population + Form: AddResolvedPopulationEntry materializes Composition once.
             // Form retains Placement intent on Path for WhoFeeds — no second Composition write.
-            destination.AddResolvedPopulationEntry(instruction.EntryId, clock);
+            var provenance = ResolutionProvenanceFactory.ForQualificationApply(
+                canonicalSource.Id,
+                path,
+                standing,
+                instruction.EntryId);
+            destination.AddResolvedPopulationEntry(instruction.EntryId, clock, provenance);
             if (path.Destination.TargetsForm || path.Destination.TargetsPopulation)
             {
                 destination.RecordFormPathResolution(
@@ -186,7 +191,8 @@ public static class ApplyQualification
             {
                 destination.ApplyResolvedGroupEntry(
                     path.Destination.GroupId!.Value,
-                    instruction.EntryId);
+                    instruction.EntryId,
+                    provenance);
             }
             else if (path.Destination.TargetsSlot)
             {
@@ -194,6 +200,7 @@ public static class ApplyQualification
                     path.Destination.SlotKey!,
                     instruction.EntryId,
                     clock,
+                    provenance,
                     destinationSnapshots);
             }
 

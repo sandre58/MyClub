@@ -45,6 +45,9 @@ public sealed class CompetitionSlice5EndpointTests(HostPostgresFixture fixture)
         var terminal = await stages.GetByIdForUpdateAsync(terminalId);
         terminal!.CompositionEntries.Should().NotBeEmpty();
         terminal.FindSlot("Champ")!.EntryId.Should().BeNull();
+        var compositionRow = terminal.CompositionEntries.Should().ContainSingle().Subject;
+        compositionRow.ResolutionProvenance.Should().NotBeNull();
+        compositionRow.ResolutionProvenance!.Kind.Should().Be(ResolutionProvenanceKind.Qualification);
     }
 
     [IntegrationFact]
