@@ -12,7 +12,9 @@ import {
   startMatch,
 } from '../../api';
 import type { MatchDetail, StructureView, StageOverview } from '../../types';
+import { queryKeys } from '../../queryKeys';
 import { structureReadiness } from '../../test/structureTestFixtures';
+import { matchMutationQueryKeys } from './matchInvalidation';
 import { MatchPage } from './MatchPage';
 
 vi.mock('../../api', async (importOriginal) => {
@@ -209,6 +211,65 @@ describe('MatchPage', () => {
       });
     });
     expect(startMatch).not.toHaveBeenCalled();
+  });
+
+  it('finishing a match invalidates every view that shows that match', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchMatchDetail).mockResolvedValue(
+      baseMatch({ status: 'Scheduled' }),
+    );
+    const { queryClient } = renderMatchPage();
+    const spy = vi.spyOn(queryClient, 'invalidateQueries');
+
+    await screen.findByRole('button', { name: 'Terminer le match' });
+    await user.click(screen.getByRole('button', { name: 'Terminer le match' }));
+
+    const expected = matchMutationQueryKeys({
+      matchId,
+      stageId,
+      competitionId,
+    }).map((queryKey) => ({
+      queryKey,
+      refetchType: 'active',
+    }));
+
+    await waitFor(() => {
+      expect(finishMatch).toHaveBeenCalled();
+      expect(spy.mock.calls.map((call) => call[0])).toEqual(expected);
+    });
+
+    expect(spy).toHaveBeenCalledWith({
+      queryKey: queryKeys.competitions.matchHub(competitionId),
+      refetchType: 'active',
+    });
+    expect(spy).toHaveBeenCalledWith({
+      queryKey: queryKeys.competitions.structure(competitionId),
+      refetchType: 'active',
+    });
+    expect(spy).toHaveBeenCalledWith({
+      queryKey: queryKeys.competitions.overview(competitionId),
+      refetchType: 'active',
+    });
+    expect(spy).toHaveBeenCalledWith({
+      queryKey: queryKeys.competitions.consultation(competitionId),
+      refetchType: 'active',
+    });
+    expect(spy).toHaveBeenCalledWith({
+      queryKey: queryKeys.competitions.attention(competitionId),
+      refetchType: 'active',
+    });
+    expect(spy).toHaveBeenCalledWith({
+      queryKey: queryKeys.matches.detail(matchId),
+      refetchType: 'active',
+    });
+    expect(spy).toHaveBeenCalledWith({
+      queryKey: queryKeys.matches.byStage(stageId),
+      refetchType: 'active',
+    });
+    expect(spy).toHaveBeenCalledWith({
+      queryKey: queryKeys.stages.detail(stageId),
+      refetchType: 'active',
+    });
   });
 
   it('Live: running score update and Finish prefills from the counter', async () => {

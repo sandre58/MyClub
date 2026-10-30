@@ -15,7 +15,7 @@
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="11.0.0-rc.3.26522.148" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="11.0.0-rc.3.26522.148" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="11.0.0-rc.3.26522.148" />
-    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="11.0.0-rc.2" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="11.0.0-rc.3" />
     <PackageVersion Include="Serilog.AspNetCore" Version="10.0.1-dev-02312" />
     <PackageVersion Include="Serilog.Formatting.Compact" Version="3.0.0" />
     <PackageVersion Include="Testcontainers.PostgreSql" Version="4.16.0" />

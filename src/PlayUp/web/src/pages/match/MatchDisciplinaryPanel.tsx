@@ -1,9 +1,4 @@
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-  type QueryClient,
-} from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useId, useState, type SubmitEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
@@ -35,6 +30,7 @@ import {
   TrashIcon,
 } from '../../design-system/icons/contentIcons';
 import { CloseIcon } from '../../design-system/icons/shellIcons';
+import { invalidateAfterMatchMutation } from './matchInvalidation';
 
 /** Domain CanMutateDisciplinaryEventsFreely — Create/Remove/Correct UI gate. */
 function canMutateRecordedDisciplinaryEvents(match: MatchDetail): boolean {
@@ -82,7 +78,7 @@ export function MatchDisciplinaryPanel({ match }: { match: MatchDetail }) {
       recordDisciplinaryEvent(match.matchId, request),
     onSuccess: async () => {
       resetForm();
-      await invalidateMatchDiscipline(queryClient, match);
+      await invalidateAfterMatchMutation(queryClient, match);
     },
   });
 
@@ -102,7 +98,7 @@ export function MatchDisciplinaryPanel({ match }: { match: MatchDetail }) {
     onSuccess: async () => {
       setEditingId(null);
       resetForm();
-      await invalidateMatchDiscipline(queryClient, match);
+      await invalidateAfterMatchMutation(queryClient, match);
     },
   });
 
@@ -111,7 +107,7 @@ export function MatchDisciplinaryPanel({ match }: { match: MatchDetail }) {
       removeRecordedDisciplinaryEvent(match.matchId, disciplinaryEventId),
     onSuccess: async () => {
       setPendingRemoveId(null);
-      await invalidateMatchDiscipline(queryClient, match);
+      await invalidateAfterMatchMutation(queryClient, match);
     },
     onError: () => {
       setPendingRemoveId(null);
@@ -326,15 +322,6 @@ function typeLabel(t: (key: string) => string, type: DisciplinaryType): string {
     case 'White':
       return t('discipline.typeWhite');
   }
-}
-
-async function invalidateMatchDiscipline(
-  queryClient: QueryClient,
-  match: MatchDetail,
-) {
-  await queryClient.invalidateQueries({
-    queryKey: queryKeys.matches.detail(match.matchId),
-  });
 }
 
 function DisciplinaryForm({
