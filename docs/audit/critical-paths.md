@@ -44,7 +44,9 @@ Stability, applied in that spec and in `playwright.config.ts` (project `visual`)
 - mask on `.ds-live-dot` (live pulse)
 - `animations: 'disabled'`, `scale: 'css'`, `maxDiffPixelRatio: 0.02` (per-pixel color threshold stays the Playwright default, 0.2)
 
-Reference files are the **Linux** snapshots (`*-visual-linux.png`) produced with the Chromium that `npx playwright install --with-deps chromium` installs on ubuntu (the CI `web` job). Commit those files. Do not commit macOS or Windows snapshots; they will not match CI.
+Reference files are the **Linux** snapshots (`*-visual-linux.png`) produced with the Chromium that `npx playwright@1.64.1 install --with-deps chromium` installs on ubuntu (the CI `web` job; version pinned in `package.json`). Commit those files. Do not commit macOS or Windows snapshots; they will not match CI.
+
+After any bump of `@playwright/test`, regenerate the reference screenshots on Linux (same environment as CI) before merging — browser builds differ across Playwright versions and stale baselines will fail the visual job.
 
 Regenerate from `src/PlayUp/web` on that Linux environment:
 

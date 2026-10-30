@@ -111,7 +111,7 @@ jobs:
         run: npm run build
 
       - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
+        run: npx playwright@1.64.1 install --with-deps chromium
 
       - name: E2E smoke (stub API)
         run: npx playwright test
@@ -192,7 +192,7 @@ jobs:
 
       - name: Install Playwright Chromium
         working-directory: src/PlayUp/web
-        run: npx playwright install --with-deps chromium
+        run: npx playwright@1.64.1 install --with-deps chromium
 
       - name: E2E business (Host + PostgreSQL)
         working-directory: src/PlayUp/web
