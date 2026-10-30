@@ -121,7 +121,7 @@ Do not collapse them: pulse activity ≠ tone chip.
 - Canonical: `components/Status.tsx` + `foundations/status.css`.
 - Icon + label rows: wrap children in `.ds-status-inline` / `.ds-status-inline__icon`.
 - Hub notes (Structure PageHead): `context` · `outline` · `pill`, short nominal label + `.ds-status-inline`; specimen in Design Lab **Structure PageHead**. Use `multiline` + `textBody` only when a longer wrapped label is explicitly required elsewhere.
-- **Déjà placée** (`AlreadyPlacedStatus`): `compact` · `neutral` · `outline`, pin icon + label. Specimen in Design Lab **Foundations** (D2 — Status), before any product screen. Text is `--color-text-secondary` (`#5a6270`) on the 10% outline wash. Measured contrast of that ink on the composited wash (WCAG, light scheme): **5.34:1** on surface `#ffffff`, **5.01:1** on canvas `#f6f7f9`. Neutral soft (18% wash) is **4.48:1** on canvas and is not used. The pin is the non-chromatic cue. Do not restyle it in `structure-dialogs.css`. No extra crest ring.
+- **Déjà placée** (`AlreadyPlacedStatus`): `compact` · `neutral` · `outline`, pin icon only; label in **Tooltip**. Specimen in Design Lab **Foundations** (D2 — Status). In the draw grid, the team name uses `--color-text-secondary` and semibold (`.structure-draw-slot__name--placed`); do not repeat the label beside the name. Outline wash contrast budget unchanged (≥ 4.5:1 on surface/canvas for secondary ink on wash — see test). No extra crest ring.
 
 ## PageHead
 

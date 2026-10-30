@@ -1,5 +1,6 @@
 import type { HTMLAttributes, ReactNode } from 'react';
 import { PlacedIcon } from '../icons/contentIcons';
+import { Tooltip } from './Tooltip';
 
 export type StatusDensity = 'context' | 'compact' | 'dense';
 export type StatusVariant = 'soft' | 'outline' | 'plain';
@@ -57,19 +58,25 @@ export function Status({
 }
 
 /**
- * « Déjà placée » — compact neutral outline. The pin is the non-chromatic cue.
- * Ink is `--color-text-secondary` on a 10% outline wash (light scheme ≥ 4.5:1
- * on surface and canvas). Do not restyle this badge in a page stylesheet.
+ * « Déjà placée » — compact neutral outline pin. Label lives in the tooltip only.
+ * Product rows style the team name separately (see draw confrontation grid).
+ * Ink/contrast budget: Foundations specimen + AlreadyPlacedStatus.test.ts.
  */
-export function AlreadyPlacedStatus({ children }: { children: ReactNode }) {
+export function AlreadyPlacedStatus({ label }: { label: ReactNode }) {
   return (
-    <Status density="compact" tone="neutral" variant="outline">
-      <span className="ds-status-inline">
-        <span className="ds-status-inline__icon" aria-hidden="true">
-          <PlacedIcon size="sm" />
+    <Tooltip content={label}>
+      <Status
+        density="compact"
+        tone="neutral"
+        variant="outline"
+        aria-label={typeof label === 'string' ? label : undefined}
+      >
+        <span className="ds-status-inline">
+          <span className="ds-status-inline__icon" aria-hidden="true">
+            <PlacedIcon size="sm" />
+          </span>
         </span>
-        {children}
-      </span>
-    </Status>
+      </Status>
+    </Tooltip>
   );
 }

@@ -65,6 +65,7 @@ import {
   resolveDrawDetailGuidance,
   resolveDrawHeroModel,
   sortDrawsNewestFirst,
+  type DrawHeroLabel,
   type CupDrawCellLabels,
 } from './drawUi';
 import { DrawSlotConfrontationGrid } from './DrawSlotConfrontationGrid';
@@ -1359,6 +1360,15 @@ function CancelledDrawDetail({
   );
 }
 
+function drawHeroFactClass(label: DrawHeroLabel): string {
+  const base = 'structure-qualification__fact';
+  const emphasis =
+    label === 'heroTeams' || label === 'heroToPlace'
+      ? `${base}--primary`
+      : `${base}--secondary`;
+  return `${base} ${emphasis}`;
+}
+
 function DrawHeroFacts({
   model,
 }: {
@@ -1368,56 +1378,69 @@ function DrawHeroFacts({
   if (model.layout === 'triplet') {
     const facts = [model.toPlace, model.freePlaces, model.alreadyPlaced];
     return (
-      <div className="structure-qualification__facts" aria-live="polite">
-        {facts.map((fact, index) => (
-          <Fragment key={fact.label}>
-            {index > 0 ? (
-              <span
-                className="structure-qualification__fact-rule"
-                aria-hidden="true"
-              />
-            ) : null}
-            <span
-              className="structure-qualification__fact"
-              data-fact={fact.label}
-            >
-              <span className="structure-qualification__fact-value">
-                {fact.value}
-              </span>
-              <span className="structure-qualification__fact-label">
-                {t(fact.label)}
-              </span>
-            </span>
-          </Fragment>
-        ))}
+      <div
+        className="structure-qualification__summary structure-draw-dialog__facts"
+        aria-live="polite"
+      >
+        <div className="structure-qualification__facts">
+          {facts.map((fact, index) => (
+            <Fragment key={fact.label}>
+              {index > 0 ? (
+                <span
+                  className="structure-qualification__fact-rule"
+                  aria-hidden="true"
+                />
+              ) : null}
+              <div
+                className={drawHeroFactClass(fact.label)}
+                data-fact={fact.label}
+              >
+                <span className="structure-qualification__fact-value">
+                  {fact.value}
+                </span>
+                <span className="structure-qualification__fact-label">
+                  {t(fact.label)}
+                </span>
+              </div>
+            </Fragment>
+          ))}
+        </div>
       </div>
     );
   }
   return (
-    <div className="structure-qualification__facts" aria-live="polite">
-      <span
-        className="structure-qualification__fact structure-qualification__fact--secondary"
-        data-fact="secondary"
-      >
-        <span className="structure-qualification__fact-value">
-          {model.secondary.value}
-        </span>
-        <span className="structure-qualification__fact-label">
-          {t(model.secondary.label)}
-        </span>
-      </span>
-      <span className="structure-qualification__fact-rule" aria-hidden="true" />
-      <span
-        className="structure-qualification__fact structure-qualification__fact--primary"
-        data-fact="primary"
-      >
-        <span className="structure-qualification__fact-value">
-          {model.primary.value}
-        </span>
-        <span className="structure-qualification__fact-label">
-          {t(model.primary.label)}
-        </span>
-      </span>
+    <div
+      className="structure-qualification__summary structure-draw-dialog__facts"
+      aria-live="polite"
+    >
+      <div className="structure-qualification__facts">
+        <div
+          className={drawHeroFactClass(model.secondary.label)}
+          data-fact="secondary"
+        >
+          <span className="structure-qualification__fact-value">
+            {model.secondary.value}
+          </span>
+          <span className="structure-qualification__fact-label">
+            {t(model.secondary.label)}
+          </span>
+        </div>
+        <span
+          className="structure-qualification__fact-rule"
+          aria-hidden="true"
+        />
+        <div
+          className={drawHeroFactClass(model.primary.label)}
+          data-fact="primary"
+        >
+          <span className="structure-qualification__fact-value">
+            {model.primary.value}
+          </span>
+          <span className="structure-qualification__fact-label">
+            {t(model.primary.label)}
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
