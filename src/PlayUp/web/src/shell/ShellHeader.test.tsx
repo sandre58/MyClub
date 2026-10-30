@@ -91,7 +91,14 @@ function renderWithShell(initialEntry: string) {
               path="/competitions/:competitionId/structure"
               element={<p>Structure page</p>}
             />
-            <Route path="/stages/:stageId" element={<p>Stage page</p>} />
+            <Route
+              path="/competitions/:competitionId/structure"
+              element={<p>Structure page</p>}
+            />
+            <Route
+              path="/stages/:stageId"
+              element={<p>Legacy stage redirect</p>}
+            />
             <Route path="/matches/:matchId" element={<p>Match page</p>} />
           </Route>
         </Routes>

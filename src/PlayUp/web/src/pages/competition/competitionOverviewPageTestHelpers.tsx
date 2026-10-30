@@ -53,7 +53,14 @@ export function renderOverviewPage() {
             path="/competitions/:competitionId/classements"
             element={<p>Classements route</p>}
           />
-          <Route path="/stages/:stageId" element={<p>Stage route</p>} />
+          <Route
+            path="/competitions/:competitionId/structure"
+            element={<p>Structure route</p>}
+          />
+          <Route
+            path="/stages/:stageId"
+            element={<p>Legacy stage redirect</p>}
+          />
           <Route path="/matches/:matchId" element={<p>Match route</p>} />
           <Route path="/competitions" element={<p>List route</p>} />
         </Routes>

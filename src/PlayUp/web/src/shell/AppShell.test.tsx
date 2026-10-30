@@ -91,7 +91,14 @@ function AppShellRoutes({ initialEntry }: { initialEntry: string }) {
             path="/competitions/:competitionId/classements"
             element={<p>Classements page</p>}
           />
-          <Route path="/stages/:stageId" element={<p>Stage page</p>} />
+          <Route
+            path="/competitions/:competitionId/structure"
+            element={<p>Structure page</p>}
+          />
+          <Route
+            path="/stages/:stageId"
+            element={<p>Legacy stage redirect</p>}
+          />
           <Route
             path="/stages/:stageId/matches"
             element={<p>Stage matches page</p>}
@@ -239,12 +246,13 @@ describe('AppShell', () => {
     expect(screen.getByText('Regulation page')).toBeInTheDocument();
   });
 
-  it('maps stage deep links to Matchs', () => {
+  it('maps legacy stage deep links to Structure after redirect', () => {
     renderWithShell('/stages/stage-id');
 
-    expect(
-      screen.getByRole('link', { name: 'Calendrier & matchs' }),
-    ).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Structure' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
   });
 
   it('maps match deep links to Matchs', () => {

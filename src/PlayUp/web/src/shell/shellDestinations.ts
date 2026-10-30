@@ -81,6 +81,10 @@ export function resolveActiveDestination(
     return 'structure';
   }
 
+  if (/^\/stages\/[^/]+$/.test(pathname)) {
+    return 'structure';
+  }
+
   if (/^\/competitions\/[^/]+\/teams(?:\/[^/]+)?$/.test(pathname)) {
     return 'teams';
   }
@@ -92,8 +96,7 @@ export function resolveActiveDestination(
   if (
     /^\/competitions\/[^/]+\/matches$/.test(pathname) ||
     /^\/stages\/[^/]+\/matches$/.test(pathname) ||
-    /^\/matches\/[^/]+$/.test(pathname) ||
-    /^\/stages\/[^/]+$/.test(pathname)
+    /^\/matches\/[^/]+$/.test(pathname)
   ) {
     return 'matches';
   }

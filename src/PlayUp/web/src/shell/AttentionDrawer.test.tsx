@@ -70,7 +70,14 @@ function renderWithShell(initialEntry: string) {
               path="/competitions/:competitionId"
               element={<p>Workspace page</p>}
             />
-            <Route path="/stages/:stageId" element={<p>Stage page</p>} />
+            <Route
+              path="/competitions/:competitionId/structure"
+              element={<p>Structure page</p>}
+            />
+            <Route
+              path="/stages/:stageId"
+              element={<p>Legacy stage redirect</p>}
+            />
             <Route path="/matches/:matchId" element={<p>Match page</p>} />
           </Route>
         </Routes>
@@ -254,7 +261,7 @@ describe('AttentionDrawer', () => {
       await screen.findByRole('link', { name: /Progression en attente/i }),
     );
 
-    expect(await screen.findByText('Stage page')).toBeInTheDocument();
+    expect(await screen.findByText('Structure page')).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });

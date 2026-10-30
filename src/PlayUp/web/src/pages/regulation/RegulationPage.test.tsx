@@ -198,7 +198,11 @@ function renderPage() {
             path="/competitions/:competitionId/structure"
             element={<p>Structure route</p>}
           />
-          <Route path="/stages/:stageId" element={<p>Stage</p>} />
+          <Route
+            path="/competitions/:competitionId/structure"
+            element={<p>Structure</p>}
+          />
+          <Route path="/stages/:stageId" element={<p>Legacy stage</p>} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,

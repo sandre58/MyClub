@@ -114,6 +114,19 @@ describe('resolveOverviewActionIntent', () => {
       }),
     ).toBe(`PublishDraw:${stageId}:${drawId}::`);
   });
+
+  it('navigates incomplete draw actions to Structure with stage param', () => {
+    const view = overviewView();
+    expect(
+      resolveOverviewActionIntent(
+        { code: 'PublishDraw', guaranteed: false, stageId },
+        view,
+      ),
+    ).toEqual({
+      kind: 'navigate',
+      to: `/competitions/${competitionId}/structure?stage=${encodeURIComponent(stageId)}`,
+    });
+  });
 });
 
 describe('situationHref', () => {
@@ -178,7 +191,7 @@ describe('situationHref', () => {
   });
 
   it('keeps MissingPotRules on structure hub without construction section', () => {
-    const stageId = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
+    const otherStageId = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
     expect(
       situationHref(
         {
@@ -190,7 +203,28 @@ describe('situationHref', () => {
           actionable: true,
           actionCode: 'FixStructure',
           impactCode: 'BlocksConstruction',
-          params: { stageId },
+          params: { stageId: otherStageId },
+        },
+        competitionId,
+      ),
+    ).toBe(
+      `/competitions/${competitionId}/structure?stage=${encodeURIComponent(otherStageId)}`,
+    );
+  });
+
+  it('maps Stage targets to Structure with stage param', () => {
+    expect(
+      situationHref(
+        {
+          source: 'ProgressionPending',
+          nature: 'Blocking',
+          targetType: 'Stage',
+          targetId: stageId,
+          matchId: null,
+          actionable: true,
+          actionCode: 'ApplyProgression',
+          impactCode: 'BlocksProgression',
+          params: {},
         },
         competitionId,
       ),

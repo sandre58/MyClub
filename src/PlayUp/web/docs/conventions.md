@@ -26,7 +26,7 @@ CI `web` job: `format:check` → `lint` → `typecheck` → `test:run` → `buil
 | Helpers / pure modules            | `camelCase.ts`             | `structureInvalidation.ts`, `queryKeys.ts` |
 | Tests                             | colocated `Nom.test.ts(x)` | `TeamsPage.test.tsx`                       |
 | Page CSS (multi-component domain) | `domaine.css`              | `structure.css`, `regulation.css`          |
-| Page CSS (single isolated page)   | `PageName.css`             | `StagePage.css`                            |
+| Page CSS (single isolated page)   | `PageName.css`             | `StructurePage.css` (page-local layout)    |
 | DS foundations                    | `kebab-case.css`           | `panels.css`, `selectable-tile.css`        |
 | DS React                          | `PascalCase.tsx`           | `Dialog.tsx`, `ChoiceTile.tsx`             |
 
@@ -87,7 +87,7 @@ Decorative per-row glyphs stay out. `lucide-react` stays inside `design-system/i
 
 ## Out of scope here
 
-- DS tile/card unification → Phase 4 (`SelectableTile`, `npm run tile:check`; Stage `stage-draw-tile`).
+- DS tile/card unification → Phase 4 (`SelectableTile`, `npm run tile:check`).
 - Structure file splits → Phase 5 (`structureFluxRails` / `structure-fiche.css`, `npm run` scripts under `scripts/split-structure-*.mjs`).
 - Large CSS cleanup → Phase 6 (done: drop global `.field`; match `.form-row` / `.fieldset` in `matches.css`; dead Structure operational + fiche CSS; `npm run css:audit` → `scripts/audit-structure-fiche-css.mjs`).
 
