@@ -351,10 +351,10 @@ public sealed record StructureStageHubSummaryDto(
 /// </summary>
 public readonly record struct StructureDrawCreateLaunchDto
 {
-    /// <summary>True when the launch gate admits a new draw.</summary>
+    /// <summary>Gets a value indicating whether the launch gate admits a new draw.</summary>
     public bool Allowed { get; }
 
-    /// <summary>Stable code when launch is not allowed; null when <see cref="Allowed"/> is true.</summary>
+    /// <summary>Gets the stable block reason code when launch is not allowed; otherwise null.</summary>
     public string? BlockReasonCode { get; }
 
     public StructureDrawCreateLaunchDto(bool allowed, string? blockReasonCode)
