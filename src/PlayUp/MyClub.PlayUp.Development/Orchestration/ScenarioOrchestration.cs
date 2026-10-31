@@ -3736,6 +3736,7 @@ internal static class ScenarioOrchestration
                 "RECETTE T3 — Qual slot fraîcheur",
                 cancellationToken)
             .ConfigureAwait(false);
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         await SeedResolutionFreshnessQualSlotAsync(
                 context,
                 "RECETTE T3 — Score upstream fraîcheur",
