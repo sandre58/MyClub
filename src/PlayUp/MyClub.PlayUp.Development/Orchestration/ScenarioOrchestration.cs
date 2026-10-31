@@ -3734,12 +3734,14 @@ internal static class ScenarioOrchestration
         await SeedResolutionFreshnessQualSlotAsync(
                 context,
                 "RECETTE T3 — Qual slot fraîcheur",
+                "freshness-qual",
                 cancellationToken)
             .ConfigureAwait(false);
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         await SeedResolutionFreshnessQualSlotAsync(
                 context,
                 "RECETTE T3 — Score upstream fraîcheur",
+                "freshness-score",
                 cancellationToken)
             .ConfigureAwait(false);
 
@@ -3749,11 +3751,13 @@ internal static class ScenarioOrchestration
     private static async Task SeedResolutionFreshnessQualSlotAsync(
         ScenarioContext context,
         string competitionName,
+        string competitionLocalKey,
         CancellationToken cancellationToken)
     {
         var competition = await CreateCompetitionAsync(
                 context,
                 competitionName,
+                competitionLocalKey: competitionLocalKey,
                 cancellationToken: cancellationToken)
             .ConfigureAwait(false);
 
