@@ -15,12 +15,9 @@ test.describe('Play’Up business (resolution freshness)', () => {
     page,
     request,
   }) => {
-    const competition = await findResolutionFreshnessQualSlotCompetition(request);
-    const leagueId = await getStageIdByName(
-      request,
-      competition.id,
-      'League',
-    );
+    const competition =
+      await findResolutionFreshnessQualSlotCompetition(request);
+    const leagueId = await getStageIdByName(request, competition.id, 'League');
     const terminalId = await getStageIdByName(
       request,
       competition.id,
@@ -30,7 +27,9 @@ test.describe('Play’Up business (resolution freshness)', () => {
     await page.goto(
       `/competitions/${competition.id}/structure?stage=${terminalId}`,
     );
-    await expect(page.getByRole('heading', { name: 'Structure' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: 'Structure' }),
+    ).toBeVisible();
     await expect(page.getByText('Périmé')).toHaveCount(0);
 
     await replaceQualificationRulesForStaleBadge(request, leagueId, terminalId);
