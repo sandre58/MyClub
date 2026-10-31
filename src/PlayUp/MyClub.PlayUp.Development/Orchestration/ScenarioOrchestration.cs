@@ -3720,4 +3720,68 @@ internal static class ScenarioOrchestration
         stage.Suspend(context.Clock);
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
+
+    /// <summary>
+    /// Finished league match, qualification applied into a cup slot — resolution occupants start current.
+    /// </summary>
+    public static async Task BuildResolutionFreshnessQualSlotAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var competition = await CreateCompetitionAsync(
+                context,
+                "RECETTE T3 — Qual slot fraîcheur",
+                cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+
+        var home = competition.AddEntry(TeamId.New(), "Alpha", context.Clock);
+        var away = competition.AddEntry(TeamId.New(), "Beta", context.Clock);
+
+        var league = Stage.Create(
+            competition.Id,
+            new StageName("League"),
+            RegulationPacks.Standard(),
+            context.Clock);
+        league.AddMatchday(1, context.Clock);
+        competition.AddStage(league.Id, context.Clock);
+
+        var terminal = Stage.Create(
+            competition.Id,
+            new StageName("Terminal"),
+            RegulationPacks.Standard(),
+            context.Clock);
+        terminal.AddSlot("Champ");
+        competition.AddStage(terminal.Id, context.Clock);
+
+        var match = Match.Create(competition.Id, league.Id, home.Id, away.Id, context.Clock);
+        match.Start(context.Clock);
+        match.Finish(new MatchResult(ResultType.Played, new Score(2, 0)), context.Clock);
+
+        var standing = CalculateStanding.Execute(
+            [home.Id, away.Id],
+            [match],
+            league.Regulation.StandingRules!);
+
+        league.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.Overall(),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    QualificationDestination.ForSlot(terminal.Id, "Champ")),
+            ]),
+            context.Clock);
+
+        ApplyQualification.Execute(league, standing, [league, terminal], context.Clock);
+
+        context.Stages.Add(league);
+        context.Stages.Add(terminal);
+        context.Matches.Add(match);
+
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
 }

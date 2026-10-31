@@ -23,6 +23,11 @@ import '../phase-schematic.css';
 
 import { GroupsSchematicView } from './GroupsSchematicView';
 import { groupsSchematicFromStageSchematic } from './groupsSchematic';
+import { StructureResolutionFreshnessBadge } from '../resolution/StructureResolutionFreshnessBadge';
+import {
+  lookupSchematicCaseResolutionOccupant,
+  type StructureResolutionOccupantIndex,
+} from '../resolution/structureResolutionOccupants';
 import { buildSchematicCaseTooltipModel } from './phaseSchematicTooltip';
 
 type Translate = (key: string, opts?: Record<string, unknown>) => string;
@@ -60,6 +65,8 @@ export function PhaseSchematic({
   /** Stage hub round count — used when schematic.cupRoundCount is absent (older Host). */
   cupRoundCount,
   cupPairProductionStates,
+  /** Server resolution freshness for schematic places. */
+  resolutionIndex,
   /** Cup manual placement — click a place to open the shared dialog. */
   onPlaceActivate,
 }: {
@@ -67,13 +74,20 @@ export function PhaseSchematic({
   terminal?: boolean;
   cupRoundCount?: number | null;
   cupPairProductionStates?: Readonly<Record<string, CupPairProductionState>>;
+  resolutionIndex?: StructureResolutionOccupantIndex | null;
   onPlaceActivate?: (place: SchematicCase) => void;
 }): ReactElement {
   const { t } = useTranslation(['regulation', 'structure']);
   const format = schematic.formatKind;
 
   if (format === 'Groups') {
-    return <GroupsSchematic schematic={schematic} t={t} />;
+    return (
+      <GroupsSchematic
+        schematic={schematic}
+        t={t}
+        resolutionIndex={resolutionIndex}
+      />
+    );
   }
 
   if (format === 'Cup') {
@@ -84,17 +98,30 @@ export function PhaseSchematic({
         terminal={terminal}
         roundHint={cupRoundCount}
         cupPairProductionStates={cupPairProductionStates}
+        resolutionIndex={resolutionIndex}
         onPlaceActivate={onPlaceActivate}
       />
     );
   }
 
   if (format === 'Championship') {
-    return <ChampionshipSchematic schematic={schematic} t={t} />;
+    return (
+      <ChampionshipSchematic
+        schematic={schematic}
+        t={t}
+        resolutionIndex={resolutionIndex}
+      />
+    );
   }
 
   if (format === 'Swiss') {
-    return <SwissSchematic schematic={schematic} t={t} />;
+    return (
+      <SwissSchematic
+        schematic={schematic}
+        t={t}
+        resolutionIndex={resolutionIndex}
+      />
+    );
   }
 
   return (
@@ -113,6 +140,7 @@ function SlotBox({
   density = 'full',
   style,
   onActivate,
+  resolutionIndex,
 }: {
   c?: SchematicCase | null;
   t: Translate;
@@ -120,6 +148,7 @@ function SlotBox({
   density?: SchematicDensity;
   style?: CSSProperties;
   onActivate?: (place: SchematicCase) => void;
+  resolutionIndex?: StructureResolutionOccupantIndex | null;
 }) {
   const address = c ? placeChromeLabel(c.formPosition) : null;
   const { primary, secondary } = c
@@ -192,6 +221,11 @@ function SlotBox({
   ]
     .filter(Boolean)
     .join(' ');
+  const slotResolutionOccupant = lookupSchematicCaseResolutionOccupant(
+    resolutionIndex,
+    c?.formPosition ?? { kind: 'RosterPlace' },
+    c?.assignment?.entryId ?? c?.entry?.entryId ?? null,
+  );
   const slotInner = (
     <>
       {density === 'crest' && showTeamCrest ? (
@@ -224,6 +258,13 @@ function SlotBox({
               <span className="schematic-slot__secondary">{secondary}</span>
             ) : null}
           </span>
+        </span>
+      ) : null}
+      {slotResolutionOccupant ? (
+        <span className="schematic-slot__freshness">
+          <StructureResolutionFreshnessBadge
+            occupant={slotResolutionOccupant}
+          />
         </span>
       ) : null}
     </>
@@ -384,9 +425,11 @@ function buildSchematicCaseTooltip(
 function GroupsSchematic({
   schematic,
   t,
+  resolutionIndex,
 }: {
   schematic: StageSchematic;
   t: Translate;
+  resolutionIndex?: StructureResolutionOccupantIndex | null;
 }) {
   const { groups, casesByGroupId } = groupsSchematicFromStageSchematic(
     schematic,
@@ -402,7 +445,7 @@ function GroupsSchematic({
         if (!place) {
           return undefined;
         }
-        return <SlotBox c={place} t={t} />;
+        return <SlotBox c={place} t={t} resolutionIndex={resolutionIndex} />;
       }}
     />
   );
@@ -415,9 +458,11 @@ function GroupsSchematic({
 function ChampionshipSchematic({
   schematic,
   t,
+  resolutionIndex,
 }: {
   schematic: StageSchematic;
   t: Translate;
+  resolutionIndex?: StructureResolutionOccupantIndex | null;
 }) {
   const rows = [...schematic.cases].sort(
     (a, b) => (a.formPosition.index ?? 0) - (b.formPosition.index ?? 0),
@@ -437,6 +482,7 @@ function ChampionshipSchematic({
             c={c}
             t={t}
             style={{ width: '100%' }}
+            resolutionIndex={resolutionIndex}
           />
         ))}
       </div>
@@ -451,9 +497,11 @@ function ChampionshipSchematic({
 function SwissSchematic({
   schematic,
   t,
+  resolutionIndex,
 }: {
   schematic: StageSchematic;
   t: Translate;
+  resolutionIndex?: StructureResolutionOccupantIndex | null;
 }) {
   const rounds = schematic.swissRoundCount ?? null;
   // Cases = ExpectedFormParticipants bag projected into N cells (no alimentation zone).
@@ -473,7 +521,12 @@ function SwissSchematic({
       </p>
       <div className="regulation-schematic__swiss-places">
         {schematic.cases.map((c, i) => (
-          <SlotBox key={c.formPosition.index ?? i} c={c} t={t} />
+          <SlotBox
+            key={c.formPosition.index ?? i}
+            c={c}
+            t={t}
+            resolutionIndex={resolutionIndex}
+          />
         ))}
       </div>
     </div>
@@ -508,6 +561,7 @@ function CupSchematic({
   terminal,
   roundHint,
   cupPairProductionStates,
+  resolutionIndex,
   onPlaceActivate,
 }: {
   schematic: StageSchematic;
@@ -515,6 +569,7 @@ function CupSchematic({
   terminal: boolean;
   roundHint?: number | null;
   cupPairProductionStates?: Readonly<Record<string, CupPairProductionState>>;
+  resolutionIndex?: StructureResolutionOccupantIndex | null;
   onPlaceActivate?: (place: SchematicCase) => void;
 }) {
   const roundCount = resolveCupRoundCount(
@@ -629,6 +684,7 @@ function CupSchematic({
       density={density}
       metrics={metrics}
       cupPairProductionStates={cupPairProductionStates}
+      resolutionIndex={resolutionIndex}
       onPlaceActivate={onPlaceActivate}
     />
   ) : (
@@ -640,6 +696,7 @@ function CupSchematic({
       density={density}
       metrics={metrics}
       cupPairProductionStates={cupPairProductionStates}
+      resolutionIndex={resolutionIndex}
       onPlaceActivate={onPlaceActivate}
     />
   );
@@ -891,6 +948,7 @@ function CupMultiRoundSchematic({
   density,
   metrics: m,
   cupPairProductionStates,
+  resolutionIndex,
   onPlaceActivate,
 }: {
   columns: (SchematicCase | null)[][];
@@ -900,6 +958,7 @@ function CupMultiRoundSchematic({
   density: SchematicDensity;
   metrics: CupMetrics;
   cupPairProductionStates?: Readonly<Record<string, CupPairProductionState>>;
+  resolutionIndex?: StructureResolutionOccupantIndex | null;
   onPlaceActivate?: (place: SchematicCase) => void;
 }) {
   const leafCount = columns[0]?.length ?? 0;
@@ -971,6 +1030,7 @@ function CupMultiRoundSchematic({
                     ghost={!c}
                     density={density}
                     onActivate={onPlaceActivate}
+                    resolutionIndex={resolutionIndex}
                     style={{
                       position: 'absolute',
                       top: y - m.slotH / 2,
@@ -1066,6 +1126,7 @@ function CupSingleRoundSchematic({
   density,
   metrics: m,
   cupPairProductionStates,
+  resolutionIndex,
   onPlaceActivate,
 }: {
   schematic: StageSchematic;
@@ -1075,6 +1136,7 @@ function CupSingleRoundSchematic({
   density: SchematicDensity;
   metrics: CupMetrics;
   cupPairProductionStates?: Readonly<Record<string, CupPairProductionState>>;
+  resolutionIndex?: StructureResolutionOccupantIndex | null;
   onPlaceActivate?: (place: SchematicCase) => void;
 }) {
   const roundOrders = [
@@ -1154,6 +1216,7 @@ function CupSingleRoundSchematic({
                 ghost={!c && i >= cases.length}
                 density={density}
                 onActivate={onPlaceActivate}
+                resolutionIndex={resolutionIndex}
                 style={{
                   height: m.slotH,
                   minHeight: 0,

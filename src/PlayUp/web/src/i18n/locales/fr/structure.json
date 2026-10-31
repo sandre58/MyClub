@@ -828,6 +828,28 @@
     "group": "Groupe {{name}}",
     "form": "Organisation"
   },
+  "resolution": {
+    "freshness": {
+      "state": {
+        "Perime": "Périmé",
+        "Indetermine": "Indéterminé",
+        "NonVerifiee": "Non vérifiée"
+      },
+      "cause": {
+        "ResultatAmont": "Résultat amont modifié",
+        "RegleQualification": "Règle de qualification modifiée",
+        "AmontPerime": "Phase amont périmée"
+      },
+      "ariaWithCause": "{{label}} — {{cause}}"
+    },
+    "staleDraw": {
+      "message": "Le tirage appliqué ne correspond plus à la phase.",
+      "redo": "Refaire le tirage",
+      "release": "Libérer les placements",
+      "confirmRedoTitle": "Refaire le tirage ?",
+      "confirmReleaseTitle": "Libérer les placements du tirage ?"
+    }
+  },
   "population": {
     "sectionSources": "Qualifiés",
     "sectionAffectation": "Équipes"

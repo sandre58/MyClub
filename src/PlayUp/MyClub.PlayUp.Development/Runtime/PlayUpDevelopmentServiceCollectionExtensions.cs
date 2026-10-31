@@ -81,6 +81,7 @@ public static class PlayUpDevelopmentServiceCollectionExtensions
         services.AddSingleton<IScenario, Swiss8X3Scenario>();
         services.AddSingleton<IScenario, SwissReadyScenario>();
         services.AddSingleton<IScenario, RandomScenario>();
+        services.AddSingleton<IScenario, ResolutionFreshnessQualSlotScenario>();
         services.AddSingleton(static sp => new ScenarioCatalog(sp.GetServices<IScenario>()));
 
         // Templates = inspired competitions only (datasets / capacity demos). Situations → IScenario.

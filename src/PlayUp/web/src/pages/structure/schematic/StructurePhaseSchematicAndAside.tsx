@@ -1,5 +1,6 @@
 import type { UseQueryResult } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { GradientSeparator } from '../../../design-system/components/GradientSeparator';
@@ -30,6 +31,7 @@ import { shouldShowMatchsSection } from '../matchs/structureMatchsSectionUi';
 import { StructureSchematicViewport } from './StructureSchematicViewport';
 import type { MaterializePresentation } from '../fiche/structureMaterializeCopy';
 import type { StructurePlacementOperationalSectionProps } from '../fiche/structurePlacementOperationalProps';
+import { buildStructureResolutionOccupantIndex } from '../resolution/structureResolutionOccupants';
 export function StructurePhaseSchematicAndAside({
   showHeroStats,
   heroFacts,
@@ -104,6 +106,10 @@ export function StructurePhaseSchematicAndAside({
 }) {
   const { t } = useTranslation('structure');
   const showHeroChrome = showHeroStats || canRebuild;
+  const resolutionIndex = useMemo(
+    () => buildStructureResolutionOccupantIndex(stage.resolutionOccupants),
+    [stage.resolutionOccupants],
+  );
 
   return (
     <div className="structure-phase-main">
@@ -169,6 +175,7 @@ export function StructurePhaseSchematicAndAside({
                 terminal={!hasExits}
                 cupRoundCount={stage.roundCount}
                 cupPairProductionStates={cupPairProductionStates}
+                resolutionIndex={resolutionIndex}
                 onPlaceActivate={
                   canManualPlace ? onManualPlaceActivate : undefined
                 }
