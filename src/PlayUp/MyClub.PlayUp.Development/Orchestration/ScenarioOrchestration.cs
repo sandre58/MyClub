@@ -3778,6 +3778,8 @@ internal static class ScenarioOrchestration
 
         ApplyQualification.Execute(league, standing, [league, terminal], context.Clock);
 
+        SeedLifecycle.PrepareAndStart(context, competition, league, [league, terminal]);
+
         context.Stages.Add(league);
         context.Stages.Add(terminal);
         context.Matches.Add(match);

@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { queryKeys } from '../../queryKeys';
 import {
   collectStructureInvalidationDescriptors,
+  invalidateAfterQualificationRulesReplace,
   invalidateStructureQueries,
   overviewActionInvalidatesStageReads,
   scheduleStructureRefresh,
@@ -161,6 +162,28 @@ describe('structureInvalidation', () => {
     );
     expect(overviewActionInvalidatesStageReads('PrepareStage')).toBe(true);
     expect(overviewActionInvalidatesStageReads('AddEntry')).toBe(false);
+  });
+
+  it('invalidateAfterQualificationRulesReplace marks structure and stages prefix stale', async () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.competitions.structure(competitionId), {
+      fresh: true,
+    });
+    queryClient.setQueryData(['stages', 'detail', stageId], { fresh: true });
+    const spy = vi.spyOn(queryClient, 'invalidateQueries');
+
+    invalidateAfterQualificationRulesReplace(queryClient, competitionId);
+
+    await vi.waitFor(() => {
+      expect(spy).toHaveBeenCalledWith({
+        queryKey: ['stages'],
+        refetchType: 'active',
+      });
+    });
+    expect(spy).toHaveBeenCalledWith({
+      queryKey: queryKeys.competitions.structure(competitionId),
+      refetchType: 'active',
+    });
   });
 
   it('scheduleStructureRefresh absorbs rejected invalidation', async () => {

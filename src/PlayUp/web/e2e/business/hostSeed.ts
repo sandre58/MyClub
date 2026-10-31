@@ -394,6 +394,55 @@ export async function getStageIdByName(
   return stage.stageId;
 }
 
+export async function findFirstFinishedMatchOnStage(
+  request: APIRequestContext,
+  stageId: string,
+): Promise<string> {
+  const response = await request.get(
+    `${playUpApiBase()}/stages/${stageId}/matches`,
+  );
+  if (!response.ok()) {
+    const body = await response.text();
+    throw new Error(
+      `GET /stages/${stageId}/matches failed (${response.status()}): ${body}`,
+    );
+  }
+
+  const matches = (await response.json()) as {
+    matchId: string;
+    status: string;
+  }[];
+  const finished = matches.find((m) => m.status === 'Finished');
+  if (!finished) {
+    throw new Error(`No Finished match on stage ${stageId}`);
+  }
+  return finished.matchId;
+}
+
+export async function correctFinishedMatchResult(
+  request: APIRequestContext,
+  matchId: string,
+  homeGoals: number,
+  awayGoals: number,
+): Promise<void> {
+  const response = await request.put(
+    `${playUpApiBase()}/matches/${matchId}/result`,
+    {
+      data: {
+        type: 'Played',
+        homeGoals,
+        awayGoals,
+      },
+    },
+  );
+  if (!response.ok()) {
+    const body = await response.text();
+    throw new Error(
+      `PUT /matches/${matchId}/result failed (${response.status()}): ${body}`,
+    );
+  }
+}
+
 export async function replaceQualificationRulesForStaleBadge(
   request: APIRequestContext,
   leagueStageId: string,

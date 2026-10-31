@@ -41,6 +41,17 @@ internal static class MatchEndpoints
                 return Results.NoContent();
             });
 
+        app.MapPut(
+            "/matches/{matchId:guid}/result",
+            async (Guid matchId, FinishMatchRequest request, UseCaseExecutor executor, CancellationToken cancellationToken) =>
+            {
+                var result = request.ToDomain();
+                await executor
+                    .CorrectMatchResultAsync(new MatchId(matchId), result, cancellationToken)
+                    .ConfigureAwait(false);
+                return Results.NoContent();
+            });
+
         app.MapPost(
             "/matches/{matchId:guid}/declared-participations",
             async (

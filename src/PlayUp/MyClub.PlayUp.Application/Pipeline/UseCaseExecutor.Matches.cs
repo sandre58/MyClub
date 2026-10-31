@@ -55,6 +55,22 @@ public sealed partial class UseCaseExecutor
     }
 
     /// <summary>
+    /// Loads a finished match, runs <see cref="CorrectMatchResult"/>, and saves changes.
+    /// </summary>
+    public async Task CorrectMatchResultAsync(
+        MatchId matchId,
+        MatchResult result,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(result);
+
+        var match = await RequireMatchForOperationAsync(matchId, cancellationToken).ConfigureAwait(false);
+
+        CorrectMatchResult.Execute(match, result, clock);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// Adds an eligible player to the match composition sheet and saves changes.
     /// </summary>
     public async Task AddDeclaredParticipationAsync(
