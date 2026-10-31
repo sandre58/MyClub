@@ -4,6 +4,7 @@ import {
   correctFinishedMatchResult,
   findFirstFinishedMatchOnStage,
   findResolutionFreshnessQualSlotCompetition,
+  findResolutionFreshnessScoreUpstreamCompetition,
   getStageIdByName,
   replaceQualificationRulesForStaleBadge,
 } from './hostSeed';
@@ -17,7 +18,7 @@ test.describe('Play’Up business (resolution freshness)', () => {
     request,
   }) => {
     const competition =
-      await findResolutionFreshnessQualSlotCompetition(request);
+      await findResolutionFreshnessScoreUpstreamCompetition(request);
     const leagueId = await getStageIdByName(request, competition.id, 'League');
     const terminalId = await getStageIdByName(
       request,

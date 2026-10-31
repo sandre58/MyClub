@@ -3731,9 +3731,28 @@ internal static class ScenarioOrchestration
         ArgumentNullException.ThrowIfNull(context);
         cancellationToken.ThrowIfCancellationRequested();
 
-        var competition = await CreateCompetitionAsync(
+        await SeedResolutionFreshnessQualSlotAsync(
                 context,
                 "RECETTE T3 — Qual slot fraîcheur",
+                cancellationToken)
+            .ConfigureAwait(false);
+        await SeedResolutionFreshnessQualSlotAsync(
+                context,
+                "RECETTE T3 — Score upstream fraîcheur",
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task SeedResolutionFreshnessQualSlotAsync(
+        ScenarioContext context,
+        string competitionName,
+        CancellationToken cancellationToken)
+    {
+        var competition = await CreateCompetitionAsync(
+                context,
+                competitionName,
                 cancellationToken: cancellationToken)
             .ConfigureAwait(false);
 
@@ -3783,7 +3802,5 @@ internal static class ScenarioOrchestration
         context.Stages.Add(league);
         context.Stages.Add(terminal);
         context.Matches.Add(match);
-
-        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 }
