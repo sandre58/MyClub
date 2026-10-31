@@ -39,6 +39,12 @@ internal sealed class CompetitionRepository(PlayUpDbContext context) : ICompetit
     }
 
     /// <inheritdoc />
+    public Task<int> CountStagesReadOnlyAsync(CompetitionId id, CancellationToken cancellationToken = default) =>
+        context.Set<CompetitionStageRef>()
+            .AsNoTracking()
+            .CountAsync(row => row.CompetitionId == id, cancellationToken);
+
+    /// <inheritdoc />
     public void Add(Competition competition)
     {
         ArgumentNullException.ThrowIfNull(competition);

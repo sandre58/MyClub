@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Standings;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
@@ -82,4 +83,69 @@ public static class QualificationStandingFactory
         static bool isGroupScoped(QualificationPath path) =>
             path.Source.GroupId is not null || path.Source.Scope == RankingScope.Group;
     }
+
+    /// <summary>
+    /// Assembles standings from match summary rows already loaded for a read.
+    /// Same participant universe and rules as <see cref="Build(Competition, Stage, IReadOnlyList{Match})"/>.
+    /// </summary>
+    public static (Standing? Overall, IReadOnlyDictionary<GroupId, Standing> Groups) Build(
+        Competition competition,
+        Stage sourceStage,
+        IReadOnlyList<MatchSummaryRow> matches)
+    {
+        ArgumentNullException.ThrowIfNull(competition);
+        ArgumentNullException.ThrowIfNull(sourceStage);
+        ArgumentNullException.ThrowIfNull(matches);
+
+        var paths = sourceStage.Regulation.QualificationRules?.Paths ?? [];
+        var penalties = CalculateStanding.ToStandingPenalties(sourceStage.Penalties);
+        var rules = sourceStage.Regulation.StandingRules
+            ?? throw new ApplicationFailureException(
+                "Standing rules are required to calculate qualification standings.",
+                StandingErrorCodes.RulesRequired);
+
+        var needsOverall = paths.Any(path =>
+            path.Source.Scope != RankingScope.AcrossGroups && !IsGroupScoped(path));
+        var needsGroups = paths.Any(path =>
+            IsGroupScoped(path) || path.Source.Scope == RankingScope.AcrossGroups);
+
+        Standing? overall = null;
+        if (needsOverall)
+        {
+            var participants = competition.Entries
+                .Where(entry => entry.Status == EntryStatus.Active)
+                .Select(entry => entry.Id)
+                .ToArray();
+            if (participants.Length == 0)
+            {
+                participants = [.. matches
+                    .Where(match => match is { Status: MatchStatus.Finished, Result: not null })
+                    .SelectMany(match => new[] { match.HomeEntryId, match.AwayEntryId })
+                    .Distinct()];
+            }
+
+            overall = CalculateStanding.Execute(participants, matches, rules, MatchFilter.All, penalties);
+        }
+
+        var groupStandings = new Dictionary<GroupId, Standing>();
+        if (!needsGroups)
+        {
+            return (overall, groupStandings);
+        }
+
+        foreach (var group in sourceStage.Groups)
+        {
+            groupStandings[group.Id] = CalculateStanding.Execute(
+                group.EntryIds,
+                matches,
+                rules,
+                MatchFilter.All,
+                penalties);
+        }
+
+        return (overall, groupStandings);
+    }
+
+    private static bool IsGroupScoped(QualificationPath path) =>
+        path.Source.GroupId is not null || path.Source.Scope == RankingScope.Group;
 }

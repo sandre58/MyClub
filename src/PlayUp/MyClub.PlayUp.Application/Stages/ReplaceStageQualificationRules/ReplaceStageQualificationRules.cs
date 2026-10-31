@@ -75,13 +75,24 @@ public static class ReplaceStageQualificationRules
         IReadOnlyList<Stage>? competitionStages,
         IReadOnlyList<Match>? upstreamMatches)
     {
-        StructureOperationalExitEditGuard.Ensure(stage, upstreamMatches, "Qualification rules");
+        var qualificationAlreadyApplied = QualificationResolutionApplyWitness.Exists(stage, competitionStages);
+        if (stage.Status is StageStatus.Completed || !qualificationAlreadyApplied)
+        {
+            StructureOperationalExitEditGuard.Ensure(stage, upstreamMatches, "Qualification rules");
+        }
+
         if (competitionStages is not null)
         {
             StructureReadyConsumerFeedGate.EnsureQualificationReplaceAllowed(stage, afterRules, competitionStages);
         }
 
         StructureAppliedDrawFeedRulesChangeGate.EnsureQualificationReplaceAllowed(stage, afterRules);
+        if (qualificationAlreadyApplied && stage.Status is not StageStatus.Completed)
+        {
+            stage.ReplaceQualificationRulesAfterAppliedResolution(afterRules, clock);
+            return;
+        }
+
         stage.ReplaceQualificationRulesOperationally(afterRules, clock);
     }
 

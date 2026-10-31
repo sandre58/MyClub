@@ -720,6 +720,9 @@ public sealed partial class UseCaseExecutor
 
     /// <summary>
     /// Replaces qualification rules on a stage from legacy path specs (null/empty clears).
+    /// A <see cref="StageStatus.Running"/> stage with no qualification Apply on its own graph
+    /// issues <see cref="ICompetitionRepository.CountStagesReadOnlyAsync"/> before the refusal.
+    /// That query belongs to this write path, not to Structure reads.
     /// </summary>
     public async Task ReplaceStageQualificationRulesAsync(
         StageId stageId,
@@ -727,19 +730,17 @@ public sealed partial class UseCaseExecutor
         CancellationToken cancellationToken = default)
     {
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        StructureOperationalExitEditGuard.EnsureStatusAllowsExitEditWithoutMatches(stage, "Qualification rules");
-        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
-            .ConfigureAwait(false);
-        var competitionStages = await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken)
-            .ConfigureAwait(false);
-        var stageMatches = await matches.ListByStageForUpdateAsync(stageId, cancellationToken)
-            .ConfigureAwait(false);
+        var (competitionStages, stageMatches) =
+            await LoadQualificationReplaceScopeAsync(stage, cancellationToken).ConfigureAwait(false);
         ReplaceStageQualificationRules.Execute(stage, paths, clock, competitionStages, stageMatches);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
     /// Replaces qualification rules from authoring intents (null/empty clears).
+    /// A <see cref="StageStatus.Running"/> stage with no qualification Apply on its own graph
+    /// issues <see cref="ICompetitionRepository.CountStagesReadOnlyAsync"/> before the refusal.
+    /// That query belongs to this write path, not to Structure reads.
     /// </summary>
     public async Task ReplaceStageQualificationIntentsAsync(
         StageId stageId,
@@ -747,15 +748,67 @@ public sealed partial class UseCaseExecutor
         CancellationToken cancellationToken = default)
     {
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        StructureOperationalExitEditGuard.EnsureStatusAllowsExitEditWithoutMatches(stage, "Qualification rules");
-        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
-            .ConfigureAwait(false);
-        var competitionStages = await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken)
-            .ConfigureAwait(false);
-        var stageMatches = await matches.ListByStageForUpdateAsync(stageId, cancellationToken)
-            .ConfigureAwait(false);
+        var (competitionStages, stageMatches) =
+            await LoadQualificationReplaceScopeAsync(stage, cancellationToken).ConfigureAwait(false);
         ReplaceStageQualificationRules.Execute(stage, intents, clock, competitionStages, stageMatches);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Loads the stages needed to see a qualification Apply. A Running or Completed stage with no Apply
+    /// on its own graph refuses before the competition aggregate and the match graph when it is the only stage.
+    /// The extra <see cref="ICompetitionRepository.CountStagesReadOnlyAsync"/> query runs on this write path
+    /// when the stage is <see cref="StageStatus.Running"/> and stores no qualification Apply.
+    /// </summary>
+    private async Task<(List<Stage> Stages, IReadOnlyList<Match> Matches)> LoadQualificationReplaceScopeAsync(
+        Stage stage,
+        CancellationToken cancellationToken)
+    {
+        if (await RefuseQualificationReplaceBeforeScopeLoadAsync(stage, cancellationToken).ConfigureAwait(false))
+        {
+            StructureOperationalExitEditGuard.EnsureStatusAllowsExitEditWithoutMatches(stage, "Qualification rules");
+        }
+
+        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
+            .ConfigureAwait(false);
+        var competitionStages = competition.StageIds.Count == 1 && competition.StageIds[0].Equals(stage.Id)
+            ? new List<Stage> { stage }
+            : await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken).ConfigureAwait(false);
+        if (stage.Status is StageStatus.Completed
+            || !QualificationResolutionApplyWitness.Exists(stage, competitionStages))
+        {
+            StructureOperationalExitEditGuard.EnsureStatusAllowsExitEditWithoutMatches(stage, "Qualification rules");
+        }
+
+        var stageMatches = await matches.ListByStageForUpdateAsync(stage.Id, cancellationToken)
+            .ConfigureAwait(false);
+        return (competitionStages, stageMatches);
+    }
+
+    /// <summary>
+    /// True when status forbids the edit and no sibling stage can hold the qualification Apply witness.
+    /// Calls <see cref="ICompetitionRepository.CountStagesReadOnlyAsync"/> only on this write path,
+    /// for a <see cref="StageStatus.Running"/> stage with no qualification Apply on its own graph.
+    /// </summary>
+    private async Task<bool> RefuseQualificationReplaceBeforeScopeLoadAsync(
+        Stage stage,
+        CancellationToken cancellationToken)
+    {
+        if (stage.Status is StageStatus.Completed)
+        {
+            return true;
+        }
+
+        if (stage.Status is StageStatus.Draft or StageStatus.Ready
+            || QualificationResolutionApplyWitness.Exists(stage, [stage]))
+        {
+            return false;
+        }
+
+        var stageCount = await competitions
+            .CountStagesReadOnlyAsync(stage.CompetitionId, cancellationToken)
+            .ConfigureAwait(false);
+        return stageCount == 1;
     }
 
     /// <summary>

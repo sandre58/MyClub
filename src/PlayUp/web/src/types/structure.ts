@@ -275,6 +275,25 @@ export interface StructureStageHubSummary {
   } | null;
   /** Inbound Qual/Prog resolution for Composition Qualifiés; omitted when root composition. */
   inboundComposition?: StructureInboundComposition | null;
+  /**
+   * Stored resolution occupants and server-computed freshness.
+   * Null or omitted when the phase has no provenance.
+   */
+  resolutionOccupants?: StructureResolutionOccupant[] | null;
+}
+
+/** Structure GET — one stored resolution occupant. */
+export interface StructureResolutionOccupant {
+  target: 'Slot' | 'Group' | 'Population';
+  entryId: string;
+  provenanceKind:
+    'Qualification' | 'Progression' | 'Directe' | 'Tirage' | 'NonVerifiee';
+  sourcePathId: string;
+  state: 'AJour' | 'Perime' | 'Indetermine' | 'NonVerifiee';
+  slotKey?: string | null;
+  groupId?: string | null;
+  stalenessCause?:
+    'ResultatAmont' | 'RegleQualification' | 'AmontPerime' | null;
 }
 
 /** Hub projection — inbound feed seats (Structure GET, not schematic). */
