@@ -219,3 +219,12 @@ export function scheduleStructureRefresh(
     options,
   ).catch(logStructureRefreshError);
 }
+
+/** After qualification rules replace/clear — structure hub and all stage reads. */
+export function invalidateAfterQualificationRulesReplace(
+  queryClient: QueryClient,
+  competitionId: string,
+): void {
+  scheduleStructureRefresh(queryClient, competitionId, ['graph']);
+  scheduleQueryRefresh(queryClient, ['stages']);
+}

@@ -828,6 +828,28 @@
     "group": "Group {{name}}",
     "form": "Organisation"
   },
+  "resolution": {
+    "freshness": {
+      "state": {
+        "Perime": "Stale",
+        "Indetermine": "Indeterminate",
+        "NonVerifiee": "Unverified"
+      },
+      "cause": {
+        "ResultatAmont": "Upstream result changed",
+        "RegleQualification": "Qualification rule changed",
+        "AmontPerime": "Upstream phase stale"
+      },
+      "ariaWithCause": "{{label}} — {{cause}}"
+    },
+    "staleDraw": {
+      "message": "The applied draw no longer matches this phase.",
+      "redo": "Redo draw",
+      "release": "Release placements",
+      "confirmRedoTitle": "Redo the draw?",
+      "confirmReleaseTitle": "Release draw placements?"
+    }
+  },
   "population": {
     "sectionSources": "Qualified",
     "sectionAffectation": "Teams"

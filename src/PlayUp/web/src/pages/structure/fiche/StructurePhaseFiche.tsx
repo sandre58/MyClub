@@ -50,6 +50,7 @@ import {
   TieFormatDialog,
 } from '../regulation/StructureRegulationDialogs';
 import { StructureDrawDialogHost } from '../draw/StructureDrawDialogHost';
+import { redoAppliedDraw } from '../draw/drawRedo';
 import { StructureCompositionDialog } from '../composition/StructureCompositionDialog';
 import { StructurePhaseFicheHeader } from './StructurePhaseFicheHeader';
 import { StructureReadinessAttributedBlockerBanner } from '../issues/StructureReadinessAttributedBlockerBanner';
@@ -72,7 +73,12 @@ import {
   pickActiveDraw,
   resolveDrawReadinessChecklist,
 } from '../draw/drawUi';
-import { resolveServerReleaseCta } from '../draw/drawActions';
+import {
+  resolveServerReleaseCta,
+  releaseFooterMode,
+} from '../draw/drawActions';
+import { StructureStaleDrawResolutionActions } from '../resolution/StructureStaleDrawResolutionActions';
+import { hasStaleTirageResolutionOccupant } from '../resolution/structureResolutionOccupants';
 import {
   isSlotFeedAwaitingDraw,
   structureIssueBannersForTile,
@@ -191,6 +197,8 @@ export function StructurePhaseFiche({
   const [drawWorkflowOpen, setDrawWorkflowOpen] = useState(false);
   const [deactivateDrawOpen, setDeactivateDrawOpen] = useState(false);
   const [releaseConfirmOpen, setReleaseConfirmOpen] = useState(false);
+  const [staleRedoConfirmOpen, setStaleRedoConfirmOpen] = useState(false);
+  const [staleReleaseConfirmOpen, setStaleReleaseConfirmOpen] = useState(false);
   const [composeOpen, setComposeOpen] = useState(false);
   const [composeFocusSearch, setComposeFocusSearch] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
@@ -241,7 +249,24 @@ export function StructurePhaseFiche({
       releaseDrawAlignedPlacements(stage!.stageId, drawId),
     onSuccess: (result) => {
       setReleaseConfirmOpen(false);
+      setStaleReleaseConfirmOpen(false);
       notify.success(tDraw('toastReleased', { count: result.releasedCount }));
+      scheduleStructureRefresh(
+        queryClient,
+        data.competitionId,
+        ['hubStageShell'],
+        {
+          stageId: stage!.stageId,
+        },
+      );
+    },
+  });
+
+  const staleRedoMutation = useMutation({
+    mutationFn: (drawId: string) => redoAppliedDraw(stage!.stageId, drawId),
+    onSuccess: () => {
+      setStaleRedoConfirmOpen(false);
+      notify.success(tDraw('toastCreated'));
       scheduleStructureRefresh(
         queryClient,
         data.competitionId,
@@ -255,6 +280,8 @@ export function StructurePhaseFiche({
 
   useClearMutationsOnOpen(deactivateDrawOpen, deactivateDrawMutation);
   useClearMutationsOnOpen(releaseConfirmOpen, releaseMutation);
+  useClearMutationsOnOpen(staleRedoConfirmOpen, staleRedoMutation);
+  useClearMutationsOnOpen(staleReleaseConfirmOpen, releaseMutation);
 
   const initialNavigationKey = [
     stage?.stageId ?? '',
@@ -979,6 +1006,41 @@ export function StructurePhaseFiche({
     (stage.affectationIneligibleCount ?? 0) > 0
       ? t('entries.editComposition')
       : t('entries.addAffectation');
+  const showStaleDrawResolution =
+    !isCompletedStage &&
+    hasStaleTirageResolutionOccupant(stage.resolutionOccupants) &&
+    stageHasAppliedDraw;
+  const staleDrawResolutionPanel = showStaleDrawResolution ? (
+    <StructureStaleDrawResolutionActions
+      activeDraw={activeDraw}
+      releaseCta={releaseCta}
+      redoPending={staleRedoMutation.isPending}
+      releasePending={releaseMutation.isPending}
+      redoError={staleRedoMutation.error}
+      releaseError={releaseMutation.error}
+      confirmRedoOpen={staleRedoConfirmOpen}
+      confirmReleaseOpen={staleReleaseConfirmOpen}
+      structureStages={data.stages}
+      onOpenConfirmRedo={() => setStaleRedoConfirmOpen(true)}
+      onOpenConfirmRelease={() => setStaleReleaseConfirmOpen(true)}
+      onCancelConfirmRedo={() => setStaleRedoConfirmOpen(false)}
+      onCancelConfirmRelease={() => setStaleReleaseConfirmOpen(false)}
+      onConfirmRedo={() => {
+        if (activeDraw && !staleRedoMutation.isPending) {
+          staleRedoMutation.mutate(activeDraw.id);
+        }
+      }}
+      onConfirmRelease={() => {
+        const drawId =
+          activeDraw != null && releaseFooterMode(activeDraw) !== 'hidden'
+            ? activeDraw.id
+            : releasableDraw?.id;
+        if (drawId && !releaseMutation.isPending) {
+          releaseMutation.mutate(drawId);
+        }
+      }}
+    />
+  ) : null;
   const placementOperationalProps = showAffectationSection
     ? {
         competitionId: data.competitionId,
@@ -1050,6 +1112,7 @@ export function StructurePhaseFiche({
               diagnosticContext={stageDiagnosticContext}
             />
           ) : undefined,
+        staleDrawResolutionPanel,
       }
     : null;
   const compositionVisibleSectionCount = [

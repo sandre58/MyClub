@@ -280,6 +280,25 @@
   min-width: 0;
 }
 
+.schematic-slot__freshness {
+  margin-top: var(--space-4);
+  display: flex;
+  justify-content: flex-start;
+}
+
+.structure-stale-draw-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin-top: var(--space-8);
+}
+
+.structure-stale-draw-actions__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+
 /* U4 — Place address chrome (secondary; never replaces S3 primary). */
 .schematic-slot__address {
   overflow: hidden;

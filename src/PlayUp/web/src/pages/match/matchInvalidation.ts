@@ -30,6 +30,7 @@ export function matchMutationQueryKeys(
     queryKeys.competitions.matchHub(competitionId),
     queryKeys.competitions.structure(competitionId),
     queryKeys.stages.detail(stageId),
+    ['stages'],
     queryKeys.competitions.overview(competitionId),
     queryKeys.competitions.consultation(competitionId),
     queryKeys.competitions.attention(competitionId),
