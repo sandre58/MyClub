@@ -247,6 +247,21 @@ public sealed class ResolutionVisualRecetteIntegrationTests(DevelopmentPostgresF
         draw.Status.Should().Be(DrawStatus.Published);
         draw.IsApplied.Should().BeTrue();
         cup.Status.Should().Be(StageStatus.Ready);
+
+        using var redoScope = fixture.Services.CreateScope();
+        var clock = redoScope.ServiceProvider.GetRequiredService<IClock>();
+        var matchRepo = redoScope.ServiceProvider.GetRequiredService<IMatchRepository>();
+        var stagesRepo = redoScope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var cupLoaded = (await stagesRepo.GetByIdForUpdateAsync(cup.Id))!;
+        var stageMatches = await matchRepo.ListByStageForUpdateAsync(cup.Id);
+        var redoResult = RedoDraw.Execute(
+            cupLoaded,
+            new DrawId(draw.Id),
+            clock,
+            [cupLoaded],
+            stageMatches);
+        redoResult.IsResolved.Should().BeTrue();
+        cupLoaded.GetDraw(redoResult.DrawId).Resolution.State.Should().Be(DrawResolutionState.Resolved);
     }
 
     [Fact]

@@ -295,7 +295,7 @@ describe('structure draw dialog height', () => {
       /@media \(max-height:\s*36rem\)[\s\S]*structure-draw-dialog/,
     );
     expect(drawDialogCss).toMatch(
-      /\.structure-draw-dialog \{[^}]*flex:\s*none/,
+      /\.structure-draw-dialog \{[^}]*flex:\s*1 1 auto/,
     );
     expect(drawDialogCss).toMatch(
       /\.structure-draw-execution \{[^}]*flex:\s*none/,

@@ -59,13 +59,20 @@ public static class RedoDraw
             DrawActionFailure.Throw(code, $"Cannot redo draw '{draw.Id}' ({code}).");
         }
 
+        if (draw.Inputs is null)
+        {
+            throw new ApplicationFailureException(
+                $"Draw '{drawId}' has no inputs to redo.",
+                ApplicationErrorCodes.DrawGenerationFailure);
+        }
+
         var kind = draw.Kind;
 
         CancelDraw.Execute(stage, drawId, clock);
         ReleaseDrawAlignedPlacements.Execute(stage, drawId, clock, stageMatches);
 
         var created = CreateDraw.Execute(stage, kind, clock, stageMatches);
-        var inputs = DrawInputsFactory.CreateDefault(stage, kind, DrawInputsIntent.Rerun);
+        var inputs = DrawInputsFactory.CreateRerun(stage, draw);
         ConfigureDrawInputs.Execute(
             stage,
             created.Id,
