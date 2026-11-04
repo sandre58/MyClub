@@ -23,7 +23,7 @@ namespace MyClub.PlayUp.Development.Orchestration;
 internal static partial class ScenarioOrchestration
 {
     /// <summary>
-    /// Seeds nine <c>RECETTE T3 — …</c> competitions for Structure resolution freshness visual recette.
+    /// Seeds ten <c>RECETTE T3 — …</c> competitions for Structure resolution freshness visual recette.
     /// </summary>
     public static async Task BuildResolutionVisualRecetteAsync(
         ScenarioContext context,
@@ -50,6 +50,37 @@ internal static partial class ScenarioOrchestration
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         await SeedVisualRecetteStaleDrawBlockedAsync(context, cancellationToken).ConfigureAwait(false);
         await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await SeedVisualRecetteWithdrawnOccupantAsync(context, cancellationToken).ConfigureAwait(false);
+        await context.UnitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task SeedVisualRecetteWithdrawnOccupantAsync(
+        ScenarioContext context,
+        CancellationToken cancellationToken)
+    {
+        var competition = await CreateCompetitionAsync(
+                context,
+                ResolutionVisualRecetteNames.WithdrawnOccupant,
+                competitionLocalKey: "vis-t3-withdrawn",
+                cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+        var entries = AddNamedEntries(context, competition, "Forfait FC", "Beta", "Gamma", "Delta");
+        var league = Stage.Create(
+            competition.Id,
+            new StageName("Championnat"),
+            RegulationPacks.Standard(),
+            context.Clock);
+        league.AddMatchday(1, context.Clock);
+        competition.AddStage(league.Id, context.Clock);
+        league.ReplaceAffectationAuthoring(entries, context.Clock);
+        var matches = RoundRobinFinished(context, league, entries);
+        SeedLifecycle.PrepareAndStart(context, competition, league, [league]);
+        competition.WithdrawEntry(entries[0], context.Clock);
+        context.Stages.Add(league);
+        foreach (var match in matches)
+        {
+            context.Matches.Add(match);
+        }
     }
 
     private static async Task SeedVisualRecetteQualRuleSlotAsync(

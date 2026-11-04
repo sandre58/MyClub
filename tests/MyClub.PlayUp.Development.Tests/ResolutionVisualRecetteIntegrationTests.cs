@@ -68,12 +68,12 @@ public sealed class ResolutionVisualRecetteIntegrationTests(DevelopmentPostgresF
     }
 
     [Fact]
-    public async Task Resolution_visual_recette_seeds_nine_competitionsAsync()
+    public async Task Resolution_visual_recette_seeds_ten_competitionsAsync()
     {
         await RunScenarioAsync();
         using var scope = fixture.Services.CreateScope();
         var list = await scope.ServiceProvider.GetRequiredService<ICompetitionRepository>().ListAsync();
-        list.Should().HaveCount(9);
+        list.Should().HaveCount(10);
         list.Select(c => c.Name.Value).Should().BeEquivalentTo(
         [
             ResolutionVisualRecetteNames.QualRuleSlot,
@@ -85,6 +85,7 @@ public sealed class ResolutionVisualRecetteIntegrationTests(DevelopmentPostgresF
             ResolutionVisualRecetteNames.QualRuleGroup,
             ResolutionVisualRecetteNames.StaleDrawActive,
             ResolutionVisualRecetteNames.StaleDrawBlocked,
+            ResolutionVisualRecetteNames.WithdrawnOccupant,
         ]);
     }
 

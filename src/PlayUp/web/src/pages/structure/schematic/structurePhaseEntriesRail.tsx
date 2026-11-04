@@ -9,6 +9,7 @@ import {
   PlusIcon,
   LossIcon,
   WinIcon,
+  WithdrawIcon,
 } from '../../../design-system/icons/contentIcons';
 import { StructureDiagnosticIssueIcon } from '../issues/StructureDiagnosticIssueIcon';
 import { EntryCell } from '../../../design-system/components/EntryCell';
@@ -247,7 +248,7 @@ export function RootEntriesRail({
   /** Runtime empty / undetermined rendered by Composition band header zone. */
   suppressRuntimeEmptyPresentation?: boolean;
 }) {
-  const { t } = useTranslation('structure');
+  const { t } = useTranslation(['structure', 'teams']);
   const resolutionIndex = useMemo(
     () => buildStructureResolutionOccupantIndex(stage.resolutionOccupants),
     [stage.resolutionOccupants],
@@ -385,15 +386,23 @@ export function RootEntriesRail({
           logoMediaId={entry.logoMediaId}
           primaryColor={entry.primaryColor}
           ineligible={entry.status !== 'Active'}
-          ineligibleTooltip={
-            entry.status === 'Withdrawn'
-              ? t('composition.withdrawnFromCompetitionTip')
-              : undefined
-          }
           ineligibleLabel={
             entry.status !== 'Active' && entry.status !== 'Withdrawn'
               ? t('composition.noLongerEligible')
               : undefined
+          }
+          nameSuffix={
+            entry.status === 'Withdrawn' ? (
+              <Tooltip content={t('teams:withdrawnBadge')}>
+                <span
+                  className="structure-entries__team-withdrawn-inline"
+                  role="img"
+                  aria-label={t('teams:withdrawnBadge')}
+                >
+                  <WithdrawIcon size="sm" aria-hidden="true" />
+                </span>
+              </Tooltip>
+            ) : undefined
           }
           placed={placed}
           placedTooltip={

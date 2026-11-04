@@ -22,4 +22,5 @@ public static class ResolutionVisualRecetteNames
     public const string QualRuleGroup = "RECETTE T3 — Périmé règle qualif (groupe)";
     public const string StaleDrawActive = "RECETTE T3 — Tirage périmé actif";
     public const string StaleDrawBlocked = "RECETTE T3 — Tirage périmé bloqué";
+    public const string WithdrawnOccupant = "RECETTE T3 — Forfait (équipe)";
 }

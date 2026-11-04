@@ -132,6 +132,20 @@ export function PhaseSchematic({
   );
 }
 
+function SchematicSlotWithdrawnMarker({ label }: { label: string }) {
+  return (
+    <Tooltip content={label}>
+      <span
+        className="schematic-slot__withdrawn-marker"
+        role="img"
+        aria-label={label}
+      >
+        <WithdrawIcon size="sm" aria-hidden="true" />
+      </span>
+    </Tooltip>
+  );
+}
+
 /** Shared slot design: slot-key chrome and primary content; team only when there is no feed. */
 function SlotBox({
   c,
@@ -226,6 +240,13 @@ function SlotBox({
     c?.formPosition ?? { kind: 'RosterPlace' },
     c?.assignment?.entryId ?? c?.entry?.entryId ?? null,
   );
+  const withdrawnBadgeLabel = t('teams:withdrawnBadge');
+  const showFullBody = density === 'full' && (primary || showSlotCrest);
+  const freshnessBadge = slotResolutionOccupant ? (
+    <span className="schematic-slot__freshness">
+      <StructureResolutionFreshnessBadge occupant={slotResolutionOccupant} />
+    </span>
+  ) : null;
   const slotInner = (
     <>
       {density === 'crest' && showTeamCrest ? (
@@ -239,7 +260,7 @@ function SlotBox({
       {density === 'full' && address ? (
         <span className="schematic-slot__address">{address}</span>
       ) : null}
-      {density === 'full' && (primary || showSlotCrest) ? (
+      {showFullBody ? (
         <span className="schematic-slot__body">
           {showSlotCrest ? (
             <TeamCrest
@@ -252,21 +273,21 @@ function SlotBox({
           ) : null}
           <span className="schematic-slot__copy">
             {primary ? (
-              <span className={primaryClassName}>{primary}</span>
+              <span className="schematic-slot__name-row">
+                <span className={primaryClassName}>{primary}</span>
+                {withdrawn && resolvedName ? (
+                  <SchematicSlotWithdrawnMarker label={withdrawnBadgeLabel} />
+                ) : null}
+              </span>
             ) : null}
             {secondary && secondary !== primary ? (
               <span className="schematic-slot__secondary">{secondary}</span>
             ) : null}
           </span>
+          {freshnessBadge}
         </span>
       ) : null}
-      {slotResolutionOccupant ? (
-        <span className="schematic-slot__freshness">
-          <StructureResolutionFreshnessBadge
-            occupant={slotResolutionOccupant}
-          />
-        </span>
-      ) : null}
+      {!showFullBody ? freshnessBadge : null}
     </>
   );
 
