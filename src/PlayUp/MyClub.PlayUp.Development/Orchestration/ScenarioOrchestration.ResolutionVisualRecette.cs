@@ -425,17 +425,17 @@ internal static partial class ScenarioOrchestration
                 competitionLocalKey: "vis-t3-draw-active",
                 cancellationToken: cancellationToken)
             .ConfigureAwait(false);
-        var entries = AddNamedEntries(context, competition, "D1", "D2");
+        var entries = AddNamedEntries(context, competition, "D1", "D2", "D3");
         var cup = Stage.Create(competition.Id, new StageName("Cup"), RegulationPacks.Standard(), context.Clock);
         cup.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), context.Clock);
         cup.AddSlot("S1");
         cup.AddSlot("S2");
         cup.SeedEntryRoundBracketPairs();
         competition.AddStage(cup.Id, context.Clock);
-        cup.ReplaceAffectationAuthoring(entries, context.Clock);
+        cup.ReplaceAffectationAuthoring([entries[0], entries[1]], context.Clock);
         SeedSlotDraw.EngageRandomDrawRules(cup, context.Clock);
-        SeedSlotDraw.RecordAndApplySlotDraw(context, cup, entries, ["S1", "S2"]);
-        cup.AddResolvedPopulationEntry(EntryId.New(), context.Clock);
+        SeedSlotDraw.RecordAndApplySlotDraw(context, cup, [entries[0], entries[1]], ["S1", "S2"]);
+        cup.ReplaceAffectationAuthoringOperationally(entries, context.Clock);
         SeedLifecycle.PrepareOnly(context, competition, cup, [cup]);
         context.Stages.Add(cup);
     }
@@ -450,20 +450,20 @@ internal static partial class ScenarioOrchestration
                 competitionLocalKey: "vis-t3-draw-blocked",
                 cancellationToken: cancellationToken)
             .ConfigureAwait(false);
-        var entries = AddNamedEntries(context, competition, "B1", "B2");
+        var entries = AddNamedEntries(context, competition, "B1", "B2", "B3");
         var cup = Stage.Create(competition.Id, new StageName("Cup"), RegulationPacks.Standard(), context.Clock);
         var round = cup.AddRound("R1", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), context.Clock);
         cup.AddSlot("S1");
         cup.AddSlot("S2");
         cup.SeedEntryRoundBracketPairs();
         competition.AddStage(cup.Id, context.Clock);
-        cup.ReplaceAffectationAuthoring(entries, context.Clock);
+        cup.ReplaceAffectationAuthoring([entries[0], entries[1]], context.Clock);
         SeedSlotDraw.EngageRandomDrawRules(cup, context.Clock);
-        SeedSlotDraw.RecordAndApplySlotDraw(context, cup, entries, ["S1", "S2"]);
+        SeedSlotDraw.RecordAndApplySlotDraw(context, cup, [entries[0], entries[1]], ["S1", "S2"]);
         var fixture = cup.AddFixture(round.Id, context.Clock, "S1", "S2", "P1");
         var match = Match.Create(competition.Id, cup.Id, entries[0], entries[1], context.Clock);
         cup.AttachMatch(fixture.Id, match.Id, legIndex: 1, context.Clock);
-        cup.AddResolvedPopulationEntry(EntryId.New(), context.Clock);
+        cup.ReplaceAffectationAuthoringOperationally(entries, context.Clock);
         SeedLifecycle.PrepareOnly(context, competition, cup, [cup]);
         context.Stages.Add(cup);
         context.Matches.Add(match);

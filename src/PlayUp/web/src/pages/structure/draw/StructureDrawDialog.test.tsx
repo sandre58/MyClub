@@ -286,10 +286,13 @@ describe('structure draw dialog height', () => {
       /\.ds-dialog:has\(\.structure-qualification\) \.ds-dialog__panel,\s*\.ds-dialog:has\(\.structure-progression\) \.ds-dialog__panel,\s*\.ds-dialog:has\(\.structure-draw-dialog\) \.ds-dialog__panel \{[^}]*max-height:\s*min\(92vh,\s*52rem\)/,
     );
     expect(drawDialogCss).toMatch(
-      /\.ds-dialog:has\(\.structure-draw-dialog\) \.ds-dialog__body \{[^}]*overflow:\s*auto/,
+      /\.ds-dialog:has\(\.structure-draw-dialog\) \.ds-dialog__body \{[^}]*overflow:\s*hidden/,
+    );
+    expect(drawDialogCss).toMatch(
+      /\.structure-draw-dialog \{[^}]*overflow:\s*auto/,
     );
     expect(drawDialogCss).not.toMatch(
-      /\.ds-dialog:has\(\.structure-draw-dialog\) \.ds-dialog__body \{[^}]*overflow:\s*hidden/,
+      /\.ds-dialog:has\(\.structure-draw-dialog\) \.ds-dialog__body \{[^}]*overflow:\s*auto/,
     );
     expect(drawDialogCss).not.toMatch(
       /@media \(max-height:\s*36rem\)[\s\S]*structure-draw-dialog/,

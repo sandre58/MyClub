@@ -10,7 +10,8 @@
   flex: 1 1 auto;
   flex-direction: column;
   gap: var(--space-16);
-  min-height: min(calc(92vh - 14rem), 44rem);
+  min-height: 0;
+  overflow: auto;
   width: 100%;
 }
 
@@ -21,7 +22,7 @@
 .structure-draw-dialog > .ds-wait {
   flex: 1 1 auto;
   justify-content: center;
-  min-height: min(calc(92vh - 18rem), 36rem);
+  min-height: 12rem;
 }
 
 .structure-draw-dialog__facts.structure-qualification__summary {
@@ -304,10 +305,10 @@
 }
 
 .ds-dialog:has(.structure-draw-dialog) .ds-dialog__body {
-  overflow: auto;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  min-height: min(calc(92vh - 14rem), 44rem);
+  min-height: 0;
   flex: 1 1 auto;
 }
 

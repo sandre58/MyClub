@@ -238,6 +238,9 @@ public sealed class ResolutionVisualRecetteIntegrationTests(DevelopmentPostgresF
         var (competition, cup, view) = await LoadCupCaseAsync(ResolutionVisualRecetteNames.StaleDrawActive);
         DrawOccupants(view).Should().OnlyContain(occupant =>
             occupant.State == StructureResolutionFreshness.Perime);
+        var cupStage = view.Stages.Single(s => s.Name == "Cup");
+        cupStage.CompositionEntryCount.Should().Be(3);
+        cupStage.CompositionCapacity.Should().Be(2);
         var overview = StageOverviewAssembler.Assemble(cup, competition, [cup]);
         var draw = overview.Draws.Single(d => d.IsApplied);
         draw.Actions!.Redo.State.Should().Be(StageDrawActionState.Available);
