@@ -23,7 +23,7 @@ namespace MyClub.PlayUp.Development.Orchestration;
 /// <summary>
 /// Internal helpers that orchestrate Domain / Application operations for scenarios (not a fluent builder).
 /// </summary>
-internal static class ScenarioOrchestration
+internal static partial class ScenarioOrchestration
 {
     public static async Task<Competition> CreateCompetitionAsync(
         ScenarioContext context,
