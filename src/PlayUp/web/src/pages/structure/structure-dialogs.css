@@ -10,7 +10,13 @@
   flex: none;
   flex-direction: column;
   gap: var(--space-16);
-  min-height: auto;
+  min-height: min(calc(92vh - 14rem), 44rem);
+}
+
+.structure-draw-dialog > .ds-wait {
+  flex: 1 1 auto;
+  justify-content: center;
+  min-height: min(calc(92vh - 18rem), 36rem);
 }
 
 .structure-draw-dialog__facts.structure-qualification__summary {

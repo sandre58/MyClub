@@ -166,7 +166,7 @@ internal static partial class ScenarioOrchestration
         competition.AddStage(phaseB.Id, context.Clock);
 
         var phaseC = Stage.Create(competition.Id, new StageName("Phase C"), RegulationPacks.Standard(), context.Clock);
-        phaseC.AddSlot("Finale");
+        ConfigureSingleSlotCupShell(phaseC, "Finale", context.Clock);
         competition.AddStage(phaseC.Id, context.Clock);
 
         phaseA.ReplaceQualificationRules(
@@ -236,7 +236,7 @@ internal static partial class ScenarioOrchestration
         league.AddMatchday(1, context.Clock);
         competition.AddStage(league.Id, context.Clock);
         var terminal = Stage.Create(competition.Id, new StageName("Terminal"), RegulationPacks.Standard(), context.Clock);
-        terminal.AddSlot("Place");
+        ConfigureSingleSlotCupShell(terminal, "Place", context.Clock);
         competition.AddStage(terminal.Id, context.Clock);
         var matches = RoundRobinFinished(context, league, [e0.Id, e1.Id, e2.Id]);
         ApplyOverallQualToSlot(
@@ -269,7 +269,7 @@ internal static partial class ScenarioOrchestration
         league.AddMatchday(1, context.Clock);
         competition.AddStage(league.Id, context.Clock);
         var terminal = Stage.Create(competition.Id, new StageName("Terminal"), RegulationPacks.Standard(), context.Clock);
-        terminal.AddSlot("NV");
+        ConfigureSingleSlotCupShell(terminal, "NV", context.Clock);
         competition.AddStage(terminal.Id, context.Clock);
         terminal.AddResolvedPopulationEntry(home.Id, context.Clock);
         terminal.ApplyResolvedEntry("NV", home.Id, context.Clock);
@@ -301,7 +301,13 @@ internal static partial class ScenarioOrchestration
             new StageName("Knockout"),
             RegulationPacks.Standard(),
             context.Clock);
-        downstream.AddRound("R1", context.Clock);
+        downstream.AddRound(
+            "R1",
+            new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
+            context.Clock);
+        downstream.AddSlot("S1");
+        downstream.AddSlot("S2");
+        downstream.SeedEntryRoundBracketPairs();
         competition.AddStage(downstream.Id, context.Clock);
         var matches = RoundRobinFinished(context, league, entries);
         var standing = CalculateStanding.Execute(entries, matches, league.Regulation.StandingRules!);
@@ -463,6 +469,15 @@ internal static partial class ScenarioOrchestration
         context.Matches.Add(match);
     }
 
+    private static void ConfigureSingleSlotCupShell(Stage stage, string slotKey, IClock clock)
+    {
+        stage.AddRound(
+            "Finale",
+            new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
+            clock);
+        stage.AddSlot(slotKey);
+    }
+
     private static EntryId[] AddNamedEntries(ScenarioContext context, Competition competition, params string[] names)
     {
         var ids = new EntryId[names.Length];
@@ -490,7 +505,7 @@ internal static partial class ScenarioOrchestration
         league.AddMatchday(1, context.Clock);
         competition.AddStage(league.Id, context.Clock);
         var terminal = Stage.Create(competition.Id, new StageName("Terminal"), RegulationPacks.Standard(), context.Clock);
-        terminal.AddSlot(slotKey);
+        ConfigureSingleSlotCupShell(terminal, slotKey, context.Clock);
         competition.AddStage(terminal.Id, context.Clock);
         var matches = RoundRobinFinished(context, league, [home.Id, away.Id]);
         return (league, terminal, home.Id, away.Id, matches);

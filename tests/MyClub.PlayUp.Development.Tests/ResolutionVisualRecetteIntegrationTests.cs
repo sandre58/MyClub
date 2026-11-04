@@ -8,6 +8,7 @@ using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Abstractions;
+using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Development.Runtime;
@@ -87,6 +88,65 @@ public sealed class ResolutionVisualRecetteIntegrationTests(DevelopmentPostgresF
             ResolutionVisualRecetteNames.StaleDrawBlocked,
             ResolutionVisualRecetteNames.WithdrawnOccupant,
         ]);
+    }
+
+    private async Task AssertCupSchematicAsync(
+        string competitionName,
+        string stageName,
+        params string[] slotKeys)
+    {
+        await RunScenarioAsync();
+        using var scope = fixture.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var summary = (await competitions.ListAsync()).Single(c => c.Name.Value == competitionName);
+        var competition = (await competitions.GetByIdForUpdateAsync(summary.Id))!;
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
+        var loaded = new List<Stage>(competition.StageIds.Count);
+        var summaries = new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>();
+        foreach (var stageId in competition.StageIds)
+        {
+            var loadedStage = (await stages.GetByIdForUpdateAsync(stageId))!;
+            loaded.Add(loadedStage);
+            var stageMatches = await matches.ListByStageForUpdateAsync(stageId);
+            summaries[stageId] = stageMatches
+                .Select(match => new MatchSummaryRow(
+                    match.Id,
+                    match.StageId,
+                    match.Status,
+                    match.HomeEntryId,
+                    match.AwayEntryId,
+                    match.Result,
+                    match.HasObservedLive))
+                .ToArray();
+        }
+
+        var stage = loaded.Single(s => s.Name.Value == stageName);
+        var schematic = StageSchematicAssembler.Assemble(
+            stage,
+            competition,
+            loaded,
+            matchSummariesByStage: summaries);
+        schematic.FormatKind.Should().Be(StructureFormatKind.Cup);
+        schematic.Cases.Should().NotBeEmpty();
+        foreach (var slotKey in slotKeys)
+        {
+            schematic.Cases.Should().Contain(place =>
+                place.FormPosition.Kind == StageSchematicAssembler.FormKindCupSlot
+                && place.FormPosition.SlotKey == slotKey);
+        }
+    }
+
+    [Fact]
+    public async Task Visual_recette_cup_schematics_are_structurally_completeAsync()
+    {
+        await AssertCupSchematicAsync(ResolutionVisualRecetteNames.QualRuleSlot, "Terminal", "Champ");
+        await AssertCupSchematicAsync(ResolutionVisualRecetteNames.IndeterminateQual, "Terminal", "Place");
+        await AssertCupSchematicAsync(ResolutionVisualRecetteNames.NonVerifieeSlot, "Terminal", "NV");
+        await AssertCupSchematicAsync(ResolutionVisualRecetteNames.AmontPerimeCascade, "Phase C", "Finale");
+        await AssertCupSchematicAsync(ResolutionVisualRecetteNames.QualRulePopulation, "Knockout", "S1", "S2");
+        await AssertCupSchematicAsync(ResolutionVisualRecetteNames.StaleDrawActive, "Cup", "S1", "S2");
+        await AssertCupSchematicAsync(ResolutionVisualRecetteNames.StaleDrawBlocked, "Cup", "S1", "S2");
     }
 
     [Fact]
@@ -184,6 +244,8 @@ public sealed class ResolutionVisualRecetteIntegrationTests(DevelopmentPostgresF
         draw.Actions.Release.ReleasableCount.Should().BeGreaterThan(0);
         draw.Actions.Release.State.Should().Be(StageDrawActionState.Blocked);
         draw.Actions.Release.BlockCode.Should().Be(ApplicationErrorCodes.DrawReleaseRequiresCancelled);
+        draw.Status.Should().Be(DrawStatus.Published);
+        draw.IsApplied.Should().BeTrue();
         cup.Status.Should().Be(StageStatus.Ready);
     }
 
@@ -200,6 +262,9 @@ public sealed class ResolutionVisualRecetteIntegrationTests(DevelopmentPostgresF
         draw.Actions.Release.ReleasableCount.Should().BeGreaterThan(0);
         draw.Actions.Release.State.Should().Be(StageDrawActionState.Blocked);
         draw.Actions.Release.BlockCode.Should().Be(ApplicationErrorCodes.DrawReleaseRequiresCancelled);
+        draw.Status.Should().Be(DrawStatus.Published);
+        draw.IsApplied.Should().BeTrue();
+        cup.Status.Should().Be(StageStatus.Ready);
     }
 
     private async Task RunScenarioAsync()
