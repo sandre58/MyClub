@@ -30,6 +30,7 @@ internal sealed class CompetitionRepository(PlayUpDbContext context) : ICompetit
         // List does not hydrate StageIds / entry sort — enough for Competition List rows.
         var competitions = await context.Set<Competition>()
             .AsNoTracking()
+            .AsSplitQuery()
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
