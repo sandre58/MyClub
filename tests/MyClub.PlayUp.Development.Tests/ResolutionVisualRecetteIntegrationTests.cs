@@ -24,6 +24,49 @@ namespace MyClub.PlayUp.Development.Tests;
 [Trait("Category", "Integration")]
 public sealed class ResolutionVisualRecetteIntegrationTests(DevelopmentPostgresFixture fixture)
 {
+    private static StructureResolutionOccupantDto Occupant(
+        StructureViewDto view,
+        string stageName,
+        string slotKey) =>
+        view.Stages.Single(stage => stage.Name == stageName)
+            .ResolutionOccupants!
+            .Single(occupant => occupant.SlotKey == slotKey);
+
+    private static IEnumerable<StructureResolutionOccupantDto> DrawOccupants(StructureViewDto view)
+    {
+        var cup = view.Stages.Single(stage => stage.Name == "Cup");
+        return cup.ResolutionOccupants!.Where(occupant =>
+            occupant.ProvenanceKind == ResolutionProvenanceKind.Tirage);
+    }
+
+    private static async Task<StructureViewDto> AssembleStructureAsync(IServiceScope scope, CompetitionId competitionId)
+    {
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
+        var competition = (await competitions.GetByIdForUpdateAsync(competitionId))!;
+        var loaded = new List<Stage>(competition.StageIds.Count);
+        var summaries = new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>();
+        foreach (var stageId in competition.StageIds)
+        {
+            var stage = (await stages.GetByIdForUpdateAsync(stageId))!;
+            loaded.Add(stage);
+            var stageMatches = await matches.ListByStageForUpdateAsync(stageId);
+            summaries[stageId] = stageMatches
+                .Select(match => new MatchSummaryRow(
+                    match.Id,
+                    match.StageId,
+                    match.Status,
+                    match.HomeEntryId,
+                    match.AwayEntryId,
+                    match.Result,
+                    match.HasObservedLive))
+                .ToArray();
+        }
+
+        return StructureViewAssembler.Assemble(competition, loaded, matchSummariesByStage: summaries);
+    }
+
     [Fact]
     public async Task Resolution_visual_recette_seeds_nine_competitionsAsync()
     {
@@ -136,7 +179,7 @@ public sealed class ResolutionVisualRecetteIntegrationTests(DevelopmentPostgresF
             occupant.State == StructureResolutionFreshness.Perime);
         var overview = StageOverviewAssembler.Assemble(cup, competition, [cup]);
         var draw = overview.Draws.Single(d => d.IsApplied);
-        draw.Actions.Redo.State.Should().Be(StageDrawActionState.Available);
+        draw.Actions!.Redo.State.Should().Be(StageDrawActionState.Available);
         draw.Actions.Release.ReleasableCount.Should().BeGreaterThan(0);
         draw.Actions.Release.State.Should().Be(StageDrawActionState.Blocked);
         draw.Actions.Release.BlockCode.Should().Be(ApplicationErrorCodes.DrawReleaseRequiresCancelled);
@@ -151,60 +194,17 @@ public sealed class ResolutionVisualRecetteIntegrationTests(DevelopmentPostgresF
             occupant.State == StructureResolutionFreshness.Perime);
         var overview = StageOverviewAssembler.Assemble(cup, competition, [cup]);
         var draw = overview.Draws.Single(d => d.IsApplied);
-        draw.Actions.Redo.State.Should().Be(StageDrawActionState.Blocked);
+        draw.Actions!.Redo.State.Should().Be(StageDrawActionState.Blocked);
         draw.Actions.Redo.BlockCode.Should().Be(StageErrorCodes.MaterializedOpponentConflict);
         draw.Actions.Release.ReleasableCount.Should().BeGreaterThan(0);
         draw.Actions.Release.State.Should().Be(StageDrawActionState.Blocked);
         draw.Actions.Release.BlockCode.Should().Be(ApplicationErrorCodes.DrawReleaseRequiresCancelled);
     }
 
-    private static StructureResolutionOccupantDto Occupant(
-        StructureViewDto view,
-        string stageName,
-        string slotKey) =>
-        view.Stages.Single(stage => stage.Name == stageName)
-            .ResolutionOccupants!
-            .Single(occupant => occupant.SlotKey == slotKey);
-
-    private static IEnumerable<StructureResolutionOccupantDto> DrawOccupants(StructureViewDto view)
-    {
-        var cup = view.Stages.Single(stage => stage.Name == "Cup");
-        return cup.ResolutionOccupants!.Where(occupant =>
-            occupant.ProvenanceKind == ResolutionProvenanceKind.Tirage);
-    }
-
     private async Task RunScenarioAsync()
     {
         var runner = fixture.Services.GetRequiredService<ScenarioRunner>();
         await runner.ResetAndRunAsync([SeedSpec.Parse(ResolutionVisualRecetteNames.ScenarioId)]);
-    }
-
-    private static async Task<StructureViewDto> AssembleStructureAsync(IServiceScope scope, CompetitionId competitionId)
-    {
-        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
-        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
-        var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
-        var competition = (await competitions.GetByIdForUpdateAsync(competitionId))!;
-        var loaded = new List<Stage>(competition.StageIds.Count);
-        var summaries = new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>();
-        foreach (var stageId in competition.StageIds)
-        {
-            var stage = (await stages.GetByIdForUpdateAsync(stageId))!;
-            loaded.Add(stage);
-            var stageMatches = await matches.ListByStageForUpdateAsync(stageId);
-            summaries[stageId] = stageMatches
-                .Select(match => new MatchSummaryRow(
-                    match.Id,
-                    match.StageId,
-                    match.Status,
-                    match.HomeEntryId,
-                    match.AwayEntryId,
-                    match.Result,
-                    match.HasObservedLive))
-                .ToArray();
-        }
-
-        return StructureViewAssembler.Assemble(competition, loaded, matchSummariesByStage: summaries);
     }
 
     private async Task<StructureViewDto> LoadStructureForCompetitionAsync(string competitionName)
