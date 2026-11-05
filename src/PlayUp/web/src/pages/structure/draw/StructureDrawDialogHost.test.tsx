@@ -102,6 +102,7 @@ describe('StructureDrawDialogHost', () => {
     expect(fiche).not.toContain("from './StructureDrawDialog'");
     expect(fiche).toContain('StructureDrawDialogHost');
     expect(host).toContain("import('./StructureDrawDialog')");
+    expect(host).toContain('structure-draw-dialog');
   });
 
   it('loads the dialog on open and keeps it through the close transition', async () => {

@@ -7,10 +7,22 @@
 
 .structure-draw-dialog {
   display: flex;
-  flex: none;
+  flex: 1 1 auto;
   flex-direction: column;
   gap: var(--space-16);
-  min-height: auto;
+  min-height: 0;
+  overflow: auto;
+  width: 100%;
+}
+
+.structure-draw-dialog--chunk-loading {
+  justify-content: center;
+}
+
+.structure-draw-dialog > .ds-wait {
+  flex: 1 1 auto;
+  justify-content: center;
+  min-height: 12rem;
 }
 
 .structure-draw-dialog__facts.structure-qualification__summary {
@@ -293,10 +305,11 @@
 }
 
 .ds-dialog:has(.structure-draw-dialog) .ds-dialog__body {
-  overflow: auto;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   min-height: 0;
+  flex: 1 1 auto;
 }
 
 /* Attribution: fixed size — height independent of row count. */

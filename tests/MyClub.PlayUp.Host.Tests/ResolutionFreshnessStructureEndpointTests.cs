@@ -33,7 +33,7 @@ public sealed class ResolutionFreshnessStructureEndpointTests(HostPostgresFixtur
     public async Task Structure_reports_current_then_stale_after_score_correctionAsync()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
-        var seeded = await SeedAppliedQualificationAsync(factory, startLeague: false);
+        var seeded = await SeedAppliedQualificationAsync(factory, startLeague: true);
 
         using var client = factory.CreateClient();
         var before = await ReadOccupantsAsync(client, seeded.CompetitionId, "Terminal");
@@ -42,15 +42,11 @@ public sealed class ResolutionFreshnessStructureEndpointTests(HostPostgresFixtur
             occupant.State == StructureResolutionFreshness.AJour
             && occupant.ProvenanceKind == ResolutionProvenanceKind.Qualification);
 
-        using (var scope = factory.Services.CreateScope())
-        {
-            var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
-            var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
-            var match = await matches.GetByIdForUpdateAsync(seeded.MatchId);
-            match.Should().NotBeNull();
-            match.CorrectMatchResult(new MatchResult(ResultType.Played, new Score(0, 2)), _clock);
-            await unitOfWork.SaveChangesAsync();
-        }
+        using var correct = await client.PutAsJsonAsync(
+            $"/matches/{seeded.MatchId.Value}/result",
+            new FinishMatchRequest(ResultType.Played, 0, 2),
+            HostJson.Options);
+        correct.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         var after = await ReadOccupantsAsync(client, seeded.CompetitionId, "Terminal");
         after.Should().Contain(occupant =>

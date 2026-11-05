@@ -80,6 +80,56 @@ public static class DrawInputsFactory
         return DrawInputs.ForSlot(scope.UnplacedEntries);
     }
 
+    /// <summary>
+    /// Builds Rerun inputs from the applied draw's recorded pool, keeping only entries still
+    /// present in <see cref="Stage.CompositionEntries"/>. Extra composition members that were
+    /// added after Apply (stale Tirage) must not widen the Rerun pool beyond the cancelled draw.
+    /// </summary>
+    public static DrawInputs CreateRerun(Stage stage, Draw appliedDraw)
+    {
+        ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(appliedDraw);
+
+        if (appliedDraw.Inputs is null)
+        {
+            throw new ApplicationFailureException(
+                $"Draw '{appliedDraw.Id}' has no inputs to rerun.",
+                ApplicationErrorCodes.DrawGenerationFailure);
+        }
+
+        var composition = stage.CompositionEntries.Select(entry => entry.EntryId).ToHashSet();
+        var entries = appliedDraw.Inputs.Entries.Where(composition.Contains).ToList();
+        if (entries.Count == 0)
+        {
+            throw new ApplicationFailureException(
+                "Rerun requires at least one entry from the applied draw still in the phase population.",
+                ApplicationErrorCodes.DrawGenerationFailure);
+        }
+
+        return appliedDraw.Kind switch
+        {
+            DrawResolutionKind.Slot => DrawInputs.ForSlot(entries),
+            DrawResolutionKind.Group => DrawInputs.ForGroup(
+                entries,
+                potMembership: FilterPotMembership(appliedDraw.Inputs.PotMembership, entries)),
+            _ => throw new ApplicationFailureException(
+                $"Unsupported draw kind '{appliedDraw.Kind}'.",
+                ApplicationErrorCodes.DrawKindNotSupported)
+        };
+    }
+
+    private static PotMembership? FilterPotMembership(PotMembership? source, IReadOnlyList<EntryId> entries)
+    {
+        if (source is null)
+        {
+            return null;
+        }
+
+        var pool = entries.ToHashSet();
+        var filtered = source.Pots.Where(pair => pool.Contains(pair.Key)).ToDictionary(pair => pair.Key, pair => pair.Value);
+        return filtered.Count == 0 ? null : new PotMembership(filtered);
+    }
+
     private static List<EntryId> ResolveComposition(Stage stage) =>
         stage.CompositionEntries.Count == 0
             ? throw new ApplicationFailureException(

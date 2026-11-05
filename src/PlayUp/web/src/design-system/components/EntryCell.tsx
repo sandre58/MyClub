@@ -26,6 +26,8 @@ export type EntryCellProps = {
   chipClassName?: string;
   crestClassName?: string;
   nameClassName?: string;
+  /** Inline marker immediately after the display name (e.g. forfait icon). */
+  nameSuffix?: ReactNode;
   trailing?: ReactNode;
 };
 
@@ -79,6 +81,7 @@ export function EntryCell({
   chipClassName,
   crestClassName,
   nameClassName = 'structure-entries__team-name',
+  nameSuffix,
   trailing,
 }: EntryCellProps) {
   const ineligibleSlot =
@@ -181,7 +184,10 @@ export function EntryCell({
         primaryColor={primaryColor}
         size="sm"
       />
-      <span className={nameClassName}>{displayName}</span>
+      <span className="structure-entries__team-name-block">
+        <span className={nameClassName}>{displayName}</span>
+        {nameSuffix}
+      </span>
       {ineligible && ineligibleLabel && !ineligibleTooltip ? (
         <span className="structure-entries__team-warn">{ineligibleLabel}</span>
       ) : null}

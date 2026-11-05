@@ -9,6 +9,7 @@ import {
   PlusIcon,
   LossIcon,
   WinIcon,
+  WithdrawIcon,
 } from '../../../design-system/icons/contentIcons';
 import { StructureDiagnosticIssueIcon } from '../issues/StructureDiagnosticIssueIcon';
 import { EntryCell } from '../../../design-system/components/EntryCell';
@@ -43,6 +44,11 @@ import type {
   CompositionTeamProvenance,
   CompositionTeamRow,
 } from '../composition/compositionTeamsInboundRows';
+import { StructureResolutionFreshnessBadge } from '../resolution/StructureResolutionFreshnessBadge';
+import {
+  buildStructureResolutionOccupantIndex,
+  lookupPopulationResolutionOccupant,
+} from '../resolution/structureResolutionOccupants';
 
 const compactIcon =
   'ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact';
@@ -242,7 +248,11 @@ export function RootEntriesRail({
   /** Runtime empty / undetermined rendered by Composition band header zone. */
   suppressRuntimeEmptyPresentation?: boolean;
 }) {
-  const { t } = useTranslation('structure');
+  const { t } = useTranslation(['structure', 'teams']);
+  const resolutionIndex = useMemo(
+    () => buildStructureResolutionOccupantIndex(stage.resolutionOccupants),
+    [stage.resolutionOccupants],
+  );
   const fromAffectation = stage.affectationEntryCount ?? 0;
   const fromFeeds = sourcesConfiguredVolume;
   const n = resolvePlacesN(stage);
@@ -345,6 +355,17 @@ export function RootEntriesRail({
         : placed
           ? t('entries.entryPlacedStatus')
           : null;
+    const populationOccupant = lookupPopulationResolutionOccupant(
+      resolutionIndex,
+      entry.entryId,
+    );
+    const trailingParts = [
+      provenanceLabel ? compositionTeamProvenanceBadge(provenanceLabel) : null,
+      <StructureResolutionFreshnessBadge
+        key="freshness"
+        occupant={populationOccupant}
+      />,
+    ].filter(Boolean);
     return (
       <li
         key={entry.entryId}
@@ -365,24 +386,36 @@ export function RootEntriesRail({
           logoMediaId={entry.logoMediaId}
           primaryColor={entry.primaryColor}
           ineligible={entry.status !== 'Active'}
-          ineligibleTooltip={
-            entry.status === 'Withdrawn'
-              ? t('composition.withdrawnFromCompetitionTip')
-              : undefined
-          }
           ineligibleLabel={
             entry.status !== 'Active' && entry.status !== 'Withdrawn'
               ? t('composition.noLongerEligible')
               : undefined
+          }
+          nameSuffix={
+            entry.status === 'Withdrawn' ? (
+              <Tooltip content={t('teams:withdrawnBadge')}>
+                <span
+                  className="structure-entries__team-withdrawn-inline"
+                  role="img"
+                  aria-label={t('teams:withdrawnBadge')}
+                >
+                  <WithdrawIcon size="sm" aria-hidden="true" />
+                </span>
+              </Tooltip>
+            ) : undefined
           }
           placed={placed}
           placedTooltip={
             placedTooltip ?? (placed ? t('entries.entryPlacedStatus') : null)
           }
           trailing={
-            provenanceLabel
-              ? compositionTeamProvenanceBadge(provenanceLabel)
-              : undefined
+            trailingParts.length > 0 ? (
+              <span className="structure-entries__cell-trailing">
+                {trailingParts.map((part, index) => (
+                  <span key={index}>{part}</span>
+                ))}
+              </span>
+            ) : undefined
           }
         />
       </li>

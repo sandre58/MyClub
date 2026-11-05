@@ -843,7 +843,8 @@ function DrawColumn(
   if (compositionExploitation && drawEngaged) {
     body = (
       <div className="structure-operational-strip__composition-draw">
-        {props.drawApplied ? (
+        {props.staleDrawResolutionPanel}
+        {!props.staleDrawResolutionPanel && props.drawApplied ? (
           <StripOperationalMessage kind="success">
             {t('fiche.operational.draw.appliedMessage')}
           </StripOperationalMessage>
@@ -908,7 +909,8 @@ function DrawColumn(
             {drawBlockedNote}
           </div>
         ) : null}
-        {props.drawApplied ? (
+        {props.staleDrawResolutionPanel}
+        {!props.staleDrawResolutionPanel && props.drawApplied ? (
           <StripOperationalMessage kind="success">
             {t('fiche.operational.draw.appliedMessage')}
           </StripOperationalMessage>
@@ -981,19 +983,22 @@ function DrawColumn(
     );
   } else if (drawEngaged && props.drawApplied) {
     body = (
-      <StripDrawAppliedPanel
-        message={t('fiche.operational.draw.appliedMessage')}
-        action={
-          <button
-            type="button"
-            className={secondaryBtn}
-            onClick={props.onOpenDrawWorkflow}
-          >
-            <ViewIcon size="sm" />
-            {t('fiche.viewDrawWorkflow')}
-          </button>
-        }
-      />
+      <>
+        {props.staleDrawResolutionPanel}
+        <StripDrawAppliedPanel
+          message={t('fiche.operational.draw.appliedMessage')}
+          action={
+            <button
+              type="button"
+              className={secondaryBtn}
+              onClick={props.onOpenDrawWorkflow}
+            >
+              <ViewIcon size="sm" />
+              {t('fiche.viewDrawWorkflow')}
+            </button>
+          }
+        />
+      </>
     );
   } else if (drawEngaged) {
     const drawLabel = props.activeDraw

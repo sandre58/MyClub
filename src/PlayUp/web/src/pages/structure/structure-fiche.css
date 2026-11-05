@@ -356,6 +356,27 @@
   color: var(--color-text-primary);
 }
 
+.structure-entries__team-name-block {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.structure-entries__team-name-block .structure-entries__team-name {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.structure-entries__team-withdrawn-inline {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-text-secondary);
+}
+
 .structure-entries__team--ineligible .structure-entries__team-name {
   color: var(--color-text-secondary);
 }
