@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   EntryCell,
@@ -8,6 +9,7 @@ import type {
   StructureEntry,
   StructureFormatKind,
   StructureInboundComposition,
+  StructureResolutionOccupant,
 } from '../../../types';
 import type { CompositionQualifierFeedGroup } from './structureCompositionQualifierFeeds';
 import { CompositionQualifierRuleLabel } from './CompositionQualifierRuleLabel';
@@ -18,6 +20,11 @@ import {
   showPerEntryPlacement,
 } from '../draw/structureEntryPlacementProjection';
 import type { EntryPlaceProjection } from '../draw/structureEntryPlacementProjection';
+import { StructureResolutionFreshnessBadge } from '../resolution/StructureResolutionFreshnessBadge';
+import {
+  buildStructureResolutionOccupantIndex,
+  lookupPopulationResolutionOccupant,
+} from '../resolution/structureResolutionOccupants';
 
 export function CompositionQualifiersPanel({
   groups,
@@ -25,6 +32,7 @@ export function CompositionQualifiersPanel({
   entries,
   formatKind,
   entryPlaceProjections,
+  resolutionOccupants,
   onViewPhase,
   renderGroupAction,
 }: {
@@ -33,10 +41,15 @@ export function CompositionQualifiersPanel({
   entries: readonly StructureEntry[];
   formatKind: StructureFormatKind | null | undefined;
   entryPlaceProjections: ReadonlyMap<string, EntryPlaceProjection>;
+  resolutionOccupants?: StructureResolutionOccupant[] | null;
   onViewPhase?: (peerId: string) => void;
   renderGroupAction?: (group: CompositionQualifierFeedGroup) => ReactNode;
 }) {
   const { t } = useTranslation('structure');
+  const resolutionIndex = useMemo(
+    () => buildStructureResolutionOccupantIndex(resolutionOccupants),
+    [resolutionOccupants],
+  );
   const entryById = new Map(entries.map((entry) => [entry.entryId, entry]));
   const perEntryPlacement = showPerEntryPlacement(formatKind);
 
@@ -139,6 +152,14 @@ export function CompositionQualifiersPanel({
                             aria-hidden="true"
                           />
                         )}
+                        {seat.entryId ? (
+                          <StructureResolutionFreshnessBadge
+                            occupant={lookupPopulationResolutionOccupant(
+                              resolutionIndex,
+                              seat.entryId,
+                            )}
+                          />
+                        ) : null}
                       </div>
                     </li>
                   );

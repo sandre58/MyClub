@@ -274,10 +274,50 @@
 }
 
 .schematic-slot__copy {
+  flex: 1 1 auto;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 0.05rem;
+}
+
+.schematic-slot__name-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.25rem;
   min-width: 0;
+}
+
+.schematic-slot__name-row .schematic-slot__primary {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.schematic-slot__withdrawn-marker {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-text-secondary);
+}
+
+.schematic-slot__freshness {
+  margin-top: 0;
+  flex: none;
+  display: inline-flex;
+}
+
+.structure-stale-draw-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  margin-top: var(--space-8);
+}
+
+.structure-stale-draw-actions__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
 }
 
 /* U4 — Place address chrome (secondary; never replaces S3 primary). */

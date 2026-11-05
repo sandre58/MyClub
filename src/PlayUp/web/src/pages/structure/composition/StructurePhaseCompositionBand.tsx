@@ -177,6 +177,7 @@ export function StructurePhaseCompositionBand({
             entries={entries}
             formatKind={formatKind}
             entryPlaceProjections={entryPlaceProjections}
+            resolutionOccupants={stage.resolutionOccupants}
             onViewPhase={onViewPhase}
             renderGroupAction={renderAvalSourceAction}
           />

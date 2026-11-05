@@ -51,6 +51,13 @@ internal sealed class DrawConfiguration : IEntityTypeConfiguration<Draw>
             .HasConversion(new DrawInputsJsonConverter(), DrawInputsJsonConverter.Comparer)
             .UsePropertyAccessMode(PropertyAccessMode.Property);
 
+        builder.Property(draw => draw.InputsIntent)
+            .HasColumnName("inputs_intent")
+            .HasConversion<int>()
+            .IsRequired()
+            .HasDefaultValue(DrawInputsIntent.Default)
+            .UsePropertyAccessMode(PropertyAccessMode.Property);
+
         builder.Property(draw => draw.Resolution)
             .HasColumnName("resolution")
             .HasColumnType("jsonb")

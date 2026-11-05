@@ -69,6 +69,19 @@ describe('functionalProblemPresentation', () => {
     expect(belowMin.tone).toBe('warning');
     expect(belowMin.sotHref).toBe('/competitions/comp-1/teams');
     expect(belowMin.cta?.actionCode).toBe('AddEntry');
+
+    const notEnough = functionalProblemPresentation({
+      source: 'notEnoughTeams',
+      competitionId: 'comp-1',
+      stageId: 'stage-1',
+    });
+    expect(notEnough.tone).toBe('warning');
+    expect(notEnough.canal).toBe('draw-gate');
+    expect(notEnough.sotHref).toBe('/competitions/comp-1/teams');
+    expect(notEnough.cta?.actionCode).toBe('AddEntry');
+    expect(notEnough.titleKey).toBe(
+      'fiche.drawWorkflow.createBlocked.short.notEnoughTeams',
+    );
   });
 
   it('maps structureIssues children via structureIssuePresentation', () => {

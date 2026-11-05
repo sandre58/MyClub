@@ -62,13 +62,13 @@ public sealed class StageRepositoryLoadBaselineTests(
 
         structureSql.Should().BeGreaterThan(summarySql);
         structureSql.Should().BeLessThanOrEqualTo(
-            14,
-            "Structure includes plus hydration (unchanged by the stage-overview lot; surplus over Summary is that bundle)");
+            15,
+            "Structure includes plus hydration (+1 SQL for group resolution provenance include)");
         structureDrawsSlotsSql.Should().BeGreaterThanOrEqualTo(structureSql);
         structureDrawsSlotsSql.Should().BeLessThan(
             fullReadSql,
             "penalties are the Full collection the stage overview read does not use");
-        structureDrawsSlotsSql.Should().BeLessThanOrEqualTo(16, "Structure + Draws + Slots on one cup stage");
+        structureDrawsSlotsSql.Should().BeLessThanOrEqualTo(17, "Structure + Draws + Slots on one cup stage");
         fullUpdateSql.Should().BeInRange(fullReadSql - 2, fullReadSql + 2);
     }
 
@@ -88,7 +88,7 @@ public sealed class StageRepositoryLoadBaselineTests(
             });
 
         multiSql.Should().BeGreaterThan(5);
-        multiSql.Should().BeLessThanOrEqualTo(17, "D2-B lot 2 batches hydration across stages (baseline was 18 SQL)");
+        multiSql.Should().BeLessThanOrEqualTo(18, "D2-B lot 2 batches hydration across stages (+1 group provenance include)");
     }
 
     [Fact]

@@ -16,8 +16,8 @@ export function MatchRow({
   scoreMuted = false,
   density,
 }: {
-  home: { name: string; crest: ReactNode };
-  away: { name: string; crest: ReactNode };
+  home: { name: ReactNode; crest: ReactNode; mark?: ReactNode };
+  away: { name: ReactNode; crest: ReactNode; mark?: ReactNode };
   score: ReactNode;
   aside?: ReactNode;
   className?: string;
@@ -34,6 +34,7 @@ export function MatchRow({
     <>
       <span className="ds-match-row__team ds-match-row__team--home">
         <span className="ds-match-row__name">{home.name}</span>
+        {home.mark}
         {home.crest}
       </span>
 
@@ -51,6 +52,7 @@ export function MatchRow({
       <span className="ds-match-row__team ds-match-row__team--away">
         {away.crest}
         <span className="ds-match-row__name">{away.name}</span>
+        {away.mark}
       </span>
 
       {aside ? (

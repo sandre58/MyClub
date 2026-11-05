@@ -268,6 +268,9 @@ public sealed record StructureReadinessDto(
 /// Null when Places N is unknown or the format is out of scope.
 /// </param>
 /// <param name="MatchProductionPresentation">Shared Matchs production projection for strip and aside tile.</param>
+/// <param name="ResolutionOccupants">
+/// Stored resolution occupants and server-computed freshness. Null when the phase has no provenance.
+/// </param>
 public sealed record StructureStageHubSummaryDto(
     Guid StageId,
     string Name,
@@ -344,7 +347,8 @@ public sealed record StructureStageHubSummaryDto(
     StructureInboundCompositionDto? InboundComposition = null,
     int CompositionBandResolvedCount = 0,
     int? SchematicOccupiedPlaceCount = null,
-    StructureMatchProductionPresentationDto? MatchProductionPresentation = null);
+    StructureMatchProductionPresentationDto? MatchProductionPresentation = null,
+    IReadOnlyList<StructureResolutionOccupantDto>? ResolutionOccupants = null);
 
 /// <summary>
 /// Read-side decision for starting a new draw execution on a phase hub row.

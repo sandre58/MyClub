@@ -131,7 +131,7 @@ describe('PhaseSchematic', () => {
     expect(screen.getByText('Beta')).toBeInTheDocument();
   });
 
-  it('marks withdrawn occupant with muted slot chrome (no in-case forfeit icon)', () => {
+  it('marks withdrawn occupant with muted slot chrome and inline forfait icon', () => {
     const { container } = render(
       <PhaseSchematic
         schematic={cupSchematic({
@@ -162,7 +162,7 @@ describe('PhaseSchematic', () => {
     expect(slots[1]).not.toHaveClass('schematic-slot--withdrawn');
     expect(
       container.querySelector('.schematic-slot__withdrawn-marker'),
-    ).toBeNull();
+    ).toBeTruthy();
     expect(screen.getByText('Alpha')).toBeInTheDocument();
   });
 

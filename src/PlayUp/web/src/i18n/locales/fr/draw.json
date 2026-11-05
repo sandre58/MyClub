@@ -36,6 +36,8 @@
   "redoBlocked": {
     "cupFixtureAttached": "Le tirage ne peut pas être refait : un match est rattaché à une confrontation concernée.",
     "groupMatchesAttached": "Le tirage ne peut pas être refait : des matchs sont déjà rattachés à cette phase.",
+    "launchGridNotVacant": "Le tirage ne peut pas être refait tant que des places du tableau sont occupées. Libérez ou alignez les places, ou annulez le tirage appliqué avant de relancer un tirage complet.",
+    "launchDirectAssignment": "Le tirage ne peut pas être refait tant qu’une affectation directe occupe un emplacement.",
     "lifecycle": "Le tirage ne peut pas être refait dans l’état actuel de la phase."
   },
   "executionTitle": "Exécution #{{n}}",
@@ -73,5 +75,15 @@
   "releasingPlacements": "Libération…",
   "confirmReleaseTitle": "Libérer les placements du tirage ?",
   "confirmRelease": "Les Places encore peuplées selon ce tirage seront vidées. Les affectations directes et les autres alimentations ne seront pas modifiées.",
-  "toastReleased": "Placements libérés ({{count}})."
+  "toastReleased": "Placements libérés ({{count}}).",
+  "alreadyPlaced": "Déjà placée",
+  "freePlace": "Place libre",
+  "reserved": "Réservée",
+  "withdrawn": "Retirée",
+  "outsideDraw": "Hors de ce tirage",
+  "releaseDrawnTeams": "Libérer les {{n}} équipes tirées",
+  "heroToPlace": "À placer",
+  "heroFreePlaces": "Places libres",
+  "heroAlreadyPlaced": "Déjà en place",
+  "originManualHint": "Origine d’affichage : manuelle ou issue d’un tirage précédent."
 }

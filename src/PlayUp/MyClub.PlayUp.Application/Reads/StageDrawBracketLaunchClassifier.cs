@@ -11,7 +11,8 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Reads;
 
 /// <summary>
-/// Classifies bracket places for Tirage Rerun launch and overview facts (single Application rule).
+/// Classifies bracket places for Tirage Rerun launch and overview facts.
+/// Slot places use <see cref="SlotPartialDraw.Classify"/>: a withdrawn occupant is occupied, never vacant.
 /// </summary>
 public static class StageDrawBracketLaunchClassifier
 {
@@ -63,16 +64,17 @@ public static class StageDrawBracketLaunchClassifier
         IReadOnlyList<Stage> competitionStages,
         IReadOnlySet<string>? slotKeysTreatedAsVacant = null)
     {
-        var pool = stage.CompositionEntries.Select(entry => entry.EntryId).ToHashSet();
         var snapshot = SlotFeedSnapshotAssembler.Assemble(stage, competitionStages);
+        var facts = SlotPartialDraw.Classify(stage, snapshot);
 
         var occupiedByEntry = 0;
         var reservedByFeed = 0;
         var feedInvalid = 0;
         var vacant = 0;
 
-        foreach (var slot in stage.Slots)
+        for (var index = 0; index < stage.Slots.Count; index++)
         {
+            var slot = stage.Slots[index];
             if (slotKeysTreatedAsVacant?.Contains(slot.SlotKey) == true)
             {
                 // Treated as vacant ahead of feed resolution: a slot the caller is about to free
@@ -82,26 +84,30 @@ public static class StageDrawBracketLaunchClassifier
                 continue;
             }
 
-            if (slot.EntryId is { } entryId && pool.Contains(entryId))
+            switch (facts[index].Occupancy)
             {
-                occupiedByEntry++;
-                continue;
-            }
-
-            var resolution = SlotFeedResolver.Resolve(snapshot, slot.SlotKey);
-            switch (resolution.Status)
-            {
-                case FeedResolutionStatus.Missing:
+                case SlotDrawPlaceOccupancy.Free:
                     vacant++;
                     break;
-                case FeedResolutionStatus.Unique:
-                    reservedByFeed++;
+                case SlotDrawPlaceOccupancy.AlreadyPlaced:
+                case SlotDrawPlaceOccupancy.Withdrawn:
+                    occupiedByEntry++;
                     break;
-                case FeedResolutionStatus.MultipleFeeds:
-                case FeedResolutionStatus.InvalidFeed:
+                case SlotDrawPlaceOccupancy.StructuralFeed:
+                    var status = SlotFeedResolver.Resolve(snapshot, slot.SlotKey).Status;
+                    if (status is FeedResolutionStatus.MultipleFeeds or FeedResolutionStatus.InvalidFeed)
+                    {
+                        feedInvalid++;
+                    }
+                    else
+                    {
+                        reservedByFeed++;
+                    }
+
+                    break;
                 default:
-                    feedInvalid++;
-                    break;
+                    throw new InvalidOperationException(
+                        $"Slot occupancy '{facts[index].Occupancy}' is not a launch class.");
             }
         }
 

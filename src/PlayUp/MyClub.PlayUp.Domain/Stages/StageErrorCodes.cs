@@ -147,6 +147,11 @@ public static class StageErrorCodes
     public const string FeedSnapshotInvalid = "Stage.FeedSnapshotInvalid";
 
     /// <summary>
+    /// Gets the code when a resolution provenance payload is invalid.
+    /// </summary>
+    public const string ResolutionProvenanceInvalid = "Stage.ResolutionProvenanceInvalid";
+
+    /// <summary>
     /// Gets the code when a fixture outcome cannot be decided (e.g. draw score).
     /// </summary>
     public const string FixtureOutcomeUndecided = "Stage.FixtureOutcomeUndecided";

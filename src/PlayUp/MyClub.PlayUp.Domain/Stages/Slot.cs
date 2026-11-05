@@ -36,6 +36,32 @@ public sealed class Slot : Entity<string>
     /// </summary>
     public EntryId? EntryId { get; private set; }
 
+    /// <summary>
+    /// Gets the resolution provenance kind for the current dynamic occupant, if any.
+    /// </summary>
+    public ResolutionProvenanceKind? ResolutionProvenanceKind { get; private set; }
+
+    /// <summary>
+    /// Gets the resolution source path identifier, if any.
+    /// </summary>
+    public string? ResolutionSourcePathId { get; private set; }
+
+    /// <summary>
+    /// Gets the resolution upstream fingerprint, if any.
+    /// </summary>
+    public string? ResolutionUpstreamFingerprint { get; private set; }
+
+    /// <summary>
+    /// Gets the resolution provenance for the current dynamic occupant, if any.
+    /// </summary>
+    public ResolutionProvenance? ResolutionProvenance =>
+        ResolutionProvenanceKind is null
+            ? null
+            : new ResolutionProvenance(
+                ResolutionProvenanceKind.Value,
+                ResolutionSourcePathId!,
+                ResolutionUpstreamFingerprint!);
+
     internal static string NormalizeKey(string slotKey)
     {
         ArgumentNullException.ThrowIfNull(slotKey);
@@ -53,7 +79,27 @@ public sealed class Slot : Entity<string>
         };
     }
 
-    internal void SetEntry(EntryId entryId) => EntryId = entryId;
+    internal void SetEntry(EntryId entryId, ResolutionProvenance? provenance = null)
+    {
+        EntryId = entryId;
+        if (provenance is null)
+        {
+            ResolutionProvenanceKind = null;
+            ResolutionSourcePathId = null;
+            ResolutionUpstreamFingerprint = null;
+            return;
+        }
 
-    internal void ClearEntry() => EntryId = null;
+        ResolutionProvenanceKind = provenance.Kind;
+        ResolutionSourcePathId = provenance.SourcePathId;
+        ResolutionUpstreamFingerprint = provenance.UpstreamResultFingerprint;
+    }
+
+    internal void ClearEntry()
+    {
+        EntryId = null;
+        ResolutionProvenanceKind = null;
+        ResolutionSourcePathId = null;
+        ResolutionUpstreamFingerprint = null;
+    }
 }

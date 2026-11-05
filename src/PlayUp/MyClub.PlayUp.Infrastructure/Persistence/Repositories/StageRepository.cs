@@ -256,7 +256,8 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
                 .Include(candidate => candidate.MatchPlacements)
                 .Include(candidate => candidate.AffectationAuthoring)
                 .Include(candidate => candidate.CompositionEntries)
-                .Include(candidate => candidate.FormPathResolutions),
+                .Include(candidate => candidate.FormPathResolutions)
+                .Include(candidate => candidate.GroupResolutionProvenances),
             StageLoadProfile.Full => query
                 .Include(candidate => candidate.Groups)
                 .Include(candidate => candidate.Rounds.OrderBy(round => EF.Property<int>(round, "SortOrder")))

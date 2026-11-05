@@ -42,5 +42,20 @@ internal sealed class SlotConfiguration : IEntityTypeConfiguration<Slot>
             .IsRequired(false)
             .HasConversion(new GuidTypedIdConverter<EntryId>())
             .UsePropertyAccessMode(PropertyAccessMode.Property);
+
+        builder.Property(slot => slot.ResolutionProvenanceKind)
+            .HasColumnName("resolution_provenance_kind")
+            .HasConversion<int>()
+            .IsRequired(false);
+
+        builder.Property(slot => slot.ResolutionSourcePathId)
+            .HasColumnName("resolution_source_path_id")
+            .HasMaxLength(ResolutionProvenanceConfiguration.SourcePathIdMaxLength)
+            .IsRequired(false);
+
+        builder.Property(slot => slot.ResolutionUpstreamFingerprint)
+            .HasColumnName("resolution_upstream_fingerprint")
+            .HasMaxLength(ResolutionProvenanceConfiguration.UpstreamFingerprintMaxLength)
+            .IsRequired(false);
     }
 }

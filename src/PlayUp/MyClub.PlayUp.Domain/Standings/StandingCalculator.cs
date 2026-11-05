@@ -196,7 +196,30 @@ public static class StandingCalculator
             groups = nextGroups;
         }
 
-        return [.. groups.SelectMany(g => g)];
+        return [.. groups.SelectMany(g =>
+            g.Count <= 1 ? g : OrderFinalTieBreak(g, criteria))];
+    }
+
+    private static List<RankableRow> OrderFinalTieBreak(
+        List<RankableRow> group,
+        IReadOnlyList<RankingCriterion> criteria)
+    {
+        IOrderedEnumerable<RankableRow>? ordered = null;
+        foreach (var criterion in criteria)
+        {
+            if (criterion == RankingCriterion.HeadToHead)
+            {
+                continue;
+            }
+
+            ordered = ordered is null
+                ? group.OrderByDescending(r => GlobalKey(r, criterion))
+                : ordered.ThenByDescending(r => GlobalKey(r, criterion));
+        }
+
+        return ordered is null
+            ? [.. group.OrderBy(r => r.EntryId.Value)]
+            : [.. ordered.ThenBy(r => r.EntryId.Value)];
     }
 
     private static List<List<RankableRow>> PartitionByGlobalCriterion(

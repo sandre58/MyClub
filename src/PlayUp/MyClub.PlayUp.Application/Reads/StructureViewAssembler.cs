@@ -296,6 +296,10 @@ public static class StructureViewAssembler
                     .Distinct(StringComparer.Ordinal)]);
 
         var byId = stages.ToDictionary(stage => stage.Id);
+        var resolutionByStage = ResolutionFreshnessDetector.Evaluate(
+            competition,
+            stages,
+            matchSummariesByStage);
         var ordered = new List<StructureStageHubSummaryDto>(competition.StageIds.Count);
         foreach (var stageId in competition.StageIds)
         {
@@ -305,13 +309,15 @@ public static class StructureViewAssembler
             }
 
             flowIssuesByStage.TryGetValue(stage.Id.Value, out var flowIssues);
+            resolutionByStage.TryGetValue(stage.Id.Value, out var resolutionOccupants);
             ordered.Add(
                 BuildStageHubSummary(
                     competition,
                     stage,
                     stages,
                     flowIssues ?? [],
-                    matchSummariesByStage));
+                    matchSummariesByStage,
+                    resolutionOccupants is { Count: > 0 } ? resolutionOccupants : null));
         }
 
         return ordered;
@@ -322,7 +328,8 @@ public static class StructureViewAssembler
         Stage stage,
         IReadOnlyList<Stage> competitionStages,
         IReadOnlyList<string> flowIssues,
-        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>>? matchSummariesByStage)
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>>? matchSummariesByStage,
+        IReadOnlyList<StructureResolutionOccupantDto>? resolutionOccupants)
     {
         var regulation = stage.Regulation;
         var match = regulation.MatchRules;
@@ -572,7 +579,8 @@ public static class StructureViewAssembler
             InboundComposition: inboundComposition,
             CompositionBandResolvedCount: compositionBandResolved,
             SchematicOccupiedPlaceCount: schematicOccupiedPlaceCount,
-            MatchProductionPresentation: matchProductionPresentation);
+            MatchProductionPresentation: matchProductionPresentation,
+            ResolutionOccupants: resolutionOccupants);
 
         // DrawCreateLaunch on summary is provisional until Evaluate runs here.
         return summary with

@@ -129,6 +129,13 @@
   color: inherit;
 }
 
+.ds-placed-hint {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  color: var(--color-text-secondary);
+}
+
 /* Outline multiline: stronger ink + border (default outline reads muted / “disabled”) */
 .ds-status--outline.ds-status--multiline {
   --status-wash: 14%;

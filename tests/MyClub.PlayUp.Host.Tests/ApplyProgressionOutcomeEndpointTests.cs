@@ -48,6 +48,32 @@ public sealed class ApplyProgressionOutcomeEndpointTests(HostPostgresFixture fix
     }
 
     [IntegrationFact]
+    public async Task Apply_progression_to_slot_persists_progression_provenanceAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var seed = await SeedR2QuarterToSemiSlotDestinationAsync(factory);
+
+        using var client = factory.CreateClient();
+        using var response = await client.PostAsync(ApplyUri(seed.SourceStageId, seed.FixtureId), content: null);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        using var scope = factory.Services.CreateScope();
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var destination = await stages.GetByIdForUpdateAsync(seed.DestinationStageId);
+        destination.Should().NotBeNull();
+        destination!.FindSlot("SF1-A")!.EntryId.Should().Be(seed.Home);
+        destination.FindSlot("SF1-A")!.ResolutionProvenance.Should().NotBeNull();
+        destination.FindSlot("SF1-A")!.ResolutionProvenance!.Kind
+            .Should()
+            .Be(ResolutionProvenanceKind.Progression);
+        destination.CompositionEntries.Should().Contain(entry => entry.EntryId.Equals(seed.Home));
+        destination.CompositionEntries.Single(entry => entry.EntryId.Equals(seed.Home)).ResolutionProvenance
+            ?.Kind.Should()
+            .Be(ResolutionProvenanceKind.Progression);
+    }
+
+    [IntegrationFact]
     public async Task Apply_progression_when_stage_missing_returns_404Async()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
@@ -122,6 +148,45 @@ public sealed class ApplyProgressionOutcomeEndpointTests(HostPostgresFixture fix
         situation.WithProgressionPaths(
             quarter,
             new ProgressionPathSpec("P1", ProgressionOutcome.Winner, semi.Id));
+
+        await HostTestPersist.PersistAsync(scope.ServiceProvider, situation);
+
+        return new R2Seed(quarter.Id, semi.Id, addFixture.Id, home);
+    }
+
+    private async Task<R2Seed> SeedR2QuarterToSemiSlotDestinationAsync(PlayUpWebApplicationFactory factory)
+    {
+        using var scope = factory.Services.CreateScope();
+        var situation = TestCompetition.Create("Coupe slot", _clock);
+
+        var quarter = situation.AddKnockoutStage(
+            "QF",
+            "R1",
+            ["QF1-A", "QF1-B"],
+            seedBracketPairs: false);
+        var semi = situation.AddKnockoutStage(
+            "SF",
+            "R1",
+            ["SF1-A", "SF1-B"],
+            seedBracketPairs: false);
+
+        var home = EntryId.New();
+        var away = EntryId.New();
+        quarter.ReplaceBracketPairs([new BracketPair("P1", "QF1-A", "QF1-B")]);
+        var addFixture = quarter.AddFixture(quarter.Rounds[0].Id, _clock, "QF1-A", "QF1-B", "P1");
+        var match = Match.Create(situation.Competition.Id, quarter.Id, home, away, _clock);
+        quarter.AttachMatch(addFixture.Id, match.Id, legIndex: 1, _clock);
+        match.Start(_clock);
+        match.Finish(new MatchResult(ResultType.Played, new Score(2, 0)), _clock);
+        situation.TrackMatch(match);
+
+        situation.WithProgressionPaths(
+            quarter,
+            new ProgressionPathSpec(
+                "P1",
+                ProgressionOutcome.Winner,
+                semi.Id,
+                DestinationSlotKey: "SF1-A"));
 
         await HostTestPersist.PersistAsync(scope.ServiceProvider, situation);
 

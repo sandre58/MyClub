@@ -22,6 +22,7 @@ describe('matchInvalidation', () => {
       queryKeys.competitions.matchHub(target.competitionId),
       queryKeys.competitions.structure(target.competitionId),
       queryKeys.stages.detail(target.stageId),
+      ['stages'],
       queryKeys.competitions.overview(target.competitionId),
       queryKeys.competitions.consultation(target.competitionId),
       queryKeys.competitions.attention(target.competitionId),

@@ -6,6 +6,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Qualification;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 
@@ -44,15 +45,18 @@ public static class ProgressionApplier
                 StageErrorCodes.ProgressionApplyFixtureMismatch);
         }
 
-        var entryId = path.Outcome == ProgressionOutcome.Winner
-            ? outcome.WinnerEntryId
-            : outcome.LoserEntryId;
-
-        return new ProgressionInstruction(
-            path.Destination.StageId,
-            entryId,
-            path.Destination.SlotKey,
-            path.Destination.GroupId,
-            path.Destination.Form);
+        return PathOccupantSelector.SelectProgression(path, outcome) switch
+        {
+            { Status: PathOccupantSelectionStatus.Indeterminate } => throw new DomainException(
+                "Progression path did not resolve an entry from the fixture outcome.",
+                StageErrorCodes.FixtureOutcomeUndecided),
+            { Status: PathOccupantSelectionStatus.Resolved, EntryId: { } entryId } => new ProgressionInstruction(
+                path.Destination.StageId,
+                entryId,
+                path.Destination.SlotKey,
+                path.Destination.GroupId,
+                path.Destination.Form),
+            _ => throw new InvalidOperationException("Unexpected progression selection outcome.")
+        };
     }
 }

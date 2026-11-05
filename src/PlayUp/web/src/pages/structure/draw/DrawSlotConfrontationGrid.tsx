@@ -1,9 +1,13 @@
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { MatchRow } from '../../../design-system/components/MatchRow';
+import { AlreadyPlacedStatus } from '../../../design-system/components/Status';
 import { TeamCrest } from '../../../design-system/TeamCrest';
 import type { SlotConfrontationRow, SlotConfrontationSide } from './drawUi';
 
 function crestFor(side: SlotConfrontationSide): ReactElement {
+  if (!side.entryId) {
+    return <span aria-hidden="true" />;
+  }
   return (
     <TeamCrest
       name={side.displayName}
@@ -14,18 +18,62 @@ function crestFor(side: SlotConfrontationSide): ReactElement {
   );
 }
 
+function sideName(side: SlotConfrontationSide): ReactNode {
+  if (side.muted) {
+    return <span className="ds-meta">{side.displayName}</span>;
+  }
+  if (side.alreadyPlacedLabel) {
+    return (
+      <span className="structure-draw-slot__name structure-draw-slot__name--placed">
+        {side.displayName}
+      </span>
+    );
+  }
+  return side.displayName;
+}
+
+function sideMark(side: SlotConfrontationSide): ReactNode {
+  if (!side.alreadyPlacedLabel) {
+    return null;
+  }
+  return <AlreadyPlacedStatus label={side.alreadyPlacedLabel} />;
+}
+
+function rowAria(row: SlotConfrontationRow): string {
+  if (row.sideA.cellState || row.sideB.cellState) {
+    const home = row.sideA.ariaLabel ?? row.sideA.displayName;
+    const away = row.sideB.ariaLabel ?? row.sideB.displayName;
+    return `${row.key} · ${home} vs ${away}`;
+  }
+  return `${row.key} · ${row.sideA.slotKey} vs ${row.sideB.slotKey}`;
+}
+
+function unpairedAria(side: SlotConfrontationSide): string {
+  if (side.cellState) {
+    return side.ariaLabel ?? side.displayName;
+  }
+  return `${side.displayName} · ${side.slotKey}`;
+}
+
 function ConfrontationMatchRow({
   row,
 }: {
   row: SlotConfrontationRow;
 }): ReactElement {
   const aside = `${row.sideA.slotKey} vs ${row.sideB.slotKey}`;
-  const label = `${row.key} · ${aside}`;
   return (
-    <li aria-label={label}>
+    <li aria-label={rowAria(row)}>
       <MatchRow
-        home={{ name: row.sideA.displayName, crest: crestFor(row.sideA) }}
-        away={{ name: row.sideB.displayName, crest: crestFor(row.sideB) }}
+        home={{
+          name: sideName(row.sideA),
+          mark: sideMark(row.sideA),
+          crest: crestFor(row.sideA),
+        }}
+        away={{
+          name: sideName(row.sideB),
+          mark: sideMark(row.sideB),
+          crest: crestFor(row.sideB),
+        }}
         score={row.key}
         scoreMuted
         aside={aside}
@@ -40,11 +88,14 @@ function UnpairedMatchRow({
 }: {
   side: SlotConfrontationSide;
 }): ReactElement {
-  const label = `${side.displayName} · ${side.slotKey}`;
   return (
-    <li aria-label={label}>
+    <li aria-label={unpairedAria(side)}>
       <MatchRow
-        home={{ name: side.displayName, crest: crestFor(side) }}
+        home={{
+          name: sideName(side),
+          mark: sideMark(side),
+          crest: crestFor(side),
+        }}
         away={{ name: '', crest: <span aria-hidden="true" /> }}
         score={side.slotKey}
         scoreMuted

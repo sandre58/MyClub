@@ -428,6 +428,25 @@ describe('StructurePhaseOperationalStrip', () => {
     ).toBeInTheDocument();
   });
 
+  it('composition layout shows stale draw resolution panel when draw is applied', () => {
+    renderStrip({
+      layoutVariant: 'composition',
+      showPlaces: false,
+      drawApplied: true,
+      placement: {
+        ...basePlacement,
+        staleDrawResolutionPanel: (
+          <div data-testid="stale-draw-resolution">stale</div>
+        ),
+      },
+    });
+
+    expect(screen.getByTestId('stale-draw-resolution')).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Un tirage aléatoire a été appliqué/i),
+    ).not.toBeInTheDocument();
+  });
+
   describe('Completed — draw strip read-only final state', () => {
     const completedCupStage: StructureStageHubSummary = {
       ...baseStage,

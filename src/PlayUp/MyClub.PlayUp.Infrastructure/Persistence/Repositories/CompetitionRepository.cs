@@ -30,6 +30,7 @@ internal sealed class CompetitionRepository(PlayUpDbContext context) : ICompetit
         // List does not hydrate StageIds / entry sort — enough for Competition List rows.
         var competitions = await context.Set<Competition>()
             .AsNoTracking()
+            .AsSplitQuery()
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
@@ -37,6 +38,12 @@ internal sealed class CompetitionRepository(PlayUpDbContext context) : ICompetit
             .OrderBy(competition => competition.Name.Value, StringComparer.OrdinalIgnoreCase)
             .ThenBy(competition => competition.Id.Value)];
     }
+
+    /// <inheritdoc />
+    public Task<int> CountStagesReadOnlyAsync(CompetitionId id, CancellationToken cancellationToken = default) =>
+        context.Set<CompetitionStageRef>()
+            .AsNoTracking()
+            .CountAsync(row => row.CompetitionId == id, cancellationToken);
 
     /// <inheritdoc />
     public void Add(Competition competition)

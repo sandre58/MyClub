@@ -32,6 +32,30 @@ public sealed class RedoDrawTests
     private readonly CompetitionId _competitionId = CompetitionId.New();
 
     [Fact]
+    public void Redo_succeeds_when_composition_gained_extra_entries_after_apply()
+    {
+        var competition = CreateCompetition.Execute("Cup", _clock);
+        var entries = Enumerable.Range(0, 2)
+            .Select(i => AddEntry.Execute(competition, $"T{i}", _clock).Id)
+            .ToArray();
+        var configured = ConfigureStructure.Execute(competition, null, StructureIntent.Cup(2), _clock);
+        var stage = configured.Stage;
+        ReplaceStageDrawRules.Execute(stage, new DrawRules(DrawMode.Random), _clock);
+        stage.ReplaceAffectationAuthoring([.. entries], _clock);
+
+        var draw = CreateDraw.Execute(stage, DrawResolutionKind.Slot, _clock);
+        ApplyDrawPipelineToFillSlots(stage, draw);
+
+        stage.AddResolvedPopulationEntry(EntryId.New(), _clock);
+
+        var result = RedoDraw.Execute(stage, draw.Id, _clock, [stage]);
+
+        result.IsResolved.Should().BeTrue();
+        stage.GetDraw(result.DrawId).Resolution.State.Should().Be(DrawResolutionState.Resolved);
+        stage.CompositionEntries.Should().HaveCount(3);
+    }
+
+    [Fact]
     public void Redo_succeeds_cancels_releases_and_previews_a_new_resolution()
     {
         var competition = CreateCompetition.Execute("Cup", _clock);

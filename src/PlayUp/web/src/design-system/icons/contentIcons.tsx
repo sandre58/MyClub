@@ -28,6 +28,7 @@ import {
   Network,
   PackageOpen,
   Pencil,
+  Pin,
   Pipette,
   PlayingCardsFan,
   Plus,
@@ -234,6 +235,11 @@ export function PencilIcon({ size, ...props }: ContentIconProps) {
 /** Delete — trash (preparation). */
 export function TrashIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Trash2} size={size} {...props} />;
+}
+
+/** Team already placed on a cup slot — pin, not the venue map pin. */
+export function PlacedIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={Pin} size={size} {...props} />;
 }
 
 /** Release placements / unlock a grid — not a delete. */

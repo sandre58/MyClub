@@ -3,6 +3,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { useState } from 'react';
 import { ApiError } from '../../../api/http';
 import userEvent from '@testing-library/user-event';
@@ -42,6 +43,7 @@ import type {
   StructureStageHubSummary,
 } from '../../../types';
 import { StructureDrawDialog } from './StructureDrawDialog';
+import { queryKeys } from '../../../queryKeys';
 import { scheduleStructureRefresh } from '../structureInvalidation';
 
 const scrollIntoViewMock = vi.fn();
@@ -261,16 +263,18 @@ function renderDialog(
   });
   const onClose = vi.fn();
   render(
-    <QueryClientProvider client={queryClient}>
-      <StructureDrawDialog
-        open={open}
-        onClose={onClose}
-        competitionId={competitionId}
-        competitionStatus={competitionStatus}
-        stage={stage}
-        structureStages={[stage]}
-      />
-    </QueryClientProvider>,
+    <MemoryRouter>
+      <QueryClientProvider client={queryClient}>
+        <StructureDrawDialog
+          open={open}
+          onClose={onClose}
+          competitionId={competitionId}
+          competitionStatus={competitionStatus}
+          stage={stage}
+          structureStages={[stage]}
+        />
+      </QueryClientProvider>
+    </MemoryRouter>,
   );
   return { onClose, queryClient };
 }
@@ -282,16 +286,19 @@ describe('structure draw dialog height', () => {
       /\.ds-dialog:has\(\.structure-qualification\) \.ds-dialog__panel,\s*\.ds-dialog:has\(\.structure-progression\) \.ds-dialog__panel,\s*\.ds-dialog:has\(\.structure-draw-dialog\) \.ds-dialog__panel \{[^}]*max-height:\s*min\(92vh,\s*52rem\)/,
     );
     expect(drawDialogCss).toMatch(
-      /\.ds-dialog:has\(\.structure-draw-dialog\) \.ds-dialog__body \{[^}]*overflow:\s*auto/,
+      /\.ds-dialog:has\(\.structure-draw-dialog\) \.ds-dialog__body \{[^}]*overflow:\s*hidden/,
+    );
+    expect(drawDialogCss).toMatch(
+      /\.structure-draw-dialog \{[^}]*overflow:\s*auto/,
     );
     expect(drawDialogCss).not.toMatch(
-      /\.ds-dialog:has\(\.structure-draw-dialog\) \.ds-dialog__body \{[^}]*overflow:\s*hidden/,
+      /\.ds-dialog:has\(\.structure-draw-dialog\) \.ds-dialog__body \{[^}]*overflow:\s*auto/,
     );
     expect(drawDialogCss).not.toMatch(
       /@media \(max-height:\s*36rem\)[\s\S]*structure-draw-dialog/,
     );
     expect(drawDialogCss).toMatch(
-      /\.structure-draw-dialog \{[^}]*flex:\s*none/,
+      /\.structure-draw-dialog \{[^}]*flex:\s*1 1 auto/,
     );
     expect(drawDialogCss).toMatch(
       /\.structure-draw-execution \{[^}]*flex:\s*none/,
@@ -636,7 +643,7 @@ describe('StructureDrawDialog', () => {
         compositionCapacity: 16,
         drawCreateLaunch: {
           allowed: false,
-          blockReasonCode: 'BracketPlacesOccupied',
+          blockReasonCode: 'NoFreeSlot',
         },
       }),
     );
@@ -646,8 +653,40 @@ describe('StructureDrawDialog', () => {
     ).toBeDisabled();
     expect(
       screen.getByText(
-        'Libérez les placements existants avant de lancer un nouveau tirage.',
+        'Toutes les places de cette phase sont déjà occupées ou réservées. Le tirage ne remplace pas les équipes déjà placées.',
       ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        'Le tirage remplira uniquement les places libres. Les équipes déjà placées restent en place.',
+      ),
+    ).not.toBeInTheDocument();
+  });
+
+  it('disables Cup Nouveau when unplaced teams do not fill the free places', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(overview([]));
+
+    renderDialog(
+      cupStage({
+        compositionEntryCount: 2,
+        compositionCapacity: 4,
+        drawCreateLaunch: {
+          allowed: false,
+          blockReasonCode: 'NotEnoughTeams',
+        },
+      }),
+    );
+
+    expect(
+      await screen.findByRole('button', { name: 'Lancer le tirage' }),
+    ).toBeDisabled();
+    expect(
+      screen.getByText(
+        'Les équipes non placées ne suffisent pas à remplir les places encore libres.',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'Ouvrir les équipes' }),
     ).toBeInTheDocument();
   });
 
@@ -712,6 +751,11 @@ describe('StructureDrawDialog', () => {
         'Libérez les placements existants avant de lancer un nouveau tirage.',
       ),
     ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Le tirage remplira uniquement les places libres. Les équipes déjà placées restent en place.',
+      ),
+    ).toBeInTheDocument();
   });
 
   it('keeps Cup launch on the hub decision after Libérer clears occupants', async () => {
@@ -785,7 +829,7 @@ describe('StructureDrawDialog', () => {
     ).toBeDisabled();
 
     const releaseButton = await screen.findByRole('button', {
-      name: 'Libérer #1 (2/2)',
+      name: 'Libérer les 2 équipes tirées',
     });
     await user.click(releaseButton);
     const confirmDialog = await screen.findByRole('dialog', {
@@ -793,7 +837,7 @@ describe('StructureDrawDialog', () => {
     });
     await user.click(
       within(confirmDialog).getByRole('button', {
-        name: 'Libérer les placements du tirage',
+        name: 'Libérer les 2 équipes tirées',
       }),
     );
 
@@ -1471,7 +1515,7 @@ describe('StructureDrawDialog', () => {
 
     expect(await screen.findByText('1/2 non libérés')).toBeInTheDocument();
     const releaseButton = screen.getByRole('button', {
-      name: 'Libérer #1 (1/2)',
+      name: 'Libérer les 1 équipes tirées',
     });
     expect(releaseButton.closest('.structure-draw-footer')).not.toBeNull();
     expect(releaseButton.closest('summary')).toBeNull();
@@ -1484,7 +1528,7 @@ describe('StructureDrawDialog', () => {
     });
     await user.click(
       within(confirm).getByRole('button', {
-        name: 'Libérer les placements du tirage',
+        name: 'Libérer les 1 équipes tirées',
       }),
     );
 
@@ -1494,6 +1538,12 @@ describe('StructureDrawDialog', () => {
         'draw-slot-1',
       );
     });
+    expect(scheduleStructureRefresh).toHaveBeenCalledWith(
+      expect.anything(),
+      competitionId,
+      ['hubStageShell'],
+      { stageId },
+    );
     await waitFor(() => {
       expect(getToastsSnapshot().map((t) => t.message)).toContain(
         'Placements libérés (1).',
@@ -1551,11 +1601,11 @@ describe('StructureDrawDialog', () => {
     expect(footer).not.toBeNull();
     const footerRelease = await within(footer as HTMLElement).findByRole(
       'button',
-      { name: 'Libérer #2 (1/1)' },
+      { name: 'Libérer les 1 équipes tirées' },
     );
     expect(
       within(footer as HTMLElement).queryByRole('button', {
-        name: 'Libérer #1 (2/2)',
+        name: 'Libérer les 2 équipes tirées',
       }),
     ).not.toBeInTheDocument();
 
@@ -1565,7 +1615,7 @@ describe('StructureDrawDialog', () => {
     });
     await user.click(
       within(confirm).getByRole('button', {
-        name: 'Libérer les placements du tirage',
+        name: 'Libérer les 1 équipes tirées',
       }),
     );
 
@@ -1642,7 +1692,11 @@ describe('StructureDrawDialog', () => {
     await user.click(await screen.findByRole('button', { name: 'Relancer' }));
 
     await waitFor(() => {
-      expect(rerunDrawGeneration).toHaveBeenCalledWith(stageId, 'draw-zzz');
+      expect(rerunDrawGeneration).toHaveBeenCalledWith(
+        stageId,
+        'draw-zzz',
+        'Group',
+      );
     });
     expect(createAndGenerateDraw).not.toHaveBeenCalled();
     await waitFor(() => {
@@ -1676,7 +1730,11 @@ describe('StructureDrawDialog', () => {
       ),
     ).toBeInTheDocument();
     expect(createAndGenerateDraw).not.toHaveBeenCalled();
-    expect(rerunDrawGeneration).toHaveBeenCalledWith(stageId, 'draw-1');
+    expect(rerunDrawGeneration).toHaveBeenCalledWith(
+      stageId,
+      'draw-1',
+      'Group',
+    );
   });
 
   it('projects generation failure on rerun without a new execution', async () => {
@@ -2344,7 +2402,7 @@ describe('StructureDrawDialog', () => {
       }),
     );
     const release = await screen.findByRole('button', {
-      name: 'Libérer #1 (1/1)',
+      name: 'Libérer les 1 équipes tirées',
     });
     release.focus();
     await user.click(release);
@@ -2353,7 +2411,7 @@ describe('StructureDrawDialog', () => {
     });
     await user.click(
       within(confirm).getByRole('button', {
-        name: 'Libérer les placements du tirage',
+        name: 'Libérer les 1 équipes tirées',
       }),
     );
     await waitFor(() => {
@@ -2557,14 +2615,16 @@ describe('StructureDrawDialog', () => {
       });
       renderDialog(cupStage());
       await user.click(
-        await screen.findByRole('button', { name: 'Libérer #1 (1/2)' }),
+        await screen.findByRole('button', {
+          name: 'Libérer les 1 équipes tirées',
+        }),
       );
       const confirm = await screen.findByRole('dialog', {
         name: 'Libérer les placements du tirage ?',
       });
       await user.click(
         within(confirm).getByRole('button', {
-          name: 'Libérer les placements du tirage',
+          name: 'Libérer les 1 équipes tirées',
         }),
       );
       await waitFor(() => {
@@ -2577,7 +2637,7 @@ describe('StructureDrawDialog', () => {
       await vi.advanceTimersByTimeAsync(160);
       await waitFor(() => {
         expect(
-          screen.getByRole('button', { name: 'Libérer #1 (1/2)' }),
+          screen.getByRole('button', { name: 'Libérer les 1 équipes tirées' }),
         ).toHaveFocus();
       });
     });
@@ -3372,5 +3432,270 @@ describe('StructureDrawDialog', () => {
     });
     expect(release).toBeDisabled();
     expect(screen.getByText(releaseAttachedMatchesError)).toBeInTheDocument();
+  });
+
+  it('does not recompute vacant places inside the dialog', () => {
+    const source = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), 'StructureDrawDialog.tsx'),
+      'utf8',
+    );
+    expect(source).not.toMatch(/countVacantBracketPlaces/);
+  });
+
+  it('T5 shows partial duo stats, and équipes × places when nothing is left to draw', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([], {
+        slotDrawDisplayMetrics: {
+          unplacedEntryCount: 2,
+          vacantSlotKeyCount: 2,
+          vacantSlotKeys: ['S3', 'S4'],
+          alreadyPlacedEntryCount: 2,
+          entryCount: 4,
+          placeCount: 4,
+        },
+      }),
+    );
+    const { unmount } = render(
+      <MemoryRouter>
+        <QueryClientProvider
+          client={
+            new QueryClient({
+              defaultOptions: { queries: { retry: false } },
+            })
+          }
+        >
+          <StructureDrawDialog
+            open
+            onClose={vi.fn()}
+            competitionId={competitionId}
+            competitionStatus="Draft"
+            stage={cupStage({
+              compositionEntryCount: 4,
+              compositionCapacity: 4,
+              drawCreateLaunch: { allowed: true, blockReasonCode: null },
+            })}
+            structureStages={[]}
+          />
+        </QueryClientProvider>
+      </MemoryRouter>,
+    );
+    expect(await screen.findByText('À placer')).toBeInTheDocument();
+    expect(screen.getByText('Places libres')).toBeInTheDocument();
+    expect(screen.queryByText('Déjà en place')).not.toBeInTheDocument();
+    expect(screen.queryByText('équipes')).not.toBeInTheDocument();
+    unmount();
+
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([], {
+        slotDrawDisplayMetrics: {
+          unplacedEntryCount: 0,
+          vacantSlotKeyCount: 0,
+          vacantSlotKeys: [],
+          alreadyPlacedEntryCount: 4,
+          entryCount: 4,
+          placeCount: 4,
+        },
+      }),
+    );
+    renderDialog(
+      cupStage({
+        compositionEntryCount: 4,
+        compositionCapacity: 4,
+        drawCreateLaunch: { allowed: false, blockReasonCode: 'NoFreeSlot' },
+      }),
+    );
+    expect(
+      await screen.findByRole('button', { name: 'Lancer le tirage' }),
+    ).toBeDisabled();
+    expect(
+      screen.getByText(
+        'Toutes les places de cette phase sont déjà occupées ou réservées. Le tirage ne remplace pas les équipes déjà placées.',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText('équipes')).toBeInTheDocument();
+    expect(screen.getByText('places')).toBeInTheDocument();
+    expect(screen.queryByText('À placer')).not.toBeInTheDocument();
+    expect(screen.queryByText('Places libres')).not.toBeInTheDocument();
+  });
+
+  it('T5 keeps a duo when a partial draw has no occupant yet', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview(
+        [
+          slotDraw({
+            inputsIntent: 'Partial',
+            displayMetrics: {
+              unplacedEntryCount: 4,
+              vacantSlotKeyCount: 4,
+              vacantSlotKeys: ['S1', 'S2', 'S3', 'S4'],
+              alreadyPlacedEntryCount: 0,
+              entryCount: 4,
+              placeCount: 4,
+            },
+          }),
+        ],
+        { bracketPairs: cupBracketPairs },
+      ),
+    );
+    renderDialog(
+      cupStage({ compositionEntryCount: 4, compositionCapacity: 4 }),
+    );
+    expect(await screen.findByText('équipes')).toBeInTheDocument();
+    expect(screen.getByText('places')).toBeInTheDocument();
+    expect(screen.queryByText('À placer')).not.toBeInTheDocument();
+    expect(screen.queryByText('Déjà en place')).not.toBeInTheDocument();
+  });
+
+  it('T6 keeps a published partial history tile after a manual release on the phase', async () => {
+    const user = userEvent.setup();
+    const cells = [
+      {
+        slotKey: 'S1',
+        cellState: 'Drawn' as const,
+        entryId: 'e1',
+        displayName: 'Belgium',
+        origin: 'Draw' as const,
+      },
+      {
+        slotKey: 'S2',
+        cellState: 'OutsideDraw' as const,
+        entryId: null,
+        displayName: null,
+        origin: null,
+      },
+    ];
+    const draw = slotDraw({
+      status: 'Cancelled',
+      actions: hiddenDrawActions(),
+      slotPlacements: [
+        {
+          slotKey: 'S1',
+          entryId: 'e1',
+          displayName: 'Belgium',
+          origin: 'Draw',
+        },
+      ],
+      slotDisplayCells: cells,
+      displayMetrics: null,
+    });
+    let released = false;
+    vi.mocked(fetchStageOverview).mockImplementation(async () =>
+      overview([draw], {
+        bracketPairs: [{ pairKey: 'P1', slotAKey: 'S1', slotBKey: 'S2' }],
+        slots: [
+          {
+            slotKey: 'S1',
+            entryId: released ? null : 'e1',
+            displayName: released ? null : 'Belgium',
+            coveredByCompleteFixture: false,
+          },
+          {
+            slotKey: 'S2',
+            entryId: released ? null : 'e9',
+            displayName: released ? null : 'Other',
+            coveredByCompleteFixture: false,
+          },
+        ],
+      }),
+    );
+    const { queryClient } = renderDialog(cupStage());
+    await user.click(
+      await screen.findByRole('button', { name: /Exécution #1/ }),
+    );
+    const tile = await waitFor(() => {
+      const row = document.querySelector('.draw-slot-rows li');
+      expect(row).not.toBeNull();
+      return row as HTMLElement;
+    });
+    expect(tile).toHaveAccessibleName('P1 · Belgium vs Hors de ce tirage');
+    expect(tile).not.toHaveAccessibleName(/Place libre/);
+    expect(tile).not.toHaveAccessibleName(/Déjà placée/);
+    const before = tile.getAttribute('aria-label');
+    released = true;
+    await queryClient.invalidateQueries({
+      queryKey: queryKeys.stages.detail(stageId),
+    });
+    await waitFor(() => {
+      const row = document.querySelector('.draw-slot-rows li');
+      expect(row).toHaveAttribute('aria-label', before);
+    });
+    expect(screen.queryByText('Place libre')).not.toBeInTheDocument();
+    expect(screen.getByText('Belgium')).toBeInTheDocument();
+    expect(screen.getByText('Hors de ce tirage')).toBeInTheDocument();
+  });
+
+  it('T7 does not show already placed on a group rerun', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([
+        groupDraw({
+          inputsIntent: 'Rerun',
+          groupPlacements: [
+            {
+              groupId: 'g-a',
+              groupDisplayName: 'A',
+              entryId: 'e1',
+              displayName: 'Alpha',
+            },
+          ],
+        }),
+      ]),
+    );
+    renderDialog(groupsStage());
+    expect(await screen.findByText('Alpha')).toBeInTheDocument();
+    expect(screen.queryByText('Déjà placée')).not.toBeInTheDocument();
+    expect(screen.queryByText('À placer')).not.toBeInTheDocument();
+  });
+
+  it('T-cache invalidates the stage detail after a slot release', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview(
+        [
+          slotDraw({
+            status: 'Cancelled',
+            actions: releaseAvailable(1),
+            slotPlacements: [
+              { slotKey: 'S1', entryId: 'e1', displayName: 'Belgium' },
+            ],
+          }),
+        ],
+        {
+          slots: [
+            {
+              slotKey: 'S1',
+              entryId: 'e1',
+              displayName: 'Belgium',
+              coveredByCompleteFixture: false,
+            },
+          ],
+        },
+        'draw-slot-1',
+      ),
+    );
+    vi.mocked(releaseDrawAlignedPlacements).mockResolvedValue({
+      releasedCount: 1,
+      skippedCount: 0,
+    });
+    const { queryClient } = renderDialog(cupStage());
+    const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'Libérer les 1 équipes tirées',
+      }),
+    );
+    const confirm = await screen.findByRole('dialog', {
+      name: 'Libérer les placements du tirage ?',
+    });
+    await user.click(
+      within(confirm).getByRole('button', {
+        name: 'Libérer les 1 équipes tirées',
+      }),
+    );
+    await waitFor(() => {
+      expect(invalidate).toHaveBeenCalledWith({
+        queryKey: queryKeys.stages.detail(stageId),
+        refetchType: 'active',
+      });
+    });
   });
 });

@@ -6,6 +6,10 @@ import type {
   StageOverview,
 } from '../../../types';
 import { apiErrorCodeLabel } from '../../../i18n/apiErrorLabel';
+import {
+  DRAW_LAUNCH_DIRECT_ASSIGNMENT,
+  DRAW_LAUNCH_GRID_NOT_VACANT,
+} from '../../../api/draws';
 
 const hiddenAction: StageDrawAction = { state: 'Hidden' };
 
@@ -27,7 +31,11 @@ export const DRAW_RELEASE_FAILURE = 'Application.DrawReleaseFailure';
 export const CUP_RELEASE_CONFLICT = 'Stage.MaterializedOpponentConflict';
 
 export type DrawRedoBlockReason =
-  'cupFixtureAttached' | 'groupMatchesAttached' | 'lifecycle';
+  | 'cupFixtureAttached'
+  | 'groupMatchesAttached'
+  | 'launchGridNotVacant'
+  | 'launchDirectAssignment'
+  | 'lifecycle';
 
 export type DrawRedoPresentation =
   | { kind: 'hidden' }
@@ -108,6 +116,12 @@ export function redoBlockReason(
   }
   if (blockCode === CUP_RELEASE_CONFLICT) {
     return 'cupFixtureAttached';
+  }
+  if (blockCode === DRAW_LAUNCH_GRID_NOT_VACANT) {
+    return 'launchGridNotVacant';
+  }
+  if (blockCode === DRAW_LAUNCH_DIRECT_ASSIGNMENT) {
+    return 'launchDirectAssignment';
   }
   return 'lifecycle';
 }

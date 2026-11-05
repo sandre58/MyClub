@@ -30,6 +30,9 @@ public static class StructureDrawCreateLaunchGate
     internal const string BlockPlacesCountMismatch = "PlacesCountMismatch";
     internal const string BlockDirectAssignmentPresent = "DirectAssignmentPresent";
     internal const string BlockBracketPlacesOccupied = "BracketPlacesOccupied";
+    internal const string BlockNoFreeSlot = "NoFreeSlot";
+    internal const string BlockNotEnoughTeams = "NotEnoughTeams";
+    internal const string BlockTooManyTeams = "TooManyTeams";
     internal const string BlockOperationalExitEdit = "OperationalExitEditBlocked";
     internal const string BlockDrawObsoleteForConsumption = "DrawObsoleteForConsumption";
     internal const string BlockBadgeNotToLaunch = "BadgeNotToLaunch";
@@ -103,20 +106,34 @@ public static class StructureDrawCreateLaunchGate
         }
         else
         {
-            var places = hub.CompositionCapacity;
-            if (places is null or <= 0 || hub.CompositionEntryCount != places.Value)
+            var scope = SlotPartialDrawPlanner.Compose(stage, competitionStages);
+            if (!scope.IsDrawable)
             {
-                return Deny(BlockPlacesCountMismatch);
-            }
-
-            if (hub.DirectAssignmentCount > 0)
-            {
-                return Deny(BlockDirectAssignmentPresent);
+                return Deny(scope.Refusal switch
+                {
+                    SlotPartialDrawRefusal.NoFreeSlot => BlockNoFreeSlot,
+                    SlotPartialDrawRefusal.NotEnoughTeams => BlockNotEnoughTeams,
+                    SlotPartialDrawRefusal.TooManyTeams => BlockTooManyTeams,
+                    _ => throw new InvalidOperationException(
+                        $"Unexpected partial draw refusal '{scope.Refusal}'."),
+                });
             }
         }
 
-        var facts = StageDrawBracketLaunchClassifier.ClassifyForDrawKind(stage, competitionStages, kind);
-        return facts.BlockingPlaceCount > 0 ? Deny(BlockBracketPlacesOccupied) : StructureDrawConsumptionGate.StageHasObsoleteDrawForConsumption(stage) ? Deny(BlockDrawObsoleteForConsumption) : !TryAllowOperationalDrawEdit(stage) ? Deny(BlockOperationalExitEdit) : Allow();
+        if (kind == DrawResolutionKind.Group)
+        {
+            var facts = StageDrawBracketLaunchClassifier.ClassifyForDrawKind(stage, competitionStages, kind);
+            if (facts.BlockingPlaceCount > 0)
+            {
+                return Deny(BlockBracketPlacesOccupied);
+            }
+        }
+
+        return StructureDrawConsumptionGate.StageHasObsoleteDrawForConsumption(stage)
+            ? Deny(BlockDrawObsoleteForConsumption)
+            : !TryAllowOperationalDrawEdit(stage)
+                ? Deny(BlockOperationalExitEdit)
+                : Allow();
     }
 
     private static bool BlocksUpstreamCompositionPool(StructureStageHubSummaryDto hub) => !hub.IsRootComposition && (hub.CompositionEntryCount <= 0 || (hub.InboundComposition is { ConfiguredVolume: > 0 } inbound

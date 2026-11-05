@@ -18,8 +18,8 @@ namespace MyClub.PlayUp.Application.Stages;
 /// </summary>
 /// <remarks>
 /// Preflights destinations before any mutation (known orchestration failures → zero writes).
-/// Population targets call <see cref="Stage.AddResolvedPopulationEntry"/>;
-/// Place targets dual-write population membership then <see cref="Stage.ApplyResolvedEntry"/>.
+/// Population targets call population resolution apply;
+/// Place targets dual-write population membership then slot resolution apply.
 /// Persistence: caller loads source/destination Stages (and Matches) into one scope, invokes this
 /// use case, then calls <c>IUnitOfWork.SaveChangesAsync</c> once.
 /// </remarks>
@@ -119,7 +119,11 @@ public static class ApplyProgressionOutcome
         {
             var instruction = instructions[i];
             var path = paths[i];
-            destinations[i].AddResolvedPopulationEntry(instruction.EntryId, clock);
+            var provenance = ResolutionProvenanceFactory.ForProgressionApply(
+                canonicalSource.Id,
+                path,
+                outcome);
+            destinations[i].AddResolvedPopulationEntry(instruction.EntryId, clock, provenance);
 
             // Form: Path.Destination.TargetsForm retains Placement intent; materialization is
             // AddResolvedPopulationEntry only (no second Composition write).
@@ -137,7 +141,8 @@ public static class ApplyProgressionOutcome
             {
                 destinations[i].ApplyResolvedGroupEntry(
                     instruction.GroupId!.Value,
-                    instruction.EntryId);
+                    instruction.EntryId,
+                    provenance);
             }
             else if (instruction.TargetsSlot)
             {
@@ -145,6 +150,7 @@ public static class ApplyProgressionOutcome
                     instruction.SlotKey!,
                     instruction.EntryId,
                     clock,
+                    provenance,
                     destinationSnapshots);
             }
         }

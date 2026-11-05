@@ -26,6 +26,7 @@ public sealed class Stage : AggregateRoot<StageId>
     private readonly List<CompositionEntry> _affectationAuthoring = [];
     private readonly List<CompositionEntry> _compositionEntries = [];
     private readonly List<FormPathResolution> _formPathResolutions = [];
+    private readonly List<GroupResolutionProvenance> _groupResolutionProvenances = [];
     private readonly List<Draw> _draws = [];
     private readonly List<Penalty> _penalties = [];
     private readonly List<MatchPlacement> _matchPlacements = [];
@@ -138,6 +139,12 @@ public sealed class Stage : AggregateRoot<StageId>
     /// Gets ForForm Apply provenances (path fingerprint → entry). Execution detail for Structure reads.
     /// </summary>
     public IReadOnlyList<FormPathResolution> FormPathResolutions => _formPathResolutions.AsReadOnly();
+
+    /// <summary>
+    /// Gets Qual/Prog Apply provenances for group memberships.
+    /// </summary>
+    public IReadOnlyList<GroupResolutionProvenance> GroupResolutionProvenances =>
+        _groupResolutionProvenances.AsReadOnly();
 
     /// <summary>
     /// Gets the draws owned by this stage.
@@ -617,11 +624,14 @@ public sealed class Stage : AggregateRoot<StageId>
     /// <summary>
     /// Configures draw inputs (Draft draw only). Sole entry point for Entries / SeedMap / Pot / fixed placements.
     /// </summary>
-    public void ConfigureDrawInputs(DrawId drawId, DrawInputs inputs)
+    public void ConfigureDrawInputs(
+        DrawId drawId,
+        DrawInputs inputs,
+        DrawInputsIntent inputsIntent = DrawInputsIntent.Default)
     {
         ArgumentNullException.ThrowIfNull(inputs);
         EnsureOperationalExitRulesMutable();
-        GetDraw(drawId).ConfigureInputs(inputs);
+        GetDraw(drawId).ConfigureInputs(inputs, inputsIntent);
     }
 
     /// <summary>
@@ -702,6 +712,25 @@ public sealed class Stage : AggregateRoot<StageId>
     {
         ArgumentNullException.ThrowIfNull(clock);
         EnsureOperationalExitRulesMutable();
+        ApplyQualificationRulesReplacement(qualificationRules, clock);
+    }
+
+    /// <summary>
+    /// Replaces qualification rules on a non-completed stage after a qualification Apply.
+    /// Caller proves the Apply and still enforces downstream-consumer and applied-draw guards.
+    /// </summary>
+    /// <param name="qualificationRules">The new qualification rules, or <see langword="null"/>.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ReplaceQualificationRulesAfterAppliedResolution(QualificationRules? qualificationRules, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        if (Status is StageStatus.Completed)
+        {
+            throw new DomainException(
+                $"Operational structure authoring cannot be modified when status is '{Status}'.",
+                StageErrorCodes.StructureLocked);
+        }
+
         ApplyQualificationRulesReplacement(qualificationRules, clock);
     }
 
@@ -1543,19 +1572,33 @@ public sealed class Stage : AggregateRoot<StageId>
     /// </summary>
     /// <param name="entryId">Resolved competition entry.</param>
     /// <param name="clock">The clock used for domain events.</param>
-    public void AddResolvedPopulationEntry(EntryId entryId, IClock clock)
+    /// <param name="provenance">Resolution provenance witness for this Apply.</param>
+    public void AddResolvedPopulationEntry(
+        EntryId entryId,
+        IClock clock,
+        ResolutionProvenance provenance)
     {
         ArgumentNullException.ThrowIfNull(clock);
+        ArgumentNullException.ThrowIfNull(provenance);
         EnsureResolutionMutable();
 
-        if (_compositionEntries.Any(entry => entry.EntryId.Equals(entryId)))
+        var existingIndex = _compositionEntries.FindIndex(entry => entry.EntryId.Equals(entryId));
+        if (existingIndex >= 0)
         {
+            _compositionEntries[existingIndex] =
+                _compositionEntries[existingIndex].WithResolutionProvenance(provenance);
             return;
         }
 
-        _compositionEntries.Add(new CompositionEntry(entryId));
+        _compositionEntries.Add(new CompositionEntry(entryId).WithResolutionProvenance(provenance));
         Raise(new StageCompositionEntriesReplaced(Id, clock));
     }
+
+    /// <summary>
+    /// Adds a resolved population entry without provenance (legacy test/helper path — prefer the overload with provenance).
+    /// </summary>
+    public void AddResolvedPopulationEntry(EntryId entryId, IClock clock) =>
+        AddResolvedPopulationEntry(entryId, clock, ResolutionProvenance.NonVerifiee());
 
     /// <summary>
     /// Records ForForm Apply provenance (path → entry). Upserts by fingerprint — idempotent rejeu.
@@ -1793,7 +1836,7 @@ public sealed class Stage : AggregateRoot<StageId>
             _directAssignments.Add(assignment);
         }
 
-        slot.SetEntry(entryId);
+        slot.SetEntry(entryId, ResolutionProvenance.Directe(key, entryId));
     }
 
     /// <summary>
@@ -1843,6 +1886,7 @@ public sealed class Stage : AggregateRoot<StageId>
     /// <param name="slotKey">Target slot key.</param>
     /// <param name="entryId">Resolved entry identity.</param>
     /// <param name="clock">The clock used for domain events.</param>
+    /// <param name="provenance">Resolution provenance witness for this Apply.</param>
     /// <param name="materializedParticipants">
     /// Participant snapshots of matches attached on this stage (empty when none). Required for Cup opponent coherence.
     /// </param>
@@ -1850,9 +1894,11 @@ public sealed class Stage : AggregateRoot<StageId>
         string slotKey,
         EntryId entryId,
         IClock clock,
+        ResolutionProvenance provenance,
         IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants = null)
     {
         ArgumentNullException.ThrowIfNull(clock);
+        ArgumentNullException.ThrowIfNull(provenance);
         EnsureResolutionMutable();
 
         var key = Slot.NormalizeKey(slotKey);
@@ -1868,6 +1914,7 @@ public sealed class Stage : AggregateRoot<StageId>
 
         if (slot.EntryId is { } current && current.Equals(entryId))
         {
+            slot.SetEntry(entryId, provenance);
             return;
         }
 
@@ -1897,9 +1944,25 @@ public sealed class Stage : AggregateRoot<StageId>
         }
 
         var previousEntryId = slot.EntryId;
-        slot.SetEntry(entryId);
+        slot.SetEntry(entryId, provenance);
         Raise(new StageSlotOccupantChanged(Id, key, previousEntryId, entryId, clock));
     }
+
+    /// <summary>
+    /// Resolves a slot occupant without provenance (legacy test/helper path — prefer the overload with provenance).
+    /// </summary>
+    public void ApplyResolvedEntry(
+        string slotKey,
+        EntryId entryId,
+        IClock clock,
+        IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants) =>
+        ApplyResolvedEntry(slotKey, entryId, clock, ResolutionProvenance.NonVerifiee(), materializedParticipants);
+
+    /// <summary>
+    /// Resolves a slot occupant without provenance (legacy test/helper path — prefer the overload with provenance).
+    /// </summary>
+    public void ApplyResolvedEntry(string slotKey, EntryId entryId, IClock clock) =>
+        ApplyResolvedEntry(slotKey, entryId, clock, ResolutionProvenance.NonVerifiee(), materializedParticipants: null);
 
     /// <summary>
     /// Resolves group membership dynamically (Groups A1 Placement) under resolution mutability.
@@ -1912,8 +1975,10 @@ public sealed class Stage : AggregateRoot<StageId>
     /// </remarks>
     /// <param name="groupId">Target group identity.</param>
     /// <param name="entryId">Resolved entry identity.</param>
-    public void ApplyResolvedGroupEntry(GroupId groupId, EntryId entryId)
+    /// <param name="provenance">Resolution provenance witness for this Apply.</param>
+    public void ApplyResolvedGroupEntry(GroupId groupId, EntryId entryId, ResolutionProvenance provenance)
     {
+        ArgumentNullException.ThrowIfNull(provenance);
         EnsureResolutionMutable();
 
         var group = FindGroup(groupId)
@@ -1924,6 +1989,7 @@ public sealed class Stage : AggregateRoot<StageId>
         {
             if (owningGroup.Id.Equals(groupId))
             {
+                UpsertGroupResolutionProvenance(groupId, entryId, provenance);
                 return;
             }
 
@@ -1933,13 +1999,86 @@ public sealed class Stage : AggregateRoot<StageId>
         }
 
         group.Assign(entryId);
+        UpsertGroupResolutionProvenance(groupId, entryId, provenance);
     }
+
+    private void UpsertGroupResolutionProvenance(
+        GroupId groupId,
+        EntryId entryId,
+        ResolutionProvenance provenance)
+    {
+        var index = _groupResolutionProvenances.FindIndex(row =>
+            row.GroupId.Equals(groupId) && row.EntryId.Equals(entryId));
+        if (index >= 0)
+        {
+            _groupResolutionProvenances[index] = new GroupResolutionProvenance(groupId, entryId, provenance);
+            return;
+        }
+
+        _groupResolutionProvenances.Add(new GroupResolutionProvenance(groupId, entryId, provenance));
+    }
+
+    /// <summary>
+    /// Writes slot resolution provenance without changing the occupant (historical rattrapage).
+    /// </summary>
+    public void WriteSlotResolutionProvenance(string slotKey, ResolutionProvenance provenance)
+    {
+        ArgumentNullException.ThrowIfNull(provenance);
+        var key = Slot.NormalizeKey(slotKey);
+        var slot = FindSlot(key)
+                   ?? throw new DomainException($"Slot '{key}' was not found.", StageErrorCodes.SlotNotFound);
+        if (slot.EntryId is not { } occupant)
+        {
+            return;
+        }
+
+        slot.SetEntry(occupant, provenance);
+    }
+
+    /// <summary>
+    /// Writes composition resolution provenance without changing membership (historical rattrapage).
+    /// </summary>
+    public void WriteCompositionResolutionProvenance(EntryId entryId, ResolutionProvenance provenance)
+    {
+        ArgumentNullException.ThrowIfNull(provenance);
+        var index = _compositionEntries.FindIndex(entry => entry.EntryId.Equals(entryId));
+        if (index < 0)
+        {
+            return;
+        }
+
+        _compositionEntries[index] = _compositionEntries[index].WithResolutionProvenance(provenance);
+    }
+
+    /// <summary>
+    /// Writes group resolution provenance without changing membership (historical rattrapage).
+    /// </summary>
+    public void WriteGroupResolutionProvenance(
+        GroupId groupId,
+        EntryId entryId,
+        ResolutionProvenance provenance)
+    {
+        ArgumentNullException.ThrowIfNull(provenance);
+        var group = FindGroup(groupId);
+        if (group is null || !group.Contains(entryId))
+        {
+            return;
+        }
+
+        UpsertGroupResolutionProvenance(groupId, entryId, provenance);
+    }
+
+    /// <summary>
+    /// Resolves group membership without provenance (legacy test/helper path — prefer the overload with provenance).
+    /// </summary>
+    public void ApplyResolvedGroupEntry(GroupId groupId, EntryId entryId) =>
+        ApplyResolvedGroupEntry(groupId, entryId, ResolutionProvenance.NonVerifiee());
 
     /// <summary>
     /// Clears a dynamically resolved slot occupant without affecting <see cref="DirectAssignment"/>.
     /// </summary>
     /// <remarks>
-    /// Same mutability rules as <see cref="ApplyResolvedEntry"/>. No-op when already vacant.
+    /// Same mutability rules as slot resolution apply. No-op when already vacant.
     /// A DirectAssignment on the target slot yields <see cref="StageErrorCodes.SlotFeedConflict"/>.
     /// </remarks>
     /// <param name="slotKey">Target slot key.</param>

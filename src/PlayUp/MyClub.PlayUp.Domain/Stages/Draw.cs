@@ -48,6 +48,11 @@ public sealed class Draw : Entity<DrawId>
     public DrawInputs? Inputs { get; private set; }
 
     /// <summary>
+    /// Gets the intent recorded at the last inputs configuration.
+    /// </summary>
+    public DrawInputsIntent InputsIntent { get; private set; } = DrawInputsIntent.Default;
+
+    /// <summary>
     /// Gets the current resolution.
     /// </summary>
     public DrawResolution Resolution { get; private set; }
@@ -55,12 +60,13 @@ public sealed class Draw : Entity<DrawId>
     /// <summary>
     /// Configures inputs (Draft only).
     /// </summary>
-    internal void ConfigureInputs(DrawInputs inputs)
+    internal void ConfigureInputs(DrawInputs inputs, DrawInputsIntent inputsIntent = DrawInputsIntent.Default)
     {
         ArgumentNullException.ThrowIfNull(inputs);
         EnsureDraftMutable();
         inputs.EnsureCompatibleWith(Kind);
         Inputs = inputs.Copy();
+        InputsIntent = inputsIntent;
 
         // Re-configuring clears a prior attempt so resolution stays consistent with inputs.
         Resolution = DrawResolution.NotResolved();

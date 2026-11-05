@@ -55,7 +55,7 @@ import {
 } from '../../../ui';
 import { persistentStructureMutationSotHref } from '../../../persistentStructureMutationSot';
 import { StructureQualificationIntentEditor } from './StructureQualificationIntentEditor';
-import { scheduleStructureRefresh } from '../structureInvalidation';
+import { invalidateAfterQualificationRulesReplace } from '../structureInvalidation';
 import { sortiesAvalPeerStages } from './structureSortiesDestinations';
 import { isMissingDestinationStage } from './structureSortiesDestination';
 import { areProgressionPlacesLabeled } from '../draw/structurePlaceLabel';
@@ -237,7 +237,7 @@ export function StructureQualificationDialog({
     },
     onSuccess: () => {
       onClose();
-      scheduleStructureRefresh(queryClient, data.competitionId, ['graph']);
+      invalidateAfterQualificationRulesReplace(queryClient, data.competitionId);
     },
   });
 

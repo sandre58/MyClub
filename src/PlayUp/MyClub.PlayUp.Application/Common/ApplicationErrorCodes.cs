@@ -123,6 +123,21 @@ public static class ApplicationErrorCodes
     public const string DrawLaunchDirectAssignmentPresent = "Application.DrawLaunchDirectAssignmentPresent";
 
     /// <summary>
+    /// Gets the code when a partial slot draw has no free slot left to fill.
+    /// </summary>
+    public const string DrawNoFreeSlot = "Application.DrawNoFreeSlot";
+
+    /// <summary>
+    /// Gets the code when unplaced teams are fewer than the free slots.
+    /// </summary>
+    public const string DrawNotEnoughTeams = "Application.DrawNotEnoughTeams";
+
+    /// <summary>
+    /// Gets the code when unplaced teams outnumber the free slots.
+    /// </summary>
+    public const string DrawTooManyTeams = "Application.DrawTooManyTeams";
+
+    /// <summary>
     /// Gets the code when ReleaseDrawAlignedPlacements cannot run (e.g. not Resolved Slot).
     /// Distinct from Domain <c>SlotFeedConflict</c> (DirectAssignment on a target slot).
     /// </summary>

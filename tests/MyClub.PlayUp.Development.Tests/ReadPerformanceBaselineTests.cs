@@ -85,20 +85,20 @@ public sealed class ReadPerformanceBaselineTests(
         detailSql.Should().BeLessThan(10, "GetCompetitionDetail should use projection, not full stage graphs");
         matchHubSql.Should().BeLessThan(matchHubFanOutTotalSql, "unified Match Hub should beat 1+N fan-out");
         attentionSql.Should().BeLessThanOrEqualTo(overviewSql, "attention bundle must not exceed overview load");
-        attentionSql.Should().BeLessThanOrEqualTo(20, "D2-B lot 2 multi-stage hydration batch (baseline was 21 SQL)");
+        attentionSql.Should().BeLessThanOrEqualTo(21, "D2-B lot 2 multi-stage hydration batch (+1 group provenance include)");
         overviewSql.Should().BeLessThanOrEqualTo(
-            20,
-            "cup-qf-sf warm overview measured 20 SQL on CI");
+            21,
+            "cup-qf-sf warm overview (+1 group provenance include)");
         consultationSql.Should().BeLessThanOrEqualTo(overviewSql, "consultation bundle must not exceed overview load");
         structureSql.Should().BeLessThanOrEqualTo(
             overviewSql,
             "structure bundle must not exceed overview load (parity allowed when bundles align)");
         stageOverviewSql.Should().BeLessThanOrEqualTo(
-            19,
-            "one Structure+Draws+Slots batch for every competition stage (baseline was 32 SQL: Full target plus a second Structure peer load)");
-        stageSchematicSql.Should().BeLessThanOrEqualTo(
             20,
-            "one Structure+Draws+Slots batch for every competition stage, plus match summary rows (baseline was 32 SQL: target batch plus a second Structure peer load)");
+            "one Structure+Draws+Slots batch for every competition stage (+1 group provenance include)");
+        stageSchematicSql.Should().BeLessThanOrEqualTo(
+            21,
+            "Structure batch plus match summary rows (+1 group provenance include)");
     }
 
     [Fact]
@@ -134,16 +134,16 @@ public sealed class ReadPerformanceBaselineTests(
             });
 
         matchesSql.Should().BeGreaterThan(3, "list endpoint loads stage + competition + matches");
-        matchesSql.Should().BeLessThanOrEqualTo(18, "D2-B batch attachment hydration (baseline was 20 SQL)");
+        matchesSql.Should().BeLessThanOrEqualTo(19, "D2-B batch attachment hydration (+1 group provenance include)");
         structureSql.Should().BeLessThanOrEqualTo(
-            21,
-            "structure hub already uses the Structure profile; this lot does not retarget it");
+            22,
+            "structure hub (+1 group provenance include)");
         stageOverviewSql.Should().BeLessThanOrEqualTo(
-            20,
-            "single-stage overview stays flat: the competition-id projection offsets the dropped penalty include (baseline 20 SQL)");
-        stageSchematicSql.Should().BeLessThanOrEqualTo(
             21,
-            "single-stage schematic pays the competition-id projection and has no second hydration to remove (baseline was 20 SQL)");
+            "single-stage overview (+1 group provenance include)");
+        stageSchematicSql.Should().BeLessThanOrEqualTo(
+            22,
+            "single-stage schematic (+1 group provenance include)");
     }
 
     [Fact]
@@ -173,8 +173,8 @@ public sealed class ReadPerformanceBaselineTests(
 
         overviewSql.Should().BeGreaterThan(3, "overview still loads competition, stages, and match rows");
         overviewSql.Should().BeLessThanOrEqualTo(
-            20,
-            "ligue-1:running warm overview measured 20 SQL on CI (SummaryRow)");
+            21,
+            "ligue-1:running warm overview (+1 group provenance include)");
 
         var combinedSql = string.Join('\n', sqlTexts);
         combinedSql.Should().NotContain("match_declared_participations");
@@ -209,7 +209,7 @@ public sealed class ReadPerformanceBaselineTests(
             });
 
         matchesSql.Should().BeGreaterThan(10, "heavy match list should issue many SQL commands today");
-        matchesSql.Should().BeLessThanOrEqualTo(18, "D2-B batch attachment hydration (baseline was 20 SQL)");
+        matchesSql.Should().BeLessThanOrEqualTo(19, "D2-B batch attachment hydration (+1 group provenance include)");
     }
 
     private async Task<CompetitionId> SeedAsync(string seedSpec)

@@ -1,0 +1,32 @@
+{
+  "inputsIntent": "Partial",
+  "displayMetrics": {
+    "unplacedEntryCount": 1,
+    "vacantSlotKeyCount": 1,
+    "vacantSlotKeys": ["S2"],
+    "alreadyPlacedEntryCount": 1,
+    "entryCount": 2,
+    "placeCount": 2
+  },
+  "slotDisplayCells": [
+    {
+      "slotKey": "S1",
+      "cellState": "AlreadyPlaced",
+      "displayName": "T0",
+      "origin": "Manual"
+    },
+    {
+      "slotKey": "S2",
+      "cellState": "Drawn",
+      "displayName": "T1",
+      "origin": "Draw"
+    }
+  ],
+  "bracketPairs": [
+    {
+      "pairKey": "P1",
+      "slotAKey": "S1",
+      "slotBKey": "S2"
+    }
+  ]
+}
