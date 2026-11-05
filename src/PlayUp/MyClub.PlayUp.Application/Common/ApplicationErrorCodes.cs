@@ -235,6 +235,11 @@ public static class ApplicationErrorCodes
     public const string CupCanonicalTopologyInvalid = "Application.CupCanonicalTopologyInvalid";
 
     /// <summary>
+    /// Gets the code when cup materialization omits pair keys without confirming the whole round.
+    /// </summary>
+    public const string CupRoundPlanSelectionRequired = "Application.CupRoundPlanSelectionRequired";
+
+    /// <summary>
     /// Gets the code when Structure mutations are refused for the current lifecycle status.
     /// </summary>
     public const string StructureNotMutable = "Application.StructureNotMutable";

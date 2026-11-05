@@ -10,8 +10,12 @@ namespace MyClub.PlayUp.Host.Contracts;
 /// HTTP body for materializing Cup Fixtures/Matches from occupied bracket pairs.
 /// </summary>
 /// <param name="PairKeys">
-/// Optional explicit <c>BracketPair</c> keys (e.g. P1, P3).
-/// Omit / null / empty → all eligible pairs on the stage.
+/// Explicit <c>BracketPair</c> keys (e.g. P1, P3). Non-empty plans only those pairs.
+/// </param>
+/// <param name="PlanEntireRound">
+/// When true and <paramref name="PairKeys"/> is omitted or empty, plans every eligible pair on the round.
+/// Omit or false without keys is refused.
 /// </param>
 public sealed record MaterializeCupFromOccupiedSlotsRequest(
-    IReadOnlyList<string>? PairKeys = null);
+    IReadOnlyList<string>? PairKeys = null,
+    bool PlanEntireRound = false);

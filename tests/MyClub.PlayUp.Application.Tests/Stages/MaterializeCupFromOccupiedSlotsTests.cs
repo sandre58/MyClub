@@ -81,6 +81,48 @@ public sealed class MaterializeCupFromOccupiedSlotsTests
     }
 
     [Fact]
+    public void Execute_without_keys_and_without_plan_entire_round_is_refused()
+    {
+        var competition = CreateCompetition.Execute("Cup-C2-Selection", _clock);
+        var stage = CreateSemiStage(competition.Id);
+        stage.ApplyResolvedEntry("SF1-A", EntryId.New(), _clock);
+        stage.ApplyResolvedEntry("SF1-B", EntryId.New(), _clock);
+        EnsureCupMaterializeReady(stage);
+
+        var act = () => MaterializeCupFromOccupiedSlots.Execute(
+            competition,
+            stage,
+            null,
+            [],
+            _clock);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.CupRoundPlanSelectionRequired);
+        stage.Rounds[0].Fixtures.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Execute_with_keys_plans_only_those_pairs()
+    {
+        var competition = CreateCompetition.Execute("Cup-C2-Keys", _clock);
+        var stage = CreateSemiStage(competition.Id);
+        stage.ApplyResolvedEntry("SF1-A", EntryId.New(), _clock);
+        stage.ApplyResolvedEntry("SF1-B", EntryId.New(), _clock);
+        EnsureCupMaterializeReady(stage);
+
+        var result = MaterializeCupFromOccupiedSlots.Execute(
+            competition,
+            stage,
+            ["P1"],
+            [],
+            _clock);
+
+        result.CreatedMatches.Should().ContainSingle();
+        stage.FindFixtureByBracketPairKey("P1").Should().NotBeNull();
+        stage.FindFixtureByBracketPairKey("P2").Should().BeNull();
+    }
+
+    [Fact]
     public void Execute_omit_materializes_occupied_and_still_unknown_pairs()
     {
         var competition = CreateCompetition.Execute("Cup-C2-Partial-Eligible", _clock);
@@ -95,7 +137,8 @@ public sealed class MaterializeCupFromOccupiedSlotsTests
             stage,
             null,
             [],
-            _clock);
+            _clock,
+            planEntireRound: true);
 
         result.CreatedMatches.Should().HaveCount(2);
         result.CreatedMatches.Should().ContainSingle(match => match.ParticipantsResolved);
@@ -141,7 +184,13 @@ public sealed class MaterializeCupFromOccupiedSlotsTests
         stage.ApplyResolvedEntry("SF2-B", EntryId.New(), _clock);
 
         EnsureCupMaterializeReady(stage);
-        var result = MaterializeCupFromOccupiedSlots.Execute(competition, stage, null, [], _clock);
+        var result = MaterializeCupFromOccupiedSlots.Execute(
+            competition,
+            stage,
+            null,
+            [],
+            _clock,
+            planEntireRound: true);
 
         result.AlreadyComplete.Should().BeFalse();
         result.CreatedMatches.Should().HaveCount(2);
@@ -162,8 +211,8 @@ public sealed class MaterializeCupFromOccupiedSlotsTests
         stage.ApplyResolvedEntry("SF2-B", EntryId.New(), _clock);
 
         EnsureCupMaterializeReady(stage);
-        MaterializeCupFromOccupiedSlots.Execute(competition, stage, null, [], _clock);
-        var second = MaterializeCupFromOccupiedSlots.Execute(competition, stage, null, [], _clock);
+        MaterializeCupFromOccupiedSlots.Execute(competition, stage, null, [], _clock, planEntireRound: true);
+        var second = MaterializeCupFromOccupiedSlots.Execute(competition, stage, null, [], _clock, planEntireRound: true);
 
         second.CreatedMatches.Should().BeEmpty();
         second.AlreadyComplete.Should().BeTrue();

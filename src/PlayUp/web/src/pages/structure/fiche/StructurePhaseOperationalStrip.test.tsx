@@ -1204,7 +1204,10 @@ describe('StructurePhaseOperationalStrip', () => {
       await user.click(
         within(dialog).getByRole('button', { name: /Créer les matchs/i }),
       );
-      expect(materializeCupFromOccupiedSlots).toHaveBeenCalledOnce();
+      expect(materializeCupFromOccupiedSlots).toHaveBeenCalledWith(
+        baseStage.stageId,
+        { planEntireRound: true },
+      );
     });
 
     it('opens dematerialize confirm and calls dematerializePhase', async () => {

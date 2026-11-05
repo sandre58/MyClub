@@ -266,7 +266,8 @@ public sealed class StructureMatchProductionPresentationAssemblerTests
             stage,
             [],
             [],
-            _clock);
+            _clock,
+            planEntireRound: true);
 
         var hub = StructureViewAssembler.Assemble(situation.Competition, [stage]).Stages[0];
         var presentation = hub.MatchProductionPresentation;
@@ -894,7 +895,8 @@ public sealed class StructureMatchProductionPresentationAssemblerTests
             stage,
             [],
             [],
-            _clock);
+            _clock,
+            planEntireRound: true);
         stage.Start(_clock);
         stage.Suspend(_clock);
 

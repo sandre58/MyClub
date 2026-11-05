@@ -346,7 +346,8 @@ public sealed class StructureMaterializeAssemblerTests
             stage,
             [],
             [],
-            _clock);
+            _clock,
+            planEntireRound: true);
         result.CreatedMatches.Should().NotBeEmpty();
 
         var view = StructureViewAssembler.Assemble(situation.Competition, [stage]);

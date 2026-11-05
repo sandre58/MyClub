@@ -28,13 +28,17 @@ public static class MaterializeCupFromOccupiedSlots
     /// <param name="competition">Owning competition.</param>
     /// <param name="stage">Cup stage (rounds only).</param>
     /// <param name="pairKeys">
-    /// Optional explicit <see cref="BracketPair.PairKey"/> list.
-    /// Null / empty → all eligible pairs; non-empty → each key must exist and be eligible (fail-closed).
+    /// Explicit <see cref="BracketPair.PairKey"/> list. Non-empty → only those pairs, each of which must exist and be eligible.
+    /// Null or empty does not plan the round unless <paramref name="planEntireRound"/> is true.
     /// </param>
     /// <param name="existingMatches">Matches already known for the stage.</param>
     /// <param name="clock">Clock for domain events.</param>
     /// <param name="competitionStages">Stages of competition.</param>
     /// <param name="matchSummariesByStage">Summaries match by stage.</param>
+    /// <param name="planEntireRound">
+    /// When true and <paramref name="pairKeys"/> is null or empty, plans every eligible pair on the round, including a side that is still unknown.
+    /// Ignored when <paramref name="pairKeys"/> lists specific pairs.
+    /// </param>
     public static MaterializeCupFromOccupiedSlotsResult Execute(
         Competition competition,
         Stage stage,
@@ -42,7 +46,8 @@ public static class MaterializeCupFromOccupiedSlots
         IReadOnlyList<Match> existingMatches,
         IClock clock,
         IReadOnlyList<Stage>? competitionStages = null,
-        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>>? matchSummariesByStage = null)
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>>? matchSummariesByStage = null,
+        bool planEntireRound = false)
     {
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(stage);
@@ -71,6 +76,13 @@ public static class MaterializeCupFromOccupiedSlots
         }
 
         var requestEmpty = pairKeys is null || pairKeys.Count == 0;
+        if (requestEmpty && !planEntireRound)
+        {
+            throw new ApplicationFailureException(
+                "Planning a cup round requires pair keys or an explicit request to plan the whole round.",
+                ApplicationErrorCodes.CupRoundPlanSelectionRequired);
+        }
+
         var stages = competitionStages ?? [stage];
         var targets = ResolveTargetPairs(
             stage,

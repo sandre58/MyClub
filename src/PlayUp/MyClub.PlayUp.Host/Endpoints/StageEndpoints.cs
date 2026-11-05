@@ -719,7 +719,11 @@ internal static class StageEndpoints
             {
                 ArgumentNullException.ThrowIfNull(request);
                 var result = await executor
-                    .MaterializeCupFromOccupiedSlotsAsync(new StageId(stageId), request.PairKeys, cancellationToken)
+                    .MaterializeCupFromOccupiedSlotsAsync(
+                        new StageId(stageId),
+                        request.PairKeys,
+                        request.PlanEntireRound,
+                        cancellationToken)
                     .ConfigureAwait(false);
                 return Results.Ok(new MaterializeMatchesResponse(
                     result.CreatedMatches.Count,

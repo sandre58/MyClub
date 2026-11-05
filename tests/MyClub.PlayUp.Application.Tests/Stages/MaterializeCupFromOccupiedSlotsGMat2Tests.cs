@@ -94,7 +94,8 @@ public sealed class MaterializeCupFromOccupiedSlotsGMat2Tests
             stage,
             null,
             [],
-            _clock);
+            _clock,
+            planEntireRound: true);
 
         result.CreatedMatches.Should().HaveCount(1);
     }

@@ -1074,6 +1074,7 @@ public sealed partial class UseCaseExecutor
     public async Task<MaterializeCupFromOccupiedSlotsResult> MaterializeCupFromOccupiedSlotsAsync(
         StageId stageId,
         IReadOnlyList<string>? pairKeys,
+        bool planEntireRound = false,
         CancellationToken cancellationToken = default)
     {
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
@@ -1094,7 +1095,8 @@ public sealed partial class UseCaseExecutor
             existing,
             clock,
             competitionStages,
-            matchSummariesByStage);
+            matchSummariesByStage,
+            planEntireRound);
         foreach (var created in result.CreatedMatches)
         {
             matches.Add(created);

@@ -234,14 +234,15 @@ export function dematerializePhase(stageId: string): Promise<{
 /** POST /stages/{stageId}/matches/materialize-from-slots → MaterializeMatchesResponse */
 export function materializeCupFromOccupiedSlots(
   stageId: string,
-  pairKeys?: string[],
+  request: { pairKeys?: string[]; planEntireRound?: boolean } = {},
 ): Promise<{
   createdCount: number;
   attachedMatchIds: string[];
   alreadyComplete: boolean;
 }> {
   return sendJson('POST', `/stages/${stageId}/matches/materialize-from-slots`, {
-    pairKeys: pairKeys ?? [],
+    pairKeys: request.pairKeys ?? [],
+    planEntireRound: request.planEntireRound ?? false,
   });
 }
 

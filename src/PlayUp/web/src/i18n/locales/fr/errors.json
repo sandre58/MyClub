@@ -11,6 +11,7 @@
     "ConsequenceOperationNotAllowed": "Cette opération de conséquence n’est pas autorisée.",
     "CupBracketNotPowerOfTwo": "Le tableau de coupe doit avoir une taille puissance de 2.",
     "CupCanonicalTopologyInvalid": "La forme du tableau de coupe n’est pas valide — corrigez la structure du tableau avant de préparer la phase ou de produire les matchs.",
+    "CupRoundPlanSelectionRequired": "Indiquez les confrontations à planifier, ou confirmez la planification de tout le tour.",
     "DanglingFeedTarget": "La cible d’alimentation est introuvable.",
     "DeclaredMemberNotFound": "Cette personne n’est plus dans l’effectif.",
     "DeclaredMemberReferencedByMatchSheet": "Ce joueur figure encore sur une feuille de match. Retirez-le de la feuille avant de le retirer de l’équipe.",

@@ -11,6 +11,7 @@
     "ConsequenceOperationNotAllowed": "This consequence operation is not allowed.",
     "CupBracketNotPowerOfTwo": "The cup bracket size must be a power of 2.",
     "CupCanonicalTopologyInvalid": "The cup bracket shape is not valid — correct the bracket before preparing the phase or producing matches.",
+    "CupRoundPlanSelectionRequired": "Choose the confrontations to plan, or confirm planning the whole round.",
     "DanglingFeedTarget": "The feed target was not found.",
     "DeclaredMemberNotFound": "This person is no longer in the squad.",
     "DeclaredMemberReferencedByMatchSheet": "This player is still on a team sheet. Remove them from the sheet before removing them from the team.",
