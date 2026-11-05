@@ -466,7 +466,7 @@ public static class ConsultationAssembler
             .Where(entry => entry.Status == EntryStatus.Active)
             .Select(entry => entry.Id)
             .ToArray();
-        return active.Length > 0 ? active : [.. matches.Where(match => match is { Status: MatchStatus.Finished, Result: not null }).SelectMany(match => new[] { match.HomeEntryId, match.AwayEntryId }).Distinct()];
+        return active.Length > 0 ? active : [.. matches.Where(match => match is { Status: MatchStatus.Finished, Result: not null }).SelectMany(match => StandingMatchAssembler.StandingParticipantIds(match.HomeEntryId, match.AwayEntryId)).Distinct()];
     }
 
     private static EntryId[] ResolveOverallParticipants(
@@ -477,7 +477,7 @@ public static class ConsultationAssembler
             .Where(entry => entry.Status == EntryStatus.Active)
             .Select(entry => entry.Id)
             .ToArray();
-        return active.Length > 0 ? active : [.. matches.Where(match => match is { Status: MatchStatus.Finished, Result: not null }).SelectMany(match => new[] { match.HomeEntryId, match.AwayEntryId }).Distinct()];
+        return active.Length > 0 ? active : [.. matches.Where(match => match is { Status: MatchStatus.Finished, Result: not null }).SelectMany(match => StandingMatchAssembler.StandingParticipantIds(match.HomeEntryId, match.AwayEntryId)).Distinct()];
     }
 
     private static IReadOnlyList<ConsultationStandingRowDto> MapRows(

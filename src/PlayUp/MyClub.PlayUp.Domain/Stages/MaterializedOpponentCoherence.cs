@@ -73,19 +73,29 @@ public static class MaterializedOpponentCoherence
                 continue;
             }
 
-            var opponents = ResolveAttachedOpponents(fixture, byMatchId);
-
-            if (occA is null || occB is null || occA.Equals(occB))
+            foreach (var attachment in fixture.Attachments)
             {
-                throw Conflict(
-                    $"Bracket pair '{pair.PairKey}' is materialized; slot occupants cannot diverge from attached match participants.");
-            }
+                if (!byMatchId.TryGetValue(attachment.MatchId, out var snapshot))
+                {
+                    throw Conflict(
+                        $"Materialized match '{attachment.MatchId}' on fixture '{fixture.Id}' was not provided in participant snapshots.");
+                }
 
-            var occupantSet = new HashSet<EntryId> { occA.Value, occB.Value };
-            if (!occupantSet.SetEquals(opponents))
-            {
-                throw Conflict(
-                    $"Bracket pair '{pair.PairKey}' is materialized; slot occupants must remain coherent with attached match participants.");
+                // Leg 1: SlotA is home and SlotB is away. Leg 2 mirrors that orientation.
+                var slotAIsHome = attachment.LegIndex != 2;
+                var expectedHome = slotAIsHome ? occA : occB;
+                var expectedAway = slotAIsHome ? occB : occA;
+                if (snapshot.HomeEntryId is { } home && !Nullable.Equals(home, expectedHome))
+                {
+                    throw Conflict(
+                        $"Bracket pair '{pair.PairKey}' is materialized; a known home participant cannot diverge from the slot occupant.");
+                }
+
+                if (snapshot.AwayEntryId is { } away && !Nullable.Equals(away, expectedAway))
+                {
+                    throw Conflict(
+                        $"Bracket pair '{pair.PairKey}' is materialized; a known away participant cannot diverge from the slot occupant.");
+                }
             }
         }
     }
@@ -119,7 +129,8 @@ public static class MaterializedOpponentCoherence
                 continue;
             }
 
-            if (snapshot.HomeEntryId.Equals(entryId) || snapshot.AwayEntryId.Equals(entryId))
+            if ((snapshot.HomeEntryId is { } home && home.Equals(entryId))
+                || (snapshot.AwayEntryId is { } away && away.Equals(entryId)))
             {
                 throw Conflict(
                     $"Entry '{entryId}' appears on materialized match '{snapshot.MatchId}' and cannot leave its group.");
@@ -137,26 +148,6 @@ public static class MaterializedOpponentCoherence
         }
 
         return byMatchId;
-    }
-
-    private static HashSet<EntryId> ResolveAttachedOpponents(
-        Fixture fixture,
-        Dictionary<MatchId, MatchParticipantSnapshot> byMatchId)
-    {
-        var opponents = new HashSet<EntryId>();
-        foreach (var attachment in fixture.Attachments)
-        {
-            if (!byMatchId.TryGetValue(attachment.MatchId, out var snapshot))
-            {
-                throw Conflict(
-                    $"Materialized match '{attachment.MatchId}' on fixture '{fixture.Id}' was not provided in participant snapshots.");
-            }
-
-            opponents.Add(snapshot.HomeEntryId);
-            opponents.Add(snapshot.AwayEntryId);
-        }
-
-        return opponents;
     }
 
     private static HashSet<MatchId> CollectAttachedMatchIds(Stage stage)

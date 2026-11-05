@@ -41,13 +41,15 @@ public sealed class CupMaterializeRecetteProtocolTests(DevelopmentPostgresFixtur
         EnsureRecetteCupReady(competition, stage);
 
         var hubReady = AssembleHub(competition, [stage], matches);
-        var row = hubReady.Materialize!.Confrontations.Single(r => r.Eligible);
-        row.Determined.Should().BeTrue();
+        var eligible = hubReady.Materialize!.Confrontations.Where(row => row.Eligible).ToArray();
+        var row = eligible.Should().ContainSingle(candidate => candidate.Determined).Subject;
+        eligible.Should().HaveCountGreaterThan(1);
         hubReady.Materialize!.CommandEnabled.Should().BeTrue();
 
         var result = MaterializeCupFromOccupiedSlots.Execute(competition, stage, null, matches, _clock);
         result.AlreadyComplete.Should().BeFalse();
-        result.CreatedMatches.Should().HaveCount(1, "recette C1 uses SingleLeg tie format");
+        result.CreatedMatches.Should().HaveCount(eligible.Length);
+        result.CreatedMatches.Should().ContainSingle(match => match.ParticipantsResolved);
 
         var fixtureByBracketPairKey = stage.FindFixtureByBracketPairKey(row.Key);
         fixtureByBracketPairKey.Should().NotBeNull();

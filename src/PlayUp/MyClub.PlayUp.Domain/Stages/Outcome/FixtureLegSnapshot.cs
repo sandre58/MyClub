@@ -20,8 +20,8 @@ public sealed record FixtureLegSnapshot
     public FixtureLegSnapshot(
         int legIndex,
         MatchId matchId,
-        EntryId homeEntryId,
-        EntryId awayEntryId,
+        EntryId? homeEntryId,
+        EntryId? awayEntryId,
         MatchStatus status,
         Score? score,
         bool extraTimePlayed,
@@ -43,11 +43,11 @@ public sealed record FixtureLegSnapshot
     /// <summary>Gets the match identity.</summary>
     public MatchId MatchId { get; }
 
-    /// <summary>Gets the home entry of this match.</summary>
-    public EntryId HomeEntryId { get; }
+    /// <summary>Gets the home entry of this match when known.</summary>
+    public EntryId? HomeEntryId { get; }
 
-    /// <summary>Gets the away entry of this match.</summary>
-    public EntryId AwayEntryId { get; }
+    /// <summary>Gets the away entry of this match when known.</summary>
+    public EntryId? AwayEntryId { get; }
 
     /// <summary>Gets the match status.</summary>
     public MatchStatus Status { get; }

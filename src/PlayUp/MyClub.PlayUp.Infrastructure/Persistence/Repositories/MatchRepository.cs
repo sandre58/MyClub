@@ -231,18 +231,23 @@ internal sealed class MatchRepository(PlayUpDbContext context) : IMatchRepositor
         CompetitionId competitionId,
         CancellationToken cancellationToken = default)
     {
-        var refs = await context.Set<Match>()
+        var rows = await context.Set<Match>()
             .AsNoTracking()
             .Where(candidate => candidate.CompetitionId == competitionId)
             .SelectMany(
                 candidate => candidate.DeclaredParticipations,
-                (candidate, participation) => new MatchSheetMemberRef(
-                    participation.Side == Side.Home ? candidate.HomeEntryId : candidate.AwayEntryId,
-                    participation.Id))
+                (candidate, participation) => new
+                {
+                    EntryId = participation.Side == Side.Home ? candidate.HomeEntryId : candidate.AwayEntryId,
+                    MemberId = participation.Id,
+                })
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        return refs;
+        return rows
+            .Where(row => row.EntryId is not null)
+            .Select(row => new MatchSheetMemberRef(row.EntryId!.Value, row.MemberId))
+            .ToArray();
     }
 
     /// <inheritdoc />

@@ -235,7 +235,7 @@ public static class PhaseRosterPresentationClassifier
     {
         var participants = matches
             .Where(match => match is { Status: MatchStatus.Finished, Result: not null })
-            .SelectMany(match => new[] { match.HomeEntryId, match.AwayEntryId })
+            .SelectMany(match => StandingMatchAssembler.StandingParticipantIds(match.HomeEntryId, match.AwayEntryId))
             .Distinct()
             .ToArray();
         return CalculateStanding.Execute(

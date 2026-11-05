@@ -295,8 +295,8 @@ public sealed class StructureMatchProductionPresentationAssemblerTests
         var presentation = hub.MatchProductionPresentation;
 
         presentation.Should().NotBeNull();
-        hub.Materialize!.DisabledReason.Should()
-            .Be(StructureMaterializeDisabledReasons.NoDeterminedConfrontations);
+        hub.Materialize!.CommandEnabled.Should().BeTrue();
+        hub.Materialize.DisabledReason.Should().BeNull();
         presentation.PrerequisiteGauge.Should().NotBeNull();
         presentation.PrerequisiteGauge!.MessageCode.Should().Be(
             StructureMatchProductionMessageCodes.PrerequisiteCupEntryRound);
@@ -335,7 +335,7 @@ public sealed class StructureMatchProductionPresentationAssemblerTests
     }
 
     [Fact]
-    public void Cup_partial_materialized_with_incomplete_pairs_uses_danger_partial_when_materialize_command_disabled()
+    public void Cup_partial_materialized_with_unknown_pairs_keeps_danger_partial_while_start_is_blocked()
     {
         var situation = TestCompetition.Create("Cup partial R0 gauge", _clock)
             .WithTeams("A", "B", "C", "D")
@@ -364,7 +364,7 @@ public sealed class StructureMatchProductionPresentationAssemblerTests
         var presentation = hub.MatchProductionPresentation;
 
         presentation.Should().NotBeNull();
-        hub.Materialize!.CommandEnabled.Should().BeFalse();
+        hub.Materialize!.CommandEnabled.Should().BeTrue();
         hub.Lifecycle!.Transition.Enabled.Should().BeFalse();
         presentation.PrimaryGauge.Capacity.Should().BeGreaterThan(presentation.PrimaryGauge.Current);
         presentation.PrimaryGauge.MessageCode.Should().Be(StructureMatchProductionMessageCodes.Partial);

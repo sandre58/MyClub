@@ -74,8 +74,9 @@ internal static class MatchSheetEligibility
         }
     }
 
-    private static EntryId ResolveEntryId(Match match, Side side) =>
-        side switch
+    private static EntryId ResolveEntryId(Match match, Side side)
+    {
+        var entryId = side switch
         {
             Side.Home => match.HomeEntryId,
             Side.Away => match.AwayEntryId,
@@ -83,4 +84,8 @@ internal static class MatchSheetEligibility
                 $"Unknown match side '{side}'.",
                 ApplicationErrorCodes.InvalidSide)
         };
+        return entryId ?? throw new ApplicationFailureException(
+            "Match side has no entry yet.",
+            MatchErrorCodes.ParticipantsUnresolved);
+    }
 }

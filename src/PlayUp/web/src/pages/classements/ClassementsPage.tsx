@@ -22,6 +22,7 @@ import {
   structureFormatKindLabel,
 } from '../../i18n/enumLabels';
 import { queryKeys } from '../../queryKeys';
+import { sideLabel } from '../../types';
 import type {
   ConsultationResult,
   ConsultationStandingRow,
@@ -300,8 +301,8 @@ function LastMatchdayPanel({
 
 function ConsultationMatchRow({ match }: { match: ConsultationResult }) {
   const { t } = useTranslation('classements');
-  const homeName = match.home.displayName?.trim() || '—';
-  const awayName = match.away.displayName?.trim() || '—';
+  const homeName = sideLabel(match.home);
+  const awayName = sideLabel(match.away);
   const note =
     match.resultType === 'Forfeit' || match.resultType === 'WalkOver'
       ? t(`lastMatchday.resultType.${match.resultType}`)

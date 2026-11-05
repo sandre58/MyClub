@@ -265,11 +265,16 @@ internal static class MatchEnrichment
         ScenarioContext context,
         Competition competition,
         Match match,
-        EntryId entryId,
+        EntryId? entryId,
         Side side,
         bool required)
     {
-        var entry = competition.GetEntry(entryId);
+        if (entryId is not { } knownEntryId)
+        {
+            return;
+        }
+
+        var entry = competition.GetEntry(knownEntryId);
         var players = entry.DeclaredMembers
             .Where(member => member.Role == DeclaredMemberRole.Player)
             .ToList();

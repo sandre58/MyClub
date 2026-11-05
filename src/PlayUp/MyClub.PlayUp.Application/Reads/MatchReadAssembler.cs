@@ -35,6 +35,7 @@ public static class MatchReadAssembler
 
         var entries = EntryDisplayNames.ToEntries(competition);
         var placement = BuildFixturePlacementIndex(stage);
+        var origins = BuildSlotOrigins(stage);
 
         return
         [
@@ -45,13 +46,14 @@ public static class MatchReadAssembler
                 {
                     ResolveCalendarPlacement(stage, match.Id, out var scheduledAt, out var resourceId);
                     placement.TryGetValue(match.Id, out var info);
+                    origins.TryGetValue(match.Id, out var origin);
 
                     return new MatchSummaryDto(
                         match.Id.Value,
                         match.StageId.Value,
                         match.Status,
-                        EntryDisplayNames.ToSide(entries, match.HomeEntryId),
-                        EntryDisplayNames.ToSide(entries, match.AwayEntryId),
+                        EntryDisplayNames.ToSide(entries, match.HomeEntryId, origin.HomeSlotKey),
+                        EntryDisplayNames.ToSide(entries, match.AwayEntryId, origin.AwaySlotKey),
                         MapScore(match.Result),
                         info.FixtureId?.Value,
                         info.RoundId?.Value,
@@ -82,6 +84,7 @@ public static class MatchReadAssembler
 
         var entries = EntryDisplayNames.ToEntries(competition);
         var placement = BuildFixturePlacementIndex(stage);
+        var origins = BuildSlotOrigins(stage);
 
         return
         [
@@ -92,13 +95,14 @@ public static class MatchReadAssembler
                 {
                     ResolveCalendarPlacement(stage, row.Id, out var scheduledAt, out var resourceId);
                     placement.TryGetValue(row.Id, out var info);
+                    origins.TryGetValue(row.Id, out var origin);
 
                     return new MatchSummaryDto(
                         row.Id.Value,
                         row.StageId.Value,
                         row.Status,
-                        EntryDisplayNames.ToSide(entries, row.HomeEntryId),
-                        EntryDisplayNames.ToSide(entries, row.AwayEntryId),
+                        EntryDisplayNames.ToSide(entries, row.HomeEntryId, origin.HomeSlotKey),
+                        EntryDisplayNames.ToSide(entries, row.AwayEntryId, origin.AwaySlotKey),
                         MapScore(row.Result),
                         info.FixtureId?.Value,
                         info.RoundId?.Value,
@@ -124,6 +128,8 @@ public static class MatchReadAssembler
         ArgumentNullException.ThrowIfNull(competition);
 
         var entries = EntryDisplayNames.ToEntries(competition);
+        var origins = stage is null ? [] : BuildSlotOrigins(stage);
+        origins.TryGetValue(match.Id, out var origin);
         DateTimeOffset? scheduledAt = null;
         Guid? resourceId = null;
         Guid? fixtureId = null;
@@ -137,7 +143,8 @@ public static class MatchReadAssembler
                 fixtureId,
                 legIndex,
                 scheduledAt,
-                resourceId);
+                resourceId,
+                origin);
         }
 
         ResolveCalendarPlacement(stage, match.Id, out scheduledAt, out resourceId);
@@ -150,7 +157,8 @@ public static class MatchReadAssembler
                 fixtureId,
                 legIndex,
                 scheduledAt,
-                resourceId);
+                resourceId,
+                origin);
         }
 
         fixtureId = found.FixtureId.Value;
@@ -162,7 +170,8 @@ public static class MatchReadAssembler
             fixtureId,
             legIndex,
             scheduledAt,
-            resourceId);
+            resourceId,
+            origin);
     }
 
     /// <summary>
@@ -174,6 +183,28 @@ public static class MatchReadAssembler
         ArgumentNullException.ThrowIfNull(summary);
 
         return summary.RoundName is { Length: > 0 } ? summary.RoundName : summary.MatchdayNumber is { } number ? $"Journée {number}" : null;
+    }
+
+    private readonly record struct MatchSlotOrigin(string? HomeSlotKey, string? AwaySlotKey);
+
+    private static Dictionary<MatchId, MatchSlotOrigin> BuildSlotOrigins(Stage stage)
+    {
+        var map = new Dictionary<MatchId, MatchSlotOrigin>();
+        foreach (var round in stage.Rounds)
+        {
+            foreach (var fixture in round.Fixtures)
+            {
+                foreach (var attachment in fixture.Attachments)
+                {
+                    var slotAIsHome = attachment.LegIndex != 2;
+                    map[attachment.MatchId] = new MatchSlotOrigin(
+                        slotAIsHome ? fixture.SlotAKey : fixture.SlotBKey,
+                        slotAIsHome ? fixture.SlotBKey : fixture.SlotAKey);
+                }
+            }
+        }
+
+        return map;
     }
 
     private static void ResolveCalendarPlacement(
@@ -205,14 +236,15 @@ public static class MatchReadAssembler
         Guid? fixtureId,
         int? legIndex,
         DateTimeOffset? scheduledAt,
-        Guid? resourceId) =>
+        Guid? resourceId,
+        MatchSlotOrigin origin = default) =>
         new(
             match.Id.Value,
             match.CompetitionId.Value,
             match.StageId.Value,
             match.Status,
-            EntryDisplayNames.ToSide(entries, match.HomeEntryId),
-            EntryDisplayNames.ToSide(entries, match.AwayEntryId),
+            EntryDisplayNames.ToSide(entries, match.HomeEntryId, origin.HomeSlotKey),
+            EntryDisplayNames.ToSide(entries, match.AwayEntryId, origin.AwaySlotKey),
             MapResult(match.Result),
             fixtureId,
             legIndex,
@@ -287,15 +319,20 @@ public static class MatchReadAssembler
             evt.Type))
     ];
 
-    private static EntryId EntryIdForSide(Match match, Side side) =>
+    private static EntryId? EntryIdForSide(Match match, Side side) =>
         side == Side.Home ? match.HomeEntryId : match.AwayEntryId;
 
     private static string? ResolveSideMemberDisplayName(
         Match match,
         IReadOnlyDictionary<EntryId, CompetitionEntry> entries,
         Side side,
-        MemberId memberId) =>
-        EntryDisplayNames.ResolveMemberDisplayName(entries, EntryIdForSide(match, side), memberId);
+        MemberId memberId)
+    {
+        var entryId = EntryIdForSide(match, side);
+        return entryId is { } id
+            ? EntryDisplayNames.ResolveMemberDisplayName(entries, id, memberId)
+            : null;
+    }
 
     private static string? ResolveSheetMemberDisplayName(
         Match match,
@@ -303,7 +340,15 @@ public static class MatchReadAssembler
         MemberId memberId)
     {
         var participation = match.DeclaredParticipations.FirstOrDefault(p => p.Id.Equals(memberId));
-        return participation is null ? null : EntryDisplayNames.ResolveMemberDisplayName(entries, EntryIdForSide(match, participation.Side), memberId);
+        if (participation is null)
+        {
+            return null;
+        }
+
+        var entryId = EntryIdForSide(match, participation.Side);
+        return entryId is { } id
+            ? EntryDisplayNames.ResolveMemberDisplayName(entries, id, memberId)
+            : null;
     }
 
     private static MatchResultDto? MapResult(MatchResult? result)

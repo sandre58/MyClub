@@ -45,14 +45,14 @@ internal sealed class MatchConfiguration : IEntityTypeConfiguration<Match>
         builder.Property(match => match.HomeEntryId)
             .HasColumnName("home_entry_id")
             .HasColumnType("uuid")
-            .IsRequired()
-            .HasConversion(new GuidTypedIdConverter<EntryId>());
+            .IsRequired(false)
+            .HasConversion(new NullableGuidTypedIdConverter<EntryId>());
 
         builder.Property(match => match.AwayEntryId)
             .HasColumnName("away_entry_id")
             .HasColumnType("uuid")
-            .IsRequired()
-            .HasConversion(new GuidTypedIdConverter<EntryId>());
+            .IsRequired(false)
+            .HasConversion(new NullableGuidTypedIdConverter<EntryId>());
 
         builder.Property(match => match.Status)
             .HasColumnName("status")

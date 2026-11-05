@@ -1200,8 +1200,8 @@ public sealed partial class UseCaseExecutor
                 allowedStartWindows: null,
                 allowedResourceIds: null,
                 imposedStart: null,
-                home: MatchParticipantRef.Known(match.HomeEntryId),
-                away: MatchParticipantRef.Known(match.AwayEntryId)))
+                home: ToSchedulingParticipant(match.HomeEntryId),
+                away: ToSchedulingParticipant(match.AwayEntryId)))
             .ToArray();
 
         // Ensure every target has a context.
@@ -1215,7 +1215,11 @@ public sealed partial class UseCaseExecutor
                 (current, match) =>
                 [
                     .. current,
-                    new MatchSchedulingContext(match.Id, duration, home: MatchParticipantRef.Known(match.HomeEntryId), away: MatchParticipantRef.Known(match.AwayEntryId))
+                    new MatchSchedulingContext(
+                        match.Id,
+                        duration,
+                        home: ToSchedulingParticipant(match.HomeEntryId),
+                        away: ToSchedulingParticipant(match.AwayEntryId))
                 ]);
 
         var resources = resourceIds
@@ -1293,4 +1297,9 @@ public sealed partial class UseCaseExecutor
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return report;
     }
+
+    private static MatchParticipantRef ToSchedulingParticipant(EntryId? entryId) =>
+        entryId is { } known
+            ? MatchParticipantRef.Known(known)
+            : MatchParticipantRef.UnknownStructural();
 }

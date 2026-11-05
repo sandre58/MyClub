@@ -65,7 +65,7 @@ public sealed class MaterializeCupB2ProofTests
     }
 
     [Fact]
-    public void N2_projection_only_pair_is_determined_in_hub_but_not_eligible_for_command()
+    public void N2_projection_only_pair_materializes_with_unknown_sides_and_does_not_write_slots()
     {
         var (competition, source, destination, summaries) = BuildProjectedSemiFinalPair();
         var view = StructureViewAssembler.Assemble(
@@ -74,9 +74,9 @@ public sealed class MaterializeCupB2ProofTests
             matchSummariesByStage: summaries);
         var hub = view.Stages.Single(stage => stage.StageId == destination.Id.Value);
         hub.Materialize!.Confrontations.Should().ContainSingle(row =>
-            row.Key == "P1" && row.Determined && !row.Eligible);
+            row.Key == "P1" && row.Determined && row.Eligible);
 
-        var act = () => MaterializeCupFromOccupiedSlots.Execute(
+        var result = MaterializeCupFromOccupiedSlots.Execute(
             competition,
             destination,
             ["P1"],
@@ -85,8 +85,11 @@ public sealed class MaterializeCupB2ProofTests
             [source, destination],
             summaries);
 
-        act.Should().Throw<ApplicationFailureException>()
-            .Which.Code.Should().Be(ApplicationErrorCodes.ProgressionNotAppliedForMaterialization);
+        var match = result.CreatedMatches.Should().ContainSingle().Subject;
+        match.HomeEntryId.Should().BeNull();
+        match.AwayEntryId.Should().BeNull();
+        destination.FindSlot("S1")!.EntryId.Should().BeNull();
+        destination.FindSlot("S2")!.EntryId.Should().BeNull();
     }
 
     [Fact]
@@ -96,7 +99,7 @@ public sealed class MaterializeCupB2ProofTests
         destination.FindSlot("S1")!.EntryId.Should().BeNull();
         destination.FindSlot("S2")!.EntryId.Should().BeNull();
 
-        var act = () => MaterializeCupFromOccupiedSlots.Execute(
+        var result = MaterializeCupFromOccupiedSlots.Execute(
             competition,
             destination,
             ["P1"],
@@ -105,7 +108,7 @@ public sealed class MaterializeCupB2ProofTests
             [source, destination],
             summaries);
 
-        act.Should().Throw<ApplicationFailureException>();
+        result.CreatedMatches.Should().ContainSingle(match => !match.ParticipantsResolved);
         destination.FindSlot("S1")!.EntryId.Should().BeNull();
         destination.FindSlot("S2")!.EntryId.Should().BeNull();
     }

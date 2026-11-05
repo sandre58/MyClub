@@ -130,6 +130,8 @@
     "ParticipationReferencedByDisciplinaryEvent": "This player is still linked to a disciplinary event. Correct the events before removing them from the sheet.",
     "ParticipationReferencedByRecordedGoal": "This player is still linked to a recorded goal. Correct the events before removing them from the sheet.",
     "ParticipationReferencedBySubstitution": "This player is still linked to a substitution. Correct the events before removing them from the sheet.",
+    "ParticipantAlreadyResolved": "This match side is already known.",
+    "ParticipantsUnresolved": "The match cannot start or take a score while a side is unknown.",
     "RecordedGoalMutationNotAllowed": "This goals operation is not allowed in the current match state.",
     "RecordedGoalNotFound": "Goal not found on this match.",
     "ResultAlreadyRecorded": "A result is already recorded.",

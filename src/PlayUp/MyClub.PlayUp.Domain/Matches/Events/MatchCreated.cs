@@ -19,15 +19,15 @@ public sealed record MatchCreated : DomainEvent
     /// <param name="matchId">The match identity.</param>
     /// <param name="competitionId">The competition identity.</param>
     /// <param name="stageId">The stage identity.</param>
-    /// <param name="homeEntryId">The home entry identity.</param>
-    /// <param name="awayEntryId">The away entry identity.</param>
+    /// <param name="homeEntryId">The home entry identity when already known.</param>
+    /// <param name="awayEntryId">The away entry identity when already known.</param>
     /// <param name="clock">The clock providing the occurrence timestamp.</param>
     public MatchCreated(
         MatchId matchId,
         CompetitionId competitionId,
         StageId stageId,
-        EntryId homeEntryId,
-        EntryId awayEntryId,
+        EntryId? homeEntryId,
+        EntryId? awayEntryId,
         IClock clock)
         : base(clock)
     {
@@ -54,12 +54,12 @@ public sealed record MatchCreated : DomainEvent
     public StageId StageId { get; }
 
     /// <summary>
-    /// Gets the home entry identity.
+    /// Gets the home entry identity when already known.
     /// </summary>
-    public EntryId HomeEntryId { get; }
+    public EntryId? HomeEntryId { get; }
 
     /// <summary>
-    /// Gets the away entry identity.
+    /// Gets the away entry identity when already known.
     /// </summary>
-    public EntryId AwayEntryId { get; }
+    public EntryId? AwayEntryId { get; }
 }

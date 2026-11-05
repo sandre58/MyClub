@@ -194,8 +194,8 @@ internal static class StageConfrontationMaterializationState
         IReadOnlyList<MatchSummaryRow> matchSummaries) =>
     [
         .. matchSummaries
-            .Where(row => row.StageId.Equals(stageId))
-            .Select(row => (row.HomeEntryId, row.AwayEntryId))
+            .Where(row => row.StageId.Equals(stageId) && row.HomeEntryId is not null && row.AwayEntryId is not null)
+            .Select(row => (row.HomeEntryId!.Value, row.AwayEntryId!.Value))
     ];
 
     private static bool IsChampionshipOrGroupsMutable(Competition competition, Stage stage) =>

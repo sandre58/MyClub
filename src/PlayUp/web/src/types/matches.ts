@@ -13,12 +13,14 @@ import type {
 import type { CompetitionDetail } from './competitions';
 
 export interface EntrySide {
-  entryId: string;
+  entryId: string | null;
   displayName: string | null;
   shortName?: string | null;
   logoMediaId?: string | null;
   primaryColor?: string | null;
   secondaryColor?: string | null;
+  /** Bracket slot that feeds this side, when the fixture records one. */
+  sourceSlotKey?: string | null;
 }
 
 export interface MatchScore {
@@ -165,6 +167,12 @@ export interface MatchHubStageMatches {
 }
 
 export function sideLabel(side: EntrySide): string {
+  if (!side.entryId) {
+    const pending = i18n.t('pendingSide', { ns: 'matches' });
+    const origin = side.sourceSlotKey?.trim();
+    return origin ? `${pending} (${origin})` : pending;
+  }
+
   return side.displayName?.trim() || i18n.t('unknownEntry');
 }
 

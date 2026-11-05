@@ -15,9 +15,9 @@ namespace MyClub.PlayUp.Domain.Stages;
 /// Application builds these from loaded <c>Match</c> aggregates. Domain never loads Match/EF here.
 /// </remarks>
 /// <param name="MatchId">Match identity.</param>
-/// <param name="HomeEntryId">Immutable home participant.</param>
-/// <param name="AwayEntryId">Immutable away participant.</param>
+/// <param name="HomeEntryId">Home participant when known.</param>
+/// <param name="AwayEntryId">Away participant when known.</param>
 public readonly record struct MatchParticipantSnapshot(
     MatchId MatchId,
-    EntryId HomeEntryId,
-    EntryId AwayEntryId);
+    EntryId? HomeEntryId,
+    EntryId? AwayEntryId);

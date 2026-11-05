@@ -705,7 +705,11 @@ Host contract: `MyClub.PlayUp.Host.Contracts.GenerateNextRoundResponse`.
 | omit / `null` / `[]` | All **eligible** pairs on the stage |
 | non-empty `pairKeys` | Each key must exist on the stage **and** be eligible; unknown or ineligible → fail-closed (`Application.MaterializationFailure`) |
 
-**Eligible:** both pair slots occupied with distinct entries, and no Fixture on the stage already has `BracketPairKey` equal to that pair key.
+**Eligible (cup):** the bracket pair exists, its slots exist, and any sides that are already known are distinct. A side may still be unknown (`EntryId` null) so the confrontation can be planned before Apply. Championship and group materialization still require two entries on every match. A Fixture whose attachments already cover the tie legs counts as materialized, including when a side is null.
+
+### Deferred match participants
+
+`Match.home.entryId` and `Match.away.entryId` (list, detail, consultation) are nullable. `null` means that side is not known yet. `sourceSlotKey`, when present, is the fixture slot that feeds that side (Slot A is home on leg 1; leg 2 mirrors). Existing rows keep both identifiers. Start (`POST /matches/{id}/start`), finish (`POST /matches/{id}/finish`), and result correction (`PUT /matches/{id}/result`) return `Match.ParticipantsUnresolved` while either side is null. A known side is not replaced by Apply (`Match.ParticipantAlreadyResolved`); replacement is out of scope.
 
 When omit/empty resolves to no eligible pairs: if every stage `BracketPair` already has a Fixture → `AlreadyComplete` with empty created; otherwise `MaterializationFailure` (“no eligible pairs”). Explicit `pairKeys` that already have a Fixture are **not** eligible (fail), not treated as idempotent success.
 

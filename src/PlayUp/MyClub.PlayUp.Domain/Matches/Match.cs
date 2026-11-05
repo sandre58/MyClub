@@ -26,8 +26,8 @@ public sealed class Match : AggregateRoot<MatchId>
         MatchId id,
         CompetitionId competitionId,
         StageId stageId,
-        EntryId homeEntryId,
-        EntryId awayEntryId)
+        EntryId? homeEntryId,
+        EntryId? awayEntryId)
         : base(id)
     {
         CompetitionId = competitionId;
@@ -48,14 +48,26 @@ public sealed class Match : AggregateRoot<MatchId>
     public StageId StageId { get; }
 
     /// <summary>
-    /// Gets the home entry identity (immutable).
+    /// Gets the home entry identity when known. A known side is not replaced here.
     /// </summary>
-    public EntryId HomeEntryId { get; }
+    public EntryId? HomeEntryId { get; private set; }
 
     /// <summary>
-    /// Gets the away entry identity (immutable).
+    /// Gets the away entry identity when known. A known side is not replaced here.
     /// </summary>
-    public EntryId AwayEntryId { get; }
+    public EntryId? AwayEntryId { get; private set; }
+
+    /// <summary>
+    /// Gets a value indicating whether both sides name an entry.
+    /// </summary>
+    public bool ParticipantsResolved => HomeEntryId is not null && AwayEntryId is not null;
+
+    /// <summary>
+    /// Gets whether a known side names <paramref name="entryId"/>. An unknown side does not.
+    /// </summary>
+    public bool Involves(EntryId entryId) =>
+        (HomeEntryId is { } home && home.Equals(entryId))
+        || (AwayEntryId is { } away && away.Equals(entryId));
 
     /// <summary>
     /// Gets the match lifecycle status.
@@ -113,15 +125,15 @@ public sealed class Match : AggregateRoot<MatchId>
     /// </summary>
     /// <param name="competitionId">The competition identity.</param>
     /// <param name="stageId">The stage identity.</param>
-    /// <param name="homeEntryId">The home entry identity.</param>
-    /// <param name="awayEntryId">The away entry identity.</param>
+    /// <param name="homeEntryId">The home entry identity, or null when that side is not yet known.</param>
+    /// <param name="awayEntryId">The away entry identity, or null when that side is not yet known.</param>
     /// <param name="clock">The clock used for domain events.</param>
     /// <returns>The created match.</returns>
     public static Match Create(
         CompetitionId competitionId,
         StageId stageId,
-        EntryId homeEntryId,
-        EntryId awayEntryId,
+        EntryId? homeEntryId,
+        EntryId? awayEntryId,
         IClock clock) =>
         Create(competitionId, stageId, homeEntryId, awayEntryId, MatchId.New(), clock);
 
@@ -130,22 +142,22 @@ public sealed class Match : AggregateRoot<MatchId>
     /// </summary>
     /// <param name="competitionId">The competition identity.</param>
     /// <param name="stageId">The stage identity.</param>
-    /// <param name="homeEntryId">The home entry identity.</param>
-    /// <param name="awayEntryId">The away entry identity.</param>
+    /// <param name="homeEntryId">The home entry identity, or null when that side is not yet known.</param>
+    /// <param name="awayEntryId">The away entry identity, or null when that side is not yet known.</param>
     /// <param name="id">The match identity (must not be empty).</param>
     /// <param name="clock">The clock used for domain events.</param>
     /// <returns>The created match.</returns>
     public static Match Create(
         CompetitionId competitionId,
         StageId stageId,
-        EntryId homeEntryId,
-        EntryId awayEntryId,
+        EntryId? homeEntryId,
+        EntryId? awayEntryId,
         MatchId id,
         IClock clock)
     {
         ArgumentNullException.ThrowIfNull(clock);
 
-        if (homeEntryId.Equals(awayEntryId))
+        if (homeEntryId is { } home && awayEntryId is { } away && home.Equals(away))
         {
             throw new DomainException(
                 "Home and away entries must be different.",
@@ -164,12 +176,62 @@ public sealed class Match : AggregateRoot<MatchId>
     }
 
     /// <summary>
+    /// Fills a side that is still unknown. The same entry is a no-op. A different entry is refused.
+    /// </summary>
+    /// <param name="side">Home or away.</param>
+    /// <param name="entryId">The entry that now occupies that side.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ResolveParticipant(Side side, EntryId entryId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        if (!Enum.IsDefined(side))
+        {
+            throw new DomainException(
+                $"Unknown match side '{side}'.",
+                MatchErrorCodes.InvalidSide);
+        }
+
+        var current = side == Side.Home ? HomeEntryId : AwayEntryId;
+        if (current is { } known)
+        {
+            if (known.Equals(entryId))
+            {
+                return;
+            }
+
+            throw new DomainException(
+                "A known match participant cannot be replaced.",
+                MatchErrorCodes.ParticipantAlreadyResolved);
+        }
+
+        var other = side == Side.Home ? AwayEntryId : HomeEntryId;
+        if (other is { } otherEntry && otherEntry.Equals(entryId))
+        {
+            throw new DomainException(
+                "Home and away entries must be different.",
+                MatchErrorCodes.SameParticipant);
+        }
+
+        if (side == Side.Home)
+        {
+            HomeEntryId = entryId;
+        }
+        else
+        {
+            AwayEntryId = entryId;
+        }
+
+        Raise(new MatchParticipantResolved(Id, side, entryId, clock));
+    }
+
+    /// <summary>
     /// Starts the match (Scheduled to Live). Composition may be empty. Initializes running score to 0–0.
     /// </summary>
     /// <param name="clock">The clock used for domain events.</param>
     public void Start(IClock clock)
     {
         ArgumentNullException.ThrowIfNull(clock);
+        EnsureParticipantsResolved();
         EnsureStatus(MatchStatus.Scheduled, "Match can only be started from Scheduled.");
         Status = MatchStatus.Live;
         RunningScore = new RunningScore(0, 0);
@@ -214,6 +276,7 @@ public sealed class Match : AggregateRoot<MatchId>
     {
         ArgumentNullException.ThrowIfNull(result);
         ArgumentNullException.ThrowIfNull(clock);
+        EnsureParticipantsResolved();
 
         if (Status == MatchStatus.Finished || Result is not null)
         {
@@ -245,6 +308,7 @@ public sealed class Match : AggregateRoot<MatchId>
     {
         ArgumentNullException.ThrowIfNull(result);
         ArgumentNullException.ThrowIfNull(clock);
+        EnsureParticipantsResolved();
 
         if (Status != MatchStatus.Finished || Result is null)
         {
@@ -878,6 +942,18 @@ public sealed class Match : AggregateRoot<MatchId>
                 $"Jersey number '{jerseyNumber}' is already used on the {side} side of match '{Id}'.",
                 MatchErrorCodes.DuplicateJerseyNumber);
         }
+    }
+
+    private void EnsureParticipantsResolved()
+    {
+        if (ParticipantsResolved)
+        {
+            return;
+        }
+
+        throw new DomainException(
+            "Match cannot start or record a score while a participant is unresolved.",
+            MatchErrorCodes.ParticipantsUnresolved);
     }
 
     private void EnsureStatus(MatchStatus expected, string message)

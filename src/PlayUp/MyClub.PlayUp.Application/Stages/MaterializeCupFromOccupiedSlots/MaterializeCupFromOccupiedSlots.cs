@@ -91,7 +91,7 @@ public static class MaterializeCupFromOccupiedSlots
             .Where(match => stage.HasMatch(match.Id))
             .ToDictionary(match => match.Id);
 
-        var resolved = new List<(BracketPair Pair, Fixture Fixture, EntryId Home, EntryId Away)>(targets.Count);
+        var resolved = new List<(BracketPair Pair, Fixture Fixture, EntryId? Home, EntryId? Away)>(targets.Count);
         foreach (var pair in targets)
         {
             var evaluation = CupPairEvaluation.Evaluate(
@@ -102,13 +102,10 @@ public static class MaterializeCupFromOccupiedSlots
                     stages,
                     matchSummariesByStage,
                     PhaseMutable: true));
+            var home = stage.FindSlot(pair.SlotAKey)?.EntryId;
+            var away = stage.FindSlot(pair.SlotBKey)?.EntryId;
             if (!evaluation.EligibleForMaterialize
-                || !CupBracketPairMaterialization.TryResolvePairEntries(
-                    stage,
-                    pair,
-                    null,
-                    out var home,
-                    out var away))
+                || (home is { } knownHome && away is { } knownAway && knownHome.Equals(knownAway)))
             {
                 throw new ApplicationFailureException(
                     $"Bracket pair '{pair.PairKey}' is not eligible for materialization.",

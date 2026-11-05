@@ -39,18 +39,35 @@ internal static class EntryDisplayNames
         names.GetValueOrDefault(entryId);
 
     /// <summary>
+    /// Resolves a display name. Returns null when the side has no entry yet.
+    /// </summary>
+    public static string? Resolve(IReadOnlyDictionary<EntryId, string> names, EntryId? entryId) =>
+        entryId is { } id ? Resolve(names, id) ?? id.Value.ToString() : null;
+
+    /// <summary>
     /// Builds an <see cref="EntrySideDto"/> from a presentation map.
     /// </summary>
-    public static EntrySideDto ToSide(IReadOnlyDictionary<EntryId, CompetitionEntry> entries, EntryId entryId) =>
-        entries.TryGetValue(entryId, out var entry)
+    public static EntrySideDto ToSide(
+        IReadOnlyDictionary<EntryId, CompetitionEntry> entries,
+        EntryId? entryId,
+        string? sourceSlotKey = null)
+    {
+        if (entryId is not { } id)
+        {
+            return new EntrySideDto(null, null, SourceSlotKey: sourceSlotKey);
+        }
+
+        return entries.TryGetValue(id, out var entry)
             ? new EntrySideDto(
                 entry.Id.Value,
                 entry.DisplayName,
                 entry.ShortName?.Value,
                 entry.LogoMediaId?.Value,
                 entry.PrimaryColor?.Value,
-                entry.SecondaryColor?.Value)
-            : new EntrySideDto(entryId.Value, null);
+                entry.SecondaryColor?.Value,
+                sourceSlotKey)
+            : new EntrySideDto(id.Value, null, SourceSlotKey: sourceSlotKey);
+    }
 
     /// <summary>
     /// Resolves a declared member display name from a competition entry, or <see langword="null"/> when unknown.

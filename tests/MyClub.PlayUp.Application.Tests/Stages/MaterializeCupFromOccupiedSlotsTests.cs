@@ -81,14 +81,14 @@ public sealed class MaterializeCupFromOccupiedSlotsTests
     }
 
     [Fact]
-    public void Execute_omit_materializes_only_eligible_pairs()
+    public void Execute_omit_materializes_occupied_and_still_unknown_pairs()
     {
         var competition = CreateCompetition.Execute("Cup-C2-Partial-Eligible", _clock);
         var stage = CreateSemiStage(competition.Id);
         stage.ApplyResolvedEntry("SF1-A", EntryId.New(), _clock);
         stage.ApplyResolvedEntry("SF1-B", EntryId.New(), _clock);
 
-        // P2 slots vacant → not eligible
+        // P2 slots are still vacant: a cup pair may be planned before both sides are known.
         EnsureCupMaterializeReady(stage);
         var result = MaterializeCupFromOccupiedSlots.Execute(
             competition,
@@ -97,31 +97,35 @@ public sealed class MaterializeCupFromOccupiedSlotsTests
             [],
             _clock);
 
-        result.CreatedMatches.Should().HaveCount(1);
-        stage.Rounds[0].Fixtures.Should().ContainSingle().Which.BracketPairKey.Should().Be("P1");
-        stage.FindFixtureByBracketPairKey("P2").Should().BeNull();
+        result.CreatedMatches.Should().HaveCount(2);
+        result.CreatedMatches.Should().ContainSingle(match => match.ParticipantsResolved);
+        result.CreatedMatches.Should().ContainSingle(match => !match.ParticipantsResolved);
+        stage.FindFixtureByBracketPairKey("P1").Should().NotBeNull();
+        stage.FindFixtureByBracketPairKey("P2").Should().NotBeNull();
     }
 
     [Fact]
-    public void Execute_rejects_identical_occupants()
+    public void Execute_materializes_the_side_left_vacant_when_apply_moves_a_duplicate_entry()
     {
         var competition = CreateCompetition.Execute("Cup-C2-Same", _clock);
         var stage = CreateSemiStage(competition.Id);
         var same = EntryId.New();
         stage.ApplyResolvedEntry("SF1-A", same, _clock);
         stage.ApplyResolvedEntry("SF1-B", same, _clock);
+        stage.FindSlot("SF1-A")!.EntryId.Should().BeNull();
+        stage.FindSlot("SF1-B")!.EntryId.Should().Be(same);
 
         EnsureCupMaterializeReady(stage);
-        var act = () => MaterializeCupFromOccupiedSlots.Execute(
+        var result = MaterializeCupFromOccupiedSlots.Execute(
             competition,
             stage,
             ["P1"],
             [],
             _clock);
 
-        act.Should().Throw<ApplicationFailureException>()
-            .Which.Code.Should().Be(ApplicationErrorCodes.MaterializationFailure);
-        stage.Rounds[0].Fixtures.Should().BeEmpty();
+        var match = result.CreatedMatches.Should().ContainSingle().Subject;
+        match.HomeEntryId.Should().BeNull();
+        match.AwayEntryId.Should().Be(same);
     }
 
     [Fact]
@@ -216,22 +220,25 @@ public sealed class MaterializeCupFromOccupiedSlotsTests
     }
 
     [Fact]
-    public void Execute_rejects_empty_slot()
+    public void Execute_materializes_a_pair_when_one_slot_is_still_empty()
     {
         var competition = CreateCompetition.Execute("Cup-C2-Empty", _clock);
         var stage = CreateSemiStage(competition.Id);
-        stage.ApplyResolvedEntry("SF1-A", EntryId.New(), _clock);
+        var home = EntryId.New();
+        stage.ApplyResolvedEntry("SF1-A", home, _clock);
 
         EnsureCupMaterializeReady(stage);
-        var act = () => MaterializeCupFromOccupiedSlots.Execute(
+        var result = MaterializeCupFromOccupiedSlots.Execute(
             competition,
             stage,
             ["P1"],
             [],
             _clock);
 
-        act.Should().Throw<ApplicationFailureException>()
-            .Which.Code.Should().Be(ApplicationErrorCodes.MaterializationFailure);
+        var match = result.CreatedMatches.Should().ContainSingle().Subject;
+        match.HomeEntryId.Should().Be(home);
+        match.AwayEntryId.Should().BeNull();
+        stage.FindSlot("SF1-B")!.EntryId.Should().BeNull();
     }
 
     [Fact]

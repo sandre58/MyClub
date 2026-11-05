@@ -112,8 +112,12 @@ export function MatchSheetPanel({ match }: { match: MatchDetail }) {
 
 function findEntry(
   entries: StructureEntry[],
-  entryId: string,
+  entryId: string | null,
 ): StructureEntry | undefined {
+  if (!entryId) {
+    return undefined;
+  }
+
   return entries.find((entry) => entry.entryId === entryId);
 }
 

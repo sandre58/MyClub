@@ -48,7 +48,7 @@ public static class RemoveDeclaredMember
     {
         foreach (var match in competitionMatches)
         {
-            if (!match.HomeEntryId.Equals(entryId) && !match.AwayEntryId.Equals(entryId))
+            if (!match.Involves(entryId))
             {
                 continue;
             }

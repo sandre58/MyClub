@@ -53,8 +53,7 @@ public static class DeleteEntry
         IClock clock)
     {
         var stagesById = competitionStages.ToDictionary(stage => stage.Id);
-        foreach (var match in competitionMatches.Where(candidate =>
-                     candidate.HomeEntryId.Equals(entryId) || candidate.AwayEntryId.Equals(entryId)))
+        foreach (var match in competitionMatches.Where(candidate => candidate.Involves(entryId)))
         {
             if (stagesById.TryGetValue(match.StageId, out var stage))
             {

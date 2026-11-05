@@ -1365,6 +1365,13 @@ function structureCaseLabels(
     null;
   const feed = c.feedOrigin;
 
+  if (!occupant && c.formPosition.kind === 'CupSlot') {
+    const origin = feed
+      ? feedOriginLabel(feed, t)
+      : (c.formPosition.slotKey ?? null);
+    return { primary: t('matches:pendingSide'), secondary: origin };
+  }
+
   if (!feed) {
     return { primary: occupant, secondary: null };
   }
