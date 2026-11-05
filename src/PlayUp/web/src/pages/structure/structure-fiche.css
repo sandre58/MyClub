@@ -818,3 +818,10 @@
   display: inline-flex;
   flex: none;
 }
+
+.structure-freshness-replace__tip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+}

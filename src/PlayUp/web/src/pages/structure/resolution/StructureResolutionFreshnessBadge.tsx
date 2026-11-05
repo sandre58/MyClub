@@ -56,6 +56,13 @@ export function StructureResolutionFreshnessBadge({
       : label;
   const replaceable = !!onReplace && isReplayableStale(occupant);
   const replaceHint = t('resolution.cascade.replaceHint');
+  const replaceName =
+    causeLabel != null
+      ? t('resolution.cascade.replaceHintWithCause', {
+          cause: causeLabel,
+          action: replaceHint,
+        })
+      : replaceHint;
 
   const badge = (
     <Status
@@ -83,11 +90,24 @@ export function StructureResolutionFreshnessBadge({
       onReplace(occupant);
     };
     return (
-      <Tooltip content={replaceHint}>
+      <Tooltip
+        content={
+          <span className="structure-freshness-replace__tip">
+            {causeLabel ? (
+              <span className="structure-freshness-replace__cause">
+                {causeLabel}
+              </span>
+            ) : null}
+            <span className="structure-freshness-replace__action">
+              {replaceHint}
+            </span>
+          </span>
+        }
+      >
         <button
           type="button"
           className="structure-freshness-replace"
-          aria-label={replaceHint}
+          aria-label={replaceName}
           onClick={open}
         >
           {badge}

@@ -106,7 +106,11 @@ describe('StructureCascadeReplaceAction', () => {
     expect(
       screen.queryByRole('button', { name: 'Remplacer Champ' }),
     ).toBeNull();
-    await user.click(screen.getByRole('button', { name: 'Remplacer…' }));
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Résultat amont modifié. Remplacer…',
+      }),
+    );
     expect(await screen.findByText(`Match ${matchId}`)).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Remplacer' }));
@@ -139,7 +143,11 @@ describe('StructureCascadeReplaceAction', () => {
     expect(
       screen.queryByRole('button', { name: 'Remplacer Champ' }),
     ).toBeNull();
-    await user.click(screen.getByRole('button', { name: 'Remplacer…' }));
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Résultat amont modifié. Remplacer…',
+      }),
+    );
     await user.click(await screen.findByRole('button', { name: 'Remplacer' }));
 
     expect(

@@ -1,7 +1,8 @@
-import { screen } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { TOOLTIP_DELAY_OPEN_MS } from '../../../design-system/components/Tooltip';
 import { renderWithI18n } from '../../../test/renderWithI18n';
 import { StructureResolutionFreshnessBadge } from './StructureResolutionFreshnessBadge';
 
@@ -108,12 +109,69 @@ describe('StructureResolutionFreshnessBadge', () => {
       </>,
     );
 
-    expect(
-      screen.getByRole('button', { name: 'Remplacer…' }),
-    ).toBeInTheDocument();
+    const button = screen.getByRole('button', {
+      name: 'Résultat amont modifié. Remplacer…',
+    });
+    expect(button).toBeInTheDocument();
     expect(screen.getAllByRole('button')).toHaveLength(1);
-    await user.click(screen.getByRole('button', { name: 'Remplacer…' }));
+    await user.click(button);
     expect(onReplace).toHaveBeenCalledOnce();
     expect(onReplace.mock.calls[0][0].entryId).toBe('e1');
   });
+
+  it('tooltip shows the staleness cause then the replace action', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: (query: string) => ({
+        matches:
+          query.includes('hover: hover') && query.includes('pointer: fine'),
+        media: query,
+        onchange: null,
+        addListener: () => undefined,
+        removeListener: () => undefined,
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined,
+        dispatchEvent: () => false,
+      }),
+    });
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    renderWithI18n(
+      <StructureResolutionFreshnessBadge
+        occupant={{
+          target: 'Slot',
+          entryId: 'e1',
+          provenanceKind: 'Qualification',
+          sourcePathId: 'p1',
+          state: 'Perime',
+          slotKey: 'A',
+          stalenessCause: 'ResultatAmont',
+        }}
+        onReplace={() => undefined}
+      />,
+    );
+
+    await user.hover(
+      screen.getByRole('button', {
+        name: 'Résultat amont modifié. Remplacer…',
+      }),
+    );
+    await act(async () => {
+      vi.advanceTimersByTime(TOOLTIP_DELAY_OPEN_MS);
+    });
+
+    const tip = await screen.findByRole('tooltip');
+    const cause = tip.querySelector('.structure-freshness-replace__cause');
+    const action = tip.querySelector('.structure-freshness-replace__action');
+    expect(cause).toHaveTextContent('Résultat amont modifié');
+    expect(action).toHaveTextContent('Remplacer…');
+    expect(
+      cause!.compareDocumentPosition(action!) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });

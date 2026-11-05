@@ -846,6 +846,7 @@
       "action": "Remplacer l'occupant périmé",
       "actionNamed": "Remplacer {{place}}",
       "replaceHint": "Remplacer…",
+      "replaceHintWithCause": "{{cause}}. {{action}}",
       "confirmTitle": "Confirmer le remplacement en cascade ?",
       "confirm": "Remplacer",
       "cancel": "Annuler",
