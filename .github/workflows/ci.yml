@@ -2,7 +2,7 @@ name: "Play'Up — CI"
 
 on:
   push:
-    branches: [ "main", "feature/*", "bugfix/*", "fix/*" ]
+    branches: [ "main", "feature/*", "bugfix/*", "fix/*", "cursor/*" ]
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
