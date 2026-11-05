@@ -796,3 +796,25 @@
   gap: var(--space-8);
   font-size: var(--text-label);
 }
+
+.structure-freshness-replace {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  border-radius: 999px;
+}
+
+.structure-freshness-replace .ds-status {
+  gap: 0.2rem;
+}
+
+.structure-freshness-replace__icon {
+  display: inline-flex;
+  flex: none;
+}

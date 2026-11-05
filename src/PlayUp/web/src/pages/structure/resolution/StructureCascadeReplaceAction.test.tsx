@@ -10,6 +10,8 @@ import type {
   StructureStageHubSummary,
 } from '../../../types';
 import { StructureCascadeReplaceAction } from './StructureCascadeReplaceAction';
+import { useStructureCascadeReplace } from './structureCascadeReplaceContext';
+import { StructureResolutionFreshnessBadge } from './StructureResolutionFreshnessBadge';
 
 vi.mock('../../../api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../../api')>();
@@ -53,6 +55,16 @@ const stage = {
   resolutionOccupants: [occupant],
 } as StructureStageHubSummary;
 
+function ReplaceBadge() {
+  const cascade = useStructureCascadeReplace();
+  return (
+    <StructureResolutionFreshnessBadge
+      occupant={occupant}
+      onReplace={cascade?.requestReplace}
+    />
+  );
+}
+
 function renderAction() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -62,7 +74,9 @@ function renderAction() {
       <StructureCascadeReplaceAction
         stage={stage}
         competitionId="bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
-      />
+      >
+        <ReplaceBadge />
+      </StructureCascadeReplaceAction>
     </QueryClientProvider>,
   );
 }
@@ -89,7 +103,10 @@ describe('StructureCascadeReplaceAction', () => {
     const user = userEvent.setup();
     renderAction();
 
-    await user.click(screen.getByRole('button', { name: 'Remplacer Champ' }));
+    expect(
+      screen.queryByRole('button', { name: 'Remplacer Champ' }),
+    ).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Remplacer…' }));
     expect(await screen.findByText(`Match ${matchId}`)).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Remplacer' }));
@@ -119,7 +136,10 @@ describe('StructureCascadeReplaceAction', () => {
     const user = userEvent.setup();
     renderAction();
 
-    await user.click(screen.getByRole('button', { name: 'Remplacer Champ' }));
+    expect(
+      screen.queryByRole('button', { name: 'Remplacer Champ' }),
+    ).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Remplacer…' }));
     await user.click(await screen.findByRole('button', { name: 'Remplacer' }));
 
     expect(

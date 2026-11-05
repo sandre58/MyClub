@@ -90,12 +90,14 @@ public sealed class CascadeReplaceRecetteTests(DevelopmentPostgresFixture fixtur
             await ReloadAsync(competitions, Find(loaded, CascadeReplaceRecetteNames.Completed)),
             stages,
             matches,
-            ApplicationErrorCodes.CascadeReplaceCompleted);
+            ApplicationErrorCodes.CascadeReplaceCompleted,
+            "Champ");
         await AssertRefusedAsync(
             await ReloadAsync(competitions, Find(loaded, CascadeReplaceRecetteNames.Direct)),
             stages,
             matches,
-            ApplicationErrorCodes.CascadeReplaceDirectAssignment);
+            ApplicationErrorCodes.CascadeReplaceDirectAssignment,
+            "Direct");
     }
 
     private async Task AssertSimpleAsync(
@@ -182,7 +184,8 @@ public sealed class CascadeReplaceRecetteTests(DevelopmentPostgresFixture fixtur
         Competition competition,
         IStageRepository stages,
         IMatchRepository matches,
-        string code)
+        string code,
+        string slotKey)
     {
         var (stageList, matchList) = await LoadAsync(competition, stages, matches);
         var assessments = ResolutionFreshnessDetector.Inspect(
@@ -201,7 +204,8 @@ public sealed class CascadeReplaceRecetteTests(DevelopmentPostgresFixture fixtur
                         match.Result,
                         match.HasObservedLive)).ToArray()));
         var occupant = assessments.Single(row =>
-            row.Target == StructureResolutionOccupantTarget.Slot);
+            row.Target == StructureResolutionOccupantTarget.Slot
+            && row.SlotKey == slotKey);
 
         var act = () => CascadeReplace.Execute(
             competition,

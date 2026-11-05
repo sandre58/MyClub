@@ -1,13 +1,20 @@
+import type { KeyboardEvent, MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Tooltip } from '../../../design-system/components/Tooltip';
 import { Status } from '../../../design-system/components/Status';
+import { ReplaceOccupantIcon } from '../../../design-system/icons/contentIcons';
 import type { StructureResolutionOccupant } from '../../../types';
-import { resolutionOccupantNeedsBadge } from './structureResolutionOccupants';
+import {
+  isReplayableStale,
+  resolutionOccupantNeedsBadge,
+} from './structureResolutionOccupants';
 
 type StructureResolutionFreshnessBadgeProps = {
   occupant: StructureResolutionOccupant | null | undefined;
   density?: 'context' | 'compact';
+  /** Opens the cascade preview. Ignored unless the occupant is stale Qual/Prog. */
+  onReplace?: (occupant: StructureResolutionOccupant) => void;
 };
 
 function badgeTone(
@@ -28,6 +35,7 @@ function badgeTone(
 export function StructureResolutionFreshnessBadge({
   occupant,
   density = 'compact',
+  onReplace,
 }: StructureResolutionFreshnessBadgeProps) {
   const { t } = useTranslation('structure');
 
@@ -46,6 +54,8 @@ export function StructureResolutionFreshnessBadge({
     causeLabel != null
       ? t('resolution.freshness.ariaWithCause', { label, cause: causeLabel })
       : label;
+  const replaceable = !!onReplace && isReplayableStale(occupant);
+  const replaceHint = t('resolution.cascade.replaceHint');
 
   const badge = (
     <Status
@@ -53,11 +63,38 @@ export function StructureResolutionFreshnessBadge({
       tone={badgeTone(occupant.state)}
       variant="soft"
       shape="pill"
-      aria-label={ariaLabel}
+      aria-label={replaceable ? undefined : ariaLabel}
     >
+      {replaceable ? (
+        <ReplaceOccupantIcon
+          size="sm"
+          className="structure-freshness-replace__icon"
+          aria-hidden="true"
+        />
+      ) : null}
       {label}
     </Status>
   );
+
+  if (replaceable) {
+    const open = (event: MouseEvent | KeyboardEvent) => {
+      event.stopPropagation();
+      event.preventDefault();
+      onReplace(occupant);
+    };
+    return (
+      <Tooltip content={replaceHint}>
+        <button
+          type="button"
+          className="structure-freshness-replace"
+          aria-label={replaceHint}
+          onClick={open}
+        >
+          {badge}
+        </button>
+      </Tooltip>
+    );
+  }
 
   if (causeLabel == null) {
     return badge;

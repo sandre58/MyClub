@@ -23,6 +23,7 @@ import '../phase-schematic.css';
 
 import { GroupsSchematicView } from './GroupsSchematicView';
 import { groupsSchematicFromStageSchematic } from './groupsSchematic';
+import { useStructureCascadeReplace } from '../resolution/structureCascadeReplaceContext';
 import { StructureResolutionFreshnessBadge } from '../resolution/StructureResolutionFreshnessBadge';
 import {
   lookupSchematicCaseResolutionOccupant,
@@ -240,13 +241,20 @@ function SlotBox({
     c?.formPosition ?? { kind: 'RosterPlace' },
     c?.assignment?.entryId ?? c?.entry?.entryId ?? null,
   );
+  const cascade = useStructureCascadeReplace();
   const withdrawnBadgeLabel = t('teams:withdrawnBadge');
   const showFullBody = density === 'full' && (primary || showSlotCrest);
   const freshnessBadge = slotResolutionOccupant ? (
     <span className="schematic-slot__freshness">
-      <StructureResolutionFreshnessBadge occupant={slotResolutionOccupant} />
+      <StructureResolutionFreshnessBadge
+        occupant={slotResolutionOccupant}
+        onReplace={cascade?.requestReplace}
+      />
     </span>
   ) : null;
+  // A stale Qual/Prog badge is a button. Keep it outside the manual-place
+  // slot button so the control is not nested.
+  const badgeBesideSlot = interactive && freshnessBadge != null;
   const slotInner = (
     <>
       {density === 'crest' && showTeamCrest ? (
@@ -284,18 +292,19 @@ function SlotBox({
               <span className="schematic-slot__secondary">{secondary}</span>
             ) : null}
           </span>
-          {freshnessBadge}
+          {badgeBesideSlot ? null : freshnessBadge}
         </span>
       ) : null}
-      {!showFullBody ? freshnessBadge : null}
+      {!showFullBody && !badgeBesideSlot ? freshnessBadge : null}
     </>
   );
 
+  const shellStyle = tip ? fillStyle : style;
   const slot = interactive ? (
     <button
       type="button"
       className={className}
-      style={tip ? fillStyle : style}
+      style={badgeBesideSlot ? undefined : shellStyle}
       onClick={() => onActivate?.(c!)}
       aria-label={address ?? c!.formPosition.slotKey ?? undefined}
     >
@@ -304,15 +313,23 @@ function SlotBox({
   ) : (
     <span
       className={className}
-      style={tip ? fillStyle : style}
+      style={shellStyle}
       aria-hidden={ghost || undefined}
     >
       {slotInner}
     </span>
   );
+  const presented = badgeBesideSlot ? (
+    <span className="schematic-slot-with-action" style={shellStyle}>
+      {slot}
+      {freshnessBadge}
+    </span>
+  ) : (
+    slot
+  );
 
   if (!tip) {
-    return slot;
+    return presented;
   }
 
   // Geometry host OUTSIDE the DS Tooltip trigger — otherwise Cup absolute
@@ -320,7 +337,7 @@ function SlotBox({
   return (
     <span className="schematic-slot-tip" style={style}>
       <Tooltip content={tip} side="top">
-        {slot}
+        {presented}
       </Tooltip>
     </span>
   );
@@ -1364,13 +1381,6 @@ function structureCaseLabels(
     c.entry?.displayName?.trim() ||
     null;
   const feed = c.feedOrigin;
-
-  if (!occupant && c.formPosition.kind === 'CupSlot') {
-    const origin = feed
-      ? feedOriginLabel(feed, t)
-      : (c.formPosition.slotKey ?? null);
-    return { primary: t('matches:pendingSide'), secondary: origin };
-  }
 
   if (!feed) {
     return { primary: occupant, secondary: null };

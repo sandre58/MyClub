@@ -179,6 +179,11 @@ export function LegsStatIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={ArrowLeftRight} size={size} {...props} />;
 }
 
+/** Replace a stale resolution occupant. */
+export function ReplaceOccupantIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={ArrowLeftRight} size={size} {...props} />;
+}
+
 /** Compact structural anomaly (≠ draw / ops). */
 export function StructureIssueIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={CircleAlert} size={size} {...props} />;

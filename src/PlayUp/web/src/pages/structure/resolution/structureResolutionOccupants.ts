@@ -67,6 +67,18 @@ export function resolutionOccupantNeedsBadge(
   );
 }
 
+/** Stale Qual/Prog occupant the cascade replace command can replay. */
+export function isReplayableStale(
+  occupant: StructureResolutionOccupant | null | undefined,
+): occupant is StructureResolutionOccupant {
+  return (
+    occupant != null &&
+    occupant.state === 'Perime' &&
+    (occupant.provenanceKind === 'Qualification' ||
+      occupant.provenanceKind === 'Progression')
+  );
+}
+
 export function lookupSlotResolutionOccupant(
   index: StructureResolutionOccupantIndex | null | undefined,
   slotKey: string | null | undefined,

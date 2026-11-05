@@ -219,7 +219,7 @@ describe('PhaseSchematic', () => {
   });
 
   it('cup slot shows progression origin with source match number', () => {
-    render(
+    const { container } = render(
       <PhaseSchematic
         schematic={cupSchematic({
           cases: [
@@ -245,6 +245,10 @@ describe('PhaseSchematic', () => {
     );
     expect(screen.getByText(/^Vainqueur de P1$/)).toBeInTheDocument();
     expect(screen.queryByText(/Match #4/)).toBeNull();
+    expect(screen.queryByText('À déterminer')).toBeNull();
+    expect(container.querySelectorAll('.schematic-slot--empty')).toHaveLength(
+      1,
+    );
   });
 
   it('cup slot shows Winner de P1 before fixtures exist', () => {
@@ -268,6 +272,39 @@ describe('PhaseSchematic', () => {
     );
     expect(screen.getByText(/^Vainqueur de P1$/)).toBeInTheDocument();
     expect(screen.queryByText(/Match #/)).toBeNull();
+    expect(screen.queryByText('À déterminer')).toBeNull();
+  });
+
+  it('empty cup slot stays dashed and a qualification feed stays the path label', () => {
+    const { container } = render(
+      <PhaseSchematic
+        schematic={cupSchematic({
+          cases: [
+            {
+              formPosition: { kind: 'CupSlot', slotKey: 'A' },
+              entry: null,
+              assignment: null,
+            },
+            {
+              formPosition: { kind: 'CupSlot', slotKey: 'B' },
+              feedOrigin: {
+                kind: 'Qualification',
+                selectionMode: 'Position',
+                selectionValue: 1,
+                groupName: 'A',
+              },
+              entry: null,
+              assignment: null,
+            },
+          ],
+        })}
+      />,
+    );
+    expect(screen.queryByText('À déterminer')).toBeNull();
+    expect(screen.getByText('1er du groupe A')).toBeInTheDocument();
+    expect(container.querySelectorAll('.schematic-slot--empty')).toHaveLength(
+      1,
+    );
   });
 
   it('cup Qual/Prog shows the resolved participant as primary and the path in the tooltip', () => {

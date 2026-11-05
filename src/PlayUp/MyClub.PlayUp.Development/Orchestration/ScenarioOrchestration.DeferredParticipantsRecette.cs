@@ -66,6 +66,13 @@ internal static partial class ScenarioOrchestration
             .ConfigureAwait(false);
         var home = competition.AddEntry(TeamId.New(), "Alpha", context.Clock).Id;
         var away = competition.AddEntry(TeamId.New(), "Beta", context.Clock).Id;
+        var quarter = new[]
+        {
+            competition.AddEntry(TeamId.New(), "Gamma", context.Clock).Id,
+            competition.AddEntry(TeamId.New(), "Delta", context.Clock).Id,
+            competition.AddEntry(TeamId.New(), "Epsilon", context.Clock).Id,
+            competition.AddEntry(TeamId.New(), "Zeta", context.Clock).Id,
+        };
         var league = Stage.Create(competition.Id, new StageName("Poule"), RegulationPacks.Standard(), context.Clock);
         var cup = Stage.Create(competition.Id, new StageName("Demi-finale"), RegulationPacks.Standard(), context.Clock);
         competition.AddStage(league.Id, context.Clock);
@@ -74,25 +81,35 @@ internal static partial class ScenarioOrchestration
         var played = Match.Create(competition.Id, league.Id, home, away, context.Clock);
         played.Start(context.Clock);
         played.Finish(new MatchResult(ResultType.Played, new Score(2, 0)), context.Clock);
-
-        cup.AddRound("SF", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), context.Clock);
-        cup.AddSlot("SF-A");
-        cup.AddSlot("SF-B");
-        cup.SeedEntryRoundBracketPairs();
         var stages = new[] { league, cup };
-        PrepareStage.Execute(cup, stages, context.Clock);
-        var created = MaterializeCupFromOccupiedSlots.Execute(competition, cup, ["P1"], [], context.Clock);
-        var match = created.CreatedMatches[0];
-
-        if (stop != DeferredCupStop.Planned)
+        InstallQuarterToSemi(cup, quarter, context.Clock);
+        var standing = CalculateStanding.Execute(
+            [home, away],
+            [played],
+            competition.Regulation.StandingRules);
+        if (stop == DeferredCupStop.OneSide)
         {
-            var standing = CalculateStanding.Execute(
-                [home, away],
-                [played],
-                competition.Regulation.StandingRules);
             league.ReplaceQualificationRules(
                 new QualificationRules([DeferredQualPath(1, 1, cup, "SF-A")]),
                 context.Clock);
+        }
+        else
+        {
+            league.ReplaceQualificationRules(DeferredSemiRules(cup), context.Clock);
+        }
+
+        PrepareStage.Execute(cup, stages, context.Clock);
+        var created = MaterializeCupFromOccupiedSlots.Execute(
+            competition,
+            cup,
+            ["Q1", "Q2", "S1"],
+            [],
+            context.Clock,
+            stages);
+        var match = SemiMatch(cup, created.CreatedMatches);
+
+        if (stop != DeferredCupStop.Planned)
+        {
             ApplyQualification.Execute(
                 league,
                 standing,
@@ -101,31 +118,20 @@ internal static partial class ScenarioOrchestration
                 stages,
                 context.Clock,
                 destinationMatches: [match]);
-
-            if (stop == DeferredCupStop.BothSides)
+            if (stop == DeferredCupStop.OneSide)
             {
-                league.ReplaceQualificationRules(
-                    new QualificationRules(
-                    [
-                        DeferredQualPath(1, 1, cup, "SF-A"),
-                        DeferredQualPath(2, 2, cup, "SF-B")
-                    ]),
-                    context.Clock);
-                ApplyQualification.Execute(
-                league,
-                standing,
-                new Dictionary<GroupId, Standing>(),
-                matches: null,
-                stages,
-                context.Clock,
-                destinationMatches: [match]);
+                league.ReplaceQualificationRules(DeferredSemiRules(cup), context.Clock);
             }
         }
 
+        SeedLifecycle.PrepareAndStart(context, competition, league, stages);
         context.Stages.Add(league);
         context.Stages.Add(cup);
         context.Matches.Add(played);
-        context.Matches.Add(match);
+        foreach (var createdMatch in created.CreatedMatches)
+        {
+            context.Matches.Add(createdMatch);
+        }
     }
 
     private static async Task SeedDeferredPoolStandingAsync(
@@ -140,6 +146,15 @@ internal static partial class ScenarioOrchestration
             .ConfigureAwait(false);
         var home = competition.AddEntry(TeamId.New(), "Poule A", context.Clock).Id;
         var away = competition.AddEntry(TeamId.New(), "Poule B", context.Clock).Id;
+        var third = competition.AddEntry(TeamId.New(), "Poule C", context.Clock).Id;
+        var fourth = competition.AddEntry(TeamId.New(), "Poule D", context.Clock).Id;
+        var quarter = new[]
+        {
+            competition.AddEntry(TeamId.New(), "Quart A", context.Clock).Id,
+            competition.AddEntry(TeamId.New(), "Quart B", context.Clock).Id,
+            competition.AddEntry(TeamId.New(), "Quart C", context.Clock).Id,
+            competition.AddEntry(TeamId.New(), "Quart D", context.Clock).Id,
+        };
         var groups = Stage.Create(competition.Id, new StageName("Poules"), RegulationPacks.Standard(), context.Clock);
         var cup = Stage.Create(competition.Id, new StageName("Demi-finale"), RegulationPacks.Standard(), context.Clock);
         competition.AddStage(groups.Id, context.Clock);
@@ -147,22 +162,86 @@ internal static partial class ScenarioOrchestration
         var group = groups.AddGroup("A", context.Clock);
         groups.AssignEntryToGroup(group.Id, home);
         groups.AssignEntryToGroup(group.Id, away);
+        groups.AssignEntryToGroup(group.Id, third);
+        groups.AssignEntryToGroup(group.Id, fourth);
         groups.AddMatchday(1, context.Clock);
         var played = Match.Create(competition.Id, groups.Id, home, away, context.Clock);
         played.Start(context.Clock);
         played.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), context.Clock);
-
-        cup.AddRound("SF", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), context.Clock);
-        cup.AddSlot("SF-A");
-        cup.AddSlot("SF-B");
-        cup.SeedEntryRoundBracketPairs();
-        PrepareStage.Execute(cup, [groups, cup], context.Clock);
-        var created = MaterializeCupFromOccupiedSlots.Execute(competition, cup, ["P1"], [], context.Clock);
+        var stages = new[] { groups, cup };
+        InstallQuarterToSemi(cup, quarter, context.Clock);
+        groups.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.FromGroup(group.Id),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    QualificationDestination.ForSlot(cup.Id, "SF-A")),
+                new QualificationPath(
+                    2,
+                    QualificationSource.FromGroup(group.Id),
+                    new QualificationSelection(SelectionMode.Position, 2),
+                    QualificationDestination.ForSlot(cup.Id, "SF-B")),
+            ]),
+            context.Clock);
+        PrepareStage.Execute(cup, stages, context.Clock);
+        var created = MaterializeCupFromOccupiedSlots.Execute(
+            competition,
+            cup,
+            ["Q1", "Q2", "S1"],
+            [],
+            context.Clock,
+            stages);
+        SeedLifecycle.PrepareAndStart(context, competition, groups, stages);
 
         context.Stages.Add(groups);
         context.Stages.Add(cup);
         context.Matches.Add(played);
-        context.Matches.Add(created.CreatedMatches[0]);
+        foreach (var createdMatch in created.CreatedMatches)
+        {
+            context.Matches.Add(createdMatch);
+        }
+    }
+
+    private static void InstallQuarterToSemi(Stage cup, EntryId[] quarterTeams, IClock clock)
+    {
+        var quarter = cup.AddRound("QF", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), clock);
+        var semi = cup.AddRound("SF", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), clock);
+        cup.AddSlot("QF-A");
+        cup.AddSlot("QF-B");
+        cup.AddSlot("QF-C");
+        cup.AddSlot("QF-D");
+        cup.AddSlot("SF-A");
+        cup.AddSlot("SF-B");
+        cup.ReplaceBracketPairs(
+        [
+            new BracketPair("Q1", "QF-A", "QF-B"),
+            new BracketPair("Q2", "QF-C", "QF-D"),
+            new BracketPair("S1", "SF-A", "SF-B"),
+        ]);
+        cup.AddFixture(quarter.Id, clock, "QF-A", "QF-B", "Q1");
+        cup.AddFixture(quarter.Id, clock, "QF-C", "QF-D", "Q2");
+        cup.AddFixture(semi.Id, clock, "SF-A", "SF-B", "S1");
+        string[] slots = ["QF-A", "QF-B", "QF-C", "QF-D"];
+        for (var index = 0; index < slots.Length; index++)
+        {
+            cup.AddResolvedPopulationEntry(quarterTeams[index], clock);
+            cup.AssignEntryToSlot(slots[index], quarterTeams[index]);
+        }
+    }
+
+    private static QualificationRules DeferredSemiRules(Stage cup) =>
+        new(
+        [
+            DeferredQualPath(1, 1, cup, "SF-A"),
+            DeferredQualPath(2, 2, cup, "SF-B"),
+        ]);
+
+    private static Match SemiMatch(Stage cup, IReadOnlyList<Match> created)
+    {
+        var fixture = cup.FindFixtureByBracketPairKey("S1");
+        return created.Single(match => fixture!.MatchIds.Any(id => id.Equals(match.Id)));
     }
 
     private static QualificationPath DeferredQualPath(int order, int position, Stage cup, string slotKey) =>

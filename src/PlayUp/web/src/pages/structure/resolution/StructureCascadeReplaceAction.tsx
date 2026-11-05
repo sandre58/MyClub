@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useCallback, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -15,19 +15,14 @@ import type {
 } from '../../../types';
 import { MutationError } from '../../../ui';
 import { scheduleStructureRefresh } from '../structureInvalidation';
+import { CascadeReplaceContext } from './structureCascadeReplaceContext';
+import { isReplayableStale } from './structureResolutionOccupants';
 
 type StructureCascadeReplaceActionProps = {
-  stage: StructureStageHubSummary;
+  stage: StructureStageHubSummary | null;
   competitionId: string;
+  children: ReactNode;
 };
-
-function isReplayableStale(occupant: StructureResolutionOccupant): boolean {
-  return (
-    occupant.state === 'Perime' &&
-    (occupant.provenanceKind === 'Qualification' ||
-      occupant.provenanceKind === 'Progression')
-  );
-}
 
 function toRequest(
   occupant: StructureResolutionOccupant,
@@ -40,19 +35,10 @@ function toRequest(
   };
 }
 
-function placeLabel(occupant: StructureResolutionOccupant): string {
-  if (occupant.slotKey) {
-    return occupant.slotKey;
-  }
-  if (occupant.groupId) {
-    return occupant.groupId;
-  }
-  return occupant.entryId;
-}
-
 export function StructureCascadeReplaceAction({
   stage,
   competitionId,
+  children,
 }: StructureCascadeReplaceActionProps) {
   const { t } = useTranslation('structure');
   const queryClient = useQueryClient();
@@ -61,8 +47,7 @@ export function StructureCascadeReplaceAction({
   );
   const [played, setPlayed] = useState<CascadePlayedMatch[]>([]);
   const [versionToken, setVersionToken] = useState<string | null>(null);
-  const stageId = stage.stageId;
-  const stale = (stage.resolutionOccupants ?? []).filter(isReplayableStale);
+  const stageId = stage?.stageId ?? '';
 
   const preview = useMutation({
     mutationFn: (target: StructureResolutionOccupant) =>
@@ -98,28 +83,23 @@ export function StructureCascadeReplaceAction({
     },
   });
 
-  if (stale.length === 0) {
-    return null;
-  }
+  const requestReplace = useCallback(
+    (target: StructureResolutionOccupant) => {
+      if (!stage || !isReplayableStale(target)) {
+        return;
+      }
+      confirm.reset();
+      preview.mutate(target);
+    },
+    [confirm, preview, stage],
+  );
 
   const blocked = confirm.isError;
 
   return (
-    <div>
-      {stale.map((target) => (
-        <button
-          key={`${target.target}-${target.slotKey ?? ''}-${target.groupId ?? ''}-${target.entryId}`}
-          type="button"
-          className="ds-btn ds-btn--secondary"
-          onClick={() => {
-            confirm.reset();
-            preview.mutate(target);
-          }}
-        >
-          {t('resolution.cascade.actionNamed', { place: placeLabel(target) })}
-        </button>
-      ))}
+    <CascadeReplaceContext.Provider value={{ requestReplace }}>
       {preview.isError ? <MutationError error={preview.error} /> : null}
+      {children}
       <ConfirmDialog
         open={occupant !== null && versionToken !== null}
         title={t('resolution.cascade.confirmTitle')}
@@ -156,6 +136,6 @@ export function StructureCascadeReplaceAction({
           }
         }}
       />
-    </div>
+    </CascadeReplaceContext.Provider>
   );
 }
