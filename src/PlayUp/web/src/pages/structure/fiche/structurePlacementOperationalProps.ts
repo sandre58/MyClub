@@ -52,4 +52,6 @@ export type StructurePlacementOperationalSectionProps = {
   onDeactivateDraw: () => void;
   structureHubRefreshing?: boolean;
   embeddedInSection?: boolean;
+  /** Shown when resolution occupants mark an applied draw stale (Tirage périmé). */
+  staleDrawResolutionPanel?: ReactNode;
 };

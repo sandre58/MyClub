@@ -25,7 +25,11 @@ const RECETTE_G1_GROUPS_NAME = 'RECETTE G1 — Groups 0/6 actionable';
 type StructureView = {
   format: { primaryStageId?: string | null };
   readiness: { attachedMatchCount: number };
-  stages: { stageId: string; drawExecutionBadge?: string | null }[];
+  stages: {
+    stageId: string;
+    name?: string;
+    drawExecutionBadge?: string | null;
+  }[];
 };
 
 type MaterializeMatchesResponse = {
@@ -339,6 +343,155 @@ export async function expectCupDrawAppliedOnStructure(
   if (!applied) {
     throw new Error(
       `Expected drawExecutionBadge Applied on structure for competition ${competitionId}`,
+    );
+  }
+}
+
+const RECETTE_T3_QUAL_SLOT_NAME = 'RECETTE T3 — Qual slot fraîcheur';
+
+const RECETTE_T3_SCORE_UPSTREAM_NAME = 'RECETTE T3 — Score upstream fraîcheur';
+
+export async function findResolutionFreshnessScoreUpstreamCompetition(
+  request: APIRequestContext,
+): Promise<CompetitionListItem> {
+  const response = await request.get(`${playUpApiBase()}/competitions`);
+  if (!response.ok()) {
+    throw new Error(
+      `GET /competitions failed (${response.status()}). Is Host running at ${playUpApiBase()}?`,
+    );
+  }
+
+  const list = (await response.json()) as CompetitionListItem[];
+  const hit = list.find((c) => c.name === RECETTE_T3_SCORE_UPSTREAM_NAME);
+  if (!hit) {
+    throw new Error(
+      `Competition "${RECETTE_T3_SCORE_UPSTREAM_NAME}" not found. Seed with DevRunner: --reset --scenarios resolution-freshness-qual-slot`,
+    );
+  }
+  return hit;
+}
+
+export async function findResolutionFreshnessQualSlotCompetition(
+  request: APIRequestContext,
+): Promise<CompetitionListItem> {
+  const response = await request.get(`${playUpApiBase()}/competitions`);
+  if (!response.ok()) {
+    throw new Error(
+      `GET /competitions failed (${response.status()}). Is Host running at ${playUpApiBase()}?`,
+    );
+  }
+
+  const list = (await response.json()) as CompetitionListItem[];
+  const hit = list.find((c) => c.name === RECETTE_T3_QUAL_SLOT_NAME);
+  if (!hit) {
+    throw new Error(
+      `Competition "${RECETTE_T3_QUAL_SLOT_NAME}" not found. Seed with DevRunner: --reset --scenarios resolution-freshness-qual-slot`,
+    );
+  }
+  return hit;
+}
+
+export async function getStageIdByName(
+  request: APIRequestContext,
+  competitionId: string,
+  stageName: string,
+): Promise<string> {
+  const response = await request.get(
+    `${playUpApiBase()}/competitions/${competitionId}/structure`,
+  );
+  if (!response.ok()) {
+    const body = await response.text();
+    throw new Error(
+      `GET /competitions/${competitionId}/structure failed (${response.status()}): ${body}`,
+    );
+  }
+
+  const view = (await response.json()) as StructureView;
+  const stage = view.stages.find((s) => s.name === stageName);
+  if (!stage?.stageId) {
+    throw new Error(
+      `Stage "${stageName}" not found on structure for competition ${competitionId}`,
+    );
+  }
+  return stage.stageId;
+}
+
+export async function findFirstFinishedMatchOnStage(
+  request: APIRequestContext,
+  stageId: string,
+): Promise<string> {
+  const response = await request.get(
+    `${playUpApiBase()}/stages/${stageId}/matches`,
+  );
+  if (!response.ok()) {
+    const body = await response.text();
+    throw new Error(
+      `GET /stages/${stageId}/matches failed (${response.status()}): ${body}`,
+    );
+  }
+
+  const matches = (await response.json()) as {
+    matchId: string;
+    status: string;
+  }[];
+  const finished = matches.find((m) => m.status === 'Finished');
+  if (!finished) {
+    throw new Error(`No Finished match on stage ${stageId}`);
+  }
+  return finished.matchId;
+}
+
+export async function correctFinishedMatchResult(
+  request: APIRequestContext,
+  matchId: string,
+  homeGoals: number,
+  awayGoals: number,
+): Promise<void> {
+  const response = await request.put(
+    `${playUpApiBase()}/matches/${matchId}/result`,
+    {
+      data: {
+        type: 'Played',
+        homeGoals,
+        awayGoals,
+      },
+    },
+  );
+  if (!response.ok()) {
+    const body = await response.text();
+    throw new Error(
+      `PUT /matches/${matchId}/result failed (${response.status()}): ${body}`,
+    );
+  }
+}
+
+export async function replaceQualificationRulesForStaleBadge(
+  request: APIRequestContext,
+  leagueStageId: string,
+  terminalStageId: string,
+): Promise<void> {
+  const response = await request.put(
+    `${playUpApiBase()}/stages/${leagueStageId}/qualification-rules`,
+    {
+      data: {
+        intents: [
+          {
+            intentId: crypto.randomUUID(),
+            order: 1,
+            sourceKind: 'Overall',
+            positionFrom: 2,
+            positionTo: 2,
+            destinationStageId: terminalStageId,
+            destinationSlotKeys: ['Champ'],
+          },
+        ],
+      },
+    },
+  );
+  if (!response.ok()) {
+    const body = await response.text();
+    throw new Error(
+      `PUT qualification-rules failed (${response.status()}): ${body}`,
     );
   }
 }
