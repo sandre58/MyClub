@@ -646,7 +646,7 @@ The source pair must exist on the stage. Unique `(sourcePairKey, outcome)` pairs
 
 ### `POST /stages/{stageId}/resolution/cascade-preview` → `CascadeReplaceResponse`
 
-Read-only preview of an explicit cascade replacement. Does not persist. The body names the stale occupant the organiser confirms (`Slot`, `Group`, or `Population`).
+Read-only preview of an explicit cascade replacement. Computes the version token, the played matches, and the replacements without applying them and without persisting. The body names the stale occupant the organiser confirms (`Slot`, `Group`, or `Population`).
 
 ```json
 {

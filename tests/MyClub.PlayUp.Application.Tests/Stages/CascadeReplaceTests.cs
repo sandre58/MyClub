@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
+using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
@@ -53,14 +54,31 @@ public sealed class CascadeReplaceTests
         var oldFinalist = final.FindSlot("F-A")!.EntryId!.Value;
         semiMatch.CorrectMatchResult(new MatchResult(ResultType.Played, new Score(0, 2)), _clock);
         var newFinalist = entries[2];
+        var loaded = new List<Match> { quarterMatch, semiMatch, finalMatch };
+
+        var planned = CascadeReplace.Plan(
+            competition,
+            final.Id,
+            SlotTarget(final, "F-A"),
+            stages,
+            loaded,
+            _clock);
+
+        final.FindSlot("F-A")!.EntryId.Should().Be(oldFinalist);
+        finalMatch.Status.Should().Be(MatchStatus.Finished);
+        finalMatch.Result.Should().NotBeNull();
+        finalMatch.RecordedGoals.Should().NotBeEmpty();
 
         var result = CascadeReplace.Execute(
             competition,
             final.Id,
             SlotTarget(final, "F-A"),
             stages,
-            [quarterMatch, semiMatch, finalMatch],
+            loaded,
             _clock);
+        planned.VersionToken.Should().Be(result.VersionToken);
+        planned.PlayedMatches.Should().BeEquivalentTo(result.PlayedMatches);
+        planned.Replacements.Should().BeEquivalentTo(result.Replacements);
 
         final.FindSlot("F-A")!.EntryId.Should().Be(newFinalist);
         final.FindSlot("F-A")!.EntryId.Should().NotBe(oldFinalist);
@@ -169,8 +187,9 @@ public sealed class CascadeReplaceTests
             stages,
             _clock);
         groupMatch.CorrectMatchResult(new MatchResult(ResultType.Played, new Score(0, 2)), _clock);
+        var finalist = final.FindSlot("Champ")!.EntryId;
 
-        CascadeReplace.Execute(
+        var planned = CascadeReplace.Plan(
             competition,
             middle.Id,
             new CascadeReplaceTarget(
@@ -182,10 +201,67 @@ public sealed class CascadeReplaceTests
             [groupMatch],
             _clock);
 
+        middleGroup.EntryIds.Should().ContainSingle().Which.Should().Be(qualified);
+        final.FindSlot("Champ")!.EntryId.Should().Be(finalist);
+
+        var result = CascadeReplace.Execute(
+            competition,
+            middle.Id,
+            new CascadeReplaceTarget(
+                StructureResolutionOccupantTarget.Group,
+                qualified.Value,
+                null,
+                middleGroup.Id.Value),
+            stages,
+            [groupMatch],
+            _clock);
+        planned.VersionToken.Should().Be(result.VersionToken);
+        planned.PlayedMatches.Should().BeEquivalentTo(result.PlayedMatches);
+        planned.Replacements.Should().BeEquivalentTo(result.Replacements);
+
         middleGroup.EntryIds.Should().ContainSingle().Which.Should().Be(entries[1]);
         middle.CompositionEntries.Should().NotContain(entry => entry.EntryId.Equals(entries[0]));
         final.FindSlot("Champ")!.EntryId.Should().Be(entries[1]);
         final.CompositionEntries.Should().NotContain(entry => entry.EntryId.Equals(entries[0]));
+    }
+
+    [Fact]
+    public void Live_downstream_match_blocks_the_plan_and_the_command()
+    {
+        var (competition, league, cup, entries, matches) = LeagueFeed(2);
+        var third = AddEntry.Execute(competition, "Gamma", _clock).Id;
+        var fixture = CupRound(cup, "Champ", "Finalist");
+        ApplyOverall(league, cup, entries, matches, 1, "Champ");
+        Direct(cup, "Finalist", third);
+        var applied = cup.FindSlot("Champ")!.EntryId!.Value;
+        var match = Match.Create(competition.Id, cup.Id, applied, third, _clock);
+        cup.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
+        match.Start(_clock);
+        SetScore(matches, entries[0], entries[1], 0, 2);
+        var loaded = new List<Match>(matches) { match };
+
+        var plan = () => CascadeReplace.Plan(
+            competition,
+            cup.Id,
+            SlotTarget(cup, "Champ"),
+            [league, cup],
+            loaded,
+            _clock);
+        var execute = () => CascadeReplace.Execute(
+            competition,
+            cup.Id,
+            SlotTarget(cup, "Champ"),
+            [league, cup],
+            loaded,
+            _clock);
+
+        plan.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.CascadeReplaceLiveBlocked);
+        execute.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.CascadeReplaceLiveBlocked);
+        match.Status.Should().Be(MatchStatus.Live);
+        match.HomeEntryId.Should().Be(applied);
+        cup.FindSlot("Champ")!.EntryId.Should().Be(applied);
     }
 
     [Fact]

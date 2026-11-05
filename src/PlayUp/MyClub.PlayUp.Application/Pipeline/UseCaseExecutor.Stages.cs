@@ -1311,7 +1311,7 @@ public sealed partial class UseCaseExecutor
     {
         var (competition, stageList, matchList) =
             await LoadCascadeReadAsync(stageId, cancellationToken).ConfigureAwait(false);
-        return CascadeReplace.Execute(competition, stageId, target, stageList, matchList, clock);
+        return CascadeReplace.Plan(competition, stageId, target, stageList, matchList, clock);
     }
 
     /// <summary>

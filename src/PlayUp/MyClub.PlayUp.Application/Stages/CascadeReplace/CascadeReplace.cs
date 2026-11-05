@@ -22,6 +22,32 @@ namespace MyClub.PlayUp.Application.Stages.CascadeReplace;
 public static class CascadeReplace
 {
     /// <summary>
+    /// Computes the version token, the played matches, and the replacements.
+    /// The stages and matches passed in are not modified.
+    /// </summary>
+    public static CascadeReplaceResult Plan(
+        Competition competition,
+        StageId originStageId,
+        CascadeReplaceTarget target,
+        IReadOnlyList<Stage> stages,
+        IReadOnlyList<Match> matches,
+        IClock clock)
+    {
+        Require(competition, target, stages, matches, clock);
+        var token = CascadeReplaceVersion.Compute(stages, matches);
+        var scratchStages = stages.Select(CascadeAggregateCopy.Copy).ToList();
+        var scratchMatches = matches.Select(CascadeAggregateCopy.Copy).ToList();
+        var (played, replacements) = ApplyAll(
+            competition,
+            originStageId,
+            target,
+            scratchStages,
+            scratchMatches,
+            clock);
+        return new CascadeReplaceResult(token, played, replacements);
+    }
+
+    /// <summary>
     /// Replays the confirmed occupant and the stale chain around it.
     /// Callers persist with a single save. This method does not.
     /// </summary>
@@ -33,14 +59,27 @@ public static class CascadeReplace
         IReadOnlyList<Match> matches,
         IClock clock)
     {
-        ArgumentNullException.ThrowIfNull(competition);
-        ArgumentNullException.ThrowIfNull(target);
-        ArgumentNullException.ThrowIfNull(stages);
-        ArgumentNullException.ThrowIfNull(matches);
-        ArgumentNullException.ThrowIfNull(clock);
-
+        Require(competition, target, stages, matches, clock);
         var token = CascadeReplaceVersion.Compute(stages, matches);
-        var order = Plan(competition, originStageId, target, stages, matches);
+        var (played, replacements) = ApplyAll(
+            competition,
+            originStageId,
+            target,
+            stages,
+            matches,
+            clock);
+        return new CascadeReplaceResult(token, played, replacements);
+    }
+
+    private static (List<CascadePlayedMatch> Played, List<CascadeReplacement> Replacements) ApplyAll(
+        Competition competition,
+        StageId originStageId,
+        CascadeReplaceTarget target,
+        IReadOnlyList<Stage> stages,
+        IReadOnlyList<Match> matches,
+        IClock clock)
+    {
+        var order = Order(competition, originStageId, target, stages, matches);
         var played = new List<CascadePlayedMatch>();
         var replacements = new List<CascadeReplacement>();
         foreach (var node in order)
@@ -48,10 +87,24 @@ public static class CascadeReplace
             Apply(node, competition, stages, matches, clock, played, replacements);
         }
 
-        return new CascadeReplaceResult(token, played, replacements);
+        return (played, replacements);
     }
 
-    private static List<ResolutionNode> Plan(
+    private static void Require(
+        Competition competition,
+        CascadeReplaceTarget target,
+        IReadOnlyList<Stage> stages,
+        IReadOnlyList<Match> matches,
+        IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(competition);
+        ArgumentNullException.ThrowIfNull(target);
+        ArgumentNullException.ThrowIfNull(stages);
+        ArgumentNullException.ThrowIfNull(matches);
+        ArgumentNullException.ThrowIfNull(clock);
+    }
+
+    private static List<ResolutionNode> Order(
         Competition competition,
         StageId originStageId,
         CascadeReplaceTarget target,

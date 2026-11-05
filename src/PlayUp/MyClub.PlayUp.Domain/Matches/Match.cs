@@ -226,6 +226,7 @@ public sealed class Match : AggregateRoot<MatchId>
 
     /// <summary>
     /// Replaces a side that already has an entry. Filling an unknown side stays on <see cref="ResolveParticipant"/>.
+    /// A live match is refused. A finished match is refused until <see cref="InvalidateFinishedResult"/>.
     /// </summary>
     /// <param name="side">Home or away.</param>
     /// <param name="entryId">The entry that now occupies that side.</param>
@@ -238,6 +239,13 @@ public sealed class Match : AggregateRoot<MatchId>
             throw new DomainException(
                 $"Unknown match side '{side}'.",
                 MatchErrorCodes.InvalidSide);
+        }
+
+        if (Status is MatchStatus.Live or MatchStatus.Finished)
+        {
+            throw new DomainException(
+                "A live or finished match participant cannot be replaced.",
+                MatchErrorCodes.ParticipantImmutable);
         }
 
         var current = side == Side.Home ? HomeEntryId : AwayEntryId;

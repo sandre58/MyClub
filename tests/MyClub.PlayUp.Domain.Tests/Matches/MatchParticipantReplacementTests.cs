@@ -39,6 +39,42 @@ public sealed class MatchParticipantReplacementTests
     }
 
     [Fact]
+    public void ReplaceParticipant_refuses_a_live_match()
+    {
+        var home = EntryId.New();
+        var match = Match.Create(CompetitionId.New(), StageId.New(), home, EntryId.New(), _clock);
+        match.Start(_clock);
+
+        var act = () => match.ReplaceParticipant(Side.Home, EntryId.New(), _clock);
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(MatchErrorCodes.ParticipantImmutable);
+        match.HomeEntryId.Should().Be(home);
+        match.Status.Should().Be(MatchStatus.Live);
+    }
+
+    [Fact]
+    public void ReplaceParticipant_refuses_a_finished_match_until_the_result_is_invalidated()
+    {
+        var home = EntryId.New();
+        var match = Match.Create(CompetitionId.New(), StageId.New(), home, EntryId.New(), _clock);
+        match.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
+        var replacement = EntryId.New();
+
+        var blocked = () => match.ReplaceParticipant(Side.Home, replacement, _clock);
+
+        blocked.Should().Throw<DomainException>().Which.Code.Should().Be(MatchErrorCodes.ParticipantImmutable);
+        match.HomeEntryId.Should().Be(home);
+        match.Status.Should().Be(MatchStatus.Finished);
+
+        match.InvalidateFinishedResult(_clock);
+        match.ReplaceParticipant(Side.Home, replacement, _clock);
+
+        match.Status.Should().Be(MatchStatus.Scheduled);
+        match.HomeEntryId.Should().Be(replacement);
+        match.Result.Should().BeNull();
+    }
+
+    [Fact]
     public void ReplaceParticipant_refuses_an_unknown_side()
     {
         var match = Match.Create(CompetitionId.New(), StageId.New(), homeEntryId: null, awayEntryId: null, _clock);
