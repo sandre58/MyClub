@@ -77,6 +77,7 @@ import {
   resolveServerReleaseCta,
   releaseFooterMode,
 } from '../draw/drawActions';
+import { StructureCascadeReplaceAction } from '../resolution/StructureCascadeReplaceAction';
 import { StructureStaleDrawResolutionActions } from '../resolution/StructureStaleDrawResolutionActions';
 import { hasStaleTirageResolutionOccupant } from '../resolution/structureResolutionOccupants';
 import {
@@ -1250,6 +1251,13 @@ export function StructurePhaseFiche({
         onCancelRename={cancelRename}
         onCommitRename={commitRename}
       />
+
+      {stage ? (
+        <StructureCascadeReplaceAction
+          stage={stage}
+          competitionId={data.competitionId}
+        />
+      ) : null}
 
       <div
         className={[

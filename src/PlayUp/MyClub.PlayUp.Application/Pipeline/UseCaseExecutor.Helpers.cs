@@ -74,6 +74,11 @@ public sealed partial class UseCaseExecutor
         }
     }
 
+    private static MatchParticipantRef ToSchedulingParticipant(EntryId? entryId) =>
+        entryId is { } known
+            ? MatchParticipantRef.Known(known)
+            : MatchParticipantRef.UnknownStructural();
+
     private async Task<Stage> RequireStageAsync(StageId stageId, CancellationToken cancellationToken) =>
         await stages.GetByIdForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false)
         ?? throw new ApplicationFailureException(

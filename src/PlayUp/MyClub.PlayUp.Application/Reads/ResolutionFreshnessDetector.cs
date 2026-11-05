@@ -47,11 +47,32 @@ public static class ResolutionFreshnessDetector
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(stages);
 
+        return Project(competition, Analyze(competition, stages, matchSummariesByStage));
+    }
+
+    /// <summary>
+    /// Same evaluation as <see cref="Evaluate"/>, including the entry a fresh replay would select.
+    /// </summary>
+    public static IReadOnlyList<ResolutionOccupantAssessment> Inspect(
+        Competition competition,
+        IReadOnlyList<Stage> stages,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>>? matchSummariesByStage)
+    {
+        ArgumentNullException.ThrowIfNull(competition);
+        ArgumentNullException.ThrowIfNull(stages);
+        return [.. Analyze(competition, stages, matchSummariesByStage).Select(occupant => occupant.ToAssessment())];
+    }
+
+    private static List<WorkingOccupant> Analyze(
+        Competition competition,
+        IReadOnlyList<Stage> stages,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>>? matchSummariesByStage)
+    {
         var summaries = matchSummariesByStage ?? new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>();
         var occupants = Collect(stages);
         if (occupants.Count == 0)
         {
-            return new Dictionary<Guid, IReadOnlyList<StructureResolutionOccupantDto>>();
+            return occupants;
         }
 
         var byId = stages.ToDictionary(stage => stage.Id.Value);
@@ -68,11 +89,12 @@ public static class ResolutionFreshnessDetector
                 MarkIndeterminate(occupant);
                 occupant.DependsOnStageId = null;
                 occupant.DependsOnEntryIds.Clear();
+                occupant.ClearReplay();
             }
         }
 
         Propagate(occupants);
-        return Project(competition, occupants);
+        return occupants;
     }
 
     private static List<WorkingOccupant> Collect(IReadOnlyList<Stage> stages)
@@ -180,6 +202,7 @@ public static class ResolutionFreshnessDetector
         if (path is null)
         {
             MarkStale(occupant, StructureResolutionStalenessCause.RegleQualification);
+            RememberRuleReplacement(occupant, source, standings);
             return;
         }
 
@@ -198,6 +221,7 @@ public static class ResolutionFreshnessDetector
                 occupant.Fingerprint,
                 StringComparison.Ordinal))
         {
+            occupant.RememberReplay(occupant.EntryId, occupant.Fingerprint);
             MarkCurrent(occupant);
             return;
         }
@@ -205,6 +229,9 @@ public static class ResolutionFreshnessDetector
         var selection = PathOccupantSelector.SelectQualification(path, standing);
         if (selection.Status == PathOccupantSelectionStatus.Resolved && selection.EntryId == storedEntry)
         {
+            occupant.RememberReplay(
+                occupant.EntryId,
+                ResolutionUpstreamFingerprint.ForQualificationSelection(standing, storedEntry));
             MarkCurrent(occupant);
             return;
         }
@@ -213,10 +240,14 @@ public static class ResolutionFreshnessDetector
             && selection.EntryId is { } selected
             && selected != storedEntry)
         {
+            occupant.RememberReplay(
+                selected.Value,
+                ResolutionUpstreamFingerprint.ForQualificationSelection(standing, selected));
             MarkStale(occupant, StructureResolutionStalenessCause.ResultatAmont);
             return;
         }
 
+        occupant.ClearReplay();
         MarkIndeterminate(occupant);
     }
 
@@ -257,11 +288,10 @@ public static class ResolutionFreshnessDetector
             occupant,
             source.Id.Value,
             [outcome.WinnerEntryId.Value, outcome.LoserEntryId.Value]);
-        if (string.Equals(
-                ResolutionUpstreamFingerprint.ForProgressionOutcome(outcome, path.Outcome),
-                occupant.Fingerprint,
-                StringComparison.Ordinal))
+        var progressionFingerprint = ResolutionUpstreamFingerprint.ForProgressionOutcome(outcome, path.Outcome);
+        if (string.Equals(progressionFingerprint, occupant.Fingerprint, StringComparison.Ordinal))
         {
+            occupant.RememberReplay(occupant.EntryId, occupant.Fingerprint);
             MarkCurrent(occupant);
             return;
         }
@@ -269,16 +299,19 @@ public static class ResolutionFreshnessDetector
         var selection = PathOccupantSelector.SelectProgression(path, outcome);
         if (selection.Status == PathOccupantSelectionStatus.Resolved && selection.EntryId == new EntryId(occupant.EntryId))
         {
+            occupant.RememberReplay(occupant.EntryId, progressionFingerprint);
             MarkCurrent(occupant);
             return;
         }
 
-        if (selection.Status == PathOccupantSelectionStatus.Resolved)
+        if (selection.Status == PathOccupantSelectionStatus.Resolved && selection.EntryId is { } selected)
         {
+            occupant.RememberReplay(selected.Value, progressionFingerprint);
             MarkStale(occupant, StructureResolutionStalenessCause.ResultatAmont);
             return;
         }
 
+        occupant.ClearReplay();
         MarkIndeterminate(occupant);
     }
 
@@ -365,6 +398,85 @@ public static class ResolutionFreshnessDetector
             .ToDictionary(
                 group => group.Key,
                 group => (IReadOnlyList<StructureResolutionOccupantDto>)group.Select(occupant => occupant.ToDto()).ToArray());
+    }
+
+    /// <summary>
+    /// A replaced rule no longer matches the stored path. Replay the single current path
+    /// that still addresses this occupant, so the cascade can write the new selection.
+    /// </summary>
+    private static void RememberRuleReplacement(
+        WorkingOccupant occupant,
+        Stage source,
+        StandingCache standings)
+    {
+        var paths = source.Regulation.QualificationRules?.Paths;
+        if (paths is null)
+        {
+            occupant.ClearReplay();
+            return;
+        }
+
+        QualificationPath? match = null;
+        foreach (var candidate in paths)
+        {
+            if (!Targets(candidate.Destination, occupant))
+            {
+                continue;
+            }
+
+            if (match is not null)
+            {
+                occupant.ClearReplay();
+                return;
+            }
+
+            match = candidate;
+        }
+
+        if (match is null)
+        {
+            occupant.ClearReplay();
+            return;
+        }
+
+        var standing = standings.Resolve(source, match);
+        if (standing is null)
+        {
+            occupant.ClearReplay();
+            return;
+        }
+
+        RememberDependencies(occupant, source.Id.Value, standing.Rows.Select(row => row.EntryId.Value));
+        occupant.RememberPath(ResolutionPathIdentifier.ForQualification(source.Id, match));
+        var selection = PathOccupantSelector.SelectQualification(match, standing);
+        if (selection.Status == PathOccupantSelectionStatus.Resolved && selection.EntryId is { } selected)
+        {
+            occupant.RememberReplay(
+                selected.Value,
+                ResolutionUpstreamFingerprint.ForQualificationSelection(standing, selected));
+            return;
+        }
+
+        occupant.ClearReplay();
+    }
+
+    private static bool Targets(QualificationDestination destination, WorkingOccupant occupant)
+    {
+        if (destination.StageId.Value != occupant.StageId)
+        {
+            return false;
+        }
+
+        return occupant.Target switch
+        {
+            StructureResolutionOccupantTarget.Slot =>
+                destination.TargetsSlot
+                && string.Equals(destination.SlotKey, occupant.SlotKey, StringComparison.Ordinal),
+            StructureResolutionOccupantTarget.Group =>
+                destination.TargetsGroup && destination.GroupId?.Value == occupant.GroupId,
+            StructureResolutionOccupantTarget.Population => destination.TargetsPopulation,
+            _ => false
+        };
     }
 
     private static QualificationPath? FindQualificationPath(Stage source, string sourcePathId)
@@ -497,7 +609,7 @@ public static class ResolutionFreshnessDetector
 
         public required ResolutionProvenanceKind Kind { get; init; }
 
-        public required string SourcePathId { get; init; }
+        public required string SourcePathId { get; set; }
 
         public required string Fingerprint { get; init; }
 
@@ -512,6 +624,10 @@ public static class ResolutionFreshnessDetector
         public Guid? DependsOnStageId { get; set; }
 
         public HashSet<Guid> DependsOnEntryIds { get; } = [];
+
+        public Guid? ReplayEntryId { get; private set; }
+
+        public string? ReplayFingerprint { get; private set; }
 
         public static WorkingOccupant Create(
             Guid stageId,
@@ -532,6 +648,23 @@ public static class ResolutionFreshnessDetector
                 GroupId = groupId,
             };
 
+        public void RememberReplay(Guid entryId, string fingerprint)
+        {
+            ReplayEntryId = entryId;
+            ReplayFingerprint = fingerprint;
+        }
+
+        public void RememberPath(string sourcePathId)
+        {
+            SourcePathId = sourcePathId;
+        }
+
+        public void ClearReplay()
+        {
+            ReplayEntryId = null;
+            ReplayFingerprint = null;
+        }
+
         public StructureResolutionOccupantDto ToDto() =>
             new(
                 Target,
@@ -542,6 +675,22 @@ public static class ResolutionFreshnessDetector
                 SlotKey,
                 GroupId,
                 Cause);
+
+        public ResolutionOccupantAssessment ToAssessment() =>
+            new(
+                StageId,
+                Target,
+                EntryId,
+                Kind,
+                SourcePathId,
+                State,
+                Cause,
+                SlotKey,
+                GroupId,
+                DependsOnStageId,
+                [.. DependsOnEntryIds],
+                ReplayEntryId,
+                ReplayFingerprint);
     }
 
     /// <summary>

@@ -842,6 +842,17 @@
       },
       "ariaWithCause": "{{label}} — {{cause}}"
     },
+    "cascade": {
+      "action": "Replace the stale occupant",
+      "actionNamed": "Replace {{place}}",
+      "confirmTitle": "Confirm the cascade replacement?",
+      "confirm": "Replace",
+      "cancel": "Cancel",
+      "pending": "Replacing…",
+      "nonePlayed": "No downstream match that has already been played will change.",
+      "playedIntro": "These played matches will lose their score and player stats:",
+      "playedMatch": "Match {{matchId}}"
+    },
     "staleDraw": {
       "message": "The applied draw no longer matches this phase.",
       "redo": "Redo draw",

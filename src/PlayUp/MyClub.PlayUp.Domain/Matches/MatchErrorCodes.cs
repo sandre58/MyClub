@@ -32,6 +32,16 @@ public static class MatchErrorCodes
     public const string ParticipantAlreadyResolved = "Match.ParticipantAlreadyResolved";
 
     /// <summary>
+    /// Gets the code when replacement is asked for a side that is still unknown.
+    /// </summary>
+    public const string ParticipantNotResolved = "Match.ParticipantNotResolved";
+
+    /// <summary>
+    /// Gets the code when a finished result is invalidated from another status.
+    /// </summary>
+    public const string FinishedResultMissing = "Match.FinishedResultMissing";
+
+    /// <summary>
     /// Gets the code when a match result or score is invalid.
     /// </summary>
     public const string InvalidResult = "Match.InvalidResult";
