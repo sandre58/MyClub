@@ -22,6 +22,23 @@ describe('functionalProblemPresentation', () => {
     expect(presentation.titleNs).toBe('enums');
   });
 
+  it('links stale and indeterminate resolution rows to the phase', () => {
+    const presentation = functionalProblemPresentation({
+      source: 'ResolutionPerime',
+      competitionId: 'comp-1',
+      targetType: 'Stage',
+      targetId: 'phase-1',
+      params: { stageId: 'phase-1', count: '2' },
+    });
+
+    expect(presentation.tone).toBe('attention');
+    expect(presentation.titleKey).toBe('attentionSource.ResolutionPerime');
+    expect(presentation.sotHref).toBe(
+      '/competitions/comp-1/structure?stage=phase-1',
+    );
+    expect(presentation.cta).toBeNull();
+  });
+
   it('maps InsufficientParticipants to Teams SoT (not Structure)', () => {
     const presentation = functionalProblemPresentation({
       source: 'InsufficientParticipants',

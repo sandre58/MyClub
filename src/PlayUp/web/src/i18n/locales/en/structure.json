@@ -840,6 +840,30 @@
         "RegleQualification": "Qualification rule changed",
         "AmontPerime": "Upstream phase stale"
       },
+      "upstreamLink": "Go to the upstream phase",
+      "indeterminacy": {
+        "MatchNonJoue": {
+          "cause": "The match has not been played",
+          "action": "Play the match",
+          "actionNamed": "Play the match {{match}}"
+        },
+        "Egalite": {
+          "cause": "The score does not separate the teams",
+          "action": "Break the tie"
+        },
+        "SourceAbsente": {
+          "cause": "The source phase or rule cannot be found",
+          "action": "Check the source"
+        },
+        "SelectionVide": {
+          "cause": "The standing does not designate a team",
+          "action": "Check the standing"
+        },
+        "Autre": {
+          "cause": "The selection cannot be calculated",
+          "action": "Check the upstream phase"
+        }
+      },
       "ariaWithCause": "{{label}} — {{cause}}"
     },
     "cascade": {

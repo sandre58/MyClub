@@ -294,6 +294,19 @@ export interface StructureResolutionOccupant {
   groupId?: string | null;
   stalenessCause?:
     'ResultatAmont' | 'RegleQualification' | 'AmontPerime' | null;
+  /** Source phase the selection was read from, when the server knows it. */
+  upstreamStageId?: string | null;
+  indeterminacyCause?:
+    | 'MatchNonJoue'
+    | 'Egalite'
+    | 'SourceAbsente'
+    | 'SelectionVide'
+    | 'Autre'
+    | null;
+  /** Match to open for an indeterminate progression, when known. */
+  actionMatchId?: string | null;
+  /** Home and away names of `actionMatchId`, when both are known. */
+  actionMatchLabel?: string | null;
 }
 
 /** Hub projection — inbound feed seats (Structure GET, not schematic). */

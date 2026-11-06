@@ -825,3 +825,7 @@
   align-items: flex-start;
   gap: 0.15rem;
 }
+
+.structure-freshness-panel__cause {
+  color: var(--color-text-secondary);
+}

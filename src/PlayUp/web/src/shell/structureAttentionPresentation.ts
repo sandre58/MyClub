@@ -23,6 +23,12 @@ const STRUCTURE_INFORMATIONAL_PRESENTED_SOURCES = new Set([
   'AwaitingInboundQualification',
 ]);
 
+/** Freshness rows are attention, not structure diagnostics. Completed phases stay out. */
+const FRESHNESS_ATTENTION_SOURCES = new Set([
+  'ResolutionPerime',
+  'ResolutionIndetermine',
+]);
+
 export function isStructureAttentionSource(source: string): boolean {
   return (
     structureDiagnosticMeta(source) != null ||
@@ -86,6 +92,9 @@ export function shouldPresentStructureAttentionItem(
 ): boolean {
   if (STRUCTURE_INFORMATIONAL_PRESENTED_SOURCES.has(item.source)) {
     return false;
+  }
+  if (FRESHNESS_ATTENTION_SOURCES.has(item.source)) {
+    return structureAttentionStageStatus(item, stages) !== 'Completed';
   }
   if (!isStructureAttentionSource(item.source)) {
     return true;

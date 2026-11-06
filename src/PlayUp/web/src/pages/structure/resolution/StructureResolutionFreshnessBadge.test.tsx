@@ -1,5 +1,6 @@
 import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { TOOLTIP_DELAY_OPEN_MS } from '../../../design-system/components/Tooltip';
@@ -169,6 +170,69 @@ describe('StructureResolutionFreshnessBadge', () => {
       cause!.compareDocumentPosition(action!) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+  });
+
+  it('opens the upstream phase from an AmontPerime panel and keeps Remplacer there', async () => {
+    const onReplace = vi.fn();
+    const user = userEvent.setup();
+    renderWithI18n(
+      <MemoryRouter initialEntries={['/competitions/comp/structure']}>
+        <Routes>
+          <Route
+            path="/competitions/:competitionId/structure"
+            element={
+              <StructureResolutionFreshnessBadge
+                occupant={{
+                  target: 'Slot',
+                  entryId: 'e1',
+                  provenanceKind: 'Progression',
+                  sourcePathId: 'p1',
+                  state: 'Perime',
+                  slotKey: 'A',
+                  stalenessCause: 'AmontPerime',
+                  upstreamStageId: 'phase-a',
+                }}
+                onReplace={onReplace}
+              />
+            }
+          />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await user.click(
+      screen.getByRole('button', { name: /Phase amont périmée/ }),
+    );
+    expect(
+      screen.getByRole('link', { name: 'Aller à la phase amont' }),
+    ).toHaveAttribute('href', '/competitions/comp/structure?stage=phase-a');
+    await user.click(screen.getByRole('button', { name: 'Remplacer…' }));
+    expect(onReplace).toHaveBeenCalledOnce();
+  });
+
+  it('names the unplayed match in the indeterminate panel', async () => {
+    const user = userEvent.setup();
+    renderWithI18n(
+      <MemoryRouter>
+        <StructureResolutionFreshnessBadge
+          occupant={{
+            target: 'Slot',
+            entryId: 'e1',
+            provenanceKind: 'Progression',
+            sourcePathId: 'p1',
+            state: 'Indetermine',
+            indeterminacyCause: 'MatchNonJoue',
+            actionMatchId: 'match-9',
+            actionMatchLabel: 'Nord – Est',
+          }}
+        />
+      </MemoryRouter>,
+    );
+
+    await user.click(screen.getByRole('button', { name: /n'est pas joué/ }));
+    expect(
+      screen.getByRole('link', { name: 'Jouer le match Nord – Est' }),
+    ).toHaveAttribute('href', '/matches/match-9');
   });
 });
 

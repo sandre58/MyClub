@@ -203,7 +203,10 @@ public sealed class ResolutionFreshnessDetectorTests
 
         Evaluate(competition, [league, terminal], (league, matches))
             .Where(occupant => occupant.ProvenanceKind == ResolutionProvenanceKind.Qualification)
-            .Should().OnlyContain(occupant => occupant.State == StructureResolutionFreshness.Indetermine);
+            .Should().OnlyContain(occupant =>
+                occupant.State == StructureResolutionFreshness.Indetermine
+                && occupant.IndeterminacyCause == StructureResolutionIndeterminacyCause.SelectionVide
+                && occupant.UpstreamStageId == league.Id.Value);
     }
 
     [Fact]
@@ -241,7 +244,16 @@ public sealed class ResolutionFreshnessDetectorTests
             .Should().Contain(occupant =>
                 occupant.SlotKey == "NV"
                 && occupant.State == StructureResolutionFreshness.NonVerifiee
-                && occupant.ProvenanceKind == ResolutionProvenanceKind.NonVerifiee);
+                && occupant.ProvenanceKind == ResolutionProvenanceKind.NonVerifiee
+                && occupant.IndeterminacyCause == null);
+
+        NeedsAttentionAssembler.Assemble(
+                competition,
+                [league, terminal],
+                new Dictionary<StageId, IReadOnlyList<Match>> { [league.Id] = matches })
+            .Items.Should().NotContain(item =>
+                item.Source == NeedsAttentionAssembler.SourceResolutionPerime
+                || item.Source == NeedsAttentionAssembler.SourceResolutionIndetermine);
     }
 
     [Fact]
@@ -360,7 +372,8 @@ public sealed class ResolutionFreshnessDetectorTests
         occupants.Should().Contain(occupant =>
             occupant.SlotKey == "R1"
             && occupant.State == StructureResolutionFreshness.Perime
-            && occupant.StalenessCause == StructureResolutionStalenessCause.AmontPerime);
+            && occupant.StalenessCause == StructureResolutionStalenessCause.AmontPerime
+            && occupant.UpstreamStageId == cup.Id.Value);
         occupants.Should().Contain(occupant =>
             occupant.SlotKey == "QF-B"
             && occupant.ProvenanceKind == ResolutionProvenanceKind.Directe
@@ -396,7 +409,141 @@ public sealed class ResolutionFreshnessDetectorTests
         occupants[beta.Id.Value].Should().Contain(occupant =>
             occupant.StalenessCause == StructureResolutionStalenessCause.RegleQualification);
         occupants[alpha.Id.Value].Should().Contain(occupant =>
-            occupant.StalenessCause == StructureResolutionStalenessCause.AmontPerime);
+            occupant.StalenessCause == StructureResolutionStalenessCause.AmontPerime
+            && occupant.UpstreamStageId == beta.Id.Value);
+    }
+
+    [Fact]
+    public void Unplayed_progression_match_is_indeterminate_with_the_match_to_play()
+    {
+        var (competition, source, destination, match, occupant) = ProgressionFeed(finish: false);
+
+        var assessed = Evaluate(
+            competition,
+            [source, destination],
+            (source, [match])).Single(item => item.SlotKey == "Jouer");
+
+        assessed.State.Should().Be(StructureResolutionFreshness.Indetermine);
+        assessed.IndeterminacyCause.Should().Be(StructureResolutionIndeterminacyCause.MatchNonJoue);
+        assessed.ActionMatchId.Should().Be(match.Id.Value);
+        var away = match.AwayEntryId ?? throw new InvalidOperationException("Away entry is required.");
+        string Name(EntryId entryId) =>
+            competition.Entries.Single(entry => entry.Id.Equals(entryId)).DisplayName;
+        assessed.ActionMatchLabel.Should().Be($"{Name(occupant)} – {Name(away)}");
+        assessed.UpstreamStageId.Should().Be(source.Id.Value);
+
+        var attention = NeedsAttentionAssembler.Assemble(
+            competition,
+            [source, destination],
+            new Dictionary<StageId, IReadOnlyList<Match>> { [source.Id] = [match] });
+        attention.Items.Should().Contain(item =>
+            item.Source == NeedsAttentionAssembler.SourceResolutionIndetermine
+            && item.Severity == NeedsAttentionAssembler.SeverityWarning
+            && item.TargetId == destination.Id.Value.ToString()
+            && item.Params!["count"] == "2");
+
+        var view = StructureViewAssembler.Assemble(
+            competition,
+            [source, destination],
+            matchSummariesByStage: new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>
+            {
+                [source.Id] = StageStartReadinessGuard.ToSummaryRows([match]),
+            });
+        var completed = view with
+        {
+            Stages = [.. view.Stages.Select(stage => stage with { Status = StageStatus.Completed })],
+        };
+        var hidden = new List<NeedsAttentionItemDto>();
+        StructurePresentedAttentionCollector.Collect(completed, hidden);
+        hidden.Should().NotContain(item =>
+            item.Source == NeedsAttentionAssembler.SourceResolutionPerime
+            || item.Source == NeedsAttentionAssembler.SourceResolutionIndetermine);
+    }
+
+    [Fact]
+    public void Level_progression_score_asks_to_break_the_tie()
+    {
+        var (competition, source, destination, match, _) = ProgressionFeed(finish: true, draw: true);
+
+        Evaluate(competition, [source, destination], (source, [match]))
+            .Should().Contain(occupant =>
+                occupant.SlotKey == "Jouer"
+                && occupant.IndeterminacyCause == StructureResolutionIndeterminacyCause.Egalite
+                && occupant.ActionMatchId == match.Id.Value);
+    }
+
+    [Fact]
+    public void Progression_provenance_without_a_source_stage_is_source_absente()
+    {
+        var competition = CreateCompetition.Execute("Missing source", _clock);
+        var entry = AddEntry.Execute(competition, "Seul", _clock);
+        var destination = Stage.Create(competition.Id, new StageName("Dest"), SampleRegulations.Standard(), _clock);
+        destination.AddRound("Finale", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        destination.AddSlot("Jouer");
+        competition.AddStage(destination.Id, _clock);
+        var missing = Guid.NewGuid().ToString("N");
+        destination.AddResolvedPopulationEntry(entry.Id, _clock);
+        destination.ApplyResolvedEntry(
+            "Jouer",
+            entry.Id,
+            _clock,
+            new ResolutionProvenance(
+                ResolutionProvenanceKind.Progression,
+                $"P|{missing}|P1|Winner|{destination.Id.Value:N}|S|Jouer",
+                "seed"));
+
+        Evaluate(competition, [destination])
+            .Should().ContainSingle(occupant =>
+                occupant.IndeterminacyCause == StructureResolutionIndeterminacyCause.SourceAbsente
+                && occupant.UpstreamStageId == null
+                && occupant.ActionMatchId == null);
+    }
+
+    private (
+        Competition Competition,
+        Stage Source,
+        Stage Destination,
+        Match Match,
+        EntryId Home) ProgressionFeed(bool finish, bool draw = false)
+    {
+        var competition = CreateCompetition.Execute($"Prog {finish} {draw}", _clock);
+        var home = AddEntry.Execute(competition, "Nord", _clock).Id;
+        var away = AddEntry.Execute(competition, "Est", _clock).Id;
+        var source = Stage.Create(competition.Id, new StageName("Barrage"), SampleRegulations.Standard(), _clock);
+        source.AddRound("Tour", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        source.AddSlot("A");
+        source.AddSlot("B");
+        source.ReplaceBracketPairs([new BracketPair("P1", "A", "B")]);
+        competition.AddStage(source.Id, _clock);
+        source.AddResolvedPopulationEntry(home, _clock);
+        source.AddResolvedPopulationEntry(away, _clock);
+        source.AssignEntryToSlot("A", home);
+        source.AssignEntryToSlot("B", away);
+        var fixture = source.AddFixture(source.Rounds[0].Id, _clock, "A", "B", "P1");
+        var match = Match.Create(competition.Id, source.Id, home, away, _clock);
+        source.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
+        if (finish)
+        {
+            match.Start(_clock);
+            match.Finish(new MatchResult(ResultType.Played, new Score(draw ? 1 : 2, draw ? 1 : 0)), _clock);
+        }
+
+        var destination = Stage.Create(competition.Id, new StageName("Suite"), SampleRegulations.Standard(), _clock);
+        destination.AddRound("Finale", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        destination.AddSlot("Jouer");
+        competition.AddStage(destination.Id, _clock);
+        var path = new ProgressionPath(
+            "P1",
+            ProgressionOutcome.Winner,
+            new ProgressionDestination(destination.Id, "Jouer"));
+        source.ReplaceProgressionRules(new ProgressionRules([path]), _clock);
+        var provenance = new ResolutionProvenance(
+            ResolutionProvenanceKind.Progression,
+            ResolutionPathIdentifier.ForProgression(source.Id, path),
+            "seed");
+        destination.AddResolvedPopulationEntry(home, _clock, provenance);
+        destination.ApplyResolvedEntry("Jouer", home, _clock, provenance);
+        return (competition, source, destination, match, home);
     }
 
     private (Competition Competition, Stage League, Stage Terminal, EntryId[] Entries, List<Match> Matches) LeagueFeed(

@@ -840,6 +840,30 @@
         "RegleQualification": "Règle de qualification modifiée",
         "AmontPerime": "Phase amont périmée"
       },
+      "upstreamLink": "Aller à la phase amont",
+      "indeterminacy": {
+        "MatchNonJoue": {
+          "cause": "Le match n'est pas joué",
+          "action": "Jouer le match",
+          "actionNamed": "Jouer le match {{match}}"
+        },
+        "Egalite": {
+          "cause": "Le score ne départage pas",
+          "action": "Départager l'égalité"
+        },
+        "SourceAbsente": {
+          "cause": "La phase ou la règle source est introuvable",
+          "action": "Vérifier la source"
+        },
+        "SelectionVide": {
+          "cause": "Le classement ne désigne aucune équipe",
+          "action": "Vérifier le classement"
+        },
+        "Autre": {
+          "cause": "La sélection ne peut pas être calculée",
+          "action": "Vérifier la phase amont"
+        }
+      },
       "ariaWithCause": "{{label}} — {{cause}}"
     },
     "cascade": {

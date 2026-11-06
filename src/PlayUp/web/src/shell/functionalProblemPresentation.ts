@@ -251,6 +251,18 @@ export function functionalProblemPresentation(
     };
   }
 
+  if (source === 'ResolutionPerime' || source === 'ResolutionIndetermine') {
+    return {
+      tone: 'attention',
+      titleKey: `attentionSource.${source}`,
+      titleNs: 'enums',
+      descriptionParams,
+      sotHref: structureHref(competitionId, stageFromTarget),
+      cta: null,
+      canal: 'attention-drawer',
+    };
+  }
+
   if (source === 'InsufficientParticipants') {
     return {
       tone: 'attention',
