@@ -67,7 +67,7 @@ public sealed class StageApplyResolvedEntryTests
     }
 
     [Fact]
-    public void ApplyResolvedEntry_moves_entry_from_another_slot_without_second_event()
+    public void ApplyResolvedEntry_move_emits_an_event_for_the_emptied_slot()
     {
         var stage = CreateCupWithSlots("A", "B");
         var entryId = EntryId.New();
@@ -78,10 +78,12 @@ public sealed class StageApplyResolvedEntryTests
 
         stage.FindSlot("A")!.EntryId.Should().BeNull();
         stage.FindSlot("B")!.EntryId.Should().Be(entryId);
-        var changed = stage.DomainEvents.Should().ContainSingle().Which.Should().BeOfType<StageSlotOccupantChanged>().Subject;
-        changed.SlotKey.Should().Be("B");
-        changed.PreviousEntryId.Should().BeNull();
-        changed.EntryId.Should().Be(entryId);
+        var events = stage.DomainEvents.OfType<StageSlotOccupantChanged>().ToArray();
+        events.Should().HaveCount(2);
+        events.Should().ContainSingle(changed =>
+            changed.SlotKey == "A" && changed.PreviousEntryId == entryId && changed.EntryId == null);
+        events.Should().ContainSingle(changed =>
+            changed.SlotKey == "B" && changed.PreviousEntryId == null && changed.EntryId == entryId);
     }
 
     [Fact]
