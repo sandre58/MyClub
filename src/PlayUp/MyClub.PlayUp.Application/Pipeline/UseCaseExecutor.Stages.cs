@@ -583,6 +583,46 @@ public sealed partial class UseCaseExecutor
     }
 
     /// <summary>
+    /// Assigns an entry to a group (manual placement).
+    /// </summary>
+    public async Task AssignEntryToGroupAsync(
+        StageId stageId,
+        GroupId groupId,
+        EntryId entryId,
+        CancellationToken cancellationToken = default)
+    {
+        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
+            .ConfigureAwait(false);
+        await EnsureCompetitionAllowsLifecycleMutationAsync(stage.CompetitionId, cancellationToken)
+            .ConfigureAwait(false);
+        var stageMatches = await matches.ListByStageForUpdateAsync(stageId, cancellationToken)
+            .ConfigureAwait(false);
+        AssignEntryToGroup.Execute(stage, competition, groupId, entryId, stageMatches);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Clears manual group membership for an entry.
+    /// </summary>
+    public async Task ClearEntryFromGroupAsync(
+        StageId stageId,
+        GroupId groupId,
+        EntryId entryId,
+        CancellationToken cancellationToken = default)
+    {
+        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
+            .ConfigureAwait(false);
+        await EnsureCompetitionAllowsLifecycleMutationAsync(stage.CompetitionId, cancellationToken)
+            .ConfigureAwait(false);
+        var stageMatches = await matches.ListByStageForUpdateAsync(stageId, cancellationToken)
+            .ConfigureAwait(false);
+        ClearEntryFromGroup.Execute(stage, competition, groupId, entryId, stageMatches);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// Renames a stage (locale).
     /// </summary>
     public async Task RenameStageAsync(

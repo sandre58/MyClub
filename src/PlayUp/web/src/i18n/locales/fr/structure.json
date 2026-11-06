@@ -464,6 +464,9 @@
       "ProgressionDownstreamProductionBlocked": "Cette modification de progression entre en conflit avec des matchs déjà produits en aval.",
       "ProgressionProductionParticipationAmbiguous": "Cette modification de progression ne peut pas être validée — le lien avec la production aval est incertain.",
       "AppliedDrawSlotPlacementProtected": "Cette affectation est protégée par le tirage appliqué. Elle ne peut pas être modifiée directement.",
+      "AppliedDrawGroupPlacementProtected": "Cette affectation de groupe est protégée par le tirage appliqué. Elle ne peut pas être modifiée directement.",
+      "GroupManualEditResolutionLocked": "Cette affectation de groupe provient d’une qualification ou d’une progression et ne peut pas être modifiée manuellement.",
+      "GroupAssignmentEntryNotInComposition": "Cette équipe n’est pas dans le pool de composition de la phase — ajoutez-la au pool avant d’affecter un groupe.",
       "DrawObsoleteForConsumption": "Ce tirage ne correspond plus à la phase — annulez-le ou rétablissez la cohérence avant d’appliquer ou de produire des matchs."
     },
     "mutation": {
@@ -490,6 +493,9 @@
       "ProgressionDownstreamProductionBlocked": "Cette modification de progression entre en conflit avec des matchs déjà produits en aval.",
       "ProgressionProductionParticipationAmbiguous": "Cette modification de progression ne peut pas être validée — le lien avec la production aval est incertain.",
       "AppliedDrawSlotPlacementProtected": "Cette affectation est protégée par le tirage appliqué. Elle ne peut pas être modifiée directement.",
+      "AppliedDrawGroupPlacementProtected": "Cette affectation de groupe est protégée par le tirage appliqué. Elle ne peut pas être modifiée directement.",
+      "GroupManualEditResolutionLocked": "Cette affectation de groupe provient d’une qualification ou d’une progression et ne peut pas être modifiée manuellement.",
+      "GroupAssignmentEntryNotInComposition": "Cette équipe n’est pas dans le pool de composition de la phase — ajoutez-la au pool avant d’affecter un groupe.",
       "DrawObsoleteForConsumption": "Ce tirage ne correspond plus à la phase — annulez-le ou rétablissez la cohérence avant d’appliquer ou de produire des matchs.",
       "InitialRoundNotPlayable": "Le premier tour n’est pas encore jouable — vérifiez places, tirage et production des matchs.",
       "IncompleteEntryRound": "Complétez toutes les paires d’entrée du tableau avant de démarrer la phase.",

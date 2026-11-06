@@ -3,6 +3,9 @@
     "AppliedDrawFeedRulesChangeBlocked": "You cannot change qualification rules while the draw for this phase is already applied.",
     "AppliedDrawPoolChangeBlocked": "You cannot change the composition pool while the draw for this phase is already applied.",
     "AppliedDrawSlotPlacementProtected": "This placement is protected by the applied draw. It cannot be changed directly.",
+    "AppliedDrawGroupPlacementProtected": "This group placement is protected by the applied draw. It cannot be changed directly.",
+    "GroupAssignmentEntryNotInComposition": "This team is not in this phase’s composition pool — add it to the pool before assigning a group.",
+    "GroupManualEditResolutionLocked": "This group placement was produced by qualification or progression and cannot be edited manually.",
     "Attribution": "Place award paths no longer match this phase’s bracket — fix attribution first.",
     "CascadeReplaceCompleted": "A completed phase blocks the cascade replacement.",
     "CascadeReplaceConflict": "The cascade was confirmed against a state that has changed. Run the preview again.",
@@ -197,6 +200,7 @@
     "TimeWindowInvalid": "The time window is invalid."
   },
   "Stage": {
+    "CompositionWithdrawalGroupMembershipBlocked": "Cannot remove this team from the composition while it still has a group assignment — clear the group first.",
     "DisplayNameLocked": "The phase name can no longer be changed.",
     "DrawFixedPlacementViolation": "The draw result does not include the required fixed placements.",
     "DrawGenerationInvalid": "The draw request is invalid — check the inputs and try again.",
@@ -218,7 +222,9 @@
     "FixtureOutcomeInvalid": "The confrontation outcome is invalid.",
     "FixtureOutcomeNotFinished": "The match for this confrontation is not finished yet.",
     "FixtureOutcomeUndecided": "The confrontation outcome is undecided — record a result first.",
+    "GroupFull": "This group already has the maximum number of teams allowed (places per group).",
     "GroupNotFound": "Group not found.",
+    "GroupPlacementResolutionLocked": "This group placement was produced by qualification or progression and cannot be changed this way.",
     "InvalidComposition": "The phase composition is invalid.",
     "InvalidConfiguration": "Invalid stage configuration.",
     "InvalidDisplayName": "The group or round name is invalid.",

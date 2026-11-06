@@ -142,7 +142,8 @@ public static class ApplyProgressionOutcome
                 destinations[i].ApplyResolvedGroupEntry(
                     instruction.GroupId!.Value,
                     instruction.EntryId,
-                    provenance);
+                    provenance,
+                    destinationSnapshots);
             }
             else if (instruction.TargetsSlot)
             {

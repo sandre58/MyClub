@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Reads;
@@ -22,8 +23,9 @@ internal static class GroupsPlacementReadiness
             return (0, 0);
         }
 
+        var composition = stage.CompositionEntries.Select(entry => entry.EntryId).ToHashSet();
         var capacity = stage.Groups.Count * placesPerGroup;
-        var filled = stage.Groups.Sum(group => group.EntryIds.Count);
+        var filled = stage.Groups.Sum(group => CountValidGroupMembers(group, composition));
         return (filled, capacity);
     }
 
@@ -39,12 +41,20 @@ internal static class GroupsPlacementReadiness
             return true;
         }
 
-        if (stage.Groups.Any(group => group.EntryIds.Count < 2))
+        var composition = stage.CompositionEntries.Select(entry => entry.EntryId).ToHashSet();
+
+        if (stage.PlacesPerGroup is not { } placesPerGroup || placesPerGroup < 1)
         {
-            return true;
+            return stage.Groups.Any(group => CountValidGroupMembers(group, composition) < 2);
         }
 
-        var (filled, capacity) = GetPlacementProgress(stage);
-        return capacity > 0 && filled < capacity;
+        return stage.Groups.Any(group =>
+        {
+            var valid = CountValidGroupMembers(group, composition);
+            return valid < 2 || valid != placesPerGroup;
+        });
     }
+
+    private static int CountValidGroupMembers(Group group, HashSet<EntryId> composition) =>
+        group.EntryIds.Count(entryId => composition.Contains(entryId));
 }

@@ -139,6 +139,45 @@ internal static class StageEndpoints
             });
 
         app.MapPut(
+            "/stages/{stageId:guid}/groups/{groupId:guid}/entry",
+            async (
+                Guid stageId,
+                Guid groupId,
+                AssignEntryToGroupRequest request,
+                UseCaseExecutor executor,
+                CancellationToken cancellationToken) =>
+            {
+                ArgumentNullException.ThrowIfNull(request);
+                await executor
+                    .AssignEntryToGroupAsync(
+                        new StageId(stageId),
+                        new GroupId(groupId),
+                        new EntryId(request.EntryId),
+                        cancellationToken)
+                    .ConfigureAwait(false);
+                return Results.NoContent();
+            });
+
+        app.MapDelete(
+            "/stages/{stageId:guid}/groups/{groupId:guid}/entry/{entryId:guid}",
+            async (
+                Guid stageId,
+                Guid groupId,
+                Guid entryId,
+                UseCaseExecutor executor,
+                CancellationToken cancellationToken) =>
+            {
+                await executor
+                    .ClearEntryFromGroupAsync(
+                        new StageId(stageId),
+                        new GroupId(groupId),
+                        new EntryId(entryId),
+                        cancellationToken)
+                    .ConfigureAwait(false);
+                return Results.NoContent();
+            });
+
+        app.MapPut(
             "/stages/{stageId:guid}/match-generation-format",
             async (
                 Guid stageId,

@@ -57,6 +57,8 @@ internal static class StageStartReadinessGuard
                 ApplicationErrorCodes.StartBlockedIncompleteEntryRound);
         }
 
+        StructureDrawConsumptionGate.EnsureNoObsoleteDrawsOnStage(stage);
+
         if (TryGetProductionStartGap(competition, stage, matchSummaries, competitionStages) is { } productionGap)
         {
             ThrowStartBlockedForProductionGap(productionGap);
@@ -85,8 +87,6 @@ internal static class StageStartReadinessGuard
                 "Start is blocked because no confrontation is determined for this Cup phase.",
                 ApplicationErrorCodes.StartBlockedNoDeterminedConfrontations);
         }
-
-        StructureDrawConsumptionGate.EnsureNoObsoleteDrawsOnStage(stage);
     }
 
     internal static string? TryGetDisabledReasonCode(
@@ -105,6 +105,11 @@ internal static class StageStartReadinessGuard
             return DisabledIncompleteEntryRound;
         }
 
+        if (StructureDrawConsumptionGate.StageHasObsoleteDrawForConsumption(stage))
+        {
+            return DisabledDrawObsoleteForConsumption;
+        }
+
         if (TryGetProductionStartGap(competition, stage, matchSummaries, competitionStages) is { } productionGap)
         {
             return productionGap;
@@ -121,11 +126,6 @@ internal static class StageStartReadinessGuard
                 competitionStages))
         {
             return DisabledNoExploitableInitialConfrontations;
-        }
-
-        if (StructureDrawConsumptionGate.StageHasObsoleteDrawForConsumption(stage))
-        {
-            return DisabledDrawObsoleteForConsumption;
         }
 
         if (CupReadyLacksDeterminedConfrontations(stage, matchSummaries))
