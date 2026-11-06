@@ -13,7 +13,12 @@ import { Popover } from '../../../design-system/components/Popover';
 import { TextLink } from '../../../design-system/components/TextLink';
 import { Tooltip } from '../../../design-system/components/Tooltip';
 import { Status } from '../../../design-system/components/Status';
-import { ReplaceOccupantIcon } from '../../../design-system/icons/contentIcons';
+import {
+  HourglassIcon,
+  InfoIcon,
+  RefreshIcon,
+} from '../../../design-system/icons/contentIcons';
+import { ChevronRightIcon } from '../../../design-system/icons/shellIcons';
 import type { StructureResolutionOccupant } from '../../../types';
 import { freshnessPanel, type FreshnessPanel } from './freshnessGuidance';
 import {
@@ -21,9 +26,17 @@ import {
   resolutionOccupantNeedsBadge,
 } from './structureResolutionOccupants';
 
+type FreshnessBadgeVariant = 'full' | 'icon';
+
 type StructureResolutionFreshnessBadgeProps = {
   occupant: StructureResolutionOccupant | null | undefined;
   density?: 'context' | 'compact';
+  /**
+   * `icon` hides the state word (schematic slots). The word moves into the tooltip,
+   * or into the guidance panel when the badge opens one.
+   * Lists and details keep the default `full` pill.
+   */
+  variant?: FreshnessBadgeVariant;
   /** Opens the cascade preview. Ignored unless the occupant is stale Qual/Prog. */
   onReplace?: (occupant: StructureResolutionOccupant) => void;
 };
@@ -40,6 +53,20 @@ function badgeTone(
       return 'neutral';
     default:
       return 'neutral';
+  }
+}
+
+function stateIcon(state: StructureResolutionOccupant['state']): ReactNode {
+  const className = 'structure-freshness-badge__icon';
+  switch (state) {
+    case 'Perime':
+      return <RefreshIcon size="sm" className={className} aria-hidden="true" />;
+    case 'Indetermine':
+      return (
+        <HourglassIcon size="sm" className={className} aria-hidden="true" />
+      );
+    default:
+      return <InfoIcon size="sm" className={className} aria-hidden="true" />;
   }
 }
 
@@ -63,6 +90,7 @@ function FreshnessBadgeRouted(props: StructureResolutionFreshnessBadgeProps) {
 function FreshnessBadgeBody({
   occupant,
   density = 'compact',
+  variant = 'full',
   onReplace,
   competitionId,
 }: StructureResolutionFreshnessBadgeProps & {
@@ -91,13 +119,16 @@ function FreshnessBadgeBody({
       : label;
   const replaceable = !!onReplace && isReplayableStale(occupant);
   const replaceHint = t('resolution.cascade.replaceHint');
-  const replaceName =
+  const replaceDetail =
     causeLabel != null
       ? t('resolution.cascade.replaceHintWithCause', {
           cause: causeLabel,
           action: replaceHint,
         })
       : replaceHint;
+  const replaceName =
+    variant === 'icon' ? `${label}. ${replaceDetail}` : replaceDetail;
+  const iconOnly = variant === 'icon';
 
   const badge = (
     <Status
@@ -105,16 +136,26 @@ function FreshnessBadgeBody({
       tone={badgeTone(occupant.state)}
       variant="soft"
       shape="pill"
+      className={iconOnly ? 'structure-freshness-badge--icon' : undefined}
       aria-label={replaceable || panel ? undefined : ariaLabel}
     >
-      {replaceable && !panel ? (
-        <ReplaceOccupantIcon
+      {replaceable ? (
+        <RefreshIcon
           size="sm"
-          className="structure-freshness-replace__icon"
+          className="structure-freshness-badge__icon"
+          aria-hidden="true"
+        />
+      ) : iconOnly ? (
+        stateIcon(occupant.state)
+      ) : null}
+      {iconOnly ? null : label}
+      {replaceable ? (
+        <ChevronRightIcon
+          size="sm"
+          className="structure-freshness-badge__chevron"
           aria-hidden="true"
         />
       ) : null}
-      {label}
     </Status>
   );
 
@@ -125,12 +166,31 @@ function FreshnessBadgeBody({
         panel={panel}
         badge={badge}
         ariaLabel={ariaLabel}
+        stateLabel={label}
+        showStateLabel={iconOnly}
         replaceable={replaceable}
-        replaceHint={replaceHint}
+        replaceLabel={t('resolution.cascade.action')}
         onReplace={onReplace}
       />
     );
   }
+
+  const tip = (
+    <span className="structure-freshness-replace__tip">
+      {iconOnly ? (
+        <span className="structure-freshness-replace__state">{label}</span>
+      ) : null}
+      {causeLabel ? (
+        <span className="structure-freshness-replace__cause">{causeLabel}</span>
+      ) : null}
+      {replaceable ? (
+        <span className="structure-freshness-replace__action">
+          {replaceHint}
+        </span>
+      ) : null}
+    </span>
+  );
+  const hasTip = iconOnly || causeLabel != null || replaceable;
 
   if (replaceable) {
     const open = (event: MouseEvent | KeyboardEvent) => {
@@ -139,20 +199,7 @@ function FreshnessBadgeBody({
       onReplace(occupant);
     };
     return (
-      <Tooltip
-        content={
-          <span className="structure-freshness-replace__tip">
-            {causeLabel ? (
-              <span className="structure-freshness-replace__cause">
-                {causeLabel}
-              </span>
-            ) : null}
-            <span className="structure-freshness-replace__action">
-              {replaceHint}
-            </span>
-          </span>
-        }
-      >
+      <Tooltip content={tip}>
         <button
           type="button"
           className="structure-freshness-replace"
@@ -165,11 +212,11 @@ function FreshnessBadgeBody({
     );
   }
 
-  if (causeLabel == null) {
+  if (!hasTip || (causeLabel == null && !iconOnly)) {
     return badge;
   }
 
-  return <Tooltip content={causeLabel}>{badge}</Tooltip>;
+  return <Tooltip content={tip}>{badge}</Tooltip>;
 }
 
 function FreshnessGuidancePanel({
@@ -177,16 +224,20 @@ function FreshnessGuidancePanel({
   panel,
   badge,
   ariaLabel,
+  stateLabel,
+  showStateLabel,
   replaceable,
-  replaceHint,
+  replaceLabel,
   onReplace,
 }: {
   occupant: StructureResolutionOccupant;
   panel: FreshnessPanel;
   badge: ReactNode;
   ariaLabel: string;
+  stateLabel: string;
+  showStateLabel: boolean;
   replaceable: boolean;
-  replaceHint: string;
+  replaceLabel: string;
   onReplace?: (occupant: StructureResolutionOccupant) => void;
 }) {
   const { t } = useTranslation('structure');
@@ -241,6 +292,11 @@ function FreshnessGuidancePanel({
         aria-label={name}
         width={240}
       >
+        {showStateLabel ? (
+          <span className="structure-freshness-replace__state">
+            {stateLabel}
+          </span>
+        ) : null}
         <span className="structure-freshness-panel__cause">{cause}</span>
         {panel.href ? (
           <TextLink to={panel.href}>{action}</TextLink>
@@ -257,7 +313,7 @@ function FreshnessGuidancePanel({
               onReplace(occupant);
             }}
           >
-            {replaceHint}
+            {replaceLabel}
           </button>
         ) : null}
       </Popover>

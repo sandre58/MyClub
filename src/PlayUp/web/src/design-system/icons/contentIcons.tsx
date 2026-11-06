@@ -33,6 +33,7 @@ import {
   PlayingCardsFan,
   Plus,
   Podium,
+  RefreshCw,
   Search,
   ShieldBan,
   Shuffle,
@@ -179,9 +180,9 @@ export function LegsStatIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={ArrowLeftRight} size={size} {...props} />;
 }
 
-/** Replace a stale resolution occupant. */
-export function ReplaceOccupantIcon({ size, ...props }: ContentIconProps) {
-  return <LucideIcon icon={ArrowLeftRight} size={size} {...props} />;
+/** Refresh a stale resolution occupant. */
+export function RefreshIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={RefreshCw} size={size} {...props} />;
 }
 
 /** Compact structural anomaly (≠ draw / ops). */
