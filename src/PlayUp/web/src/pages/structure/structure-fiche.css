@@ -849,6 +849,10 @@
   font-style: normal;
 }
 
+.structure-freshness-replace__state {
+  font-weight: var(--font-weight-semibold);
+}
+
 .structure-freshness-replace__action {
   margin-top: 0.15rem;
   padding-top: 0.15rem;

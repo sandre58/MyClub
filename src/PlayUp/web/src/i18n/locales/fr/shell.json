@@ -46,7 +46,15 @@
     "lede": "Situations qui demandent une action.",
     "ledePaused": "Constats sur les phases en pause. Les situations recensées restent consultables. Certaines actions nécessitent de reprendre la phase.",
     "groupBlocking": "Bloquant",
-    "groupAttention": "À traiter"
+    "groupAttention": "À traiter",
+    "rowSubtitle": {
+      "qualificationConflict": "La place cible contient une autre équipe que celle qualifiée par le résultat amont.",
+      "qualificationConflictForm": "La résolution de parcours sur la phase ne correspond pas à l’équipe attendue par la qualification.",
+      "qualificationPending": "Le résultat amont est prêt mais la qualification n’a pas encore été appliquée sur la phase.",
+      "progressionConflict": "La place cible contient une autre équipe que celle attendue après la progression.",
+      "progressionConflictForm": "La résolution de parcours sur la phase ne correspond pas à l’équipe attendue par la progression.",
+      "progressionPending": "Le match source est terminé mais la progression n’a pas encore été appliquée."
+    }
   },
   "preferences": {
     "open": "Ouvrir les préférences",

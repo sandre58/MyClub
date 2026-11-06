@@ -306,4 +306,27 @@ describe('functionalProblemPresentation', () => {
     expect(presentation.cta?.actionCode).toBe('ConfigureStructure');
     expect(presentation.sotHref).toBe('/competitions/comp-1/structure');
   });
+
+  it('situationPresentation deep-links QualificationConflict to Structure qualification rail', () => {
+    const presentation = situationPresentation(
+      {
+        source: 'QualificationConflict',
+        nature: 'Blocking',
+        targetType: 'Slot',
+        targetId: 'phase-d:slot-1',
+        matchId: null,
+        actionable: true,
+        actionCode: 'ApplyQualification',
+        impactCode: 'BlocksProgression',
+        params: {
+          slotKey: 'slot-1',
+          destinationStageId: 'phase-d',
+        },
+      },
+      'comp-1',
+    );
+    expect(presentation.sotHref).toBe(
+      '/competitions/comp-1/structure?stage=phase-d&section=qualification&focus=rail-attribution',
+    );
+  });
 });

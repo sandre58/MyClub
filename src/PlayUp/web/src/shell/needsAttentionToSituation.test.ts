@@ -48,6 +48,19 @@ describe('needsAttentionItemToSituation', () => {
     expect(situation.actionCode).toBe('ApplyQualification');
   });
 
+  it('parses Group targetId into destinationStageId and groupKey for drawer copy', () => {
+    const situation = needsAttentionItemToSituation({
+      source: 'QualificationConflict',
+      severity: 'Blocking',
+      targetType: 'Group',
+      targetId: 'stage-b:group-7',
+    });
+    expect(situation.params).toEqual({
+      destinationStageId: 'stage-b',
+      groupKey: 'group-7',
+    });
+  });
+
   it('keeps DrawNoSolution non-actionable even with problem payload', () => {
     const situation = needsAttentionItemToSituation({
       source: 'DrawNoSolution',

@@ -38,7 +38,10 @@ function buildSituationParams(
     return { ...item.params };
   }
 
-  if (item.targetType !== 'Slot' || !item.targetId) {
+  if (
+    (item.targetType !== 'Slot' && item.targetType !== 'Group') ||
+    !item.targetId
+  ) {
     return {};
   }
 
@@ -47,10 +50,15 @@ function buildSituationParams(
     return {};
   }
 
-  return {
-    slotKey: parts[1]!,
-    destinationStageId: parts[0]!,
-  };
+  return item.targetType === 'Slot'
+    ? {
+        slotKey: parts[1]!,
+        destinationStageId: parts[0]!,
+      }
+    : {
+        groupKey: parts[1]!,
+        destinationStageId: parts[0]!,
+      };
 }
 
 /** Maps GET /attention items to OverviewSituation rows for shared shell UI. */

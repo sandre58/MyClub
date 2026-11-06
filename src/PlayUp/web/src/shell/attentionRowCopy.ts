@@ -26,11 +26,48 @@ export function attentionSituationTitle(
   return situationTitle(fallbackSource, params);
 }
 
+/**
+ * Second line under the drawer title for runtime signals that need business context.
+ */
+export function attentionSituationSubtitle(
+  item: OverviewSituation,
+): string | null {
+  const { source, targetType } = item;
+  if (source === 'QualificationConflict') {
+    if (targetType === 'Form') {
+      return i18n.t('attention.rowSubtitle.qualificationConflictForm', {
+        ns: 'shell',
+      });
+    }
+    return i18n.t('attention.rowSubtitle.qualificationConflict', {
+      ns: 'shell',
+    });
+  }
+  if (source === 'ProgressionConflict') {
+    if (targetType === 'Form') {
+      return i18n.t('attention.rowSubtitle.progressionConflictForm', {
+        ns: 'shell',
+      });
+    }
+    return i18n.t('attention.rowSubtitle.progressionConflict', { ns: 'shell' });
+  }
+  if (source === 'QualificationPending') {
+    return i18n.t('attention.rowSubtitle.qualificationPending', {
+      ns: 'shell',
+    });
+  }
+  if (source === 'ProgressionPending') {
+    return i18n.t('attention.rowSubtitle.progressionPending', { ns: 'shell' });
+  }
+  return null;
+}
+
 export function attentionSituationMeta(
   item: OverviewSituation,
   stages: readonly CompetitionStageSummary[],
 ): string | null {
   const stageId =
+    item.params?.destinationStageId?.trim() ||
     item.params?.stageId?.trim() ||
     (item.targetType === 'Stage' ? item.targetId?.trim() : undefined);
 

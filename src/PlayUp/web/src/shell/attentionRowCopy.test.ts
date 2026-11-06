@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   attentionSituationMeta,
+  attentionSituationSubtitle,
   attentionSituationTitle,
 } from './attentionRowCopy';
 import type { OverviewSituation } from '../types';
@@ -38,5 +39,39 @@ describe('attentionRowCopy', () => {
       { stageId: 'stage-a', name: 'Poules', status: 'Draft' },
     ]);
     expect(meta).toBe('Poules');
+  });
+
+  it('resolves stage name from destinationStageId on Slot attention rows', () => {
+    const item: OverviewSituation = {
+      source: 'QualificationConflict',
+      nature: 'Blocking',
+      targetType: 'Slot',
+      targetId: 'stage-z:slot-a',
+      matchId: null,
+      actionable: true,
+      actionCode: 'ApplyQualification',
+      impactCode: 'BlocksProgression',
+      params: { slotKey: 'slot-a', destinationStageId: 'stage-z' },
+    };
+    const meta = attentionSituationMeta(item, [
+      { stageId: 'stage-z', name: 'Phase finale', status: 'Running' },
+    ]);
+    expect(meta).toBe('Phase finale');
+  });
+
+  it('adds a business subtitle for QualificationConflict', () => {
+    const subtitle = attentionSituationSubtitle({
+      source: 'QualificationConflict',
+      nature: 'Blocking',
+      targetType: 'Slot',
+      targetId: 's:1',
+      matchId: null,
+      actionable: true,
+      actionCode: 'ApplyQualification',
+      impactCode: 'BlocksProgression',
+      params: {},
+    });
+    expect(subtitle).not.toBeNull();
+    expect(subtitle!.length).toBeGreaterThan(20);
   });
 });
