@@ -845,7 +845,7 @@
     "cascade": {
       "action": "Replace the stale occupant",
       "actionNamed": "Replace {{place}}",
-      "replaceHint": "Replace…",
+      "replaceHint": "Click to replace the team with the expected occupant",
       "replaceHintWithCause": "{{cause}}. {{action}}",
       "confirmTitle": "Confirm the cascade replacement?",
       "confirm": "Replace",
