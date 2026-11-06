@@ -262,7 +262,7 @@ public static class CascadeReplace
                 stage.RemoveResolvedGroupEntry(groupId, previous, snapshots);
             }
 
-            stage.ApplyResolvedGroupEntry(groupId, next, provenance);
+            stage.ApplyResolvedGroupEntry(groupId, next, provenance, snapshots);
             if (!previous.Equals(next))
             {
                 replacements.Add(new CascadeReplacement(

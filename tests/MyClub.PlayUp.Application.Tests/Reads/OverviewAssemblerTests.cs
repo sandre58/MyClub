@@ -1953,11 +1953,13 @@ public sealed class OverviewAssemblerTests
             stage,
             new DrawRules(DrawMode.Random, potRules: new PotRules(2)),
             _clock);
+
+        // Five teams in the pool; only four are assigned to groups (capacity 2×2) — one stays unplaced.
+        stage.ReplaceAffectationAuthoring([e1.Id, e2.Id, e3.Id, e4.Id, e5.Id], _clock);
         stage.AssignEntryToGroup(stage.Groups[0].Id, e1.Id);
         stage.AssignEntryToGroup(stage.Groups[0].Id, e2.Id);
         stage.AssignEntryToGroup(stage.Groups[1].Id, e3.Id);
         stage.AssignEntryToGroup(stage.Groups[1].Id, e4.Id);
-        stage.AssignEntryToGroup(stage.Groups[0].Id, e5.Id);
 
         StageMaterializationTestSupport.EnsureReadyForMaterialize(competition, stage, [stage], _clock);
         var first = MaterializeMatches.Execute(competition, stage, [], _clock);

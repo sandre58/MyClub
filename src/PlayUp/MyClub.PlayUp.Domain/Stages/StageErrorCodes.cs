@@ -254,6 +254,21 @@ public static class StageErrorCodes
     public const string PlacesPerGroupNotApplicable = "Stage.PlacesPerGroupNotApplicable";
 
     /// <summary>
+    /// Gets the code when a group already holds <see cref="Stage.PlacesPerGroup"/> entries.
+    /// </summary>
+    public const string GroupFull = "Stage.GroupFull";
+
+    /// <summary>
+    /// Gets the code when manual group membership cannot change a qualification/progression-resolved placement.
+    /// </summary>
+    public const string GroupPlacementResolutionLocked = "Stage.GroupPlacementResolutionLocked";
+
+    /// <summary>
+    /// Gets the code when withdrawing a composition entry cannot clear group membership (matches or placements).
+    /// </summary>
+    public const string CompositionWithdrawalGroupMembershipBlocked = "Stage.CompositionWithdrawalGroupMembershipBlocked";
+
+    /// <summary>
     /// Gets the code when Swiss settings are invalid or incompatible with stage composition.
     /// </summary>
     public const string SwissSettingsInvalid = "Stage.SwissSettingsInvalid";

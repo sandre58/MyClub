@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Matches;
 
 namespace MyClub.PlayUp.Domain.Stages;
 
@@ -136,6 +137,115 @@ public static class MaterializedOpponentCoherence
                     $"Entry '{entryId}' appears on materialized match '{snapshot.MatchId}' and cannot leave its group.");
             }
         }
+    }
+
+    /// <summary>
+    /// Copies current group occupants keyed by group identity.
+    /// </summary>
+    public static Dictionary<GroupId, List<EntryId>> CopyGroupDeterminations(Stage stage)
+    {
+        ArgumentNullException.ThrowIfNull(stage);
+        var map = new Dictionary<GroupId, List<EntryId>>(stage.Groups.Count);
+        foreach (var group in stage.Groups)
+        {
+            map[group.Id] = [.. group.EntryIds];
+        }
+
+        return map;
+    }
+
+    /// <summary>
+    /// Ensures group memberships implied by <paramref name="groupMembersAfter"/> stay coherent with
+    /// materialized round-robin confrontations on this stage.
+    /// </summary>
+    public static void EnsureGroupsCoherent(
+        Stage stage,
+        IReadOnlyDictionary<GroupId, List<EntryId>> groupMembersAfter,
+        IReadOnlyList<MatchParticipantSnapshot> materializedParticipants)
+    {
+        ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(groupMembersAfter);
+        ArgumentNullException.ThrowIfNull(materializedParticipants);
+
+        if (stage.Groups.Count == 0)
+        {
+            return;
+        }
+
+        var byMatchId = IndexSnapshots(materializedParticipants);
+        var attached = CollectAttachedMatchIds(stage);
+        if (attached.Count == 0)
+        {
+            return;
+        }
+
+        var before = CopyGroupDeterminations(stage);
+
+        foreach (var matchday in stage.Matchdays)
+        {
+            foreach (var fixture in matchday.Fixtures)
+            {
+                if (fixture.Attachments.Count == 0)
+                {
+                    continue;
+                }
+
+                foreach (var attachment in fixture.Attachments)
+                {
+                    if (!byMatchId.TryGetValue(attachment.MatchId, out var snapshot)
+                        || !attached.Contains(snapshot.MatchId))
+                    {
+                        continue;
+                    }
+
+                    if (snapshot.HomeEntryId is null || snapshot.AwayEntryId is null)
+                    {
+                        continue;
+                    }
+
+                    if (snapshot.HomeEntryId is not { } homeEntry
+                        || snapshot.AwayEntryId is not { } awayEntry)
+                    {
+                        continue;
+                    }
+
+                    var homeGroup = FindGroupIdContaining(before, homeEntry);
+                    var awayGroup = FindGroupIdContaining(before, awayEntry);
+                    if (homeGroup is null || awayGroup is null || !homeGroup.Equals(awayGroup))
+                    {
+                        continue;
+                    }
+
+                    var pool = homeGroup.Value;
+                    if (!groupMembersAfter.TryGetValue(pool, out var afterMembers))
+                    {
+                        throw Conflict(
+                            $"Materialized match '{snapshot.MatchId}' still requires both participants in group '{pool}'.");
+                    }
+
+                    if (!afterMembers.Contains(homeEntry) || !afterMembers.Contains(awayEntry))
+                    {
+                        throw Conflict(
+                            $"Materialized match '{snapshot.MatchId}' still requires both participants in group '{pool}'.");
+                    }
+                }
+            }
+        }
+    }
+
+    private static GroupId? FindGroupIdContaining(
+        IReadOnlyDictionary<GroupId, List<EntryId>> groups,
+        EntryId entryId)
+    {
+        foreach (var pair in groups)
+        {
+            if (pair.Value.Contains(entryId))
+            {
+                return pair.Key;
+            }
+        }
+
+        return null;
     }
 
     private static Dictionary<MatchId, MatchParticipantSnapshot> IndexSnapshots(

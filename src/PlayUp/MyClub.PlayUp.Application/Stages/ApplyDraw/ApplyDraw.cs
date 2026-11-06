@@ -233,7 +233,7 @@ public static class ApplyDraw
                 stage.RemoveDrawEntryFromGroup(owningGroup.Id, placement.EntryId, snapshots);
             }
 
-            stage.AssignEntryToGroup(placement.GroupId, placement.EntryId);
+            stage.AssignEntryToGroup(placement.GroupId, placement.EntryId, snapshots);
         }
 
         return [];

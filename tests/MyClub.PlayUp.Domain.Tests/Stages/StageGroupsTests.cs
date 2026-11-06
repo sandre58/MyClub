@@ -55,6 +55,23 @@ public sealed class StageGroupsTests
     }
 
     [Fact]
+    public void AssignEntryToGroup_rejects_capacity_overflow()
+    {
+        var stage = Stage.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
+        _ = stage.AddGroup("A", _clock);
+        stage.SetPlacesPerGroup(2);
+        var e1 = EntryId.New();
+        var e2 = EntryId.New();
+        var e3 = EntryId.New();
+        stage.AssignEntryToGroup(stage.Groups[0].Id, e1);
+        stage.AssignEntryToGroup(stage.Groups[0].Id, e2);
+
+        var act = () => stage.AssignEntryToGroup(stage.Groups[0].Id, e3);
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.GroupFull);
+    }
+
+    [Fact]
     public void AssignEntryToGroup_cross_group_duplicate_is_rejected()
     {
         // Arrange
@@ -85,7 +102,7 @@ public sealed class StageGroupsTests
     }
 
     [Fact]
-    public void RemoveEntryFromGroup_in_Ready_is_rejected()
+    public void RemoveEntryFromGroup_in_Ready_is_allowed()
     {
         var stage = Stage.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
         var group = stage.AddGroup("A", _clock);
@@ -95,10 +112,9 @@ public sealed class StageGroupsTests
         stage.AddMatchday(1, _clock);
         stage.Prepare(_clock);
 
-        var act = () => stage.RemoveEntryFromGroup(group.Id, entryId);
+        stage.RemoveEntryFromGroup(group.Id, entryId);
 
-        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
-        group.EntryIds.Should().Contain(entryId);
+        group.EntryIds.Should().NotContain(entryId);
         stage.Status.Should().Be(StageStatus.Ready);
     }
 
