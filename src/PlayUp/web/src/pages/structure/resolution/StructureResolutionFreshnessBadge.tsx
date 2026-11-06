@@ -1,6 +1,16 @@
-import type { KeyboardEvent, MouseEvent, ReactNode } from 'react';
+import {
+  useId,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type MouseEvent,
+  type ReactNode,
+} from 'react';
+import { useInRouterContext, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
+import { Popover } from '../../../design-system/components/Popover';
+import { TextLink } from '../../../design-system/components/TextLink';
 import { Tooltip } from '../../../design-system/components/Tooltip';
 import { Status } from '../../../design-system/components/Status';
 import {
@@ -10,6 +20,7 @@ import {
 } from '../../../design-system/icons/contentIcons';
 import { ChevronRightIcon } from '../../../design-system/icons/shellIcons';
 import type { StructureResolutionOccupant } from '../../../types';
+import { freshnessPanel, type FreshnessPanel } from './freshnessGuidance';
 import {
   isReplayableStale,
   resolutionOccupantNeedsBadge,
@@ -21,7 +32,8 @@ type StructureResolutionFreshnessBadgeProps = {
   occupant: StructureResolutionOccupant | null | undefined;
   density?: 'context' | 'compact';
   /**
-   * `icon` hides the state word (schematic slots). The word moves into the tooltip.
+   * `icon` hides the state word (schematic slots). The word moves into the tooltip,
+   * or into the guidance panel when the badge opens one.
    * Lists and details keep the default `full` pill.
    */
   variant?: FreshnessBadgeVariant;
@@ -58,13 +70,37 @@ function stateIcon(state: StructureResolutionOccupant['state']): ReactNode {
   }
 }
 
-export function StructureResolutionFreshnessBadge({
+export function StructureResolutionFreshnessBadge(
+  props: StructureResolutionFreshnessBadgeProps,
+) {
+  const inRouter = useInRouterContext();
+  if (!inRouter) {
+    return <FreshnessBadgeBody {...props} competitionId={null} />;
+  }
+  return <FreshnessBadgeRouted {...props} />;
+}
+
+function FreshnessBadgeRouted(props: StructureResolutionFreshnessBadgeProps) {
+  const { competitionId } = useParams();
+  return (
+    <FreshnessBadgeBody {...props} competitionId={competitionId ?? null} />
+  );
+}
+
+function FreshnessBadgeBody({
   occupant,
   density = 'compact',
   variant = 'full',
   onReplace,
-}: StructureResolutionFreshnessBadgeProps) {
+  competitionId,
+}: StructureResolutionFreshnessBadgeProps & {
+  competitionId: string | null;
+}) {
   const { t } = useTranslation('structure');
+  const panel =
+    occupant && resolutionOccupantNeedsBadge(occupant)
+      ? freshnessPanel(occupant, competitionId)
+      : null;
 
   if (!resolutionOccupantNeedsBadge(occupant)) {
     return null;
@@ -101,7 +137,7 @@ export function StructureResolutionFreshnessBadge({
       variant="soft"
       shape="pill"
       className={iconOnly ? 'structure-freshness-badge--icon' : undefined}
-      aria-label={replaceable ? undefined : ariaLabel}
+      aria-label={replaceable || panel ? undefined : ariaLabel}
     >
       {replaceable ? (
         <RefreshIcon
@@ -122,6 +158,22 @@ export function StructureResolutionFreshnessBadge({
       ) : null}
     </Status>
   );
+
+  if (panel) {
+    return (
+      <FreshnessGuidancePanel
+        occupant={occupant}
+        panel={panel}
+        badge={badge}
+        ariaLabel={ariaLabel}
+        stateLabel={label}
+        showStateLabel={iconOnly}
+        replaceable={replaceable}
+        replaceLabel={t('resolution.cascade.action')}
+        onReplace={onReplace}
+      />
+    );
+  }
 
   const tip = (
     <span className="structure-freshness-replace__tip">
@@ -165,4 +217,106 @@ export function StructureResolutionFreshnessBadge({
   }
 
   return <Tooltip content={tip}>{badge}</Tooltip>;
+}
+
+function FreshnessGuidancePanel({
+  occupant,
+  panel,
+  badge,
+  ariaLabel,
+  stateLabel,
+  showStateLabel,
+  replaceable,
+  replaceLabel,
+  onReplace,
+}: {
+  occupant: StructureResolutionOccupant;
+  panel: FreshnessPanel;
+  badge: ReactNode;
+  ariaLabel: string;
+  stateLabel: string;
+  showStateLabel: boolean;
+  replaceable: boolean;
+  replaceLabel: string;
+  onReplace?: (occupant: StructureResolutionOccupant) => void;
+}) {
+  const { t } = useTranslation('structure');
+  const anchorRef = useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(false);
+  const panelId = useId();
+  const cause =
+    panel.kind === 'upstream'
+      ? t('resolution.freshness.cause.AmontPerime')
+      : t(`resolution.freshness.indeterminacy.${panel.cause}.cause`);
+  const action =
+    panel.kind === 'upstream'
+      ? t('resolution.freshness.upstreamLink')
+      : panel.cause === 'MatchNonJoue' && panel.matchLabel
+        ? t('resolution.freshness.indeterminacy.MatchNonJoue.actionNamed', {
+            match: panel.matchLabel,
+          })
+        : t(`resolution.freshness.indeterminacy.${panel.cause}.action`);
+  const name =
+    panel.kind === 'upstream'
+      ? `${ariaLabel}. ${action}`
+      : t('resolution.freshness.ariaWithCause', {
+          label: ariaLabel,
+          cause: `${cause}. ${action}`,
+        });
+
+  const toggle = (event: MouseEvent | KeyboardEvent) => {
+    event.stopPropagation();
+    event.preventDefault();
+    setOpen((current) => !current);
+  };
+
+  return (
+    <>
+      <button
+        ref={anchorRef}
+        type="button"
+        className="structure-freshness-replace"
+        aria-label={name}
+        aria-expanded={open}
+        aria-haspopup="dialog"
+        aria-controls={panelId}
+        onClick={toggle}
+      >
+        {badge}
+      </button>
+      <Popover
+        id={panelId}
+        open={open}
+        onOpenChange={setOpen}
+        anchorRef={anchorRef}
+        aria-label={name}
+        width={240}
+      >
+        {showStateLabel ? (
+          <span className="structure-freshness-replace__state">
+            {stateLabel}
+          </span>
+        ) : null}
+        <span className="structure-freshness-panel__cause">{cause}</span>
+        {panel.href ? (
+          <TextLink to={panel.href}>{action}</TextLink>
+        ) : (
+          <span>{action}</span>
+        )}
+        {replaceable && onReplace ? (
+          <button
+            type="button"
+            className="ds-btn ds-btn--ghost"
+            onClick={(event) => {
+              event.stopPropagation();
+              setOpen(false);
+              onReplace(occupant);
+            }}
+          >
+            {replaceLabel}
+          </button>
+        ) : null}
+      </Popover>
+    </>
+  );
 }

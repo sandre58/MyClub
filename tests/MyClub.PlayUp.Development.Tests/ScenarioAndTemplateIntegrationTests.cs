@@ -69,6 +69,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
             "resolution-visual-recette",
             "deferred-participants-recette",
             "cascade-replace-recette",
+            "freshness-actions-recette",
             "regulation-demo",
             "regulation-tie-homogeneous",
             "confrontation-multi-round",
@@ -86,7 +87,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
 
         catalog.All.Select(s => s.Id).OrderBy(id => id, StringComparer.Ordinal)
             .Should().Equal(expectedIds.OrderBy(id => id, StringComparer.Ordinal));
-        catalog.All.Should().HaveCount(51);
+        catalog.All.Should().HaveCount(52);
 
         foreach (var id in progressiveIds)
         {

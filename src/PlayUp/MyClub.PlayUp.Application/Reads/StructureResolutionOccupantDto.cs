@@ -61,6 +61,28 @@ public enum StructureResolutionStalenessCause
 }
 
 /// <summary>
+/// Why a resolution occupant is <see cref="StructureResolutionFreshness.Indetermine"/>.
+/// </summary>
+[SuppressMessage("Design", "CA1008:Enums should have zero value", Justification = "Explicit indeterminacy causes without an unknown sentinel.")]
+public enum StructureResolutionIndeterminacyCause
+{
+    /// <summary>A progression match is not finished.</summary>
+    MatchNonJoue = 1,
+
+    /// <summary>A finished confrontation is still level.</summary>
+    Egalite = 2,
+
+    /// <summary>The source stage or source path cannot be found.</summary>
+    SourceAbsente = 3,
+
+    /// <summary>The standing does not designate an entry.</summary>
+    SelectionVide = 4,
+
+    /// <summary>The selection could not be computed.</summary>
+    Autre = 5,
+}
+
+/// <summary>
 /// One stored resolution occupant and its freshness, computed on the Structure overview.
 /// </summary>
 /// <param name="Target">Slot, group, or population.</param>
@@ -71,6 +93,10 @@ public enum StructureResolutionStalenessCause
 /// <param name="SlotKey">Slot key when <paramref name="Target"/> is <see cref="StructureResolutionOccupantTarget.Slot"/>.</param>
 /// <param name="GroupId">Group identity when <paramref name="Target"/> is <see cref="StructureResolutionOccupantTarget.Group"/>.</param>
 /// <param name="StalenessCause">Cause when <paramref name="State"/> is <see cref="StructureResolutionFreshness.Perime"/>; otherwise null.</param>
+/// <param name="UpstreamStageId">Source stage the selection was read from, when known.</param>
+/// <param name="IndeterminacyCause">Cause when <paramref name="State"/> is <see cref="StructureResolutionFreshness.Indetermine"/>; otherwise null.</param>
+/// <param name="ActionMatchId">Match the organizer should open for an indeterminate progression, when known.</param>
+/// <param name="ActionMatchLabel">Entry names of <paramref name="ActionMatchId"/>, when both are known.</param>
 public sealed record StructureResolutionOccupantDto(
     StructureResolutionOccupantTarget Target,
     Guid EntryId,
@@ -79,4 +105,8 @@ public sealed record StructureResolutionOccupantDto(
     StructureResolutionFreshness State,
     string? SlotKey = null,
     Guid? GroupId = null,
-    StructureResolutionStalenessCause? StalenessCause = null);
+    StructureResolutionStalenessCause? StalenessCause = null,
+    Guid? UpstreamStageId = null,
+    StructureResolutionIndeterminacyCause? IndeterminacyCause = null,
+    Guid? ActionMatchId = null,
+    string? ActionMatchLabel = null);

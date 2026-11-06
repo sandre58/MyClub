@@ -122,6 +122,32 @@ describe('attentionPartition', () => {
     ]);
   });
 
+  it('keeps freshness rows for an open phase and drops them once the phase is completed', () => {
+    const wire: NeedsAttentionItem[] = [
+      {
+        source: 'ResolutionPerime',
+        severity: 'Warning',
+        targetType: 'Stage',
+        targetId: 'open',
+        params: { stageId: 'open', count: '1' },
+      },
+      {
+        source: 'ResolutionIndetermine',
+        severity: 'Warning',
+        targetType: 'Stage',
+        targetId: 'done',
+        params: { stageId: 'done', count: '1' },
+      },
+    ];
+    const { attention } = partitionPresentableAttention(wire, {
+      stages: [
+        { stageId: 'open', name: 'Tableau', status: 'Running' },
+        { stageId: 'done', name: 'Finale', status: 'Completed' },
+      ],
+    });
+    expect(attention.map((item) => item.source)).toEqual(['ResolutionPerime']);
+  });
+
   it('presentableAttentionCount includes blocking and warning rows', () => {
     const wire: NeedsAttentionItem[] = [
       {

@@ -315,8 +315,14 @@ Optional. Present when the phase stores resolution provenance (slot, group membe
 | `slotKey` | string \| null | Set when `target` is `Slot` |
 | `groupId` | guid \| null | Set when `target` is `Group` |
 | `stalenessCause` | string \| null | When `state` is `Perime`: `ResultatAmont` \| `RegleQualification` \| `AmontPerime`. Otherwise null |
+| `upstreamStageId` | guid \| null | Source stage the selection was read from, when known. `AmontPerime` uses it as the phase to open |
+| `indeterminacyCause` | string \| null | When `state` is `Indetermine`: `MatchNonJoue` \| `Egalite` \| `SourceAbsente` \| `SelectionVide` \| `Autre`. Otherwise null |
+| `actionMatchId` | guid \| null | Match to open for `MatchNonJoue` or `Egalite`, when known |
+| `actionMatchLabel` | string \| null | Home and away names of `actionMatchId`, when both are known |
 
 `Directe` stays `AJour`. `NonVerifiee` stays `NonVerifiee`. An unresolved selection is `Indetermine`. `AmontPerime` means an upstream occupant this resolution depends on is already `Perime`.
+
+`GET /competitions/{id}/attention` also emits `ResolutionPerime` and `ResolutionIndetermine` (severity `Warning`, target `Stage`) for phases whose status is not `Completed`. `NonVerifiee` is not an attention source. One item per phase and source; `params.count` is the occupant count and `params.stageId` is the phase.
 
 ### Stage lifecycle commands
 

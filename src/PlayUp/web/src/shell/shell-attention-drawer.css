@@ -233,6 +233,13 @@
   line-height: var(--leading-tight);
 }
 
+.shell-attention-drawer__row-sub {
+  color: var(--color-text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--leading-normal);
+}
+
 .shell-attention-drawer__row-meta {
   color: var(--color-text-secondary);
 }

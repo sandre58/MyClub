@@ -24,6 +24,9 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="DependsOnEntryIds">Entries that selection consulted.</param>
 /// <param name="ReplayEntryId">Entry the pure selection returns now, when it resolves.</param>
 /// <param name="ReplayFingerprint">Fingerprint to persist for <paramref name="ReplayEntryId"/>.</param>
+/// <param name="IndeterminacyCause">Cause when <paramref name="State"/> is indeterminate.</param>
+/// <param name="ActionMatchId">Match to open for an indeterminate progression, when known.</param>
+/// <param name="ActionMatchLabel">Entry names of <paramref name="ActionMatchId"/>, when both are known.</param>
 public sealed record ResolutionOccupantAssessment(
     Guid StageId,
     StructureResolutionOccupantTarget Target,
@@ -37,4 +40,7 @@ public sealed record ResolutionOccupantAssessment(
     Guid? DependsOnStageId,
     IReadOnlyList<Guid> DependsOnEntryIds,
     Guid? ReplayEntryId,
-    string? ReplayFingerprint);
+    string? ReplayFingerprint,
+    StructureResolutionIndeterminacyCause? IndeterminacyCause = null,
+    Guid? ActionMatchId = null,
+    string? ActionMatchLabel = null);

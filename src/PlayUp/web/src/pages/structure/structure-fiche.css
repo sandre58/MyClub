@@ -849,10 +849,18 @@
   font-style: normal;
 }
 
+.structure-freshness-replace__state {
+  font-weight: var(--font-weight-semibold);
+}
+
 .structure-freshness-replace__action {
   margin-top: 0.15rem;
   padding-top: 0.15rem;
   border-top: var(--border-width) solid var(--color-border);
   color: var(--color-text-secondary);
   font-style: italic;
+}
+
+.structure-freshness-panel__cause {
+  color: var(--color-text-secondary);
 }
