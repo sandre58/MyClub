@@ -225,6 +225,87 @@ public sealed class Match : AggregateRoot<MatchId>
     }
 
     /// <summary>
+    /// Replaces a side that already has an entry. Filling an unknown side stays on <see cref="ResolveParticipant"/>.
+    /// A live match is refused. A finished match is refused until <see cref="InvalidateFinishedResult"/>.
+    /// </summary>
+    /// <param name="side">Home or away.</param>
+    /// <param name="entryId">The entry that now occupies that side.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void ReplaceParticipant(Side side, EntryId entryId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        if (!Enum.IsDefined(side))
+        {
+            throw new DomainException(
+                $"Unknown match side '{side}'.",
+                MatchErrorCodes.InvalidSide);
+        }
+
+        if (Status is MatchStatus.Live or MatchStatus.Finished)
+        {
+            throw new DomainException(
+                "A live or finished match participant cannot be replaced.",
+                MatchErrorCodes.ParticipantImmutable);
+        }
+
+        var current = side == Side.Home ? HomeEntryId : AwayEntryId;
+        if (current is not { } known)
+        {
+            throw new DomainException(
+                "An unknown match participant is filled, not replaced.",
+                MatchErrorCodes.ParticipantNotResolved);
+        }
+
+        if (known.Equals(entryId))
+        {
+            return;
+        }
+
+        var other = side == Side.Home ? AwayEntryId : HomeEntryId;
+        if (other is { } otherEntry && otherEntry.Equals(entryId))
+        {
+            throw new DomainException(
+                "Home and away entries must be different.",
+                MatchErrorCodes.SameParticipant);
+        }
+
+        if (side == Side.Home)
+        {
+            HomeEntryId = entryId;
+        }
+        else
+        {
+            AwayEntryId = entryId;
+        }
+
+        Raise(new MatchParticipantReplaced(Id, side, known, entryId, clock));
+    }
+
+    /// <summary>
+    /// Returns a finished match to not played. The score and the player sheet of that match are deleted.
+    /// </summary>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void InvalidateFinishedResult(IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        if (Status != MatchStatus.Finished || Result is null)
+        {
+            throw new DomainException(
+                $"A finished result can only be invalidated from Finished (current: '{Status}').",
+                MatchErrorCodes.FinishedResultMissing);
+        }
+
+        Status = MatchStatus.Scheduled;
+        Result = null;
+        RunningScore = null;
+        _recordedGoals.Clear();
+        _recordedSubstitutions.Clear();
+        _recordedDisciplinaryEvents.Clear();
+        _declaredParticipations.Clear();
+        Raise(new MatchFinishedResultInvalidated(Id, clock));
+    }
+
+    /// <summary>
     /// Starts the match (Scheduled to Live). Composition may be empty. Initializes running score to 0–0.
     /// </summary>
     /// <param name="clock">The clock used for domain events.</param>

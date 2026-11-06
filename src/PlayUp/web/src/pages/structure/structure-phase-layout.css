@@ -304,16 +304,11 @@
   }
 
   .structure-phase-composition__grid--shared-population-gauge.structure-phase-composition__grid--with-affectation:not(
-      .structure-phase-composition__grid--without-teams
-    )
-    .structure-phase-composition__section--affectation {
+      .structure-phase-composition__grid--without-teams) .structure-phase-composition__section--affectation {
     grid-row: 1 / span 2;
   }
 
-  .structure-phase-composition__grid--shared-population-gauge.structure-phase-composition__grid--with-affectation:not(
-      .structure-phase-composition__grid--without-teams
-    )
-    .structure-phase-composition__sep--before-affectation {
+  .structure-phase-composition__grid--shared-population-gauge.structure-phase-composition__grid--with-affectation:not(.structure-phase-composition__grid--without-teams) .structure-phase-composition__sep--before-affectation {
     grid-row: 1 / span 2;
   }
 
@@ -323,8 +318,7 @@
     margin-top: 0;
   }
 
-  .structure-phase-composition__grid--shared-population-gauge:not(.structure-phase-composition__grid--with-affectation)
-    .structure-phase-composition__population-gauge--span-sources {
+  .structure-phase-composition__grid--shared-population-gauge:not(.structure-phase-composition__grid--with-affectation) .structure-phase-composition__population-gauge--span-sources {
     grid-column: 1 / -1;
   }
 
@@ -932,23 +926,18 @@
 }
 
 .structure-operational-strip__production-actions--tile-dual > .structure-operational-strip__materialize-action-wrap,
-.structure-operational-strip__production-actions--tile-dual
-  > .ds-tooltip-trigger:has(.structure-operational-strip__materialize-action-wrap) {
+.structure-operational-strip__production-actions--tile-dual > .ds-tooltip-trigger:has(.structure-operational-strip__materialize-action-wrap) {
   flex: 1 1 auto;
   min-width: 0;
   display: flex;
 }
 
 .structure-operational-strip__production-actions--tile-dual .structure-operational-strip__materialize-action-wrap,
-.structure-operational-strip__production-actions--tile-dual
-  .structure-operational-strip__materialize-action-wrap
-  .ds-btn {
+.structure-operational-strip__production-actions--tile-dual .structure-operational-strip__materialize-action-wrap .ds-btn {
   width: 100%;
 }
 
-.structure-operational-strip__production-actions--tile-dual
-  > .ds-tooltip-trigger:has(.ds-btn--primary)
-  .structure-operational-tile__action-wrap,
+.structure-operational-strip__production-actions--tile-dual > .ds-tooltip-trigger:has(.ds-btn--primary) .structure-operational-tile__action-wrap,
 .structure-operational-strip__production-actions--tile-dual > .ds-tooltip-trigger:has(.ds-btn--primary) .ds-btn {
   width: 100%;
 }
@@ -960,8 +949,7 @@
 }
 
 .structure-operational-strip__production-actions--tile-dual > .structure-operational-strip__dematerialize-icon-wrap,
-.structure-operational-strip__production-actions--tile-dual
-  > .ds-tooltip-trigger:has(.structure-operational-strip__dematerialize-btn--icon) {
+.structure-operational-strip__production-actions--tile-dual > .ds-tooltip-trigger:has(.structure-operational-strip__dematerialize-btn--icon) {
   flex: none;
   display: inline-flex;
   align-self: stretch;

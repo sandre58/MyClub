@@ -497,4 +497,57 @@ public static class ApplicationErrorCodes
     /// Gets the code when a Prog/Qual slot destination is not satisfied for materialization.
     /// </summary>
     public const string InboundDestinationNotSatisfied = "Application.InboundDestinationNotSatisfied";
+
+    /// <summary>
+    /// Gets the code when a cascade confirmation token no longer matches the loaded state.
+    /// Mapped to HTTP 409.
+    /// </summary>
+    public const string CascadeReplaceConflict = "Application.CascadeReplaceConflict";
+
+    /// <summary>
+    /// Gets the code when the confirmed occupant does not exist.
+    /// </summary>
+    public const string CascadeReplaceOccupantNotFound = "Application.CascadeReplaceOccupantNotFound";
+
+    /// <summary>
+    /// Gets the code when the confirmed occupant is not a replayable qualification or progression.
+    /// Mapped to HTTP 409.
+    /// </summary>
+    public const string CascadeReplaceNotReplayable = "Application.CascadeReplaceNotReplayable";
+
+    /// <summary>
+    /// Gets the code when the confirmed occupant is not stale.
+    /// Mapped to HTTP 409.
+    /// </summary>
+    public const string CascadeReplaceNotStale = "Application.CascadeReplaceNotStale";
+
+    /// <summary>
+    /// Gets the code when the cascade would write a direct assignment.
+    /// Mapped to HTTP 409.
+    /// </summary>
+    public const string CascadeReplaceDirectAssignment = "Application.CascadeReplaceDirectAssignment";
+
+    /// <summary>
+    /// Gets the code when a phase in the cascade is completed.
+    /// Mapped to HTTP 409.
+    /// </summary>
+    public const string CascadeReplaceCompleted = "Application.CascadeReplaceCompleted";
+
+    /// <summary>
+    /// Gets the code when the resolution chain contains a cycle.
+    /// Mapped to HTTP 409.
+    /// </summary>
+    public const string CascadeReplaceCycle = "Application.CascadeReplaceCycle";
+
+    /// <summary>
+    /// Gets the code when the confirmed selection cannot be decided.
+    /// Mapped to HTTP 409.
+    /// </summary>
+    public const string CascadeReplaceIndeterminate = "Application.CascadeReplaceIndeterminate";
+
+    /// <summary>
+    /// Gets the code when a live match would change participant.
+    /// Mapped to HTTP 409.
+    /// </summary>
+    public const string CascadeReplaceLiveBlocked = "Application.CascadeReplaceLiveBlocked";
 }

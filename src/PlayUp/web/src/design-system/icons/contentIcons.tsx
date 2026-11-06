@@ -33,6 +33,7 @@ import {
   PlayingCardsFan,
   Plus,
   Podium,
+  RefreshCw,
   Search,
   ShieldBan,
   Shuffle,
@@ -177,6 +178,11 @@ export function LossIcon({ size, ...props }: ContentIconProps) {
 /** Two legs / legs. */
 export function LegsStatIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={ArrowLeftRight} size={size} {...props} />;
+}
+
+/** Refresh a stale resolution occupant. */
+export function RefreshIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={RefreshCw} size={size} {...props} />;
 }
 
 /** Compact structural anomaly (≠ draw / ops). */

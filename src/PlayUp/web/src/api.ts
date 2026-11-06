@@ -69,6 +69,15 @@ export {
   generateNextSwissRound,
   materializeCupFromOccupiedSlots,
   applyQualification,
+  previewCascadeReplace,
+  confirmCascadeReplace,
+} from './api/stages';
+export type {
+  CascadePlayedMatch,
+  CascadeReplaceRequest,
+  CascadeReplaceResponse,
+  CascadeReplaceSurface,
+  CascadeReplacement,
 } from './api/stages';
 export {
   fetchMatchHub,

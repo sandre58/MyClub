@@ -63,7 +63,7 @@ public sealed class DeferredParticipantsRecetteIntegrationTests(DevelopmentPostg
         }
 
         var deferred = allMatches.Should().ContainSingle(match => !match.ParticipantsResolved).Subject;
-        var groupMatch = allMatches.Should().ContainSingle(match => match.ParticipantsResolved).Subject;
+        var groupMatch = allMatches.Should().ContainSingle(match => match.Status == MatchStatus.Finished).Subject;
         var standing = CalculateStanding.Execute(
             [groupMatch.HomeEntryId!.Value, groupMatch.AwayEntryId!.Value],
             allMatches,
@@ -80,7 +80,8 @@ public sealed class DeferredParticipantsRecetteIntegrationTests(DevelopmentPostg
             var cup = (await stages.GetByIdsForUpdateAsync(competition.StageIds))
                 .Single(stage => stage.Name.Value == "Demi-finale");
             var stageMatches = await matches.ListByStageForUpdateAsync(cup.Id);
-            return stageMatches.Should().ContainSingle().Subject;
+            var semi = cup.Rounds.Single(round => round.Name == "SF").Fixtures.Single();
+            return stageMatches.Should().ContainSingle(match => semi.MatchIds.Any(id => id.Equals(match.Id))).Subject;
         }
     }
 }

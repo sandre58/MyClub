@@ -1595,6 +1595,58 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
+    /// Removes one resolved population entry. Affectation authoring is left untouched.
+    /// Allowed under the same mutability as dynamic resolution.
+    /// </summary>
+    /// <param name="entryId">Entry that leaves the population.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void RemoveResolvedPopulationEntry(EntryId entryId, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        if (_compositionEntries.All(entry => !entry.EntryId.Equals(entryId)))
+        {
+            return;
+        }
+
+        EnsureResolutionMutable();
+        _compositionEntries.RemoveAll(entry => entry.EntryId.Equals(entryId));
+        Raise(new StageCompositionEntriesReplaced(Id, clock));
+    }
+
+    /// <summary>
+    /// Removes a dynamically resolved group member and its resolution provenance.
+    /// Allowed under the same mutability as dynamic resolution.
+    /// </summary>
+    /// <param name="groupId">Group that currently holds the entry.</param>
+    /// <param name="entryId">Entry that leaves the group.</param>
+    /// <param name="materializedParticipants">
+    /// Participant snapshots of matches attached on this stage (empty when none).
+    /// </param>
+    public void RemoveResolvedGroupEntry(
+        GroupId groupId,
+        EntryId entryId,
+        IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants = null)
+    {
+        EnsureResolutionMutable();
+        var group = FindGroup(groupId)
+                    ?? throw new DomainException($"Group '{groupId}' was not found.", StageErrorCodes.GroupNotFound);
+        if (!group.Contains(entryId))
+        {
+            _groupResolutionProvenances.RemoveAll(row =>
+                row.GroupId.Equals(groupId) && row.EntryId.Equals(entryId));
+            return;
+        }
+
+        MaterializedOpponentCoherence.EnsureEntryNotBoundToAttachedMatch(
+            this,
+            entryId,
+            materializedParticipants ?? []);
+        group.Remove(entryId);
+        _groupResolutionProvenances.RemoveAll(row =>
+            row.GroupId.Equals(groupId) && row.EntryId.Equals(entryId));
+    }
+
+    /// <summary>
     /// Adds a resolved population entry without provenance (legacy test/helper path — prefer the overload with provenance).
     /// </summary>
     public void AddResolvedPopulationEntry(EntryId entryId, IClock clock) =>
@@ -1880,7 +1932,7 @@ public sealed class Stage : AggregateRoot<StageId>
     /// <remarks>
     /// Resolution mutation (not structure): allowed in Draft, Ready, Running, and Suspended; forbidden when Completed.
     /// Does not demote Ready to Draft. A DirectAssignment on the target slot yields <see cref="StageErrorCodes.SlotFeedConflict"/>.
-    /// When the entry already occupies another slot of this stage, it is moved (previous slot cleared without a separate event).
+    /// When the entry already occupies another slot of this stage, that slot is cleared and emits its own event.
     /// Validates final simulated BracketPair occupants against attached match participants.
     /// </remarks>
     /// <param name="slotKey">Target slot key.</param>
@@ -1940,6 +1992,7 @@ public sealed class Stage : AggregateRoot<StageId>
             if (other.EntryId is { } occupied && occupied.Equals(entryId))
             {
                 other.ClearEntry();
+                Raise(new StageSlotOccupantChanged(Id, other.SlotKey, occupied, entryId: null, clock));
             }
         }
 

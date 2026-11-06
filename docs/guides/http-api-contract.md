@@ -644,6 +644,40 @@ Configuration only — does **not** resolve awards, mutate slots, or compute `Co
 
 The source pair must exist on the stage. Unique `(sourcePairKey, outcome)` pairs and unique ranks (`rank ≥ 1`). Rejected while the stage is Running / Suspended / Completed (`StructureNotMutable`).
 
+### `POST /stages/{stageId}/resolution/cascade-preview` → `CascadeReplaceResponse`
+
+Read-only preview of an explicit cascade replacement. Computes the version token, the played matches, and the replacements without applying them and without persisting. The body names the stale occupant the organiser confirms (`Slot`, `Group`, or `Population`).
+
+```json
+{
+  "target": "Slot",
+  "entryId": "<guid>",
+  "slotKey": "Champ",
+  "groupId": null
+}
+```
+
+```json
+{
+  "versionToken": "<sha256 hex>",
+  "playedMatches": [
+    {
+      "matchId": "<guid>",
+      "stageId": "<guid>",
+      "homeEntryId": "<guid>",
+      "awayEntryId": "<guid>"
+    }
+  ],
+  "replacements": []
+}
+```
+
+`playedMatches` lists finished matches the confirmation will return to not played. `versionToken` is the state the confirmation must send back. Unknown occupant → **404** `Application.CascadeReplaceOccupantNotFound`. Direct assignment, a non-replayable kind, an occupant that is not stale, a completed phase in the chain, a cycle, an indeterminate origin, or a live match → **409** with `Application.CascadeReplaceDirectAssignment`, `Application.CascadeReplaceNotReplayable`, `Application.CascadeReplaceNotStale`, `Application.CascadeReplaceCompleted`, `Application.CascadeReplaceCycle`, `Application.CascadeReplaceIndeterminate`, or `Application.CascadeReplaceLiveBlocked`.
+
+### `POST /stages/{stageId}/resolution/cascade-replace` → `CascadeReplaceResponse`
+
+Confirms the preview. One save. The body is the preview body plus `versionToken`. A token that no longer matches the stored stages and matches → **409** `Application.CascadeReplaceConflict`. The same codes as the preview apply. `replacements` lists occupants whose entry changed. A finished match in `playedMatches` is left Scheduled, with no result and no player sheet, and drops out of standings until a new result is recorded.
+
 ### `POST /stages/{stageId}/qualification/apply` → `QualificationApplyResponse`
 
 ```json

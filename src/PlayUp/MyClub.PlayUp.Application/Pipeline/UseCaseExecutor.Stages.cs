@@ -8,6 +8,7 @@ using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
+using MyClub.PlayUp.Application.Stages.CascadeReplace;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
@@ -1300,8 +1301,109 @@ public sealed partial class UseCaseExecutor
         return report;
     }
 
-    private static MatchParticipantRef ToSchedulingParticipant(EntryId? entryId) =>
-        entryId is { } known
-            ? MatchParticipantRef.Known(known)
-            : MatchParticipantRef.UnknownStructural();
+    /// <summary>
+    /// Previews a cascade replacement without persisting it.
+    /// </summary>
+    public async Task<CascadeReplaceResult> PreviewCascadeReplaceAsync(
+        StageId stageId,
+        CascadeReplaceTarget target,
+        CancellationToken cancellationToken = default)
+    {
+        var (competition, stageList, matchList) =
+            await LoadCascadeReadAsync(stageId, cancellationToken).ConfigureAwait(false);
+        return CascadeReplace.Plan(competition, stageId, target, stageList, matchList, clock);
+    }
+
+    /// <summary>
+    /// Confirms a cascade replacement when <paramref name="versionToken"/> still matches, then saves once.
+    /// </summary>
+    public async Task<CascadeReplaceResult> ConfirmCascadeReplaceAsync(
+        StageId stageId,
+        CascadeReplaceTarget target,
+        string versionToken,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(versionToken))
+        {
+            throw new ApplicationFailureException(
+                "A cascade confirmation requires the preview version token.",
+                ApplicationErrorCodes.CascadeReplaceConflict);
+        }
+
+        var competitionId = await stages.GetCompetitionIdReadOnlyAsync(stageId, cancellationToken)
+                                .ConfigureAwait(false)
+                            ?? throw new ApplicationFailureException(
+                                $"Stage '{stageId}' was not found.",
+                                ApplicationErrorCodes.StageNotFound);
+        CascadeReplaceResult? result = null;
+        await unitOfWork.ExecuteExclusiveAsync(
+            competitionId,
+            async innerToken =>
+            {
+                var (competition, stageList, matchList) =
+                    await LoadCascadeForUpdateAsync(stageId, innerToken).ConfigureAwait(false);
+                var current = CascadeReplaceVersion.Compute(stageList, matchList);
+                if (!string.Equals(current, versionToken, StringComparison.Ordinal))
+                {
+                    throw new ApplicationFailureException(
+                        "The cascade was confirmed against a state that has changed.",
+                        ApplicationErrorCodes.CascadeReplaceConflict);
+                }
+
+                result = CascadeReplace.Execute(
+                    competition,
+                    stageId,
+                    target,
+                    stageList,
+                    matchList,
+                    clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
+        return result ?? throw new InvalidOperationException("Cascade confirmation did not run.");
+    }
+
+    private async Task<(Domain.Competitions.Competition Competition, List<Stage> Stages, List<Match> Matches)>
+        LoadCascadeReadAsync(StageId stageId, CancellationToken cancellationToken)
+    {
+        var competitionId = await stages.GetCompetitionIdReadOnlyAsync(stageId, cancellationToken)
+                                .ConfigureAwait(false)
+                            ?? throw new ApplicationFailureException(
+                                $"Stage '{stageId}' was not found.",
+                                ApplicationErrorCodes.StageNotFound);
+        var competition = await competitions.GetByIdReadOnlyAsync(competitionId, cancellationToken)
+                              .ConfigureAwait(false)
+                          ?? throw new ApplicationFailureException(
+                              $"Competition '{competitionId}' was not found.",
+                              ApplicationErrorCodes.CompetitionNotFound);
+        var stageList = await LoadCompetitionStagesReadOnlyAsync(
+            competition,
+            StageReadCapabilities.FromProfile(StageLoadProfile.Full),
+            cancellationToken).ConfigureAwait(false);
+        var grouped = await matches.ListByStageIdsReadOnlyAsync(
+            stageList.Select(stage => stage.Id).ToArray(),
+            cancellationToken).ConfigureAwait(false);
+        return (competition, stageList, grouped.SelectMany(pair => pair.Value).ToList());
+    }
+
+    private async Task<(Domain.Competitions.Competition Competition, List<Stage> Stages, List<Match> Matches)>
+        LoadCascadeForUpdateAsync(StageId stageId, CancellationToken cancellationToken)
+    {
+        var origin = await stages.GetByIdForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false)
+                     ?? throw new ApplicationFailureException(
+                         $"Stage '{stageId}' was not found.",
+                         ApplicationErrorCodes.StageNotFound);
+        var competition = await competitions.GetByIdForUpdateAsync(origin.CompetitionId, cancellationToken)
+                              .ConfigureAwait(false)
+                          ?? throw new ApplicationFailureException(
+                              $"Competition '{origin.CompetitionId}' was not found.",
+                              ApplicationErrorCodes.CompetitionNotFound);
+        EnsureCompetitionAllowsConsequenceOperation(competition);
+        var stageList = await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken)
+            .ConfigureAwait(false);
+        var grouped = await matches.ListByStageIdsForUpdateAsync(
+            stageList.Select(stage => stage.Id).ToArray(),
+            cancellationToken).ConfigureAwait(false);
+        return (competition, stageList, grouped.SelectMany(pair => pair.Value).ToList());
+    }
 }
