@@ -797,6 +797,11 @@
   font-size: var(--text-label);
 }
 
+.structure-entries__cell-trailing {
+  display: flex;
+  gap: var(--space-4);
+}
+
 .structure-freshness-replace {
   display: inline-flex;
   align-items: center;
