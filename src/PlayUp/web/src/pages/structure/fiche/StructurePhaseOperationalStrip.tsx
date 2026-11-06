@@ -304,7 +304,9 @@ export function StructurePhaseOperationalStrip({
     mutationFn: () => {
       const commandCode = matchProductionMaterializeCommandCode(stage);
       return commandCode === 'MaterializeFromOccupiedSlots'
-        ? materializeCupFromOccupiedSlots(stage.stageId)
+        ? materializeCupFromOccupiedSlots(stage.stageId, {
+            planEntireRound: true,
+          })
         : materializeMatches(stage.stageId);
     },
     onSuccess: (result) => {

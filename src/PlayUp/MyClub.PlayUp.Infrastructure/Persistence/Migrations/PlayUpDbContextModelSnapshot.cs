@@ -16,7 +16,7 @@ partial class PlayUpDbContextModelSnapshot : ModelSnapshot
     // If you encounter a merge conflict in the line below, it means you need to
     // discard one of the migration branches and recreate its migrations on top of
     // the other branch. See https://aka.ms/efcore-docs-migrations-conflicts for more info.
-    public override string LastMigrationId => "20261030200141_AddResolutionProvenance";
+    public override string LastMigrationId => "20261105135623_MakeMatchParticipantsNullable";
 
     protected override void BuildModel(ModelBuilder modelBuilder)
     {
@@ -80,7 +80,7 @@ partial class PlayUpDbContextModelSnapshot : ModelSnapshot
                     .HasColumnType("uuid")
                     .HasColumnName("id");
 
-                b.Property<Guid>("AwayEntryId")
+                b.Property<Guid?>("AwayEntryId")
                     .HasColumnType("uuid")
                     .HasColumnName("away_entry_id");
 
@@ -88,7 +88,7 @@ partial class PlayUpDbContextModelSnapshot : ModelSnapshot
                     .HasColumnType("uuid")
                     .HasColumnName("competition_id");
 
-                b.Property<Guid>("HomeEntryId")
+                b.Property<Guid?>("HomeEntryId")
                     .HasColumnType("uuid")
                     .HasColumnName("home_entry_id");
 

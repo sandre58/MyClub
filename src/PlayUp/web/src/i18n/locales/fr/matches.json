@@ -1,5 +1,6 @@
 {
   "title": "Matchs",
+  "pendingSide": "À déterminer",
   "back": "Vue d'ensemble",
   "loading": "Chargement des matchs…",
   "band": {
@@ -68,6 +69,7 @@
     "home": "Domicile",
     "away": "Extérieur",
     "start": "Démarrer le match",
+    "participantsUnresolved": "Démarrer et saisir le score restent indisponibles tant qu’un côté n’est pas connu.",
     "starting": "Démarrage…",
     "runningScore": "Compteur",
     "runningScoreHint": "Score observé pendant le live. Distinct du résultat officiel.",

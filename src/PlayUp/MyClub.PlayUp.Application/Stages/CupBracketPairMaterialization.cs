@@ -37,25 +37,25 @@ internal static class CupBracketPairMaterialization
         Stage stage,
         BracketPair pair,
         ResolutionContext? context,
-        out EntryId home,
-        out EntryId away)
+        out EntryId? home,
+        out EntryId? away)
     {
-        home = default;
-        away = default;
-        var idA = ResolveSlotEntry(stage, pair.SlotAKey, context);
-        var idB = ResolveSlotEntry(stage, pair.SlotBKey, context);
-        if (idA is null || idB is null || idA.Value.Equals(idB.Value))
+        home = null;
+        away = null;
+        if (stage.FindSlot(pair.SlotAKey) is null || stage.FindSlot(pair.SlotBKey) is null)
         {
             return false;
         }
 
-        home = idA.Value;
-        away = idB.Value;
-        return true;
+        home = ResolveSlotEntry(stage, pair.SlotAKey, context);
+        away = ResolveSlotEntry(stage, pair.SlotBKey, context);
+        return home is not { } resolvedHome || away is not { } resolvedAway || !resolvedHome.Equals(resolvedAway);
     }
 
     internal static bool IsPairDetermined(Stage stage, BracketPair pair, ResolutionContext? context = null) =>
-        TryResolvePairEntries(stage, pair, context, out _, out _);
+        TryResolvePairEntries(stage, pair, context, out var home, out var away)
+        && home is not null
+        && away is not null;
 
     internal static int ExpectedLegs(Stage stage, BracketPair pair)
     {
@@ -64,18 +64,14 @@ internal static class CupBracketPairMaterialization
     }
 
     /// <summary>
-    /// True when the pair is determined and attached matches cover the round tie-format legs.
+    /// True when attached matches cover the round tie-format legs, including a side that is still unknown.
     /// </summary>
     internal static bool IsConfrontationMaterialized(
         Stage stage,
         BracketPair pair,
         ResolutionContext? context = null)
     {
-        if (!IsPairDetermined(stage, pair, context))
-        {
-            return false;
-        }
-
+        _ = context;
         var fixture = stage.FindFixtureByBracketPairKey(pair.PairKey);
         if (fixture is null)
         {
@@ -109,8 +105,13 @@ internal static class CupBracketPairMaterialization
     {
         var slotA = stage.FindSlot(pair.SlotAKey);
         var slotB = stage.FindSlot(pair.SlotBKey);
-        return slotA?.EntryId is { } home
-               && slotB?.EntryId is { } away
-               && !home.Equals(away);
+        if (slotA is null || slotB is null)
+        {
+            return false;
+        }
+
+        return slotA.EntryId is not { } home
+               || slotB.EntryId is not { } away
+               || !home.Equals(away);
     }
 }

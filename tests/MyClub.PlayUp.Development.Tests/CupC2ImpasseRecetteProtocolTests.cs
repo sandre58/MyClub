@@ -44,7 +44,7 @@ public sealed class CupC2ImpasseRecetteProtocolTests(DevelopmentPostgresFixture 
 
         hub.Materialize!.MaterializedCount.Should().Be(1);
         hub.Materialize.DeterminedCount.Should().Be(2);
-        hub.Materialize.EligibleCount.Should().Be(1);
+        hub.Materialize.EligibleCount.Should().Be(3);
 
         // No manual assign before Start. The incomplete-entry-round guard runs before the production-gap check on this seed.
         hub.Lifecycle!.Transition.DisabledReasonCode.Should()
@@ -70,8 +70,14 @@ public sealed class CupC2ImpasseRecetteProtocolTests(DevelopmentPostgresFixture 
 
         hub.Should().NotBeNull();
 
-        var materializeSecond = MaterializeCupFromOccupiedSlots.Execute(competition, stage, null, matches, _clock);
-        materializeSecond.CreatedMatches.Should().HaveCount(1);
+        var materializeSecond = MaterializeCupFromOccupiedSlots.Execute(
+            competition,
+            stage,
+            null,
+            matches,
+            _clock,
+            planEntireRound: true);
+        materializeSecond.CreatedMatches.Should().HaveCount(3);
         foreach (var created in materializeSecond.CreatedMatches)
         {
             scope.MatchRepository.Add(created);
@@ -82,7 +88,7 @@ public sealed class CupC2ImpasseRecetteProtocolTests(DevelopmentPostgresFixture 
         matches = await scope.ReloadMatchesAsync();
         hub = AssembleHub(competition, [stage], matches);
 
-        hub.Materialize!.MaterializedCount.Should().Be(2);
+        hub.Materialize!.MaterializedCount.Should().Be(4);
         hub.Materialize.DeterminedCount.Should().Be(2);
         hub.Materialize.EligibleCount.Should().Be(0);
         hub.Materialize.Confrontations.Count(row => !row.Determined).Should().Be(2);

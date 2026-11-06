@@ -1,5 +1,6 @@
 {
   "title": "Matches",
+  "pendingSide": "To be determined",
   "back": "Overview",
   "loading": "Loading matches…",
   "band": {
@@ -68,6 +69,7 @@
     "home": "Home",
     "away": "Away",
     "start": "Start match",
+    "participantsUnresolved": "Start and score entry stay unavailable until both sides are known.",
     "starting": "Starting…",
     "runningScore": "Counter",
     "runningScoreHint": "Score observed during live. Distinct from the official result.",

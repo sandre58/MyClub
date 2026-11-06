@@ -88,7 +88,8 @@ public sealed class StructureDematerializeAssemblerTests
             stage,
             [],
             [],
-            _clock);
+            _clock,
+            planEntireRound: true);
         var summaries = materialized.CreatedMatches.Select(Summary).ToArray();
 
         var dematerialize = StructureDematerializeAssembler.Assemble(situation.Competition, stage, summaries);

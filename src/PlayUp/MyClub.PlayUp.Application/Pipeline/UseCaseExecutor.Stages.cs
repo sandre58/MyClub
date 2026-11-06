@@ -1074,6 +1074,7 @@ public sealed partial class UseCaseExecutor
     public async Task<MaterializeCupFromOccupiedSlotsResult> MaterializeCupFromOccupiedSlotsAsync(
         StageId stageId,
         IReadOnlyList<string>? pairKeys,
+        bool planEntireRound = false,
         CancellationToken cancellationToken = default)
     {
         var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
@@ -1094,7 +1095,8 @@ public sealed partial class UseCaseExecutor
             existing,
             clock,
             competitionStages,
-            matchSummariesByStage);
+            matchSummariesByStage,
+            planEntireRound);
         foreach (var created in result.CreatedMatches)
         {
             matches.Add(created);
@@ -1200,8 +1202,8 @@ public sealed partial class UseCaseExecutor
                 allowedStartWindows: null,
                 allowedResourceIds: null,
                 imposedStart: null,
-                home: MatchParticipantRef.Known(match.HomeEntryId),
-                away: MatchParticipantRef.Known(match.AwayEntryId)))
+                home: ToSchedulingParticipant(match.HomeEntryId),
+                away: ToSchedulingParticipant(match.AwayEntryId)))
             .ToArray();
 
         // Ensure every target has a context.
@@ -1215,7 +1217,11 @@ public sealed partial class UseCaseExecutor
                 (current, match) =>
                 [
                     .. current,
-                    new MatchSchedulingContext(match.Id, duration, home: MatchParticipantRef.Known(match.HomeEntryId), away: MatchParticipantRef.Known(match.AwayEntryId))
+                    new MatchSchedulingContext(
+                        match.Id,
+                        duration,
+                        home: ToSchedulingParticipant(match.HomeEntryId),
+                        away: ToSchedulingParticipant(match.AwayEntryId))
                 ]);
 
         var resources = resourceIds
@@ -1293,4 +1299,9 @@ public sealed partial class UseCaseExecutor
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return report;
     }
+
+    private static MatchParticipantRef ToSchedulingParticipant(EntryId? entryId) =>
+        entryId is { } known
+            ? MatchParticipantRef.Known(known)
+            : MatchParticipantRef.UnknownStructural();
 }

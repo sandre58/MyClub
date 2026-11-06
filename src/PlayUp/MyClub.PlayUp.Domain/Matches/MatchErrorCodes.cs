@@ -22,6 +22,16 @@ public static class MatchErrorCodes
     public const string SameParticipant = "Match.SameParticipant";
 
     /// <summary>
+    /// Gets the code when start, finish, or result correction is attempted while a side is still unknown.
+    /// </summary>
+    public const string ParticipantsUnresolved = "Match.ParticipantsUnresolved";
+
+    /// <summary>
+    /// Gets the code when a known side would be replaced. Replacement is outside this operation.
+    /// </summary>
+    public const string ParticipantAlreadyResolved = "Match.ParticipantAlreadyResolved";
+
+    /// <summary>
     /// Gets the code when a match result or score is invalid.
     /// </summary>
     public const string InvalidResult = "Match.InvalidResult";

@@ -202,6 +202,12 @@ public static class ApplyQualification
                     clock,
                     provenance,
                     destinationSnapshots);
+                DeferredMatchParticipantFill.FillSlot(
+                    destination,
+                    path.Destination.SlotKey!,
+                    instruction.EntryId,
+                    coherenceMatches,
+                    clock);
             }
 
             applied.Add(instruction);

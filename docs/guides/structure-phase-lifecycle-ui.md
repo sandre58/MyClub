@@ -130,7 +130,7 @@ These must stay **separate** in copy and layout; none replaces another.
 
 | Track | Format / situation | Read `disabledReasonCode` (Start) | Production command (hub) | Remediation (when projected) | Proof |
 | :---- | :----------------- | :-------------------------------- | :------------------------- | :--------------------------- | :---- |
-| **A** | Cup Ready, R0 fixtures **slotted** with **empty slots**, no **determined** confrontations (`materializedCount` may reflect fixture shells, not full production) | `InitialRoundNotPlayable` | `MaterializeFromOccupiedSlots` idle (`NoDeterminedConfrontations`) | Fiche: `focus=operational-placement&manual=1` — **not** `section=matchs` | Read `10166fbb`; SPA separation `50c4354f` |
+| **A** | Cup Ready, R0 fixtures **slotted** with **empty slots**, no **determined** confrontations (`materializedCount` stays 0 until matches are attached) | `IncompleteEntryRound` | `MaterializeFromOccupiedSlots` enabled — an unknown side may be planned | Fiche: `focus=operational-placement&manual=1` — **not** `section=matchs` | Read `10166fbb`; SPA separation `50c4354f` |
 | **Poules partial** | Groups Ready, partial materialization, eligible confrontations remain | `UnmaterializedConfrontations` | **`MaterializeMatches`** (actionable partial production) | Fiche: `section=matchs` when remediation link shown; Matchs aside: production CTA only — **no** `UnmaterializedConfrontations` paragraph | Read `32c6186e`; SPA `50c4354f` |
 | **Cup partial** | Cup Ready, some pairs determined, not all materialized | `UnmaterializedConfrontations` | **`MaterializeFromOccupiedSlots`** (not `MaterializeMatches`) | Same suppression rule on aside; fiche carries Start gate | Read `fb14feb7`; SPA `50c4354f` |
 
@@ -142,7 +142,7 @@ These must stay **separate** in copy and layout; none replaces another.
 
 **Claim (invalid under current canonical Cup model):** Ready Cup with **100 % of determined confrontations materialized** **and** Start blocked with **`InitialRoundNotPlayable`**.
 
-**Why it does not hold today:** mono-round canonical Cup production via `MaterializeCupFromOccupiedSlots` materializes a **playable** first-round fixture for determined occupied pairs; slotted-but-empty R0 shells without determined confrontations are a **different** situation (piste **A** — production idle, IRR on Start). Do **not** add automated tests or manual recette scripts for the piste C combination.
+**Why it does not hold today:** mono-round canonical Cup production via `MaterializeCupFromOccupiedSlots` can plan a first-round fixture before both sides are known; slotted-but-empty R0 shells without determined confrontations are a **different** situation (piste **A** — production available for unknown sides, Start still blocked). Do **not** add automated tests or manual recette scripts for the piste C combination.
 
 ---
 

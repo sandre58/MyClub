@@ -817,7 +817,7 @@ public static class StageSchematicAssembler
 
         var side = EntryDisplayNames.ToSide(entries, id);
         return new SchematicParticipantRefDto(
-            side.EntryId,
+            id.Value,
             side.DisplayName,
             side.ShortName,
             side.LogoMediaId,

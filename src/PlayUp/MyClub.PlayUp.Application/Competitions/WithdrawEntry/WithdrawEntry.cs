@@ -46,7 +46,7 @@ public static class WithdrawEntry
         var stagesById = competitionStages.ToDictionary(stage => stage.Id);
         foreach (var match in competitionMatches)
         {
-            if (!match.HomeEntryId.Equals(entryId) && !match.AwayEntryId.Equals(entryId))
+            if (!match.Involves(entryId))
             {
                 continue;
             }

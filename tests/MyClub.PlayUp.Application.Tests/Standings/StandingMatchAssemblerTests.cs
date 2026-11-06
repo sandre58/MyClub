@@ -46,4 +46,44 @@ public sealed class StandingMatchAssemblerTests
         standing.Rows.Should().HaveCount(2);
         standing.Rows.Should().OnlyContain(r => r.Draws == 1 && r.Wins == 0 && r.Losses == 0 && r.Points == 1);
     }
+
+    [Fact]
+    public void Assemble_excludes_a_finished_match_whose_side_is_unknown_from_standings_and_stats()
+    {
+        var home = EntryId.New();
+        var away = EntryId.New();
+        var played = Match.Create(CompetitionId.New(), StageId.New(), home, away, _clock);
+        played.Start(_clock);
+        played.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
+
+        var deferred = new MyClub.PlayUp.Application.Abstractions.MatchSummaryRow(
+            MatchId.New(),
+            StageId.New(),
+            MatchStatus.Finished,
+            home,
+            null,
+            new MatchResult(ResultType.Played, new Score(5, 0)));
+
+        var rules = new StandingRules(new PointsPolicy(3, 1, 0), [RankingCriterion.Points]);
+        var fromMatches = StandingMatchAssembler.Assemble([played]);
+        var fromRows = StandingMatchAssembler.Assemble(
+        [
+            new MyClub.PlayUp.Application.Abstractions.MatchSummaryRow(
+                played.Id,
+                played.StageId,
+                played.Status,
+                played.HomeEntryId,
+                played.AwayEntryId,
+                played.Result),
+            deferred
+        ]);
+
+        fromMatches.Should().ContainSingle();
+        fromRows.Should().ContainSingle();
+        fromRows[0].HomeGoals.Should().Be(1);
+        var standing = StandingCalculator.Calculate([home, away], fromRows, rules);
+        standing.Rows.Single(row => row.EntryId.Equals(home)).Played.Should().Be(1);
+        standing.Rows.Single(row => row.EntryId.Equals(home)).GoalsFor.Should().Be(1);
+        standing.Rows.Single(row => row.EntryId.Equals(away)).GoalsAgainst.Should().Be(1);
+    }
 }

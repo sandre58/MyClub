@@ -26,8 +26,8 @@ public static class ForfeitMatchResult
         ArgumentNullException.ThrowIfNull(match);
         ArgumentNullException.ThrowIfNull(policy);
 
-        var withdrawnIsHome = match.HomeEntryId.Equals(withdrawnEntryId);
-        if (!withdrawnIsHome && !match.AwayEntryId.Equals(withdrawnEntryId))
+        var withdrawnIsHome = match.HomeEntryId is { } home && home.Equals(withdrawnEntryId);
+        if (!match.Involves(withdrawnEntryId))
         {
             throw new ArgumentException(
                 $"Match '{match.Id}' does not involve entry '{withdrawnEntryId}'.",
