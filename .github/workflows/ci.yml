@@ -23,9 +23,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: |
-            11.0.100-rc.1.26425.128
-            11.0.100-rc.2.26504.105
+          global-json-file: global.json
 
       - name: Restore
         run: bash .github/scripts/restore-with-diagnostics.sh MyClub.slnx
@@ -110,8 +108,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      # Browser build comes from package-lock.json (local playwright after npm ci).
       - name: Install Playwright Chromium
-        run: npx playwright@1.64.1 install --with-deps chromium
+        run: npx playwright install --with-deps chromium
 
       - name: E2E smoke (stub API)
         run: npx playwright test
@@ -153,9 +152,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: |
-            11.0.100-rc.1.26425.128
-            11.0.100-rc.2.26504.105
+          global-json-file: global.json
 
       - name: Restore
         run: bash .github/scripts/restore-with-diagnostics.sh MyClub.slnx
@@ -190,9 +187,10 @@ jobs:
         working-directory: src/PlayUp/web
         run: npm ci
 
+      # Browser build comes from package-lock.json (local playwright after npm ci).
       - name: Install Playwright Chromium
         working-directory: src/PlayUp/web
-        run: npx playwright@1.64.1 install --with-deps chromium
+        run: npx playwright install --with-deps chromium
 
       - name: E2E business (Host + PostgreSQL)
         working-directory: src/PlayUp/web
