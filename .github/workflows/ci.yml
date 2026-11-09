@@ -23,9 +23,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: |
-            11.0.100-rc.1.26425.128
-            11.0.100-rc.2.26504.105
+          global-json-file: global.json
 
       - name: Restore
         run: bash .github/scripts/restore-with-diagnostics.sh MyClub.slnx
@@ -153,9 +151,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: |
-            11.0.100-rc.1.26425.128
-            11.0.100-rc.2.26504.105
+          global-json-file: global.json
 
       - name: Restore
         run: bash .github/scripts/restore-with-diagnostics.sh MyClub.slnx
