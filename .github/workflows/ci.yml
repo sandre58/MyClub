@@ -108,8 +108,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      # Browser build comes from package-lock.json (local playwright after npm ci).
       - name: Install Playwright Chromium
-        run: npx playwright@1.64.1 install --with-deps chromium
+        run: npx playwright install --with-deps chromium
 
       - name: E2E smoke (stub API)
         run: npx playwright test
@@ -186,9 +187,10 @@ jobs:
         working-directory: src/PlayUp/web
         run: npm ci
 
+      # Browser build comes from package-lock.json (local playwright after npm ci).
       - name: Install Playwright Chromium
         working-directory: src/PlayUp/web
-        run: npx playwright@1.64.1 install --with-deps chromium
+        run: npx playwright install --with-deps chromium
 
       - name: E2E business (Host + PostgreSQL)
         working-directory: src/PlayUp/web
