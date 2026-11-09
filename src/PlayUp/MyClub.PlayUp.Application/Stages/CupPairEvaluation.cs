@@ -49,20 +49,18 @@ internal static class CupPairEvaluation
             input.CompetitionStages,
             input.MatchSummariesByStage);
 
-        var determinedForDisplay = CupBracketPairMaterialization.TryResolvePairEntries(
+        var determinedForDisplay = CupBracketPairMaterialization.IsPairDetermined(
             input.Stage,
             pair,
-            context,
-            out _,
-            out _);
+            context);
 
         var slotA = input.Stage.FindSlot(pair.SlotAKey);
         var slotB = input.Stage.FindSlot(pair.SlotBKey);
         var persistedA = slotA?.EntryId;
         var persistedB = slotB?.EntryId;
-        var determinedForMaterialize = persistedA is { } home
-                                     && persistedB is { } away
-                                     && !home.Equals(away);
+        var determinedForMaterialize = persistedA is not { } home
+                                     || persistedB is not { } away
+                                     || !home.Equals(away);
 
         var materialized = CupBracketPairMaterialization.IsConfrontationMaterialized(
             input.Stage,
@@ -183,19 +181,23 @@ internal static class CupPairEvaluation
         };
     }
 
-    private static SlotSideEvaluation EvaluateMissingChannel(EntryId? occupant) =>
-        occupant is null
-            ? new SlotSideEvaluation(
-                CupOccupationChannel.Missing,
-                false,
-                CupPairBlockReason.SlotEmpty,
-                ApplicationErrorCodes.MaterializationFailure)
-            : new SlotSideEvaluation(CupOccupationChannel.Missing, true, null, null);
+    private static SlotSideEvaluation EvaluateMissingChannel(EntryId? occupant)
+    {
+        _ = occupant;
+        return new SlotSideEvaluation(CupOccupationChannel.Missing, true, null, null);
+    }
 
     private static SlotSideEvaluation EvaluateDirectChannel(SlotFeedResolution resolution, EntryId? occupant)
     {
+        if (occupant is null)
+        {
+            return new SlotSideEvaluation(CupOccupationChannel.Direct, true, null, null);
+        }
+
         var expected = resolution.Source!.Direct!.ConfiguredEntryId;
-        return occupant is null ? new SlotSideEvaluation(CupOccupationChannel.Direct, false, CupPairBlockReason.SlotEmpty, ApplicationErrorCodes.MaterializationFailure) : !occupant.Value.Equals(expected) ? new SlotSideEvaluation(CupOccupationChannel.Direct, false, CupPairBlockReason.OccupantConflict, ApplicationErrorCodes.MaterializationOccupantConflict) : new SlotSideEvaluation(CupOccupationChannel.Direct, true, null, null);
+        return !occupant.Value.Equals(expected)
+            ? new SlotSideEvaluation(CupOccupationChannel.Direct, false, CupPairBlockReason.OccupantConflict, ApplicationErrorCodes.MaterializationOccupantConflict)
+            : new SlotSideEvaluation(CupOccupationChannel.Direct, true, null, null);
     }
 
     private static SlotSideEvaluation EvaluateDrawChannel(
@@ -204,9 +206,18 @@ internal static class CupPairEvaluation
         string slotKey,
         EntryId? occupant)
     {
+        if (occupant is null)
+        {
+            return new SlotSideEvaluation(CupOccupationChannel.Draw, true, null, null);
+        }
+
         var drawId = resolution.Source!.Draw!.DrawId;
         var placement = TryGetDrawPlacementEntry(stage, drawId, slotKey);
-        return placement is null ? new SlotSideEvaluation(CupOccupationChannel.Draw, false, CupPairBlockReason.ResolutionAmbiguous, ApplicationErrorCodes.InboundResolutionAmbiguous) : occupant is null ? new SlotSideEvaluation(CupOccupationChannel.Draw, false, CupPairBlockReason.SlotEmpty, ApplicationErrorCodes.MaterializationFailure) : !occupant.Value.Equals(placement.Value) ? new SlotSideEvaluation(CupOccupationChannel.Draw, false, CupPairBlockReason.OccupantConflict, ApplicationErrorCodes.MaterializationOccupantConflict) : new SlotSideEvaluation(CupOccupationChannel.Draw, true, null, null);
+        return placement is null
+            ? new SlotSideEvaluation(CupOccupationChannel.Draw, false, CupPairBlockReason.ResolutionAmbiguous, ApplicationErrorCodes.InboundResolutionAmbiguous)
+            : !occupant.Value.Equals(placement.Value)
+                ? new SlotSideEvaluation(CupOccupationChannel.Draw, false, CupPairBlockReason.OccupantConflict, ApplicationErrorCodes.MaterializationOccupantConflict)
+                : new SlotSideEvaluation(CupOccupationChannel.Draw, true, null, null);
     }
 
     private static SlotSideEvaluation EvaluateProgressionChannel(
@@ -227,6 +238,11 @@ internal static class CupPairEvaluation
             path!,
             sourceStage!,
             input.MatchSummariesByStage);
+        if (occupant is null)
+        {
+            return new SlotSideEvaluation(CupOccupationChannel.Progression, true, null, null);
+        }
+
         if (replay is null)
         {
             return new SlotSideEvaluation(
@@ -234,15 +250,6 @@ internal static class CupPairEvaluation
                 false,
                 CupPairBlockReason.ResolutionAmbiguous,
                 ApplicationErrorCodes.InboundResolutionAmbiguous);
-        }
-
-        if (occupant is null)
-        {
-            return new SlotSideEvaluation(
-                CupOccupationChannel.Progression,
-                false,
-                CupPairBlockReason.ProjectionOnly,
-                ApplicationErrorCodes.ProgressionNotAppliedForMaterialization);
         }
 
         var satisfaction = DestinationSatisfaction.EvaluateProgression(
@@ -272,6 +279,11 @@ internal static class CupPairEvaluation
             input.Stage,
             sourceStage!,
             input.MatchSummariesByStage);
+        if (occupant is null)
+        {
+            return new SlotSideEvaluation(CupOccupationChannel.Qualification, true, null, null);
+        }
+
         if (replay is null)
         {
             return new SlotSideEvaluation(
@@ -279,15 +291,6 @@ internal static class CupPairEvaluation
                 false,
                 CupPairBlockReason.ResolutionAmbiguous,
                 ApplicationErrorCodes.InboundResolutionAmbiguous);
-        }
-
-        if (occupant is null)
-        {
-            return new SlotSideEvaluation(
-                CupOccupationChannel.Qualification,
-                false,
-                CupPairBlockReason.SlotEmpty,
-                ApplicationErrorCodes.MaterializationFailure);
         }
 
         var satisfaction = DestinationSatisfaction.EvaluateQualification(

@@ -114,8 +114,8 @@ public sealed record OverviewCalendarNextMatchDto(
     Guid StageId,
     int? MatchdayNumber,
     DateTimeOffset? ScheduledAt,
-    string HomeDisplayName,
-    string AwayDisplayName);
+    string? HomeDisplayName,
+    string? AwayDisplayName);
 
 /// <summary>
 /// Operational competition period derived from placed match starts (Read fact, not Domain season dates).
@@ -313,16 +313,16 @@ public sealed record OverviewMatchCountsDto(
 /// <param name="StageId">Owning stage.</param>
 /// <param name="Status">Match status (Scheduled, Live, Finished, …).</param>
 /// <param name="ScheduledAt">Placement start when known.</param>
-/// <param name="HomeDisplayName">Home entry display name.</param>
-/// <param name="AwayDisplayName">Away entry display name.</param>
+/// <param name="HomeDisplayName">Home entry display name, or null when that side is not yet known.</param>
+/// <param name="AwayDisplayName">Away entry display name, or null when that side is not yet known.</param>
 /// <param name="Score">Play score when Finished; null otherwise (Domain has no in-progress score).</param>
 public sealed record OverviewMatchLineDto(
     Guid MatchId,
     Guid StageId,
     MatchStatus Status,
     DateTimeOffset? ScheduledAt,
-    string HomeDisplayName,
-    string AwayDisplayName,
+    string? HomeDisplayName,
+    string? AwayDisplayName,
     MatchScoreDto? Score);
 
 /// <summary>Compact standing for Overview — derived from ReferenceStage only (Running or Suspended preferred, else last Completed).</summary>

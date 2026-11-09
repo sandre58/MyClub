@@ -41,13 +41,21 @@ public sealed class CupMaterializeRecetteProtocolTests(DevelopmentPostgresFixtur
         EnsureRecetteCupReady(competition, stage);
 
         var hubReady = AssembleHub(competition, [stage], matches);
-        var row = hubReady.Materialize!.Confrontations.Single(r => r.Eligible);
-        row.Determined.Should().BeTrue();
+        var eligible = hubReady.Materialize!.Confrontations.Where(row => row.Eligible).ToArray();
+        var row = eligible.Should().ContainSingle(candidate => candidate.Determined).Subject;
+        eligible.Should().HaveCountGreaterThan(1);
         hubReady.Materialize!.CommandEnabled.Should().BeTrue();
 
-        var result = MaterializeCupFromOccupiedSlots.Execute(competition, stage, null, matches, _clock);
+        var result = MaterializeCupFromOccupiedSlots.Execute(
+            competition,
+            stage,
+            null,
+            matches,
+            _clock,
+            planEntireRound: true);
         result.AlreadyComplete.Should().BeFalse();
-        result.CreatedMatches.Should().HaveCount(1, "recette C1 uses SingleLeg tie format");
+        result.CreatedMatches.Should().HaveCount(eligible.Length);
+        result.CreatedMatches.Should().ContainSingle(match => match.ParticipantsResolved);
 
         var fixtureByBracketPairKey = stage.FindFixtureByBracketPairKey(row.Key);
         fixtureByBracketPairKey.Should().NotBeNull();
@@ -66,7 +74,13 @@ public sealed class CupMaterializeRecetteProtocolTests(DevelopmentPostgresFixtur
         hub.Materialize!.MaterializedCount.Should().Be(hub.Materialize.DeterminedCount);
         hub.Materialize.CommandEnabled.Should().BeFalse();
 
-        var second = MaterializeCupFromOccupiedSlots.Execute(competition, stage, null, matchList, _clock);
+        var second = MaterializeCupFromOccupiedSlots.Execute(
+            competition,
+            stage,
+            null,
+            matchList,
+            _clock,
+            planEntireRound: true);
         second.CreatedMatches.Should().BeEmpty();
         second.AlreadyComplete.Should().BeTrue();
     }
@@ -184,7 +198,13 @@ public sealed class CupMaterializeRecetteProtocolTests(DevelopmentPostgresFixtur
         stage.ApplyResolvedEntry("SF2-B", EntryId.New(), _clock);
         stage.Prepare(_clock);
 
-        var result = MaterializeCupFromOccupiedSlots.Execute(competition, stage, null, [], _clock);
+        var result = MaterializeCupFromOccupiedSlots.Execute(
+            competition,
+            stage,
+            null,
+            [],
+            _clock,
+            planEntireRound: true);
         result.CreatedMatches.Should().HaveCount(1);
         result.AlreadyComplete.Should().BeFalse();
     }

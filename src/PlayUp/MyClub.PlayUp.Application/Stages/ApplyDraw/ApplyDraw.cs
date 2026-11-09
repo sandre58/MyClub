@@ -180,6 +180,15 @@ public static class ApplyDraw
                 clock,
                 ResolutionProvenance.Tirage(draw.Id, instruction.SlotKey, instruction.EntryId),
                 snapshots);
+            if (stageMatches is not null)
+            {
+                DeferredMatchParticipantFill.FillSlot(
+                    stage,
+                    instruction.SlotKey,
+                    instruction.EntryId,
+                    stageMatches,
+                    clock);
+            }
         }
 
         return instructions;

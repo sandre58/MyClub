@@ -152,6 +152,12 @@ public static class ApplyProgressionOutcome
                     clock,
                     provenance,
                     destinationSnapshots);
+                DeferredMatchParticipantFill.FillSlot(
+                    destinations[i],
+                    instruction.SlotKey!,
+                    instruction.EntryId,
+                    coherenceMatches,
+                    clock);
             }
         }
 

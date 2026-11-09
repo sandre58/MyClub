@@ -34,7 +34,7 @@ export type OverviewActionIntent =
 /**
  * Map a backend-projected action to execute vs navigate.
  * Availability is decided by the Read; this only chooses how to carry it out.
- * Cup materialize executes all eligible pairs (empty pairKeys) — Structure hub when draw params are incomplete.
+ * Cup materialize plans the whole round only when the action sends planEntireRound.
  */
 function navigateToStageStructure(
   competitionId: string,
@@ -112,7 +112,10 @@ export function resolveOverviewActionIntent(
       return stageId
         ? {
             kind: 'execute',
-            run: () => materializeCupFromOccupiedSlots(stageId),
+            run: () =>
+              materializeCupFromOccupiedSlots(stageId, {
+                planEntireRound: true,
+              }),
           }
         : { kind: 'unsupported' };
 

@@ -850,15 +850,17 @@ public sealed class OverviewAssemblerTests
         action.Params.Should().ContainKey(OverviewAssembler.ActionParamLabelVariant)
             .WhoseValue.Should().Be(OverviewAssembler.LabelVariantCreate);
 
+        var primary = view.AvailableActions.Should().ContainSingle(item =>
+            item.Code == OverviewAssembler.ActionMaterializeFromOccupiedSlots
+            && item.StageId == qf.Id.Value).Subject;
+        primary.Params.Should().ContainKey("occupiedSlotCount").WhoseValue.Should().Be("0");
+
         view.ConstructionDimensions.Regulation.TransitionReadiness.Should().Contain(item =>
             item.Transition == OverviewAssembler.TransitionMaterializeFromOccupiedSlots && item.Ready);
 
-        // Primary Cup never offers MaterializeMatches skeleton; SF from-slots is the natural next step.
+        // Cup stages use from-slots, including a primary bracket whose sides are still unknown.
         view.AvailableActions.Should().NotContain(item => item.Code == OverviewAssembler.ActionMaterializeMatches);
         view.NaturalProgression!.Code.Should().Be(OverviewAssembler.ActionMaterializeFromOccupiedSlots);
-        view.AvailableActions.Should().NotContain(item =>
-            item.Code == OverviewAssembler.ActionMaterializeFromOccupiedSlots
-            && item.StageId == qf.Id.Value);
     }
 
     [Fact]

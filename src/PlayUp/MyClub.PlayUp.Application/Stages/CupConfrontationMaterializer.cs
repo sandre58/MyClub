@@ -41,8 +41,8 @@ internal static class CupConfrontationMaterializer
     public static IReadOnlyList<Match> AttachLegs(
         Stage stage,
         FixtureId fixtureId,
-        EntryId home,
-        EntryId away,
+        EntryId? home,
+        EntryId? away,
         int expectedLegs,
         IClock clock)
     {
@@ -64,8 +64,8 @@ internal static class CupConfrontationMaterializer
     /// </summary>
     public static bool TryMatchCompleteLegs(
         Fixture fixture,
-        EntryId home,
-        EntryId away,
+        EntryId? home,
+        EntryId? away,
         IReadOnlyDictionary<MatchId, Match> knownById,
         int expectedLegs,
         out List<MatchId> matchedIds)
@@ -105,10 +105,14 @@ internal static class CupConfrontationMaterializer
         Fixture fixture,
         IReadOnlyDictionary<MatchId, Match> knownById,
         int legIndex,
-        EntryId home,
-        EntryId away)
+        EntryId? home,
+        EntryId? away)
     {
         var attachment = fixture.Attachments.FirstOrDefault(a => a.LegIndex == legIndex);
-        return attachment is null || !knownById.TryGetValue(attachment.MatchId, out var match) ? null : match.HomeEntryId.Equals(home) && match.AwayEntryId.Equals(away) ? match : null;
+        return attachment is null || !knownById.TryGetValue(attachment.MatchId, out var match)
+            ? null
+            : Nullable.Equals(match.HomeEntryId, home) && Nullable.Equals(match.AwayEntryId, away)
+                ? match
+                : null;
     }
 }

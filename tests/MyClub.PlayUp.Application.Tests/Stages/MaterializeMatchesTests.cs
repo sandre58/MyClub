@@ -272,7 +272,7 @@ public sealed class MaterializeMatchesTests
         directed.Should().OnlyHaveUniqueItems();
 
         var unordered = directed
-            .Select(pair => pair.HomeEntryId.Value.CompareTo(pair.AwayEntryId.Value) <= 0
+            .Select(pair => pair.HomeEntryId!.Value.Value.CompareTo(pair.AwayEntryId!.Value.Value) <= 0
                 ? (pair.HomeEntryId, pair.AwayEntryId)
                 : (pair.AwayEntryId, pair.HomeEntryId))
             .GroupBy(pair => pair)

@@ -220,12 +220,14 @@ internal static class SeedMaterialization
                 context.Clock);
         }
 
+        var planEntireRound = pairKeys is null || pairKeys.Count == 0;
         var result = MaterializeCupFromOccupiedSlots.Execute(
             competition,
             stage,
             pairKeys,
             [],
-            context.Clock);
+            context.Clock,
+            planEntireRound: planEntireRound);
         foreach (var match in result.CreatedMatches)
         {
             context.Matches.Add(match);

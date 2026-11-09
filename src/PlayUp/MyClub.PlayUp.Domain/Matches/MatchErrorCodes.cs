@@ -22,6 +22,31 @@ public static class MatchErrorCodes
     public const string SameParticipant = "Match.SameParticipant";
 
     /// <summary>
+    /// Gets the code when start, finish, or result correction is attempted while a side is still unknown.
+    /// </summary>
+    public const string ParticipantsUnresolved = "Match.ParticipantsUnresolved";
+
+    /// <summary>
+    /// Gets the code when a known side would be replaced. Replacement is outside this operation.
+    /// </summary>
+    public const string ParticipantAlreadyResolved = "Match.ParticipantAlreadyResolved";
+
+    /// <summary>
+    /// Gets the code when replacement is asked for a side that is still unknown.
+    /// </summary>
+    public const string ParticipantNotResolved = "Match.ParticipantNotResolved";
+
+    /// <summary>
+    /// Gets the code when a participant replacement is asked on a live or finished match.
+    /// </summary>
+    public const string ParticipantImmutable = "Match.ParticipantImmutable";
+
+    /// <summary>
+    /// Gets the code when a finished result is invalidated from another status.
+    /// </summary>
+    public const string FinishedResultMissing = "Match.FinishedResultMissing";
+
+    /// <summary>
     /// Gets the code when a match result or score is invalid.
     /// </summary>
     public const string InvalidResult = "Match.InvalidResult";

@@ -171,7 +171,7 @@ public sealed class StructureStageLifecycleAssemblerTests
 
         hub.Materialize.Should().NotBeNull();
         hub.Materialize!.CommandEnabled.Should().BeTrue();
-        hub.Materialize.EligibleCount.Should().Be(1);
+        hub.Materialize.EligibleCount.Should().Be(2);
         hub.Materialize.DeterminedCount.Should().Be(1);
         hub.Materialize.MaterializedCount.Should().Be(0);
         hub.Materialize.CommandCode.Should().Be(OverviewAssembler.ActionMaterializeFromOccupiedSlots);
@@ -647,8 +647,8 @@ public sealed class StructureStageLifecycleAssemblerTests
         hub.Lifecycle.Transition.DisabledReasonCode.Should().BeOneOf(
             StructureStageLifecycleAssembler.DisabledIncompleteEntryRound,
             StructureStageLifecycleAssembler.DisabledNoDeterminedConfrontations);
-        hub.Materialize!.DisabledReason.Should()
-            .Be(StructureMaterializeDisabledReasons.NoDeterminedConfrontations);
+        hub.Materialize!.CommandEnabled.Should().BeTrue();
+        hub.Materialize.DisabledReason.Should().BeNull();
     }
 
     [Fact]
@@ -680,12 +680,11 @@ public sealed class StructureStageLifecycleAssemblerTests
         hub.Lifecycle.Transition.Remediation.Href.Should().NotContain("section=matchs");
 
         hub.Materialize.Should().NotBeNull();
-        hub.Materialize!.CommandEnabled.Should().BeFalse();
-        hub.Materialize.EligibleCount.Should().Be(0);
+        hub.Materialize!.CommandEnabled.Should().BeTrue();
+        hub.Materialize.EligibleCount.Should().Be(2);
         hub.Materialize.DeterminedCount.Should().Be(0);
         hub.Materialize.MaterializedCount.Should().Be(0, "fixture shells without attached legs are not materialized confrontations");
-        hub.Materialize.DisabledReason.Should()
-            .Be(StructureMaterializeDisabledReasons.NoDeterminedConfrontations);
+        hub.Materialize.DisabledReason.Should().BeNull();
     }
 
     private static MatchSummaryRow ToSummaryRow(Match match) =>

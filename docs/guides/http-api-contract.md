@@ -221,7 +221,7 @@ Contract notes:
 - Competition Prepare/Start/Suspend/Resume are Host-exposed (`POST …/prepare`, `POST …/start`, `POST …/suspend`, `POST …/resume`) and projected as Overview `availableActions` (`PrepareCompetition` / `StartCompetition` / `SuspendCompetition` / `ResumeCompetition`) when Domain preconditions appear satisfied. They are **not** elevated to `naturalProgression`. SPA shows Prepare/Start on Prochaine action **only when** `naturalProgression` is null — never stacked with a structural tip. Suspend/Resume render on Overview whenever projected, including beside a structural tip. `CompetitionSuspended` stays Informational (not Needs Attention) and carries `actionCode` `ResumeCompetition`. Stage `PrepareStage` / `StartStage` **are** eligible as Préparation tips when projected. Competition suspend/resume does not cascade to stages (`SuspendStage` / `ResumeStage` stay on Structure).
 - `closureHint` (CompletionAnalyzer) is **distinct** from attention / situations — completion blockers ≠ À traiter.
 - `availableActions` are opportunities from known state — not execution guarantees (R19). Running projects `SuspendCompetition`; Suspended projects `ResumeCompetition`.
-- **`MaterializeFromOccupiedSlots` (Overview):** projected with `stageId` + params (`stageName`, `occupiedSlotCount`) when a Cup stage has an from-slots opportunity. The Overview does **not** choose `pairKeys` and does **not** POST materialize-from-slots. SPA intent is **navigate** to `/stages/{stageId}`; the organizer selects bracket pairs explicitly on the Stage surface (or omits for all eligible), then calls `POST …/matches/materialize-from-slots`.
+- **`MaterializeFromOccupiedSlots` (Overview):** projected with `stageId` + params (`stageName`, `occupiedSlotCount`) when a Cup stage has an from-slots opportunity. The Overview action plans the whole round by posting `planEntireRound: true`. It does not invent pair keys. Selecting specific pairs is a separate request that sends `pairKeys` and leaves the flag false.
 - Stage overview `slots[].coveredByCompleteFixture`: true when that slot key is already on a Fixture with the expected legs attached. Confrontations pairing UI excludes those slots (same coverage rule as Overview opportunity).
 - `naturalProgression` replaces the workspace `nextAction*` stub for Overview consumption (code only). May be `MaterializeFromOccupiedSlots` when that opportunity is the relevant tip. On Running/Suspended may be **null** when no structural tip applies.
 - Fixture → Match: `navigationHints` with `targetType: "Fixture"` include resolved `matchId` when an attachment exists; progression situations may also carry `matchId`.
@@ -644,6 +644,40 @@ Configuration only — does **not** resolve awards, mutate slots, or compute `Co
 
 The source pair must exist on the stage. Unique `(sourcePairKey, outcome)` pairs and unique ranks (`rank ≥ 1`). Rejected while the stage is Running / Suspended / Completed (`StructureNotMutable`).
 
+### `POST /stages/{stageId}/resolution/cascade-preview` → `CascadeReplaceResponse`
+
+Read-only preview of an explicit cascade replacement. Computes the version token, the played matches, and the replacements without applying them and without persisting. The body names the stale occupant the organiser confirms (`Slot`, `Group`, or `Population`).
+
+```json
+{
+  "target": "Slot",
+  "entryId": "<guid>",
+  "slotKey": "Champ",
+  "groupId": null
+}
+```
+
+```json
+{
+  "versionToken": "<sha256 hex>",
+  "playedMatches": [
+    {
+      "matchId": "<guid>",
+      "stageId": "<guid>",
+      "homeEntryId": "<guid>",
+      "awayEntryId": "<guid>"
+    }
+  ],
+  "replacements": []
+}
+```
+
+`playedMatches` lists finished matches the confirmation will return to not played. `versionToken` is the state the confirmation must send back. Unknown occupant → **404** `Application.CascadeReplaceOccupantNotFound`. Direct assignment, a non-replayable kind, an occupant that is not stale, a completed phase in the chain, a cycle, an indeterminate origin, or a live match → **409** with `Application.CascadeReplaceDirectAssignment`, `Application.CascadeReplaceNotReplayable`, `Application.CascadeReplaceNotStale`, `Application.CascadeReplaceCompleted`, `Application.CascadeReplaceCycle`, `Application.CascadeReplaceIndeterminate`, or `Application.CascadeReplaceLiveBlocked`.
+
+### `POST /stages/{stageId}/resolution/cascade-replace` → `CascadeReplaceResponse`
+
+Confirms the preview. One save. The body is the preview body plus `versionToken`. A token that no longer matches the stored stages and matches → **409** `Application.CascadeReplaceConflict`. The same codes as the preview apply. `replacements` lists occupants whose entry changed. A finished match in `playedMatches` is left Scheduled, with no result and no player sheet, and drops out of standings until a new result is recorded.
+
 ### `POST /stages/{stageId}/qualification/apply` → `QualificationApplyResponse`
 
 ```json
@@ -696,18 +730,24 @@ Host contract: `MyClub.PlayUp.Host.Contracts.GenerateNextRoundResponse`.
 
 ```json
 {
-  "pairKeys": ["P1", "P3"]
+  "pairKeys": ["P1", "P3"],
+  "planEntireRound": false
 }
 ```
 
 | Body | Behaviour |
 | :--- | :--- |
-| omit / `null` / `[]` | All **eligible** pairs on the stage |
-| non-empty `pairKeys` | Each key must exist on the stage **and** be eligible; unknown or ineligible → fail-closed (`Application.MaterializationFailure`) |
+| non-empty `pairKeys` | Only those pairs. Each key must exist on the stage **and** be eligible; unknown or ineligible → fail-closed (`Application.MaterializationFailure`). `planEntireRound` is ignored. |
+| `planEntireRound: true` and omitted / `null` / `[]` `pairKeys` | Every **eligible** pair on the round, including a pair whose side is still unknown |
+| omitted keys and `planEntireRound` omitted or `false` | Refused (`Application.CupRoundPlanSelectionRequired`) |
 
-**Eligible:** both pair slots occupied with distinct entries, and no Fixture on the stage already has `BracketPairKey` equal to that pair key.
+**Eligible (cup):** the bracket pair exists, its slots exist, and any sides that are already known are distinct. A side may still be unknown (`EntryId` null) so the confrontation can be planned before Apply. An empty pair stays eligible; planning the whole round still requires `planEntireRound`. Championship and group materialization still require two entries on every match. A Fixture whose attachments already cover the tie legs counts as materialized, including when a side is null.
 
-When omit/empty resolves to no eligible pairs: if every stage `BracketPair` already has a Fixture → `AlreadyComplete` with empty created; otherwise `MaterializationFailure` (“no eligible pairs”). Explicit `pairKeys` that already have a Fixture are **not** eligible (fail), not treated as idempotent success.
+### Deferred match participants
+
+`Match.home.entryId` and `Match.away.entryId` (list, detail, consultation) are nullable. `null` means that side is not known yet. `sourceSlotKey`, when present, is the fixture slot that feeds that side (Slot A is home on leg 1; leg 2 mirrors). Existing rows keep both identifiers. Start (`POST /matches/{id}/start`), finish (`POST /matches/{id}/finish`), and result correction (`PUT /matches/{id}/result`) return `Match.ParticipantsUnresolved` while either side is null. A known side is not replaced by Apply (`Match.ParticipantAlreadyResolved`); replacement is out of scope.
+
+When `planEntireRound` resolves to no eligible pairs: if every stage `BracketPair` already has a Fixture → `AlreadyComplete` with empty created; otherwise `MaterializationFailure` (“no eligible pairs”). Explicit `pairKeys` that already have a Fixture are **not** eligible (fail), not treated as idempotent success.
 
 Response shape is the same `MaterializeMatchesResponse` as materialize.
 
@@ -723,7 +763,7 @@ Typical product flow (Overview is readiness + navigation only):
 ```text
 Overview (MaterializeFromOccupiedSlots)
   → navigate to Stage
-  → user selects BracketPair keys (or omits for all eligible)
+  → user selects BracketPair keys, or confirms planning the whole round (`planEntireRound`)
   → POST /stages/{id}/matches/materialize-from-slots
 ```
 

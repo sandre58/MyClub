@@ -842,6 +842,19 @@
       },
       "ariaWithCause": "{{label}} — {{cause}}"
     },
+    "cascade": {
+      "action": "Remplacer l'occupant périmé",
+      "actionNamed": "Remplacer {{place}}",
+      "replaceHint": "Cliquer pour remplacer l'équipe par l'occupant attendu",
+      "replaceHintWithCause": "{{cause}}. {{action}}",
+      "confirmTitle": "Confirmer le remplacement en cascade ?",
+      "confirm": "Remplacer",
+      "cancel": "Annuler",
+      "pending": "Remplacement…",
+      "nonePlayed": "Aucun match aval déjà joué ne sera modifié.",
+      "playedIntro": "Ces matchs joués perdront leur score et les stats de leurs joueurs :",
+      "playedMatch": "Match {{matchId}}"
+    },
     "staleDraw": {
       "message": "Le tirage appliqué ne correspond plus à la phase.",
       "redo": "Refaire le tirage",

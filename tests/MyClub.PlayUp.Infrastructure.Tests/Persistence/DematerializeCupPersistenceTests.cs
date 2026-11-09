@@ -54,7 +54,13 @@ public sealed class DematerializeCupPersistenceTests
             await unitOfWork.SaveChangesAsync();
 
             stage.Prepare(_clock);
-            var materialized = MaterializeCupFromOccupiedSlots.Execute(competition, stage, [], [], _clock);
+            var materialized = MaterializeCupFromOccupiedSlots.Execute(
+                competition,
+                stage,
+                [],
+                [],
+                _clock,
+                planEntireRound: true);
             materialized.CreatedMatches.Should().ContainSingle();
             foreach (var match in materialized.CreatedMatches)
             {

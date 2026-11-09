@@ -167,6 +167,38 @@ describe('MatchPage', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('shows an unknown side as À déterminer and disables start and score', async () => {
+    vi.mocked(fetchMatchDetail).mockResolvedValue(
+      baseMatch({
+        home: {
+          entryId: null,
+          displayName: null,
+          sourceSlotKey: 'SF-A',
+        },
+      }),
+    );
+
+    renderMatchPage();
+
+    expect(
+      await screen.findByRole('heading', {
+        name: /À déterminer \(SF-A\) vs Beta/,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Démarrer le match' }),
+    ).toBeDisabled();
+    expect(
+      screen.queryByRole('button', { name: 'Terminer le match' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Démarrer et saisir le score restent indisponibles tant qu’un côté n’est pas connu/,
+      ),
+    ).toBeInTheDocument();
+    expect(startMatch).not.toHaveBeenCalled();
+  });
+
   it('Start button triggers startMatch mutation', async () => {
     const user = userEvent.setup();
     vi.mocked(fetchMatchDetail).mockResolvedValue(

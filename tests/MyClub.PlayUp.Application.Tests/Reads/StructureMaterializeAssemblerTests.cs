@@ -346,7 +346,8 @@ public sealed class StructureMaterializeAssemblerTests
             stage,
             [],
             [],
-            _clock);
+            _clock,
+            planEntireRound: true);
         result.CreatedMatches.Should().NotBeEmpty();
 
         var view = StructureViewAssembler.Assemble(situation.Competition, [stage]);
@@ -514,10 +515,10 @@ public sealed class StructureMaterializeAssemblerTests
         var materialize = hub.Materialize!;
 
         materialize.DeterminedCount.Should().Be(1);
-        materialize.EligibleCount.Should().Be(0);
-        materialize.CommandEnabled.Should().BeFalse();
+        materialize.EligibleCount.Should().Be(2);
+        materialize.CommandEnabled.Should().BeTrue();
         materialize.Confrontations.Should().ContainSingle(row =>
-            row.Key == "P1" && row.Determined && !row.Eligible && row.SideA == "ES Hyères" && row.SideB == "FC Menton");
+            row.Key == "P1" && row.Determined && row.Eligible && row.SideA == "ES Hyères" && row.SideB == "FC Menton");
     }
 
     [Fact]
@@ -609,9 +610,8 @@ public sealed class StructureMaterializeAssemblerTests
         var presentation = hub.MatchProductionPresentation!;
 
         presentation.Materialize.Visible.Should().BeTrue();
-        presentation.Materialize.Enabled.Should().BeFalse();
-        presentation.Materialize.DisabledReason.Should().Be(
-            StructureMaterializeDisabledReasons.NoEligibleConfrontations);
+        presentation.Materialize.Enabled.Should().BeTrue();
+        presentation.Materialize.DisabledReason.Should().BeNull();
         presentation.PrimaryGauge.Current.Should().Be(1);
     }
 

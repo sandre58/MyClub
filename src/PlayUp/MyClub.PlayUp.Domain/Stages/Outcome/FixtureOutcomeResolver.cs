@@ -87,7 +87,7 @@ public static class FixtureOutcomeResolver
                     StageErrorCodes.FixtureOutcomeInvalid);
             }
 
-            if (leg.HomeEntryId.Equals(leg.AwayEntryId))
+            if (leg.HomeEntryId is not { } home || leg.AwayEntryId is not { } away || home.Equals(away))
             {
                 throw new DomainException(
                     "Fixture outcome requires distinct home and away entries on each leg.",
@@ -133,10 +133,20 @@ public static class FixtureOutcomeResolver
     {
         var entries = legs
             .SelectMany(l => new[] { l.HomeEntryId, l.AwayEntryId })
+            .Where(id => id is not null)
+            .Select(id => id!.Value)
             .Distinct()
             .ToArray();
 
-        return entries.Length != 2 ? throw new DomainException("Fixture confrontation requires exactly two distinct entries across all legs.", StageErrorCodes.FixtureOutcomeInvalid) : legs.Select(leg => new HashSet<EntryId> { leg.HomeEntryId, leg.AwayEntryId }).Any(pair => !pair.SetEquals(entries)) ? throw new DomainException("All confrontation legs must share the same two entries.", StageErrorCodes.FixtureOutcomeInvalid) : ((EntryId EntryA, EntryId EntryB))(entries[0], entries[1]);
+        return entries.Length != 2
+            ? throw new DomainException(
+                "Fixture confrontation requires exactly two distinct entries across all legs.",
+                StageErrorCodes.FixtureOutcomeInvalid)
+            : legs.Select(leg => new HashSet<EntryId> { leg.HomeEntryId!.Value, leg.AwayEntryId!.Value }).Any(pair => !pair.SetEquals(entries))
+                ? throw new DomainException(
+                    "All confrontation legs must share the same two entries.",
+                    StageErrorCodes.FixtureOutcomeInvalid)
+                : ((EntryId EntryA, EntryId EntryB))(entries[0], entries[1]);
     }
 
     private static FixtureOutcome ResolveSingleLeg(TieFormat tieFormat, FixtureLegSnapshot leg)
@@ -144,8 +154,8 @@ public static class FixtureOutcomeResolver
         var score = leg.Score!.Value;
         return score.HomeGoals != score.AwayGoals
             ? score.HomeGoals > score.AwayGoals
-                ? new FixtureOutcome(leg.HomeEntryId, leg.AwayEntryId)
-                : new FixtureOutcome(leg.AwayEntryId, leg.HomeEntryId)
+                ? new FixtureOutcome(leg.HomeEntryId!.Value, leg.AwayEntryId!.Value)
+                : new FixtureOutcome(leg.AwayEntryId!.Value, leg.HomeEntryId!.Value)
             : ResolveLevelScore(tieFormat, leg);
     }
 
@@ -163,8 +173,8 @@ public static class FixtureOutcomeResolver
         foreach (var leg in legs)
         {
             var score = leg.Score!.Value;
-            AddGoals(leg.HomeEntryId, score.HomeGoals, isAway: false, entryA, entryB, ref totalA, ref totalB, ref awayA, ref awayB);
-            AddGoals(leg.AwayEntryId, score.AwayGoals, isAway: true, entryA, entryB, ref totalA, ref totalB, ref awayA, ref awayB);
+            AddGoals(leg.HomeEntryId!.Value, score.HomeGoals, isAway: false, entryA, entryB, ref totalA, ref totalB, ref awayA, ref awayB);
+            AddGoals(leg.AwayEntryId!.Value, score.AwayGoals, isAway: true, entryA, entryB, ref totalA, ref totalB, ref awayA, ref awayB);
         }
 
         if (totalA != totalB)
@@ -237,8 +247,8 @@ public static class FixtureOutcomeResolver
                         "Fixture outcome requires a decisive penalty shootout score.",
                         StageErrorCodes.FixtureOutcomeInvalid)
                     : shootout.HomeGoals > shootout.AwayGoals
-                        ? new FixtureOutcome(leg.HomeEntryId, leg.AwayEntryId)
-                        : new FixtureOutcome(leg.AwayEntryId, leg.HomeEntryId);
+                        ? new FixtureOutcome(leg.HomeEntryId!.Value, leg.AwayEntryId!.Value)
+                        : new FixtureOutcome(leg.AwayEntryId!.Value, leg.HomeEntryId!.Value);
         }
 
         if (leg.PenaltyShootoutScore is not null)

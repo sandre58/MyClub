@@ -60,7 +60,7 @@ public sealed class DeclaredParticipationUseCaseTests
     public void AddDeclaredParticipation_rejects_staff_on_sheet()
     {
         var (match, competition, _) = CreateScheduledMatchWithHomePlayer();
-        var coach = AddDeclaredMember.Execute(competition, match.HomeEntryId, "Coach", DeclaredMemberRole.Staff, _clock);
+        var coach = AddDeclaredMember.Execute(competition, match.HomeEntryId!.Value, "Coach", DeclaredMemberRole.Staff, _clock);
 
         var act = () => AddDeclaredParticipation.Execute(
             match,
@@ -80,7 +80,7 @@ public sealed class DeclaredParticipationUseCaseTests
         var (match, competition, _) = CreateScheduledMatchWithHomePlayer();
         var awayPlayer = AddDeclaredMember.Execute(
             competition,
-            match.AwayEntryId,
+            match.AwayEntryId!.Value,
             "Away Player",
             DeclaredMemberRole.Player,
             _clock);
@@ -103,7 +103,7 @@ public sealed class DeclaredParticipationUseCaseTests
         var (match, competition, member) = CreateScheduledMatchWithHomePlayer();
         competition.Prepare(_clock);
         competition.Start(_clock);
-        competition.WithdrawEntry(match.HomeEntryId, _clock);
+        competition.WithdrawEntry(match.HomeEntryId!.Value, _clock);
 
         var act = () => AddDeclaredParticipation.Execute(
             match,

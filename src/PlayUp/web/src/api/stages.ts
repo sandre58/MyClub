@@ -234,15 +234,71 @@ export function dematerializePhase(stageId: string): Promise<{
 /** POST /stages/{stageId}/matches/materialize-from-slots → MaterializeMatchesResponse */
 export function materializeCupFromOccupiedSlots(
   stageId: string,
-  pairKeys?: string[],
+  request: { pairKeys?: string[]; planEntireRound?: boolean } = {},
 ): Promise<{
   createdCount: number;
   attachedMatchIds: string[];
   alreadyComplete: boolean;
 }> {
   return sendJson('POST', `/stages/${stageId}/matches/materialize-from-slots`, {
-    pairKeys: pairKeys ?? [],
+    pairKeys: request.pairKeys ?? [],
+    planEntireRound: request.planEntireRound ?? false,
   });
+}
+
+export type CascadeReplaceSurface = 'Slot' | 'Group' | 'Population';
+
+export type CascadeReplaceRequest = {
+  target: CascadeReplaceSurface;
+  entryId: string;
+  slotKey?: string | null;
+  groupId?: string | null;
+};
+
+export type CascadePlayedMatch = {
+  matchId: string;
+  stageId: string;
+  homeEntryId: string | null;
+  awayEntryId: string | null;
+};
+
+export type CascadeReplacement = {
+  stageId: string;
+  target: CascadeReplaceSurface;
+  slotKey: string | null;
+  groupId: string | null;
+  previousEntryId: string;
+  entryId: string;
+};
+
+export type CascadeReplaceResponse = {
+  versionToken: string;
+  playedMatches: CascadePlayedMatch[];
+  replacements: CascadeReplacement[];
+};
+
+/** POST /stages/{stageId}/resolution/cascade-preview → CascadeReplaceResponse */
+export function previewCascadeReplace(
+  stageId: string,
+  request: CascadeReplaceRequest,
+): Promise<CascadeReplaceResponse> {
+  return sendJson(
+    'POST',
+    `/stages/${stageId}/resolution/cascade-preview`,
+    request,
+  );
+}
+
+/** POST /stages/{stageId}/resolution/cascade-replace → CascadeReplaceResponse */
+export function confirmCascadeReplace(
+  stageId: string,
+  request: CascadeReplaceRequest & { versionToken: string },
+): Promise<CascadeReplaceResponse> {
+  return sendJson(
+    'POST',
+    `/stages/${stageId}/resolution/cascade-replace`,
+    request,
+  );
 }
 
 /** POST /stages/{stageId}/qualification/apply → QualificationApplyResponse */

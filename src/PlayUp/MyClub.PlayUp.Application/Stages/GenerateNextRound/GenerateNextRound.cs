@@ -252,7 +252,9 @@ public static class GenerateNextRound
     private static List<(EntryId First, EntryId Second)> CollectPlayedPairs(
         IReadOnlyDictionary<MatchId, Match> attached) =>
     [
-        .. attached.Values.Select(match => (match.HomeEntryId, match.AwayEntryId))
+        .. attached.Values
+            .Where(match => match.HomeEntryId is not null && match.AwayEntryId is not null)
+            .Select(match => (match.HomeEntryId!.Value, match.AwayEntryId!.Value))
     ];
 
     private static Dictionary<EntryId, int> CollectHomeCounts(IReadOnlyDictionary<MatchId, Match> attached)
@@ -260,7 +262,12 @@ public static class GenerateNextRound
         var counts = new Dictionary<EntryId, int>();
         foreach (var match in attached.Values)
         {
-            counts[match.HomeEntryId] = counts.GetValueOrDefault(match.HomeEntryId) + 1;
+            if (match.HomeEntryId is not { } home)
+            {
+                continue;
+            }
+
+            counts[home] = counts.GetValueOrDefault(home) + 1;
         }
 
         return counts;

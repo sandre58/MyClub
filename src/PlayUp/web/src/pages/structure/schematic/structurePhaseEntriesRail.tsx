@@ -44,6 +44,7 @@ import type {
   CompositionTeamProvenance,
   CompositionTeamRow,
 } from '../composition/compositionTeamsInboundRows';
+import { useStructureCascadeReplace } from '../resolution/structureCascadeReplaceContext';
 import { StructureResolutionFreshnessBadge } from '../resolution/StructureResolutionFreshnessBadge';
 import {
   buildStructureResolutionOccupantIndex,
@@ -249,6 +250,7 @@ export function RootEntriesRail({
   suppressRuntimeEmptyPresentation?: boolean;
 }) {
   const { t } = useTranslation(['structure', 'teams']);
+  const cascade = useStructureCascadeReplace();
   const resolutionIndex = useMemo(
     () => buildStructureResolutionOccupantIndex(stage.resolutionOccupants),
     [stage.resolutionOccupants],
@@ -364,6 +366,7 @@ export function RootEntriesRail({
       <StructureResolutionFreshnessBadge
         key="freshness"
         occupant={populationOccupant}
+        onReplace={cascade?.requestReplace}
       />,
     ].filter(Boolean);
     return (

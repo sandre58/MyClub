@@ -39,7 +39,10 @@ internal static class ProgressionDestinationAttachedProduction
         ArgumentNullException.ThrowIfNull(materializedParticipants);
 
         var attached = CollectAttachedMatchIds(destination);
-        return materializedParticipants.Any(snapshot => attached.Contains(snapshot.MatchId) && (snapshot.HomeEntryId.Equals(entryId) || snapshot.AwayEntryId.Equals(entryId)));
+        return materializedParticipants.Any(snapshot =>
+            attached.Contains(snapshot.MatchId)
+            && ((snapshot.HomeEntryId is { } home && home.Equals(entryId))
+                || (snapshot.AwayEntryId is { } away && away.Equals(entryId))));
     }
 
     private static HashSet<MatchId> CollectAttachedMatchIds(Stage stage)

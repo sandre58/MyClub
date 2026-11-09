@@ -7,6 +7,7 @@
 using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Pipeline;
 using MyClub.PlayUp.Application.Stages;
+using MyClub.PlayUp.Application.Stages.CascadeReplace;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Host.Contracts;
@@ -546,6 +547,37 @@ internal static class StageEndpoints
             });
 
         app.MapPost(
+            "/stages/{stageId:guid}/resolution/cascade-preview",
+            async (
+                Guid stageId,
+                CascadeReplacePreviewRequest request,
+                UseCaseExecutor executor,
+                CancellationToken cancellationToken) =>
+            {
+                var result = await executor.PreviewCascadeReplaceAsync(
+                    new StageId(stageId),
+                    new CascadeReplaceTarget(request.Target, request.EntryId, request.SlotKey, request.GroupId),
+                    cancellationToken).ConfigureAwait(false);
+                return Results.Ok(ToCascadeReplaceResponse(result));
+            });
+
+        app.MapPost(
+            "/stages/{stageId:guid}/resolution/cascade-replace",
+            async (
+                Guid stageId,
+                CascadeReplaceConfirmRequest request,
+                UseCaseExecutor executor,
+                CancellationToken cancellationToken) =>
+            {
+                var result = await executor.ConfirmCascadeReplaceAsync(
+                    new StageId(stageId),
+                    new CascadeReplaceTarget(request.Target, request.EntryId, request.SlotKey, request.GroupId),
+                    request.VersionToken,
+                    cancellationToken).ConfigureAwait(false);
+                return Results.Ok(ToCascadeReplaceResponse(result));
+            });
+
+        app.MapPost(
             "/stages/{stageId:guid}/qualification/apply",
             async (Guid stageId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
             {
@@ -719,7 +751,11 @@ internal static class StageEndpoints
             {
                 ArgumentNullException.ThrowIfNull(request);
                 var result = await executor
-                    .MaterializeCupFromOccupiedSlotsAsync(new StageId(stageId), request.PairKeys, cancellationToken)
+                    .MaterializeCupFromOccupiedSlotsAsync(
+                        new StageId(stageId),
+                        request.PairKeys,
+                        request.PlanEntireRound,
+                        cancellationToken)
                     .ConfigureAwait(false);
                 return Results.Ok(new MaterializeMatchesResponse(
                     result.CreatedMatches.Count,
@@ -782,4 +818,24 @@ internal static class StageEndpoints
 
         return app;
     }
+
+    private static CascadeReplaceResponse ToCascadeReplaceResponse(CascadeReplaceResult result) =>
+        new(
+            result.VersionToken,
+            result.PlayedMatches
+                .Select(match => new CascadePlayedMatchDto(
+                    match.MatchId,
+                    match.StageId,
+                    match.HomeEntryId,
+                    match.AwayEntryId))
+                .ToArray(),
+            result.Replacements
+                .Select(row => new CascadeReplacementDto(
+                    row.StageId,
+                    row.Target,
+                    row.SlotKey,
+                    row.GroupId,
+                    row.PreviousEntryId,
+                    row.EntryId))
+                .ToArray());
 }

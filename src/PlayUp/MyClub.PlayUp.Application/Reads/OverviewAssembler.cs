@@ -389,8 +389,8 @@ public static class OverviewAssembler
                         stage.Id.Value,
                         unit.MatchdayNumber,
                         scheduledAt,
-                        EntryDisplayNames.Resolve(names, match.HomeEntryId) ?? match.HomeEntryId.Value.ToString(),
-                        EntryDisplayNames.Resolve(names, match.AwayEntryId) ?? match.AwayEntryId.Value.ToString()),
+                        EntryDisplayNames.Resolve(names, match.HomeEntryId),
+                        EntryDisplayNames.Resolve(names, match.AwayEntryId)),
                     scheduledAt));
             }
         }
@@ -931,8 +931,8 @@ public static class OverviewAssembler
                     stage.Id.Value,
                     match.Status,
                     scheduledAt,
-                    EntryDisplayNames.Resolve(names, match.HomeEntryId) ?? match.HomeEntryId.Value.ToString(),
-                    EntryDisplayNames.Resolve(names, match.AwayEntryId) ?? match.AwayEntryId.Value.ToString(),
+                    EntryDisplayNames.Resolve(names, match.HomeEntryId),
+                    EntryDisplayNames.Resolve(names, match.AwayEntryId),
                     score);
             })
             .OrderBy(line => line.Status == MatchStatus.Live ? 0 : 1)
@@ -1869,7 +1869,7 @@ public static class OverviewAssembler
 
     /// <summary>
     /// Opportunity for from-slots materialization: Cup stage Draft/Ready with at least one
-    /// eligible <see cref="BracketPair"/> (both slots occupied, no fixture bound yet).
+    /// eligible <see cref="BracketPair"/> (known sides distinct, unknown sides allowed, no fixture bound yet).
     /// </summary>
     private static bool TryDescribeFromSlotsOpportunity(
         Competition competition,

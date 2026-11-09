@@ -180,9 +180,11 @@ public static class MaterializeMatches
         var keys = new HashSet<(EntryId Home, EntryId Away)>();
         foreach (var match in existingMatches)
         {
-            if (stage.HasMatch(match.Id))
+            if (stage.HasMatch(match.Id)
+                && match.HomeEntryId is { } home
+                && match.AwayEntryId is { } away)
             {
-                keys.Add(DirectedPair(match.HomeEntryId, match.AwayEntryId));
+                keys.Add(DirectedPair(home, away));
             }
         }
 
@@ -458,9 +460,9 @@ public static class MaterializeMatches
         Stage stage,
         IReadOnlyList<Match> existingMatches) =>
         existingMatches
-            .Where(match => stage.HasMatch(match.Id))
+            .Where(match => stage.HasMatch(match.Id) && match.HomeEntryId is not null && match.AwayEntryId is not null)
             .ToDictionary(
-                match => DirectedPair(match.HomeEntryId, match.AwayEntryId),
+                match => DirectedPair(match.HomeEntryId!.Value, match.AwayEntryId!.Value),
                 match => match);
 
     private static void EnsureMatchdays(Stage stage, int requiredCount, IClock clock)

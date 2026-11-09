@@ -1,13 +1,32 @@
+import type { KeyboardEvent, MouseEvent, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Tooltip } from '../../../design-system/components/Tooltip';
 import { Status } from '../../../design-system/components/Status';
+import {
+  HourglassIcon,
+  InfoIcon,
+  RefreshIcon,
+} from '../../../design-system/icons/contentIcons';
+import { ChevronRightIcon } from '../../../design-system/icons/shellIcons';
 import type { StructureResolutionOccupant } from '../../../types';
-import { resolutionOccupantNeedsBadge } from './structureResolutionOccupants';
+import {
+  isReplayableStale,
+  resolutionOccupantNeedsBadge,
+} from './structureResolutionOccupants';
+
+type FreshnessBadgeVariant = 'full' | 'icon';
 
 type StructureResolutionFreshnessBadgeProps = {
   occupant: StructureResolutionOccupant | null | undefined;
   density?: 'context' | 'compact';
+  /**
+   * `icon` hides the state word (schematic slots). The word moves into the tooltip.
+   * Lists and details keep the default `full` pill.
+   */
+  variant?: FreshnessBadgeVariant;
+  /** Opens the cascade preview. Ignored unless the occupant is stale Qual/Prog. */
+  onReplace?: (occupant: StructureResolutionOccupant) => void;
 };
 
 function badgeTone(
@@ -25,9 +44,25 @@ function badgeTone(
   }
 }
 
+function stateIcon(state: StructureResolutionOccupant['state']): ReactNode {
+  const className = 'structure-freshness-badge__icon';
+  switch (state) {
+    case 'Perime':
+      return <RefreshIcon size="sm" className={className} aria-hidden="true" />;
+    case 'Indetermine':
+      return (
+        <HourglassIcon size="sm" className={className} aria-hidden="true" />
+      );
+    default:
+      return <InfoIcon size="sm" className={className} aria-hidden="true" />;
+  }
+}
+
 export function StructureResolutionFreshnessBadge({
   occupant,
   density = 'compact',
+  variant = 'full',
+  onReplace,
 }: StructureResolutionFreshnessBadgeProps) {
   const { t } = useTranslation('structure');
 
@@ -46,6 +81,18 @@ export function StructureResolutionFreshnessBadge({
     causeLabel != null
       ? t('resolution.freshness.ariaWithCause', { label, cause: causeLabel })
       : label;
+  const replaceable = !!onReplace && isReplayableStale(occupant);
+  const replaceHint = t('resolution.cascade.replaceHint');
+  const replaceDetail =
+    causeLabel != null
+      ? t('resolution.cascade.replaceHintWithCause', {
+          cause: causeLabel,
+          action: replaceHint,
+        })
+      : replaceHint;
+  const replaceName =
+    variant === 'icon' ? `${label}. ${replaceDetail}` : replaceDetail;
+  const iconOnly = variant === 'icon';
 
   const badge = (
     <Status
@@ -53,15 +100,69 @@ export function StructureResolutionFreshnessBadge({
       tone={badgeTone(occupant.state)}
       variant="soft"
       shape="pill"
-      aria-label={ariaLabel}
+      className={iconOnly ? 'structure-freshness-badge--icon' : undefined}
+      aria-label={replaceable ? undefined : ariaLabel}
     >
-      {label}
+      {replaceable ? (
+        <RefreshIcon
+          size="sm"
+          className="structure-freshness-badge__icon"
+          aria-hidden="true"
+        />
+      ) : iconOnly ? (
+        stateIcon(occupant.state)
+      ) : null}
+      {iconOnly ? null : label}
+      {replaceable ? (
+        <ChevronRightIcon
+          size="sm"
+          className="structure-freshness-badge__chevron"
+          aria-hidden="true"
+        />
+      ) : null}
     </Status>
   );
 
-  if (causeLabel == null) {
+  const tip = (
+    <span className="structure-freshness-replace__tip">
+      {iconOnly ? (
+        <span className="structure-freshness-replace__state">{label}</span>
+      ) : null}
+      {causeLabel ? (
+        <span className="structure-freshness-replace__cause">{causeLabel}</span>
+      ) : null}
+      {replaceable ? (
+        <span className="structure-freshness-replace__action">
+          {replaceHint}
+        </span>
+      ) : null}
+    </span>
+  );
+  const hasTip = iconOnly || causeLabel != null || replaceable;
+
+  if (replaceable) {
+    const open = (event: MouseEvent | KeyboardEvent) => {
+      event.stopPropagation();
+      event.preventDefault();
+      onReplace(occupant);
+    };
+    return (
+      <Tooltip content={tip}>
+        <button
+          type="button"
+          className="structure-freshness-replace"
+          aria-label={replaceName}
+          onClick={open}
+        >
+          {badge}
+        </button>
+      </Tooltip>
+    );
+  }
+
+  if (!hasTip || (causeLabel == null && !iconOnly)) {
     return badge;
   }
 
-  return <Tooltip content={causeLabel}>{badge}</Tooltip>;
+  return <Tooltip content={tip}>{badge}</Tooltip>;
 }

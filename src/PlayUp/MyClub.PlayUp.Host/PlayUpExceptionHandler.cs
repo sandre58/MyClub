@@ -130,6 +130,24 @@ internal sealed partial class PlayUpExceptionHandler(ILogger<PlayUpExceptionHand
                 (StatusCodes.Status409Conflict, "Draw release requires a cancelled draw", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.DrawRedoRequiresApplied } application =>
                 (StatusCodes.Status409Conflict, "Draw redo requires an applied draw", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.CascadeReplaceOccupantNotFound } application =>
+                (StatusCodes.Status404NotFound, "Resolution occupant not found", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.CascadeReplaceConflict } application =>
+                (StatusCodes.Status409Conflict, "Cascade confirmation conflict", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.CascadeReplaceNotReplayable } application =>
+                (StatusCodes.Status409Conflict, "Cascade occupant is not replayable", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.CascadeReplaceNotStale } application =>
+                (StatusCodes.Status409Conflict, "Cascade occupant is not stale", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.CascadeReplaceDirectAssignment } application =>
+                (StatusCodes.Status409Conflict, "Direct assignment is not replaced", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.CascadeReplaceCompleted } application =>
+                (StatusCodes.Status409Conflict, "Completed phase blocks the cascade", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.CascadeReplaceCycle } application =>
+                (StatusCodes.Status409Conflict, "Resolution chain contains a cycle", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.CascadeReplaceIndeterminate } application =>
+                (StatusCodes.Status409Conflict, "Cascade selection is indeterminate", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.CascadeReplaceLiveBlocked } application =>
+                (StatusCodes.Status409Conflict, "Live match blocks the cascade", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.MediaNotFound } application =>
                 (StatusCodes.Status400BadRequest, "Media not found", application.Code),
             ApplicationFailureException application =>

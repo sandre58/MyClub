@@ -307,6 +307,19 @@
   display: inline-flex;
 }
 
+.schematic-slot-with-action {
+  display: flex;
+  align-items: stretch;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.schematic-slot-with-action > .schematic-slot {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto;
+}
+
 .structure-stale-draw-actions {
   display: flex;
   flex-direction: column;

@@ -133,12 +133,20 @@ function MatchDetailView({
     runningScoreMutation.isPending ||
     finishMutation.isPending;
 
-  const canStart = data.status === 'Scheduled';
-  const canSetRunningScore = data.status === 'Live';
+  const participantsResolved = Boolean(data.home.entryId && data.away.entryId);
+  const canStart = data.status === 'Scheduled' && participantsResolved;
+  const startBlocked = data.status === 'Scheduled' && !participantsResolved;
+  const canSetRunningScore = data.status === 'Live' && participantsResolved;
   const canFinish =
-    data.status === 'Scheduled' ||
-    data.status === 'Postponed' ||
-    data.status === 'Live';
+    participantsResolved &&
+    (data.status === 'Scheduled' ||
+      data.status === 'Postponed' ||
+      data.status === 'Live');
+  const participantsBlocked =
+    !participantsResolved &&
+    (data.status === 'Scheduled' ||
+      data.status === 'Postponed' ||
+      data.status === 'Live');
 
   const runningPrefill: MatchScore = data.runningScore ?? {
     homeGoals: 0,
@@ -218,6 +226,7 @@ function MatchDetailView({
             board={board}
             busy={busy}
             canStart={canStart}
+            startBlocked={startBlocked}
             homeName={homeName}
             awayName={awayName}
             kickoffTime={kickoffParts.time}
@@ -341,6 +350,12 @@ function MatchDetailView({
         </div>
       )}
 
+      {participantsBlocked ? (
+        <p className="ds-notice" role="status">
+          {t('detail.participantsUnresolved')}
+        </p>
+      ) : null}
+
       {data.status === 'Cancelled' && (
         <p className="ds-notice">
           {t('detail.noAction', { status: matchStatusLabel(data.status) })}
@@ -391,6 +406,7 @@ function MatchHeroStatus({
 function MatchHeroCenter({
   board,
   canStart,
+  startBlocked = false,
   kickoffTime,
   onStart,
   startPending,
@@ -400,6 +416,7 @@ function MatchHeroCenter({
 }: {
   board: ReturnType<typeof displayedScore>;
   canStart: boolean;
+  startBlocked?: boolean;
   kickoffTime: string | null;
   onStart: () => void;
   startPending: boolean;
@@ -409,14 +426,14 @@ function MatchHeroCenter({
 }) {
   const { t } = useTranslation('matches');
 
-  if (canStart) {
+  if (canStart || startBlocked) {
     return (
       <>
         <MatchHeroScore pending>{kickoffTime ?? '–'}</MatchHeroScore>
         <button
           type="button"
           className="ds-btn ds-btn--primary"
-          disabled={startPending || busy}
+          disabled={startBlocked || startPending || busy}
           onClick={onStart}
         >
           {startPending ? (

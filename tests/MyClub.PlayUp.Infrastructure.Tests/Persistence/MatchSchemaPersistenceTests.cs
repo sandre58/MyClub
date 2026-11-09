@@ -53,7 +53,9 @@ public sealed class MatchSchemaPersistenceTests(PostgresFixture fixture)
         columns.Single(column => column.Name == "result").IsNullable.Should().Be("YES");
         columns.Single(column => column.Name == "running_score").DataType.Should().Be("jsonb");
         columns.Single(column => column.Name == "running_score").IsNullable.Should().Be("YES");
-        columns.Where(column => column.Name is not ("result" or "running_score"))
+        columns.Single(column => column.Name == "home_entry_id").IsNullable.Should().Be("YES");
+        columns.Single(column => column.Name == "away_entry_id").IsNullable.Should().Be("YES");
+        columns.Where(column => column.Name is not ("result" or "running_score" or "home_entry_id" or "away_entry_id"))
             .Should().OnlyContain(column => column.IsNullable == "NO");
     }
 

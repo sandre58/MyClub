@@ -20,6 +20,7 @@ import {
   showPerEntryPlacement,
 } from '../draw/structureEntryPlacementProjection';
 import type { EntryPlaceProjection } from '../draw/structureEntryPlacementProjection';
+import { useStructureCascadeReplace } from '../resolution/structureCascadeReplaceContext';
 import { StructureResolutionFreshnessBadge } from '../resolution/StructureResolutionFreshnessBadge';
 import {
   buildStructureResolutionOccupantIndex,
@@ -46,6 +47,7 @@ export function CompositionQualifiersPanel({
   renderGroupAction?: (group: CompositionQualifierFeedGroup) => ReactNode;
 }) {
   const { t } = useTranslation('structure');
+  const cascade = useStructureCascadeReplace();
   const resolutionIndex = useMemo(
     () => buildStructureResolutionOccupantIndex(resolutionOccupants),
     [resolutionOccupants],
@@ -158,6 +160,7 @@ export function CompositionQualifiersPanel({
                               resolutionIndex,
                               seat.entryId,
                             )}
+                            onReplace={cascade?.requestReplace}
                           />
                         ) : null}
                       </div>

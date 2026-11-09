@@ -37,7 +37,8 @@ public sealed class DematerializeCupTests
             stage,
             [],
             [],
-            _clock);
+            _clock,
+            planEntireRound: true);
         materialized.CreatedMatches.Should().ContainSingle();
         foreach (var match in materialized.CreatedMatches)
         {
@@ -97,7 +98,8 @@ public sealed class DematerializeCupTests
             stage,
             [],
             [],
-            _clock);
+            _clock,
+            planEntireRound: true);
         foreach (var match in materialized.CreatedMatches)
         {
             _matches.Track(match);
@@ -135,7 +137,8 @@ public sealed class DematerializeCupTests
             stage,
             [],
             [],
-            _clock);
+            _clock,
+            planEntireRound: true);
         foreach (var match in materialized.CreatedMatches)
         {
             _matches.Track(match);
@@ -169,7 +172,8 @@ public sealed class DematerializeCupTests
             stage,
             [],
             [],
-            _clock);
+            _clock,
+            planEntireRound: true);
         foreach (var match in materialized.CreatedMatches)
         {
             _matches.Track(match);

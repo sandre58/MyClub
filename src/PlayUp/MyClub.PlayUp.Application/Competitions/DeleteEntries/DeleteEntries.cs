@@ -50,8 +50,7 @@ public static class DeleteEntries
                 remainingMatches,
                 matchRepository,
                 clock);
-            remainingMatches.RemoveAll(match =>
-                match.HomeEntryId.Equals(entryId) || match.AwayEntryId.Equals(entryId));
+            remainingMatches.RemoveAll(match => match.Involves(entryId));
             foreach (var stage in competitionStages)
             {
                 stage.RemoveCompositionEntryIfPresent(entryId, clock);

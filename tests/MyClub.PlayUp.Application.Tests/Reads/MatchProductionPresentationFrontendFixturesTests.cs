@@ -147,7 +147,8 @@ public sealed class MatchProductionPresentationFrontendFixturesTests
             stage,
             [],
             [],
-            _clock);
+            _clock,
+            planEntireRound: true);
 
         var hub = StructureViewAssembler.Assemble(situation.Competition, [stage]).Stages[0];
         return hub.MatchProductionPresentation
