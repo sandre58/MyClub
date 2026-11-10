@@ -250,12 +250,10 @@ function SlotBox({
         occupant={slotResolutionOccupant}
         variant="icon"
         onReplace={cascade?.requestReplace}
+        directActionDisabled={interactive}
       />
     </span>
   ) : null;
-  // A stale Qual/Prog badge is a button. Keep it outside the manual-place
-  // slot button so the control is not nested.
-  const badgeBesideSlot = interactive && freshnessBadge != null;
   const slotInner = (
     <>
       {density === 'crest' && showTeamCrest ? (
@@ -293,10 +291,10 @@ function SlotBox({
               <span className="schematic-slot__secondary">{secondary}</span>
             ) : null}
           </span>
-          {badgeBesideSlot ? null : freshnessBadge}
+          {freshnessBadge}
         </span>
       ) : null}
-      {!showFullBody && !badgeBesideSlot ? freshnessBadge : null}
+      {!showFullBody ? freshnessBadge : null}
     </>
   );
 
@@ -305,7 +303,7 @@ function SlotBox({
     <button
       type="button"
       className={className}
-      style={badgeBesideSlot ? undefined : shellStyle}
+      style={shellStyle}
       onClick={() => onActivate?.(c!)}
       aria-label={address ?? c!.formPosition.slotKey ?? undefined}
     >
@@ -320,17 +318,8 @@ function SlotBox({
       {slotInner}
     </span>
   );
-  const presented = badgeBesideSlot ? (
-    <span className="schematic-slot-with-action" style={shellStyle}>
-      {slot}
-      {freshnessBadge}
-    </span>
-  ) : (
-    slot
-  );
-
   if (!tip) {
-    return presented;
+    return slot;
   }
 
   // Geometry host OUTSIDE the DS Tooltip trigger — otherwise Cup absolute
@@ -338,7 +327,7 @@ function SlotBox({
   return (
     <span className="schematic-slot-tip" style={style}>
       <Tooltip content={tip} side="top">
-        {presented}
+        {slot}
       </Tooltip>
     </span>
   );

@@ -71,12 +71,22 @@ export function resolutionOccupantNeedsBadge(
 export function isReplayableStale(
   occupant: StructureResolutionOccupant | null | undefined,
 ): occupant is StructureResolutionOccupant {
-  return (
-    occupant != null &&
-    occupant.state === 'Perime' &&
-    (occupant.provenanceKind === 'Qualification' ||
-      occupant.provenanceKind === 'Progression')
-  );
+  if (occupant == null || occupant.state !== 'Perime') {
+    return false;
+  }
+  if (
+    occupant.provenanceKind !== 'Qualification' &&
+    occupant.provenanceKind !== 'Progression'
+  ) {
+    return false;
+  }
+  if (occupant.stalenessCause === 'AmontPerime') {
+    return false;
+  }
+  if (occupant.cascadeReplaceable != null) {
+    return occupant.cascadeReplaceable;
+  }
+  return occupant.stalenessCause !== 'RegleQualification';
 }
 
 export function lookupSlotResolutionOccupant(

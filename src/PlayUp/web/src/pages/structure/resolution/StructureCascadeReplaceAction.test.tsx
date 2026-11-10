@@ -34,6 +34,7 @@ const occupant: StructureResolutionOccupant = {
   state: 'Perime',
   slotKey: 'Champ',
   stalenessCause: 'ResultatAmont',
+  cascadeReplaceable: true,
 };
 
 const stage = {

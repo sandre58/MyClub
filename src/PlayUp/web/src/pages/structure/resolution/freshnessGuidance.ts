@@ -1,15 +1,15 @@
 import type { StructureResolutionOccupant } from '../../../types';
 import { structureDeepLink } from '../structureNavigation';
 
-export type FreshnessPanel =
+export type FreshnessGuidance =
   | {
       kind: 'upstream';
-      href: string | null;
+      href: string;
     }
   | {
       kind: 'indeterminate';
       cause: NonNullable<StructureResolutionOccupant['indeterminacyCause']>;
-      href: string | null;
+      href: string;
       matchLabel: string | null;
     };
 
@@ -36,22 +36,20 @@ function matchHref(matchId: string | null | undefined): string | null {
 }
 
 /**
- * Panel for an upstream-stale badge or an indeterminate badge.
+ * Corrective navigation for upstream-stale or indeterminate badges.
  * Replayable qualification and progression staleness other than AmontPerime
  * stays on the replace control.
  */
-export function freshnessPanel(
+export function freshnessGuidance(
   occupant: StructureResolutionOccupant,
   competitionId: string | null | undefined,
-): FreshnessPanel | null {
+): FreshnessGuidance | null {
   if (
     occupant.state === 'Perime' &&
     occupant.stalenessCause === 'AmontPerime'
   ) {
-    return {
-      kind: 'upstream',
-      href: stageHref(competitionId, occupant.upstreamStageId),
-    };
+    const href = stageHref(competitionId, occupant.upstreamStageId);
+    return href ? { kind: 'upstream', href } : null;
   }
 
   if (occupant.state !== 'Indetermine' || !occupant.indeterminacyCause) {
@@ -73,6 +71,10 @@ export function freshnessPanel(
     href = upstream;
   } else if (cause === 'SelectionVide' || cause === 'Autre') {
     href = upstream;
+  }
+
+  if (!href) {
+    return null;
   }
 
   return {

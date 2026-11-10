@@ -307,6 +307,8 @@ export interface StructureResolutionOccupant {
   actionMatchId?: string | null;
   /** Home and away names of `actionMatchId`, when both are known. */
   actionMatchLabel?: string | null;
+  /** Host-computed: a cascade replace can replay this stale Qual/Prog occupant. */
+  cascadeReplaceable?: boolean;
 }
 
 /** Hub projection — inbound feed seats (Structure GET, not schematic). */

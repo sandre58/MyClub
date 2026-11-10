@@ -54,6 +54,7 @@ public sealed class ResolutionFreshnessStructureEndpointTests(HostPostgresFixtur
             && occupant.EntryId == seeded.QualifierId
             && occupant.State == StructureResolutionFreshness.Perime
             && occupant.StalenessCause == StructureResolutionStalenessCause.ResultatAmont
+            && occupant.CascadeReplaceable
             && occupant.UpstreamStageId == seeded.LeagueId
             && occupant.IndeterminacyCause == null);
 
@@ -98,7 +99,8 @@ public sealed class ResolutionFreshnessStructureEndpointTests(HostPostgresFixtur
             occupant.Target == StructureResolutionOccupantTarget.Slot
             && occupant.EntryId == seeded.QualifierId
             && occupant.State == StructureResolutionFreshness.Perime
-            && occupant.StalenessCause == StructureResolutionStalenessCause.RegleQualification);
+            && occupant.StalenessCause == StructureResolutionStalenessCause.RegleQualification
+            && occupant.CascadeReplaceable);
     }
 
     private async Task<Seed> SeedAppliedQualificationAsync(PlayUpWebApplicationFactory factory, bool startLeague)

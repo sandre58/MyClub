@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { StructureResolutionOccupant } from '../../../types';
-import { freshnessPanel } from './freshnessGuidance';
+import { freshnessGuidance } from './freshnessGuidance';
 
 const base: StructureResolutionOccupant = {
   target: 'Slot',
@@ -12,10 +12,10 @@ const base: StructureResolutionOccupant = {
   slotKey: 'A',
 };
 
-describe('freshnessPanel', () => {
+describe('freshnessGuidance', () => {
   it('links an upstream-stale badge to the source phase', () => {
     expect(
-      freshnessPanel(
+      freshnessGuidance(
         {
           ...base,
           state: 'Perime',
@@ -30,9 +30,9 @@ describe('freshnessPanel', () => {
     });
   });
 
-  it('keeps replayable staleness other than AmontPerime off the guidance panel', () => {
+  it('keeps replayable staleness other than AmontPerime off navigation guidance', () => {
     expect(
-      freshnessPanel(
+      freshnessGuidance(
         {
           ...base,
           provenanceKind: 'Qualification',
@@ -47,7 +47,7 @@ describe('freshnessPanel', () => {
 
   it('points an unplayed match at the match and a tie at the match', () => {
     expect(
-      freshnessPanel(
+      freshnessGuidance(
         {
           ...base,
           indeterminacyCause: 'MatchNonJoue',
@@ -60,7 +60,7 @@ describe('freshnessPanel', () => {
     ).toMatchObject({ href: '/matches/match-1', matchLabel: 'Nord – Est' });
 
     expect(
-      freshnessPanel(
+      freshnessGuidance(
         {
           ...base,
           indeterminacyCause: 'Egalite',
@@ -73,7 +73,7 @@ describe('freshnessPanel', () => {
 
   it('opens the standing for an empty selection and skips a missing source without a phase', () => {
     expect(
-      freshnessPanel(
+      freshnessGuidance(
         {
           ...base,
           indeterminacyCause: 'SelectionVide',
@@ -84,14 +84,16 @@ describe('freshnessPanel', () => {
     ).toBe('/competitions/comp/structure?stage=poules&section=classement');
 
     expect(
-      freshnessPanel({ ...base, indeterminacyCause: 'SourceAbsente' }, 'comp')
-        ?.href,
+      freshnessGuidance(
+        { ...base, indeterminacyCause: 'SourceAbsente' },
+        'comp',
+      ),
     ).toBeNull();
   });
 
   it('links a known source phase when the rule itself is missing', () => {
     expect(
-      freshnessPanel(
+      freshnessGuidance(
         {
           ...base,
           indeterminacyCause: 'SourceAbsente',

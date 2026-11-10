@@ -727,8 +727,15 @@ public static class ResolutionFreshnessDetector
             ActionMatchLabel = null;
         }
 
-        public StructureResolutionOccupantDto ToDto() =>
-            new(
+        public StructureResolutionOccupantDto ToDto()
+        {
+            var cascadeReplaceable = State == StructureResolutionFreshness.Perime
+                && (Kind == ResolutionProvenanceKind.Qualification
+                    || Kind == ResolutionProvenanceKind.Progression)
+                && Cause != StructureResolutionStalenessCause.AmontPerime
+                && ReplayEntryId is not null
+                && ReplayFingerprint is not null;
+            return new(
                 Target,
                 EntryId,
                 Kind,
@@ -740,7 +747,9 @@ public static class ResolutionFreshnessDetector
                 DependsOnStageId,
                 Indeterminacy,
                 ActionMatchId,
-                ActionMatchLabel);
+                ActionMatchLabel,
+                cascadeReplaceable);
+        }
 
         public ResolutionOccupantAssessment ToAssessment() =>
             new(

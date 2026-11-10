@@ -103,6 +103,7 @@ public sealed class ResolutionFreshnessDetectorTests
                 EntryId = stored.Value,
                 State = StructureResolutionFreshness.Perime,
                 StalenessCause = StructureResolutionStalenessCause.ResultatAmont,
+                CascadeReplaceable = true,
             });
         terminal.FindSlot("Champ")!.EntryId.Should().Be(stored);
     }
@@ -125,6 +126,7 @@ public sealed class ResolutionFreshnessDetectorTests
             .Subject;
         slot.State.Should().Be(StructureResolutionFreshness.Perime);
         slot.StalenessCause.Should().Be(StructureResolutionStalenessCause.RegleQualification);
+        slot.CascadeReplaceable.Should().BeTrue();
         slot.EntryId.Should().Be(stored.Value);
         terminal.FindSlot("Champ")!.EntryId.Should().Be(stored);
     }

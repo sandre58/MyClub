@@ -1,16 +1,7 @@
-import {
-  useId,
-  useRef,
-  useState,
-  type KeyboardEvent,
-  type MouseEvent,
-  type ReactNode,
-} from 'react';
-import { useInRouterContext, useParams } from 'react-router-dom';
+import { type KeyboardEvent, type MouseEvent, type ReactNode } from 'react';
+import { useInRouterContext, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
-import { Popover } from '../../../design-system/components/Popover';
-import { TextLink } from '../../../design-system/components/TextLink';
 import { Tooltip } from '../../../design-system/components/Tooltip';
 import { Status } from '../../../design-system/components/Status';
 import {
@@ -20,7 +11,7 @@ import {
 } from '../../../design-system/icons/contentIcons';
 import { ChevronRightIcon } from '../../../design-system/icons/shellIcons';
 import type { StructureResolutionOccupant } from '../../../types';
-import { freshnessPanel, type FreshnessPanel } from './freshnessGuidance';
+import { freshnessGuidance } from './freshnessGuidance';
 import {
   isReplayableStale,
   resolutionOccupantNeedsBadge,
@@ -32,13 +23,18 @@ type StructureResolutionFreshnessBadgeProps = {
   occupant: StructureResolutionOccupant | null | undefined;
   density?: 'context' | 'compact';
   /**
-   * `icon` hides the state word (schematic slots). The word moves into the tooltip,
-   * or into the guidance panel when the badge opens one.
+   * `icon` hides the state word (schematic slots). The word moves into the tooltip
+   * when the badge is not directly clickable.
    * Lists and details keep the default `full` pill.
    */
   variant?: FreshnessBadgeVariant;
   /** Opens the cascade preview. Ignored unless the occupant is stale Qual/Prog. */
   onReplace?: (occupant: StructureResolutionOccupant) => void;
+  /**
+   * Manual placement slots use a single outer button. Nested action controls are
+   * invalid HTML — keep the tooltip and skip direct navigation/replace here.
+   */
+  directActionDisabled?: boolean;
 };
 
 function badgeTone(
@@ -75,15 +71,22 @@ export function StructureResolutionFreshnessBadge(
 ) {
   const inRouter = useInRouterContext();
   if (!inRouter) {
-    return <FreshnessBadgeBody {...props} competitionId={null} />;
+    return (
+      <FreshnessBadgeBody {...props} competitionId={null} onNavigate={null} />
+    );
   }
   return <FreshnessBadgeRouted {...props} />;
 }
 
 function FreshnessBadgeRouted(props: StructureResolutionFreshnessBadgeProps) {
   const { competitionId } = useParams();
+  const navigate = useNavigate();
   return (
-    <FreshnessBadgeBody {...props} competitionId={competitionId ?? null} />
+    <FreshnessBadgeBody
+      {...props}
+      competitionId={competitionId ?? null}
+      onNavigate={navigate}
+    />
   );
 }
 
@@ -93,42 +96,62 @@ function FreshnessBadgeBody({
   variant = 'full',
   onReplace,
   competitionId,
+  directActionDisabled = false,
+  onNavigate,
 }: StructureResolutionFreshnessBadgeProps & {
   competitionId: string | null;
+  onNavigate: ((href: string) => void) | null;
 }) {
   const { t } = useTranslation('structure');
-  const panel =
-    occupant && resolutionOccupantNeedsBadge(occupant)
-      ? freshnessPanel(occupant, competitionId)
-      : null;
 
   if (!resolutionOccupantNeedsBadge(occupant)) {
     return null;
   }
 
+  const guidance = freshnessGuidance(occupant, competitionId);
   const labelKey = `resolution.freshness.state.${occupant.state}` as const;
   const label = t(labelKey);
   const causeKey =
     occupant.state === 'Perime' && occupant.stalenessCause
       ? (`resolution.freshness.cause.${occupant.stalenessCause}` as const)
-      : null;
+      : occupant.state === 'Indetermine' && occupant.indeterminacyCause
+        ? (`resolution.freshness.indeterminacy.${occupant.indeterminacyCause}.cause` as const)
+        : null;
   const causeLabel = causeKey ? t(causeKey) : null;
-  const ariaLabel =
-    causeLabel != null
-      ? t('resolution.freshness.ariaWithCause', { label, cause: causeLabel })
-      : label;
   const replaceable = !!onReplace && isReplayableStale(occupant);
   const replaceHint = t('resolution.cascade.replaceHint');
-  const replaceDetail =
-    causeLabel != null
-      ? t('resolution.cascade.replaceHintWithCause', {
-          cause: causeLabel,
-          action: replaceHint,
-        })
-      : replaceHint;
-  const replaceName =
-    variant === 'icon' ? `${label}. ${replaceDetail}` : replaceDetail;
+  const navigateHref = guidance?.href ?? null;
+  const directAction =
+    !directActionDisabled &&
+    (replaceable || (navigateHref != null && onNavigate != null));
+
+  const guidanceActionLabel =
+    guidance?.kind === 'upstream'
+      ? t('resolution.freshness.upstreamLink')
+      : guidance?.kind === 'indeterminate'
+        ? guidance.cause === 'MatchNonJoue' && guidance.matchLabel
+          ? t('resolution.freshness.indeterminacy.MatchNonJoue.actionNamed', {
+              match: guidance.matchLabel,
+            })
+          : t(`resolution.freshness.indeterminacy.${guidance.cause}.action`)
+        : null;
+
+  const tooltipAction = replaceable
+    ? replaceHint
+    : (guidanceActionLabel ?? null);
+
+  const ariaLabel =
+    tooltipAction != null && causeLabel != null
+      ? `${causeLabel}. ${tooltipAction}`
+      : causeLabel != null
+        ? t('resolution.freshness.ariaWithCause', { label, cause: causeLabel })
+        : label;
+
   const iconOnly = variant === 'icon';
+  const showStateIcon =
+    iconOnly ||
+    occupant.state === 'Indetermine' ||
+    (replaceable && occupant.state === 'Perime');
 
   const badge = (
     <Status
@@ -137,19 +160,11 @@ function FreshnessBadgeBody({
       variant="soft"
       shape="pill"
       className={iconOnly ? 'structure-freshness-badge--icon' : undefined}
-      aria-label={replaceable || panel ? undefined : ariaLabel}
+      aria-label={directAction ? undefined : ariaLabel}
     >
-      {replaceable ? (
-        <RefreshIcon
-          size="sm"
-          className="structure-freshness-badge__icon"
-          aria-hidden="true"
-        />
-      ) : iconOnly ? (
-        stateIcon(occupant.state)
-      ) : null}
+      {showStateIcon ? stateIcon(occupant.state) : null}
       {iconOnly ? null : label}
-      {replaceable ? (
+      {directAction ? (
         <ChevronRightIcon
           size="sm"
           className="structure-freshness-badge__chevron"
@@ -159,22 +174,6 @@ function FreshnessBadgeBody({
     </Status>
   );
 
-  if (panel) {
-    return (
-      <FreshnessGuidancePanel
-        occupant={occupant}
-        panel={panel}
-        badge={badge}
-        ariaLabel={ariaLabel}
-        stateLabel={label}
-        showStateLabel={iconOnly}
-        replaceable={replaceable}
-        replaceLabel={t('resolution.cascade.action')}
-        onReplace={onReplace}
-      />
-    );
-  }
-
   const tip = (
     <span className="structure-freshness-replace__tip">
       {iconOnly ? (
@@ -183,28 +182,35 @@ function FreshnessBadgeBody({
       {causeLabel ? (
         <span className="structure-freshness-replace__cause">{causeLabel}</span>
       ) : null}
-      {replaceable ? (
+      {tooltipAction ? (
         <span className="structure-freshness-replace__action">
-          {replaceHint}
+          {tooltipAction}
         </span>
       ) : null}
     </span>
   );
-  const hasTip = iconOnly || causeLabel != null || replaceable;
+  const hasTip = iconOnly || causeLabel != null || tooltipAction != null;
 
-  if (replaceable) {
-    const open = (event: MouseEvent | KeyboardEvent) => {
-      event.stopPropagation();
-      event.preventDefault();
-      onReplace(occupant);
-    };
+  const runAction = (event: MouseEvent | KeyboardEvent) => {
+    event.stopPropagation();
+    event.preventDefault();
+    if (replaceable) {
+      onReplace?.(occupant);
+      return;
+    }
+    if (navigateHref && onNavigate) {
+      onNavigate(navigateHref);
+    }
+  };
+
+  if (directAction) {
     return (
       <Tooltip content={tip}>
         <button
           type="button"
           className="structure-freshness-replace"
-          aria-label={replaceName}
-          onClick={open}
+          aria-label={ariaLabel}
+          onClick={runAction}
         >
           {badge}
         </button>
@@ -212,111 +218,9 @@ function FreshnessBadgeBody({
     );
   }
 
-  if (!hasTip || (causeLabel == null && !iconOnly)) {
+  if (!hasTip) {
     return badge;
   }
 
   return <Tooltip content={tip}>{badge}</Tooltip>;
-}
-
-function FreshnessGuidancePanel({
-  occupant,
-  panel,
-  badge,
-  ariaLabel,
-  stateLabel,
-  showStateLabel,
-  replaceable,
-  replaceLabel,
-  onReplace,
-}: {
-  occupant: StructureResolutionOccupant;
-  panel: FreshnessPanel;
-  badge: ReactNode;
-  ariaLabel: string;
-  stateLabel: string;
-  showStateLabel: boolean;
-  replaceable: boolean;
-  replaceLabel: string;
-  onReplace?: (occupant: StructureResolutionOccupant) => void;
-}) {
-  const { t } = useTranslation('structure');
-  const anchorRef = useRef<HTMLButtonElement>(null);
-  const [open, setOpen] = useState(false);
-  const panelId = useId();
-  const cause =
-    panel.kind === 'upstream'
-      ? t('resolution.freshness.cause.AmontPerime')
-      : t(`resolution.freshness.indeterminacy.${panel.cause}.cause`);
-  const action =
-    panel.kind === 'upstream'
-      ? t('resolution.freshness.upstreamLink')
-      : panel.cause === 'MatchNonJoue' && panel.matchLabel
-        ? t('resolution.freshness.indeterminacy.MatchNonJoue.actionNamed', {
-            match: panel.matchLabel,
-          })
-        : t(`resolution.freshness.indeterminacy.${panel.cause}.action`);
-  const name =
-    panel.kind === 'upstream'
-      ? `${ariaLabel}. ${action}`
-      : t('resolution.freshness.ariaWithCause', {
-          label: ariaLabel,
-          cause: `${cause}. ${action}`,
-        });
-
-  const toggle = (event: MouseEvent | KeyboardEvent) => {
-    event.stopPropagation();
-    event.preventDefault();
-    setOpen((current) => !current);
-  };
-
-  return (
-    <>
-      <button
-        ref={anchorRef}
-        type="button"
-        className="structure-freshness-replace"
-        aria-label={name}
-        aria-expanded={open}
-        aria-haspopup="dialog"
-        aria-controls={panelId}
-        onClick={toggle}
-      >
-        {badge}
-      </button>
-      <Popover
-        id={panelId}
-        open={open}
-        onOpenChange={setOpen}
-        anchorRef={anchorRef}
-        aria-label={name}
-        width={240}
-      >
-        {showStateLabel ? (
-          <span className="structure-freshness-replace__state">
-            {stateLabel}
-          </span>
-        ) : null}
-        <span className="structure-freshness-panel__cause">{cause}</span>
-        {panel.href ? (
-          <TextLink to={panel.href}>{action}</TextLink>
-        ) : (
-          <span>{action}</span>
-        )}
-        {replaceable && onReplace ? (
-          <button
-            type="button"
-            className="ds-btn ds-btn--ghost"
-            onClick={(event) => {
-              event.stopPropagation();
-              setOpen(false);
-              onReplace(occupant);
-            }}
-          >
-            {replaceLabel}
-          </button>
-        ) : null}
-      </Popover>
-    </>
-  );
 }
