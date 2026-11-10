@@ -864,13 +864,14 @@
           "action": "Vérifier la phase amont"
         }
       },
-      "ariaWithCause": "{{label}} — {{cause}}"
+      "ariaWithCause": "{{label}} — {{cause}}",
+      "ariaAction": "{{label}} — {{cause}}. {{action}}",
+      "ariaActionNoCause": "{{label}}. {{action}}"
     },
     "cascade": {
       "action": "Remplacer l'occupant périmé",
       "actionNamed": "Remplacer {{place}}",
       "replaceHint": "Cliquer pour remplacer l'équipe par l'occupant attendu",
-      "replaceHintWithCause": "{{cause}}. {{action}}",
       "confirmTitle": "Confirmer le remplacement en cascade ?",
       "confirm": "Remplacer",
       "cancel": "Annuler",

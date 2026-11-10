@@ -109,7 +109,7 @@ describe('StructureCascadeReplaceAction', () => {
     ).toBeNull();
     await user.click(
       screen.getByRole('button', {
-        name: "Résultat amont modifié. Cliquer pour remplacer l'équipe par l'occupant attendu",
+        name: "Périmé — Résultat amont modifié. Cliquer pour remplacer l'équipe par l'occupant attendu",
       }),
     );
     expect(await screen.findByText(`Match ${matchId}`)).toBeInTheDocument();
@@ -146,7 +146,7 @@ describe('StructureCascadeReplaceAction', () => {
     ).toBeNull();
     await user.click(
       screen.getByRole('button', {
-        name: "Résultat amont modifié. Cliquer pour remplacer l'équipe par l'occupant attendu",
+        name: "Périmé — Résultat amont modifié. Cliquer pour remplacer l'équipe par l'occupant attendu",
       }),
     );
     await user.click(await screen.findByRole('button', { name: 'Remplacer' }));

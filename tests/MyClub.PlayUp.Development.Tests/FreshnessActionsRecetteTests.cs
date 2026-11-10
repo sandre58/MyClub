@@ -65,9 +65,9 @@ public sealed class FreshnessActionsRecetteTests(DevelopmentPostgresFixture fixt
                 .ToArray();
         }
 
-        var occupants = ResolutionFreshnessDetector.Evaluate(competition, stages, summaries)
-            .SelectMany(pair => pair.Value)
-            .ToList();
+        var byOccupantStage = ResolutionFreshnessDetector.Evaluate(competition, stages, summaries);
+        var occupants = byOccupantStage.SelectMany(pair => pair.Value).ToList();
+        var seuleId = StageId(stages, "Seule");
 
         occupants.Should().Contain(occupant =>
             occupant.SlotKey == "Suite"
@@ -90,6 +90,14 @@ public sealed class FreshnessActionsRecetteTests(DevelopmentPostgresFixture fixt
         occupants.Should().Contain(occupant =>
             occupant.SlotKey == "NV"
             && occupant.State == StructureResolutionFreshness.NonVerifiee);
+        occupants.Should().Contain(occupant =>
+            occupant.SlotKey == "Rejouable"
+            && occupant.State == StructureResolutionFreshness.Perime
+            && occupant.StalenessCause == StructureResolutionStalenessCause.ResultatAmont
+            && occupant.CascadeReplaceable
+            && occupant.ProvenanceKind == ResolutionProvenanceKind.Qualification);
+        byOccupantStage[seuleId].Should().NotBeEmpty()
+            .And.OnlyContain(occupant => occupant.State == StructureResolutionFreshness.NonVerifiee);
 
         var byStage = matches
             .GroupBy(match => match.StageId)
@@ -113,7 +121,11 @@ public sealed class FreshnessActionsRecetteTests(DevelopmentPostgresFixture fixt
         attention.Items.Should().Contain(item =>
             item.Source == NeedsAttentionAssembler.SourceResolutionIndetermine
             && item.TargetId == StageId(stages, "Classement").ToString());
-        attention.Items.Should().NotContain(item => item.Source == "NonVerifiee");
+        attention.Items.Where(item => item.TargetId == seuleId.ToString())
+            .Should().NotContain(item =>
+                item.Source == NeedsAttentionAssembler.SourceResolutionPerime
+                || item.Source == NeedsAttentionAssembler.SourceResolutionIndetermine
+                || item.Source == "NonVerifiee");
     }
 
     private static Guid StageId(IEnumerable<Stage> stages, string name) =>

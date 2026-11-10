@@ -250,7 +250,6 @@ function SlotBox({
         occupant={slotResolutionOccupant}
         variant="icon"
         onReplace={cascade?.requestReplace}
-        directActionDisabled={interactive}
       />
     </span>
   ) : null;
@@ -267,9 +266,9 @@ function SlotBox({
       {density === 'full' && address ? (
         <span className="schematic-slot__address">{address}</span>
       ) : null}
-      {showFullBody ? (
+      {showFullBody || freshnessBadge ? (
         <span className="schematic-slot__body">
-          {showSlotCrest ? (
+          {showFullBody && showSlotCrest ? (
             <TeamCrest
               name={resolvedName!}
               logoMediaId={c?.assignment?.logoMediaId}
@@ -278,37 +277,48 @@ function SlotBox({
               className="schematic-slot__crest"
             />
           ) : null}
-          <span className="schematic-slot__copy">
-            {primary ? (
-              <span className="schematic-slot__name-row">
-                <span className={primaryClassName}>{primary}</span>
-                {withdrawn && resolvedName ? (
-                  <SchematicSlotWithdrawnMarker label={withdrawnBadgeLabel} />
-                ) : null}
-              </span>
-            ) : null}
-            {secondary && secondary !== primary ? (
-              <span className="schematic-slot__secondary">{secondary}</span>
-            ) : null}
-          </span>
+          {showFullBody ? (
+            <span className="schematic-slot__copy">
+              {primary ? (
+                <span className="schematic-slot__name-row">
+                  <span className={primaryClassName}>{primary}</span>
+                  {withdrawn && resolvedName ? (
+                    <SchematicSlotWithdrawnMarker label={withdrawnBadgeLabel} />
+                  ) : null}
+                </span>
+              ) : null}
+              {secondary && secondary !== primary ? (
+                <span className="schematic-slot__secondary">{secondary}</span>
+              ) : null}
+            </span>
+          ) : null}
           {freshnessBadge}
         </span>
       ) : null}
-      {!showFullBody ? freshnessBadge : null}
     </>
   );
 
-  const shellStyle = tip ? fillStyle : style;
+  const shellStyle: CSSProperties | undefined = interactive
+    ? {
+        ...((tip ? fillStyle : style) ?? {}),
+        position:
+          (tip ? fillStyle : style)?.position === 'absolute'
+            ? 'absolute'
+            : 'relative',
+      }
+    : tip
+      ? fillStyle
+      : style;
   const slot = interactive ? (
-    <button
-      type="button"
-      className={className}
-      style={shellStyle}
-      onClick={() => onActivate?.(c!)}
-      aria-label={address ?? c!.formPosition.slotKey ?? undefined}
-    >
+    <div className={className} style={shellStyle}>
+      <button
+        type="button"
+        className="schematic-slot__hit"
+        aria-label={address ?? c!.formPosition.slotKey ?? undefined}
+        onClick={() => onActivate?.(c!)}
+      />
       {slotInner}
-    </button>
+    </div>
   ) : (
     <span
       className={className}
@@ -326,7 +336,11 @@ function SlotBox({
   // top/height land on an inner node and slots collapse / drift vs wires.
   return (
     <span className="schematic-slot-tip" style={style}>
-      <Tooltip content={tip} side="top">
+      <Tooltip
+        content={tip}
+        side="top"
+        activation={interactive ? 'long-press' : 'auto'}
+      >
         {slot}
       </Tooltip>
     </span>

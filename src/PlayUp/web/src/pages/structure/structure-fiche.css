@@ -813,6 +813,7 @@
   font: inherit;
   cursor: pointer;
   border-radius: 999px;
+  text-decoration: none;
 }
 
 .structure-freshness-replace .ds-status,
@@ -859,8 +860,4 @@
   border-top: var(--border-width) solid var(--color-border);
   color: var(--color-text-secondary);
   font-style: italic;
-}
-
-.structure-freshness-panel__cause {
-  color: var(--color-text-secondary);
 }

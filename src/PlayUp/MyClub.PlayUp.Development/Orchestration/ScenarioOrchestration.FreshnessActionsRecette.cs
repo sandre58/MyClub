@@ -53,9 +53,21 @@ internal static partial class ScenarioOrchestration
         var nul = Cup(context, competition, "Nul", "A", "B", "C", "D");
         var aDepartager = Cup(context, competition, "A départager", "Egal", "Est", "Sud", "Ouest");
         var orphelin = Cup(context, competition, "Orphelin", "Fantome", "Est", "Sud", "Ouest");
+        var manuel = Cup(context, competition, "Manuel", "Rejouable", "Est", "Sud", "Ouest");
+        var seule = Cup(context, competition, "Seule", "NV", "B", "C", "D");
         var stages = new List<Stage>
         {
-            poules, tableau, classement, aval, barrage, aJouer, nul, aDepartager, orphelin,
+            poules,
+            tableau,
+            classement,
+            aval,
+            barrage,
+            aJouer,
+            nul,
+            aDepartager,
+            orphelin,
+            manuel,
+            seule,
         };
 
         var matches = RoundRobin(context, poules, [nord, est, sud, ouest, centre]);
@@ -72,12 +84,11 @@ internal static partial class ScenarioOrchestration
             context.Clock);
         ApplyQualification.Execute(poules, standing, stages, context.Clock);
 
-        PlaceDirect(tableau, "Est", est, context.Clock);
-        PlaceDirect(tableau, "Sud", sud, context.Clock);
-        PlaceDirect(tableau, "Ouest", ouest, context.Clock);
-        var upstream = Play(context, tableau, nord, est, "P1", "Tete", "Est", 2, 0);
+        PlaceDirect(tableau, "Est", sud, context.Clock);
+        PlaceDirect(tableau, "Sud", ouest, context.Clock);
+        tableau.AddResolvedPopulationEntry(est, context.Clock, ResolutionProvenance.Directe("Ouest", est));
+        var upstream = Play(context, tableau, nord, sud, "P1", "Tete", "Est", 2, 0);
         matches.Add(upstream.Match);
-        matches.Add(Play(context, tableau, sud, ouest, "P2", "Sud", "Ouest", 1, 0).Match);
         tableau.ReplaceProgressionRules(
             new ProgressionRules(
             [
@@ -123,6 +134,24 @@ internal static partial class ScenarioOrchestration
         PlaceDirect(classement, "Relais", est, context.Clock);
         PlaceDirect(classement, "Annexe", sud, context.Clock);
         PlaceDirect(classement, "Reserve", ouest, context.Clock);
+
+        PlaceDirect(manuel, "Rejouable", nord, context.Clock);
+        PlaceDirect(manuel, "Est", est, context.Clock);
+        PlaceDirect(manuel, "Sud", sud, context.Clock);
+        PlaceDirect(manuel, "Ouest", ouest, context.Clock);
+        var headPath = poules.Regulation.QualificationRules!.Paths.Single(path =>
+            path.Destination.SlotKey == "Tete");
+        manuel.WriteSlotResolutionProvenance(
+            "Rejouable",
+            new ResolutionProvenance(
+                ResolutionProvenanceKind.Qualification,
+                ResolutionPathIdentifier.ForQualification(poules.Id, headPath),
+                "seed"));
+
+        PlaceUnverified(seule, "NV", nord, context.Clock);
+        PlaceUnverified(seule, "B", est, context.Clock);
+        PlaceUnverified(seule, "C", sud, context.Clock);
+        PlaceUnverified(seule, "D", ouest, context.Clock);
 
         SeedLifecycle.PrepareAndStart(context, competition, poules, stages);
         WithdrawEntry.Execute(competition, centre, stages, matches, context.Clock);
@@ -179,6 +208,13 @@ internal static partial class ScenarioOrchestration
         ]);
         competition.AddStage(stage.Id, context.Clock);
         return stage;
+    }
+
+    private static void PlaceUnverified(Stage stage, string slot, EntryId entry, IClock clock)
+    {
+        var provenance = ResolutionProvenance.NonVerifiee();
+        stage.AddResolvedPopulationEntry(entry, clock, provenance);
+        stage.ApplyResolvedEntry(slot, entry, clock, provenance);
     }
 
     private static void PlaceDirect(Stage stage, string slot, EntryId entry, IClock clock)

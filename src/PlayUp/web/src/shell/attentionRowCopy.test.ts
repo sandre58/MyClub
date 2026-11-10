@@ -71,7 +71,39 @@ describe('attentionRowCopy', () => {
       impactCode: 'BlocksProgression',
       params: {},
     });
-    expect(subtitle).not.toBeNull();
-    expect(subtitle!.length).toBeGreaterThan(20);
+    expect(subtitle).toBe(
+      'La place cible contient une autre équipe que celle qualifiée par le résultat amont.',
+    );
+  });
+
+  it('counts stale and indeterminate resolutions', () => {
+    const stale = {
+      tone: 'attention' as const,
+      titleKey: 'attentionSource.ResolutionPerime',
+      titleNs: 'enums',
+      sotHref: '/x',
+      cta: null,
+      canal: 'attention-drawer' as const,
+    };
+    const indeterminate = {
+      ...stale,
+      titleKey: 'attentionSource.ResolutionIndetermine',
+    };
+    expect(
+      attentionSituationTitle(stale, 'ResolutionPerime', { count: '1' }),
+    ).toBe('1 résolution périmée');
+    expect(
+      attentionSituationTitle(stale, 'ResolutionPerime', { count: '3' }),
+    ).toBe('3 résolutions périmées');
+    expect(
+      attentionSituationTitle(indeterminate, 'ResolutionIndetermine', {
+        count: '1',
+      }),
+    ).toBe('1 résolution indéterminée');
+    expect(
+      attentionSituationTitle(indeterminate, 'ResolutionIndetermine', {
+        count: '3',
+      }),
+    ).toBe('3 résolutions indéterminées');
   });
 });

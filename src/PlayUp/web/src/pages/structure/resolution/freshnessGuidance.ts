@@ -1,16 +1,13 @@
 import type { StructureResolutionOccupant } from '../../../types';
 import { structureDeepLink } from '../structureNavigation';
 
-export type FreshnessGuidance =
+export type FreshnessAction =
+  | { kind: 'replace' }
   | {
-      kind: 'upstream';
+      kind: 'navigate';
       href: string;
-    }
-  | {
-      kind: 'indeterminate';
-      cause: NonNullable<StructureResolutionOccupant['indeterminacyCause']>;
-      href: string;
-      matchLabel: string | null;
+      labelKey: string;
+      labelParams?: Record<string, string>;
     };
 
 function stageHref(
@@ -35,21 +32,40 @@ function matchHref(matchId: string | null | undefined): string | null {
   return id ? `/matches/${id}` : null;
 }
 
+function navigate(
+  href: string,
+  labelKey: string,
+  labelParams?: Record<string, string>,
+): FreshnessAction {
+  return labelParams
+    ? { kind: 'navigate', href, labelKey, labelParams }
+    : { kind: 'navigate', href, labelKey };
+}
+
 /**
- * Corrective navigation for upstream-stale or indeterminate badges.
- * Replayable qualification and progression staleness other than AmontPerime
- * stays on the replace control.
+ * The single corrective action for a freshness badge.
+ * `canReplace` is true when the surface can open the cascade preview.
+ * Navigation is a route; replace is not.
  */
-export function freshnessGuidance(
+export function freshnessAction(
   occupant: StructureResolutionOccupant,
   competitionId: string | null | undefined,
-): FreshnessGuidance | null {
-  if (
-    occupant.state === 'Perime' &&
-    occupant.stalenessCause === 'AmontPerime'
-  ) {
-    const href = stageHref(competitionId, occupant.upstreamStageId);
-    return href ? { kind: 'upstream', href } : null;
+  options: { canReplace: boolean },
+): FreshnessAction | null {
+  if (occupant.state === 'Perime') {
+    if (occupant.stalenessCause === 'AmontPerime') {
+      const href = stageHref(competitionId, occupant.upstreamStageId);
+      return href ? navigate(href, 'resolution.freshness.upstreamLink') : null;
+    }
+    if (
+      options.canReplace &&
+      occupant.cascadeReplaceable &&
+      (occupant.stalenessCause === 'ResultatAmont' ||
+        occupant.stalenessCause === 'RegleQualification')
+    ) {
+      return { kind: 'replace' };
+    }
+    return null;
   }
 
   if (occupant.state !== 'Indetermine' || !occupant.indeterminacyCause) {
@@ -64,23 +80,35 @@ export function freshnessGuidance(
   );
   const match = matchHref(occupant.actionMatchId);
 
-  let href: string | null = null;
   if (cause === 'MatchNonJoue' || cause === 'Egalite') {
-    href = match ?? upstream;
-  } else if (cause === 'SourceAbsente') {
-    href = upstream;
-  } else if (cause === 'SelectionVide' || cause === 'Autre') {
-    href = upstream;
+    const href = match ?? upstream;
+    if (!href) {
+      return null;
+    }
+    const matchLabel = occupant.actionMatchLabel?.trim();
+    if (cause === 'MatchNonJoue' && matchLabel) {
+      return navigate(
+        href,
+        'resolution.freshness.indeterminacy.MatchNonJoue.actionNamed',
+        { match: matchLabel },
+      );
+    }
+    return navigate(href, `resolution.freshness.indeterminacy.${cause}.action`);
   }
 
-  if (!href) {
-    return null;
+  if (
+    cause === 'SelectionVide' ||
+    cause === 'SourceAbsente' ||
+    cause === 'Autre'
+  ) {
+    if (!upstream) {
+      return null;
+    }
+    return navigate(
+      upstream,
+      `resolution.freshness.indeterminacy.${cause}.action`,
+    );
   }
 
-  return {
-    kind: 'indeterminate',
-    cause,
-    href,
-    matchLabel: occupant.actionMatchLabel?.trim() || null,
-  };
+  return null;
 }

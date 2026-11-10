@@ -19,6 +19,7 @@ const slotOccupant: StructureResolutionOccupant = {
   slotKey: 'A',
   groupId: null,
   stalenessCause: 'ResultatAmont',
+  cascadeReplaceable: false,
 };
 
 describe('structureResolutionOccupants', () => {

@@ -93,6 +93,7 @@ public static class ResolutionFreshnessDetector
             {
                 MarkIndeterminate(occupant, Classify(ex));
                 occupant.DependsOnStageId = null;
+                occupant.UpstreamStageId = null;
                 occupant.DependsOnEntryIds.Clear();
                 occupant.ClearReplay();
             }
@@ -215,7 +216,7 @@ public static class ResolutionFreshnessDetector
         var standing = standings.Resolve(source, path);
         if (standing is null)
         {
-            occupant.DependsOnStageId = source.Id.Value;
+            RememberSource(occupant, source.Id.Value);
             MarkIndeterminate(occupant, StructureResolutionIndeterminacyCause.Autre);
             return;
         }
@@ -255,7 +256,7 @@ public static class ResolutionFreshnessDetector
         }
 
         occupant.ClearReplay();
-        MarkIndeterminate(occupant, QualificationIndeterminacy(path, standing));
+        MarkIndeterminate(occupant, ClassifyQualification(selection));
     }
 
     /// <summary>
@@ -280,7 +281,7 @@ public static class ResolutionFreshnessDetector
         var path = FindProgressionPath(source, occupant.SourcePathId);
         if (path is null)
         {
-            occupant.DependsOnStageId = source.Id.Value;
+            RememberSource(occupant, source.Id.Value);
             MarkIndeterminate(occupant, StructureResolutionIndeterminacyCause.SourceAbsente);
             return;
         }
@@ -288,7 +289,7 @@ public static class ResolutionFreshnessDetector
         var read = outcomes.Resolve(source, path);
         if (read.Outcome is not { } outcome)
         {
-            occupant.DependsOnStageId = source.Id.Value;
+            RememberSource(occupant, source.Id.Value);
             MarkIndeterminate(
                 occupant,
                 read.Failure ?? StructureResolutionIndeterminacyCause.Autre,
@@ -340,7 +341,6 @@ public static class ResolutionFreshnessDetector
         var draw = stage.Draws.FirstOrDefault(candidate => candidate.Id.Value == drawId);
         if (draw?.Inputs is null)
         {
-            occupant.DependsOnStageId = stage.Id.Value;
             MarkIndeterminate(occupant, StructureResolutionIndeterminacyCause.SourceAbsente);
             return;
         }
@@ -565,12 +565,26 @@ public static class ResolutionFreshnessDetector
         return false;
     }
 
+    /// <summary>
+    /// Records the phase a selection was read from.
+    /// Draw propagation stays on <see cref="WorkingOccupant.DependsOnStageId"/> and does not
+    /// expose that same phase as a navigation target.
+    /// </summary>
+    private static void RememberSource(WorkingOccupant occupant, Guid sourceStageId)
+    {
+        occupant.DependsOnStageId = sourceStageId;
+        if (occupant.Kind != ResolutionProvenanceKind.Tirage)
+        {
+            occupant.UpstreamStageId = sourceStageId;
+        }
+    }
+
     private static void RememberDependencies(
         WorkingOccupant occupant,
         Guid sourceStageId,
         IEnumerable<Guid> entryIds)
     {
-        occupant.DependsOnStageId = sourceStageId;
+        RememberSource(occupant, sourceStageId);
         occupant.DependsOnEntryIds.Clear();
         foreach (var entryId in entryIds)
         {
@@ -595,20 +609,21 @@ public static class ResolutionFreshnessDetector
         return Guid.TryParseExact(sourcePathId[2..separator], "N", out id);
     }
 
-    private static StructureResolutionIndeterminacyCause QualificationIndeterminacy(
-        QualificationPath path,
-        Standing standing)
+    private static StructureResolutionIndeterminacyCause ClassifyQualification(
+        PathOccupantSelectionResult selection)
     {
-        try
-        {
-            return QualificationApplier.SelectEntries(standing, path.Selection).Count > 1
-                ? StructureResolutionIndeterminacyCause.Autre
-                : StructureResolutionIndeterminacyCause.SelectionVide;
-        }
-        catch (Exception ex) when (ex is DomainException or ApplicationFailureException)
+        if (selection.Status == PathOccupantSelectionStatus.Skipped)
         {
             return StructureResolutionIndeterminacyCause.Autre;
         }
+
+        if (selection.Status == PathOccupantSelectionStatus.Indeterminate
+            && selection.Indeterminacy == PathOccupantIndeterminacyReason.Empty)
+        {
+            return StructureResolutionIndeterminacyCause.SelectionVide;
+        }
+
+        return StructureResolutionIndeterminacyCause.Autre;
     }
 
     private static StructureResolutionIndeterminacyCause Classify(Exception exception) =>
@@ -678,6 +693,12 @@ public static class ResolutionFreshnessDetector
 
         public Guid? DependsOnStageId { get; set; }
 
+        /// <summary>
+        /// Gets or sets the phase the organizer should open. Distinct from
+        /// <see cref="DependsOnStageId"/>, which also carries draw propagation edges.
+        /// </summary>
+        public Guid? UpstreamStageId { get; set; }
+
         public HashSet<Guid> DependsOnEntryIds { get; } = [];
 
         public Guid? ReplayEntryId { get; private set; }
@@ -744,7 +765,7 @@ public static class ResolutionFreshnessDetector
                 SlotKey,
                 GroupId,
                 Cause,
-                DependsOnStageId,
+                UpstreamStageId,
                 Indeterminacy,
                 ActionMatchId,
                 ActionMatchLabel,
@@ -895,12 +916,13 @@ public static class ResolutionFreshnessDetector
                 return null;
             }
 
+            var legs = snapshot.Legs.OrderBy(leg => leg.LegIndex).ToArray();
             if (exception.Code == StageErrorCodes.FixtureOutcomeNotFinished)
             {
-                return snapshot.Legs.FirstOrDefault(leg => leg.Status != MatchStatus.Finished) ?? snapshot.Legs[0];
+                return legs.FirstOrDefault(leg => leg.Status != MatchStatus.Finished) ?? legs[0];
             }
 
-            return snapshot.Legs.OrderBy(leg => leg.LegIndex).Last();
+            return legs[^1];
         }
 
         public OutcomeRead Resolve(Stage source, ProgressionPath path)

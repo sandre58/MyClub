@@ -40,13 +40,29 @@
 
 .schematic-slot--interactive {
   cursor: pointer;
-  font: inherit;
-  color: inherit;
-  text-align: inherit;
-  appearance: none;
 }
 
-.schematic-slot--interactive:focus-visible {
+.schematic-slot--interactive > :not(.schematic-slot__hit) {
+  pointer-events: none;
+}
+
+.schematic-slot__hit {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  appearance: none;
+  cursor: pointer;
+  border-radius: inherit;
+}
+
+.schematic-slot__hit:focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
 }
@@ -302,22 +318,16 @@
 }
 
 .schematic-slot__freshness {
+  position: relative;
+  z-index: 1;
   margin-top: 0;
   flex: none;
   display: inline-flex;
+  pointer-events: none;
 }
 
-.schematic-slot-with-action {
-  display: flex;
-  align-items: stretch;
-  gap: 0.25rem;
-  min-width: 0;
-}
-
-.schematic-slot-with-action > .schematic-slot {
-  flex: 1 1 auto;
-  min-width: 0;
-  width: auto;
+.schematic-slot__freshness :is(button, a) {
+  pointer-events: auto;
 }
 
 .structure-stale-draw-actions {

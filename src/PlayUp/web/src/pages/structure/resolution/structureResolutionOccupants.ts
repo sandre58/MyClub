@@ -83,10 +83,7 @@ export function isReplayableStale(
   if (occupant.stalenessCause === 'AmontPerime') {
     return false;
   }
-  if (occupant.cascadeReplaceable != null) {
-    return occupant.cascadeReplaceable;
-  }
-  return occupant.stalenessCause !== 'RegleQualification';
+  return occupant.cascadeReplaceable;
 }
 
 export function lookupSlotResolutionOccupant(

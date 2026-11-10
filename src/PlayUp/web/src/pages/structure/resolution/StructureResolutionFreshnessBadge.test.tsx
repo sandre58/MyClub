@@ -28,6 +28,7 @@ describe('StructureResolutionFreshnessBadge', () => {
           sourcePathId: 'p1',
           state: 'AJour',
           slotKey: 'A',
+          cascadeReplaceable: false,
         }}
       />,
     );
@@ -45,6 +46,7 @@ describe('StructureResolutionFreshnessBadge', () => {
           state: 'Perime',
           slotKey: 'A',
           stalenessCause: 'RegleQualification',
+          cascadeReplaceable: false,
         }}
       />,
     );
@@ -62,6 +64,7 @@ describe('StructureResolutionFreshnessBadge', () => {
             provenanceKind: 'Progression',
             sourcePathId: 'p1',
             state: 'Indetermine',
+            cascadeReplaceable: false,
           }}
         />
         <StructureResolutionFreshnessBadge
@@ -71,6 +74,7 @@ describe('StructureResolutionFreshnessBadge', () => {
             provenanceKind: 'NonVerifiee',
             sourcePathId: 'p2',
             state: 'NonVerifiee',
+            cascadeReplaceable: false,
           }}
         />
       </>,
@@ -104,6 +108,7 @@ describe('StructureResolutionFreshnessBadge', () => {
             provenanceKind: 'Progression',
             sourcePathId: 'p2',
             state: 'Indetermine',
+            cascadeReplaceable: false,
           }}
           onReplace={onReplace}
         />
@@ -115,6 +120,7 @@ describe('StructureResolutionFreshnessBadge', () => {
             sourcePathId: 'p3',
             state: 'Perime',
             slotKey: 'B',
+            cascadeReplaceable: false,
           }}
           onReplace={onReplace}
         />
@@ -122,7 +128,7 @@ describe('StructureResolutionFreshnessBadge', () => {
     );
 
     const button = screen.getByRole('button', {
-      name: "Résultat amont modifié. Cliquer pour remplacer l'équipe par l'occupant attendu",
+      name: "Périmé — Résultat amont modifié. Cliquer pour remplacer l'équipe par l'occupant attendu",
     });
     expect(button).toBeInTheDocument();
     expect(
@@ -173,7 +179,7 @@ describe('StructureResolutionFreshnessBadge', () => {
 
     await user.hover(
       screen.getByRole('button', {
-        name: "Résultat amont modifié. Cliquer pour remplacer l'équipe par l'occupant attendu",
+        name: "Périmé — Résultat amont modifié. Cliquer pour remplacer l'équipe par l'occupant attendu",
       }),
     );
     await act(async () => {
@@ -214,6 +220,7 @@ describe('StructureResolutionFreshnessBadge', () => {
                     slotKey: 'A',
                     stalenessCause: 'AmontPerime',
                     upstreamStageId: 'phase-a',
+                    cascadeReplaceable: false,
                   }}
                 />
               </>
@@ -223,8 +230,8 @@ describe('StructureResolutionFreshnessBadge', () => {
       </MemoryRouter>,
     );
 
-    const badge = screen.getByRole('button', {
-      name: /Phase amont périmée.*Aller à la phase amont/,
+    const badge = screen.getByRole('link', {
+      name: /Périmé.*Phase amont périmée.*Aller à la phase amont/,
     });
     await user.click(badge);
     expect(screen.getByTestId('navigation-spy')).toHaveAttribute(
@@ -253,6 +260,7 @@ describe('StructureResolutionFreshnessBadge', () => {
                     indeterminacyCause: 'MatchNonJoue',
                     actionMatchId: 'match-9',
                     actionMatchLabel: 'Nord – Est',
+                    cascadeReplaceable: false,
                   }}
                 />
               </>
@@ -264,8 +272,8 @@ describe('StructureResolutionFreshnessBadge', () => {
     );
 
     await user.click(
-      screen.getByRole('button', {
-        name: /n'est pas joué.*Jouer le match Nord/,
+      screen.getByRole('link', {
+        name: /Indéterminé.*n'est pas joué.*Jouer le match Nord/,
       }),
     );
     expect(screen.getByTestId('navigation-spy')).toHaveAttribute(
@@ -290,6 +298,7 @@ describe('StructureResolutionFreshnessBadge', () => {
                   state: 'Indetermine',
                   indeterminacyCause: 'Autre',
                   upstreamStageId: 'phase-a',
+                  cascadeReplaceable: false,
                 }}
               />
             }
@@ -299,8 +308,8 @@ describe('StructureResolutionFreshnessBadge', () => {
     );
     expect(
       screen
-        .getByRole('button', {
-          name: /La sélection ne peut pas être calculée.*Vérifier la phase amont/,
+        .getByRole('link', {
+          name: /Indéterminé.*La sélection ne peut pas être calculée.*Vérifier la phase amont/,
         })
         .querySelector('.structure-freshness-badge__icon'),
     ).not.toBeNull();
@@ -347,6 +356,7 @@ describe('StructureResolutionFreshnessBadge', () => {
             provenanceKind: 'Progression',
             sourcePathId: 'p2',
             state: 'Indetermine',
+            cascadeReplaceable: false,
           }}
           onReplace={() => undefined}
         />
@@ -356,7 +366,7 @@ describe('StructureResolutionFreshnessBadge', () => {
     expect(screen.queryByText('Périmé')).toBeNull();
     expect(screen.queryByText('Indéterminé')).toBeNull();
     const button = screen.getByRole('button', {
-      name: "Résultat amont modifié. Cliquer pour remplacer l'équipe par l'occupant attendu",
+      name: "Périmé — Résultat amont modifié. Cliquer pour remplacer l'équipe par l'occupant attendu",
     });
     expect(
       button.querySelector('.structure-freshness-badge__chevron'),
@@ -386,11 +396,9 @@ describe('StructureResolutionFreshnessBadge', () => {
     );
   });
 
-  it('skips direct action when placement disables it', () => {
+  it('renders no button when a changed qualification rule cannot be replayed', () => {
     renderWithI18n(
       <StructureResolutionFreshnessBadge
-        directActionDisabled
-        variant="icon"
         occupant={{
           target: 'Slot',
           entryId: 'e1',
@@ -398,14 +406,58 @@ describe('StructureResolutionFreshnessBadge', () => {
           sourcePathId: 'p1',
           state: 'Perime',
           slotKey: 'A',
-          stalenessCause: 'ResultatAmont',
-          cascadeReplaceable: true,
+          stalenessCause: 'RegleQualification',
+          cascadeReplaceable: false,
         }}
         onReplace={() => undefined}
       />,
     );
     expect(screen.queryByRole('button')).toBeNull();
-    expect(screen.getByLabelText(/Résultat amont modifié/)).toBeInTheDocument();
+    expect(screen.queryByRole('link')).toBeNull();
+    expect(
+      screen.getByLabelText(/Périmé.*Règle de qualification modifiée/),
+    ).toBeInTheDocument();
+  });
+
+  it('opens the standing when an empty selection is clicked', async () => {
+    const user = userEvent.setup();
+    renderWithI18n(
+      <MemoryRouter initialEntries={['/competitions/comp/structure']}>
+        <Routes>
+          <Route
+            path="/competitions/:competitionId/structure"
+            element={
+              <>
+                <NavigationSpy />
+                <StructureResolutionFreshnessBadge
+                  occupant={{
+                    target: 'Slot',
+                    entryId: 'e1',
+                    provenanceKind: 'Qualification',
+                    sourcePathId: 'p1',
+                    state: 'Indetermine',
+                    slotKey: 'A',
+                    indeterminacyCause: 'SelectionVide',
+                    upstreamStageId: 'poules',
+                    cascadeReplaceable: false,
+                  }}
+                />
+              </>
+            }
+          />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await user.click(
+      screen.getByRole('link', {
+        name: /Indéterminé.*aucune équipe.*classement/,
+      }),
+    );
+    expect(screen.getByTestId('navigation-spy')).toHaveAttribute(
+      'data-path',
+      '/competitions/comp/structure?stage=poules&section=classement',
+    );
   });
 });
 

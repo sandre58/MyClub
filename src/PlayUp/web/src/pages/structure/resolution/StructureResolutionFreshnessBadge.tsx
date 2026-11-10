@@ -1,5 +1,5 @@
-import { type KeyboardEvent, type MouseEvent, type ReactNode } from 'react';
-import { useInRouterContext, useNavigate, useParams } from 'react-router-dom';
+import type { ReactNode } from 'react';
+import { Link, useInRouterContext, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 import { Tooltip } from '../../../design-system/components/Tooltip';
@@ -11,11 +11,8 @@ import {
 } from '../../../design-system/icons/contentIcons';
 import { ChevronRightIcon } from '../../../design-system/icons/shellIcons';
 import type { StructureResolutionOccupant } from '../../../types';
-import { freshnessGuidance } from './freshnessGuidance';
-import {
-  isReplayableStale,
-  resolutionOccupantNeedsBadge,
-} from './structureResolutionOccupants';
+import { freshnessAction, type FreshnessAction } from './freshnessGuidance';
+import { resolutionOccupantNeedsBadge } from './structureResolutionOccupants';
 
 type FreshnessBadgeVariant = 'full' | 'icon';
 
@@ -23,18 +20,12 @@ type StructureResolutionFreshnessBadgeProps = {
   occupant: StructureResolutionOccupant | null | undefined;
   density?: 'context' | 'compact';
   /**
-   * `icon` hides the state word (schematic slots). The word moves into the tooltip
-   * when the badge is not directly clickable.
+   * `icon` hides the state word (schematic slots). The word moves into the tooltip.
    * Lists and details keep the default `full` pill.
    */
   variant?: FreshnessBadgeVariant;
-  /** Opens the cascade preview. Ignored unless the occupant is stale Qual/Prog. */
+  /** Opens the cascade preview. Ignored unless the occupant is replayable. */
   onReplace?: (occupant: StructureResolutionOccupant) => void;
-  /**
-   * Manual placement slots use a single outer button. Nested action controls are
-   * invalid HTML — keep the tooltip and skip direct navigation/replace here.
-   */
-  directActionDisabled?: boolean;
 };
 
 function badgeTone(
@@ -72,20 +63,19 @@ export function StructureResolutionFreshnessBadge(
   const inRouter = useInRouterContext();
   if (!inRouter) {
     return (
-      <FreshnessBadgeBody {...props} competitionId={null} onNavigate={null} />
+      <FreshnessBadgeBody {...props} competitionId={null} linked={false} />
     );
   }
-  return <FreshnessBadgeRouted {...props} />;
+  return <FreshnessBadgeInRouter {...props} />;
 }
 
-function FreshnessBadgeRouted(props: StructureResolutionFreshnessBadgeProps) {
+function FreshnessBadgeInRouter(props: StructureResolutionFreshnessBadgeProps) {
   const { competitionId } = useParams();
-  const navigate = useNavigate();
   return (
     <FreshnessBadgeBody
       {...props}
       competitionId={competitionId ?? null}
-      onNavigate={navigate}
+      linked
     />
   );
 }
@@ -96,11 +86,11 @@ function FreshnessBadgeBody({
   variant = 'full',
   onReplace,
   competitionId,
-  directActionDisabled = false,
-  onNavigate,
+  linked,
 }: StructureResolutionFreshnessBadgeProps & {
   competitionId: string | null;
-  onNavigate: ((href: string) => void) | null;
+  /** False outside a router: navigation stays a tooltip, with no link. */
+  linked: boolean;
 }) {
   const { t } = useTranslation('structure');
 
@@ -108,7 +98,15 @@ function FreshnessBadgeBody({
     return null;
   }
 
-  const guidance = freshnessGuidance(occupant, competitionId);
+  const action = freshnessAction(occupant, competitionId, {
+    canReplace: !!onReplace,
+  });
+  const control =
+    action?.kind === 'replace'
+      ? 'replace'
+      : action?.kind === 'navigate' && linked
+        ? 'navigate'
+        : null;
   const labelKey = `resolution.freshness.state.${occupant.state}` as const;
   const label = t(labelKey);
   const causeKey =
@@ -118,32 +116,21 @@ function FreshnessBadgeBody({
         ? (`resolution.freshness.indeterminacy.${occupant.indeterminacyCause}.cause` as const)
         : null;
   const causeLabel = causeKey ? t(causeKey) : null;
-  const replaceable = !!onReplace && isReplayableStale(occupant);
-  const replaceHint = t('resolution.cascade.replaceHint');
-  const navigateHref = guidance?.href ?? null;
-  const directAction =
-    !directActionDisabled &&
-    (replaceable || (navigateHref != null && onNavigate != null));
-
-  const guidanceActionLabel =
-    guidance?.kind === 'upstream'
-      ? t('resolution.freshness.upstreamLink')
-      : guidance?.kind === 'indeterminate'
-        ? guidance.cause === 'MatchNonJoue' && guidance.matchLabel
-          ? t('resolution.freshness.indeterminacy.MatchNonJoue.actionNamed', {
-              match: guidance.matchLabel,
-            })
-          : t(`resolution.freshness.indeterminacy.${guidance.cause}.action`)
-        : null;
-
-  const tooltipAction = replaceable
-    ? replaceHint
-    : (guidanceActionLabel ?? null);
+  const actionLabel = actionText(t, action);
 
   const ariaLabel =
-    tooltipAction != null && causeLabel != null
-      ? `${causeLabel}. ${tooltipAction}`
-      : causeLabel != null
+    control && actionLabel
+      ? causeLabel
+        ? t('resolution.freshness.ariaAction', {
+            label,
+            cause: causeLabel,
+            action: actionLabel,
+          })
+        : t('resolution.freshness.ariaActionNoCause', {
+            label,
+            action: actionLabel,
+          })
+      : causeLabel
         ? t('resolution.freshness.ariaWithCause', { label, cause: causeLabel })
         : label;
 
@@ -151,7 +138,7 @@ function FreshnessBadgeBody({
   const showStateIcon =
     iconOnly ||
     occupant.state === 'Indetermine' ||
-    (replaceable && occupant.state === 'Perime');
+    (control === 'replace' && occupant.state === 'Perime');
 
   const badge = (
     <Status
@@ -160,11 +147,11 @@ function FreshnessBadgeBody({
       variant="soft"
       shape="pill"
       className={iconOnly ? 'structure-freshness-badge--icon' : undefined}
-      aria-label={directAction ? undefined : ariaLabel}
+      aria-label={control ? undefined : ariaLabel}
     >
       {showStateIcon ? stateIcon(occupant.state) : null}
       {iconOnly ? null : label}
-      {directAction ? (
+      {control ? (
         <ChevronRightIcon
           size="sm"
           className="structure-freshness-badge__chevron"
@@ -182,35 +169,27 @@ function FreshnessBadgeBody({
       {causeLabel ? (
         <span className="structure-freshness-replace__cause">{causeLabel}</span>
       ) : null}
-      {tooltipAction ? (
+      {actionLabel ? (
         <span className="structure-freshness-replace__action">
-          {tooltipAction}
+          {actionLabel}
         </span>
       ) : null}
     </span>
   );
-  const hasTip = iconOnly || causeLabel != null || tooltipAction != null;
+  const hasTip = iconOnly || causeLabel != null || actionLabel != null;
+  const wrapped = hasTip ? <Tooltip content={tip}>{badge}</Tooltip> : badge;
 
-  const runAction = (event: MouseEvent | KeyboardEvent) => {
-    event.stopPropagation();
-    event.preventDefault();
-    if (replaceable) {
-      onReplace?.(occupant);
-      return;
-    }
-    if (navigateHref && onNavigate) {
-      onNavigate(navigateHref);
-    }
-  };
-
-  if (directAction) {
+  if (control === 'replace') {
     return (
       <Tooltip content={tip}>
         <button
           type="button"
           className="structure-freshness-replace"
           aria-label={ariaLabel}
-          onClick={runAction}
+          onClick={(event) => {
+            event.stopPropagation();
+            onReplace?.(occupant);
+          }}
         >
           {badge}
         </button>
@@ -218,9 +197,35 @@ function FreshnessBadgeBody({
     );
   }
 
-  if (!hasTip) {
-    return badge;
+  if (control === 'navigate' && action?.kind === 'navigate') {
+    return (
+      <Tooltip content={tip}>
+        <Link
+          to={action.href}
+          className="structure-freshness-replace"
+          aria-label={ariaLabel}
+          onClick={(event) => {
+            event.stopPropagation();
+          }}
+        >
+          {badge}
+        </Link>
+      </Tooltip>
+    );
   }
 
-  return <Tooltip content={tip}>{badge}</Tooltip>;
+  return wrapped;
+}
+
+function actionText(
+  t: (key: string, params?: Record<string, string>) => string,
+  action: FreshnessAction | null,
+): string | null {
+  if (action?.kind === 'replace') {
+    return t('resolution.cascade.replaceHint');
+  }
+  if (action?.kind === 'navigate') {
+    return t(action.labelKey, action.labelParams);
+  }
+  return null;
 }

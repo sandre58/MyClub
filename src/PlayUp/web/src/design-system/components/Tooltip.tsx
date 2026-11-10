@@ -439,6 +439,16 @@ function TooltipActive({
     longPressOrigin.current = null;
   }
 
+  function onClickCapture(event: React.MouseEvent) {
+    if (fine || (!suppressClick.current && !openedByLongPress.current)) {
+      return;
+    }
+    suppressClick.current = false;
+    openedByLongPress.current = false;
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
   function onClickTrigger(event: React.MouseEvent) {
     if (fine) {
       return;
@@ -495,6 +505,7 @@ function TooltipActive({
         onPointerMove={onPointerMoveTrigger}
         onPointerUp={onPointerUpOrCancel}
         onPointerCancel={onPointerUpOrCancel}
+        onClickCapture={onClickCapture}
         onClick={onClickTrigger}
         onKeyDown={onKeyDownTrigger}
         onContextMenu={onContextMenu}

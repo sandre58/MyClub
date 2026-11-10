@@ -14,6 +14,10 @@ export function attentionSituationTitle(
     ...presentation.descriptionParams,
     ...params,
   };
+  const count = numericCount(mergedParams.count);
+  if (count != null) {
+    mergedParams.count = count;
+  }
   const translated = i18n.t(presentation.titleKey, {
     ns: presentation.titleNs,
     defaultValue: '',
@@ -24,6 +28,19 @@ export function attentionSituationTitle(
   }
 
   return situationTitle(fallbackSource, params);
+}
+
+function numericCount(value: string | number | undefined): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+  return undefined;
 }
 
 /**

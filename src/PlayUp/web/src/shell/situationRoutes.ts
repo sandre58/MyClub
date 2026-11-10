@@ -101,13 +101,6 @@ export function runtimeQualificationProgressionHref(
   const formStageId =
     targetType === 'Form' && targetId?.trim() ? targetId.trim() : null;
 
-  const hasPreciseDestination =
-    fromParams != null || colonPrefix != null || targetType === 'Form';
-
-  if (!hasPreciseDestination) {
-    return null;
-  }
-
   const stageId = fromParams ?? colonPrefix ?? formStageId;
   if (!stageId) {
     return null;

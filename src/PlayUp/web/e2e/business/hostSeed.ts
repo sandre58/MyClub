@@ -347,9 +347,31 @@ export async function expectCupDrawAppliedOnStructure(
   }
 }
 
+const RECETTE_FRESHNESS_ACTIONS_NAME = 'RECETTE — Actions de fraîcheur';
+
 const RECETTE_T3_QUAL_SLOT_NAME = 'RECETTE T3 — Qual slot fraîcheur';
 
 const RECETTE_T3_SCORE_UPSTREAM_NAME = 'RECETTE T3 — Score upstream fraîcheur';
+
+export async function findFreshnessActionsRecetteCompetition(
+  request: APIRequestContext,
+): Promise<CompetitionListItem> {
+  const response = await request.get(`${playUpApiBase()}/competitions`);
+  if (!response.ok()) {
+    throw new Error(
+      `GET /competitions failed (${response.status()}). Is Host running at ${playUpApiBase()}?`,
+    );
+  }
+
+  const list = (await response.json()) as CompetitionListItem[];
+  const hit = list.find((c) => c.name === RECETTE_FRESHNESS_ACTIONS_NAME);
+  if (!hit) {
+    throw new Error(
+      `Competition "${RECETTE_FRESHNESS_ACTIONS_NAME}" not found. Seed with DevRunner: --reset --scenarios freshness-actions-recette`,
+    );
+  }
+  return hit;
+}
 
 export async function findResolutionFreshnessScoreUpstreamCompetition(
   request: APIRequestContext,

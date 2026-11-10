@@ -22,7 +22,7 @@ public sealed class FreshnessActionsRecetteScenario : IScenario
 
     /// <inheritdoc />
     public string Description =>
-        "Upstream-stale phase, each indeterminate motif, and À traiter rows, on phases of at least four teams.";
+        "Upstream-stale phase, each indeterminate motif, attention rows, and a manually placeable stale slot, on phases of at least four teams.";
 
     /// <inheritdoc />
     public ScenarioCategory Category => ScenarioCategory.Operational;
