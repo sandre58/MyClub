@@ -41,10 +41,11 @@ const MUTATION_WIRE_TO_LIFECYCLE: Record<string, string> = {
     'AppliedDrawSlotPlacementProtected',
   'Application.AppliedDrawGroupPlacementProtected':
     'AppliedDrawGroupPlacementProtected',
-  'Application.GroupManualEditResolutionLocked':
-    'GroupManualEditResolutionLocked',
-  'Application.GroupAssignmentEntryNotInComposition':
+  'Stage.GroupPlacementResolutionLocked': 'GroupPlacementResolutionLocked',
+  'Stage.GroupAssignmentEntryNotInComposition':
     'GroupAssignmentEntryNotInComposition',
+  'Stage.CompositionWithdrawalGroupMembershipBlocked':
+    'CompositionWithdrawalGroupMembershipBlocked',
   'Application.DrawObsoleteForConsumption': 'DrawObsoleteForConsumption',
 };
 

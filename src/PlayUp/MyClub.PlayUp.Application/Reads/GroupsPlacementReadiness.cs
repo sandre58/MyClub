@@ -16,43 +16,40 @@ internal static class GroupsPlacementReadiness
 {
     internal static (int Filled, int Capacity) GetPlacementProgress(Stage stage)
     {
-        ArgumentNullException.ThrowIfNull(stage);
-
-        if (stage.Groups.Count == 0 || stage.PlacesPerGroup is not { } placesPerGroup || placesPerGroup < 1)
-        {
-            return (0, 0);
-        }
-
-        var composition = stage.CompositionEntries.Select(entry => entry.EntryId).ToHashSet();
-        var capacity = stage.Groups.Count * placesPerGroup;
-        var filled = stage.Groups.Sum(group => CountValidGroupMembers(group, composition));
-        return (filled, capacity);
+        var evaluated = Evaluate(stage);
+        return (evaluated.Filled, evaluated.Capacity);
     }
 
     /// <summary>
     /// True when pools are not full enough for match production or Start (minimum two per pool when capacity unknown).
     /// </summary>
-    internal static bool BlocksProduction(Stage stage)
+    internal static bool BlocksProduction(Stage stage) => Evaluate(stage).BlocksProduction;
+
+    /// <summary>
+    /// Placement progress and the production block, from one composition set.
+    /// </summary>
+    internal static (int Filled, int Capacity, bool BlocksProduction) Evaluate(Stage stage)
     {
         ArgumentNullException.ThrowIfNull(stage);
 
         if (stage.Groups.Count == 0)
         {
-            return true;
+            return (0, 0, true);
         }
 
         var composition = stage.CompositionEntries.Select(entry => entry.EntryId).ToHashSet();
+        var validCounts = stage.Groups
+            .Select(group => CountValidGroupMembers(group, composition))
+            .ToArray();
 
         if (stage.PlacesPerGroup is not { } placesPerGroup || placesPerGroup < 1)
         {
-            return stage.Groups.Any(group => CountValidGroupMembers(group, composition) < 2);
+            return (0, 0, validCounts.Any(valid => valid < 2));
         }
 
-        return stage.Groups.Any(group =>
-        {
-            var valid = CountValidGroupMembers(group, composition);
-            return valid < 2 || valid != placesPerGroup;
-        });
+        var filled = validCounts.Sum(valid => Math.Min(valid, placesPerGroup));
+        var capacity = stage.Groups.Count * placesPerGroup;
+        return (filled, capacity, validCounts.Any(valid => valid != placesPerGroup));
     }
 
     private static int CountValidGroupMembers(Group group, HashSet<EntryId> composition) =>

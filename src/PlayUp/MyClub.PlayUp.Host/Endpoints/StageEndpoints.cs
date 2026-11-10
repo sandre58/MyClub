@@ -139,27 +139,26 @@ internal static class StageEndpoints
             });
 
         app.MapPut(
-            "/stages/{stageId:guid}/groups/{groupId:guid}/entry",
+            "/stages/{stageId:guid}/groups/{groupId:guid}/entries/{entryId:guid}",
             async (
                 Guid stageId,
                 Guid groupId,
-                AssignEntryToGroupRequest request,
+                Guid entryId,
                 UseCaseExecutor executor,
                 CancellationToken cancellationToken) =>
             {
-                ArgumentNullException.ThrowIfNull(request);
                 await executor
                     .AssignEntryToGroupAsync(
                         new StageId(stageId),
                         new GroupId(groupId),
-                        new EntryId(request.EntryId),
+                        new EntryId(entryId),
                         cancellationToken)
                     .ConfigureAwait(false);
                 return Results.NoContent();
             });
 
         app.MapDelete(
-            "/stages/{stageId:guid}/groups/{groupId:guid}/entry/{entryId:guid}",
+            "/stages/{stageId:guid}/groups/{groupId:guid}/entries/{entryId:guid}",
             async (
                 Guid stageId,
                 Guid groupId,

@@ -4,8 +4,6 @@
     "AppliedDrawPoolChangeBlocked": "Le pool de composition ne peut pas être modifié tant que le tirage de cette phase est déjà appliqué.",
     "AppliedDrawSlotPlacementProtected": "Cette affectation est protégée par le tirage appliqué. Elle ne peut pas être modifiée directement.",
     "AppliedDrawGroupPlacementProtected": "Cette affectation de groupe est protégée par le tirage appliqué. Elle ne peut pas être modifiée directement.",
-    "GroupAssignmentEntryNotInComposition": "Cette équipe n’est pas dans le pool de composition de la phase — ajoutez-la au pool avant d’affecter un groupe.",
-    "GroupManualEditResolutionLocked": "Cette affectation de groupe provient d’une qualification ou d’une progression et ne peut pas être modifiée manuellement.",
     "Attribution": "Les chemins d’attribution ne correspondent plus au tableau — corrigez l’attribution d’abord.",
     "CascadeReplaceCompleted": "Une phase terminée bloque le remplacement en cascade.",
     "CascadeReplaceConflict": "La cascade a été confirmée sur un état qui a changé. Relancez l’aperçu.",
@@ -200,7 +198,7 @@
     "TimeWindowInvalid": "La plage horaire est invalide."
   },
   "Stage": {
-    "CompositionWithdrawalGroupMembershipBlocked": "Impossible de retirer cette équipe de la composition tant qu’elle est encore affectée à un groupe — libérez d’abord le groupe.",
+    "CompositionWithdrawalGroupMembershipBlocked": "Impossible de retirer cette équipe de la composition : elle figure déjà sur un match produit, ou son placement de groupe provient d’une qualification ou d’une progression.",
     "DisplayNameLocked": "Le nom de la phase ne peut plus être modifié.",
     "DrawFixedPlacementViolation": "Le résultat du tirage n’inclut pas les placements fixes requis.",
     "DrawGenerationInvalid": "La demande de tirage est invalide — vérifiez les paramètres et réessayez.",
@@ -222,6 +220,7 @@
     "FixtureOutcomeInvalid": "Le résultat de la confrontation est invalide.",
     "FixtureOutcomeNotFinished": "Le match de cette confrontation n’est pas encore terminé.",
     "FixtureOutcomeUndecided": "Le résultat de la confrontation n’est pas tranché — enregistrez un résultat d’abord.",
+    "GroupAssignmentEntryNotInComposition": "Cette équipe n’est pas dans le pool de composition de la phase — ajoutez-la au pool avant d’affecter un groupe.",
     "GroupFull": "Ce groupe comporte déjà le nombre maximum d’équipes autorisé (places par groupe).",
     "GroupNotFound": "Groupe introuvable.",
     "GroupPlacementResolutionLocked": "Cette affectation de groupe provient d’une qualification ou d’une progression et ne peut pas être modifiée ainsi.",

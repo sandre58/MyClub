@@ -264,6 +264,11 @@ public static class StageErrorCodes
     public const string GroupPlacementResolutionLocked = "Stage.GroupPlacementResolutionLocked";
 
     /// <summary>
+    /// Gets the code when a manual group assignment targets an entry outside the phase composition.
+    /// </summary>
+    public const string GroupAssignmentEntryNotInComposition = "Stage.GroupAssignmentEntryNotInComposition";
+
+    /// <summary>
     /// Gets the code when withdrawing a composition entry cannot clear group membership (matches or placements).
     /// </summary>
     public const string CompositionWithdrawalGroupMembershipBlocked = "Stage.CompositionWithdrawalGroupMembershipBlocked";

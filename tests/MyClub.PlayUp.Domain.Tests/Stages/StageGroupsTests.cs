@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using System.Linq;
 using FluentAssertions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
@@ -102,7 +103,7 @@ public sealed class StageGroupsTests
     }
 
     [Fact]
-    public void RemoveEntryFromGroup_in_Ready_is_allowed()
+    public void RemoveEntryFromGroup_in_Ready_is_rejected()
     {
         var stage = Stage.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
         var group = stage.AddGroup("A", _clock);
@@ -112,10 +113,59 @@ public sealed class StageGroupsTests
         stage.AddMatchday(1, _clock);
         stage.Prepare(_clock);
 
-        stage.RemoveEntryFromGroup(group.Id, entryId);
+        var act = () => stage.RemoveEntryFromGroup(group.Id, entryId);
 
-        group.EntryIds.Should().NotContain(entryId);
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
+        group.EntryIds.Should().Contain(entryId);
         stage.Status.Should().Be(StageStatus.Ready);
+    }
+
+    [Fact]
+    public void AssignEntryToGroup_in_Running_is_rejected()
+    {
+        var stage = CreateReadyPoules();
+        stage.Start(_clock);
+        var act = () => stage.AssignEntryToGroup(stage.Groups[0].Id, EntryId.New());
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
+    }
+
+    [Fact]
+    public void RemoveEntryFromGroup_in_Running_is_rejected()
+    {
+        var stage = Stage.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
+        var group = stage.AddGroup("A", _clock);
+        var entryId = EntryId.New();
+        stage.AssignEntryToGroup(group.Id, entryId);
+        stage.AssignEntryToGroup(group.Id, EntryId.New());
+        stage.AddMatchday(1, _clock);
+        stage.Prepare(_clock);
+        stage.Start(_clock);
+
+        var act = () => stage.RemoveEntryFromGroup(group.Id, entryId);
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
+        group.EntryIds.Should().Contain(entryId);
+    }
+
+    [Fact]
+    public void AssignEntryToGroup_refuses_when_raw_membership_is_full_even_if_one_member_is_outside_composition()
+    {
+        var stage = Stage.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
+        var group = stage.AddGroup("A", _clock);
+        var inPool = Enumerable.Range(0, 4).Select(_ => EntryId.New()).ToArray();
+        var orphan = EntryId.New();
+        stage.ReplaceAffectationAuthoring(inPool, _clock);
+        stage.AssignEntryToGroup(group.Id, inPool[0]);
+        stage.AssignEntryToGroup(group.Id, inPool[1]);
+        stage.AssignEntryToGroup(group.Id, inPool[2]);
+        stage.AssignEntryToGroup(group.Id, orphan);
+        stage.SetPlacesPerGroup(4);
+
+        var act = () => stage.AssignEntryToGroup(group.Id, inPool[3]);
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.GroupFull);
+        group.EntryIds.Should().NotContain(inPool[3]);
     }
 
     [Fact]

@@ -4,7 +4,6 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
@@ -33,27 +32,8 @@ public static class AssignEntryToGroup
         StructureOperationalExitEditGuard.Ensure(stage, stageMatches, "Group assignment");
 
         _ = competition.GetEntry(entryId);
-
-        if (stage.CompositionEntries.All(row => !row.EntryId.Equals(entryId)))
-        {
-            throw new ApplicationFailureException(
-                $"Entry '{entryId}' is not in the stage population.",
-                ApplicationErrorCodes.GroupAssignmentEntryNotInComposition);
-        }
-
-        if (stage.GroupResolutionProvenances.Any(row =>
-                row.EntryId.Equals(entryId)
-                && row.ProvenanceKind is ResolutionProvenanceKind.Qualification
-                    or ResolutionProvenanceKind.Progression))
-        {
-            throw new ApplicationFailureException(
-                "This group placement was produced by qualification or progression and cannot be edited manually.",
-                ApplicationErrorCodes.GroupManualEditResolutionLocked);
-        }
-
         StructureAppliedDrawGroupPlacementGate.EnsureAssignAllowed(stage, groupId, entryId);
-
-        stage.AssignEntryToGroup(
+        stage.AssignManualEntryToGroup(
             groupId,
             entryId,
             MaterializedParticipantSnapshots.FromMatches(stageMatches ?? []));

@@ -293,7 +293,7 @@ public static class CascadeReplace
                 continue;
             }
 
-            stage.RemoveResolvedPopulationEntry(previous, clock);
+            stage.RemoveResolvedPopulationEntry(previous, clock, snapshots);
             replacements.Add(new CascadeReplacement(
                 stage.Id.Value,
                 StructureResolutionOccupantTarget.Population,

@@ -63,6 +63,50 @@ public sealed class StageApplyResolvedGroupEntryTests
         groupB.EntryIds.Should().BeEmpty();
     }
 
+    [Theory]
+    [InlineData(ResolutionProvenanceKind.Qualification)]
+    [InlineData(ResolutionProvenanceKind.Progression)]
+    public void ApplyResolvedGroupEntry_refuses_a_fifth_member_when_capacity_is_four(
+        ResolutionProvenanceKind kind)
+    {
+        var stage = Stage.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
+        var group = stage.AddGroup("A", _clock);
+        stage.SetPlacesPerGroup(4);
+        for (var index = 0; index < 4; index++)
+        {
+            stage.ApplyResolvedGroupEntry(
+                group.Id,
+                EntryId.New(),
+                new ResolutionProvenance(kind, $"{kind}|{index}", $"fp-{index}"));
+        }
+
+        var act = () => stage.ApplyResolvedGroupEntry(
+            group.Id,
+            EntryId.New(),
+            new ResolutionProvenance(kind, $"{kind}|5", "fp-5"));
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.GroupFull);
+        group.EntryIds.Should().HaveCount(4);
+    }
+
+    [Fact]
+    public void ApplyResolvedGroupEntry_same_qualification_entry_in_the_same_group_is_idempotent()
+    {
+        var stage = Stage.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
+        var group = stage.AddGroup("A", _clock);
+        stage.SetPlacesPerGroup(4);
+        var entryId = EntryId.New();
+        var provenance = new ResolutionProvenance(
+            ResolutionProvenanceKind.Qualification,
+            "Q|same",
+            "fp");
+
+        stage.ApplyResolvedGroupEntry(group.Id, entryId, provenance);
+        stage.ApplyResolvedGroupEntry(group.Id, entryId, provenance);
+
+        group.EntryIds.Should().ContainSingle().Which.Should().Be(entryId);
+    }
+
     [Fact]
     public void ApplyResolvedGroupEntry_does_not_demote_Ready()
     {

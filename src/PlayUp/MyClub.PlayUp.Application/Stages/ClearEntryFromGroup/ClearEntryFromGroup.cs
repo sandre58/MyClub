@@ -4,7 +4,6 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
@@ -33,18 +32,6 @@ public static class ClearEntryFromGroup
         StructureOperationalExitEditGuard.Ensure(stage, stageMatches, "Group clear");
 
         _ = competition.GetEntry(entryId);
-
-        if (stage.GroupResolutionProvenances.Any(row =>
-                row.GroupId.Equals(groupId)
-                && row.EntryId.Equals(entryId)
-                && row.ProvenanceKind is ResolutionProvenanceKind.Qualification
-                    or ResolutionProvenanceKind.Progression))
-        {
-            throw new ApplicationFailureException(
-                "This group placement was produced by qualification or progression and cannot be edited manually.",
-                ApplicationErrorCodes.GroupManualEditResolutionLocked);
-        }
-
         StructureAppliedDrawGroupPlacementGate.EnsureClearAllowed(stage, groupId, entryId);
 
         stage.RemoveEntryFromGroup(

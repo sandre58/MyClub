@@ -290,16 +290,6 @@ public static class ApplicationErrorCodes
     public const string AppliedDrawGroupPlacementProtected = "Application.AppliedDrawGroupPlacementProtected";
 
     /// <summary>
-    /// Gets the code when a manual group assignment targets an entry outside the phase composition.
-    /// </summary>
-    public const string GroupAssignmentEntryNotInComposition = "Application.GroupAssignmentEntryNotInComposition";
-
-    /// <summary>
-    /// Gets the code when manual group placement cannot change a qualification/progression-resolved membership.
-    /// </summary>
-    public const string GroupManualEditResolutionLocked = "Application.GroupManualEditResolutionLocked";
-
-    /// <summary>
     /// Gets the code when a draw resolution is obsolete for consumption.
     /// </summary>
     public const string DrawObsoleteForConsumption = "Application.DrawObsoleteForConsumption";

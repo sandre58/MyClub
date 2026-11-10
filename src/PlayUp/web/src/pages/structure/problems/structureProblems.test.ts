@@ -302,14 +302,19 @@ describe('resolveLifecycleMutationMessageKey', () => {
     ).toBe('problems.lifecycle.AppliedDrawGroupPlacementProtected');
     expect(
       resolveLifecycleMutationMessageKey(
-        'Application.GroupManualEditResolutionLocked',
+        'Stage.GroupPlacementResolutionLocked',
       ),
-    ).toBe('problems.lifecycle.GroupManualEditResolutionLocked');
+    ).toBe('problems.lifecycle.GroupPlacementResolutionLocked');
     expect(
       resolveLifecycleMutationMessageKey(
-        'Application.GroupAssignmentEntryNotInComposition',
+        'Stage.GroupAssignmentEntryNotInComposition',
       ),
     ).toBe('problems.lifecycle.GroupAssignmentEntryNotInComposition');
+    expect(
+      resolveLifecycleMutationMessageKey(
+        'Stage.CompositionWithdrawalGroupMembershipBlocked',
+      ),
+    ).toBe('problems.lifecycle.CompositionWithdrawalGroupMembershipBlocked');
   });
 
   it('resolves applied-draw pool change refusal without mutation unknown', () => {
