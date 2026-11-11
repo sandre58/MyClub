@@ -86,7 +86,20 @@ public sealed class FreshnessActionsRecetteTests(DevelopmentPostgresFixture fixt
             && occupant.IndeterminacyCause == StructureResolutionIndeterminacyCause.SourceAbsente);
         occupants.Should().Contain(occupant =>
             occupant.SlotKey == "Dernier"
-            && occupant.IndeterminacyCause == StructureResolutionIndeterminacyCause.SelectionVide);
+            && occupant.IndeterminacyCause == StructureResolutionIndeterminacyCause.SelectionVide
+            && occupant.Releasable);
+        occupants.Should().Contain(occupant =>
+            occupant.SlotKey == "Partage"
+            && occupant.IndeterminacyCause == StructureResolutionIndeterminacyCause.EgaliteClassement
+            && occupant.Releasable);
+        occupants.Should().Contain(occupant =>
+            occupant.SlotKey == "Seuil"
+            && occupant.IndeterminacyCause == StructureResolutionIndeterminacyCause.ConditionNonRemplie
+            && occupant.Releasable);
+        occupants.Should().Contain(occupant =>
+            occupant.SlotKey == "Libre"
+            && occupant.IndeterminacyCause == StructureResolutionIndeterminacyCause.SelectionVide
+            && occupant.Releasable);
         occupants.Should().Contain(occupant =>
             occupant.SlotKey == "NV"
             && occupant.State == StructureResolutionFreshness.NonVerifiee);
@@ -121,6 +134,15 @@ public sealed class FreshnessActionsRecetteTests(DevelopmentPostgresFixture fixt
         attention.Items.Should().Contain(item =>
             item.Source == NeedsAttentionAssembler.SourceResolutionIndetermine
             && item.TargetId == StageId(stages, "Classement").ToString());
+        attention.Items.Should().Contain(item =>
+            item.Source == NeedsAttentionAssembler.SourceResolutionIndetermine
+            && item.TargetId == StageId(stages, "Ex aequo").ToString());
+        attention.Items.Should().Contain(item =>
+            item.Source == NeedsAttentionAssembler.SourceResolutionIndetermine
+            && item.TargetId == StageId(stages, "Condition").ToString());
+        attention.Items.Should().Contain(item =>
+            item.Source == NeedsAttentionAssembler.SourceResolutionIndetermine
+            && item.TargetId == StageId(stages, "Généré").ToString());
         attention.Items.Where(item => item.TargetId == seuleId.ToString())
             .Should().NotContain(item =>
                 item.Source == NeedsAttentionAssembler.SourceResolutionPerime

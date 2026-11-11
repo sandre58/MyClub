@@ -71,6 +71,8 @@ export {
   applyQualification,
   previewCascadeReplace,
   confirmCascadeReplace,
+  previewResolutionRelease,
+  confirmResolutionRelease,
 } from './api/stages';
 export type {
   CascadePlayedMatch,
@@ -78,6 +80,11 @@ export type {
   CascadeReplaceResponse,
   CascadeReplaceSurface,
   CascadeReplacement,
+  ResolutionReleaseAffectedOccupant,
+  ResolutionReleaseDetachedMatch,
+  ResolutionReleaseRequest,
+  ResolutionReleaseResponse,
+  ResolutionReleaseRow,
 } from './api/stages';
 export {
   fetchMatchHub,

@@ -55,6 +55,9 @@ internal static partial class ScenarioOrchestration
         var orphelin = Cup(context, competition, "Orphelin", "Fantome", "Est", "Sud", "Ouest");
         var manuel = Cup(context, competition, "Manuel", "Rejouable", "Est", "Sud", "Ouest");
         var seule = Cup(context, competition, "Seule", "NV", "B", "C", "D");
+        var exAequo = Cup(context, competition, "Ex aequo", "Partage", "B", "C", "D");
+        var condition = Cup(context, competition, "Condition", "Seuil", "B", "C", "D");
+        var genere = Cup(context, competition, "Généré", "Libre", "Adversaire", "C", "D");
         var stages = new List<Stage>
         {
             poules,
@@ -68,6 +71,9 @@ internal static partial class ScenarioOrchestration
             orphelin,
             manuel,
             seule,
+            exAequo,
+            condition,
+            genere,
         };
 
         var matches = RoundRobin(context, poules, [nord, est, sud, ouest, centre]);
@@ -152,6 +158,46 @@ internal static partial class ScenarioOrchestration
         PlaceUnverified(seule, "B", est, context.Clock);
         PlaceUnverified(seule, "C", sud, context.Clock);
         PlaceUnverified(seule, "D", ouest, context.Clock);
+
+        PlaceDirect(exAequo, "B", est, context.Clock);
+        PlaceDirect(exAequo, "C", sud, context.Clock);
+        PlaceDirect(exAequo, "D", ouest, context.Clock);
+        PlaceDirect(condition, "B", est, context.Clock);
+        PlaceDirect(condition, "C", sud, context.Clock);
+        PlaceDirect(condition, "D", ouest, context.Clock);
+        PlaceDirect(genere, "Adversaire", est, context.Clock);
+        PlaceDirect(genere, "C", sud, context.Clock);
+        PlaceDirect(genere, "D", ouest, context.Clock);
+        var partage = new QualificationPath(
+            3,
+            QualificationSource.Overall(),
+            new QualificationSelection(SelectionMode.Top, 2),
+            QualificationDestination.ForSlot(exAequo.Id, "Partage"));
+        var seuil = new QualificationPath(
+            4,
+            QualificationSource.Overall(),
+            new QualificationSelection(SelectionMode.Position, 2),
+            QualificationDestination.ForSlot(condition.Id, "Seuil"),
+            QualificationCondition.PointsAtLeast(100));
+        var libre = new QualificationPath(
+            5,
+            QualificationSource.Overall(),
+            new QualificationSelection(SelectionMode.Position, 9),
+            QualificationDestination.ForSlot(genere.Id, "Libre"));
+        poules.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                QualPath(1, 1, tableau.Id, "Tete"),
+                QualPath(2, 5, classement.Id, "Dernier"),
+                partage,
+                seuil,
+                libre,
+            ]),
+            context.Clock);
+        StampQualified(context, poules, partage, exAequo, "Partage", nord);
+        StampQualified(context, poules, seuil, condition, "Seuil", nord);
+        StampQualified(context, poules, libre, genere, "Libre", nord);
+        matches.Add(Schedule(context, genere, nord, est, "P1", "Libre", "Adversaire"));
 
         SeedLifecycle.PrepareAndStart(context, competition, poules, stages);
         WithdrawEntry.Execute(competition, centre, stages, matches, context.Clock);
@@ -289,6 +335,22 @@ internal static partial class ScenarioOrchestration
         var match = Match.Create(stage.CompetitionId, stage.Id, home, away, context.Clock);
         stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, context.Clock);
         return match;
+    }
+
+    private static void StampQualified(
+        ScenarioContext context,
+        Stage source,
+        QualificationPath path,
+        Stage destination,
+        string slot,
+        EntryId entry)
+    {
+        var provenance = new ResolutionProvenance(
+            ResolutionProvenanceKind.Qualification,
+            ResolutionPathIdentifier.ForQualification(source.Id, path),
+            "seed");
+        destination.AddResolvedPopulationEntry(entry, context.Clock, provenance);
+        destination.ApplyResolvedEntry(slot, entry, context.Clock, provenance);
     }
 
     private static void StampProgression(

@@ -24,6 +24,7 @@ import '../phase-schematic.css';
 import { GroupsSchematicView } from './GroupsSchematicView';
 import { groupsSchematicFromStageSchematic } from './groupsSchematic';
 import { useStructureCascadeReplace } from '../resolution/structureCascadeReplaceContext';
+import { useStructureResolutionRelease } from '../resolution/structureResolutionReleaseContext';
 import { StructureResolutionFreshnessBadge } from '../resolution/StructureResolutionFreshnessBadge';
 import {
   lookupSchematicCaseResolutionOccupant,
@@ -242,6 +243,7 @@ function SlotBox({
     c?.assignment?.entryId ?? c?.entry?.entryId ?? null,
   );
   const cascade = useStructureCascadeReplace();
+  const release = useStructureResolutionRelease();
   const withdrawnBadgeLabel = t('teams:withdrawnBadge');
   const showFullBody = density === 'full' && (primary || showSlotCrest);
   const freshnessBadge = slotResolutionOccupant ? (
@@ -251,6 +253,7 @@ function SlotBox({
         variant="icon"
         entryName={resolvedName}
         onReplace={cascade?.requestReplace}
+        onRelease={release?.requestRelease}
       />
     </span>
   ) : null;

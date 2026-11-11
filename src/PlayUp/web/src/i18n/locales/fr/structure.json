@@ -901,6 +901,22 @@
       "ariaAction": "{{label}} — {{cause}}. {{action}}",
       "ariaActionNoCause": "{{label}}. {{action}}"
     },
+    "release": {
+      "action": "Libérer la place",
+      "confirmTitle": "Libérer cette place ?",
+      "confirm": "Libérer",
+      "cancel": "Annuler",
+      "pending": "Libération…",
+      "nonePlayed": "Aucun match ne sera modifié.",
+      "detachedIntro": "Le côté de l'équipe redevient à déterminer :",
+      "detachedMatch": "Manche {{leg}} — {{side}}",
+      "affectedIntro": "D'autres places changent d'état :",
+      "affectedOccupant": "{{before}} → {{after}}",
+      "side": {
+        "Home": "domicile",
+        "Away": "extérieur"
+      }
+    },
     "cascade": {
       "action": "Remplacer l'occupant périmé",
       "actionNamed": "Remplacer {{place}}",

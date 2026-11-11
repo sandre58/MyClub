@@ -901,6 +901,22 @@
       "ariaAction": "{{label}} — {{cause}}. {{action}}",
       "ariaActionNoCause": "{{label}}. {{action}}"
     },
+    "release": {
+      "action": "Release the place",
+      "confirmTitle": "Release this place?",
+      "confirm": "Release",
+      "cancel": "Cancel",
+      "pending": "Releasing…",
+      "nonePlayed": "No match will change.",
+      "detachedIntro": "The team's side becomes to be determined:",
+      "detachedMatch": "Leg {{leg}} — {{side}}",
+      "affectedIntro": "Other places change state:",
+      "affectedOccupant": "{{before}} → {{after}}",
+      "side": {
+        "Home": "home",
+        "Away": "away"
+      }
+    },
     "cascade": {
       "action": "Replace the stale occupant",
       "actionNamed": "Replace {{place}}",

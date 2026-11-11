@@ -21,6 +21,7 @@ import {
 } from '../draw/structureEntryPlacementProjection';
 import type { EntryPlaceProjection } from '../draw/structureEntryPlacementProjection';
 import { useStructureCascadeReplace } from '../resolution/structureCascadeReplaceContext';
+import { useStructureResolutionRelease } from '../resolution/structureResolutionReleaseContext';
 import { StructureResolutionFreshnessBadge } from '../resolution/StructureResolutionFreshnessBadge';
 import {
   buildStructureResolutionOccupantIndex,
@@ -48,6 +49,7 @@ export function CompositionQualifiersPanel({
 }) {
   const { t } = useTranslation('structure');
   const cascade = useStructureCascadeReplace();
+  const release = useStructureResolutionRelease();
   const resolutionIndex = useMemo(
     () => buildStructureResolutionOccupantIndex(resolutionOccupants),
     [resolutionOccupants],
@@ -162,6 +164,7 @@ export function CompositionQualifiersPanel({
                             )}
                             entryName={seat.teamName ?? entry?.displayName}
                             onReplace={cascade?.requestReplace}
+                            onRelease={release?.requestRelease}
                           />
                         ) : null}
                       </div>

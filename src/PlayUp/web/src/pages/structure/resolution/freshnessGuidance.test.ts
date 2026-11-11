@@ -226,4 +226,32 @@ describe('freshnessAction', () => {
       ),
     ).toBeNull();
   });
+
+  it('releases a releasable occupant when the surface offers the release', () => {
+    expect(
+      freshnessAction(
+        {
+          ...base,
+          state: 'Indetermine',
+          indeterminacyCause: 'SelectionVide',
+          releasable: true,
+        },
+        'comp',
+        { canReplace: true, canRelease: true },
+      ),
+    ).toEqual({ kind: 'release' });
+
+    expect(
+      freshnessAction(
+        {
+          ...base,
+          state: 'Indetermine',
+          indeterminacyCause: 'SelectionVide',
+          releasable: true,
+        },
+        'comp',
+        { canReplace: true },
+      ),
+    ).toBeNull();
+  });
 });

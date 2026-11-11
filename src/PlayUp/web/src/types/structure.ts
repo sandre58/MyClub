@@ -312,6 +312,8 @@ export interface StructureResolutionOccupant {
   actionMatchLabel?: string | null;
   /** Host-computed: a cascade replace can replay this stale Qual/Prog occupant. */
   cascadeReplaceable: boolean;
+  /** Host-computed: the shared release guards all pass for this unconfirmed place. */
+  releasable?: boolean;
 }
 
 /** Hub projection — inbound feed seats (Structure GET, not schematic). */

@@ -301,6 +301,67 @@ export function confirmCascadeReplace(
   );
 }
 
+export type ResolutionReleaseRequest = {
+  target: CascadeReplaceSurface;
+  entryId: string;
+  slotKey?: string | null;
+  groupId?: string | null;
+};
+
+export type ResolutionReleaseRow = {
+  stageId: string;
+  target: CascadeReplaceSurface;
+  slotKey: string | null;
+  groupId: string | null;
+  entryId: string;
+};
+
+export type ResolutionReleaseDetachedMatch = {
+  matchId: string;
+  stageId: string;
+  legIndex: number;
+  side: 'Home' | 'Away';
+  homeEntryId: string | null;
+  awayEntryId: string | null;
+};
+
+export type ResolutionReleaseAffectedOccupant = {
+  stageId: string;
+  target: CascadeReplaceSurface;
+  slotKey: string | null;
+  groupId: string | null;
+  entryId: string;
+  stateBefore: string;
+  stateAfter: string;
+};
+
+export type ResolutionReleaseResponse = {
+  versionToken: string;
+  releases: ResolutionReleaseRow[];
+  detachedMatches: ResolutionReleaseDetachedMatch[];
+  affectedOccupants: ResolutionReleaseAffectedOccupant[];
+};
+
+/** POST /stages/{stageId}/resolution/release-preview → ResolutionReleaseResponse */
+export function previewResolutionRelease(
+  stageId: string,
+  request: ResolutionReleaseRequest,
+): Promise<ResolutionReleaseResponse> {
+  return sendJson(
+    'POST',
+    `/stages/${stageId}/resolution/release-preview`,
+    request,
+  );
+}
+
+/** POST /stages/{stageId}/resolution/release → ResolutionReleaseResponse */
+export function confirmResolutionRelease(
+  stageId: string,
+  request: ResolutionReleaseRequest & { versionToken: string },
+): Promise<ResolutionReleaseResponse> {
+  return sendJson('POST', `/stages/${stageId}/resolution/release`, request);
+}
+
 /** POST /stages/{stageId}/qualification/apply → QualificationApplyResponse */
 export function applyQualification(
   stageId: string,

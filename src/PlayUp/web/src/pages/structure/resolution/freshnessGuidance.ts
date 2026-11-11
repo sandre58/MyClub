@@ -3,6 +3,7 @@ import { structureDeepLink } from '../structureNavigation';
 
 export type FreshnessAction =
   | { kind: 'replace' }
+  | { kind: 'release' }
   | {
       kind: 'navigate';
       href: string;
@@ -88,12 +89,13 @@ function navigate(
 /**
  * The single corrective action for a freshness badge.
  * `canReplace` is true when the surface can open the cascade preview.
- * Navigation is a route; replace is not.
+ * `canRelease` is true when the surface can open the release preview.
+ * Navigation is a route; replace and release are not.
  */
 export function freshnessAction(
   occupant: StructureResolutionOccupant,
   competitionId: string | null | undefined,
-  options: { canReplace: boolean },
+  options: { canReplace: boolean; canRelease?: boolean },
 ): FreshnessAction | null {
   if (occupant.state === 'Perime') {
     if (occupant.stalenessCause === 'AmontPerime') {
@@ -113,6 +115,10 @@ export function freshnessAction(
 
   if (occupant.state !== 'Indetermine' || !occupant.indeterminacyCause) {
     return null;
+  }
+
+  if (options.canRelease && occupant.releasable) {
+    return { kind: 'release' };
   }
 
   const cause = occupant.indeterminacyCause;

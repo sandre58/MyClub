@@ -488,6 +488,36 @@ describe('StructureResolutionFreshnessBadge', () => {
       }),
     ).toBeInTheDocument();
   });
+
+  it('opens the release when the occupant can be released', async () => {
+    const onRelease = vi.fn();
+    const user = userEvent.setup();
+    const releasable = {
+      target: 'Slot' as const,
+      entryId: 'e1',
+      provenanceKind: 'Qualification' as const,
+      sourcePathId: 'p1',
+      state: 'Indetermine' as const,
+      slotKey: 'Dernier',
+      indeterminacyCause: 'SelectionVide' as const,
+      releasable: true,
+      cascadeReplaceable: false,
+    };
+    renderWithI18n(
+      <StructureResolutionFreshnessBadge
+        occupant={releasable}
+        entryName="Centre"
+        onRelease={onRelease}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole('button', {
+        name: /Centre n'est plus confirmée — le classement ne désigne aucune équipe.*Libérer la place/,
+      }),
+    );
+    expect(onRelease).toHaveBeenCalledWith(releasable);
+  });
 });
 
 afterEach(() => {

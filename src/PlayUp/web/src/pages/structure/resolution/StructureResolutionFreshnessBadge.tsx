@@ -29,6 +29,8 @@ type StructureResolutionFreshnessBadgeProps = {
   variant?: FreshnessBadgeVariant;
   /** Opens the cascade preview. Ignored unless the occupant is replayable. */
   onReplace?: (occupant: StructureResolutionOccupant) => void;
+  /** Opens the release preview. Ignored unless the occupant is releasable. */
+  onRelease?: (occupant: StructureResolutionOccupant) => void;
   /** Stored team, used to name who is no longer confirmed. */
   entryName?: string | null;
 };
@@ -87,6 +89,7 @@ function FreshnessBadgeBody({
   density = 'compact',
   variant = 'full',
   onReplace,
+  onRelease,
   entryName,
   competitionId,
   linked,
@@ -103,13 +106,16 @@ function FreshnessBadgeBody({
 
   const action = freshnessAction(occupant, competitionId, {
     canReplace: !!onReplace,
+    canRelease: !!onRelease,
   });
   const control =
     action?.kind === 'replace'
       ? 'replace'
-      : action?.kind === 'navigate' && linked
-        ? 'navigate'
-        : null;
+      : action?.kind === 'release'
+        ? 'release'
+        : action?.kind === 'navigate' && linked
+          ? 'navigate'
+          : null;
   const labelKey = `resolution.freshness.state.${occupant.state}` as const;
   const label = t(labelKey);
   const causeKey =
@@ -193,7 +199,7 @@ function FreshnessBadgeBody({
   const hasTip = iconOnly || explained != null || actionLabel != null;
   const wrapped = hasTip ? <Tooltip content={tip}>{badge}</Tooltip> : badge;
 
-  if (control === 'replace') {
+  if (control === 'replace' || control === 'release') {
     return (
       <Tooltip content={tip}>
         <button
@@ -202,6 +208,10 @@ function FreshnessBadgeBody({
           aria-label={ariaLabel}
           onClick={(event) => {
             event.stopPropagation();
+            if (control === 'release') {
+              onRelease?.(occupant);
+              return;
+            }
             onReplace?.(occupant);
           }}
         >
@@ -237,6 +247,9 @@ function actionText(
 ): string | null {
   if (action?.kind === 'replace') {
     return t('resolution.cascade.replaceHint');
+  }
+  if (action?.kind === 'release') {
+    return t('resolution.release.action');
   }
   if (action?.kind === 'navigate') {
     return t(action.labelKey, action.labelParams);
