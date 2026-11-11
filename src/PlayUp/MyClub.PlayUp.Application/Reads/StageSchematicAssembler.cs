@@ -23,6 +23,24 @@ public static class StageSchematicAssembler
     public const string FormKindGroupPlace = "GroupPlace";
     public const string FormKindRosterPlace = "RosterPlace";
 
+    /// <summary>Groups seat that a manual assign or clear may change.</summary>
+    public const string GroupSeatEditable = GroupSeatModes.Editable;
+
+    /// <summary>Groups seat occupied by a qualification or progression resolution.</summary>
+    public const string GroupSeatQualProg = GroupSeatModes.QualProg;
+
+    /// <summary>Groups seat occupied by an applied group draw.</summary>
+    public const string GroupSeatDraw = GroupSeatModes.Draw;
+
+    /// <summary>Empty Groups seat whose target group already has an attached match.</summary>
+    public const string GroupSeatMatchLocked = GroupSeatModes.MatchLocked;
+
+    /// <summary>Empty Groups seat held for an unresolved qualification or progression feed.</summary>
+    public const string GroupSeatReserved = GroupSeatModes.Reserved;
+
+    /// <summary>Groups seat blocked because a group draw is still in progress, including a draft.</summary>
+    public const string GroupSeatDrawPending = GroupSeatModes.DrawPending;
+
     /// <summary>
     /// Maps stage form + placement into the schematic read model.
     /// </summary>
@@ -36,6 +54,10 @@ public static class StageSchematicAssembler
     /// Non-positive values leave Places N unknown.
     /// Null reads the configured expected occupancy. Ignored for other formats.
     /// </param>
+    /// <param name="includeGroupSeatModes">
+    /// When <see langword="false"/>, Groups cases omit seat mode, clear, excess, and outside-composition.
+    /// Occupancy counts use that path and must not evaluate placement guards.
+    /// </param>
     /// <returns>The assembled schematic.</returns>
     public static StageSchematicDto Assemble(
         Stage stage,
@@ -43,7 +65,8 @@ public static class StageSchematicAssembler
         IReadOnlyList<Stage> competitionStages,
         IReadOnlyList<MatchSummaryRow>? matchRows = null,
         IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>>? matchSummariesByStage = null,
-        int? championshipSwissExpectedOccupancy = null)
+        int? championshipSwissExpectedOccupancy = null,
+        bool includeGroupSeatModes = true)
     {
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(competition);
@@ -60,7 +83,12 @@ public static class StageSchematicAssembler
                 entries,
                 matchRows ?? [],
                 matchSummariesByStage),
-            StructureFormatKind.Groups => AssembleGroups(stage, competitionStages, entries),
+            StructureFormatKind.Groups => AssembleGroups(
+                stage,
+                competitionStages,
+                entries,
+                matchRows ?? [],
+                includeGroupSeatModes),
             StructureFormatKind.Championship or StructureFormatKind.Swiss =>
                 AssembleRosterCapacity(
                     stage,
@@ -356,7 +384,9 @@ public static class StageSchematicAssembler
     private static StageSchematicDto AssembleGroups(
         Stage stage,
         IReadOnlyList<Stage> competitionStages,
-        IReadOnlyDictionary<EntryId, CompetitionEntry> entries)
+        IReadOnlyDictionary<EntryId, CompetitionEntry> entries,
+        IReadOnlyList<MatchSummaryRow> matchRows,
+        bool includeGroupSeatModes)
     {
         var perGroup = stage.PlacesPerGroup;
         if (stage.Groups.Count == 0 || perGroup is null or < 1)
@@ -365,12 +395,15 @@ public static class StageSchematicAssembler
         }
 
         var pendingByGroup = CollectGroupPendingFeeds(stage, competitionStages);
-        var cases = new List<SchematicCaseDto>(stage.Groups.Count * perGroup.Value);
+        var snapshots = MaterializedParticipantSnapshots.FromSummaryRows(matchRows);
+        var composition = stage.CompositionEntries.Select(entry => entry.EntryId).ToHashSet();
+        var cases = new List<SchematicCaseDto>();
         foreach (var group in stage.Groups)
         {
             var pending = pendingByGroup.GetValueOrDefault(group.Id.Value) ?? [];
             var pendingIndex = 0;
-            for (var index = 1; index <= perGroup.Value; index++)
+            var seatCount = Math.Max(perGroup.Value, group.EntryIds.Count);
+            for (var index = 1; index <= seatCount; index++)
             {
                 EntryId? placed = index <= group.EntryIds.Count
                     ? group.EntryIds[index - 1]
@@ -384,6 +417,27 @@ public static class StageSchematicAssembler
                     feedOrigin = pending[pendingIndex++];
                 }
 
+                string? seatMode = null;
+                bool? canClear = null;
+                bool? excess = null;
+                bool? outsideComposition = null;
+                if (includeGroupSeatModes)
+                {
+                    var seat = ManualGroupSeatRules.Project(
+                        stage,
+                        competitionStages,
+                        group,
+                        index,
+                        placed,
+                        composition,
+                        snapshots,
+                        pending.Count);
+                    seatMode = seat.SeatMode;
+                    canClear = seat.CanClear;
+                    excess = seat.Excess;
+                    outsideComposition = seat.OutsideComposition;
+                }
+
                 cases.Add(
                     new SchematicCaseDto(
                         new SchematicFormPositionDto(
@@ -393,7 +447,11 @@ public static class StageSchematicAssembler
                             Index: index),
                         FeedOrigin: feedOrigin,
                         MapEntry(placed, entries),
-                        MapAssignment(placed, entries)));
+                        MapAssignment(placed, entries),
+                        seatMode,
+                        canClear,
+                        excess,
+                        outsideComposition));
             }
         }
 
@@ -412,47 +470,20 @@ public static class StageSchematicAssembler
     }
 
     /// <summary>
-    /// Inbound Qual/Prog ForGroup destinations, ordered per group (all paths — one seat each when pending).
+    /// Unresolved Qual/Prog ForGroup destinations, ordered per group (one seat each while still pending).
     /// </summary>
     private static Dictionary<Guid, List<SchematicFeedOriginDto>> CollectGroupPendingFeeds(
         Stage target,
         IReadOnlyList<Stage> competitionStages)
     {
         var candidates = new Dictionary<Guid, List<SchematicFeedOriginDto>>();
-
-        foreach (var stage in competitionStages)
+        foreach (var feed in GroupPendingFeeds.List(target, competitionStages))
         {
-            if (stage.Regulation.QualificationRules is { } qualification)
-            {
-                foreach (var path in qualification.Paths)
-                {
-                    if (!path.Destination.StageId.Equals(target.Id) || !path.Destination.TargetsGroup)
-                    {
-                        continue;
-                    }
-
-                    var groupId = path.Destination.GroupId!.Value.Value;
-                    var origin = MapQualificationPathOrigin(path, stage, groupId);
-                    AddGroupFeedCandidate(candidates, groupId, origin);
-                }
-            }
-
-            if (stage.Regulation.ProgressionRules is not { } progression)
-            {
-                continue;
-            }
-
-            foreach (var path in progression.Paths)
-            {
-                if (!path.Destination.StageId.Equals(target.Id) || !path.Destination.TargetsGroup)
-                {
-                    continue;
-                }
-
-                var groupId = path.Destination.GroupId!.Value.Value;
-                var origin = MapProgressionPathOrigin(path, stage, competitionStages, groupId);
-                AddGroupFeedCandidate(candidates, groupId, origin);
-            }
+            var groupId = feed.GroupId.Value;
+            var origin = feed.Qualification is { } qualification
+                ? MapQualificationPathOrigin(qualification, feed.Source, groupId)
+                : MapProgressionPathOrigin(feed.Progression!, feed.Source, competitionStages, groupId);
+            AddGroupFeedCandidate(candidates, groupId, origin);
         }
 
         var result = new Dictionary<Guid, List<SchematicFeedOriginDto>>();

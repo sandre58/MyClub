@@ -618,7 +618,11 @@ public static class StructureViewAssembler
             return null;
         }
 
-        var schematic = StageSchematicAssembler.Assemble(stage, competition, competitionStages);
+        var schematic = StageSchematicAssembler.Assemble(
+            stage,
+            competition,
+            competitionStages,
+            includeGroupSeatModes: false);
         return StructurePlaceOccupancyIssues.CountOccupiedPlaces(schematic, formatKind.Value);
     }
 
@@ -657,7 +661,32 @@ public static class StructureViewAssembler
             break;
         }
 
+        // Groups grid already full: the draw is not required. Cup and other formats keep ToLaunch.
+        // An active non-cancelled draw still reports InProgress, ToApply, or Applied.
+        if (active is null && GroupsGridIsComplete(stage))
+        {
+            return null;
+        }
+
         return active is null ? StructureDrawExecutionBadge.ToLaunch : active.Status == DrawStatus.Draft ? StructureDrawExecutionBadge.InProgress : active.Status == DrawStatus.Published ? DrawAppliedState.IsApplied(active, stage) ? StructureDrawExecutionBadge.Applied : StructureDrawExecutionBadge.ToApply : StructureDrawExecutionBadge.ToLaunch;
+    }
+
+    /// <summary>
+    /// Every group holds exactly <see cref="Stage.PlacesPerGroup"/> members that are still in the composition.
+    /// </summary>
+    private static bool GroupsGridIsComplete(Stage stage)
+    {
+        if (StructureSkeleton.InferFormat(stage) != StructureFormatKind.Groups)
+        {
+            return false;
+        }
+
+        if (stage.Groups.Count == 0 || stage.PlacesPerGroup is not > 0)
+        {
+            return false;
+        }
+
+        return !GroupsPlacementReadiness.BlocksProduction(stage);
     }
 
     private static StructureTieFormatSummaryDto? MapDefaultTieFormat(TieFormat? tie) =>

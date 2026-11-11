@@ -20,6 +20,22 @@ internal static class StructureAppliedDrawGroupPlacementGate
 
     internal static void EnsureAssignAllowed(Stage stage, GroupId groupId, EntryId proposedEntryId)
     {
+        if (AssignWouldBreakAppliedDraw(stage, groupId, proposedEntryId))
+        {
+            ThrowProtected();
+        }
+    }
+
+    internal static void EnsureClearAllowed(Stage stage, GroupId groupId, EntryId entryId)
+    {
+        if (ClearWouldBreakAppliedDraw(stage, groupId, entryId))
+        {
+            ThrowProtected();
+        }
+    }
+
+    internal static bool AssignWouldBreakAppliedDraw(Stage stage, GroupId groupId, EntryId proposedEntryId)
+    {
         ArgumentNullException.ThrowIfNull(stage);
         foreach (var draw in stage.Draws)
         {
@@ -35,20 +51,16 @@ internal static class StructureAppliedDrawGroupPlacementGate
                     continue;
                 }
 
-                if (!placement.GroupId.Equals(groupId))
-                {
-                    ThrowProtected();
-                }
-
-                return;
+                return !placement.GroupId.Equals(groupId);
             }
         }
+
+        return false;
     }
 
-    internal static void EnsureClearAllowed(Stage stage, GroupId groupId, EntryId entryId)
+    internal static bool ClearWouldBreakAppliedDraw(Stage stage, GroupId groupId, EntryId entryId)
     {
         ArgumentNullException.ThrowIfNull(stage);
-
         foreach (var draw in stage.Draws)
         {
             if (!DrawAppliedState.IsApplied(draw, stage) || draw.Kind != DrawResolutionKind.Group)
@@ -56,12 +68,14 @@ internal static class StructureAppliedDrawGroupPlacementGate
                 continue;
             }
 
-            if (draw.Resolution.GroupResults.Any(p =>
-                    p.GroupId.Equals(groupId) && p.EntryId.Equals(entryId)))
+            if (draw.Resolution.GroupResults.Any(placement =>
+                    placement.GroupId.Equals(groupId) && placement.EntryId.Equals(entryId)))
             {
-                ThrowProtected();
+                return true;
             }
         }
+
+        return false;
     }
 
     private static void ThrowProtected() =>

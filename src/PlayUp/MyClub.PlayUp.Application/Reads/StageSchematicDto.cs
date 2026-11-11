@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using System.Text.Json.Serialization;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Rules;
@@ -74,11 +75,22 @@ public sealed record SchematicGroupFeedDto(
 /// <param name="FeedOrigin">Unique WhoFeeds (Cup slot / Groups) when known.</param>
 /// <param name="Entry">Entry actually placed in this unit; null = empty.</param>
 /// <param name="Assignment">Resolved participant of that entry when known.</param>
+/// <param name="SeatMode">
+/// Groups seat mode (<c>Editable</c>, <c>QualProg</c>, <c>Draw</c>, <c>MatchLocked</c>, <c>Reserved</c>, <c>DrawPending</c>).
+/// Null for Cup and roster places.
+/// </param>
+/// <param name="CanClear">Whether a manual clear of this Groups seat would succeed. Null outside Groups.</param>
+/// <param name="Excess">Whether this Groups member sits past <c>PlacesPerGroup</c>. Null outside Groups.</param>
+/// <param name="OutsideComposition">Whether this Groups member is absent from the phase composition. Null outside Groups.</param>
 public sealed record SchematicCaseDto(
     SchematicFormPositionDto FormPosition,
     SchematicFeedOriginDto? FeedOrigin,
     SchematicEntryRefDto? Entry,
-    SchematicParticipantRefDto? Assignment);
+    SchematicParticipantRefDto? Assignment,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? SeatMode = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] bool? CanClear = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] bool? Excess = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] bool? OutsideComposition = null);
 
 /// <summary>
 /// Discriminated form position (<c>Kind</c>: CupSlot | GroupPlace | RosterPlace).

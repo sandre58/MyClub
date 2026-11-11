@@ -21,16 +21,22 @@ internal static class StructurePlaceOccupancyIssues
     internal static bool IsSlotFeedAwaitingDraw(
         bool hasDrawRules,
         StructureDrawExecutionBadge? badge) =>
-        hasDrawRules && badge is not StructureDrawExecutionBadge.ToApply
+        hasDrawRules
+        && badge is not null
+        && badge is not StructureDrawExecutionBadge.ToApply
             and not StructureDrawExecutionBadge.Applied;
 
     /// <summary>
     /// Incomplete group pools are expected until a published draw is applied (Groups + draw rules).
+    /// A null badge does not defer: with draw rules engaged it means the Groups grid is already full,
+    /// so match production is not held for a draw. Cup badges are never null while draw rules are engaged.
     /// </summary>
     internal static bool DeferGroupsNotReadyForDraw(
         bool hasDrawRules,
         StructureDrawExecutionBadge? drawExecutionBadge) =>
-        hasDrawRules && drawExecutionBadge is not StructureDrawExecutionBadge.Applied;
+        hasDrawRules
+        && drawExecutionBadge is not null
+        && drawExecutionBadge is not StructureDrawExecutionBadge.Applied;
 
     internal static void AppendSchematicPlaceOccupancyIssue(
         IList<string> issues,
@@ -71,7 +77,11 @@ internal static class StructurePlaceOccupancyIssues
             return;
         }
 
-        var schematic = StageSchematicAssembler.Assemble(stage, competition, competitionStages);
+        var schematic = StageSchematicAssembler.Assemble(
+            stage,
+            competition,
+            competitionStages,
+            includeGroupSeatModes: false);
         var occupied = CountOccupiedPlaces(schematic, format.Value);
         if (occupied >= placesN.Value)
         {
