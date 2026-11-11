@@ -84,14 +84,20 @@ describe('Groups schematic placement', () => {
     expect(screen.getByText('5/4 · En trop')).toBeInTheDocument();
     expect(screen.getAllByText('En trop').length).toBeGreaterThan(0);
     expect(
-      screen.getAllByRole('button', { name: 'Cliquer pour placer une équipe' }),
+      screen.getAllByRole('button', {
+        name: 'Groupe B · 1 — Cliquer pour placer une équipe',
+      }),
     ).toHaveLength(1);
     expect(
-      screen.getAllByRole('button', { name: 'Cliquer pour retirer l’équipe' }),
+      screen.getAllByRole('button', {
+        name: /Groupe A · \d+ — Cliquer pour retirer l’équipe/,
+      }),
     ).toHaveLength(4);
 
     await user.click(
-      screen.getByRole('button', { name: 'Cliquer pour placer une équipe' }),
+      screen.getByRole('button', {
+        name: 'Groupe B · 1 — Cliquer pour placer une équipe',
+      }),
     );
     expect(onGroupPlaceActivate).toHaveBeenCalledOnce();
     expect(onPlaceActivate).not.toHaveBeenCalled();
@@ -134,6 +140,12 @@ describe('Groups schematic placement', () => {
     );
 
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    const slot = screen.getByText('Alpha').closest('.schematic-slot');
+    expect(slot).toHaveAttribute('aria-describedby');
+    const reasonId = slot?.getAttribute('aria-describedby');
+    expect(document.getElementById(reasonId ?? '')).toHaveTextContent(
+      'Cette équipe a été placée par le tirage appliqué. Elle est protégée.',
+    );
     await user.hover(screen.getByText('Alpha'));
     await act(async () => {
       vi.advanceTimersByTime(TOOLTIP_DELAY_OPEN_MS);

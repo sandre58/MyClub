@@ -1,5 +1,8 @@
 import { useTranslation } from 'react-i18next';
-import { DrawPendingIcon } from '../../../design-system/icons/contentIcons';
+import {
+  CheckIcon,
+  DrawPendingIcon,
+} from '../../../design-system/icons/contentIcons';
 import type { StructureStageHubSummary } from '../../../types';
 
 /** Draw execution badge — fiche header and topology tile (label only, no tooltip). */
@@ -27,7 +30,7 @@ export function StructurePhaseDrawHint({
         : 'structure-fiche__draw-hint structure-phase-draw-hint--done';
     return (
       <span className={className}>
-        <DrawPendingIcon size="sm" aria-hidden="true" />
+        <CheckIcon size="sm" aria-hidden="true" />
         <span>{t('hub.drawExecution.notRequired')}</span>
       </span>
     );

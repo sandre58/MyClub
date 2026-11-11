@@ -166,7 +166,7 @@ describe('StructureGroupPlacementDialog', () => {
 
     await user.click(screen.getByRole('button', { name: 'Retirer du groupe' }));
     const confirm = screen.getByRole('dialog', { name: 'Retirer du groupe' });
-    expect(confirm).toHaveTextContent('Retirer Alpha du groupe Groupe A ?');
+    expect(confirm).toHaveTextContent('Retirer Alpha du Groupe A ?');
     await user.click(
       within(confirm).getByRole('button', { name: 'Retirer du groupe' }),
     );

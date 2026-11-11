@@ -944,6 +944,7 @@
     "remove": "Remove from group",
     "removeConfirmTitle": "Remove from group",
     "removeConfirm": "Remove {{team}} from {{group}}?",
+    "seatName": "{{address}} — {{reason}}",
     "save": "Save",
     "saving": "Saving…",
     "removing": "Removing…",

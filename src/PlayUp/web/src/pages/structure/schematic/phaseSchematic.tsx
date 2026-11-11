@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactElement, ReactNode } from 'react';
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useId, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type {
   SchematicCase,
@@ -212,6 +212,19 @@ function SlotBox({
     groupInteraction && groupInteraction.kind !== 'none'
       ? t(`structure:groupPlacement.${groupInteraction.reasonKey}`)
       : null;
+  const seatAddress = address ?? (c ? groupSeatAddress(c, t) : null);
+  const groupAccessibleName =
+    groupInteractive && groupReason
+      ? seatAddress
+        ? t('structure:groupPlacement.seatName', {
+            address: seatAddress,
+            reason: groupReason,
+          })
+        : groupReason
+      : null;
+  const lockDescriptionId = useId();
+  const showLockReason =
+    !ghost && groupInteraction?.kind === 'locked' && groupReason != null;
   const className = [
     'schematic-slot',
     `schematic-slot--${density}`,
@@ -350,9 +363,7 @@ function SlotBox({
       style={badgeBesideSlot ? undefined : shellStyle}
       onClick={() => onActivate?.(c!)}
       aria-label={
-        groupInteractive
-          ? (groupReason ?? address ?? undefined)
-          : (address ?? c!.formPosition.slotKey ?? undefined)
+        groupAccessibleName ?? address ?? c!.formPosition.slotKey ?? undefined
       }
     >
       {slotInner}
@@ -362,6 +373,8 @@ function SlotBox({
       className={className}
       style={shellStyle}
       aria-hidden={ghost || undefined}
+      tabIndex={showLockReason ? 0 : undefined}
+      aria-describedby={showLockReason ? lockDescriptionId : undefined}
     >
       {slotInner}
     </span>
@@ -375,8 +388,19 @@ function SlotBox({
     slot
   );
 
+  const lockDescription = showLockReason ? (
+    <span id={lockDescriptionId} className="ds-visually-hidden">
+      {groupReason}
+    </span>
+  ) : null;
+
   if (!tip) {
-    return presented;
+    return (
+      <>
+        {presented}
+        {lockDescription}
+      </>
+    );
   }
 
   // Geometry host OUTSIDE the DS Tooltip trigger — otherwise Cup absolute
@@ -386,8 +410,25 @@ function SlotBox({
       <Tooltip content={tip} side="top">
         {presented}
       </Tooltip>
+      {lockDescription}
     </span>
   );
+}
+
+/** Group seat address: group label and 1-based place index. */
+function groupSeatAddress(place: SchematicCase, t: Translate): string | null {
+  if (place.formPosition.kind !== 'GroupPlace') {
+    return null;
+  }
+  const name = place.formPosition.groupName?.trim();
+  const group =
+    name != null && name.length > 0
+      ? t('structure:place.group', { name })
+      : null;
+  const index =
+    place.formPosition.index != null ? String(place.formPosition.index) : null;
+  const address = [group, index].filter(Boolean).join(' · ');
+  return address.length > 0 ? address : null;
 }
 
 /** Structured DS Tooltip body for a schematic case (all formats). */
