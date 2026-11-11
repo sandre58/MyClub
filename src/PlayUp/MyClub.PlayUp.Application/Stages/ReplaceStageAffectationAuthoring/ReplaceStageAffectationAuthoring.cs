@@ -47,6 +47,7 @@ public static class ReplaceStageAffectationAuthoring
 
         StructureAppliedDrawPoolChangeGate.EnsurePoolChangeAllowed(stage, entryIds);
 
-        stage.ReplaceAffectationAuthoringOperationally(entryIds, clock);
+        var snapshots = MaterializedParticipantSnapshots.FromMatches(stageMatches ?? []);
+        stage.ReplaceAffectationAuthoringOperationally(entryIds, clock, snapshots);
     }
 }

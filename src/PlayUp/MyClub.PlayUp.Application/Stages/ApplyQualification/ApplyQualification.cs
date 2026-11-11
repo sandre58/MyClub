@@ -192,7 +192,8 @@ public static class ApplyQualification
                 destination.ApplyResolvedGroupEntry(
                     path.Destination.GroupId!.Value,
                     instruction.EntryId,
-                    provenance);
+                    provenance,
+                    destinationSnapshots);
             }
             else if (path.Destination.TargetsSlot)
             {

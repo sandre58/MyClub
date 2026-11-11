@@ -295,6 +295,36 @@ describe('resolveLifecycleMutationMessageKey', () => {
         'Application.AppliedDrawSlotPlacementProtected',
       ),
     ).toBe('problems.lifecycle.AppliedDrawSlotPlacementProtected');
+    expect(
+      resolveLifecycleMutationMessageKey(
+        'Application.AppliedDrawGroupPlacementProtected',
+      ),
+    ).toBe('problems.lifecycle.AppliedDrawGroupPlacementProtected');
+    expect(
+      resolveLifecycleMutationMessageKey(
+        'Stage.GroupAssignLockedByGroupMatches',
+      ),
+    ).toBe('problems.lifecycle.GroupAssignLockedByGroupMatches');
+    expect(
+      resolveLifecycleMutationMessageKey(
+        'Stage.GroupClearLockedByStageMatches',
+      ),
+    ).toBe('problems.lifecycle.GroupClearLockedByStageMatches');
+    expect(
+      resolveLifecycleMutationMessageKey(
+        'Stage.GroupPlacementResolutionLocked',
+      ),
+    ).toBe('problems.lifecycle.GroupPlacementResolutionLocked');
+    expect(
+      resolveLifecycleMutationMessageKey(
+        'Stage.GroupAssignmentEntryNotInComposition',
+      ),
+    ).toBe('problems.lifecycle.GroupAssignmentEntryNotInComposition');
+    expect(
+      resolveLifecycleMutationMessageKey(
+        'Stage.CompositionWithdrawalGroupMembershipBlocked',
+      ),
+    ).toBe('problems.lifecycle.CompositionWithdrawalGroupMembershipBlocked');
   });
 
   it('resolves applied-draw pool change refusal without mutation unknown', () => {
@@ -325,6 +355,22 @@ describe('resolveLifecycleMutationMessageKey', () => {
     );
     expect(msg).toBe(
       enStructure.problems.lifecycle.AppliedDrawSlotPlacementProtected,
+    );
+    expect(msg).not.toBe(enStructure.problems.mutation._unknown);
+  });
+
+  it('resolves group placement protected refusal without mutation unknown', () => {
+    const msg = resolveLifecycleMutationMessage(
+      tStructure,
+      new ApiError(
+        409,
+        'blocked',
+        undefined,
+        'Application.AppliedDrawGroupPlacementProtected',
+      ),
+    );
+    expect(msg).toBe(
+      enStructure.problems.lifecycle.AppliedDrawGroupPlacementProtected,
     );
     expect(msg).not.toBe(enStructure.problems.mutation._unknown);
   });

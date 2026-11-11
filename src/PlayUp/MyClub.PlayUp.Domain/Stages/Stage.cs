@@ -6,6 +6,7 @@
 
 using System.Diagnostics;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages.Events;
 
@@ -1323,25 +1324,59 @@ public sealed class Stage : AggregateRoot<StageId>
     /// </summary>
     /// <param name="groupId">The group identity.</param>
     /// <param name="entryId">The entry identity.</param>
-    public void AssignEntryToGroup(GroupId groupId, EntryId entryId)
+    /// <param name="materializedParticipants">
+    /// Accepted for callers that already hold match snapshots. An add does not rewrite an existing determination.
+    /// </param>
+    public void AssignEntryToGroup(
+        GroupId groupId,
+        EntryId entryId,
+        IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants = null)
     {
+        _ = materializedParticipants;
         EnsureOperationalExitRulesMutable();
 
         var owningGroup = _groups.FirstOrDefault(g => g.Contains(entryId));
+        if (owningGroup is not null && owningGroup.Id.Equals(groupId))
+        {
+            return;
+        }
+
+        EnsureEntryGroupPlacementNotResolutionLocked(entryId);
         if (owningGroup is not null)
         {
-            if (owningGroup.Id.Equals(groupId))
-            {
-                return;
-            }
-
             throw new DomainException(
                 $"Entry '{entryId}' is already assigned to another group.",
                 StageErrorCodes.DuplicateEntry);
         }
 
         var group = GetGroup(groupId);
+        EnsureGroupHasCapacityForNewMember(group, entryId);
         group.Assign(entryId);
+    }
+
+    /// <summary>
+    /// Manual assignment: the entry must already belong to the phase composition.
+    /// Draw apply keeps calling <see cref="AssignEntryToGroup"/>, which does not repeat this check.
+    /// </summary>
+    /// <param name="groupId">The group identity.</param>
+    /// <param name="entryId">The entry identity.</param>
+    /// <param name="materializedParticipants">
+    /// Participant snapshots of matches attached on this stage (empty when none).
+    /// </param>
+    public void AssignManualEntryToGroup(
+        GroupId groupId,
+        EntryId entryId,
+        IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants = null)
+    {
+        EnsureManualGroupEntryInComposition(entryId);
+        var owningGroup = _groups.FirstOrDefault(group => group.Contains(entryId));
+        if (owningGroup is not null && owningGroup.Id.Equals(groupId))
+        {
+            return;
+        }
+
+        EnsureManualAssignNotLockedByTargetGroupMatches(groupId, materializedParticipants ?? []);
+        AssignEntryToGroup(groupId, entryId, materializedParticipants);
     }
 
     /// <summary>
@@ -1350,14 +1385,16 @@ public sealed class Stage : AggregateRoot<StageId>
     /// <param name="groupId">The group identity.</param>
     /// <param name="entryId">The entry identity.</param>
     /// <param name="materializedParticipants">
-    /// Participant snapshots of matches attached on this stage (empty when none). Required for group determination coherence.
+    /// Accepted for callers that already hold match snapshots. Manual clear refuses when the stage
+    /// has any attached match, so the snapshots are not used to attribute that match.
     /// </param>
     public void RemoveEntryFromGroup(
         GroupId groupId,
         EntryId entryId,
         IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants = null)
     {
-        EnsureStructureMutable();
+        _ = materializedParticipants;
+        EnsureOperationalExitRulesMutable();
 
         var group = GetGroup(groupId);
         if (!group.Contains(entryId))
@@ -1367,12 +1404,11 @@ public sealed class Stage : AggregateRoot<StageId>
                 StageErrorCodes.EntryNotFound);
         }
 
-        MaterializedOpponentCoherence.EnsureEntryNotBoundToAttachedMatch(
-            this,
-            entryId,
-            materializedParticipants ?? []);
+        EnsureManualGroupMembershipChangeAllowed(groupId, entryId);
+        EnsureManualClearNotLockedByStageMatches();
 
         group.Remove(entryId);
+        RemoveGroupResolutionProvenanceIfPresent(groupId, entryId);
     }
 
     /// <summary>
@@ -1600,17 +1636,25 @@ public sealed class Stage : AggregateRoot<StageId>
     /// </summary>
     /// <param name="entryId">Entry that leaves the population.</param>
     /// <param name="clock">The clock used for domain events.</param>
-    public void RemoveResolvedPopulationEntry(EntryId entryId, IClock clock)
+    /// <param name="materializedParticipants">Attached matches used to refuse a withdrawal that would leave a produced match.</param>
+    public void RemoveResolvedPopulationEntry(
+        EntryId entryId,
+        IClock clock,
+        IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants = null)
     {
         ArgumentNullException.ThrowIfNull(clock);
-        if (_compositionEntries.All(entry => !entry.EntryId.Equals(entryId)))
+        if (_compositionEntries.All(entry => !entry.EntryId.Equals(entryId))
+            && _groups.All(group => !group.Contains(entryId)))
         {
             return;
         }
 
         EnsureResolutionMutable();
-        _compositionEntries.RemoveAll(entry => entry.EntryId.Equals(entryId));
-        Raise(new StageCompositionEntriesReplaced(Id, clock));
+        ClearMembershipOnWithdrawal(entryId, materializedParticipants ?? []);
+        if (_compositionEntries.RemoveAll(entry => entry.EntryId.Equals(entryId)) > 0)
+        {
+            Raise(new StageCompositionEntriesReplaced(Id, clock));
+        }
     }
 
     /// <summary>
@@ -1641,6 +1685,7 @@ public sealed class Stage : AggregateRoot<StageId>
             this,
             entryId,
             materializedParticipants ?? []);
+
         group.Remove(entryId);
         _groupResolutionProvenances.RemoveAll(row =>
             row.GroupId.Equals(groupId) && row.EntryId.Equals(entryId));
@@ -1684,12 +1729,18 @@ public sealed class Stage : AggregateRoot<StageId>
     /// </summary>
     /// <param name="entryIds">Authoring entry identities (may be empty to clear Affectation).</param>
     /// <param name="clock">The clock used for domain events.</param>
-    public void ReplaceAffectationAuthoring(IReadOnlyList<EntryId> entryIds, IClock clock)
+    /// <param name="materializedParticipants">
+    /// Participant snapshots of matches attached on this stage (empty when none). Required when membership shrinks.
+    /// </param>
+    public void ReplaceAffectationAuthoring(
+        IReadOnlyList<EntryId> entryIds,
+        IClock clock,
+        IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants = null)
     {
         ArgumentNullException.ThrowIfNull(entryIds);
         ArgumentNullException.ThrowIfNull(clock);
         EnsureStructureMutable();
-        ApplyAffectationAuthoringReplacement(entryIds, clock);
+        ApplyAffectationAuthoringReplacement(entryIds, clock, materializedParticipants);
     }
 
     /// <summary>
@@ -1698,15 +1749,24 @@ public sealed class Stage : AggregateRoot<StageId>
     /// </summary>
     /// <param name="entryIds">Authoring entry identities (may be empty to clear Affectation).</param>
     /// <param name="clock">The clock used for domain events.</param>
-    public void ReplaceAffectationAuthoringOperationally(IReadOnlyList<EntryId> entryIds, IClock clock)
+    /// <param name="materializedParticipants">
+    /// Participant snapshots of matches attached on this stage (empty when none). Required when membership shrinks.
+    /// </param>
+    public void ReplaceAffectationAuthoringOperationally(
+        IReadOnlyList<EntryId> entryIds,
+        IClock clock,
+        IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants = null)
     {
         ArgumentNullException.ThrowIfNull(entryIds);
         ArgumentNullException.ThrowIfNull(clock);
         EnsureOperationalExitRulesMutable();
-        ApplyAffectationAuthoringReplacement(entryIds, clock);
+        ApplyAffectationAuthoringReplacement(entryIds, clock, materializedParticipants);
     }
 
-    private void ApplyAffectationAuthoringReplacement(IReadOnlyList<EntryId> entryIds, IClock clock)
+    private void ApplyAffectationAuthoringReplacement(
+        IReadOnlyList<EntryId> entryIds,
+        IClock clock,
+        IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants)
     {
         var distinct = new List<EntryId>(entryIds.Count);
         var seen = new HashSet<EntryId>();
@@ -1730,6 +1790,12 @@ public sealed class Stage : AggregateRoot<StageId>
 
         var previous = _affectationAuthoring.Select(entry => entry.EntryId).ToHashSet();
         var next = distinct.ToHashSet();
+        var withdrawn = previous.Where(id => !next.Contains(id)).ToList();
+        var snapshots = materializedParticipants ?? [];
+        foreach (var entryId in withdrawn)
+        {
+            EnsureCompositionWithdrawalAllowed(entryId, snapshots);
+        }
 
         _affectationAuthoring.Clear();
         foreach (var entryId in distinct)
@@ -1740,12 +1806,14 @@ public sealed class Stage : AggregateRoot<StageId>
         Raise(new StageAffectationAuthoringReplaced(Id, clock));
 
         var compositionChanged = false;
-        foreach (var removed in previous.Where(id => !next.Contains(id)))
+        foreach (var removed in withdrawn)
         {
             if (_compositionEntries.RemoveAll(entry => entry.EntryId.Equals(removed)) > 0)
             {
                 compositionChanged = true;
             }
+
+            ClearMembershipOnWithdrawal(removed, snapshots);
         }
 
         foreach (var added in next.Where(id => !previous.Contains(id)))
@@ -1770,17 +1838,33 @@ public sealed class Stage : AggregateRoot<StageId>
     /// Draft/Ready only.
     /// </summary>
     /// <param name="clock">The clock used for domain events.</param>
-    public void ClearCompositionEntries(IClock clock)
+    /// <param name="materializedParticipants">Attached matches used to refuse a withdrawal that would leave a produced match.</param>
+    public void ClearCompositionEntries(
+        IClock clock,
+        IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants = null)
     {
         ArgumentNullException.ThrowIfNull(clock);
+        var grouped = _groups.SelectMany(group => group.EntryIds).Distinct().ToList();
         if (_affectationAuthoring.Count == 0
             && _compositionEntries.Count == 0
-            && _formPathResolutions.Count == 0)
+            && _formPathResolutions.Count == 0
+            && grouped.Count == 0)
         {
             return;
         }
 
         EnsureStructureMutable();
+        var snapshots = materializedParticipants ?? [];
+        foreach (var entryId in grouped)
+        {
+            EnsureCompositionWithdrawalAllowed(entryId, snapshots);
+        }
+
+        foreach (var entryId in grouped)
+        {
+            ClearMembershipOnWithdrawal(entryId, snapshots);
+        }
+
         var hadAffectation = _affectationAuthoring.Count > 0;
         var hadComposition = _compositionEntries.Count > 0;
         _affectationAuthoring.Clear();
@@ -1800,8 +1884,14 @@ public sealed class Stage : AggregateRoot<StageId>
 
     /// <summary>
     /// Removes an entry from Affectation authoring and runtime membership when present
-    /// (e.g. hard-delete of a competition entry). Drops provenances that pointed at that entry.
+    /// (hard-delete of a competition entry). Drops provenances that pointed at that entry.
     /// </summary>
+    /// <remarks>
+    /// Definitive deletion of a competition entry is not a composition withdrawal: group membership
+    /// is cleared even when qualification or progression sealed the placement, and even when the
+    /// entry is only still in a group. Attached-match coherence is not re-checked here; the entry
+    /// is leaving the competition.
+    /// </remarks>
     /// <param name="entryId">Entry identity.</param>
     /// <param name="clock">The clock used for domain events.</param>
     public void RemoveCompositionEntryIfPresent(EntryId entryId, IClock clock)
@@ -1810,12 +1900,18 @@ public sealed class Stage : AggregateRoot<StageId>
         var hadAffectation = _affectationAuthoring.Any(entry => entry.EntryId.Equals(entryId));
         var hadEntry = _compositionEntries.Any(entry => entry.EntryId.Equals(entryId));
         var hadResolution = _formPathResolutions.Any(resolution => resolution.EntryId.Equals(entryId));
-        if (!hadAffectation && !hadEntry && !hadResolution)
+        var owningGroup = _groups.FirstOrDefault(group => group.Contains(entryId));
+        if (!hadAffectation && !hadEntry && !hadResolution && owningGroup is null)
         {
             return;
         }
 
         EnsureStructureMutable();
+        if (owningGroup is not null)
+        {
+            RemoveGroupMembershipIgnoringResolutionGuards(owningGroup.Id, entryId, []);
+        }
+
         _formPathResolutions.RemoveAll(resolution => resolution.EntryId.Equals(entryId));
         if (hadAffectation)
         {
@@ -1823,7 +1919,11 @@ public sealed class Stage : AggregateRoot<StageId>
             Raise(new StageAffectationAuthoringReplaced(Id, clock));
         }
 
-        if (!hadEntry) return;
+        if (!hadEntry)
+        {
+            return;
+        }
+
         _compositionEntries.RemoveAll(entry => entry.EntryId.Equals(entryId));
         Raise(new StageCompositionEntriesReplaced(Id, clock));
     }
@@ -2029,9 +2129,17 @@ public sealed class Stage : AggregateRoot<StageId>
     /// <param name="groupId">Target group identity.</param>
     /// <param name="entryId">Resolved entry identity.</param>
     /// <param name="provenance">Resolution provenance witness for this Apply.</param>
-    public void ApplyResolvedGroupEntry(GroupId groupId, EntryId entryId, ResolutionProvenance provenance)
+    /// <param name="materializedParticipants">
+    /// Accepted for callers that already hold match snapshots. An add does not rewrite an existing determination.
+    /// </param>
+    public void ApplyResolvedGroupEntry(
+        GroupId groupId,
+        EntryId entryId,
+        ResolutionProvenance provenance,
+        IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants = null)
     {
         ArgumentNullException.ThrowIfNull(provenance);
+        _ = materializedParticipants;
         EnsureResolutionMutable();
 
         var group = FindGroup(groupId)
@@ -2051,6 +2159,7 @@ public sealed class Stage : AggregateRoot<StageId>
                 StageErrorCodes.DuplicateEntry);
         }
 
+        EnsureGroupHasCapacityForNewMember(group, entryId);
         group.Assign(entryId);
         UpsertGroupResolutionProvenance(groupId, entryId, provenance);
     }
@@ -2124,8 +2233,11 @@ public sealed class Stage : AggregateRoot<StageId>
     /// <summary>
     /// Resolves group membership without provenance (legacy test/helper path — prefer the overload with provenance).
     /// </summary>
-    public void ApplyResolvedGroupEntry(GroupId groupId, EntryId entryId) =>
-        ApplyResolvedGroupEntry(groupId, entryId, ResolutionProvenance.NonVerifiee());
+    public void ApplyResolvedGroupEntry(
+        GroupId groupId,
+        EntryId entryId,
+        IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants = null) =>
+        ApplyResolvedGroupEntry(groupId, entryId, ResolutionProvenance.NonVerifiee(), materializedParticipants);
 
     /// <summary>
     /// Clears a dynamically resolved slot occupant without affecting <see cref="DirectAssignment"/>.
@@ -3112,6 +3224,214 @@ public sealed class Stage : AggregateRoot<StageId>
                 $"Operational structure authoring cannot be modified when status is '{Status}'.",
                 StageErrorCodes.StructureLocked);
         }
+    }
+
+    /// <summary>
+    /// Counts every stored member, including one that is no longer in the composition.
+    /// Policy-4 withdrawal removes that membership; a leftover member still occupies a place.
+    /// Readiness counts only members that are still in the composition.
+    /// </summary>
+    private void EnsureGroupHasCapacityForNewMember(Group group, EntryId entryId)
+    {
+        if (PlacesPerGroup is not { } capacity || capacity < 1)
+        {
+            return;
+        }
+
+        var current = group.EntryIds.Count;
+        if (group.Contains(entryId))
+        {
+            return;
+        }
+
+        if (current >= capacity)
+        {
+            throw new DomainException(
+                $"Group '{group.Id}' already has {capacity} entries (PlacesPerGroup).",
+                StageErrorCodes.GroupFull);
+        }
+    }
+
+    private void EnsureManualAssignNotLockedByTargetGroupMatches(
+        GroupId groupId,
+        IReadOnlyList<MatchParticipantSnapshot> materializedParticipants)
+    {
+        if (!TargetGroupHasAttachedMatch(groupId, materializedParticipants))
+        {
+            return;
+        }
+
+        throw new DomainException(
+            $"Cannot assign an entry to group '{groupId}': that group already has an attached match.",
+            StageErrorCodes.GroupAssignLockedByGroupMatches);
+    }
+
+    private void EnsureManualClearNotLockedByStageMatches()
+    {
+        if (!StageHasAttachedMatch())
+        {
+            return;
+        }
+
+        throw new DomainException(
+            $"Cannot remove an entry from a group: stage '{Id}' already has an attached match.",
+            StageErrorCodes.GroupClearLockedByStageMatches);
+    }
+
+    private bool StageHasAttachedMatch() =>
+        _matchdays.SelectMany(matchday => matchday.Fixtures).Any(fixture => fixture.Attachments.Count > 0)
+        || _rounds.SelectMany(round => round.Fixtures).Any(fixture => fixture.Attachments.Count > 0);
+
+    /// <summary>
+    /// A match belongs to a group when both participants are current members of that group.
+    /// Group fixtures do not store a group identity.
+    /// </summary>
+    private bool TargetGroupHasAttachedMatch(
+        GroupId groupId,
+        IReadOnlyList<MatchParticipantSnapshot> materializedParticipants)
+    {
+        var group = FindGroup(groupId);
+        if (group is null)
+        {
+            return false;
+        }
+
+        var members = group.EntryIds.ToHashSet();
+        foreach (var snapshot in materializedParticipants)
+        {
+            if (!HasMatch(snapshot.MatchId))
+            {
+                continue;
+            }
+
+            if (snapshot.HomeEntryId is { } home
+                && snapshot.AwayEntryId is { } away
+                && members.Contains(home)
+                && members.Contains(away))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void EnsureManualGroupEntryInComposition(EntryId entryId)
+    {
+        if (_compositionEntries.Any(entry => entry.EntryId.Equals(entryId)))
+        {
+            return;
+        }
+
+        throw new DomainException(
+            $"Entry '{entryId}' is not in the stage population.",
+            StageErrorCodes.GroupAssignmentEntryNotInComposition);
+    }
+
+    /// <summary>
+    /// Refuses a manual move when the entry still occupies a group under qualification or progression.
+    /// Stale provenance left after a draw removal does not lock the next assignment.
+    /// </summary>
+    private void EnsureEntryGroupPlacementNotResolutionLocked(EntryId entryId)
+    {
+        if (HasQualificationOrProgressionGroupPlacement(entryId))
+        {
+            throw new DomainException(
+                $"Entry '{entryId}' group membership is sealed by qualification/progression resolution.",
+                StageErrorCodes.GroupPlacementResolutionLocked);
+        }
+    }
+
+    private void EnsureManualGroupMembershipChangeAllowed(GroupId groupId, EntryId entryId)
+    {
+        if (_groupResolutionProvenances.Any(row =>
+                row.GroupId.Equals(groupId)
+                && row.EntryId.Equals(entryId)
+                && row.ProvenanceKind is ResolutionProvenanceKind.Qualification or ResolutionProvenanceKind.Progression))
+        {
+            throw new DomainException(
+                $"Entry '{entryId}' group membership is sealed by qualification/progression resolution.",
+                StageErrorCodes.GroupPlacementResolutionLocked);
+        }
+    }
+
+    private void EnsureCompositionWithdrawalAllowed(
+        EntryId entryId,
+        IReadOnlyList<MatchParticipantSnapshot> materializedParticipants)
+    {
+        if (_groups.All(group => !group.Contains(entryId)))
+        {
+            return;
+        }
+
+        if (HasQualificationOrProgressionGroupPlacement(entryId))
+        {
+            throw new DomainException(
+                $"Cannot withdraw entry '{entryId}' from the composition: it is on a produced match, or its group placement comes from qualification or progression.",
+                StageErrorCodes.CompositionWithdrawalGroupMembershipBlocked);
+        }
+
+        try
+        {
+            MaterializedOpponentCoherence.EnsureEntryNotBoundToAttachedMatch(
+                this,
+                entryId,
+                materializedParticipants);
+        }
+        catch (DomainException exception) when (exception.Code == StageErrorCodes.MaterializedOpponentConflict)
+        {
+            throw new DomainException(
+                $"Cannot withdraw entry '{entryId}' from the composition: it is on a produced match, or its group placement comes from qualification or progression.",
+                StageErrorCodes.CompositionWithdrawalGroupMembershipBlocked);
+        }
+    }
+
+    private void ClearMembershipOnWithdrawal(
+        EntryId entryId,
+        IReadOnlyList<MatchParticipantSnapshot> materializedParticipants)
+    {
+        EnsureCompositionWithdrawalAllowed(entryId, materializedParticipants);
+        var owningGroup = _groups.FirstOrDefault(group => group.Contains(entryId));
+        if (owningGroup is null)
+        {
+            return;
+        }
+
+        owningGroup.Remove(entryId);
+        RemoveGroupResolutionProvenanceIfPresent(owningGroup.Id, entryId);
+    }
+
+    private bool HasQualificationOrProgressionGroupPlacement(EntryId entryId) =>
+        _groupResolutionProvenances.Any(row =>
+            row.EntryId.Equals(entryId)
+            && (row.ProvenanceKind is ResolutionProvenanceKind.Qualification
+                or ResolutionProvenanceKind.Progression)
+            && _groups.Any(group => group.Id.Equals(row.GroupId) && group.Contains(entryId)));
+
+    private void RemoveGroupResolutionProvenanceIfPresent(GroupId groupId, EntryId entryId) =>
+        _groupResolutionProvenances.RemoveAll(row =>
+            row.GroupId.Equals(groupId) && row.EntryId.Equals(entryId));
+
+    /// <summary>
+    /// Removes group membership without qualification/draw placement guards (hard membership shrink only).
+    /// </summary>
+    private void RemoveGroupMembershipIgnoringResolutionGuards(
+        GroupId groupId,
+        EntryId entryId,
+        IReadOnlyList<MatchParticipantSnapshot> materializedParticipants)
+    {
+        var group = GetGroup(groupId);
+        if (!group.Contains(entryId))
+        {
+            return;
+        }
+
+        MaterializedOpponentCoherence.EnsureEntryNotBoundToAttachedMatch(
+            this,
+            entryId,
+            materializedParticipants ?? []);
+        group.Remove(entryId);
+        RemoveGroupResolutionProvenanceIfPresent(groupId, entryId);
     }
 
     private void EnsureMatchProductionMutable()

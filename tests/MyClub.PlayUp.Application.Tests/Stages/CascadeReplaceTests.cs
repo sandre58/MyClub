@@ -226,6 +226,67 @@ public sealed class CascadeReplaceTests
     }
 
     [Fact]
+    public void Cascade_refuses_a_fifth_member_in_a_group_of_four()
+    {
+        var competition = CreateCompetition.Execute("Cap", _clock);
+        var entries = AddTeams(competition, 6);
+        var groups = Stage.Create(competition.Id, new StageName("Groups"), SampleRegulations.Standard(), _clock);
+        var group = groups.AddGroup("A", _clock);
+        groups.AssignEntryToGroup(group.Id, entries[0]);
+        groups.AssignEntryToGroup(group.Id, entries[1]);
+        competition.AddStage(groups.Id, _clock);
+        var groupMatch = Match.Create(competition.Id, groups.Id, entries[0], entries[1], _clock);
+        groupMatch.Finish(new MatchResult(ResultType.Played, new Score(2, 0)), _clock);
+        var standing = CalculateStanding.Execute(
+            [entries[0], entries[1]],
+            [groupMatch],
+            groups.Regulation.StandingRules!);
+
+        var middle = Stage.Create(competition.Id, new StageName("Middle"), SampleRegulations.Standard(), _clock);
+        var middleGroup = middle.AddGroup("M", _clock);
+        competition.AddStage(middle.Id, _clock);
+        for (var index = 2; index < 6; index++)
+        {
+            middle.AssignEntryToGroup(middleGroup.Id, entries[index]);
+        }
+
+        groups.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.FromGroup(group.Id),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    QualificationDestination.ForGroup(middle.Id, middleGroup.Id)),
+            ]),
+            _clock);
+        ApplyQualification.Execute(
+            groups,
+            overallStanding: null,
+            new Dictionary<GroupId, Standing> { [group.Id] = standing },
+            [groups, middle],
+            _clock);
+        middleGroup.EntryIds.Should().Contain(entries[0]);
+        middle.SetPlacesPerGroup(4);
+        groupMatch.CorrectMatchResult(new MatchResult(ResultType.Played, new Score(0, 2)), _clock);
+
+        var act = () => CascadeReplace.Execute(
+            competition,
+            middle.Id,
+            new CascadeReplaceTarget(
+                StructureResolutionOccupantTarget.Group,
+                entries[0].Value,
+                null,
+                middleGroup.Id.Value),
+            [groups, middle],
+            [groupMatch],
+            _clock);
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.GroupFull);
+        middleGroup.EntryIds.Should().NotContain(entries[1]);
+    }
+
+    [Fact]
     public void Live_downstream_match_blocks_the_plan_and_the_command()
     {
         var (competition, league, cup, entries, matches) = LeagueFeed(2);

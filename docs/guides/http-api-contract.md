@@ -459,10 +459,14 @@ Locale non-destructive skeleton edits (Lot 3):
 - `POST /stages/{stageId}/rename` → 204
 - `POST /stages/{stageId}/matchdays` → 201
 - `POST /stages/{stageId}/groups` → 201
+- `PUT /stages/{stageId}/groups/{groupId}/entries/{entryId}` → 204 (no body; assigning an entry that is already in that group is idempotent)
+- `DELETE /stages/{stageId}/groups/{groupId}/entries/{entryId}` → 204
 - `PUT /stages/{stageId}/match-generation-format` → 204
 - `PUT /stages/{stageId}/swiss-settings` → 204
 
-Stage hub `actions` may include `RebuildStructure`, `RenameStage`, `AddMatchday`, `AddGroup`, `AddRound`, `AddSlot`, `ReplaceMatchGenerationFormat`, `ReplaceSwissSettings`.
+Stage hub `actions` may include `RebuildStructure`, `RenameStage`, `AddMatchday`, `AddGroup`, `AddRound`, `AddSlot`, `ReplaceMatchGenerationFormat`, `ReplaceSwissSettings`, `AssignEntryToGroup`, `ClearEntryFromGroup`.
+
+`AssignEntryToGroup` and `ClearEntryFromGroup` are present for a Groups stage in Draft and in Ready, including when matches are attached. They are absent for Championship and Cup. Manual assign and clear use the same rule in Draft and Ready. Clear is refused when the stage has any attached match (`Stage.GroupClearLockedByStageMatches`, 409), including a match in another group. Assign is refused when the target group already has an attached match (`Stage.GroupAssignLockedByGroupMatches`, 409); an assign into a group with no match stays allowed when another group has matches. Putting an entry that is already in the target group stays 204. Running and Suspended → `Stage.StructureLocked` (409). Unknown group → `Stage.GroupNotFound` (409). Group already at `PlacesPerGroup` → `Stage.GroupFull` (409). Entry outside the phase composition → `Stage.GroupAssignmentEntryNotInComposition` (409). Placement sealed by an applied group draw → `Application.AppliedDrawGroupPlacementProtected` (409). Placement produced by qualification or progression → `Stage.GroupPlacementResolutionLocked` (409). Composition withdrawal blocked by a produced match or by that same qualification/progression placement → `Stage.CompositionWithdrawalGroupMembershipBlocked` (409).
 
 #### `POST /competitions/{competitionId}/stages` → 201 `AddCompetitionStageResponse`
 
@@ -913,6 +917,7 @@ ProblemDetails extensions:
 - `Application.DrawNoFreeSlot`
 - `Application.DrawNotEnoughTeams`
 - `Application.DrawTooManyTeams`
+- `Application.AppliedDrawGroupPlacementProtected`
 
 ### Application codes mapped to 404
 

@@ -92,6 +92,12 @@ public static class StructureViewAssembler
     /// <summary>Per-phase action: clear Cup DirectAssignment.</summary>
     public const string ActionClearSlotAssignment = "ClearSlotAssignment";
 
+    /// <summary>Per-phase action: assign entry to group (manual placement).</summary>
+    public const string ActionAssignEntryToGroup = "AssignEntryToGroup";
+
+    /// <summary>Per-phase action: clear group membership (manual).</summary>
+    public const string ActionClearEntryFromGroup = "ClearEntryFromGroup";
+
     /// <summary>Per-phase action: set match generation format (locale).</summary>
     public const string ActionReplaceMatchGenerationFormat = "ReplaceMatchGenerationFormat";
 
@@ -859,7 +865,12 @@ public static class StructureViewAssembler
                 actions.Add(ActionAssignEntryToSlot);
                 actions.Add(ActionClearSlotAssignment);
                 break;
-            case StructureFormatKind.Championship or StructureFormatKind.Groups:
+            case StructureFormatKind.Groups:
+                actions.Add(ActionReplaceMatchGenerationFormat);
+                actions.Add(ActionAssignEntryToGroup);
+                actions.Add(ActionClearEntryFromGroup);
+                break;
+            case StructureFormatKind.Championship:
                 actions.Add(ActionReplaceMatchGenerationFormat);
                 break;
             case StructureFormatKind.Swiss:
@@ -899,6 +910,12 @@ public static class StructureViewAssembler
         if (attachedMatches > 0
             && !CupCanonicalEntryRoundStartGate.BlocksStart(stage, competition, competitionStages))
         {
+            if (StructureSkeleton.InferFormat(stage) == StructureFormatKind.Groups)
+            {
+                actions.Add(ActionAssignEntryToGroup);
+                actions.Add(ActionClearEntryFromGroup);
+            }
+
             return actions;
         }
 
@@ -922,13 +939,17 @@ public static class StructureViewAssembler
         actions.Add(ActionReplaceAffectationAuthoring);
 
         var format = StructureSkeleton.InferFormat(stage);
-        if (format is not (StructureFormatKind.Cup or null))
+        switch (format)
         {
-            return;
+            case StructureFormatKind.Cup or null:
+                actions.Add(ActionAssignEntryToSlot);
+                actions.Add(ActionClearSlotAssignment);
+                break;
+            case StructureFormatKind.Groups:
+                actions.Add(ActionAssignEntryToGroup);
+                actions.Add(ActionClearEntryFromGroup);
+                break;
         }
-
-        actions.Add(ActionAssignEntryToSlot);
-        actions.Add(ActionClearSlotAssignment);
     }
 
     /// <summary>Running / Suspended — rename + standing recalculation on classifying phases (R-Stand1).</summary>

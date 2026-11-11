@@ -39,6 +39,15 @@ const MUTATION_WIRE_TO_LIFECYCLE: Record<string, string> = {
     'ProgressionProductionParticipationAmbiguous',
   'Application.AppliedDrawSlotPlacementProtected':
     'AppliedDrawSlotPlacementProtected',
+  'Application.AppliedDrawGroupPlacementProtected':
+    'AppliedDrawGroupPlacementProtected',
+  'Stage.GroupAssignLockedByGroupMatches': 'GroupAssignLockedByGroupMatches',
+  'Stage.GroupClearLockedByStageMatches': 'GroupClearLockedByStageMatches',
+  'Stage.GroupPlacementResolutionLocked': 'GroupPlacementResolutionLocked',
+  'Stage.GroupAssignmentEntryNotInComposition':
+    'GroupAssignmentEntryNotInComposition',
+  'Stage.CompositionWithdrawalGroupMembershipBlocked':
+    'CompositionWithdrawalGroupMembershipBlocked',
   'Application.DrawObsoleteForConsumption': 'DrawObsoleteForConsumption',
 };
 
