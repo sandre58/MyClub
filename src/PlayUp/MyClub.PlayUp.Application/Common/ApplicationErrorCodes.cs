@@ -290,6 +290,18 @@ public static class ApplicationErrorCodes
     public const string AppliedDrawGroupPlacementProtected = "Application.AppliedDrawGroupPlacementProtected";
 
     /// <summary>
+    /// Gets the code when a manual group assignment would take a place still reserved
+    /// for a pending qualification or progression feed.
+    /// </summary>
+    public const string GroupSeatReservedByInboundFeed = "Application.GroupSeatReservedByInboundFeed";
+
+    /// <summary>
+    /// Gets the code when a manual group assignment or clear is attempted while a group draw
+    /// is still in progress, including a draft left after a failed generation.
+    /// </summary>
+    public const string ManualGroupPlacementBlockedByActiveDraw = "Application.ManualGroupPlacementBlockedByActiveDraw";
+
+    /// <summary>
     /// Gets the code when a draw resolution is obsolete for consumption.
     /// </summary>
     public const string DrawObsoleteForConsumption = "Application.DrawObsoleteForConsumption";

@@ -112,6 +112,10 @@ internal sealed partial class PlayUpExceptionHandler(ILogger<PlayUpExceptionHand
                 (StatusCodes.Status409Conflict, "Applied draw slot placement protected", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.AppliedDrawGroupPlacementProtected } application =>
                 (StatusCodes.Status409Conflict, "Applied draw group placement protected", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.GroupSeatReservedByInboundFeed } application =>
+                (StatusCodes.Status409Conflict, "Group seat reserved by inbound feed", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.ManualGroupPlacementBlockedByActiveDraw } application =>
+                (StatusCodes.Status409Conflict, "Manual group placement blocked by active draw", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.DrawObsoleteForConsumption } application =>
                 (StatusCodes.Status409Conflict, "Draw obsolete for consumption", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.MaterializationOccupantConflict } application =>

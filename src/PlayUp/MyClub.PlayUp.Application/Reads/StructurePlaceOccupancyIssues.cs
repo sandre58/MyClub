@@ -26,11 +26,15 @@ internal static class StructurePlaceOccupancyIssues
 
     /// <summary>
     /// Incomplete group pools are expected until a published draw is applied (Groups + draw rules).
+    /// A null badge does not defer: with draw rules engaged it means the Groups grid is already full,
+    /// so match production is not held for a draw. Cup badges are never null while draw rules are engaged.
     /// </summary>
     internal static bool DeferGroupsNotReadyForDraw(
         bool hasDrawRules,
         StructureDrawExecutionBadge? drawExecutionBadge) =>
-        hasDrawRules && drawExecutionBadge is not StructureDrawExecutionBadge.Applied;
+        hasDrawRules
+        && drawExecutionBadge is not null
+        && drawExecutionBadge is not StructureDrawExecutionBadge.Applied;
 
     internal static void AppendSchematicPlaceOccupancyIssue(
         IList<string> issues,

@@ -30,7 +30,7 @@ public static class ClearEntryFromGroup
         ArgumentNullException.ThrowIfNull(competition);
 
         _ = competition.GetEntry(entryId);
-        StructureAppliedDrawGroupPlacementGate.EnsureClearAllowed(stage, groupId, entryId);
+        ManualGroupSeatRules.EnsureClearAllowed(stage, groupId, entryId);
 
         stage.RemoveEntryFromGroup(
             groupId,

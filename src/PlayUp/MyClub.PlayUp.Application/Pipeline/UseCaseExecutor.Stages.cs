@@ -591,14 +591,26 @@ public sealed partial class UseCaseExecutor
         EntryId entryId,
         CancellationToken cancellationToken = default)
     {
-        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
+        var probed = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        var competition = await RequireCompetitionAsync(probed.CompetitionId, cancellationToken)
             .ConfigureAwait(false);
-        await EnsureCompetitionAllowsLifecycleMutationAsync(stage.CompetitionId, cancellationToken)
+        await EnsureCompetitionAllowsLifecycleMutationAsync(probed.CompetitionId, cancellationToken)
             .ConfigureAwait(false);
+        var competitionStages = await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken)
+            .ConfigureAwait(false);
+        var stage = competitionStages.FirstOrDefault(candidate => candidate.Id.Equals(stageId))
+                    ?? throw new ApplicationFailureException(
+                        $"Stage '{stageId}' is not part of the competition stages list.",
+                        ApplicationErrorCodes.StageNotInCompetition);
         var stageMatches = await matches.ListByStageForUpdateAsync(stageId, cancellationToken)
             .ConfigureAwait(false);
-        AssignEntryToGroup.Execute(stage, competition, groupId, entryId, stageMatches);
+        AssignEntryToGroup.Execute(
+            stage,
+            competition,
+            groupId,
+            entryId,
+            stageMatches,
+            competitionStages);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 

@@ -132,6 +132,75 @@ public sealed class ManualGroupPlacementEndpointTests(HostPostgresFixture fixtur
         (await ReadCodeAsync(response)).Should().Be(ApplicationErrorCodes.AppliedDrawGroupPlacementProtected);
     }
 
+    [IntegrationFact]
+    public async Task Groups_schematic_projects_seat_modeAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var seed = await SeedGroupsAsync(factory, applyDraw: false);
+        using var client = factory.CreateClient();
+
+        using var response = await client.GetAsync(new Uri($"/stages/{seed.StageId.Value}/schematic", UriKind.Relative));
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        using var document = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync());
+        var cases = document.RootElement.GetProperty("cases");
+        cases.GetArrayLength().Should().BeGreaterThan(0);
+        cases.EnumerateArray().Should().OnlyContain(item =>
+            item.GetProperty("seatMode").GetString() == "Editable"
+            && item.GetProperty("canClear").GetBoolean() == false
+            && item.GetProperty("excess").GetBoolean() == false
+            && item.GetProperty("outsideComposition").GetBoolean() == false);
+    }
+
+    [IntegrationFact]
+    public async Task Put_reserved_group_seat_returns_409Async()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var seed = await SeedReservedGroupAsync(factory);
+        using var client = factory.CreateClient();
+
+        using var response = await client.PutAsync(EntryUri(seed.StageId, seed.GroupId, seed.EntryId), null);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        (await ReadCodeAsync(response)).Should().Be(ApplicationErrorCodes.GroupSeatReservedByInboundFeed);
+    }
+
+    [IntegrationFact]
+    public async Task Put_and_delete_are_refused_while_a_group_draw_draft_existsAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var seed = await SeedGroupsWithDraftDrawAsync(factory, noSolution: false);
+        using var client = factory.CreateClient();
+
+        using var assign = await client.PutAsync(
+            EntryUri(seed.StageId, seed.OtherGroupId, seed.SecondEntryId),
+            null);
+        using var clear = await client.DeleteAsync(EntryUri(seed.StageId, seed.GroupId, seed.EntryId));
+
+        assign.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        (await ReadCodeAsync(assign)).Should().Be(ApplicationErrorCodes.ManualGroupPlacementBlockedByActiveDraw);
+        clear.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        (await ReadCodeAsync(clear)).Should().Be(ApplicationErrorCodes.ManualGroupPlacementBlockedByActiveDraw);
+    }
+
+    [IntegrationFact]
+    public async Task Put_and_delete_are_refused_for_a_no_solution_group_draw_draftAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var seed = await SeedGroupsWithDraftDrawAsync(factory, noSolution: true);
+        using var client = factory.CreateClient();
+
+        using var assign = await client.PutAsync(
+            EntryUri(seed.StageId, seed.OtherGroupId, seed.SecondEntryId),
+            null);
+        using var clear = await client.DeleteAsync(EntryUri(seed.StageId, seed.GroupId, seed.EntryId));
+
+        assign.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        (await ReadCodeAsync(assign)).Should().Be(ApplicationErrorCodes.ManualGroupPlacementBlockedByActiveDraw);
+        clear.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        (await ReadCodeAsync(clear)).Should().Be(ApplicationErrorCodes.ManualGroupPlacementBlockedByActiveDraw);
+    }
+
     private static Uri EntryUri(StageId stageId, GroupId groupId, EntryId entryId) =>
         new(
             $"/stages/{stageId.Value}/groups/{groupId.Value}/entries/{entryId.Value}",
@@ -254,6 +323,94 @@ public sealed class ManualGroupPlacementEndpointTests(HostPostgresFixture fixtur
             ids[2],
             ids[4],
             ids[4],
+            ids[0]);
+    }
+
+    private async Task<GroupSeed> SeedReservedGroupAsync(PlayUpWebApplicationFactory factory)
+    {
+        var competition = CreateCompetition.Execute("G-http-reserved", _clock);
+        var entryId = AddEntry.Execute(competition, "Manual", _clock).Id;
+        var source = AddCompetitionStage.Execute(competition, StructureIntent.Groups(2, 2), _clock);
+        var destination = AddCompetitionStage.Execute(competition, StructureIntent.Groups(2, 2), _clock);
+        destination.ReplaceAffectationAuthoring([entryId], _clock);
+        source.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.FromGroup(source.Groups[0].Id),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    QualificationDestination.ForGroup(destination.Id, destination.Groups[0].Id)),
+                new QualificationPath(
+                    2,
+                    QualificationSource.FromGroup(source.Groups[1].Id),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    QualificationDestination.ForGroup(destination.Id, destination.Groups[0].Id))
+            ]),
+            _clock);
+
+        using var scope = factory.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+        competitions.Add(competition);
+        stages.Add(source);
+        stages.Add(destination);
+        await unitOfWork.SaveChangesAsync();
+
+        return new GroupSeed(
+            destination.Id,
+            destination.Groups[0].Id,
+            destination.Groups[1].Id,
+            entryId,
+            entryId,
+            entryId,
+            entryId,
+            entryId);
+    }
+
+    private async Task<GroupSeed> SeedGroupsWithDraftDrawAsync(
+        PlayUpWebApplicationFactory factory,
+        bool noSolution)
+    {
+        var competition = CreateCompetition.Execute(noSolution ? "G-http-orphan" : "G-http-draft", _clock);
+        var ids = Enumerable.Range(0, 4)
+            .Select(index => AddEntry.Execute(competition, $"T{index}", _clock).Id)
+            .ToArray();
+        var stage = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Groups(2, 2),
+            _clock).Stage;
+        ReplaceStageDrawRules.Execute(
+            stage,
+            competition,
+            new DrawRules(DrawMode.Random, potRules: new PotRules(2)),
+            _clock);
+        stage.ReplaceAffectationAuthoring(ids, _clock);
+        stage.AssignEntryToGroup(stage.Groups[0].Id, ids[0]);
+        var draw = CreateDraw.Execute(stage, DrawResolutionKind.Group, _clock);
+        if (noSolution)
+        {
+            stage.MarkDrawNoSolution(draw.Id, _clock);
+        }
+
+        using var scope = factory.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+        competitions.Add(competition);
+        stages.Add(stage);
+        await unitOfWork.SaveChangesAsync();
+
+        return new GroupSeed(
+            stage.Id,
+            stage.Groups[0].Id,
+            stage.Groups[1].Id,
+            ids[0],
+            ids[1],
+            ids[2],
+            ids[3],
             ids[0]);
     }
 
