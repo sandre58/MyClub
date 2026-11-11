@@ -58,7 +58,7 @@
     "InvalidSide": "Invalid side.",
     "InvalidStructureIntent": "Invalid structure parameters.",
     "LastStageCannotBeRemoved": "The last stage cannot be removed.",
-    "ManualGroupPlacementBlockedByActiveDraw": "Apply the draw again or cancel it, including a draw in draft, before placing or removing a team.",
+    "ManualGroupPlacementBlockedByActiveDraw": "Cancel the draw, including a draw in draft, or apply it only when it can still be applied, before placing or removing a team.",
     "MatchNotFound": "Match not found.",
     "MatchNotInCompetition": "This match does not belong to this competition.",
     "MatchOperationNotAllowed": "This match operation is not allowed.",

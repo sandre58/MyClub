@@ -32,7 +32,7 @@ public static class ClearEntryFromGroup
         _ = competition.GetEntry(entryId);
         if (ManualGroupSeatRules.EvaluateClear(stage, groupId, entryId) is { } refusal)
         {
-            ManualGroupSeatRules.Throw(refusal);
+            ManualGroupSeatRules.ThrowClear(stage, groupId, entryId, refusal);
         }
 
         stage.RemoveEntryFromGroup(

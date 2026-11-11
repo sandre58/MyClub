@@ -323,6 +323,23 @@ public sealed class ManualGroupSeatProjectionTests
             .Which.Code.Should().Be(StageErrorCodes.StructureLocked);
     }
 
+    [Fact]
+    public void Repeated_put_on_a_running_stage_returns_structure_locked()
+    {
+        var (competition, stage, entryId) = Groups(places: 2, entryCount: 2);
+        var groupId = stage.Groups[0].Id;
+        AssignEntryToGroup.Execute(stage, competition, groupId, entryId);
+        stage.Prepare(_clock);
+        stage.Start(_clock);
+
+        var repeated = () => AssignEntryToGroup.Execute(stage, competition, groupId, entryId);
+        var error = repeated.Should().Throw<DomainException>().Which;
+        error.Code.Should().Be(StageErrorCodes.StructureLocked);
+        error.Message.Should().Be(
+            "Operational structure authoring cannot be modified when status is 'Running'.");
+        stage.FindGroup(groupId)!.EntryIds.Should().Contain(entryId);
+    }
+
     [Theory]
     [InlineData(ApplicationErrorCodes.ManualGroupPlacementBlockedByActiveDraw, GroupSeatModes.DrawPending)]
     [InlineData(ApplicationErrorCodes.AppliedDrawGroupPlacementProtected, GroupSeatModes.Draw)]

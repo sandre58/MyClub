@@ -45,7 +45,7 @@ public static class AssignEntryToGroup
                 snapshots);
             if (refusal is not null)
             {
-                ManualGroupSeatRules.Throw(refusal);
+                ManualGroupSeatRules.ThrowAssign(stage, groupId, entryId, refusal);
             }
         }
 

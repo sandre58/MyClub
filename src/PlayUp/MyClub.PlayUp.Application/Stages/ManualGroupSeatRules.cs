@@ -142,17 +142,30 @@ internal static class ManualGroupSeatRules
         return new Assessment(GroupSeatModes.FromRefusal(refusal), canClear, excess, outsideComposition);
     }
 
-    internal static void Throw(string code)
+    internal static void ThrowAssign(Stage stage, GroupId groupId, EntryId entryId, string code)
     {
-        if (code is ApplicationErrorCodes.ManualGroupPlacementBlockedByActiveDraw
-            or ApplicationErrorCodes.GroupSeatReservedByInboundFeed
-            or ApplicationErrorCodes.AppliedDrawGroupPlacementProtected)
+        if (IsApplicationRefusal(code))
         {
             throw new ApplicationFailureException(ApplicationMessage(code), code);
         }
 
-        throw new DomainException("Manual group placement was refused.", code);
+        throw new DomainException(stage.DescribeManualAssignRefusal(code, groupId, entryId), code);
     }
+
+    internal static void ThrowClear(Stage stage, GroupId groupId, EntryId entryId, string code)
+    {
+        if (IsApplicationRefusal(code))
+        {
+            throw new ApplicationFailureException(ApplicationMessage(code), code);
+        }
+
+        throw new DomainException(stage.DescribeManualClearRefusal(code, groupId, entryId), code);
+    }
+
+    private static bool IsApplicationRefusal(string code) =>
+        code is ApplicationErrorCodes.ManualGroupPlacementBlockedByActiveDraw
+            or ApplicationErrorCodes.GroupSeatReservedByInboundFeed
+            or ApplicationErrorCodes.AppliedDrawGroupPlacementProtected;
 
     private static bool HasActiveUnappliedGroupDraw(Stage stage) =>
         stage.Draws.Any(draw =>
@@ -175,7 +188,7 @@ internal static class ManualGroupSeatRules
         code switch
         {
             ApplicationErrorCodes.ManualGroupPlacementBlockedByActiveDraw =>
-                "Apply the draw again or cancel it, including a draw in draft, before placing or removing a team.",
+                "Cancel the draw, including a draw in draft, or apply it only when it can still be applied, before placing or removing a team.",
             ApplicationErrorCodes.GroupSeatReservedByInboundFeed =>
                 "This group place is reserved for a pending qualification or progression feed.",
             _ => "Group placement is protected by the applied draw on this stage.",

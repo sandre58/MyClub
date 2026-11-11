@@ -1534,6 +1534,26 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
+    /// Gets the message for a manual assign refusal code. Does not mutate.
+    /// </summary>
+    /// <param name="code">The refusal code.</param>
+    /// <param name="groupId">The target group.</param>
+    /// <param name="entryId">The entry.</param>
+    /// <returns>The domain message for <paramref name="code"/>.</returns>
+    public string DescribeManualAssignRefusal(string code, GroupId groupId, EntryId entryId) =>
+        ManualAssignRefusalMessage(code, groupId, entryId);
+
+    /// <summary>
+    /// Gets the message for a manual clear refusal code. Does not mutate.
+    /// </summary>
+    /// <param name="code">The refusal code.</param>
+    /// <param name="groupId">The target group.</param>
+    /// <param name="entryId">The entry.</param>
+    /// <returns>The domain message for <paramref name="code"/>.</returns>
+    public string DescribeManualClearRefusal(string code, GroupId groupId, EntryId entryId) =>
+        ManualClearRefusalMessage(code, groupId, entryId);
+
+    /// <summary>
     /// Removes an entry from a group on behalf of a draw (apply move or release). Draft or Ready.
     /// </summary>
     /// <param name="groupId">The group identity.</param>

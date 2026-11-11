@@ -477,50 +477,13 @@ public static class StageSchematicAssembler
         IReadOnlyList<Stage> competitionStages)
     {
         var candidates = new Dictionary<Guid, List<SchematicFeedOriginDto>>();
-
-        foreach (var stage in competitionStages)
+        foreach (var feed in GroupPendingFeeds.List(target, competitionStages))
         {
-            if (stage.Regulation.QualificationRules is { } qualification)
-            {
-                foreach (var path in qualification.Paths)
-                {
-                    if (!path.Destination.StageId.Equals(target.Id) || !path.Destination.TargetsGroup)
-                    {
-                        continue;
-                    }
-
-                    if (GroupPendingFeeds.IsQualificationResolved(target, stage.Id, path))
-                    {
-                        continue;
-                    }
-
-                    var groupId = path.Destination.GroupId!.Value.Value;
-                    var origin = MapQualificationPathOrigin(path, stage, groupId);
-                    AddGroupFeedCandidate(candidates, groupId, origin);
-                }
-            }
-
-            if (stage.Regulation.ProgressionRules is not { } progression)
-            {
-                continue;
-            }
-
-            foreach (var path in progression.Paths)
-            {
-                if (!path.Destination.StageId.Equals(target.Id) || !path.Destination.TargetsGroup)
-                {
-                    continue;
-                }
-
-                if (GroupPendingFeeds.IsProgressionResolved(target, stage.Id, path))
-                {
-                    continue;
-                }
-
-                var groupId = path.Destination.GroupId!.Value.Value;
-                var origin = MapProgressionPathOrigin(path, stage, competitionStages, groupId);
-                AddGroupFeedCandidate(candidates, groupId, origin);
-            }
+            var groupId = feed.GroupId.Value;
+            var origin = feed.Qualification is { } qualification
+                ? MapQualificationPathOrigin(qualification, feed.Source, groupId)
+                : MapProgressionPathOrigin(feed.Progression!, feed.Source, competitionStages, groupId);
+            AddGroupFeedCandidate(candidates, groupId, origin);
         }
 
         var result = new Dictionary<Guid, List<SchematicFeedOriginDto>>();
