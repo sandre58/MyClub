@@ -237,7 +237,26 @@ public sealed class ManualGroupSeatProjectionTests
         seats.Should().HaveCount(5);
         seats[4].Entry!.EntryId.Should().Be(ids[4].Value);
         seats[4].Excess.Should().BeTrue();
+        seats[4].CanClear.Should().BeTrue();
         seats.Take(4).Should().OnlyContain(seat => seat.Excess == false);
+        ClearEntryFromGroup.Execute(stage, competition, stage.Groups[0].Id, ids[4]);
+        stage.Groups[0].EntryIds.Should().NotContain(ids[4]);
+
+        stage.SetPlacesPerGroup(null);
+        stage.AssignEntryToGroup(stage.Groups[0].Id, ids[4]);
+        stage.SetPlacesPerGroup(4);
+        var match = Attach(competition, stage, ids[0], ids[1]);
+        var locked = Seat(stage, competition, stage.Groups[0].Id, index: 5, match);
+        locked.Excess.Should().BeTrue();
+        locked.CanClear.Should().BeFalse();
+        var clear = () => ClearEntryFromGroup.Execute(
+            stage,
+            competition,
+            stage.Groups[0].Id,
+            ids[4],
+            [match]);
+        clear.Should().Throw<DomainException>()
+            .Which.Code.Should().Be(StageErrorCodes.GroupClearLockedByStageMatches);
     }
 
     [Fact]
@@ -264,6 +283,57 @@ public sealed class ManualGroupSeatProjectionTests
         seats[3].Entry!.EntryId.Should().Be(ids[3].Value);
         seats[3].OutsideComposition.Should().BeTrue();
         seats[3].SeatMode.Should().Be(StageSchematicAssembler.GroupSeatEditable);
+        seats[3].CanClear.Should().BeTrue();
+        ClearEntryFromGroup.Execute(stage, competition, stage.Groups[0].Id, ids[3]);
+        stage.Groups[0].EntryIds.Should().NotContain(ids[3]);
+
+        stage.AssignEntryToGroup(stage.Groups[0].Id, ids[3]);
+        var match = Attach(competition, stage, ids[0], ids[1]);
+        var locked = Seat(stage, competition, stage.Groups[0].Id, index: 4, match);
+        locked.OutsideComposition.Should().BeTrue();
+        locked.CanClear.Should().BeFalse();
+        var clear = () => ClearEntryFromGroup.Execute(
+            stage,
+            competition,
+            stage.Groups[0].Id,
+            ids[3],
+            [match]);
+        clear.Should().Throw<DomainException>()
+            .Which.Code.Should().Be(StageErrorCodes.GroupClearLockedByStageMatches);
+    }
+
+    [Fact]
+    public void Running_stage_projects_editable_and_the_route_returns_structure_locked()
+    {
+        var (competition, stage, entryId) = Groups(places: 2, entryCount: 2);
+        ReplaceStageDrawRules.Execute(
+            stage,
+            new DrawRules(DrawMode.Random, potRules: new PotRules(2)),
+            _clock);
+        var draw = CreateDraw.Execute(stage, DrawResolutionKind.Group, _clock);
+        stage.MarkDrawNoSolution(draw.Id, _clock);
+        stage.Prepare(_clock);
+        stage.Start(_clock);
+
+        var seat = Seat(stage, competition, stage.Groups[0].Id, index: 1);
+        seat.SeatMode.Should().Be(GroupSeatModes.Editable);
+        seat.CanClear.Should().BeFalse();
+        var assign = () => AssignEntryToGroup.Execute(stage, competition, stage.Groups[0].Id, entryId);
+        assign.Should().Throw<DomainException>()
+            .Which.Code.Should().Be(StageErrorCodes.StructureLocked);
+    }
+
+    [Theory]
+    [InlineData(ApplicationErrorCodes.ManualGroupPlacementBlockedByActiveDraw, GroupSeatModes.DrawPending)]
+    [InlineData(ApplicationErrorCodes.AppliedDrawGroupPlacementProtected, GroupSeatModes.Draw)]
+    [InlineData(StageErrorCodes.GroupPlacementResolutionLocked, GroupSeatModes.QualProg)]
+    [InlineData(StageErrorCodes.GroupAssignLockedByGroupMatches, GroupSeatModes.MatchLocked)]
+    [InlineData(ApplicationErrorCodes.GroupSeatReservedByInboundFeed, GroupSeatModes.Reserved)]
+    [InlineData(StageErrorCodes.StructureLocked, GroupSeatModes.Editable)]
+    [InlineData(null, GroupSeatModes.Editable)]
+    public void Refusal_code_maps_to_one_seat_mode(string? code, string mode)
+    {
+        GroupSeatModes.FromRefusal(code).Should().Be(mode);
     }
 
     private SchematicCaseDto Seat(

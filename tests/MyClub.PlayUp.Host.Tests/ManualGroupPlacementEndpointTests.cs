@@ -14,10 +14,12 @@ using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Stages;
+using MyClub.PlayUp.Application.Standings;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
+using MyClub.PlayUp.Domain.Standings;
 using Xunit;
 
 namespace MyClub.PlayUp.Host.Tests;
@@ -200,6 +202,50 @@ public sealed class ManualGroupPlacementEndpointTests(HostPostgresFixture fixtur
         clear.StatusCode.Should().Be(HttpStatusCode.Conflict);
         (await ReadCodeAsync(clear)).Should().Be(ApplicationErrorCodes.ManualGroupPlacementBlockedByActiveDraw);
     }
+
+    [IntegrationFact]
+    public async Task Put_after_qualification_into_a_freed_group_returns_204Async()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var seed = await SeedQualifiedGroupAsync(factory);
+        using var client = factory.CreateClient();
+
+        using var response = await client.PutAsync(EntryUri(seed.StageId, seed.GroupId, seed.EntryId), null);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+    }
+
+    [IntegrationFact]
+    public async Task Groups_schematic_projects_draw_pending_and_cup_omits_seat_fieldsAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var draft = await SeedGroupsWithDraftDrawAsync(factory, noSolution: true);
+        var cupId = await SeedCupAsync(factory);
+        using var client = factory.CreateClient();
+
+        using var groups = await client.GetAsync(SchematicUri(draft.StageId));
+        using var cup = await client.GetAsync(SchematicUri(cupId));
+
+        groups.StatusCode.Should().Be(HttpStatusCode.OK);
+        using var groupsDocument = await JsonDocument.ParseAsync(await groups.Content.ReadAsStreamAsync());
+        groupsDocument.RootElement.GetProperty("cases").EnumerateArray().Should()
+            .OnlyContain(item => item.GetProperty("seatMode").GetString() == "DrawPending");
+
+        cup.StatusCode.Should().Be(HttpStatusCode.OK);
+        using var cupDocument = await JsonDocument.ParseAsync(await cup.Content.ReadAsStreamAsync());
+        var cupCases = cupDocument.RootElement.GetProperty("cases");
+        cupCases.GetArrayLength().Should().BeGreaterThan(0);
+        foreach (var item in cupCases.EnumerateArray())
+        {
+            item.TryGetProperty("seatMode", out _).Should().BeFalse();
+            item.TryGetProperty("canClear", out _).Should().BeFalse();
+            item.TryGetProperty("excess", out _).Should().BeFalse();
+            item.TryGetProperty("outsideComposition", out _).Should().BeFalse();
+        }
+    }
+
+    private static Uri SchematicUri(StageId stageId) =>
+        new($"/stages/{stageId.Value}/schematic", UriKind.Relative);
 
     private static Uri EntryUri(StageId stageId, GroupId groupId, EntryId entryId) =>
         new(
@@ -412,6 +458,91 @@ public sealed class ManualGroupPlacementEndpointTests(HostPostgresFixture fixtur
             ids[2],
             ids[3],
             ids[0]);
+    }
+
+    private async Task<GroupSeed> SeedQualifiedGroupAsync(PlayUpWebApplicationFactory factory)
+    {
+        var competition = CreateCompetition.Execute("G-http-qualified", _clock);
+        var manualId = AddEntry.Execute(competition, "Manual", _clock).Id;
+        var sourceIds = Enumerable.Range(0, 4)
+            .Select(index => AddEntry.Execute(competition, $"S{index}", _clock).Id)
+            .ToArray();
+        var source = AddCompetitionStage.Execute(competition, StructureIntent.Groups(2, 2), _clock);
+        var destination = AddCompetitionStage.Execute(competition, StructureIntent.Groups(2, 4), _clock);
+        destination.ReplaceAffectationAuthoring([manualId], _clock);
+        source.AssignEntryToGroup(source.Groups[0].Id, sourceIds[0]);
+        source.AssignEntryToGroup(source.Groups[0].Id, sourceIds[1]);
+        source.AssignEntryToGroup(source.Groups[1].Id, sourceIds[2]);
+        source.AssignEntryToGroup(source.Groups[1].Id, sourceIds[3]);
+        source.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.FromGroup(source.Groups[0].Id),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    QualificationDestination.ForGroup(destination.Id, destination.Groups[0].Id)),
+                new QualificationPath(
+                    2,
+                    QualificationSource.FromGroup(source.Groups[1].Id),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    QualificationDestination.ForGroup(destination.Id, destination.Groups[0].Id))
+            ]),
+            _clock);
+        var matches = new List<Match>
+        {
+            Finish(Match.Create(competition.Id, source.Id, sourceIds[0], sourceIds[1], _clock), 2, 0),
+            Finish(Match.Create(competition.Id, source.Id, sourceIds[2], sourceIds[3], _clock), 1, 0)
+        };
+        var rules = source.Regulation.StandingRules
+            ?? throw new InvalidOperationException("Standing rules are required.");
+        var standings = new Dictionary<GroupId, Standing>
+        {
+            [source.Groups[0].Id] = CalculateStanding.Execute(source.Groups[0].EntryIds, matches, rules),
+            [source.Groups[1].Id] = CalculateStanding.Execute(source.Groups[1].EntryIds, matches, rules)
+        };
+        ApplyQualification.Execute(source, overallStanding: null, standings, [source, destination], _clock);
+
+        using var scope = factory.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+        competitions.Add(competition);
+        stages.Add(source);
+        stages.Add(destination);
+        await unitOfWork.SaveChangesAsync();
+
+        return new GroupSeed(
+            destination.Id,
+            destination.Groups[0].Id,
+            destination.Groups[1].Id,
+            manualId,
+            manualId,
+            manualId,
+            manualId,
+            manualId);
+    }
+
+    private async Task<StageId> SeedCupAsync(PlayUpWebApplicationFactory factory)
+    {
+        var competition = CreateCompetition.Execute("Cup-http-schematic", _clock);
+        var stage = ConfigureStructure.Execute(competition, null, StructureIntent.Cup(4), _clock).Stage;
+
+        using var scope = factory.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+        competitions.Add(competition);
+        stages.Add(stage);
+        await unitOfWork.SaveChangesAsync();
+        return stage.Id;
+    }
+
+    private Match Finish(Match match, int homeGoals, int awayGoals)
+    {
+        match.Start(_clock);
+        match.Finish(new MatchResult(ResultType.Played, new Score(homeGoals, awayGoals)), _clock);
+        return match;
     }
 
     private sealed record GroupSeed(

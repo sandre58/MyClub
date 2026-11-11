@@ -21,7 +21,9 @@ internal static class StructurePlaceOccupancyIssues
     internal static bool IsSlotFeedAwaitingDraw(
         bool hasDrawRules,
         StructureDrawExecutionBadge? badge) =>
-        hasDrawRules && badge is not StructureDrawExecutionBadge.ToApply
+        hasDrawRules
+        && badge is not null
+        && badge is not StructureDrawExecutionBadge.ToApply
             and not StructureDrawExecutionBadge.Applied;
 
     /// <summary>
@@ -75,7 +77,11 @@ internal static class StructurePlaceOccupancyIssues
             return;
         }
 
-        var schematic = StageSchematicAssembler.Assemble(stage, competition, competitionStages);
+        var schematic = StageSchematicAssembler.Assemble(
+            stage,
+            competition,
+            competitionStages,
+            includeGroupSeatModes: false);
         var occupied = CountOccupiedPlaces(schematic, format.Value);
         if (occupied >= placesN.Value)
         {

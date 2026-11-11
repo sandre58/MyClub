@@ -144,13 +144,11 @@ public static class StructurePresentedStageDiagnostics
             ? [.. codes.Where(code => code != CompetitionFlowAnalyzer.ExpectedRankUnreachable)]
             : codes;
 
-    /// <summary>SPA: <c>isSlotFeedAwaitingDraw</c>.</summary>
+    /// <summary>SPA: <c>isSlotFeedAwaitingDraw</c>. A null badge is not awaiting a draw.</summary>
     public static bool IsSlotFeedAwaitingDraw(StructureStageHubSummaryDto stage) =>
-        stage is
-        {
-            HasDrawRules: true, DrawExecutionBadge: not (
-            StructureDrawExecutionBadge.ToApply or StructureDrawExecutionBadge.Applied)
-        };
+        StructurePlaceOccupancyIssues.IsSlotFeedAwaitingDraw(
+            stage.HasDrawRules,
+            stage.DrawExecutionBadge);
 
     public static bool DeferGroupsNotReadyForDraw(StructureStageHubSummaryDto stage) =>
         StructurePlaceOccupancyIssues.DeferGroupsNotReadyForDraw(

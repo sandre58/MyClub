@@ -297,7 +297,7 @@ public static class ApplicationErrorCodes
 
     /// <summary>
     /// Gets the code when a manual group assignment or clear is attempted while a group draw
-    /// is still in progress, including a draft left after a failed generation.
+    /// is not cancelled and not applied, including a draft and a published draw that no longer matches the groups.
     /// </summary>
     public const string ManualGroupPlacementBlockedByActiveDraw = "Application.ManualGroupPlacementBlockedByActiveDraw";
 

@@ -618,7 +618,11 @@ public static class StructureViewAssembler
             return null;
         }
 
-        var schematic = StageSchematicAssembler.Assemble(stage, competition, competitionStages);
+        var schematic = StageSchematicAssembler.Assemble(
+            stage,
+            competition,
+            competitionStages,
+            includeGroupSeatModes: false);
         return StructurePlaceOccupancyIssues.CountOccupiedPlaces(schematic, formatKind.Value);
     }
 

@@ -24,22 +24,22 @@ public static class StageSchematicAssembler
     public const string FormKindRosterPlace = "RosterPlace";
 
     /// <summary>Groups seat that a manual assign or clear may change.</summary>
-    public const string GroupSeatEditable = "Editable";
+    public const string GroupSeatEditable = GroupSeatModes.Editable;
 
     /// <summary>Groups seat occupied by a qualification or progression resolution.</summary>
-    public const string GroupSeatQualProg = "QualProg";
+    public const string GroupSeatQualProg = GroupSeatModes.QualProg;
 
     /// <summary>Groups seat occupied by an applied group draw.</summary>
-    public const string GroupSeatDraw = "Draw";
+    public const string GroupSeatDraw = GroupSeatModes.Draw;
 
     /// <summary>Empty Groups seat whose target group already has an attached match.</summary>
-    public const string GroupSeatMatchLocked = "MatchLocked";
+    public const string GroupSeatMatchLocked = GroupSeatModes.MatchLocked;
 
-    /// <summary>Empty Groups seat held for a pending qualification or progression feed.</summary>
-    public const string GroupSeatReserved = "Reserved";
+    /// <summary>Empty Groups seat held for an unresolved qualification or progression feed.</summary>
+    public const string GroupSeatReserved = GroupSeatModes.Reserved;
 
     /// <summary>Groups seat blocked because a group draw is still in progress, including a draft.</summary>
-    public const string GroupSeatDrawPending = "DrawPending";
+    public const string GroupSeatDrawPending = GroupSeatModes.DrawPending;
 
     /// <summary>
     /// Maps stage form + placement into the schematic read model.
@@ -54,6 +54,10 @@ public static class StageSchematicAssembler
     /// Non-positive values leave Places N unknown.
     /// Null reads the configured expected occupancy. Ignored for other formats.
     /// </param>
+    /// <param name="includeGroupSeatModes">
+    /// When <see langword="false"/>, Groups cases omit seat mode, clear, excess, and outside-composition.
+    /// Occupancy counts use that path and must not evaluate placement guards.
+    /// </param>
     /// <returns>The assembled schematic.</returns>
     public static StageSchematicDto Assemble(
         Stage stage,
@@ -61,7 +65,8 @@ public static class StageSchematicAssembler
         IReadOnlyList<Stage> competitionStages,
         IReadOnlyList<MatchSummaryRow>? matchRows = null,
         IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>>? matchSummariesByStage = null,
-        int? championshipSwissExpectedOccupancy = null)
+        int? championshipSwissExpectedOccupancy = null,
+        bool includeGroupSeatModes = true)
     {
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(competition);
@@ -82,7 +87,8 @@ public static class StageSchematicAssembler
                 stage,
                 competitionStages,
                 entries,
-                matchRows ?? []),
+                matchRows ?? [],
+                includeGroupSeatModes),
             StructureFormatKind.Championship or StructureFormatKind.Swiss =>
                 AssembleRosterCapacity(
                     stage,
@@ -379,7 +385,8 @@ public static class StageSchematicAssembler
         Stage stage,
         IReadOnlyList<Stage> competitionStages,
         IReadOnlyDictionary<EntryId, CompetitionEntry> entries,
-        IReadOnlyList<MatchSummaryRow> matchRows)
+        IReadOnlyList<MatchSummaryRow> matchRows,
+        bool includeGroupSeatModes)
     {
         var perGroup = stage.PlacesPerGroup;
         if (stage.Groups.Count == 0 || perGroup is null or < 1)
@@ -410,14 +417,27 @@ public static class StageSchematicAssembler
                     feedOrigin = pending[pendingIndex++];
                 }
 
-                var seat = ManualGroupSeatRules.Project(
-                    stage,
-                    competitionStages,
-                    group,
-                    index,
-                    placed,
-                    composition,
-                    snapshots);
+                string? seatMode = null;
+                bool? canClear = null;
+                bool? excess = null;
+                bool? outsideComposition = null;
+                if (includeGroupSeatModes)
+                {
+                    var seat = ManualGroupSeatRules.Project(
+                        stage,
+                        competitionStages,
+                        group,
+                        index,
+                        placed,
+                        composition,
+                        snapshots,
+                        pending.Count);
+                    seatMode = seat.SeatMode;
+                    canClear = seat.CanClear;
+                    excess = seat.Excess;
+                    outsideComposition = seat.OutsideComposition;
+                }
+
                 cases.Add(
                     new SchematicCaseDto(
                         new SchematicFormPositionDto(
@@ -428,10 +448,10 @@ public static class StageSchematicAssembler
                         FeedOrigin: feedOrigin,
                         MapEntry(placed, entries),
                         MapAssignment(placed, entries),
-                        seat.SeatMode,
-                        seat.CanClear,
-                        seat.Excess,
-                        seat.OutsideComposition));
+                        seatMode,
+                        canClear,
+                        excess,
+                        outsideComposition));
             }
         }
 
@@ -450,19 +470,7 @@ public static class StageSchematicAssembler
     }
 
     /// <summary>
-    /// Counts inbound Qual/Prog ForGroup feeds for one group. Same source as the schematic pending seats.
-    /// </summary>
-    internal static int CountGroupPendingFeeds(
-        Stage target,
-        IReadOnlyList<Stage> competitionStages,
-        GroupId groupId)
-    {
-        var pending = CollectGroupPendingFeeds(target, competitionStages);
-        return pending.TryGetValue(groupId.Value, out var feeds) ? feeds.Count : 0;
-    }
-
-    /// <summary>
-    /// Inbound Qual/Prog ForGroup destinations, ordered per group (all paths — one seat each when pending).
+    /// Unresolved Qual/Prog ForGroup destinations, ordered per group (one seat each while still pending).
     /// </summary>
     private static Dictionary<Guid, List<SchematicFeedOriginDto>> CollectGroupPendingFeeds(
         Stage target,
@@ -481,6 +489,11 @@ public static class StageSchematicAssembler
                         continue;
                     }
 
+                    if (GroupPendingFeeds.IsQualificationResolved(target, stage.Id, path))
+                    {
+                        continue;
+                    }
+
                     var groupId = path.Destination.GroupId!.Value.Value;
                     var origin = MapQualificationPathOrigin(path, stage, groupId);
                     AddGroupFeedCandidate(candidates, groupId, origin);
@@ -495,6 +508,11 @@ public static class StageSchematicAssembler
             foreach (var path in progression.Paths)
             {
                 if (!path.Destination.StageId.Equals(target.Id) || !path.Destination.TargetsGroup)
+                {
+                    continue;
+                }
+
+                if (GroupPendingFeeds.IsProgressionResolved(target, stage.Id, path))
                 {
                     continue;
                 }

@@ -10,6 +10,7 @@ using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Stages.CascadeReplace;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Scheduling;
@@ -591,17 +592,20 @@ public sealed partial class UseCaseExecutor
         EntryId entryId,
         CancellationToken cancellationToken = default)
     {
-        var probed = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        var competition = await RequireCompetitionAsync(probed.CompetitionId, cancellationToken)
+        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
+        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
             .ConfigureAwait(false);
-        await EnsureCompetitionAllowsLifecycleMutationAsync(probed.CompetitionId, cancellationToken)
+        await EnsureCompetitionAllowsLifecycleMutationAsync(stage.CompetitionId, cancellationToken)
             .ConfigureAwait(false);
-        var competitionStages = await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken)
+
+        // Assign consults sibling qualification and progression paths (reserved places).
+        // The target stage stays the instance already loaded. Siblings are loaded only when
+        // the competition has another phase. Clear does not: a removal does not read inbound feeds.
+        var competitionStages = await LoadSiblingStagesForManualAssignAsync(
+                competition,
+                stage,
+                cancellationToken)
             .ConfigureAwait(false);
-        var stage = competitionStages.FirstOrDefault(candidate => candidate.Id.Equals(stageId))
-                    ?? throw new ApplicationFailureException(
-                        $"Stage '{stageId}' is not part of the competition stages list.",
-                        ApplicationErrorCodes.StageNotInCompetition);
         var stageMatches = await matches.ListByStageForUpdateAsync(stageId, cancellationToken)
             .ConfigureAwait(false);
         AssignEntryToGroup.Execute(
@@ -628,10 +632,37 @@ public sealed partial class UseCaseExecutor
             .ConfigureAwait(false);
         await EnsureCompetitionAllowsLifecycleMutationAsync(stage.CompetitionId, cancellationToken)
             .ConfigureAwait(false);
+
+        // Clear does not load sibling phases. Reserved inbound feeds apply to assign only.
         var stageMatches = await matches.ListByStageForUpdateAsync(stageId, cancellationToken)
             .ConfigureAwait(false);
         ClearEntryFromGroup.Execute(stage, competition, groupId, entryId, stageMatches);
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<List<Stage>> LoadSiblingStagesForManualAssignAsync(
+        Competition competition,
+        Stage stage,
+        CancellationToken cancellationToken)
+    {
+        if (competition.StageIds.Count <= 1)
+        {
+            return [stage];
+        }
+
+        var siblingIds = competition.StageIds.Where(id => !id.Equals(stage.Id)).ToArray();
+        var siblings = await stages.GetByIdsForUpdateAsync(siblingIds, cancellationToken)
+            .ConfigureAwait(false);
+        if (siblings.Count != siblingIds.Length)
+        {
+            throw new ApplicationFailureException(
+                "One or more competition stages were not found.",
+                ApplicationErrorCodes.StageNotFound);
+        }
+
+        var loaded = new List<Stage>(siblingIds.Length + 1) { stage };
+        loaded.AddRange(siblings);
+        return loaded;
     }
 
     /// <summary>

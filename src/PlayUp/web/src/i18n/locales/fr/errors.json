@@ -58,7 +58,7 @@
     "InvalidSide": "Côté invalide.",
     "InvalidStructureIntent": "Paramètres de structure invalides.",
     "LastStageCannotBeRemoved": "Impossible de supprimer la dernière phase.",
-    "ManualGroupPlacementBlockedByActiveDraw": "Annulez le tirage en cours ou en brouillon avant de placer ou de retirer une équipe.",
+    "ManualGroupPlacementBlockedByActiveDraw": "Appliquez (de nouveau) ou annulez le tirage en cours (brouillon compris) avant de placer ou de retirer une équipe.",
     "MatchNotFound": "Match introuvable.",
     "MatchNotInCompetition": "Ce match n’appartient pas à cette compétition.",
     "MatchOperationNotAllowed": "Cette opération de match n’est pas autorisée.",

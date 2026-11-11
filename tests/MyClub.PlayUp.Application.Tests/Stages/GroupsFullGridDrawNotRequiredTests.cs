@@ -87,6 +87,39 @@ public sealed class GroupsFullGridDrawNotRequiredTests
         hub.Materialize!.CommandEnabled.Should().BeFalse();
     }
 
+    [Fact]
+    public void Full_groups_grid_reports_no_stale_resolution_and_a_null_badge_is_not_awaiting_a_draw()
+    {
+        var (competition, stage) = GroupsWithDrawRules(placeEveryone: true);
+        StageLifecycleTestSupport.EnsureReadyForMaterialize(competition, stage, [stage], _clock);
+
+        var hub = StructureViewAssembler.Assemble(competition, [stage]).Stages.Single();
+        hub.DrawExecutionBadge.Should().BeNull();
+        hub.Materialize!.CommandEnabled.Should().BeTrue();
+        (hub.ResolutionOccupants ?? []).Should()
+            .NotContain(occupant => occupant.State == StructureResolutionFreshness.Perime);
+        StructurePlaceOccupancyIssues.IsSlotFeedAwaitingDraw(true, null).Should().BeFalse();
+        StructurePlaceOccupancyIssues.DeferGroupsNotReadyForDraw(true, null).Should().BeFalse();
+        StructurePlaceOccupancyIssues.IsSlotFeedAwaitingDraw(true, StructureDrawExecutionBadge.ToLaunch)
+            .Should().BeTrue();
+    }
+
+    [Fact]
+    public void Full_groups_grid_with_only_a_cancelled_draw_still_does_not_require_a_draw()
+    {
+        var (competition, stage) = GroupsWithDrawRules(placeEveryone: true);
+        var draw = CreateDraw.Execute(stage, DrawResolutionKind.Group, _clock);
+        CancelDraw.Execute(stage, draw.Id, _clock);
+        StageLifecycleTestSupport.EnsureReadyForMaterialize(competition, stage, [stage], _clock);
+
+        var hub = StructureViewAssembler.Assemble(competition, [stage]).Stages.Single();
+        hub.HasDrawRules.Should().BeTrue();
+        hub.DrawExecutionBadge.Should().BeNull();
+        hub.Materialize!.CommandEnabled.Should().BeTrue();
+        (hub.ResolutionOccupants ?? []).Should()
+            .NotContain(occupant => occupant.State == StructureResolutionFreshness.Perime);
+    }
+
     private (Domain.Competitions.Competition Competition, Stage Stage) GroupsWithDrawRules(bool placeEveryone)
     {
         var competition = CreateCompetition.Execute(placeEveryone ? "Full" : "Open", _clock);

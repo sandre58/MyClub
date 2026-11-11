@@ -34,12 +34,21 @@ public static class AssignEntryToGroup
 
         _ = competition.GetEntry(entryId);
         var snapshots = MaterializedParticipantSnapshots.FromMatches(stageMatches ?? []);
-        ManualGroupSeatRules.EnsureAssignAllowed(
-            stage,
-            competitionStages ?? [stage],
-            groupId,
-            entryId,
-            snapshots);
+        var group = stage.FindGroup(groupId);
+        if (group is not null)
+        {
+            var refusal = ManualGroupSeatRules.EvaluateAssign(
+                stage,
+                competitionStages ?? [stage],
+                group,
+                entryId,
+                snapshots);
+            if (refusal is not null)
+            {
+                ManualGroupSeatRules.Throw(refusal);
+            }
+        }
+
         stage.AssignManualEntryToGroup(groupId, entryId, snapshots);
     }
 }

@@ -190,6 +190,190 @@ public sealed class ManualGroupPlacementGuardTests
             .Which.Code.Should().Be(ApplicationErrorCodes.AppliedDrawGroupPlacementProtected);
     }
 
+    [Fact]
+    public void After_apply_an_undrawn_entry_can_be_placed_and_cleared_in_a_group_that_is_not_full()
+    {
+        var (competition, stage) = DrawnGroups(places: 4, drawnEntries: 4);
+        var extra = AddEntry.Execute(competition, "Extra", _clock).Id;
+        stage.ReplaceAffectationAuthoring(
+            [.. stage.CompositionEntries.Select(entry => entry.EntryId), extra],
+            _clock);
+
+        AssignEntryToGroup.Execute(stage, competition, stage.Groups[0].Id, extra);
+        stage.Groups[0].EntryIds.Should().Contain(extra);
+        ClearEntryFromGroup.Execute(stage, competition, stage.Groups[0].Id, extra);
+        stage.Groups[0].EntryIds.Should().NotContain(extra);
+    }
+
+    [Fact]
+    public void Resolved_qualification_frees_the_place_and_one_of_two_paths_uses_the_remaining_count()
+    {
+        var competition = CreateCompetition.Execute("Resolved", _clock);
+        var manualId = AddEntry.Execute(competition, "Manual", _clock).Id;
+        var sourceIds = Enumerable.Range(0, 4)
+            .Select(index => AddEntry.Execute(competition, $"S{index}", _clock).Id)
+            .ToArray();
+        var source = AddCompetitionStage.Execute(competition, StructureIntent.Groups(2, 2), _clock);
+        var destination = AddCompetitionStage.Execute(competition, StructureIntent.Groups(2, 4), _clock);
+        destination.ReplaceAffectationAuthoring([manualId], _clock);
+        source.AssignEntryToGroup(source.Groups[0].Id, sourceIds[0]);
+        source.AssignEntryToGroup(source.Groups[0].Id, sourceIds[1]);
+        source.AssignEntryToGroup(source.Groups[1].Id, sourceIds[2]);
+        source.AssignEntryToGroup(source.Groups[1].Id, sourceIds[3]);
+        var firstPath = new QualificationPath(
+            1,
+            QualificationSource.FromGroup(source.Groups[0].Id),
+            new QualificationSelection(SelectionMode.Position, 1),
+            QualificationDestination.ForGroup(destination.Id, destination.Groups[0].Id));
+        var secondPath = new QualificationPath(
+            2,
+            QualificationSource.FromGroup(source.Groups[1].Id),
+            new QualificationSelection(SelectionMode.Position, 1),
+            QualificationDestination.ForGroup(destination.Id, destination.Groups[0].Id));
+        source.ReplaceQualificationRules(new QualificationRules([firstPath, secondPath]), _clock);
+        var stages = new[] { source, destination };
+        var matches = new List<Match>
+        {
+            Finish(Match.Create(competition.Id, source.Id, sourceIds[0], sourceIds[1], _clock), 2, 0),
+            Finish(Match.Create(competition.Id, source.Id, sourceIds[2], sourceIds[3], _clock), 1, 0)
+        };
+        var standings = new Dictionary<GroupId, Standing>
+        {
+            [source.Groups[0].Id] = CalculateStanding.Execute(
+                source.Groups[0].EntryIds,
+                matches,
+                source.Regulation.StandingRules.OrThrow()),
+            [source.Groups[1].Id] = CalculateStanding.Execute(
+                source.Groups[1].EntryIds,
+                matches,
+                source.Regulation.StandingRules.OrThrow())
+        };
+
+        ApplyQualification.Execute(source, overallStanding: null, standings, stages, _clock);
+
+        var seat = Project(destination, competition, stages, destination.Groups[0].Id, index: 3);
+        seat.Entry.Should().BeNull();
+        seat.SeatMode.Should().Be(GroupSeatModes.Editable);
+        AssignEntryToGroup.Execute(
+            destination,
+            competition,
+            destination.Groups[0].Id,
+            manualId,
+            competitionStages: stages);
+        destination.Groups[0].EntryIds.Should().Contain(manualId);
+    }
+
+    [Fact]
+    public void One_resolved_feed_of_two_no_longer_counts_the_resolved_path()
+    {
+        var competition = CreateCompetition.Execute("Partial", _clock);
+        var ids = Enumerable.Range(0, 3)
+            .Select(index => AddEntry.Execute(competition, $"T{index}", _clock).Id)
+            .ToArray();
+        var source = AddCompetitionStage.Execute(competition, StructureIntent.Groups(2, 2), _clock);
+        var destination = AddCompetitionStage.Execute(competition, StructureIntent.Groups(2, 4), _clock);
+        destination.ReplaceAffectationAuthoring(ids, _clock);
+        destination.AssignEntryToGroup(destination.Groups[0].Id, ids[0]);
+        destination.AssignEntryToGroup(destination.Groups[0].Id, ids[1]);
+        var firstPath = new QualificationPath(
+            1,
+            QualificationSource.FromGroup(source.Groups[0].Id),
+            new QualificationSelection(SelectionMode.Position, 1),
+            QualificationDestination.ForGroup(destination.Id, destination.Groups[0].Id));
+        source.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                firstPath,
+                new QualificationPath(
+                    2,
+                    QualificationSource.FromGroup(source.Groups[1].Id),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    QualificationDestination.ForGroup(destination.Id, destination.Groups[0].Id))
+            ]),
+            _clock);
+        var stages = new[] { source, destination };
+        var before = Project(destination, competition, stages, destination.Groups[0].Id, index: 3);
+        before.SeatMode.Should().Be(GroupSeatModes.Reserved);
+        var blocked = () => AssignEntryToGroup.Execute(
+            destination,
+            competition,
+            destination.Groups[0].Id,
+            ids[2],
+            competitionStages: stages);
+        blocked.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.GroupSeatReservedByInboundFeed);
+
+        destination.WriteGroupResolutionProvenance(
+            destination.Groups[0].Id,
+            ids[0],
+            new ResolutionProvenance(
+                ResolutionProvenanceKind.Qualification,
+                ResolutionPathIdentifier.ForQualification(source.Id, firstPath),
+                "fp"));
+
+        var after = Project(destination, competition, stages, destination.Groups[0].Id, index: 3);
+        after.SeatMode.Should().Be(GroupSeatModes.Editable);
+        AssignEntryToGroup.Execute(
+            destination,
+            competition,
+            destination.Groups[0].Id,
+            ids[2],
+            competitionStages: stages);
+        destination.Groups[0].EntryIds.Should().Contain(ids[2]);
+    }
+
+    [Fact]
+    public void A_published_draw_that_no_longer_matches_the_groups_still_blocks_manual_placement()
+    {
+        var (competition, stage) = DrawnGroups(places: 2, drawnEntries: 4);
+        var pinned = stage.Groups[0].EntryIds[0];
+        var remaining = stage.CompositionEntries
+            .Select(entry => entry.EntryId)
+            .Where(id => !id.Equals(pinned))
+            .ToArray();
+        stage.ReplaceAffectationAuthoring(remaining, _clock);
+
+        var seat = Project(stage, competition, [stage], stage.Groups[0].Id, index: 1);
+        seat.SeatMode.Should().Be(GroupSeatModes.DrawPending);
+        var assign = () => AssignEntryToGroup.Execute(stage, competition, stage.Groups[1].Id, remaining[0]);
+        var clear = () => ClearEntryFromGroup.Execute(stage, competition, stage.Groups[1].Id, stage.Groups[1].EntryIds[0]);
+        assign.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.ManualGroupPlacementBlockedByActiveDraw);
+        clear.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.ManualGroupPlacementBlockedByActiveDraw);
+    }
+
+    private (Competition Competition, Stage Stage) DrawnGroups(int places, int drawnEntries)
+    {
+        var competition = CreateCompetition.Execute($"Drawn-{places}", _clock);
+        var ids = Enumerable.Range(0, drawnEntries)
+            .Select(index => AddEntry.Execute(competition, $"D{index}", _clock).Id)
+            .ToArray();
+        var stage = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Groups(2, places),
+            _clock).Stage;
+        ReplaceStageDrawRules.Execute(
+            stage,
+            new DrawRules(DrawMode.Random, potRules: new PotRules(2)),
+            _clock);
+        stage.ReplaceAffectationAuthoring(ids, _clock);
+        var draw = CreateDraw.Execute(stage, DrawResolutionKind.Group, _clock);
+        ConfigureDrawInputs.Execute(
+            stage,
+            draw.Id,
+            DrawInputsFactory.CreateDefault(stage, DrawResolutionKind.Group));
+        GenerateDrawResolution.Execute(
+            stage,
+            draw.Id,
+            _clock,
+            groupTargets: [.. stage.Groups.Select(group => group.Id)]).IsResolved.Should().BeTrue();
+        PublishDraw.Execute(stage, draw.Id, _clock);
+        ApplyDraw.Execute(stage, draw.Id, _clock);
+        return (competition, stage);
+    }
+
     private SchematicCaseDto Project(
         Stage stage,
         Competition competition,

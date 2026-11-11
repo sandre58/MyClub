@@ -30,7 +30,10 @@ public static class ClearEntryFromGroup
         ArgumentNullException.ThrowIfNull(competition);
 
         _ = competition.GetEntry(entryId);
-        ManualGroupSeatRules.EnsureClearAllowed(stage, groupId, entryId);
+        if (ManualGroupSeatRules.EvaluateClear(stage, groupId, entryId) is { } refusal)
+        {
+            ManualGroupSeatRules.Throw(refusal);
+        }
 
         stage.RemoveEntryFromGroup(
             groupId,

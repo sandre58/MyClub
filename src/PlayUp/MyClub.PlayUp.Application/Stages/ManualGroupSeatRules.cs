@@ -12,20 +12,16 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
-/// Single evaluation of a Groups seat for manual placement routes and the schematic.
+/// Single evaluation of a Groups seat for the manual routes and the schematic.
 /// </summary>
 /// <remarks>
-/// Priority is the first refusal the matching route would return.
-/// Assign (empty seat): active unapplied group draw, then an applied-draw move of that entry,
-/// then the domain assign refusal (composition, same-group success, target-group match,
-/// lifecycle, qualification/progression, duplicate, unknown group, capacity),
-/// then a place reserved for a pending qualification or progression feed.
-/// Clear (occupied seat): active unapplied group draw, then applied-draw protection,
-/// then the domain clear refusal (lifecycle, missing membership, qualification/progression,
-/// any match on the stage).
-/// <see cref="StageSchematicAssembler.GroupSeatEditable"/> with <c>CanClear</c> false covers an
-/// occupied manual seat whose clear is refused because the stage already has a match.
-/// A lifecycle lock (<c>Stage.StructureLocked</c>) is not one of the six seat modes.
+/// <see cref="EvaluateAssign"/> and <see cref="EvaluateClear"/> return the first refusal code.
+/// <see cref="Project"/> only maps that code to a seat mode.
+/// Order: lifecycle (<see cref="StageErrorCodes.StructureLocked"/>), then an unapplied group draw,
+/// then applied-draw protection, then the domain refusal, then a place reserved for an unresolved feed.
+/// An empty seat has no entry yet. The probe is the first composition entry that is not in any group.
+/// When every composition entry is already placed, entry-specific checks are skipped and the seat
+/// evaluation covers the lifecycle, the active draw, the target group's match, capacity, and the reserved feed.
 /// </remarks>
 internal static class ManualGroupSeatRules
 {
@@ -35,78 +31,89 @@ internal static class ManualGroupSeatRules
         bool Excess,
         bool OutsideComposition);
 
-    internal static bool HasActiveUnappliedGroupDraw(Stage stage)
+    internal static EntryId? ProbeUnplacedCompositionEntry(Stage stage)
     {
         ArgumentNullException.ThrowIfNull(stage);
-        return stage.Draws.Any(draw =>
-            draw.Kind == DrawResolutionKind.Group
-            && draw.Status != DrawStatus.Cancelled
-            && !DrawAppliedState.IsApplied(draw, stage));
+        foreach (var entry in stage.CompositionEntries)
+        {
+            if (stage.Groups.All(group => !group.EntryIds.Contains(entry.EntryId)))
+            {
+                return entry.EntryId;
+            }
+        }
+
+        return null;
     }
 
-    internal static bool IsReservedForInboundFeed(
+    internal static string? EvaluateAssign(
         Stage stage,
         IReadOnlyList<Stage> competitionStages,
-        Group group)
+        Group group,
+        EntryId? entryId,
+        IReadOnlyList<MatchParticipantSnapshot>? snapshots,
+        int? unresolvedPendingFeeds = null)
     {
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(competitionStages);
         ArgumentNullException.ThrowIfNull(group);
-        if (stage.PlacesPerGroup is not int capacity || capacity < 1)
+        if (stage.FindManualPlacementLifecycleRefusal() is { } lifecycle)
         {
-            return false;
+            return lifecycle;
         }
 
-        var free = capacity - group.EntryIds.Count;
-        if (free <= 0)
-        {
-            return false;
-        }
-
-        var pending = StageSchematicAssembler.CountGroupPendingFeeds(stage, competitionStages, group.Id);
-        return pending > 0 && free <= pending;
-    }
-
-    internal static void EnsureAssignAllowed(
-        Stage stage,
-        IReadOnlyList<Stage> competitionStages,
-        GroupId groupId,
-        EntryId entryId,
-        IReadOnlyList<MatchParticipantSnapshot>? snapshots)
-    {
-        ArgumentNullException.ThrowIfNull(stage);
-        ArgumentNullException.ThrowIfNull(competitionStages);
         if (HasActiveUnappliedGroupDraw(stage))
         {
-            throw ActiveDraw();
+            return ApplicationErrorCodes.ManualGroupPlacementBlockedByActiveDraw;
         }
 
-        StructureAppliedDrawGroupPlacementGate.EnsureAssignAllowed(stage, groupId, entryId);
-        if (stage.PreviewManualGroupAssignRefusal(groupId, entryId, snapshots) is not null)
+        if (entryId is { } known)
         {
-            return;
+            if (StructureAppliedDrawGroupPlacementGate.AssignWouldBreakAppliedDraw(stage, group.Id, known))
+            {
+                return ApplicationErrorCodes.AppliedDrawGroupPlacementProtected;
+            }
+
+            if (stage.FindManualAssignRefusal(group.Id, known, snapshots) is { } domain)
+            {
+                return domain;
+            }
+
+            if (group.EntryIds.Contains(known))
+            {
+                return null;
+            }
+        }
+        else if (stage.FindManualAssignSeatRefusal(group.Id, snapshots) is { } seat)
+        {
+            return seat;
         }
 
-        var group = stage.FindGroup(groupId);
-        if (group is not null
-            && !group.EntryIds.Contains(entryId)
-            && IsReservedForInboundFeed(stage, competitionStages, group))
-        {
-            throw new ApplicationFailureException(
-                "This group place is reserved for a pending qualification or progression feed.",
-                ApplicationErrorCodes.GroupSeatReservedByInboundFeed);
-        }
+        var pending = unresolvedPendingFeeds
+            ?? GroupPendingFeeds.CountUnresolved(stage, competitionStages, group.Id);
+        return IsReserved(stage, group, pending)
+            ? ApplicationErrorCodes.GroupSeatReservedByInboundFeed
+            : null;
     }
 
-    internal static void EnsureClearAllowed(Stage stage, GroupId groupId, EntryId entryId)
+    internal static string? EvaluateClear(Stage stage, GroupId groupId, EntryId entryId)
     {
         ArgumentNullException.ThrowIfNull(stage);
-        if (HasActiveUnappliedGroupDraw(stage))
+        if (stage.FindManualPlacementLifecycleRefusal() is { } lifecycle)
         {
-            throw ActiveDraw();
+            return lifecycle;
         }
 
-        StructureAppliedDrawGroupPlacementGate.EnsureClearAllowed(stage, groupId, entryId);
+        if (HasActiveUnappliedGroupDraw(stage))
+        {
+            return ApplicationErrorCodes.ManualGroupPlacementBlockedByActiveDraw;
+        }
+
+        if (StructureAppliedDrawGroupPlacementGate.ClearWouldBreakAppliedDraw(stage, groupId, entryId))
+        {
+            return ApplicationErrorCodes.AppliedDrawGroupPlacementProtected;
+        }
+
+        return stage.FindManualClearRefusal(groupId, entryId);
     }
 
     internal static Assessment Project(
@@ -116,61 +123,61 @@ internal static class ManualGroupSeatRules
         int index,
         EntryId? occupant,
         IReadOnlyCollection<EntryId> composition,
-        IReadOnlyList<MatchParticipantSnapshot> snapshots)
+        IReadOnlyList<MatchParticipantSnapshot> snapshots,
+        int unresolvedPendingFeeds)
     {
-        ArgumentNullException.ThrowIfNull(stage);
-        ArgumentNullException.ThrowIfNull(group);
         ArgumentNullException.ThrowIfNull(composition);
-        ArgumentNullException.ThrowIfNull(snapshots);
-
         var excess = stage.PlacesPerGroup is int capacity && index > capacity;
         var outsideComposition = occupant is { } placed && !composition.Contains(placed);
-        if (HasActiveUnappliedGroupDraw(stage))
-        {
-            return new Assessment(StageSchematicAssembler.GroupSeatDrawPending, false, excess, outsideComposition);
-        }
-
-        if (occupant is { } entryId)
-        {
-            if (StructureAppliedDrawGroupPlacementGate.ClearWouldBreakAppliedDraw(stage, group.Id, entryId))
-            {
-                return new Assessment(StageSchematicAssembler.GroupSeatDraw, false, excess, outsideComposition);
-            }
-
-            var clearRefusal = stage.PreviewManualGroupClearRefusal(group.Id, entryId);
-            if (clearRefusal == StageErrorCodes.GroupPlacementResolutionLocked)
-            {
-                return new Assessment(StageSchematicAssembler.GroupSeatQualProg, false, excess, outsideComposition);
-            }
-
-            return new Assessment(
-                StageSchematicAssembler.GroupSeatEditable,
-                clearRefusal is null,
-                excess,
-                outsideComposition);
-        }
-
-        if (stage.ManualGroupAssignBlockedByAttachedMatch(group.Id, snapshots))
-        {
-            return new Assessment(StageSchematicAssembler.GroupSeatMatchLocked, false, excess, outsideComposition);
-        }
-
-        // Lifecycle lock is checked before the reserved-feed guard, and it is not a seat mode.
-        if (stage.Status is not (StageStatus.Draft or StageStatus.Ready))
-        {
-            return new Assessment(StageSchematicAssembler.GroupSeatEditable, false, excess, outsideComposition);
-        }
-
-        if (IsReservedForInboundFeed(stage, competitionStages, group))
-        {
-            return new Assessment(StageSchematicAssembler.GroupSeatReserved, false, excess, outsideComposition);
-        }
-
-        return new Assessment(StageSchematicAssembler.GroupSeatEditable, false, excess, outsideComposition);
+        var refusal = occupant is { } entryId
+            ? EvaluateClear(stage, group.Id, entryId)
+            : EvaluateAssign(
+                stage,
+                competitionStages,
+                group,
+                ProbeUnplacedCompositionEntry(stage),
+                snapshots,
+                unresolvedPendingFeeds);
+        var canClear = occupant is not null && refusal is null;
+        return new Assessment(GroupSeatModes.FromRefusal(refusal), canClear, excess, outsideComposition);
     }
 
-    private static ApplicationFailureException ActiveDraw() =>
-        new(
-            "Cancel the draw in progress or in draft before placing or removing a team.",
-            ApplicationErrorCodes.ManualGroupPlacementBlockedByActiveDraw);
+    internal static void Throw(string code)
+    {
+        if (code is ApplicationErrorCodes.ManualGroupPlacementBlockedByActiveDraw
+            or ApplicationErrorCodes.GroupSeatReservedByInboundFeed
+            or ApplicationErrorCodes.AppliedDrawGroupPlacementProtected)
+        {
+            throw new ApplicationFailureException(ApplicationMessage(code), code);
+        }
+
+        throw new DomainException("Manual group placement was refused.", code);
+    }
+
+    private static bool HasActiveUnappliedGroupDraw(Stage stage) =>
+        stage.Draws.Any(draw =>
+            draw.Kind == DrawResolutionKind.Group
+            && draw.Status != DrawStatus.Cancelled
+            && !DrawAppliedState.IsApplied(draw, stage));
+
+    private static bool IsReserved(Stage stage, Group group, int pending)
+    {
+        if (stage.PlacesPerGroup is not int capacity || capacity < 1 || pending <= 0)
+        {
+            return false;
+        }
+
+        var free = capacity - group.EntryIds.Count;
+        return free > 0 && free <= pending;
+    }
+
+    private static string ApplicationMessage(string code) =>
+        code switch
+        {
+            ApplicationErrorCodes.ManualGroupPlacementBlockedByActiveDraw =>
+                "Apply the draw again or cancel it, including a draw in draft, before placing or removing a team.",
+            ApplicationErrorCodes.GroupSeatReservedByInboundFeed =>
+                "This group place is reserved for a pending qualification or progression feed.",
+            _ => "Group placement is protected by the applied draw on this stage.",
+        };
 }

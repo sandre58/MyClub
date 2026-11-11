@@ -1380,7 +1380,7 @@ public sealed class Stage : AggregateRoot<StageId>
 
     /// <summary>
     /// Gets the first refusal code of a manual group assignment, or <see langword="null"/> when it would succeed.
-    /// A same-group membership is a success. Does not mutate.
+    /// A same-group membership is a success. Does not mutate and does not throw.
     /// </summary>
     /// <param name="groupId">The group identity.</param>
     /// <param name="entryId">The entry identity.</param>
@@ -1388,34 +1388,90 @@ public sealed class Stage : AggregateRoot<StageId>
     /// Participant snapshots of matches attached on this stage (empty when none).
     /// </param>
     /// <returns>The domain refusal code, or <see langword="null"/>.</returns>
-    public string? PreviewManualGroupAssignRefusal(
+    public string? FindManualAssignRefusal(
         GroupId groupId,
         EntryId entryId,
         IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants = null)
     {
-        try
+        if (_compositionEntries.All(entry => !entry.EntryId.Equals(entryId)))
         {
-            EnsureManualAssignAllowed(groupId, entryId, materializedParticipants);
+            return StageErrorCodes.GroupAssignmentEntryNotInComposition;
+        }
+
+        var owningGroup = _groups.FirstOrDefault(group => group.Contains(entryId));
+        if (owningGroup is not null && owningGroup.Id.Equals(groupId))
+        {
             return null;
         }
-        catch (DomainException exception)
+
+        if (TargetGroupHasAttachedMatch(groupId, materializedParticipants ?? []))
         {
-            return exception.Code;
+            return StageErrorCodes.GroupAssignLockedByGroupMatches;
         }
+
+        if (FindOperationalExitRulesRefusal() is { } lifecycle)
+        {
+            return lifecycle;
+        }
+
+        if (HasQualificationOrProgressionGroupPlacement(entryId))
+        {
+            return StageErrorCodes.GroupPlacementResolutionLocked;
+        }
+
+        if (owningGroup is not null)
+        {
+            return StageErrorCodes.DuplicateEntry;
+        }
+
+        var group = FindGroup(groupId);
+        if (group is null)
+        {
+            return StageErrorCodes.GroupNotFound;
+        }
+
+        return FindGroupCapacityRefusal(group, entryId);
     }
 
     /// <summary>
-    /// Gets whether a manual assignment into the group is refused because that group already has an attached match.
+    /// Gets the lifecycle refusal for manual group placement, or <see langword="null"/> in Draft and Ready.
+    /// Does not mutate. This is the same check as operational exit-rules mutability.
+    /// </summary>
+    /// <returns><see cref="StageErrorCodes.StructureLocked"/>, or <see langword="null"/>.</returns>
+    public string? FindManualPlacementLifecycleRefusal() => FindOperationalExitRulesRefusal();
+
+    /// <summary>
+    /// Gets the refusal of an empty seat when the entry that would be placed is not known.
+    /// Covers the target-group match, the lifecycle, a missing group, and capacity.
+    /// Entry-specific checks are skipped. Does not mutate.
     /// </summary>
     /// <param name="groupId">The group identity.</param>
     /// <param name="materializedParticipants">
     /// Participant snapshots of matches attached on this stage (empty when none).
     /// </param>
-    /// <returns><see langword="true"/> when the target group has an attached match.</returns>
-    public bool ManualGroupAssignBlockedByAttachedMatch(
+    /// <returns>The domain refusal code, or <see langword="null"/>.</returns>
+    public string? FindManualAssignSeatRefusal(
         GroupId groupId,
-        IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants = null) =>
-        TargetGroupHasAttachedMatch(groupId, materializedParticipants ?? []);
+        IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants = null)
+    {
+        if (TargetGroupHasAttachedMatch(groupId, materializedParticipants ?? []))
+        {
+            return StageErrorCodes.GroupAssignLockedByGroupMatches;
+        }
+
+        if (FindOperationalExitRulesRefusal() is { } lifecycle)
+        {
+            return lifecycle;
+        }
+
+        var group = FindGroup(groupId);
+        if (group is null)
+        {
+            return StageErrorCodes.GroupNotFound;
+        }
+
+        return FindGroupCapacityRefusal(group, entryId: null);
+    }
 
     /// <summary>
     /// Removes an entry from a group.
@@ -1440,22 +1496,41 @@ public sealed class Stage : AggregateRoot<StageId>
 
     /// <summary>
     /// Gets the first refusal code of a manual group clear, or <see langword="null"/> when it would succeed.
-    /// Does not mutate.
+    /// Does not mutate and does not throw.
     /// </summary>
     /// <param name="groupId">The group identity.</param>
     /// <param name="entryId">The entry identity.</param>
     /// <returns>The domain refusal code, or <see langword="null"/>.</returns>
-    public string? PreviewManualGroupClearRefusal(GroupId groupId, EntryId entryId)
+    public string? FindManualClearRefusal(GroupId groupId, EntryId entryId)
     {
-        try
+        if (FindOperationalExitRulesRefusal() is { } lifecycle)
         {
-            EnsureManualClearAllowed(groupId, entryId);
-            return null;
+            return lifecycle;
         }
-        catch (DomainException exception)
+
+        var group = FindGroup(groupId);
+        if (group is null)
         {
-            return exception.Code;
+            return StageErrorCodes.GroupNotFound;
         }
+
+        if (!group.Contains(entryId))
+        {
+            return StageErrorCodes.EntryNotFound;
+        }
+
+        if (_groupResolutionProvenances.Any(row =>
+                row.GroupId.Equals(groupId)
+                && row.EntryId.Equals(entryId)
+                && row.ProvenanceKind is ResolutionProvenanceKind.Qualification
+                    or ResolutionProvenanceKind.Progression))
+        {
+            return StageErrorCodes.GroupPlacementResolutionLocked;
+        }
+
+        return StageHasAttachedMatch()
+            ? StageErrorCodes.GroupClearLockedByStageMatches
+            : null;
     }
 
     /// <summary>
@@ -3263,9 +3338,14 @@ public sealed class Stage : AggregateRoot<StageId>
         }
     }
 
+    private string? FindOperationalExitRulesRefusal() =>
+        Status is not (StageStatus.Draft or StageStatus.Ready)
+            ? StageErrorCodes.StructureLocked
+            : null;
+
     private void EnsureOperationalExitRulesMutable()
     {
-        if (Status is not (StageStatus.Draft or StageStatus.Ready))
+        if (FindOperationalExitRulesRefusal() is not null)
         {
             throw new DomainException(
                 $"Operational structure authoring cannot be modified when status is '{Status}'.",
@@ -3297,32 +3377,6 @@ public sealed class Stage : AggregateRoot<StageId>
                 $"Group '{group.Id}' already has {capacity} entries (PlacesPerGroup).",
                 StageErrorCodes.GroupFull);
         }
-    }
-
-    private void EnsureManualAssignNotLockedByTargetGroupMatches(
-        GroupId groupId,
-        IReadOnlyList<MatchParticipantSnapshot> materializedParticipants)
-    {
-        if (!TargetGroupHasAttachedMatch(groupId, materializedParticipants))
-        {
-            return;
-        }
-
-        throw new DomainException(
-            $"Cannot assign an entry to group '{groupId}': that group already has an attached match.",
-            StageErrorCodes.GroupAssignLockedByGroupMatches);
-    }
-
-    private void EnsureManualClearNotLockedByStageMatches()
-    {
-        if (!StageHasAttachedMatch())
-        {
-            return;
-        }
-
-        throw new DomainException(
-            $"Cannot remove an entry from a group: stage '{Id}' already has an attached match.",
-            StageErrorCodes.GroupClearLockedByStageMatches);
     }
 
     private bool StageHasAttachedMatch() =>
@@ -3368,52 +3422,67 @@ public sealed class Stage : AggregateRoot<StageId>
         EntryId entryId,
         IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants)
     {
-        EnsureManualGroupEntryInComposition(entryId);
-        var owningGroup = _groups.FirstOrDefault(group => group.Contains(entryId));
-        if (owningGroup is not null && owningGroup.Id.Equals(groupId))
+        if (FindManualAssignRefusal(groupId, entryId, materializedParticipants) is { } code)
         {
-            return;
+            throw new DomainException(ManualAssignRefusalMessage(code, groupId, entryId), code);
         }
-
-        EnsureManualAssignNotLockedByTargetGroupMatches(groupId, materializedParticipants ?? []);
-        EnsureOperationalExitRulesMutable();
-        EnsureEntryGroupPlacementNotResolutionLocked(entryId);
-        if (owningGroup is not null)
-        {
-            throw new DomainException(
-                $"Entry '{entryId}' is already assigned to another group.",
-                StageErrorCodes.DuplicateEntry);
-        }
-
-        var group = GetGroup(groupId);
-        EnsureGroupHasCapacityForNewMember(group, entryId);
     }
 
     private void EnsureManualClearAllowed(GroupId groupId, EntryId entryId)
     {
-        EnsureOperationalExitRulesMutable();
-        var group = GetGroup(groupId);
-        if (!group.Contains(entryId))
+        if (FindManualClearRefusal(groupId, entryId) is { } code)
         {
-            throw new DomainException(
-                $"Entry '{entryId}' was not found in group '{groupId}'.",
-                StageErrorCodes.EntryNotFound);
+            throw new DomainException(ManualClearRefusalMessage(code, groupId, entryId), code);
         }
-
-        EnsureManualGroupMembershipChangeAllowed(groupId, entryId);
-        EnsureManualClearNotLockedByStageMatches();
     }
 
-    private void EnsureManualGroupEntryInComposition(EntryId entryId)
-    {
-        if (_compositionEntries.Any(entry => entry.EntryId.Equals(entryId)))
+    private string ManualAssignRefusalMessage(string code, GroupId groupId, EntryId entryId) =>
+        code switch
         {
-            return;
+            StageErrorCodes.GroupAssignmentEntryNotInComposition =>
+                $"Entry '{entryId}' is not in the stage population.",
+            StageErrorCodes.GroupAssignLockedByGroupMatches =>
+                $"Cannot assign an entry to group '{groupId}': that group already has an attached match.",
+            StageErrorCodes.StructureLocked =>
+                $"Operational structure authoring cannot be modified when status is '{Status}'.",
+            StageErrorCodes.GroupPlacementResolutionLocked =>
+                $"Entry '{entryId}' group membership is sealed by qualification/progression resolution.",
+            StageErrorCodes.DuplicateEntry =>
+                $"Entry '{entryId}' is already assigned to another group.",
+            StageErrorCodes.GroupNotFound => $"Group '{groupId}' was not found.",
+            StageErrorCodes.GroupFull =>
+                $"Group '{groupId}' already has its PlacesPerGroup entries.",
+            _ => $"Manual assignment to group '{groupId}' was refused.",
+        };
+
+    private string ManualClearRefusalMessage(string code, GroupId groupId, EntryId entryId) =>
+        code switch
+        {
+            StageErrorCodes.StructureLocked =>
+                $"Operational structure authoring cannot be modified when status is '{Status}'.",
+            StageErrorCodes.GroupNotFound => $"Group '{groupId}' was not found.",
+            StageErrorCodes.EntryNotFound =>
+                $"Entry '{entryId}' was not found in group '{groupId}'.",
+            StageErrorCodes.GroupPlacementResolutionLocked =>
+                $"Entry '{entryId}' group membership is sealed by qualification/progression resolution.",
+            StageErrorCodes.GroupClearLockedByStageMatches =>
+                $"Cannot remove an entry from a group: stage '{Id}' already has an attached match.",
+            _ => $"Manual removal from group '{groupId}' was refused.",
+        };
+
+    private string? FindGroupCapacityRefusal(Group group, EntryId? entryId)
+    {
+        if (PlacesPerGroup is not { } capacity || capacity < 1)
+        {
+            return null;
         }
 
-        throw new DomainException(
-            $"Entry '{entryId}' is not in the stage population.",
-            StageErrorCodes.GroupAssignmentEntryNotInComposition);
+        if (entryId is { } known && group.Contains(known))
+        {
+            return null;
+        }
+
+        return group.EntryIds.Count >= capacity ? StageErrorCodes.GroupFull : null;
     }
 
     /// <summary>
@@ -3423,19 +3492,6 @@ public sealed class Stage : AggregateRoot<StageId>
     private void EnsureEntryGroupPlacementNotResolutionLocked(EntryId entryId)
     {
         if (HasQualificationOrProgressionGroupPlacement(entryId))
-        {
-            throw new DomainException(
-                $"Entry '{entryId}' group membership is sealed by qualification/progression resolution.",
-                StageErrorCodes.GroupPlacementResolutionLocked);
-        }
-    }
-
-    private void EnsureManualGroupMembershipChangeAllowed(GroupId groupId, EntryId entryId)
-    {
-        if (_groupResolutionProvenances.Any(row =>
-                row.GroupId.Equals(groupId)
-                && row.EntryId.Equals(entryId)
-                && row.ProvenanceKind is ResolutionProvenanceKind.Qualification or ResolutionProvenanceKind.Progression))
         {
             throw new DomainException(
                 $"Entry '{entryId}' group membership is sealed by qualification/progression resolution.",
