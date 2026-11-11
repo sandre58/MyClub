@@ -21,6 +21,7 @@ import type {
   StructureStageHubSummary,
 } from '../../../types';
 import { MutationError, StageStatusBadge } from '../../../ui';
+import { StructurePhaseDrawHint } from '../draw/StructurePhaseDrawHint';
 import { shouldShowMatchsLifecycle } from '../problems';
 import { StructurePhaseHeaderLifecycle } from './StructurePhaseHeaderLifecycle';
 
@@ -193,6 +194,13 @@ export function StructurePhaseFicheHeader({
         </div>
         {!editingName ? (
           <div className="structure-fiche__header-row-end">
+            {/* A complete Groups grid has no draw badge. The fiche shows that
+                the draw is not required; other badges stay on the topology tile. */}
+            {stage.hasDrawRules &&
+            stage.formatKind === 'Groups' &&
+            stage.drawExecutionBadge == null ? (
+              <StructurePhaseDrawHint stage={stage} variant="fiche" />
+            ) : null}
             <StageStatusBadge status={stage.status} />
           </div>
         ) : null}

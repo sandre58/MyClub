@@ -35,7 +35,11 @@ import {
   patchDrawRulesDeactivatedOptimistic,
   patchStageNameOptimistic,
 } from '../structureQueryCache';
-import type { StructureStageHubSummary, StructureView } from '../../../types';
+import type {
+  SchematicCase,
+  StructureStageHubSummary,
+  StructureView,
+} from '../../../types';
 import {
   EditSkeletonDialog,
   QualificationRulesDialog,
@@ -43,6 +47,8 @@ import {
 } from '../schematic/StructureGraphDialogs';
 import { StructurePlacementAwardDialog } from '../intents/StructurePlacementAwardDialog';
 import { StructureManualPlacementDialog } from '../draw/StructureManualPlacementDialog';
+import { StructureGroupPlacementDialog } from '../draw/StructureGroupPlacementDialog';
+import { resolveGroupSeatInteraction } from '../draw/manualGroupPlacementUi';
 import {
   DrawRulesDialog,
   MatchRulesDialog,
@@ -204,6 +210,10 @@ export function StructurePhaseFiche({
   const [composeFocusSearch, setComposeFocusSearch] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
   const [manualSlotKey, setManualSlotKey] = useState<string | null>(null);
+  const [groupOpen, setGroupOpen] = useState(false);
+  const [groupPlace, setGroupPlace] = useState<SchematicCase | null>(null);
+  const [groupIntent, setGroupIntent] = useState<'place' | 'remove'>('place');
+  const [groupSession, setGroupSession] = useState(0);
 
   useSyncWhen(true, stage?.stageId ?? '', () => {
     setEdit(null);
@@ -218,6 +228,9 @@ export function StructurePhaseFiche({
     setComposeFocusSearch(false);
     setManualOpen(false);
     setManualSlotKey(null);
+    setGroupOpen(false);
+    setGroupPlace(null);
+    setGroupIntent('place');
   });
 
   const deactivateDrawMutation = useMutation({
@@ -1339,6 +1352,20 @@ export function StructurePhaseFiche({
             setManualSlotKey(key);
             setManualOpen(true);
           }}
+          onGroupPlaceActivate={(place) => {
+            const interaction = resolveGroupSeatInteraction(place, {
+              actions: stage.actions ?? [],
+            });
+            if (interaction.kind !== 'place' && interaction.kind !== 'remove') {
+              return;
+            }
+            setGroupPlace(place);
+            setGroupIntent(interaction.kind);
+            setGroupSession((value) => value + 1);
+            setGroupOpen(true);
+          }}
+          groupActions={stage.actions}
+          placesPerGroup={stage.placesPerGroup}
           schematicIssuesBanner={(() => {
             const placesBanner = !showPlacementBlock
               ? railIssueBanner(placesBanners)
@@ -1544,6 +1571,21 @@ export function StructurePhaseFiche({
           entries={data.participants.entries}
           cases={schematicQuery.data?.cases ?? []}
           initialSlotKey={manualSlotKey}
+        />
+        <StructureGroupPlacementDialog
+          key={groupSession}
+          open={groupOpen}
+          onClose={() => {
+            setGroupOpen(false);
+            setGroupPlace(null);
+          }}
+          competitionId={data.competitionId}
+          stage={stage}
+          structureStages={data.stages}
+          entries={data.participants.entries}
+          cases={schematicQuery.data?.cases ?? []}
+          place={groupPlace}
+          intent={groupIntent}
         />
         <TieFormatDialog
           competitionId={data.competitionId}

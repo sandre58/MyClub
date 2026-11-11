@@ -586,7 +586,8 @@ public static class StructureViewAssembler
             CompositionBandResolvedCount: compositionBandResolved,
             SchematicOccupiedPlaceCount: schematicOccupiedPlaceCount,
             MatchProductionPresentation: matchProductionPresentation,
-            ResolutionOccupants: resolutionOccupants);
+            ResolutionOccupants: resolutionOccupants,
+            CompositionEntryPots: BuildCompositionEntryPots(stage, formatKind));
 
         // DrawCreateLaunch on summary is provisional until Evaluate runs here.
         return summary with
@@ -725,6 +726,31 @@ public static class StructureViewAssembler
         var (_, ineligible) = StructureCompositionEligibility.CountRoster(competition, entries);
 
         return new EntrySetProjection(count, entryIds, preview, ineligible);
+    }
+
+    /// <summary>
+    /// Pots of the current composition, in composition order. Entry ids are not the preview-name order.
+    /// </summary>
+    private static StructureCompositionEntryPotDto[]? BuildCompositionEntryPots(
+        Stage stage,
+        StructureFormatKind? formatKind)
+    {
+        if (formatKind != StructureFormatKind.Groups)
+        {
+            return null;
+        }
+
+        var pots = GroupDrawPots.TryRead(stage);
+        if (pots is null)
+        {
+            return null;
+        }
+
+        return stage.CompositionEntries
+            .Select(entry => new StructureCompositionEntryPotDto(
+                entry.EntryId.Value,
+                pots[entry.EntryId]))
+            .ToArray();
     }
 
     /// <summary>

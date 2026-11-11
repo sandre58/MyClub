@@ -496,6 +496,18 @@ When every group already holds exactly `PlacesPerGroup` members that are still i
 }
 ```
 
+`GET /competitions/{competitionId}/structure` adds optional `compositionEntryPots` on each stage hub row. Each item is `{ "entryId", "pot" }` with pot numbers starting at 1. The list follows the current composition order. It is present only for a Groups phase when pot rules exist, the composition is not empty, and the entry count is divisible by the pot count. It is omitted for every other phase, including Cup, Groups without pot rules, an empty composition, and a count that is not divisible. The value is the current composition, not a pot stored on a past draw. It is computed by `GroupDrawPots`, the same function `DrawInputsFactory.CreateDefault` uses for a Group draw's `PotMembership`.
+
+```json
+{
+  "compositionEntryPots": [
+    { "entryId": "<guid>", "pot": 1 },
+    { "entryId": "<guid>", "pot": 1 },
+    { "entryId": "<guid>", "pot": 2 }
+  ]
+}
+```
+
 #### `POST /competitions/{competitionId}/stages` → 201 `AddCompetitionStageResponse`
 
 Appends the new stage at the end of `StageIds`. Body is the birth payload (`format`, `name`, and the format's skeleton fields). Response is `stageId`, `name`, and the refreshed `structure` view. This route does not take an anchor.

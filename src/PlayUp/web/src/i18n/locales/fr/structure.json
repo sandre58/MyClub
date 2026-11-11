@@ -39,7 +39,8 @@
       "toLaunch": "Tirage à lancer",
       "inProgress": "Tirage en cours",
       "toApply": "Tirage à appliquer",
-      "applied": "Tirage appliqué"
+      "applied": "Tirage appliqué",
+      "notRequired": "Non requis — grille complète"
     },
     "outboundTo": "→ {{name}}",
     "overview": {
@@ -928,6 +929,37 @@
     "saving": "Enregistrement…",
     "toastSaved": "Affectation manuelle enregistrée",
     "toastCleared": "Affectation manuelle effacée"
+  },
+  "groupPlacement": {
+    "title": "Placer une équipe — {{group}}",
+    "removeTitle": "Retirer une équipe — {{group}}",
+    "placeLead": "Choisissez une équipe de la composition de cette phase.",
+    "removeLead": "Cette équipe est dans le groupe.",
+    "teamLabel": "Équipes disponibles",
+    "pot": "Pot {{pot}}",
+    "allPlacedTitle": "Aucune équipe à placer",
+    "allPlaced": "Toutes les équipes de la composition sont déjà placées.",
+    "emptyCompositionTitle": "Composition vide",
+    "emptyComposition": "Ajoutez des équipes à la composition de la phase.",
+    "remove": "Retirer du groupe",
+    "removeConfirmTitle": "Retirer du groupe",
+    "removeConfirm": "Retirer {{team}} du {{group}} ?",
+    "seatName": "{{address}} — {{reason}}",
+    "save": "Enregistrer",
+    "saving": "Enregistrement…",
+    "removing": "Retrait…",
+    "placeInvite": "Cliquer pour placer une équipe",
+    "removeInvite": "Cliquer pour retirer l’équipe",
+    "drawPending": "Un tirage est en cours ou en brouillon : annulez-le, ou appliquez-le s’il peut encore l’être, avant de placer ou de retirer une équipe.",
+    "matchLocked": "Ce groupe a déjà un match : une équipe ne peut pas y être ajoutée.",
+    "reserved": "Cette place est réservée à une équipe attendue par une qualification ou une progression.",
+    "clearLocked": "Cette phase a déjà un match : une équipe ne peut pas être retirée d’un groupe.",
+    "qualProg": "Cette équipe est arrivée par une qualification ou une progression.",
+    "draw": "Cette équipe a été placée par le tirage appliqué. Elle est protégée.",
+    "excess": "En trop",
+    "outsideComposition": "Hors composition",
+    "counter": "{{occupied}}/{{capacity}}",
+    "counterExcess": "{{occupied}}/{{capacity}} · En trop"
   },
   "composition": {
     "gauge": {
