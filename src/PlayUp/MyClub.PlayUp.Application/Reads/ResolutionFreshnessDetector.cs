@@ -443,8 +443,12 @@ public static class ResolutionFreshnessDetector
                 group => (IReadOnlyList<StructureResolutionOccupantDto>)group.Select(occupant =>
                 {
                     var releasable = false;
-                    if (stagesById.TryGetValue(occupant.StageId, out var stage))
+                    if (matchSummariesByStage is not null
+                        && stagesById.TryGetValue(occupant.StageId, out var stage))
                     {
+                        // A missing stage key means this caller loaded no rows for it.
+                        // The structure read writes an empty list for every stage, so a
+                        // null dictionary is the case where matches were not loaded at all.
                         matchesByStage.TryGetValue(occupant.StageId, out var matches);
                         releasable = ResolutionReleaseRules.Refusal(
                             stage,
@@ -1032,9 +1036,19 @@ public static class ResolutionFreshnessDetector
                 return OutcomeRead.Failed(Classify(ex));
             }
 
+            var format = TieFormat.OrDefaultOneLeg(round.TieFormat);
+            if (snapshot.Legs.Count != format.NumberOfLegs)
+            {
+                var missing = snapshot.Legs.OrderBy(leg => leg.LegIndex).FirstOrDefault();
+                return OutcomeRead.Failed(
+                    StructureResolutionIndeterminacyCause.MatchNonJoue,
+                    missing?.MatchId.Value,
+                    MatchLabel(missing));
+            }
+
             try
             {
-                var outcome = FixtureOutcomeResolver.Resolve(TieFormat.OrDefaultOneLeg(round.TieFormat), snapshot);
+                var outcome = FixtureOutcomeResolver.Resolve(format, snapshot);
                 return OutcomeRead.Resolved(outcome);
             }
             catch (DomainException ex)

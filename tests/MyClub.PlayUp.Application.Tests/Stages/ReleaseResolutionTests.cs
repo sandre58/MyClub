@@ -47,6 +47,25 @@ public sealed class ReleaseResolutionTests
             ]
         };
 
+    private static Dictionary<StageId, IReadOnlyList<MyClub.PlayUp.Application.Abstractions.MatchSummaryRow>> Summaries(
+        Match first,
+        Match second) =>
+        new Dictionary<StageId, IReadOnlyList<MyClub.PlayUp.Application.Abstractions.MatchSummaryRow>>
+        {
+            [first.StageId] = [Row(first)],
+            [second.StageId] = [Row(second)],
+        };
+
+    private static MyClub.PlayUp.Application.Abstractions.MatchSummaryRow Row(Match match) =>
+        new(
+            match.Id,
+            match.StageId,
+            match.Status,
+            match.HomeEntryId,
+            match.AwayEntryId,
+            match.Result,
+            match.HasObservedLive);
+
     [Fact]
     public void Preview_writes_nothing_and_confirmation_clears_an_empty_selection()
     {
@@ -59,7 +78,12 @@ public sealed class ReleaseResolutionTests
         var planned = ReleaseResolution.Plan(competition, terminal.Id, target, stages, matches, _clock);
 
         terminal.FindSlot("Champ")!.EntryId.Should().Be(entries[0]);
-        planned.Releases.Should().ContainSingle().Which.EntryId.Should().Be(entries[0].Value);
+        planned.Releases.Should().Contain(row =>
+            row.Target == StructureResolutionOccupantTarget.Slot && row.EntryId == entries[0].Value);
+        planned.Releases.Should().Contain(row =>
+            row.Target == StructureResolutionOccupantTarget.Population
+            && row.EntryId == entries[0].Value
+            && row.EntryName == "Nord");
         planned.DetachedMatches.Should().BeEmpty();
 
         var result = ReleaseResolution.Execute(competition, terminal.Id, target, stages, matches, _clock);
@@ -67,6 +91,7 @@ public sealed class ReleaseResolutionTests
         result.VersionToken.Should().Be(planned.VersionToken);
         terminal.FindSlot("Champ")!.EntryId.Should().BeNull();
         terminal.FindSlot("Champ")!.ResolutionProvenance.Should().BeNull();
+        terminal.CompositionEntries.Should().NotContain(entry => entry.EntryId.Equals(entries[0]));
         var again = () => ReleaseResolution.Plan(competition, terminal.Id, target, stages, matches, _clock);
         again.Should().Throw<ApplicationFailureException>()
             .Which.Code.Should().Be(ApplicationErrorCodes.ResolutionReleaseOccupantNotFound);
@@ -481,61 +506,403 @@ public sealed class ReleaseResolutionTests
     }
 
     [Fact]
-    public void Affected_occupants_match_a_full_recalculation()
+    public void Releasing_a_slot_drops_the_team_from_the_composition_unless_another_place_holds_it()
     {
         var (competition, league, terminal, entries, match) = Pair();
-        StampSlot(league, terminal, entries[0], position: 9);
-        var further = Stage.Create(competition.Id, new StageName("Suite"), SampleRegulations.Standard(), _clock);
-        further.AddSlot("Suite");
-        competition.AddStage(further.Id, _clock);
-        var path = new QualificationPath(
+        var group = terminal.AddGroup("A", _clock);
+        var slotPath = new QualificationPath(
             1,
             QualificationSource.Overall(),
-            new QualificationSelection(SelectionMode.Position, 1),
-            QualificationDestination.ForSlot(further.Id, "Suite"));
-        terminal.ReplaceQualificationRules(new QualificationRules([path]), _clock);
-        var provenance = new ResolutionProvenance(
+            new QualificationSelection(SelectionMode.Position, 9),
+            QualificationDestination.ForSlot(terminal.Id, "Champ"));
+        var groupPath = new QualificationPath(
+            2,
+            QualificationSource.Overall(),
+            new QualificationSelection(SelectionMode.Position, 2),
+            QualificationDestination.ForGroup(terminal.Id, group.Id));
+        league.ReplaceQualificationRules(new QualificationRules([slotPath, groupPath]), _clock);
+        var slotProvenance = new ResolutionProvenance(
             ResolutionProvenanceKind.Qualification,
-            ResolutionPathIdentifier.ForQualification(terminal.Id, path),
+            ResolutionPathIdentifier.ForQualification(league.Id, slotPath),
             "seed");
-        further.AddResolvedPopulationEntry(entries[0], _clock, provenance);
-        further.ApplyResolvedEntry("Suite", entries[0], _clock, provenance);
-        var stages = new List<Stage> { league, terminal, further };
-        var matches = new List<Match> { match };
-        var before = ResolutionFreshnessDetector.Inspect(competition, stages, Summaries(league, match));
+        var groupProvenance = new ResolutionProvenance(
+            ResolutionProvenanceKind.Qualification,
+            ResolutionPathIdentifier.ForQualification(league.Id, groupPath),
+            "seed");
+        var kept = new QualificationPath(
+            3,
+            QualificationSource.Overall(),
+            new QualificationSelection(SelectionMode.Position, 1),
+            QualificationDestination.ForPopulation(terminal.Id));
+        terminal.AddResolvedPopulationEntry(entries[0], _clock, slotProvenance);
+        terminal.ApplyResolvedEntry("Champ", entries[0], _clock, slotProvenance);
+        terminal.ApplyResolvedGroupEntry(group.Id, entries[0], groupProvenance);
+        terminal.RecordFormPathResolution(FormPathResolutionKey.FromQualification(league.Id, kept), entries[0]);
 
         var result = ReleaseResolution.Execute(
             competition,
             terminal.Id,
             SlotTarget(entries[0]),
+            [league, terminal],
+            [match],
+            _clock);
+
+        terminal.FindSlot("Champ")!.EntryId.Should().BeNull();
+        terminal.CompositionEntries.Should().Contain(entry => entry.EntryId.Equals(entries[0]));
+        result.Releases.Should().NotContain(row => row.Target == StructureResolutionOccupantTarget.Population);
+        terminal.FormPathResolutions.Should().Contain(resolution => resolution.EntryId.Equals(entries[0]));
+    }
+
+    [Fact]
+    public void A_downstream_place_changes_state_when_the_released_team_leaves()
+    {
+        var (competition, league, mid, entries, match) = Pair();
+        match.CorrectMatchResult(new MatchResult(ResultType.Played, new Score(0, 2)), _clock);
+        var est = AddEntry.Execute(competition, "Est", _clock).Id;
+        var nord = entries[0];
+        var sud = entries[1];
+        var populationPath = new QualificationPath(
+            1,
+            QualificationSource.Overall(),
+            new QualificationSelection(SelectionMode.Position, 1),
+            QualificationDestination.ForPopulation(mid.Id));
+        var slotPath = new QualificationPath(
+            2,
+            QualificationSource.Overall(),
+            new QualificationSelection(SelectionMode.Position, 9),
+            QualificationDestination.ForSlot(mid.Id, "Champ"));
+        league.ReplaceQualificationRules(new QualificationRules([populationPath, slotPath]), _clock);
+        var stalePopulation = new ResolutionProvenance(
+            ResolutionProvenanceKind.Qualification,
+            ResolutionPathIdentifier.ForQualification(league.Id, populationPath),
+            "seed");
+        var emptySlot = new ResolutionProvenance(
+            ResolutionProvenanceKind.Qualification,
+            ResolutionPathIdentifier.ForQualification(league.Id, slotPath),
+            "seed");
+        mid.AddResolvedPopulationEntry(nord, _clock, stalePopulation);
+        mid.ApplyResolvedEntry("Champ", nord, _clock, emptySlot);
+        var midMatch = Match.Create(competition.Id, mid.Id, sud, est, _clock);
+        midMatch.Start(_clock);
+        midMatch.Finish(new MatchResult(ResultType.Played, new Score(2, 0)), _clock);
+
+        var downstream = Stage.Create(competition.Id, new StageName("Aval"), SampleRegulations.Standard(), _clock);
+        downstream.AddSlot("Suite");
+        competition.AddStage(downstream.Id, _clock);
+        var onward = new QualificationPath(
+            1,
+            QualificationSource.Overall(),
+            new QualificationSelection(SelectionMode.Position, 1),
+            QualificationDestination.ForSlot(downstream.Id, "Suite"));
+        mid.ReplaceQualificationRules(new QualificationRules([onward]), _clock);
+        var onwardProvenance = new ResolutionProvenance(
+            ResolutionProvenanceKind.Qualification,
+            ResolutionPathIdentifier.ForQualification(mid.Id, onward),
+            "seed");
+        downstream.AddResolvedPopulationEntry(sud, _clock, onwardProvenance);
+        downstream.ApplyResolvedEntry("Suite", sud, _clock, onwardProvenance);
+        var stages = new List<Stage> { league, mid, downstream };
+        var matches = new List<Match> { match, midMatch };
+
+        var before = ResolutionFreshnessDetector.Inspect(competition, stages, Summaries(match, midMatch));
+        before.Should().Contain(occupant =>
+            occupant.SlotKey == "Suite"
+            && occupant.EntryId == sud.Value
+            && occupant.State == StructureResolutionFreshness.Perime);
+
+        var result = ReleaseResolution.Execute(
+            competition,
+            mid.Id,
+            new ResolutionReleaseTarget(StructureResolutionOccupantTarget.Slot, nord.Value, "Champ", null),
             stages,
             matches,
             _clock);
-        var after = ResolutionFreshnessDetector.Inspect(competition, stages, Summaries(league, match));
 
-        var expected = before
-            .Where(occupant => occupant.StageId != terminal.Id.Value || occupant.SlotKey != "Champ")
-            .Select(occupant => new
-            {
-                occupant,
-                next = after.FirstOrDefault(candidate =>
-                    candidate.StageId == occupant.StageId
-                    && candidate.Target == occupant.Target
-                    && candidate.EntryId == occupant.EntryId
-                    && candidate.SlotKey == occupant.SlotKey
-                    && candidate.GroupId == occupant.GroupId)
-            })
-            .Where(pair => pair.next is not null && pair.next.State != pair.occupant.State)
-            .Select(pair => new ResolutionReleaseAffectedOccupant(
-                pair.occupant.StageId,
-                pair.occupant.Target,
-                pair.occupant.SlotKey,
-                pair.occupant.GroupId,
-                pair.occupant.EntryId,
-                pair.occupant.State,
-                pair.next!.State))
+        result.AffectedOccupants.Should().NotBeEmpty();
+        result.AffectedOccupants.Should().Contain(row =>
+            row.SlotKey == "Suite"
+            && row.PlaceLabel == "Suite"
+            && row.EntryName == "Sud"
+            && row.StageName == "Aval"
+            && row.StateBefore == StructureResolutionFreshness.Perime
+            && row.StateAfter == StructureResolutionFreshness.AJour);
+        result.Releases.Should().Contain(row => row.Target == StructureResolutionOccupantTarget.Population);
+        mid.CompositionEntries.Should().NotContain(entry => entry.EntryId.Equals(nord));
+    }
+
+    [Theory]
+    [InlineData(StageStatus.Running)]
+    [InlineData(StageStatus.Suspended)]
+    public void A_group_or_population_with_generated_matches_cannot_be_released_while_the_phase_is_open(StageStatus status)
+    {
+        var (competition, league, terminal, entries, match) = Pair();
+        var group = terminal.AddGroup("A", _clock);
+        var path = new QualificationPath(
+            1,
+            QualificationSource.Overall(),
+            new QualificationSelection(SelectionMode.Position, 9),
+            QualificationDestination.ForGroup(terminal.Id, group.Id));
+        league.ReplaceQualificationRules(new QualificationRules([path]), _clock);
+        var provenance = new ResolutionProvenance(
+            ResolutionProvenanceKind.Qualification,
+            ResolutionPathIdentifier.ForQualification(league.Id, path),
+            "seed");
+        terminal.AddResolvedPopulationEntry(entries[0], _clock, provenance);
+        terminal.ApplyResolvedGroupEntry(group.Id, entries[0], provenance);
+        var matchday = terminal.AddMatchday(1, _clock);
+        var fixture = terminal.AddFixture(matchday.Id, _clock);
+        var attached = Match.Create(competition.Id, terminal.Id, entries[0], entries[1], _clock);
+        terminal.AttachMatch(fixture.Id, attached.Id, 1, _clock);
+        Move(terminal, status);
+        var stages = new List<Stage> { league, terminal };
+        var matches = new List<Match> { match, attached };
+
+        var occupants = ResolutionFreshnessDetector.Evaluate(competition, stages, Summaries(match, attached))
+            .SelectMany(pair => pair.Value);
+        occupants.Should().Contain(occupant =>
+            occupant.Target == StructureResolutionOccupantTarget.Group && !occupant.Releasable);
+        occupants.Should().Contain(occupant =>
+            occupant.Target == StructureResolutionOccupantTarget.Population && occupant.Releasable == false);
+
+        var groupRelease = () => ReleaseResolution.Plan(
+            competition,
+            terminal.Id,
+            new ResolutionReleaseTarget(StructureResolutionOccupantTarget.Group, entries[0].Value, null, group.Id.Value),
+            stages,
+            matches,
+            _clock);
+        groupRelease.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.ResolutionReleaseBlockedByMatchesRunning);
+
+        var lone = Stage.Create(competition.Id, new StageName("Seule"), SampleRegulations.Standard(), _clock);
+        competition.AddStage(lone.Id, _clock);
+        var populationPath = new QualificationPath(
+            1,
+            QualificationSource.Overall(),
+            new QualificationSelection(SelectionMode.Position, 9),
+            QualificationDestination.ForPopulation(lone.Id));
+        league.ReplaceQualificationRules(new QualificationRules([populationPath]), _clock);
+        var populationProvenance = new ResolutionProvenance(
+            ResolutionProvenanceKind.Qualification,
+            ResolutionPathIdentifier.ForQualification(league.Id, populationPath),
+            "seed");
+        lone.AddResolvedPopulationEntry(entries[0], _clock, populationProvenance);
+        var loneDay = lone.AddMatchday(1, _clock);
+        var loneFixture = lone.AddFixture(loneDay.Id, _clock);
+        var loneMatch = Match.Create(competition.Id, lone.Id, entries[0], entries[1], _clock);
+        lone.AttachMatch(loneFixture.Id, loneMatch.Id, 1, _clock);
+        Move(lone, status);
+
+        var loneSummaries = new Dictionary<StageId, IReadOnlyList<MyClub.PlayUp.Application.Abstractions.MatchSummaryRow>>
+        {
+            [league.Id] = [Row(match)],
+            [lone.Id] = [Row(loneMatch)],
+        };
+        ResolutionFreshnessDetector.Evaluate(competition, [league, lone], loneSummaries)[lone.Id.Value]
+            .Should().Contain(occupant =>
+                occupant.Target == StructureResolutionOccupantTarget.Population && !occupant.Releasable);
+        var populationRelease = () => ReleaseResolution.Plan(
+            competition,
+            lone.Id,
+            new ResolutionReleaseTarget(StructureResolutionOccupantTarget.Population, entries[0].Value, null, null),
+            [league, lone],
+            [match, loneMatch],
+            _clock);
+        populationRelease.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.ResolutionReleaseBlockedByMatchesRunning);
+    }
+
+    [Fact]
+    public void A_draw_blocks_on_entries_alone_and_on_a_group_and_lets_go_once_cancelled_placements_are_gone()
+    {
+        var (competition, league, terminal, entries, match) = Pair();
+        StampSlot(league, terminal, entries[0], position: 9);
+        terminal.AddSlot("B");
+        var draw = terminal.CreateDraw(DrawResolutionKind.Slot, _clock);
+        terminal.ConfigureDrawInputs(draw.Id, DrawInputs.ForSlot([entries[0]]));
+        terminal.RecordDrawResolution(
+            draw.Id,
+            DrawResolution.ResolvedSlots([new SlotDrawPlacement(entries[0], "B")]),
+            _clock);
+        terminal.PublishDraw(draw.Id, _clock);
+        var stages = new List<Stage> { league, terminal };
+        var matches = new List<Match> { match };
+        var target = SlotTarget(entries[0]);
+
+        var entriesOnly = () => ReleaseResolution.Plan(
+            competition, terminal.Id, target, stages, matches, _clock);
+        entriesOnly.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.ResolutionReleaseBlockedByDraw);
+
+        terminal.CancelDraw(draw.Id, _clock);
+        ReleaseResolution.Execute(competition, terminal.Id, target, stages, matches, _clock);
+        terminal.FindSlot("Champ")!.EntryId.Should().BeNull();
+
+        var grouped = Stage.Create(competition.Id, new StageName("Poules"), SampleRegulations.Standard(), _clock);
+        var group = grouped.AddGroup("A", _clock);
+        competition.AddStage(grouped.Id, _clock);
+        var groupPath = new QualificationPath(
+            1,
+            QualificationSource.Overall(),
+            new QualificationSelection(SelectionMode.Position, 9),
+            QualificationDestination.ForGroup(grouped.Id, group.Id));
+        league.ReplaceQualificationRules(new QualificationRules([groupPath]), _clock);
+        var provenance = new ResolutionProvenance(
+            ResolutionProvenanceKind.Qualification,
+            ResolutionPathIdentifier.ForQualification(league.Id, groupPath),
+            "seed");
+        grouped.AddResolvedPopulationEntry(entries[0], _clock, provenance);
+        grouped.ApplyResolvedGroupEntry(group.Id, entries[0], provenance);
+        var groupDraw = grouped.CreateDraw(DrawResolutionKind.Group, _clock);
+        grouped.ConfigureDrawInputs(groupDraw.Id, DrawInputs.ForGroup([entries[0]]));
+        grouped.RecordDrawResolution(
+            groupDraw.Id,
+            DrawResolution.ResolvedGroups([new GroupDrawPlacement(entries[0], group.Id)]),
+            _clock);
+        grouped.PublishDraw(groupDraw.Id, _clock);
+        var drawn = new ResolutionProvenance(
+            ResolutionProvenanceKind.Tirage,
+            ResolutionPathIdentifier.ForDrawSlot(groupDraw.Id, "A"),
+            "seed");
+        grouped.AddResolvedPopulationEntry(entries[1], _clock, drawn);
+        grouped.ApplyResolvedGroupEntry(group.Id, entries[1], drawn);
+        var before = ResolutionFreshnessDetector.Inspect(competition, [league, grouped], Summaries(league, match))
+            .Where(occupant => occupant.Kind == ResolutionProvenanceKind.Tirage)
+            .Select(occupant => (occupant.Target, occupant.EntryId, occupant.State))
             .ToArray();
-        result.AffectedOccupants.Should().BeEquivalentTo(expected);
+        before.Should().NotBeEmpty();
+        before.Should().OnlyContain(occupant => occupant.State != StructureResolutionFreshness.Perime);
+
+        var held = () => ReleaseResolution.Plan(
+            competition,
+            grouped.Id,
+            new ResolutionReleaseTarget(StructureResolutionOccupantTarget.Group, entries[0].Value, null, group.Id.Value),
+            [league, grouped],
+            matches,
+            _clock);
+        held.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.ResolutionReleaseBlockedByDraw);
+        var after = ResolutionFreshnessDetector.Inspect(competition, [league, grouped], Summaries(league, match))
+            .Where(occupant => occupant.Kind == ResolutionProvenanceKind.Tirage)
+            .Select(occupant => (occupant.Target, occupant.EntryId, occupant.State))
+            .ToArray();
+        after.Should().BeEquivalentTo(before);
+    }
+
+    [Theory]
+    [InlineData(StructureResolutionOccupantTarget.Group, StageStatus.Draft)]
+    [InlineData(StructureResolutionOccupantTarget.Group, StageStatus.Ready)]
+    [InlineData(StructureResolutionOccupantTarget.Group, StageStatus.Running)]
+    [InlineData(StructureResolutionOccupantTarget.Group, StageStatus.Suspended)]
+    [InlineData(StructureResolutionOccupantTarget.Group, StageStatus.Completed)]
+    [InlineData(StructureResolutionOccupantTarget.Population, StageStatus.Draft)]
+    [InlineData(StructureResolutionOccupantTarget.Population, StageStatus.Ready)]
+    [InlineData(StructureResolutionOccupantTarget.Population, StageStatus.Running)]
+    [InlineData(StructureResolutionOccupantTarget.Population, StageStatus.Suspended)]
+    [InlineData(StructureResolutionOccupantTarget.Population, StageStatus.Completed)]
+    public void An_unconfirmed_group_or_population_follows_the_phase_status(
+        StructureResolutionOccupantTarget target,
+        StageStatus status)
+    {
+        var (competition, league, terminal, entries, match) = Pair();
+        var group = target == StructureResolutionOccupantTarget.Group
+            ? terminal.AddGroup("A", _clock)
+            : null;
+        var destination = group is null
+            ? QualificationDestination.ForPopulation(terminal.Id)
+            : QualificationDestination.ForGroup(terminal.Id, group.Id);
+        var path = new QualificationPath(
+            1,
+            QualificationSource.Overall(),
+            new QualificationSelection(SelectionMode.Position, 9),
+            destination);
+        league.ReplaceQualificationRules(new QualificationRules([path]), _clock);
+        var provenance = new ResolutionProvenance(
+            ResolutionProvenanceKind.Qualification,
+            ResolutionPathIdentifier.ForQualification(league.Id, path),
+            "seed");
+        terminal.AddResolvedPopulationEntry(entries[0], _clock, provenance);
+        if (group is not null)
+        {
+            terminal.ApplyResolvedGroupEntry(group.Id, entries[0], provenance);
+        }
+
+        if (terminal.Matchdays.Count == 0)
+        {
+            terminal.AddMatchday(1, _clock);
+        }
+
+        Move(terminal, status);
+        var release = () => ReleaseResolution.Execute(
+            competition,
+            terminal.Id,
+            new ResolutionReleaseTarget(target, entries[0].Value, null, group?.Id.Value),
+            [league, terminal],
+            [match],
+            _clock);
+
+        if (status == StageStatus.Completed)
+        {
+            release.Should().Throw<ApplicationFailureException>()
+                .Which.Code.Should().Be(ApplicationErrorCodes.ResolutionReleaseCompleted);
+            terminal.CompositionEntries.Should().Contain(entry => entry.EntryId.Equals(entries[0]));
+            return;
+        }
+
+        release.Should().NotThrow();
+        terminal.Status.Should().Be(status);
+        if (group is null)
+        {
+            terminal.CompositionEntries.Should().NotContain(entry => entry.EntryId.Equals(entries[0]));
+        }
+    }
+
+    [Theory]
+    [InlineData(StageStatus.Draft)]
+    [InlineData(StageStatus.Ready)]
+    [InlineData(StageStatus.Running)]
+    [InlineData(StageStatus.Suspended)]
+    [InlineData(StageStatus.Completed)]
+    public void A_downstream_phase_of_any_status_does_not_block_the_release(StageStatus status)
+    {
+        var (competition, league, terminal, entries, match) = Pair();
+        StampSlot(league, terminal, entries[0], position: 9);
+        var downstream = Stage.Create(competition.Id, new StageName("Aval"), SampleRegulations.Standard(), _clock);
+        downstream.AddMatchday(1, _clock);
+        competition.AddStage(downstream.Id, _clock);
+        Move(downstream, status);
+
+        ReleaseResolution.Execute(
+            competition,
+            terminal.Id,
+            SlotTarget(entries[0]),
+            [league, terminal, downstream],
+            [match],
+            _clock);
+
+        terminal.FindSlot("Champ")!.EntryId.Should().BeNull();
+    }
+
+    [Fact]
+    public void A_penalty_that_confirms_the_team_again_refuses_confirmation_without_writing()
+    {
+        var (competition, league, terminal, entries, match) = Pair();
+        StampSlot(league, terminal, entries[0], position: 1, minimumPoints: 3);
+        var penalty = league.AddPenalty(entries[0], pointsDeducted: 1, _clock);
+        var stages = new List<Stage> { league, terminal };
+        var matches = new List<Match> { match };
+        var target = SlotTarget(entries[0]);
+        var preview = ReleaseResolution.Plan(competition, terminal.Id, target, stages, matches, _clock);
+
+        league.RemovePenalty(penalty.Id, _clock);
+        var token = MyClub.PlayUp.Application.Stages.CascadeReplace.CascadeReplaceVersion.Compute(stages, matches);
+
+        var act = () => ReleaseResolution.Execute(
+            competition, terminal.Id, target, stages, matches, _clock);
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.ResolutionReleaseNotIndeterminate);
+        token.Should().Be(preview.VersionToken);
+        terminal.FindSlot("Champ")!.EntryId.Should().Be(entries[0]);
     }
 
     [Fact]

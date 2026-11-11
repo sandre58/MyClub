@@ -41,7 +41,7 @@ public sealed record ResolutionReleaseConfirmRequest(
 /// Preview or confirmation payload.
 /// </summary>
 /// <param name="VersionToken">State token. Send it back to confirm.</param>
-/// <param name="Releases">The place that is cleared.</param>
+/// <param name="Releases">Places cleared, including the population row when the team leaves the composition.</param>
 /// <param name="DetachedMatches">Unplayed matches whose side becomes to be determined.</param>
 /// <param name="AffectedOccupants">Other places whose freshness changes.</param>
 public sealed record ResolutionReleaseResponse(
@@ -58,7 +58,8 @@ public sealed record ResolutionReleaseRowDto(
     StructureResolutionOccupantTarget Target,
     string? SlotKey,
     Guid? GroupId,
-    Guid EntryId);
+    Guid EntryId,
+    string? EntryName);
 
 /// <summary>
 /// One unplayed match whose side is cleared.
@@ -69,7 +70,9 @@ public sealed record ResolutionReleaseDetachedMatchDto(
     int LegIndex,
     Side Side,
     Guid? HomeEntryId,
-    Guid? AwayEntryId);
+    Guid? AwayEntryId,
+    string? HomeName,
+    string? AwayName);
 
 /// <summary>
 /// Another place whose freshness changes when this place is released.
@@ -81,4 +84,7 @@ public sealed record ResolutionReleaseAffectedOccupantDto(
     Guid? GroupId,
     Guid EntryId,
     StructureResolutionFreshness StateBefore,
-    StructureResolutionFreshness StateAfter);
+    StructureResolutionFreshness StateAfter,
+    string? EntryName,
+    string? StageName,
+    string? PlaceLabel);

@@ -843,6 +843,7 @@
   "resolution": {
     "freshness": {
       "state": {
+        "AJour": "À jour",
         "Perime": "Périmé",
         "Indetermine": "Non confirmée",
         "NonVerifiee": "Non vérifiée"
@@ -869,18 +870,15 @@
         },
         "SourceAbsente": {
           "cause": "La phase ou la règle source est introuvable",
-          "clause": "la phase ou la règle source est introuvable",
-          "action": "Vérifier la source"
+          "clause": "la phase ou la règle source est introuvable"
         },
         "SelectionVide": {
           "cause": "Le classement ne désigne aucune équipe",
-          "clause": "le classement ne désigne aucune équipe",
-          "action": "Vérifier le classement"
+          "clause": "le classement ne désigne aucune équipe"
         },
         "Autre": {
           "cause": "La sélection ne peut pas être calculée",
-          "clause": "la sélection ne peut pas être calculée",
-          "action": "Vérifier la phase amont"
+          "clause": "la sélection ne peut pas être calculée"
         },
         "EgaliteClassement": {
           "cause": "Plusieurs équipes à égalité au classement",
@@ -910,8 +908,16 @@
       "nonePlayed": "Aucun match ne sera modifié.",
       "detachedIntro": "Le côté de l'équipe redevient à déterminer :",
       "detachedMatch": "Manche {{leg}} — {{side}}",
+      "detachedMatchNamed": "Manche {{leg}} — {{side}} — {{match}}",
+      "populationDropped": "{{team}} quitte aussi la composition.",
       "affectedIntro": "D'autres places changent d'état :",
-      "affectedOccupant": "{{before}} → {{after}}",
+      "affectedOccupant": "{{team}} — {{place}} : {{before}} → {{after}}",
+      "affectedOccupantOtherPhase": "{{team}} — {{place}} ({{phase}}) : {{before}} → {{after}}",
+      "target": {
+        "Slot": "Place",
+        "Group": "Groupe",
+        "Population": "Composition"
+      },
       "side": {
         "Home": "domicile",
         "Away": "extérieur"

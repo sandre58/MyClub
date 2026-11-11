@@ -314,6 +314,7 @@ export type ResolutionReleaseRow = {
   slotKey: string | null;
   groupId: string | null;
   entryId: string;
+  entryName?: string | null;
 };
 
 export type ResolutionReleaseDetachedMatch = {
@@ -323,6 +324,8 @@ export type ResolutionReleaseDetachedMatch = {
   side: 'Home' | 'Away';
   homeEntryId: string | null;
   awayEntryId: string | null;
+  homeName?: string | null;
+  awayName?: string | null;
 };
 
 export type ResolutionReleaseAffectedOccupant = {
@@ -333,6 +336,9 @@ export type ResolutionReleaseAffectedOccupant = {
   entryId: string;
   stateBefore: string;
   stateAfter: string;
+  entryName?: string | null;
+  stageName?: string | null;
+  placeLabel?: string | null;
 };
 
 export type ResolutionReleaseResponse = {

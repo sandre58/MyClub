@@ -13,8 +13,13 @@ import type {
   StructureResolutionOccupant,
   StructureStageHubSummary,
 } from '../../../types';
+import { scheduleStructureRefresh } from '../structureInvalidation';
 import { StructureResolutionReleaseAction } from './StructureResolutionReleaseAction';
 import { useStructureResolutionRelease } from './structureResolutionReleaseContext';
+
+vi.mock('../structureInvalidation', () => ({
+  scheduleStructureRefresh: vi.fn(),
+}));
 
 vi.mock('../../../api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../../api')>();
@@ -140,7 +145,9 @@ describe('StructureResolutionReleaseAction', () => {
           legIndex: 1,
           side: 'Home',
           homeEntryId: entryId,
-          awayEntryId: null,
+          awayEntryId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+          homeName: 'Nord',
+          awayName: 'Est',
         },
       ],
     });
@@ -153,7 +160,9 @@ describe('StructureResolutionReleaseAction', () => {
 
     await user.click(screen.getByRole('button', { name: 'open' }));
 
-    expect(await screen.findByText('Manche 1 — domicile')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Manche 1 — domicile — Nord – Est'),
+    ).toBeInTheDocument();
     expect(
       screen.getByText("Le côté de l'équipe redevient à déterminer :"),
     ).toBeInTheDocument();
@@ -183,12 +192,92 @@ describe('StructureResolutionReleaseAction', () => {
 
     expect(
       await screen.findByText(
-        'Une affectation directe n’est pas libérée. (409)',
+        'Cette place est fixée à la main : retirez l’affectation directe. (409)',
       ),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('dialog', { name: 'Libérer cette place ?' }),
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Libérer' })).toBeDisabled();
+    expect(scheduleStructureRefresh).toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: 'Annuler' }));
+    expect(scheduleStructureRefresh).toHaveBeenCalledTimes(2);
+  });
+
+  it('shows a preview refusal in the dialog and refreshes the structure', async () => {
+    vi.mocked(previewResolutionRelease).mockRejectedValue(
+      new ApiError(
+        404,
+        'Missing',
+        undefined,
+        'Application.ResolutionReleaseOccupantNotFound',
+      ),
+    );
+    const user = userEvent.setup();
+    renderAction();
+
+    await user.click(screen.getByRole('button', { name: 'open' }));
+
+    expect(
+      await screen.findByRole('dialog', { name: 'Libérer cette place ?' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Il n’y a rien à libérer. (404)'),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Libérer' })).toBeDisabled();
+    expect(scheduleStructureRefresh).toHaveBeenCalledTimes(1);
+
+    await user.click(screen.getByRole('button', { name: 'Annuler' }));
+    expect(scheduleStructureRefresh).toHaveBeenCalledTimes(2);
+  });
+
+  it('names the team that leaves the composition and a downstream place', async () => {
+    vi.mocked(previewResolutionRelease).mockResolvedValue({
+      ...emptyPlan,
+      releases: [
+        {
+          stageId,
+          target: 'Slot',
+          slotKey: 'Dernier',
+          groupId: null,
+          entryId,
+          entryName: 'Centre',
+        },
+        {
+          stageId,
+          target: 'Population',
+          slotKey: null,
+          groupId: null,
+          entryId,
+          entryName: 'Centre',
+        },
+      ],
+      affectedOccupants: [
+        {
+          stageId: 'ffffffff-ffff-ffff-ffff-ffffffffffff',
+          target: 'Slot',
+          slotKey: 'Suite',
+          groupId: null,
+          entryId,
+          stateBefore: 'Perime',
+          stateAfter: 'AJour',
+          entryName: 'Centre',
+          stageName: 'Aval',
+          placeLabel: 'Suite',
+        },
+      ],
+    });
+    const user = userEvent.setup();
+    renderAction();
+
+    await user.click(screen.getByRole('button', { name: 'open' }));
+
+    expect(
+      await screen.findByText('Centre quitte aussi la composition.'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Centre — Suite (Aval) : Périmé → À jour'),
+    ).toBeInTheDocument();
   });
 });

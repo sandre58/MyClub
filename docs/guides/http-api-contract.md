@@ -739,7 +739,16 @@ Read-only preview of releasing one unconfirmed place. Computes the version token
       "target": "Slot",
       "slotKey": "Champ",
       "groupId": null,
-      "entryId": "<guid>"
+      "entryId": "<guid>",
+      "entryName": "Nord"
+    },
+    {
+      "stageId": "<guid>",
+      "target": "Population",
+      "slotKey": null,
+      "groupId": null,
+      "entryId": "<guid>",
+      "entryName": "Nord"
     }
   ],
   "detachedMatches": [
@@ -749,14 +758,33 @@ Read-only preview of releasing one unconfirmed place. Computes the version token
       "legIndex": 1,
       "side": "Home",
       "homeEntryId": "<guid>",
-      "awayEntryId": "<guid>"
+      "awayEntryId": "<guid>",
+      "homeName": "Nord",
+      "awayName": "Sud"
     }
   ],
-  "affectedOccupants": []
+  "affectedOccupants": [
+    {
+      "stageId": "<guid>",
+      "target": "Slot",
+      "slotKey": "Suite",
+      "groupId": null,
+      "entryId": "<guid>",
+      "stateBefore": "Perime",
+      "stateAfter": "AJour",
+      "entryName": "Nord",
+      "stageName": "Aval",
+      "placeLabel": "Suite"
+    }
+  ]
 }
 ```
 
-`detachedMatches` lists each leg of the bracket pair. On leg 2, slot A is away. `affectedOccupants` lists other places whose freshness changes after a full recalculation; it is often empty. Unknown occupant → **404** `Application.ResolutionReleaseOccupantNotFound`. A provenance other than qualification or progression, a configuration cause, or a population entry that is still referenced → **409** `Application.ResolutionReleaseNotReleasable`. A place that is not unconfirmed → **409** `Application.ResolutionReleaseNotIndeterminate`. A completed phase → **409** `Application.ResolutionReleaseCompleted`. A direct assignment → **409** `Application.ResolutionReleaseDirectAssignment`. A live or finished match that involves the team → **409** `Application.ResolutionReleaseBlockedByPlayedMatch`. An attached match on a group, a population, or a non-bracket place while the phase is Draft or Ready → **409** `Application.ResolutionReleaseBlockedByMatches`. The same case while the phase is Running or Suspended → **409** `Application.ResolutionReleaseBlockedByMatchesRunning`. A team still held by a published draw, or by a cancelled draw whose placements remain → **409** `Application.ResolutionReleaseBlockedByDraw`.
+`releases` lists the place that is cleared. It also lists a `Population` row when that release removes the team from the composition. The row is absent when a slot, a group, or a direct assignment on the same phase still holds the team. `entryName` is the competition display name. `detachedMatches` lists each leg of the bracket pair, with `homeName` and `awayName` when the competition still lists those entries. On leg 2, slot A is away. `affectedOccupants` lists other places whose freshness state changes after a full recalculation. `stateBefore` and `stateAfter` are `AJour`, `Perime`, or `Indetermine`. `placeLabel` is the slot key or the group name. `stageName` is the phase. An occupant that disappears is not a row here; the population removal is a `releases` row. Unknown occupant → **404** `Application.ResolutionReleaseOccupantNotFound`. A provenance other than qualification or progression, a configuration cause, or a population entry that is still referenced → **409** `Application.ResolutionReleaseNotReleasable`. A place that is not unconfirmed → **409** `Application.ResolutionReleaseNotIndeterminate`. A completed phase → **409** `Application.ResolutionReleaseCompleted`. A direct assignment → **409** `Application.ResolutionReleaseDirectAssignment`. A live or finished match that involves the team → **409** `Application.ResolutionReleaseBlockedByPlayedMatch`. An attached match on a group, a population, or a non-bracket place while the phase is Draft or Ready → **409** `Application.ResolutionReleaseBlockedByMatches`. The same case while the phase is Running or Suspended → **409** `Application.ResolutionReleaseBlockedByMatchesRunning`. A team still held by a published draw, or by a cancelled draw whose placements remain → **409** `Application.ResolutionReleaseBlockedByDraw`.
+
+A stored provenance of `Directe` returns `Application.ResolutionReleaseDirectAssignment` at the first kind check. The guard list also uses that code when a qualification or progression place still holds a direct assignment. `Application.ResolutionReleaseNotReleasable` stays the code for every other kind, including a draw. The direct-provenance message names the assignment the organiser can remove.
+
+Witnesses removed with the place are the form-path rows whose fingerprint is the released path. A witness for another path is left in place, including when the team remains seated in a group of the same phase. `releasable` is false when the structure read was given no match summaries. A summary dictionary that contains the phase with an empty list means that phase has no matches.
 
 ### `POST /stages/{stageId}/resolution/release` → `ResolutionReleaseResponse`
 

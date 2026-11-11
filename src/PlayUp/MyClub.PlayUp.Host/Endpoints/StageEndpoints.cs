@@ -918,7 +918,8 @@ internal static class StageEndpoints
                     row.Target,
                     row.SlotKey,
                     row.GroupId,
-                    row.EntryId))
+                    row.EntryId,
+                    row.EntryName))
                 .ToArray(),
             result.DetachedMatches
                 .Select(match => new ResolutionReleaseDetachedMatchDto(
@@ -927,7 +928,9 @@ internal static class StageEndpoints
                     match.LegIndex,
                     match.Side,
                     match.HomeEntryId,
-                    match.AwayEntryId))
+                    match.AwayEntryId,
+                    match.HomeName,
+                    match.AwayName))
                 .ToArray(),
             result.AffectedOccupants
                 .Select(occupant => new ResolutionReleaseAffectedOccupantDto(
@@ -937,6 +940,9 @@ internal static class StageEndpoints
                     occupant.GroupId,
                     occupant.EntryId,
                     occupant.StateBefore,
-                    occupant.StateAfter))
+                    occupant.StateAfter,
+                    occupant.EntryName,
+                    occupant.StageName,
+                    occupant.PlaceLabel))
                 .ToArray());
 }

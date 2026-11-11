@@ -13,7 +13,7 @@ namespace MyClub.PlayUp.Application.Stages.ReleaseResolution;
 /// Preview or confirmation of one release.
 /// </summary>
 /// <param name="VersionToken">State token. Send it back to confirm.</param>
-/// <param name="Releases">The place that is cleared.</param>
+/// <param name="Releases">Places cleared, including the population row when the team leaves the composition.</param>
 /// <param name="DetachedMatches">Unplayed matches whose side becomes to be determined.</param>
 /// <param name="AffectedOccupants">Other places whose freshness changes.</param>
 public sealed record ResolutionReleaseResult(
@@ -30,10 +30,11 @@ public sealed record ResolutionReleaseRow(
     StructureResolutionOccupantTarget Target,
     string? SlotKey,
     Guid? GroupId,
-    Guid EntryId);
+    Guid EntryId,
+    string? EntryName = null);
 
 /// <summary>
-/// One unplayed match whose side is cleared.
+/// One unplayed match whose side is cleared. Home and away names are the competition display names.
 /// </summary>
 public sealed record ResolutionReleaseDetachedMatch(
     Guid MatchId,
@@ -41,10 +42,13 @@ public sealed record ResolutionReleaseDetachedMatch(
     int LegIndex,
     Side Side,
     Guid? HomeEntryId,
-    Guid? AwayEntryId);
+    Guid? AwayEntryId,
+    string? HomeName = null,
+    string? AwayName = null);
 
 /// <summary>
 /// Another place whose freshness changes when this place is released.
+/// Names are the team, the phase, and the slot key or group name.
 /// </summary>
 public sealed record ResolutionReleaseAffectedOccupant(
     Guid StageId,
@@ -53,7 +57,10 @@ public sealed record ResolutionReleaseAffectedOccupant(
     Guid? GroupId,
     Guid EntryId,
     StructureResolutionFreshness StateBefore,
-    StructureResolutionFreshness StateAfter);
+    StructureResolutionFreshness StateAfter,
+    string? EntryName = null,
+    string? StageName = null,
+    string? PlaceLabel = null);
 
 /// <summary>
 /// The place the organiser asked to release.

@@ -45,12 +45,12 @@ public static class ReleaseResolution
         var scratchStages = stages.Select(CascadeAggregateCopy.Copy).ToList();
         var scratchMatches = matches.Select(CascadeAggregateCopy.Copy).ToList();
         var scratchStage = scratchStages.Single(candidate => candidate.Id.Equals(stageId));
-        var detached = Apply(scratchStage, scratchMatches, origin, clock);
+        var applied = Apply(competition, scratchStage, scratchMatches, origin, clock);
         var after = ResolutionFreshnessDetector.Inspect(
             competition,
             scratchStages,
             Summaries(scratchMatches));
-        return Result(token, stageId, origin, detached, Diff(before, after, origin));
+        return Result(token, applied.Releases, applied.Detached, Diff(competition, stages, before, after, origin));
     }
 
     /// <summary>
@@ -70,9 +70,9 @@ public static class ReleaseResolution
         var origin = Find(before, stageId, target);
         var stage = stages.Single(candidate => candidate.Id.Equals(stageId));
         RefuseUnlessReleasable(stage, origin, matches);
-        var detached = Apply(stage, matches, origin, clock);
+        var applied = Apply(competition, stage, matches, origin, clock);
         var after = ResolutionFreshnessDetector.Inspect(competition, stages, Summaries(matches));
-        return Result(token, stageId, origin, detached, Diff(before, after, origin));
+        return Result(token, applied.Releases, applied.Detached, Diff(competition, stages, before, after, origin));
     }
 
     private static void Require(
@@ -135,7 +135,8 @@ public static class ReleaseResolution
         }
     }
 
-    private static List<ResolutionReleaseDetachedMatch> Apply(
+    private static AppliedRelease Apply(
+        Competition competition,
         Stage stage,
         IReadOnlyList<Match> matches,
         ResolutionOccupantAssessment origin,
@@ -145,9 +146,10 @@ public static class ReleaseResolution
         var detached = new List<ResolutionReleaseDetachedMatch>();
         if (origin.Target == StructureResolutionOccupantTarget.Slot && origin.SlotKey is not null)
         {
-            UnresolveBracket(stage, origin.SlotKey, entryId, matches, clock, detached);
+            UnresolveBracket(competition, stage, origin.SlotKey, entryId, matches, clock, detached);
         }
 
+        var releases = new List<ResolutionReleaseRow> { ReleaseRow(competition, stage, origin) };
         var snapshots = MaterializedParticipantSnapshots.FromMatches(
             matches.Where(match => match.StageId.Equals(stage.Id)));
         if (origin.Target == StructureResolutionOccupantTarget.Slot && origin.SlotKey is not null)
@@ -159,7 +161,11 @@ public static class ReleaseResolution
             stage.RemoveResolvedGroupEntry(new GroupId(groupId), entryId, snapshots);
         }
 
-        foreach (var witness in stage.FormPathResolutions.Where(resolution => resolution.EntryId.Equals(entryId)).ToArray())
+        foreach (var witness in stage.FormPathResolutions
+            .Where(resolution =>
+                resolution.EntryId.Equals(entryId)
+                && WitnessesReleasedPath(resolution.PathFingerprint, origin.SourcePathId))
+            .ToArray())
         {
             stage.RemoveFormPathResolution(witness.PathFingerprint);
         }
@@ -167,12 +173,27 @@ public static class ReleaseResolution
         if (!CascadeReplaceUseCase.Referenced(stage, entryId))
         {
             stage.RemoveResolvedPopulationEntry(entryId, clock, snapshots);
+            if (origin.Target != StructureResolutionOccupantTarget.Population)
+            {
+                releases.Add(new ResolutionReleaseRow(
+                    stage.Id.Value,
+                    StructureResolutionOccupantTarget.Population,
+                    null,
+                    null,
+                    origin.EntryId,
+                    EntryName(competition, origin.EntryId)));
+            }
         }
 
-        return detached;
+        return new AppliedRelease(releases, detached);
     }
 
+    private static bool WitnessesReleasedPath(string fingerprint, string sourcePathId) =>
+        string.Equals(sourcePathId, fingerprint, StringComparison.Ordinal)
+        || sourcePathId.StartsWith(fingerprint + "|", StringComparison.Ordinal);
+
     private static void UnresolveBracket(
+        Competition competition,
         Stage stage,
         string slotKey,
         EntryId entryId,
@@ -201,18 +222,19 @@ public static class ReleaseResolution
 
                 if (match.HomeEntryId is { } home && home.Equals(entryId))
                 {
-                    Detach(match, attachment.LegIndex, Side.Home, clock, detached);
+                    Detach(competition, match, attachment.LegIndex, Side.Home, clock, detached);
                 }
 
                 if (match.AwayEntryId is { } away && away.Equals(entryId))
                 {
-                    Detach(match, attachment.LegIndex, Side.Away, clock, detached);
+                    Detach(competition, match, attachment.LegIndex, Side.Away, clock, detached);
                 }
             }
         }
     }
 
     private static void Detach(
+        Competition competition,
         Match match,
         int legIndex,
         Side side,
@@ -232,30 +254,22 @@ public static class ReleaseResolution
             legIndex,
             side,
             match.HomeEntryId?.Value,
-            match.AwayEntryId?.Value));
+            match.AwayEntryId?.Value,
+            EntryName(competition, match.HomeEntryId),
+            EntryName(competition, match.AwayEntryId)));
         match.UnresolveParticipant(side, clock);
     }
 
     private static ResolutionReleaseResult Result(
         string token,
-        StageId stageId,
-        ResolutionOccupantAssessment origin,
+        IReadOnlyList<ResolutionReleaseRow> releases,
         IReadOnlyList<ResolutionReleaseDetachedMatch> detached,
         IReadOnlyList<ResolutionReleaseAffectedOccupant> affected) =>
-        new(
-            token,
-            [
-                new ResolutionReleaseRow(
-                    stageId.Value,
-                    origin.Target,
-                    origin.SlotKey,
-                    origin.GroupId,
-                    origin.EntryId)
-            ],
-            detached,
-            affected);
+        new(token, releases, detached, affected);
 
     private static List<ResolutionReleaseAffectedOccupant> Diff(
+        Competition competition,
+        IReadOnlyList<Stage> stages,
         IReadOnlyList<ResolutionOccupantAssessment> before,
         IReadOnlyList<ResolutionOccupantAssessment> after,
         ResolutionOccupantAssessment origin)
@@ -278,12 +292,58 @@ public static class ReleaseResolution
                     occupant.GroupId,
                     occupant.EntryId,
                     occupant.State,
-                    next.State));
+                    next.State,
+                    EntryName(competition, occupant.EntryId),
+                    StageName(stages, occupant.StageId),
+                    PlaceLabel(stages, occupant)));
             }
         }
 
         return affected;
     }
+
+    private static ResolutionReleaseRow ReleaseRow(
+        Competition competition,
+        Stage stage,
+        ResolutionOccupantAssessment origin) =>
+        new(
+            stage.Id.Value,
+            origin.Target,
+            origin.SlotKey,
+            origin.GroupId,
+            origin.EntryId,
+            EntryName(competition, origin.EntryId));
+
+    private static string? EntryName(Competition competition, Guid entryId) =>
+        competition.Entries.FirstOrDefault(entry => entry.Id.Value == entryId)?.DisplayName;
+
+    private static string? EntryName(Competition competition, EntryId? entryId) =>
+        entryId is { } id ? EntryName(competition, id.Value) : null;
+
+    private static string? StageName(IReadOnlyList<Stage> stages, Guid stageId) =>
+        stages.FirstOrDefault(stage => stage.Id.Value == stageId)?.Name.Value;
+
+    private static string? PlaceLabel(IReadOnlyList<Stage> stages, ResolutionOccupantAssessment occupant)
+    {
+        if (!string.IsNullOrEmpty(occupant.SlotKey))
+        {
+            return occupant.SlotKey;
+        }
+
+        if (occupant.GroupId is not Guid groupId)
+        {
+            return null;
+        }
+
+        return stages
+            .FirstOrDefault(stage => stage.Id.Value == occupant.StageId)?
+            .Groups.FirstOrDefault(group => group.Id.Value == groupId)?
+            .Name;
+    }
+
+    private sealed record AppliedRelease(
+        IReadOnlyList<ResolutionReleaseRow> Releases,
+        IReadOnlyList<ResolutionReleaseDetachedMatch> Detached);
 
     private static bool SamePlace(ResolutionOccupantAssessment left, ResolutionOccupantAssessment right) =>
         left.StageId == right.StageId

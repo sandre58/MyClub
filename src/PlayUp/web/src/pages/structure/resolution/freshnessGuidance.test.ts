@@ -181,19 +181,31 @@ describe('freshnessAction', () => {
     ).toBeNull();
   });
 
-  it('opens the rules for an invalid source setup and does not release it', () => {
+  it('opens the source phase for an invalid source setup and does not release it', () => {
+    expect(
+      freshnessAction(
+        {
+          ...base,
+          indeterminacyCause: 'ConfigurationInvalide',
+          upstreamStageId: 'poules',
+        },
+        'comp',
+        { canReplace: false },
+      ),
+    ).toEqual({
+      kind: 'navigate',
+      href: '/competitions/comp/structure?stage=poules',
+      labelKey:
+        'resolution.freshness.indeterminacy.ConfigurationInvalide.action',
+    });
+
     expect(
       freshnessAction(
         { ...base, indeterminacyCause: 'ConfigurationInvalide' },
         'comp',
         { canReplace: false },
       ),
-    ).toEqual({
-      kind: 'navigate',
-      href: '/competitions/comp/regulation',
-      labelKey:
-        'resolution.freshness.indeterminacy.ConfigurationInvalide.action',
-    });
+    ).toMatchObject({ href: '/competitions/comp/regulation' });
   });
 
   it('names the team and the unplayed match in the explanation', () => {

@@ -43,7 +43,10 @@ public sealed class ResolutionReleaseEndpointTests(HostPostgresFixture fixture)
         preview.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await preview.Content.ReadFromJsonAsync<ResolutionReleaseResponse>(HostJson.Options);
         body.Should().NotBeNull();
-        body.Releases.Should().ContainSingle().Which.EntryId.Should().Be(seeded.EntryId);
+        body.Releases.Should().Contain(row =>
+            row.Target == StructureResolutionOccupantTarget.Slot && row.EntryId == seeded.EntryId);
+        body.Releases.Should().Contain(row =>
+            row.Target == StructureResolutionOccupantTarget.Population && row.EntryName == "Nord");
 
         var confirm = await ConfirmAsync(client, seeded, body.VersionToken);
         confirm.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -102,6 +105,8 @@ public sealed class ResolutionReleaseEndpointTests(HostPostgresFixture fixture)
             (SeedDrawAsync, ApplicationErrorCodes.ResolutionReleaseBlockedByDraw),
             (SeedConfigurationAsync, ApplicationErrorCodes.ResolutionReleaseNotReleasable),
             (SeedReferencedPopulationAsync, ApplicationErrorCodes.ResolutionReleaseNotReleasable),
+            (SeedRunningGroupAsync, ApplicationErrorCodes.ResolutionReleaseBlockedByMatchesRunning),
+            (SeedSuspendedPopulationAsync, ApplicationErrorCodes.ResolutionReleaseBlockedByMatchesRunning),
         };
 
         using var client = factory.CreateClient();
@@ -150,6 +155,49 @@ public sealed class ResolutionReleaseEndpointTests(HostPostgresFixture fixture)
 
     private async Task<Seed> SeedRunningAsync(PlayUpWebApplicationFactory factory) =>
         await SeedAttachedAsync(factory, running: true);
+
+    [IntegrationFact]
+    public async Task A_running_group_is_not_releasable_and_conflicts_with_the_french_keyAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var seeded = await SeedRunningGroupAsync(factory);
+        using var client = factory.CreateClient();
+
+        (await ReadOccupantsAsync(client, seeded.CompetitionId)).Should().Contain(occupant =>
+            occupant.Target == StructureResolutionOccupantTarget.Group && !occupant.Releasable);
+
+        var preview = await PreviewAsync(client, seeded);
+        preview.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        GetCode(await preview.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options))
+            .Should().Be(ApplicationErrorCodes.ResolutionReleaseBlockedByMatchesRunning);
+    }
+
+    [IntegrationFact]
+    public async Task A_penalty_that_confirms_the_team_again_conflicts_without_clearing_the_placeAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var seeded = await SeedTieAsync(factory);
+        using var client = factory.CreateClient();
+        var preview = await PreviewAsync(client, seeded);
+        preview.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await preview.Content.ReadFromJsonAsync<ResolutionReleaseResponse>(HostJson.Options);
+
+        using (var scope = factory.Services.CreateScope())
+        {
+            var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+            var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+            var league = await stages.GetByIdForUpdateAsync(new StageId(seeded.LeagueId));
+            league!.RemovePenalty(league.Penalties[0].Id, _clock);
+            await unitOfWork.SaveChangesAsync();
+        }
+
+        var confirm = await ConfirmAsync(client, seeded, body!.VersionToken);
+        confirm.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        GetCode(await confirm.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options))
+            .Should().Be(ApplicationErrorCodes.ResolutionReleaseNotIndeterminate);
+        (await ReadOccupantsAsync(client, seeded.CompetitionId)).Should().Contain(occupant =>
+            occupant.SlotKey == "Champ" && occupant.EntryId == seeded.EntryId);
+    }
 
     private async Task<Seed> SeedAttachedAsync(PlayUpWebApplicationFactory factory, bool running)
     {
@@ -233,6 +281,90 @@ public sealed class ResolutionReleaseEndpointTests(HostPostgresFixture fixture)
             null,
             StructureResolutionOccupantTarget.Population,
             match.Id.Value);
+    }
+
+    private async Task<Seed> SeedRunningGroupAsync(PlayUpWebApplicationFactory factory) =>
+        await SeedGroupedMatchAsync(factory, StageStatus.Running, StructureResolutionOccupantTarget.Group);
+
+    private async Task<Seed> SeedSuspendedPopulationAsync(PlayUpWebApplicationFactory factory) =>
+        await SeedGroupedMatchAsync(factory, StageStatus.Suspended, StructureResolutionOccupantTarget.Population);
+
+    private async Task<Seed> SeedGroupedMatchAsync(
+        PlayUpWebApplicationFactory factory,
+        StageStatus status,
+        StructureResolutionOccupantTarget target)
+    {
+        var (competition, league, terminal, entries, match) = Build(position: null);
+        var group = terminal.AddGroup("A", _clock);
+        var destination = target == StructureResolutionOccupantTarget.Population
+            ? QualificationDestination.ForPopulation(terminal.Id)
+            : QualificationDestination.ForGroup(terminal.Id, group.Id);
+        var path = new QualificationPath(
+            1,
+            QualificationSource.Overall(),
+            new QualificationSelection(SelectionMode.Position, 9),
+            destination);
+        league.ReplaceQualificationRules(new QualificationRules([path]), _clock);
+        var provenance = new ResolutionProvenance(
+            ResolutionProvenanceKind.Qualification,
+            ResolutionPathIdentifier.ForQualification(league.Id, path),
+            "seed");
+        terminal.AddResolvedPopulationEntry(entries[0], _clock, provenance);
+        if (target == StructureResolutionOccupantTarget.Group)
+        {
+            terminal.ApplyResolvedGroupEntry(group.Id, entries[0], provenance);
+        }
+
+        var matchday = terminal.AddMatchday(1, _clock);
+        var fixture = terminal.AddFixture(matchday.Id, _clock);
+        var attached = Match.Create(competition.Id, terminal.Id, entries[0], entries[1], _clock);
+        terminal.AttachMatch(fixture.Id, attached.Id, 1, _clock);
+        terminal.Prepare(_clock);
+        terminal.Start(_clock);
+        if (status == StageStatus.Suspended)
+        {
+            terminal.Suspend(_clock);
+        }
+
+        await PersistAsync(factory, competition, [league, terminal], [match, attached]);
+        return new Seed(
+            competition.Id.Value,
+            terminal.Id.Value,
+            entries[0].Value,
+            null,
+            target == StructureResolutionOccupantTarget.Group ? group.Id.Value : null,
+            target,
+            match.Id.Value);
+    }
+
+    private async Task<Seed> SeedTieAsync(PlayUpWebApplicationFactory factory)
+    {
+        var (competition, league, terminal, entries, match) = Build(position: null);
+        var path = new QualificationPath(
+            1,
+            QualificationSource.Overall(),
+            new QualificationSelection(SelectionMode.Position, 1),
+            QualificationDestination.ForSlot(terminal.Id, "Champ"),
+            QualificationCondition.PointsAtLeast(3));
+        league.ReplaceQualificationRules(new QualificationRules([path]), _clock);
+        var provenance = new ResolutionProvenance(
+            ResolutionProvenanceKind.Qualification,
+            ResolutionPathIdentifier.ForQualification(league.Id, path),
+            "seed");
+        terminal.AddResolvedPopulationEntry(entries[0], _clock, provenance);
+        terminal.ApplyResolvedEntry("Champ", entries[0], _clock, provenance);
+        league.AddPenalty(entries[0], pointsDeducted: 1, _clock);
+        await PersistAsync(factory, competition, [league, terminal], [match]);
+        return new Seed(
+            competition.Id.Value,
+            terminal.Id.Value,
+            entries[0].Value,
+            "Champ",
+            null,
+            StructureResolutionOccupantTarget.Slot,
+            match.Id.Value,
+            league.Id.Value,
+            entries[1].Value);
     }
 
     private async Task<Seed> SaveAsync(PlayUpWebApplicationFactory factory, int position, bool persist = true)
@@ -358,5 +490,7 @@ public sealed class ResolutionReleaseEndpointTests(HostPostgresFixture fixture)
         string? SlotKey,
         Guid? GroupId,
         StructureResolutionOccupantTarget Target,
-        Guid MatchId);
+        Guid MatchId,
+        Guid LeagueId = default,
+        Guid OtherEntryId = default);
 }

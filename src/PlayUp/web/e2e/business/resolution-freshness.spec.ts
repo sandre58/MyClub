@@ -3,6 +3,7 @@ import { expect, test, type Page } from '@playwright/test';
 import {
   correctFinishedMatchResult,
   findFirstFinishedMatchOnStage,
+  createIsolatedReleaseCompetition,
   findFreshnessActionsRecetteCompetition,
   findResolutionFreshnessQualSlotCompetition,
   findResolutionFreshnessScoreUpstreamCompetition,
@@ -183,64 +184,53 @@ test.describe('Play’Up business (resolution freshness)', () => {
     page,
     request,
   }) => {
-    const competition = await findFreshnessActionsRecetteCompetition(request);
-    const classementId = await getStageIdByName(
-      request,
-      competition.id,
-      'Classement',
-    );
-    const genereId = await getStageIdByName(request, competition.id, 'Généré');
+    const empty = await createIsolatedReleaseCompetition(request, false);
+    await releasePlace(page, empty, false);
 
-    await page.goto(
-      `/competitions/${competition.id}/structure?stage=${classementId}`,
-    );
-    await expect(
-      page.getByRole('heading', { name: 'Structure' }),
-    ).toBeVisible();
-    await expectAttentionRow(page, 'Classement', true);
-
-    const dernier = page.locator('.schematic-slot').filter({
-      hasText: 'Dernier',
-    });
-    await expect(dernier.getByText('Centre')).toBeVisible();
-    await dernier.getByRole('button', { name: /Libérer la place/ }).click();
-    await expect(
-      page.getByRole('dialog', { name: 'Libérer cette place ?' }),
-    ).toBeVisible();
-    await expect(page.getByText('Aucun match ne sera modifié.')).toBeVisible();
-    await page.getByRole('button', { name: 'Libérer', exact: true }).click();
-    await expect(
-      page.getByRole('dialog', { name: 'Libérer cette place ?' }),
-    ).toHaveCount(0);
-    await expect(dernier.getByText('Centre')).toHaveCount(0);
-    await expect(
-      dernier.getByRole('button', { name: /Libérer la place/ }),
-    ).toHaveCount(0);
-
-    await expectAttentionRow(page, 'Classement', false);
-
-    await page.goto(
-      `/competitions/${competition.id}/structure?stage=${genereId}`,
-    );
-    const libre = page.locator('.schematic-slot').filter({
-      hasText: 'Libre',
-    });
-    await expectAttentionRow(page, 'Généré', true);
-    await expect(libre.getByText('Nord')).toBeVisible();
-    await libre.getByRole('button', { name: /Libérer la place/ }).click();
-    await expect(page.getByText('Manche 1 — domicile')).toBeVisible();
-    await page.getByRole('button', { name: 'Libérer', exact: true }).click();
-    await expect(
-      page.getByRole('dialog', { name: 'Libérer cette place ?' }),
-    ).toHaveCount(0);
-    await expect(libre.getByText('Nord')).toHaveCount(0);
-    await expect(
-      libre.getByRole('button', { name: /Libérer la place/ }),
-    ).toHaveCount(0);
-
-    await expectAttentionRow(page, 'Généré', false);
+    const generated = await createIsolatedReleaseCompetition(request, true);
+    await releasePlace(page, generated, true);
   });
 });
+
+async function releasePlace(
+  page: Page,
+  seeded: Awaited<ReturnType<typeof createIsolatedReleaseCompetition>>,
+  withMatch: boolean,
+) {
+  await page.goto(
+    `/competitions/${seeded.competitionId}/structure?stage=${seeded.stageId}`,
+  );
+  await expect(page.getByRole('heading', { name: 'Structure' })).toBeVisible();
+  const stageName = withMatch ? 'Généré' : 'Vide';
+  await expectAttentionRow(page, stageName, true);
+
+  const place = page.locator('.schematic-slot').filter({
+    hasText: seeded.team,
+  });
+  await place.getByRole('button', { name: /Libérer la place/ }).click();
+  await expect(
+    page.getByRole('dialog', { name: 'Libérer cette place ?' }),
+  ).toBeVisible();
+  if (withMatch) {
+    await expect(
+      page.getByText(`Manche 1 — domicile — ${seeded.matchLabel}`),
+    ).toBeVisible();
+  } else {
+    await expect(page.getByText('Aucun match ne sera modifié.')).toBeVisible();
+  }
+  await expect(
+    page.getByText(`${seeded.team} quitte aussi la composition.`),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Libérer', exact: true }).click();
+  await expect(
+    page.getByRole('dialog', { name: 'Libérer cette place ?' }),
+  ).toHaveCount(0);
+  await expect(place.getByText(seeded.team)).toHaveCount(0);
+  await expect(
+    place.getByRole('button', { name: /Libérer la place/ }),
+  ).toHaveCount(0);
+  await expectAttentionRow(page, stageName, false);
+}
 
 async function expectAttentionRow(
   page: Page,

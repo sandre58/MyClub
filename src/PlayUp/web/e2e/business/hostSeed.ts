@@ -487,6 +487,207 @@ export async function correctFinishedMatchResult(
   }
 }
 
+export type IsolatedReleaseCompetition = {
+  competitionId: string;
+  stageId: string;
+  team: string;
+  matchLabel: string | null;
+};
+
+/**
+ * A competition created for one release walkthrough. A retry builds another
+ * competition, so a previous release cannot empty the place under test.
+ * Nord is qualified while a win meets the points condition, then the score
+ * becomes a draw and the place is unconfirmed again.
+ */
+export async function createIsolatedReleaseCompetition(
+  request: APIRequestContext,
+  withMatch: boolean,
+): Promise<IsolatedReleaseCompetition> {
+  const competitionId = await postId(request, '/competitions', {
+    name: `Libérer ${crypto.randomUUID()}`,
+  });
+  const nord = await addNamedEntry(request, competitionId, 'Nord');
+  const est = await addNamedEntry(request, competitionId, 'Est');
+  const sourceId = await addStage(request, competitionId, {
+    format: 'Championship',
+    name: 'Source',
+    matchGenerationFormat: 'SingleRoundRobin',
+  });
+  const stageId = await addStage(request, competitionId, {
+    format: 'Cup',
+    name: withMatch ? 'Généré' : 'Vide',
+    bracketSize: 2,
+  });
+
+  await sendOk(request, 'PUT', `/stages/${sourceId}/affectation`, {
+    entryIds: [nord, est],
+  });
+  await sendOk(request, 'PUT', `/stages/${sourceId}/qualification-rules`, {
+    intents: [
+      {
+        ...intent(1, 1, stageId, 'S1'),
+        minimumPoints: 3,
+      },
+      ...(withMatch ? [intent(2, 2, stageId, 'S2')] : []),
+    ],
+  });
+  await sendOk(request, 'POST', `/stages/${sourceId}/prepare`);
+  await sendOk(request, 'POST', `/competitions/${competitionId}/prepare`);
+  await sendOk(request, 'POST', `/stages/${sourceId}/matches/materialize`);
+  await sendOk(request, 'POST', `/stages/${sourceId}/start`);
+  await sendOk(request, 'POST', `/competitions/${competitionId}/start`);
+
+  const sourceMatch = await readStageMatch(request, sourceId);
+  const nordAtHome = sourceMatch.homeEntryId === nord;
+  await sendOk(request, 'POST', `/matches/${sourceMatch.matchId}/start`);
+  await sendOk(request, 'POST', `/matches/${sourceMatch.matchId}/finish`, {
+    type: 'Played',
+    homeGoals: nordAtHome ? 2 : 0,
+    awayGoals: nordAtHome ? 0 : 2,
+  });
+  await sendOk(request, 'POST', `/stages/${sourceId}/qualification/apply`);
+  if (withMatch) {
+    await sendOk(request, 'POST', `/stages/${stageId}/prepare`);
+    await sendOk(
+      request,
+      'POST',
+      `/stages/${stageId}/matches/materialize-from-slots`,
+      { pairKeys: ['P1'] },
+    );
+  }
+  await sendOk(request, 'PUT', `/matches/${sourceMatch.matchId}/result`, {
+    type: 'Played',
+    homeGoals: 1,
+    awayGoals: 1,
+  });
+
+  return {
+    competitionId,
+    stageId,
+    team: 'Nord',
+    matchLabel: withMatch ? 'Nord – Est' : null,
+  };
+}
+
+async function postId(
+  request: APIRequestContext,
+  path: string,
+  data: unknown,
+): Promise<string> {
+  const response = await request.post(`${playUpApiBase()}${path}`, { data });
+  if (!response.ok()) {
+    throw new Error(
+      `POST ${path} failed (${response.status()}): ${await response.text()}`,
+    );
+  }
+  const body = (await response.json()) as {
+    id?: string;
+    stageId?: string;
+  };
+  const id = body.stageId ?? body.id;
+  if (!id) {
+    throw new Error(`POST ${path} returned no id.`);
+  }
+  return id;
+}
+
+async function addNamedEntry(
+  request: APIRequestContext,
+  competitionId: string,
+  displayName: string,
+): Promise<string> {
+  const response = await request.post(
+    `${playUpApiBase()}/competitions/${competitionId}/entries`,
+    { data: { displayName } },
+  );
+  if (!response.ok()) {
+    throw new Error(
+      `POST entry failed (${response.status()}): ${await response.text()}`,
+    );
+  }
+  const view = (await response.json()) as {
+    participants?: { entries?: { entryId: string; displayName?: string }[] };
+    entries?: { entryId: string; displayName?: string }[];
+  };
+  const entries = view.participants?.entries ?? view.entries ?? [];
+  const created = entries.find((entry) => entry.displayName === displayName);
+  if (!created) {
+    throw new Error(`Entry "${displayName}" was not returned.`);
+  }
+  return created.entryId;
+}
+
+async function addStage(
+  request: APIRequestContext,
+  competitionId: string,
+  data: {
+    format: string;
+    name: string;
+    matchGenerationFormat?: string;
+    bracketSize?: number;
+  },
+): Promise<string> {
+  return postId(request, `/competitions/${competitionId}/stages`, data);
+}
+
+function intent(
+  order: number,
+  position: number,
+  destinationStageId: string,
+  slotKey: string,
+) {
+  return {
+    intentId: crypto.randomUUID(),
+    order,
+    sourceKind: 'Overall',
+    positionFrom: position,
+    positionTo: position,
+    destinationStageId,
+    destinationSlotKeys: [slotKey],
+  };
+}
+
+async function sendOk(
+  request: APIRequestContext,
+  method: 'POST' | 'PUT',
+  path: string,
+  data?: unknown,
+): Promise<void> {
+  const response = await request.fetch(`${playUpApiBase()}${path}`, {
+    method,
+    data,
+  });
+  if (!response.ok()) {
+    throw new Error(
+      `${method} ${path} failed (${response.status()}): ${await response.text()}`,
+    );
+  }
+}
+
+async function readStageMatch(
+  request: APIRequestContext,
+  stageId: string,
+): Promise<{ matchId: string; homeEntryId: string }> {
+  const response = await request.get(
+    `${playUpApiBase()}/stages/${stageId}/matches`,
+  );
+  if (!response.ok()) {
+    throw new Error(
+      `GET matches failed (${response.status()}): ${await response.text()}`,
+    );
+  }
+  const matches = (await response.json()) as {
+    matchId: string;
+    home?: { entryId?: string };
+  }[];
+  const match = matches[0];
+  if (!match?.home?.entryId) {
+    throw new Error(`Stage ${stageId} has no match with a home team.`);
+  }
+  return { matchId: match.matchId, homeEntryId: match.home.entryId };
+}
+
 export async function replaceQualificationRulesForStaleBadge(
   request: APIRequestContext,
   leagueStageId: string,

@@ -117,6 +117,7 @@ export function freshnessAction(
     return null;
   }
 
+  // Q10-A: one dialog. The badge offers release; "Play the match" stays the link inside it.
   if (options.canRelease && occupant.releasable) {
     return { kind: 'release' };
   }
@@ -166,7 +167,9 @@ export function freshnessAction(
   }
 
   if (cause === 'ConfigurationInvalide') {
-    const href = regulationHref(competitionId);
+    const href =
+      stageHref(competitionId, occupant.upstreamStageId) ??
+      regulationHref(competitionId);
     return href
       ? navigate(
           href,
