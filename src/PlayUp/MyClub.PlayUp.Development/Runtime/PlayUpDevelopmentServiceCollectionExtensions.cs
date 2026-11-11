@@ -53,6 +53,7 @@ public static class PlayUpDevelopmentServiceCollectionExtensions
         services.AddSingleton<IScenario, GroupsScenario>();
         services.AddSingleton<IScenario, GroupsSuspendedScenario>();
         services.AddSingleton<IScenario, GroupsDrawPendingScenario>();
+        services.AddSingleton<IScenario, GroupsManualPlacementScenario>();
         services.AddSingleton<IScenario, GroupsToKoMidScenario>();
         services.AddSingleton<IScenario, QualAutoPlaceMidScenario>();
         services.AddSingleton<IScenario, QualHybridAutoDrawMidScenario>();
