@@ -19,6 +19,10 @@ import {
 } from '../../../design-system/icons/contentIcons';
 import { placeChromeLabel } from '../draw/structurePlaceLabel';
 import { resolveManualPlaceMode } from '../draw/manualPlacementUi';
+import {
+  groupSeatCounter,
+  resolveGroupSeatInteraction,
+} from '../draw/manualGroupPlacementUi';
 import '../phase-schematic.css';
 
 import { GroupsSchematicView } from './GroupsSchematicView';
@@ -70,6 +74,11 @@ export function PhaseSchematic({
   resolutionIndex,
   /** Cup manual placement — click a place to open the shared dialog. */
   onPlaceActivate,
+  /** Groups manual placement — click a place or remove seat. */
+  onGroupPlaceActivate,
+  /** Server stage actions. Groups clicks require AssignEntryToGroup / ClearEntryFromGroup. */
+  groupActions,
+  placesPerGroup,
 }: {
   schematic: StageSchematic;
   terminal?: boolean;
@@ -77,6 +86,9 @@ export function PhaseSchematic({
   cupPairProductionStates?: Readonly<Record<string, CupPairProductionState>>;
   resolutionIndex?: StructureResolutionOccupantIndex | null;
   onPlaceActivate?: (place: SchematicCase) => void;
+  onGroupPlaceActivate?: (place: SchematicCase) => void;
+  groupActions?: readonly string[];
+  placesPerGroup?: number | null;
 }): ReactElement {
   const { t } = useTranslation(['regulation', 'structure']);
   const format = schematic.formatKind;
@@ -87,6 +99,9 @@ export function PhaseSchematic({
         schematic={schematic}
         t={t}
         resolutionIndex={resolutionIndex}
+        onActivate={onGroupPlaceActivate}
+        groupActions={groupActions}
+        placesPerGroup={placesPerGroup}
       />
     );
   }
@@ -156,6 +171,7 @@ function SlotBox({
   style,
   onActivate,
   resolutionIndex,
+  groupActions = [],
 }: {
   c?: SchematicCase | null;
   t: Translate;
@@ -164,6 +180,7 @@ function SlotBox({
   style?: CSSProperties;
   onActivate?: (place: SchematicCase) => void;
   resolutionIndex?: StructureResolutionOccupantIndex | null;
+  groupActions?: readonly string[];
 }) {
   const address = c ? placeChromeLabel(c.formPosition) : null;
   const { primary, secondary } = c
@@ -178,9 +195,23 @@ function SlotBox({
   // Solid chrome when the case shows a label (occupant or structural WhoFeeds).
   // Dashed `--empty` = blank cell only — not "no EntryId".
   const hasSurface = !!(primary || secondary);
+  const groupInteraction =
+    c?.formPosition.kind === 'GroupPlace'
+      ? resolveGroupSeatInteraction(c, { actions: groupActions })
+      : null;
   const canManualPlace =
-    !!onActivate && !!c && !ghost && resolveManualPlaceMode(c) === 'editable';
-  const interactive = canManualPlace;
+    groupInteraction == null &&
+    !!onActivate &&
+    !!c &&
+    !ghost &&
+    resolveManualPlaceMode(c) === 'editable';
+  const groupInteractive =
+    groupInteraction?.kind === 'place' || groupInteraction?.kind === 'remove';
+  const interactive = canManualPlace || (!!onActivate && groupInteractive);
+  const groupReason =
+    groupInteraction && groupInteraction.kind !== 'none'
+      ? t(`structure:groupPlacement.${groupInteraction.reasonKey}`)
+      : null;
   const className = [
     'schematic-slot',
     `schematic-slot--${density}`,
@@ -213,6 +244,7 @@ function SlotBox({
               }
             : null,
           canManualPlace,
+          action: groupReason,
           entryWithdrawn: withdrawn,
           t,
         })
@@ -292,6 +324,16 @@ function SlotBox({
             {secondary && secondary !== primary ? (
               <span className="schematic-slot__secondary">{secondary}</span>
             ) : null}
+            {c?.excess ? (
+              <span className="schematic-slot__secondary">
+                {t('structure:groupPlacement.excess')}
+              </span>
+            ) : null}
+            {c?.outsideComposition ? (
+              <span className="schematic-slot__secondary">
+                {t('structure:groupPlacement.outsideComposition')}
+              </span>
+            ) : null}
           </span>
           {badgeBesideSlot ? null : freshnessBadge}
         </span>
@@ -307,7 +349,11 @@ function SlotBox({
       className={className}
       style={badgeBesideSlot ? undefined : shellStyle}
       onClick={() => onActivate?.(c!)}
-      aria-label={address ?? c!.formPosition.slotKey ?? undefined}
+      aria-label={
+        groupInteractive
+          ? (groupReason ?? address ?? undefined)
+          : (address ?? c!.formPosition.slotKey ?? undefined)
+      }
     >
       {slotInner}
     </button>
@@ -465,10 +511,16 @@ function GroupsSchematic({
   schematic,
   t,
   resolutionIndex,
+  onActivate,
+  groupActions = [],
+  placesPerGroup,
 }: {
   schematic: StageSchematic;
   t: Translate;
   resolutionIndex?: StructureResolutionOccupantIndex | null;
+  onActivate?: (place: SchematicCase) => void;
+  groupActions?: readonly string[];
+  placesPerGroup?: number | null;
 }) {
   const { groups, casesByGroupId } = groupsSchematicFromStageSchematic(
     schematic,
@@ -479,12 +531,39 @@ function GroupsSchematic({
     <GroupsSchematicView
       groups={groups}
       ariaLabel={t('regulation:schematic.groups', { count: groups.length })}
+      seatSummary={
+        placesPerGroup == null
+          ? undefined
+          : (group) => {
+              const cases = casesByGroupId.get(group.id) ?? [];
+              const { occupied, capacity } = groupSeatCounter(
+                group,
+                cases,
+                placesPerGroup,
+              );
+              const excess = cases.some((place) => place.excess);
+              return t(
+                excess
+                  ? 'structure:groupPlacement.counterExcess'
+                  : 'structure:groupPlacement.counter',
+                { occupied, capacity },
+              );
+            }
+      }
       renderSeat={(group, seat) => {
         const place = casesByGroupId.get(group.id)?.[seat];
         if (!place) {
           return undefined;
         }
-        return <SlotBox c={place} t={t} resolutionIndex={resolutionIndex} />;
+        return (
+          <SlotBox
+            c={place}
+            t={t}
+            resolutionIndex={resolutionIndex}
+            onActivate={onActivate}
+            groupActions={groupActions}
+          />
+        );
       }}
     />
   );

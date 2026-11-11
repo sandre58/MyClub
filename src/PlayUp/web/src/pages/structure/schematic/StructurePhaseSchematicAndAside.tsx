@@ -43,6 +43,9 @@ export function StructurePhaseSchematicAndAside({
   cupPairProductionStates,
   canManualPlace,
   onManualPlaceActivate,
+  onGroupPlaceActivate,
+  groupActions,
+  placesPerGroup,
   schematicIssuesBanner,
   showAsideMatchsSection,
   structureHubBackgroundRefresh,
@@ -80,6 +83,9 @@ export function StructurePhaseSchematicAndAside({
   cupPairProductionStates?: Readonly<Record<string, CupPairProductionState>>;
   canManualPlace: boolean;
   onManualPlaceActivate: (place: SchematicCase) => void;
+  onGroupPlaceActivate?: (place: SchematicCase) => void;
+  groupActions?: readonly string[];
+  placesPerGroup?: number | null;
   schematicIssuesBanner: ReactNode;
   showAsideMatchsSection: boolean;
   structureHubBackgroundRefresh: boolean;
@@ -179,6 +185,9 @@ export function StructurePhaseSchematicAndAside({
                 onPlaceActivate={
                   canManualPlace ? onManualPlaceActivate : undefined
                 }
+                onGroupPlaceActivate={onGroupPlaceActivate}
+                groupActions={groupActions}
+                placesPerGroup={placesPerGroup}
               />
             )}
           </StructureSchematicViewport>

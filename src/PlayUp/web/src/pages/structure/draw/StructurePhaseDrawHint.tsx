@@ -14,7 +14,24 @@ export function StructurePhaseDrawHint({
   if (!stage.hasDrawRules) {
     return null;
   }
-  const badge = stage.drawExecutionBadge ?? 'ToLaunch';
+  // Full Groups grid: the server omits the badge because a draw is not required.
+  const groupsGridComplete =
+    stage.formatKind === 'Groups' && stage.drawExecutionBadge == null;
+  const badge = groupsGridComplete
+    ? null
+    : (stage.drawExecutionBadge ?? 'ToLaunch');
+  if (badge == null) {
+    const className =
+      variant === 'topology'
+        ? 'structure-topology__draw-signal structure-topology__draw-signal--done'
+        : 'structure-fiche__draw-hint structure-phase-draw-hint--done';
+    return (
+      <span className={className}>
+        <DrawPendingIcon size="sm" aria-hidden="true" />
+        <span>{t('hub.drawExecution.notRequired')}</span>
+      </span>
+    );
+  }
 
   const key =
     badge === 'ToLaunch'

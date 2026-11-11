@@ -15,6 +15,7 @@ export function GroupsSchematicView({
   ariaLabel,
   ghostLabel,
   renderSeat,
+  seatSummary,
 }: {
   groups: readonly GroupsSchematicGroup[];
   ariaLabel?: string;
@@ -23,6 +24,8 @@ export function GroupsSchematicView({
     group: GroupsSchematicGroup,
     seat: number,
   ) => ReactNode | undefined;
+  /** Phase sheet pool counter. Omitted by the draw dialog. */
+  seatSummary?: (group: GroupsSchematicGroup) => string | null;
 }) {
   return (
     <div
@@ -33,6 +36,7 @@ export function GroupsSchematicView({
       <div className="regulation-schematic__cards">
         {groups.map((group, index) => {
           const seatCount = Math.max(group.capacity, group.entries.length);
+          const summary = seatSummary?.(group);
           return (
             <div
               key={group.id || `group-${index}`}
@@ -41,6 +45,11 @@ export function GroupsSchematicView({
               <span className="regulation-schematic__card-label">
                 {group.name}
               </span>
+              {summary ? (
+                <span className="regulation-schematic__card-feed">
+                  {summary}
+                </span>
+              ) : null}
               <div className="regulation-schematic__card-slots">
                 {Array.from({ length: seatCount }, (_, seat) => {
                   const custom = renderSeat?.(group, seat);

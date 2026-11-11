@@ -39,7 +39,8 @@
       "toLaunch": "Draw to run",
       "inProgress": "Draw in progress",
       "toApply": "Draw to apply",
-      "applied": "Draw applied"
+      "applied": "Draw applied",
+      "notRequired": "Not required — grid complete"
     },
     "outboundTo": "→ {{name}}",
     "overview": {
@@ -928,6 +929,36 @@
     "saving": "Saving…",
     "toastSaved": "Manual assignment saved",
     "toastCleared": "Manual assignment cleared"
+  },
+  "groupPlacement": {
+    "title": "Place a team — {{group}}",
+    "removeTitle": "Remove a team — {{group}}",
+    "placeLead": "Choose a team from this phase composition.",
+    "removeLead": "This team is in the group.",
+    "teamLabel": "Available teams",
+    "pot": "Pot {{pot}}",
+    "allPlacedTitle": "No team to place",
+    "allPlaced": "Every team in the composition is already placed.",
+    "emptyCompositionTitle": "Empty composition",
+    "emptyComposition": "Add teams to the phase composition.",
+    "remove": "Remove from group",
+    "removeConfirmTitle": "Remove from group",
+    "removeConfirm": "Remove {{team}} from {{group}}?",
+    "save": "Save",
+    "saving": "Saving…",
+    "removing": "Removing…",
+    "placeInvite": "Click to place a team",
+    "removeInvite": "Click to remove the team",
+    "drawPending": "A draw is in progress or in draft: cancel it, or apply it only when it can still be applied, before placing or removing a team.",
+    "matchLocked": "This group already has a match: a team cannot be added to it.",
+    "reserved": "This place is reserved for a team expected by a qualification or a progression.",
+    "clearLocked": "This phase already has a match: a team cannot be removed from a group.",
+    "qualProg": "This team arrived through a qualification or a progression.",
+    "draw": "This team was placed by the applied draw. It is protected.",
+    "excess": "Extra",
+    "outsideComposition": "Outside composition",
+    "counter": "{{occupied}}/{{capacity}}",
+    "counterExcess": "{{occupied}}/{{capacity}} · Extra"
   },
   "composition": {
     "gauge": {

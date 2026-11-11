@@ -284,8 +284,8 @@ export function structureDiagnosticCta(
 }
 
 /**
- * Host: SlotFeedMissing is expected while draw is engaged and not published.
- * Analyzer still emits the code — UX projection is silenced.
+ * SlotFeedMissing stays expected while draw rules are engaged and the draw is not applied.
+ * A null badge with draw rules is a full Groups grid: the draw is not required.
  */
 export function isSlotFeedAwaitingDraw(stage: {
   hasDrawRules: boolean;
@@ -293,15 +293,17 @@ export function isSlotFeedAwaitingDraw(stage: {
 }): boolean {
   if (!stage.hasDrawRules) return false;
   const badge = stage.drawExecutionBadge;
+  if (badge == null) return false;
   return badge !== 'ToApply' && badge !== 'Applied';
 }
 
-/** Groups pool gaps stay expected until draw results are applied (read parity). */
+/** Groups pool gaps stay expected until draw results are applied. A null badge does not defer. */
 export function deferGroupsNotReadyPresentation(stage: {
   hasDrawRules: boolean;
   drawExecutionBadge?: 'ToLaunch' | 'InProgress' | 'ToApply' | 'Applied' | null;
 }): boolean {
-  return stage.hasDrawRules && stage.drawExecutionBadge !== 'Applied';
+  if (!stage.hasDrawRules || stage.drawExecutionBadge == null) return false;
+  return stage.drawExecutionBadge !== 'Applied';
 }
 
 /** Host title key for a structure issue. */

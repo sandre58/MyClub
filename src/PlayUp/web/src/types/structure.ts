@@ -232,6 +232,11 @@ export interface StructureStageHubSummary {
   compositionEntryCount?: number;
   /** Runtime composition entry identities. */
   compositionEntryIds?: string[] | null;
+  /**
+   * Current composition pot of each entry, in composition order.
+   * Present for Groups when pots can be computed; omitted otherwise.
+   */
+  compositionEntryPots?: { entryId: string; pot: number }[] | null;
   /** Target Places N at T (≠ composition set k). Null = E4 indeterminable. */
   compositionCapacity?: number | null;
   /** Groups form fact: places per group (SoT for Places N); independent of Draw. */
