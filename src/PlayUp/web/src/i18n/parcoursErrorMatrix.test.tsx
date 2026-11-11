@@ -120,6 +120,8 @@ const PARCOURS_CODES = [
   'Application.AppliedDrawFeedRulesChangeBlocked',
   'Application.AppliedDrawSlotPlacementProtected',
   'Application.AppliedDrawGroupPlacementProtected',
+  'Stage.GroupAssignLockedByGroupMatches',
+  'Stage.GroupClearLockedByStageMatches',
   'Stage.GroupPlacementResolutionLocked',
   'Stage.GroupAssignmentEntryNotInComposition',
   'Stage.CompositionWithdrawalGroupMembershipBlocked',

@@ -259,6 +259,16 @@ public static class StageErrorCodes
     public const string GroupFull = "Stage.GroupFull";
 
     /// <summary>
+    /// Gets the code when a manual group assignment targets a group that already has an attached match.
+    /// </summary>
+    public const string GroupAssignLockedByGroupMatches = "Stage.GroupAssignLockedByGroupMatches";
+
+    /// <summary>
+    /// Gets the code when a manual group clear is attempted while the stage has any attached match.
+    /// </summary>
+    public const string GroupClearLockedByStageMatches = "Stage.GroupClearLockedByStageMatches";
+
+    /// <summary>
     /// Gets the code when manual group membership cannot change a qualification/progression-resolved placement.
     /// </summary>
     public const string GroupPlacementResolutionLocked = "Stage.GroupPlacementResolutionLocked";

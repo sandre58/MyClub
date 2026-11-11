@@ -29,8 +29,6 @@ public static class AssignEntryToGroup
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(competition);
 
-        StructureOperationalExitEditGuard.Ensure(stage, stageMatches, "Group assignment");
-
         _ = competition.GetEntry(entryId);
         StructureAppliedDrawGroupPlacementGate.EnsureAssignAllowed(stage, groupId, entryId);
         stage.AssignManualEntryToGroup(

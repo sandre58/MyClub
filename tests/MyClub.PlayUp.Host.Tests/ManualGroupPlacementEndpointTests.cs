@@ -15,6 +15,7 @@ using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using Xunit;
@@ -91,6 +92,29 @@ public sealed class ManualGroupPlacementEndpointTests(HostPostgresFixture fixtur
 
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
         (await ReadCodeAsync(response)).Should().Be(StageErrorCodes.GroupAssignmentEntryNotInComposition);
+    }
+
+    [IntegrationFact]
+    public async Task Put_and_delete_are_refused_when_matches_block_the_placementAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var seed = await SeedGroupsWithMatchOnFirstGroupAsync(factory);
+        using var client = factory.CreateClient();
+
+        using var again = await client.PutAsync(EntryUri(seed.StageId, seed.GroupId, seed.EntryId), null);
+        using var intoBusy = await client.PutAsync(EntryUri(seed.StageId, seed.GroupId, seed.ThirdEntryId), null);
+        using var intoQuiet = await client.PutAsync(
+            EntryUri(seed.StageId, seed.OtherGroupId, seed.ThirdEntryId),
+            null);
+        using var clearQuiet = await client.DeleteAsync(
+            EntryUri(seed.StageId, seed.OtherGroupId, seed.SecondEntryId));
+
+        again.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        intoBusy.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        (await ReadCodeAsync(intoBusy)).Should().Be(StageErrorCodes.GroupAssignLockedByGroupMatches);
+        intoQuiet.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        clearQuiet.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        (await ReadCodeAsync(clearQuiet)).Should().Be(StageErrorCodes.GroupClearLockedByStageMatches);
     }
 
     [IntegrationFact]
@@ -189,6 +213,48 @@ public sealed class ManualGroupPlacementEndpointTests(HostPostgresFixture fixtur
             ids[2],
             outsider,
             protectedEntry);
+    }
+
+    private async Task<GroupSeed> SeedGroupsWithMatchOnFirstGroupAsync(PlayUpWebApplicationFactory factory)
+    {
+        var competition = CreateCompetition.Execute("G-http-match", _clock);
+        var ids = Enumerable.Range(0, 5)
+            .Select(index => AddEntry.Execute(competition, $"T{index}", _clock).Id)
+            .ToArray();
+        var stage = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Groups(2, 4),
+            _clock).Stage;
+        stage.ReplaceAffectationAuthoring(ids, _clock);
+        stage.AssignEntryToGroup(stage.Groups[0].Id, ids[0]);
+        stage.AssignEntryToGroup(stage.Groups[0].Id, ids[1]);
+        stage.AssignEntryToGroup(stage.Groups[1].Id, ids[2]);
+        stage.AssignEntryToGroup(stage.Groups[1].Id, ids[3]);
+        var matchday = stage.Matchdays.Count == 0 ? stage.AddMatchday(1, _clock) : stage.Matchdays[0];
+        var fixture = stage.AddFixture(matchday.Id, _clock);
+        var match = Match.Create(competition.Id, stage.Id, ids[0], ids[1], _clock);
+        stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
+
+        using var scope = factory.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+        competitions.Add(competition);
+        stages.Add(stage);
+        matches.Add(match);
+        await unitOfWork.SaveChangesAsync();
+
+        return new GroupSeed(
+            stage.Id,
+            stage.Groups[0].Id,
+            stage.Groups[1].Id,
+            ids[0],
+            ids[2],
+            ids[4],
+            ids[4],
+            ids[0]);
     }
 
     private sealed record GroupSeed(

@@ -103,7 +103,7 @@ public sealed class StageGroupsTests
     }
 
     [Fact]
-    public void RemoveEntryFromGroup_in_Ready_is_rejected()
+    public void RemoveEntryFromGroup_in_Ready_without_a_match_is_allowed()
     {
         var stage = Stage.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
         var group = stage.AddGroup("A", _clock);
@@ -113,11 +113,67 @@ public sealed class StageGroupsTests
         stage.AddMatchday(1, _clock);
         stage.Prepare(_clock);
 
-        var act = () => stage.RemoveEntryFromGroup(group.Id, entryId);
+        stage.RemoveEntryFromGroup(group.Id, entryId);
 
-        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
-        group.EntryIds.Should().Contain(entryId);
+        group.EntryIds.Should().NotContain(entryId);
         stage.Status.Should().Be(StageStatus.Ready);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Manual_clear_is_refused_when_another_group_has_a_match(bool prepare)
+    {
+        var stage = StageWithTwoGroupsAndAMatchOnTheFirst(prepare, out var quietGroup, out var entryOnQuietGroup, out _);
+
+        var act = () => stage.RemoveEntryFromGroup(quietGroup.Id, entryOnQuietGroup);
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.GroupClearLockedByStageMatches);
+        quietGroup.EntryIds.Should().Contain(entryOnQuietGroup);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Manual_assign_is_refused_when_the_target_group_has_a_match(bool prepare)
+    {
+        var stage = StageWithTwoGroupsAndAMatchOnTheFirst(prepare, out _, out _, out var snapshots);
+        var newcomer = EntryId.New();
+        stage.ReplaceAffectationAuthoringOperationally(
+            [.. stage.AffectationAuthoring.Select(entry => entry.EntryId), newcomer],
+            _clock);
+
+        var act = () => stage.AssignManualEntryToGroup(stage.Groups[0].Id, newcomer, snapshots);
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.GroupAssignLockedByGroupMatches);
+        stage.Groups[0].EntryIds.Should().NotContain(newcomer);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Manual_assign_is_allowed_when_only_another_group_has_a_match(bool prepare)
+    {
+        var stage = StageWithTwoGroupsAndAMatchOnTheFirst(prepare, out var quietGroup, out _, out var snapshots);
+        var newcomer = EntryId.New();
+        stage.ReplaceAffectationAuthoringOperationally(
+            [.. stage.AffectationAuthoring.Select(entry => entry.EntryId), newcomer],
+            _clock);
+
+        stage.AssignManualEntryToGroup(quietGroup.Id, newcomer, snapshots);
+
+        quietGroup.EntryIds.Should().Contain(newcomer);
+    }
+
+    [Fact]
+    public void Manual_assign_of_an_entry_already_in_a_group_with_a_match_is_idempotent()
+    {
+        var stage = StageWithTwoGroupsAndAMatchOnTheFirst(prepare: false, out _, out _, out var snapshots);
+        var alreadyThere = stage.Groups[0].EntryIds[0];
+
+        stage.AssignManualEntryToGroup(stage.Groups[0].Id, alreadyThere, snapshots);
+
+        stage.Groups[0].EntryIds.Should().Contain(alreadyThere);
     }
 
     [Fact]
@@ -341,6 +397,37 @@ public sealed class StageGroupsTests
         reorderLeague.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
         league.Status.Should().Be(StageStatus.Ready);
         league.Matchdays.Select(m => m.Id).Should().Equal(m1.Id, m2.Id);
+    }
+
+    private Stage StageWithTwoGroupsAndAMatchOnTheFirst(
+        bool prepare,
+        out Group quietGroup,
+        out EntryId entryOnQuietGroup,
+        out IReadOnlyList<MatchParticipantSnapshot> snapshots)
+    {
+        var stage = Stage.Create(_competitionId, new StageName("Poules"), SampleRegulations.Standard(), _clock);
+        var noisy = stage.AddGroup("A", _clock);
+        quietGroup = stage.AddGroup("B", _clock);
+        var matchday = stage.AddMatchday(1, _clock);
+        var home = EntryId.New();
+        var away = EntryId.New();
+        entryOnQuietGroup = EntryId.New();
+        var partner = EntryId.New();
+        stage.ReplaceAffectationAuthoring([home, away, entryOnQuietGroup, partner], _clock);
+        stage.AssignEntryToGroup(noisy.Id, home);
+        stage.AssignEntryToGroup(noisy.Id, away);
+        stage.AssignEntryToGroup(quietGroup.Id, entryOnQuietGroup);
+        stage.AssignEntryToGroup(quietGroup.Id, partner);
+        var fixture = stage.AddFixture(matchday.Id, _clock);
+        var match = Match.Create(_competitionId, stage.Id, home, away, _clock);
+        stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
+        snapshots = [new MatchParticipantSnapshot(match.Id, home, away)];
+        if (prepare)
+        {
+            stage.Prepare(_clock);
+        }
+
+        return stage;
     }
 
     private Stage CreateReadyPoules()

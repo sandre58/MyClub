@@ -11,6 +11,7 @@ using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
+using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using Xunit;
@@ -128,6 +129,51 @@ public sealed class ManualGroupPlacementTests
             entryId);
         clear.Should().Throw<DomainException>()
             .Which.Code.Should().Be(StageErrorCodes.GroupPlacementResolutionLocked);
+    }
+
+    [Fact]
+    public void Ready_manual_placement_uses_the_match_rule_instead_of_structure_not_mutable()
+    {
+        var competition = CreateCompetition.Execute("G-match", _clock);
+        var ids = Enumerable.Range(0, 4)
+            .Select(index => AddEntry.Execute(competition, $"T{index}", _clock).Id)
+            .ToArray();
+        var stage = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Groups(2, 4),
+            _clock).Stage;
+        stage.ReplaceAffectationAuthoring(ids, _clock);
+        stage.AssignEntryToGroup(stage.Groups[0].Id, ids[0]);
+        stage.AssignEntryToGroup(stage.Groups[0].Id, ids[1]);
+        stage.AssignEntryToGroup(stage.Groups[1].Id, ids[2]);
+        var matchday = stage.Matchdays.Count == 0 ? stage.AddMatchday(1, _clock) : stage.Matchdays[0];
+        var fixture = stage.AddFixture(matchday.Id, _clock);
+        var match = Match.Create(competition.Id, stage.Id, ids[0], ids[1], _clock);
+        stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
+        stage.Prepare(_clock);
+
+        var intoBusyGroup = () => AssignEntryToGroup.Execute(
+            stage,
+            competition,
+            stage.Groups[0].Id,
+            ids[3],
+            [match]);
+        intoBusyGroup.Should().Throw<DomainException>()
+            .Which.Code.Should().Be(StageErrorCodes.GroupAssignLockedByGroupMatches);
+
+        AssignEntryToGroup.Execute(stage, competition, stage.Groups[1].Id, ids[3], [match]);
+        stage.Groups[1].EntryIds.Should().Contain(ids[3]);
+
+        var clear = () => ClearEntryFromGroup.Execute(
+            stage,
+            competition,
+            stage.Groups[1].Id,
+            ids[2],
+            [match]);
+        clear.Should().Throw<DomainException>()
+            .Which.Code.Should().Be(StageErrorCodes.GroupClearLockedByStageMatches);
+        stage.Groups[1].EntryIds.Should().Contain(ids[2]);
     }
 
     [Fact]

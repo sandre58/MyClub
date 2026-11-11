@@ -29,8 +29,6 @@ public static class ClearEntryFromGroup
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(competition);
 
-        StructureOperationalExitEditGuard.Ensure(stage, stageMatches, "Group clear");
-
         _ = competition.GetEntry(entryId);
         StructureAppliedDrawGroupPlacementGate.EnsureClearAllowed(stage, groupId, entryId);
 

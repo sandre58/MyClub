@@ -41,6 +41,8 @@ const MUTATION_WIRE_TO_LIFECYCLE: Record<string, string> = {
     'AppliedDrawSlotPlacementProtected',
   'Application.AppliedDrawGroupPlacementProtected':
     'AppliedDrawGroupPlacementProtected',
+  'Stage.GroupAssignLockedByGroupMatches': 'GroupAssignLockedByGroupMatches',
+  'Stage.GroupClearLockedByStageMatches': 'GroupClearLockedByStageMatches',
   'Stage.GroupPlacementResolutionLocked': 'GroupPlacementResolutionLocked',
   'Stage.GroupAssignmentEntryNotInComposition':
     'GroupAssignmentEntryNotInComposition',

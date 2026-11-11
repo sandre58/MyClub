@@ -302,6 +302,16 @@ describe('resolveLifecycleMutationMessageKey', () => {
     ).toBe('problems.lifecycle.AppliedDrawGroupPlacementProtected');
     expect(
       resolveLifecycleMutationMessageKey(
+        'Stage.GroupAssignLockedByGroupMatches',
+      ),
+    ).toBe('problems.lifecycle.GroupAssignLockedByGroupMatches');
+    expect(
+      resolveLifecycleMutationMessageKey(
+        'Stage.GroupClearLockedByStageMatches',
+      ),
+    ).toBe('problems.lifecycle.GroupClearLockedByStageMatches');
+    expect(
+      resolveLifecycleMutationMessageKey(
         'Stage.GroupPlacementResolutionLocked',
       ),
     ).toBe('problems.lifecycle.GroupPlacementResolutionLocked');

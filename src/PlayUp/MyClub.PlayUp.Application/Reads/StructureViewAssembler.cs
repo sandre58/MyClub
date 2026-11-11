@@ -910,6 +910,12 @@ public static class StructureViewAssembler
         if (attachedMatches > 0
             && !CupCanonicalEntryRoundStartGate.BlocksStart(stage, competition, competitionStages))
         {
+            if (StructureSkeleton.InferFormat(stage) == StructureFormatKind.Groups)
+            {
+                actions.Add(ActionAssignEntryToGroup);
+                actions.Add(ActionClearEntryFromGroup);
+            }
+
             return actions;
         }
 

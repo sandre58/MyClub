@@ -1369,6 +1369,13 @@ public sealed class Stage : AggregateRoot<StageId>
         IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants = null)
     {
         EnsureManualGroupEntryInComposition(entryId);
+        var owningGroup = _groups.FirstOrDefault(group => group.Contains(entryId));
+        if (owningGroup is not null && owningGroup.Id.Equals(groupId))
+        {
+            return;
+        }
+
+        EnsureManualAssignNotLockedByTargetGroupMatches(groupId, materializedParticipants ?? []);
         AssignEntryToGroup(groupId, entryId, materializedParticipants);
     }
 
@@ -1378,14 +1385,16 @@ public sealed class Stage : AggregateRoot<StageId>
     /// <param name="groupId">The group identity.</param>
     /// <param name="entryId">The entry identity.</param>
     /// <param name="materializedParticipants">
-    /// Participant snapshots of matches attached on this stage (empty when none). Required for group determination coherence.
+    /// Accepted for callers that already hold match snapshots. Manual clear refuses when the stage
+    /// has any attached match, so the snapshots are not used to attribute that match.
     /// </param>
     public void RemoveEntryFromGroup(
         GroupId groupId,
         EntryId entryId,
         IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants = null)
     {
-        EnsureStructureMutable();
+        _ = materializedParticipants;
+        EnsureOperationalExitRulesMutable();
 
         var group = GetGroup(groupId);
         if (!group.Contains(entryId))
@@ -1396,10 +1405,7 @@ public sealed class Stage : AggregateRoot<StageId>
         }
 
         EnsureManualGroupMembershipChangeAllowed(groupId, entryId);
-        MaterializedOpponentCoherence.EnsureEntryNotBoundToAttachedMatch(
-            this,
-            entryId,
-            materializedParticipants ?? []);
+        EnsureManualClearNotLockedByStageMatches();
 
         group.Remove(entryId);
         RemoveGroupResolutionProvenanceIfPresent(groupId, entryId);
@@ -3244,6 +3250,70 @@ public sealed class Stage : AggregateRoot<StageId>
                 $"Group '{group.Id}' already has {capacity} entries (PlacesPerGroup).",
                 StageErrorCodes.GroupFull);
         }
+    }
+
+    private void EnsureManualAssignNotLockedByTargetGroupMatches(
+        GroupId groupId,
+        IReadOnlyList<MatchParticipantSnapshot> materializedParticipants)
+    {
+        if (!TargetGroupHasAttachedMatch(groupId, materializedParticipants))
+        {
+            return;
+        }
+
+        throw new DomainException(
+            $"Cannot assign an entry to group '{groupId}': that group already has an attached match.",
+            StageErrorCodes.GroupAssignLockedByGroupMatches);
+    }
+
+    private void EnsureManualClearNotLockedByStageMatches()
+    {
+        if (!StageHasAttachedMatch())
+        {
+            return;
+        }
+
+        throw new DomainException(
+            $"Cannot remove an entry from a group: stage '{Id}' already has an attached match.",
+            StageErrorCodes.GroupClearLockedByStageMatches);
+    }
+
+    private bool StageHasAttachedMatch() =>
+        _matchdays.SelectMany(matchday => matchday.Fixtures).Any(fixture => fixture.Attachments.Count > 0)
+        || _rounds.SelectMany(round => round.Fixtures).Any(fixture => fixture.Attachments.Count > 0);
+
+    /// <summary>
+    /// A match belongs to a group when both participants are current members of that group.
+    /// Group fixtures do not store a group identity.
+    /// </summary>
+    private bool TargetGroupHasAttachedMatch(
+        GroupId groupId,
+        IReadOnlyList<MatchParticipantSnapshot> materializedParticipants)
+    {
+        var group = FindGroup(groupId);
+        if (group is null)
+        {
+            return false;
+        }
+
+        var members = group.EntryIds.ToHashSet();
+        foreach (var snapshot in materializedParticipants)
+        {
+            if (!HasMatch(snapshot.MatchId))
+            {
+                continue;
+            }
+
+            if (snapshot.HomeEntryId is { } home
+                && snapshot.AwayEntryId is { } away
+                && members.Contains(home)
+                && members.Contains(away))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void EnsureManualGroupEntryInComposition(EntryId entryId)
