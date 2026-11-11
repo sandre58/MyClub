@@ -319,6 +319,7 @@ Optional. Present when the phase stores resolution provenance (slot, group membe
 | `indeterminacyCause` | string \| null | When `state` is `Indetermine`: `MatchNonJoue` \| `Egalite` \| `SourceAbsente` \| `SelectionVide` \| `Autre` \| `EgaliteClassement` \| `ConditionNonRemplie` \| `ConfigurationInvalide`. Otherwise null. `EgaliteClassement` is a tied standing. `ConditionNonRemplie` is a qualification condition that no longer holds. `ConfigurationInvalide` is a source-phase setup that threw while the selection was evaluated |
 | `actionMatchId` | guid \| null | Match to open for `MatchNonJoue` or `Egalite`, when known |
 | `actionMatchLabel` | string \| null | Home and away names of `actionMatchId`, when both are known |
+| `releasable` | boolean | True when the shared release guards all pass: qualification or progression, `Indetermine`, cause other than `ConfigurationInvalide`, phase not `Completed`, and no direct assignment, played match, attached match, or holding draw blocks the place. False otherwise |
 
 `Directe` stays `AJour`. `NonVerifiee` stays `NonVerifiee`. An unresolved selection is `Indetermine`. `AmontPerime` means an upstream occupant this resolution depends on is already `Perime`.
 
@@ -715,6 +716,51 @@ Read-only preview of an explicit cascade replacement. Computes the version token
 ### `POST /stages/{stageId}/resolution/cascade-replace` → `CascadeReplaceResponse`
 
 Confirms the preview. One save. The body is the preview body plus `versionToken`. A token that no longer matches the stored stages and matches → **409** `Application.CascadeReplaceConflict`. The same codes as the preview apply. `replacements` lists occupants whose entry changed. A finished match in `playedMatches` is left Scheduled, with no result and no player sheet, and drops out of standings until a new result is recorded.
+
+### `POST /stages/{stageId}/resolution/release-preview` → `ResolutionReleaseResponse`
+
+Read-only preview of releasing one unconfirmed place. Computes the version token, the place that would be cleared, the unplayed matches whose side becomes to be determined, and the other places whose freshness would change. Nothing is persisted. The body names the occupant.
+
+```json
+{
+  "target": "Slot",
+  "entryId": "<guid>",
+  "slotKey": "Champ",
+  "groupId": null
+}
+```
+
+```json
+{
+  "versionToken": "<sha256 hex>",
+  "releases": [
+    {
+      "stageId": "<guid>",
+      "target": "Slot",
+      "slotKey": "Champ",
+      "groupId": null,
+      "entryId": "<guid>"
+    }
+  ],
+  "detachedMatches": [
+    {
+      "matchId": "<guid>",
+      "stageId": "<guid>",
+      "legIndex": 1,
+      "side": "Home",
+      "homeEntryId": "<guid>",
+      "awayEntryId": "<guid>"
+    }
+  ],
+  "affectedOccupants": []
+}
+```
+
+`detachedMatches` lists each leg of the bracket pair. On leg 2, slot A is away. `affectedOccupants` lists other places whose freshness changes after a full recalculation; it is often empty. Unknown occupant → **404** `Application.ResolutionReleaseOccupantNotFound`. A provenance other than qualification or progression, a configuration cause, or a population entry that is still referenced → **409** `Application.ResolutionReleaseNotReleasable`. A place that is not unconfirmed → **409** `Application.ResolutionReleaseNotIndeterminate`. A completed phase → **409** `Application.ResolutionReleaseCompleted`. A direct assignment → **409** `Application.ResolutionReleaseDirectAssignment`. A live or finished match that involves the team → **409** `Application.ResolutionReleaseBlockedByPlayedMatch`. An attached match on a group, a population, or a non-bracket place while the phase is Draft or Ready → **409** `Application.ResolutionReleaseBlockedByMatches`. The same case while the phase is Running or Suspended → **409** `Application.ResolutionReleaseBlockedByMatchesRunning`. A team still held by a published draw, or by a cancelled draw whose placements remain → **409** `Application.ResolutionReleaseBlockedByDraw`.
+
+### `POST /stages/{stageId}/resolution/release` → `ResolutionReleaseResponse`
+
+Confirms the preview. One save. The body is the preview body plus `versionToken`. A token that no longer matches → **409** `Application.ResolutionReleaseConflict`. The same codes as the preview apply, and the unconfirmed check is evaluated again under the exclusive lock. The place is left empty. A second confirmation conflicts because the token changed. A new preview of the empty place is **404**.
 
 ### `POST /stages/{stageId}/qualification/apply` → `QualificationApplyResponse`
 

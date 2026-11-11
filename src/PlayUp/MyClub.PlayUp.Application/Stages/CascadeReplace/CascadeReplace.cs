@@ -304,7 +304,7 @@ public static class CascadeReplace
         }
     }
 
-    private static bool Referenced(Stage stage, EntryId entryId) =>
+    internal static bool Referenced(Stage stage, EntryId entryId) =>
         stage.Slots.Any(slot => slot.EntryId is { } occupant && occupant.Equals(entryId))
         || stage.Groups.Any(group => group.EntryIds.Contains(entryId))
         || stage.DirectAssignments.Any(assignment => assignment.EntryId.Equals(entryId));

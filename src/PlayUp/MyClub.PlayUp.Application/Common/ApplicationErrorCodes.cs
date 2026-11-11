@@ -567,4 +567,65 @@ public static class ApplicationErrorCodes
     /// Mapped to HTTP 409.
     /// </summary>
     public const string CascadeReplaceLiveBlocked = "Application.CascadeReplaceLiveBlocked";
+
+    /// <summary>
+    /// Gets the code when a release confirmation token no longer matches the loaded state.
+    /// Mapped to HTTP 409.
+    /// </summary>
+    public const string ResolutionReleaseConflict = "Application.ResolutionReleaseConflict";
+
+    /// <summary>
+    /// Gets the code when the place to release does not exist.
+    /// Mapped to HTTP 404.
+    /// </summary>
+    public const string ResolutionReleaseOccupantNotFound = "Application.ResolutionReleaseOccupantNotFound";
+
+    /// <summary>
+    /// Gets the code when the place is not an unconfirmed qualification or progression,
+    /// or the cause is a configuration exception, or a population entry is still referenced.
+    /// Mapped to HTTP 409.
+    /// </summary>
+    public const string ResolutionReleaseNotReleasable = "Application.ResolutionReleaseNotReleasable";
+
+    /// <summary>
+    /// Gets the code when the place is no longer unconfirmed.
+    /// Mapped to HTTP 409.
+    /// </summary>
+    public const string ResolutionReleaseNotIndeterminate = "Application.ResolutionReleaseNotIndeterminate";
+
+    /// <summary>
+    /// Gets the code when the phase is completed.
+    /// Mapped to HTTP 409.
+    /// </summary>
+    public const string ResolutionReleaseCompleted = "Application.ResolutionReleaseCompleted";
+
+    /// <summary>
+    /// Gets the code when the place is held by a direct assignment.
+    /// Mapped to HTTP 409.
+    /// </summary>
+    public const string ResolutionReleaseDirectAssignment = "Application.ResolutionReleaseDirectAssignment";
+
+    /// <summary>
+    /// Gets the code when a live or finished match involves the team.
+    /// Mapped to HTTP 409.
+    /// </summary>
+    public const string ResolutionReleaseBlockedByPlayedMatch = "Application.ResolutionReleaseBlockedByPlayedMatch";
+
+    /// <summary>
+    /// Gets the code when an attached match involves the team and the phase is still Draft or Ready.
+    /// Mapped to HTTP 409.
+    /// </summary>
+    public const string ResolutionReleaseBlockedByMatches = "Application.ResolutionReleaseBlockedByMatches";
+
+    /// <summary>
+    /// Gets the code when an attached match involves the team and the phase is Running or Suspended.
+    /// Mapped to HTTP 409.
+    /// </summary>
+    public const string ResolutionReleaseBlockedByMatchesRunning = "Application.ResolutionReleaseBlockedByMatchesRunning";
+
+    /// <summary>
+    /// Gets the code when the team is still in a draw whose placements remain.
+    /// Mapped to HTTP 409.
+    /// </summary>
+    public const string ResolutionReleaseBlockedByDraw = "Application.ResolutionReleaseBlockedByDraw";
 }

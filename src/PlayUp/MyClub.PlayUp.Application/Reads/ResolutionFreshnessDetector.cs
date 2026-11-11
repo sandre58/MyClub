@@ -6,6 +6,7 @@
 
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Stages;
+using MyClub.PlayUp.Application.Stages.ReleaseResolution;
 using MyClub.PlayUp.Application.Standings;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
@@ -55,7 +56,11 @@ public static class ResolutionFreshnessDetector
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(stages);
 
-        return Project(competition, Analyze(competition, stages, matchSummariesByStage));
+        return Project(
+            competition,
+            stages,
+            matchSummariesByStage,
+            Analyze(competition, stages, matchSummariesByStage));
     }
 
     /// <summary>
@@ -400,12 +405,30 @@ public static class ResolutionFreshnessDetector
 
     private static Dictionary<Guid, IReadOnlyList<StructureResolutionOccupantDto>> Project(
         Competition competition,
+        IReadOnlyList<Stage> stages,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>>? matchSummariesByStage,
         List<WorkingOccupant> occupants)
     {
         var order = new Dictionary<Guid, int>(competition.StageIds.Count);
         for (var index = 0; index < competition.StageIds.Count; index++)
         {
             order[competition.StageIds[index].Value] = index;
+        }
+
+        var stagesById = stages.ToDictionary(stage => stage.Id.Value);
+        var matchesByStage = new Dictionary<Guid, ResolutionReleaseMatch[]>();
+        if (matchSummariesByStage is not null)
+        {
+            foreach (var (stageId, rows) in matchSummariesByStage)
+            {
+                matchesByStage[stageId.Value] = rows
+                    .Select(row => new ResolutionReleaseMatch(
+                        row.Id.Value,
+                        row.Status,
+                        row.HomeEntryId?.Value,
+                        row.AwayEntryId?.Value))
+                    .ToArray();
+            }
         }
 
         return occupants
@@ -417,7 +440,27 @@ public static class ResolutionFreshnessDetector
             .GroupBy(occupant => occupant.StageId)
             .ToDictionary(
                 group => group.Key,
-                group => (IReadOnlyList<StructureResolutionOccupantDto>)group.Select(occupant => occupant.ToDto()).ToArray());
+                group => (IReadOnlyList<StructureResolutionOccupantDto>)group.Select(occupant =>
+                {
+                    var releasable = false;
+                    if (stagesById.TryGetValue(occupant.StageId, out var stage))
+                    {
+                        matchesByStage.TryGetValue(occupant.StageId, out var matches);
+                        releasable = ResolutionReleaseRules.Refusal(
+                            stage,
+                            new ResolutionReleaseSubject(
+                                occupant.Target,
+                                occupant.EntryId,
+                                occupant.Kind,
+                                occupant.State,
+                                occupant.Indeterminacy,
+                                occupant.SlotKey,
+                                occupant.GroupId),
+                            matches ?? []) is null;
+                    }
+
+                    return occupant.ToDto(releasable);
+                }).ToArray());
     }
 
     /// <summary>
@@ -760,7 +803,7 @@ public static class ResolutionFreshnessDetector
             ActionMatchLabel = null;
         }
 
-        public StructureResolutionOccupantDto ToDto()
+        public StructureResolutionOccupantDto ToDto(bool releasable)
         {
             var cascadeReplaceable = State == StructureResolutionFreshness.Perime
                 && (Kind == ResolutionProvenanceKind.Qualification
@@ -781,7 +824,8 @@ public static class ResolutionFreshnessDetector
                 Indeterminacy,
                 ActionMatchId,
                 ActionMatchLabel,
-                cascadeReplaceable);
+                cascadeReplaceable,
+                releasable);
         }
 
         public ResolutionOccupantAssessment ToAssessment() =>

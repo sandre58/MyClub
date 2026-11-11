@@ -154,6 +154,26 @@ internal sealed partial class PlayUpExceptionHandler(ILogger<PlayUpExceptionHand
                 (StatusCodes.Status409Conflict, "Cascade selection is indeterminate", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.CascadeReplaceLiveBlocked } application =>
                 (StatusCodes.Status409Conflict, "Live match blocks the cascade", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.ResolutionReleaseOccupantNotFound } application =>
+                (StatusCodes.Status404NotFound, "Nothing to release", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.ResolutionReleaseConflict } application =>
+                (StatusCodes.Status409Conflict, "Resolution release conflict", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.ResolutionReleaseNotReleasable } application =>
+                (StatusCodes.Status409Conflict, "Place cannot be released", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.ResolutionReleaseNotIndeterminate } application =>
+                (StatusCodes.Status409Conflict, "Place is no longer unconfirmed", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.ResolutionReleaseCompleted } application =>
+                (StatusCodes.Status409Conflict, "Completed phase cannot release a place", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.ResolutionReleaseDirectAssignment } application =>
+                (StatusCodes.Status409Conflict, "Direct assignment is not released", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.ResolutionReleaseBlockedByPlayedMatch } application =>
+                (StatusCodes.Status409Conflict, "Played match blocks the release", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.ResolutionReleaseBlockedByMatches } application =>
+                (StatusCodes.Status409Conflict, "Generated matches block the release", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.ResolutionReleaseBlockedByMatchesRunning } application =>
+                (StatusCodes.Status409Conflict, "In-progress phase blocks the release", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.ResolutionReleaseBlockedByDraw } application =>
+                (StatusCodes.Status409Conflict, "Draw blocks the release", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.MediaNotFound } application =>
                 (StatusCodes.Status400BadRequest, "Media not found", application.Code),
             ApplicationFailureException application =>

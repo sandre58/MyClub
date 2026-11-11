@@ -8,6 +8,7 @@ using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Pipeline;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Stages.CascadeReplace;
+using MyClub.PlayUp.Application.Stages.ReleaseResolution;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Host.Contracts;
@@ -616,6 +617,37 @@ internal static class StageEndpoints
             });
 
         app.MapPost(
+            "/stages/{stageId:guid}/resolution/release-preview",
+            async (
+                Guid stageId,
+                ResolutionReleasePreviewRequest request,
+                UseCaseExecutor executor,
+                CancellationToken cancellationToken) =>
+            {
+                var result = await executor.PreviewResolutionReleaseAsync(
+                    new StageId(stageId),
+                    new ResolutionReleaseTarget(request.Target, request.EntryId, request.SlotKey, request.GroupId),
+                    cancellationToken).ConfigureAwait(false);
+                return Results.Ok(ToResolutionReleaseResponse(result));
+            });
+
+        app.MapPost(
+            "/stages/{stageId:guid}/resolution/release",
+            async (
+                Guid stageId,
+                ResolutionReleaseConfirmRequest request,
+                UseCaseExecutor executor,
+                CancellationToken cancellationToken) =>
+            {
+                var result = await executor.ConfirmResolutionReleaseAsync(
+                    new StageId(stageId),
+                    new ResolutionReleaseTarget(request.Target, request.EntryId, request.SlotKey, request.GroupId),
+                    request.VersionToken,
+                    cancellationToken).ConfigureAwait(false);
+                return Results.Ok(ToResolutionReleaseResponse(result));
+            });
+
+        app.MapPost(
             "/stages/{stageId:guid}/qualification/apply",
             async (Guid stageId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
             {
@@ -875,5 +907,36 @@ internal static class StageEndpoints
                     row.GroupId,
                     row.PreviousEntryId,
                     row.EntryId))
+                .ToArray());
+
+    private static ResolutionReleaseResponse ToResolutionReleaseResponse(ResolutionReleaseResult result) =>
+        new(
+            result.VersionToken,
+            result.Releases
+                .Select(row => new ResolutionReleaseRowDto(
+                    row.StageId,
+                    row.Target,
+                    row.SlotKey,
+                    row.GroupId,
+                    row.EntryId))
+                .ToArray(),
+            result.DetachedMatches
+                .Select(match => new ResolutionReleaseDetachedMatchDto(
+                    match.MatchId,
+                    match.StageId,
+                    match.LegIndex,
+                    match.Side,
+                    match.HomeEntryId,
+                    match.AwayEntryId))
+                .ToArray(),
+            result.AffectedOccupants
+                .Select(occupant => new ResolutionReleaseAffectedOccupantDto(
+                    occupant.StageId,
+                    occupant.Target,
+                    occupant.SlotKey,
+                    occupant.GroupId,
+                    occupant.EntryId,
+                    occupant.StateBefore,
+                    occupant.StateAfter))
                 .ToArray());
 }

@@ -106,7 +106,8 @@ public enum StructureResolutionIndeterminacyCause
 /// <param name="IndeterminacyCause">Cause when <paramref name="State"/> is <see cref="StructureResolutionFreshness.Indetermine"/>; otherwise null.</param>
 /// <param name="ActionMatchId">Match the organizer should open for an indeterminate progression, when known.</param>
 /// <param name="ActionMatchLabel">Entry names of <paramref name="ActionMatchId"/>, when both are known.</param>
-/// <param name="CascadeReplaceable">Whether a cascade replace preview can resolve a replay for this occupant.</param>
+    /// <param name="CascadeReplaceable">Whether a cascade replace preview can resolve a replay for this occupant.</param>
+    /// <param name="Releasable">Whether this unconfirmed place can be released. False unless the shared release guards all pass.</param>
 public sealed record StructureResolutionOccupantDto(
     StructureResolutionOccupantTarget Target,
     Guid EntryId,
@@ -120,4 +121,5 @@ public sealed record StructureResolutionOccupantDto(
     StructureResolutionIndeterminacyCause? IndeterminacyCause = null,
     Guid? ActionMatchId = null,
     string? ActionMatchLabel = null,
-    bool CascadeReplaceable = false);
+    bool CascadeReplaceable = false,
+    bool Releasable = false);
