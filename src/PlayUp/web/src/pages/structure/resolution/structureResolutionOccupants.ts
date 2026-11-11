@@ -60,11 +60,7 @@ export function resolutionOccupantNeedsBadge(
   if (occupant == null) {
     return false;
   }
-  return (
-    occupant.state === 'Perime' ||
-    occupant.state === 'Indetermine' ||
-    occupant.state === 'NonVerifiee'
-  );
+  return occupant.state === 'Perime' || occupant.state === 'Indetermine';
 }
 
 /** Stale Qual/Prog occupant the cascade replace command can replay. */

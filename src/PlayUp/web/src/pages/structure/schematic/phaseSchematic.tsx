@@ -249,6 +249,7 @@ function SlotBox({
       <StructureResolutionFreshnessBadge
         occupant={slotResolutionOccupant}
         variant="icon"
+        entryName={resolvedName}
         onReplace={cascade?.requestReplace}
       />
     </span>

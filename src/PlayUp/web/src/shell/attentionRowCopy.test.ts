@@ -99,11 +99,11 @@ describe('attentionRowCopy', () => {
       attentionSituationTitle(indeterminate, 'ResolutionIndetermine', {
         count: '1',
       }),
-    ).toBe('1 résolution indéterminée');
+    ).toBe('1 équipe non confirmée');
     expect(
       attentionSituationTitle(indeterminate, 'ResolutionIndetermine', {
         count: '3',
       }),
-    ).toBe('3 résolutions indéterminées');
+    ).toBe('3 équipes non confirmées');
   });
 });

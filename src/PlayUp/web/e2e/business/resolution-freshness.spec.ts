@@ -168,7 +168,7 @@ test.describe('Play’Up business (resolution freshness)', () => {
     await page
       .locator('.schematic-slot')
       .getByRole('link', {
-        name: /Indéterminé.*n'est pas joué.*Jouer le match/,
+        name: /Non confirmée.*n'est pas joué.*Jouer le match/,
       })
       .click();
     await expect(page).toHaveURL(/\/matches\/[0-9a-f-]+/);

@@ -6,12 +6,15 @@ import { Tooltip } from '../../../design-system/components/Tooltip';
 import { Status } from '../../../design-system/components/Status';
 import {
   HourglassIcon,
-  InfoIcon,
   RefreshIcon,
 } from '../../../design-system/icons/contentIcons';
 import { ChevronRightIcon } from '../../../design-system/icons/shellIcons';
 import type { StructureResolutionOccupant } from '../../../types';
-import { freshnessAction, type FreshnessAction } from './freshnessGuidance';
+import {
+  freshnessAction,
+  indeterminacyExplanation,
+  type FreshnessAction,
+} from './freshnessGuidance';
 import { resolutionOccupantNeedsBadge } from './structureResolutionOccupants';
 
 type FreshnessBadgeVariant = 'full' | 'icon';
@@ -26,6 +29,8 @@ type StructureResolutionFreshnessBadgeProps = {
   variant?: FreshnessBadgeVariant;
   /** Opens the cascade preview. Ignored unless the occupant is replayable. */
   onReplace?: (occupant: StructureResolutionOccupant) => void;
+  /** Stored team, used to name who is no longer confirmed. */
+  entryName?: string | null;
 };
 
 function badgeTone(
@@ -33,11 +38,8 @@ function badgeTone(
 ): 'attention' | 'error' | 'neutral' {
   switch (state) {
     case 'Perime':
-      return 'attention';
     case 'Indetermine':
       return 'attention';
-    case 'NonVerifiee':
-      return 'neutral';
     default:
       return 'neutral';
   }
@@ -53,7 +55,7 @@ function stateIcon(state: StructureResolutionOccupant['state']): ReactNode {
         <HourglassIcon size="sm" className={className} aria-hidden="true" />
       );
     default:
-      return <InfoIcon size="sm" className={className} aria-hidden="true" />;
+      return null;
   }
 }
 
@@ -85,6 +87,7 @@ function FreshnessBadgeBody({
   density = 'compact',
   variant = 'full',
   onReplace,
+  entryName,
   competitionId,
   linked,
 }: StructureResolutionFreshnessBadgeProps & {
@@ -116,22 +119,33 @@ function FreshnessBadgeBody({
         ? (`resolution.freshness.indeterminacy.${occupant.indeterminacyCause}.cause` as const)
         : null;
   const causeLabel = causeKey ? t(causeKey) : null;
+  const explanation = indeterminacyExplanation(occupant, entryName);
+  const sentence = explanation
+    ? t('resolution.freshness.unconfirmedSentence', {
+        team: explanation.team,
+        detail: t(explanation.detailKey, explanation.detailParams),
+      })
+    : null;
+  const explained = sentence ?? causeLabel;
   const actionLabel = actionText(t, action);
 
   const ariaLabel =
     control && actionLabel
-      ? causeLabel
+      ? explained
         ? t('resolution.freshness.ariaAction', {
             label,
-            cause: causeLabel,
+            cause: explained,
             action: actionLabel,
           })
         : t('resolution.freshness.ariaActionNoCause', {
             label,
             action: actionLabel,
           })
-      : causeLabel
-        ? t('resolution.freshness.ariaWithCause', { label, cause: causeLabel })
+      : explained
+        ? t('resolution.freshness.ariaWithCause', {
+            label,
+            cause: explained,
+          })
         : label;
 
   const iconOnly = variant === 'icon';
@@ -166,8 +180,8 @@ function FreshnessBadgeBody({
       {iconOnly ? (
         <span className="structure-freshness-replace__state">{label}</span>
       ) : null}
-      {causeLabel ? (
-        <span className="structure-freshness-replace__cause">{causeLabel}</span>
+      {explained ? (
+        <span className="structure-freshness-replace__cause">{explained}</span>
       ) : null}
       {actionLabel ? (
         <span className="structure-freshness-replace__action">
@@ -176,7 +190,7 @@ function FreshnessBadgeBody({
       ) : null}
     </span>
   );
-  const hasTip = iconOnly || causeLabel != null || actionLabel != null;
+  const hasTip = iconOnly || explained != null || actionLabel != null;
   const wrapped = hasTip ? <Tooltip content={tip}>{badge}</Tooltip> : badge;
 
   if (control === 'replace') {

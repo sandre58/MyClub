@@ -79,8 +79,8 @@ describe('StructureResolutionFreshnessBadge', () => {
         />
       </>,
     );
-    expect(screen.getByText('Indéterminé')).toBeInTheDocument();
-    expect(screen.getByText('Non vérifiée')).toBeInTheDocument();
+    expect(screen.getByText('Non confirmée')).toBeInTheDocument();
+    expect(screen.queryByText('Non vérifiée')).toBeNull();
   });
 
   it('makes a stale Qual or Prog badge the replace action', async () => {
@@ -273,7 +273,7 @@ describe('StructureResolutionFreshnessBadge', () => {
 
     await user.click(
       screen.getByRole('link', {
-        name: /Indéterminé.*n'est pas joué.*Jouer le match Nord/,
+        name: /Non confirmée.*n'est pas joué.*Jouer le match Nord/,
       }),
     );
     expect(screen.getByTestId('navigation-spy')).toHaveAttribute(
@@ -306,13 +306,13 @@ describe('StructureResolutionFreshnessBadge', () => {
         </Routes>
       </MemoryRouter>,
     );
+    const badge = screen.getByLabelText(
+      /Non confirmée.*La sélection ne peut pas être calculée/,
+    );
     expect(
-      screen
-        .getByRole('link', {
-          name: /Indéterminé.*La sélection ne peut pas être calculée.*Vérifier la phase amont/,
-        })
-        .querySelector('.structure-freshness-badge__icon'),
+      badge.querySelector('.structure-freshness-badge__icon'),
     ).not.toBeNull();
+    expect(screen.queryByRole('link')).toBeNull();
   });
 
   it('schematic variant keeps the state word in the tooltip and the chevron only when clickable', async () => {
@@ -364,17 +364,17 @@ describe('StructureResolutionFreshnessBadge', () => {
     );
 
     expect(screen.queryByText('Périmé')).toBeNull();
-    expect(screen.queryByText('Indéterminé')).toBeNull();
+    expect(screen.queryByText('Non confirmée')).toBeNull();
     const button = screen.getByRole('button', {
       name: "Périmé — Résultat amont modifié. Cliquer pour remplacer l'équipe par l'occupant attendu",
     });
     expect(
       button.querySelector('.structure-freshness-badge__chevron'),
     ).not.toBeNull();
-    expect(screen.getByLabelText(/Indéterminé/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Non confirmée/)).toBeInTheDocument();
     expect(
       screen
-        .getByLabelText(/Indéterminé/)
+        .getByLabelText(/Non confirmée/)
         .querySelector('.structure-freshness-badge__chevron'),
     ).toBeNull();
 
@@ -419,45 +419,74 @@ describe('StructureResolutionFreshnessBadge', () => {
     ).toBeInTheDocument();
   });
 
-  it('opens the standing when an empty selection is clicked', async () => {
-    const user = userEvent.setup();
+  it('keeps an empty selection on the badge without a dead-end link', () => {
     renderWithI18n(
       <MemoryRouter initialEntries={['/competitions/comp/structure']}>
         <Routes>
           <Route
             path="/competitions/:competitionId/structure"
             element={
-              <>
-                <NavigationSpy />
-                <StructureResolutionFreshnessBadge
-                  occupant={{
-                    target: 'Slot',
-                    entryId: 'e1',
-                    provenanceKind: 'Qualification',
-                    sourcePathId: 'p1',
-                    state: 'Indetermine',
-                    slotKey: 'A',
-                    indeterminacyCause: 'SelectionVide',
-                    upstreamStageId: 'poules',
-                    cascadeReplaceable: false,
-                  }}
-                />
-              </>
+              <StructureResolutionFreshnessBadge
+                occupant={{
+                  target: 'Slot',
+                  entryId: 'e1',
+                  provenanceKind: 'Qualification',
+                  sourcePathId: 'p1',
+                  state: 'Indetermine',
+                  slotKey: 'A',
+                  indeterminacyCause: 'SelectionVide',
+                  upstreamStageId: 'poules',
+                  cascadeReplaceable: false,
+                }}
+                entryName="Nord"
+              />
             }
           />
         </Routes>
       </MemoryRouter>,
     );
 
-    await user.click(
+    expect(screen.queryByRole('link')).toBeNull();
+    expect(
+      screen.getByLabelText(
+        /Nord n'est plus confirmée — le classement ne désigne aucune équipe/,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('names the team and the unplayed match in the tooltip sentence', () => {
+    renderWithI18n(
+      <MemoryRouter initialEntries={['/competitions/comp/structure']}>
+        <Routes>
+          <Route
+            path="/competitions/:competitionId/structure"
+            element={
+              <StructureResolutionFreshnessBadge
+                occupant={{
+                  target: 'Slot',
+                  entryId: 'e1',
+                  provenanceKind: 'Progression',
+                  sourcePathId: 'p1',
+                  state: 'Indetermine',
+                  indeterminacyCause: 'MatchNonJoue',
+                  actionMatchId: 'match-9',
+                  actionMatchLabel: 'Est – Sud',
+                  cascadeReplaceable: false,
+                }}
+                entryName="Nord"
+              />
+            }
+          />
+          <Route path="/matches/:matchId" element={<NavigationSpy />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(
       screen.getByRole('link', {
-        name: /Indéterminé.*aucune équipe.*classement/,
+        name: /Nord n'est plus confirmée — le match Est – Sud n'est pas joué.*Jouer le match Est – Sud/,
       }),
-    );
-    expect(screen.getByTestId('navigation-spy')).toHaveAttribute(
-      'data-path',
-      '/competitions/comp/structure?stage=poules&section=classement',
-    );
+    ).toBeInTheDocument();
   });
 });
 

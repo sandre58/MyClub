@@ -160,6 +160,7 @@ export function CompositionQualifiersPanel({
                               resolutionIndex,
                               seat.entryId,
                             )}
+                            entryName={seat.teamName ?? entry?.displayName}
                             onReplace={cascade?.requestReplace}
                           />
                         ) : null}

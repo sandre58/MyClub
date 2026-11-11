@@ -366,6 +366,7 @@ export function RootEntriesRail({
       <StructureResolutionFreshnessBadge
         key="freshness"
         occupant={populationOccupant}
+        entryName={entry.displayName}
         onReplace={cascade?.requestReplace}
       />,
     ].filter(Boolean);

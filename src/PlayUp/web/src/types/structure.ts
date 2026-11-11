@@ -302,6 +302,9 @@ export interface StructureResolutionOccupant {
     | 'SourceAbsente'
     | 'SelectionVide'
     | 'Autre'
+    | 'EgaliteClassement'
+    | 'ConditionNonRemplie'
+    | 'ConfigurationInvalide'
     | null;
   /** Match to open for an indeterminate progression, when known. */
   actionMatchId?: string | null;

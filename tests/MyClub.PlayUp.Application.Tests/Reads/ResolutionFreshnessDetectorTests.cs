@@ -515,7 +515,7 @@ public sealed class ResolutionFreshnessDetectorTests
     }
 
     [Fact]
-    public void Skipped_qualification_condition_is_autre_not_an_empty_selection()
+    public void Skipped_qualification_condition_is_condition_non_remplie()
     {
         var (competition, league, terminal, entries, matches) = LeagueFeed(2);
         StampQualification(league, terminal, entries[0], position: 1, top: null, minimumPoints: 100);
@@ -523,11 +523,11 @@ public sealed class ResolutionFreshnessDetectorTests
         Evaluate(competition, [league, terminal], (league, matches))
             .Should().Contain(occupant =>
                 occupant.SlotKey == "Champ"
-                && occupant.IndeterminacyCause == StructureResolutionIndeterminacyCause.Autre);
+                && occupant.IndeterminacyCause == StructureResolutionIndeterminacyCause.ConditionNonRemplie);
     }
 
     [Fact]
-    public void Ambiguous_qualification_selection_stays_autre()
+    public void Ambiguous_qualification_selection_is_egalite_classement()
     {
         var (competition, league, terminal, entries, matches) = LeagueFeed(3);
         StampQualification(league, terminal, entries[0], position: null, top: 2, minimumPoints: null);
@@ -535,7 +535,39 @@ public sealed class ResolutionFreshnessDetectorTests
         Evaluate(competition, [league, terminal], (league, matches))
             .Should().Contain(occupant =>
                 occupant.SlotKey == "Champ"
-                && occupant.IndeterminacyCause == StructureResolutionIndeterminacyCause.Autre);
+                && occupant.IndeterminacyCause == StructureResolutionIndeterminacyCause.EgaliteClassement);
+    }
+
+    [Fact]
+    public void Missing_standing_rules_are_configuration_invalide()
+    {
+        var competition = CreateCompetition.Execute("No standing", _clock);
+        var entry = AddEntry.Execute(competition, "Nord", _clock).Id;
+        var source = Stage.Create(competition.Id, new StageName("Tableau"), SampleRegulations.Standard(), _clock);
+        source.AddRound("Tour", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
+        competition.AddStage(source.Id, _clock);
+        var terminal = Stage.Create(competition.Id, new StageName("Suite"), SampleRegulations.Standard(), _clock);
+        terminal.AddSlot("Champ");
+        competition.AddStage(terminal.Id, _clock);
+        var path = new QualificationPath(
+            1,
+            QualificationSource.Overall(),
+            new QualificationSelection(SelectionMode.Position, 1),
+            QualificationDestination.ForSlot(terminal.Id, "Champ"));
+        source.ReplaceQualificationRules(new QualificationRules([path]), _clock);
+        var provenance = new ResolutionProvenance(
+            ResolutionProvenanceKind.Qualification,
+            ResolutionPathIdentifier.ForQualification(source.Id, path),
+            "seed");
+        terminal.AddResolvedPopulationEntry(entry, _clock, provenance);
+        terminal.ApplyResolvedEntry("Champ", entry, _clock, provenance);
+
+        source.Regulation.StandingRules.Should().BeNull();
+        Evaluate(competition, [source, terminal])
+            .Should().Contain(occupant =>
+                occupant.SlotKey == "Champ"
+                && occupant.IndeterminacyCause == StructureResolutionIndeterminacyCause.ConfigurationInvalide
+                && occupant.UpstreamStageId == source.Id.Value);
     }
 
     [Fact]

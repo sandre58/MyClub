@@ -1085,13 +1085,8 @@ describe('PhaseSchematic', () => {
     expect(onActivate).toHaveBeenCalledOnce();
     expect(requestReplace).toHaveBeenCalledOnce();
 
-    const unverifiedBadge = screen.getByLabelText(/Non vérifiée/);
-    expect(unverifiedBadge.closest('.schematic-slot__body')).not.toBeNull();
-    expect(
-      unverifiedBadge
-        .closest('.schematic-slot__freshness')
-        ?.querySelector('button, a'),
-    ).toBeNull();
+    expect(screen.queryByLabelText(/Non vérifiée/)).toBeNull();
+    expect(screen.queryByText('Non vérifiée')).toBeNull();
     await user.click(screen.getByRole('button', { name: /^B$/ }));
     expect(onActivate).toHaveBeenCalledTimes(2);
   });

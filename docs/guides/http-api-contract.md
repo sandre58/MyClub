@@ -316,7 +316,7 @@ Optional. Present when the phase stores resolution provenance (slot, group membe
 | `groupId` | guid \| null | Set when `target` is `Group` |
 | `stalenessCause` | string \| null | When `state` is `Perime`: `ResultatAmont` \| `RegleQualification` \| `AmontPerime`. Otherwise null |
 | `upstreamStageId` | guid \| null | Source stage the selection was read from, when known. `AmontPerime` uses it as the phase to open |
-| `indeterminacyCause` | string \| null | When `state` is `Indetermine`: `MatchNonJoue` \| `Egalite` \| `SourceAbsente` \| `SelectionVide` \| `Autre`. Otherwise null |
+| `indeterminacyCause` | string \| null | When `state` is `Indetermine`: `MatchNonJoue` \| `Egalite` \| `SourceAbsente` \| `SelectionVide` \| `Autre` \| `EgaliteClassement` \| `ConditionNonRemplie` \| `ConfigurationInvalide`. Otherwise null. `EgaliteClassement` is a tied standing. `ConditionNonRemplie` is a qualification condition that no longer holds. `ConfigurationInvalide` is a source-phase setup that threw while the selection was evaluated |
 | `actionMatchId` | guid \| null | Match to open for `MatchNonJoue` or `Egalite`, when known |
 | `actionMatchLabel` | string \| null | Home and away names of `actionMatchId`, when both are known |
 

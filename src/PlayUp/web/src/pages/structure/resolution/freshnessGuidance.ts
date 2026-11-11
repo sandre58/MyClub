@@ -32,6 +32,49 @@ function matchHref(matchId: string | null | undefined): string | null {
   return id ? `/matches/${id}` : null;
 }
 
+function regulationHref(
+  competitionId: string | null | undefined,
+): string | null {
+  const competition = competitionId?.trim();
+  return competition ? `/competitions/${competition}/regulation` : null;
+}
+
+export type IndeterminacyExplanation = {
+  team: string;
+  detailKey: string;
+  detailParams?: Record<string, string>;
+};
+
+/** Team and cause clause for the unconfirmed tooltip sentence. */
+export function indeterminacyExplanation(
+  occupant: StructureResolutionOccupant,
+  entryName: string | null | undefined,
+): IndeterminacyExplanation | null {
+  const team = entryName?.trim();
+  if (
+    !team ||
+    occupant.state !== 'Indetermine' ||
+    !occupant.indeterminacyCause
+  ) {
+    return null;
+  }
+
+  const cause = occupant.indeterminacyCause;
+  const match = occupant.actionMatchLabel?.trim();
+  if (cause === 'MatchNonJoue' && match) {
+    return {
+      team,
+      detailKey: 'resolution.freshness.indeterminacy.MatchNonJoue.clauseNamed',
+      detailParams: { match },
+    };
+  }
+
+  return {
+    team,
+    detailKey: `resolution.freshness.indeterminacy.${cause}.clause`,
+  };
+}
+
 function navigate(
   href: string,
   labelKey: string,
@@ -73,41 +116,57 @@ export function freshnessAction(
   }
 
   const cause = occupant.indeterminacyCause;
-  const upstream = stageHref(
-    competitionId,
-    occupant.upstreamStageId,
-    cause === 'SelectionVide' ? 'classement' : undefined,
-  );
+  const upstream = stageHref(competitionId, occupant.upstreamStageId);
   const match = matchHref(occupant.actionMatchId);
 
-  if (cause === 'MatchNonJoue' || cause === 'Egalite') {
+  if (cause === 'MatchNonJoue') {
     const href = match ?? upstream;
     if (!href) {
       return null;
     }
     const matchLabel = occupant.actionMatchLabel?.trim();
-    if (cause === 'MatchNonJoue' && matchLabel) {
+    if (matchLabel) {
       return navigate(
         href,
         'resolution.freshness.indeterminacy.MatchNonJoue.actionNamed',
         { match: matchLabel },
       );
     }
-    return navigate(href, `resolution.freshness.indeterminacy.${cause}.action`);
+    return navigate(
+      href,
+      'resolution.freshness.indeterminacy.MatchNonJoue.action',
+    );
   }
 
-  if (
-    cause === 'SelectionVide' ||
-    cause === 'SourceAbsente' ||
-    cause === 'Autre'
-  ) {
-    if (!upstream) {
-      return null;
-    }
-    return navigate(
-      upstream,
-      `resolution.freshness.indeterminacy.${cause}.action`,
+  if (cause === 'Egalite') {
+    const href = match ?? upstream;
+    return href
+      ? navigate(href, 'resolution.freshness.indeterminacy.Egalite.action')
+      : null;
+  }
+
+  if (cause === 'EgaliteClassement') {
+    const href = stageHref(
+      competitionId,
+      occupant.upstreamStageId,
+      'classement',
     );
+    return href
+      ? navigate(
+          href,
+          'resolution.freshness.indeterminacy.EgaliteClassement.action',
+        )
+      : null;
+  }
+
+  if (cause === 'ConfigurationInvalide') {
+    const href = regulationHref(competitionId);
+    return href
+      ? navigate(
+          href,
+          'resolution.freshness.indeterminacy.ConfigurationInvalide.action',
+        )
+      : null;
   }
 
   return null;

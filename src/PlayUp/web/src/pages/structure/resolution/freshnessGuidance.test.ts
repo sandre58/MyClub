@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { StructureResolutionOccupant } from '../../../types';
-import { freshnessAction } from './freshnessGuidance';
+import { freshnessAction, indeterminacyExplanation } from './freshnessGuidance';
 
 const base: StructureResolutionOccupant = {
   target: 'Slot',
@@ -134,12 +134,33 @@ describe('freshnessAction', () => {
     }
   });
 
-  it('opens the standing for an empty selection', () => {
+  it('drops dead-end checks for an empty selection, a missing source, and Autre', () => {
+    for (const indeterminacyCause of [
+      'SelectionVide',
+      'SourceAbsente',
+      'Autre',
+      'ConditionNonRemplie',
+    ] as const) {
+      expect(
+        freshnessAction(
+          {
+            ...base,
+            indeterminacyCause,
+            upstreamStageId: 'poules',
+          },
+          'comp',
+          { canReplace: false },
+        ),
+      ).toBeNull();
+    }
+  });
+
+  it('opens the standing when several teams are tied', () => {
     expect(
       freshnessAction(
         {
           ...base,
-          indeterminacyCause: 'SelectionVide',
+          indeterminacyCause: 'EgaliteClassement',
           upstreamStageId: 'poules',
         },
         'comp',
@@ -148,48 +169,61 @@ describe('freshnessAction', () => {
     ).toMatchObject({
       kind: 'navigate',
       href: '/competitions/comp/structure?stage=poules&section=classement',
-      labelKey: 'resolution.freshness.indeterminacy.SelectionVide.action',
-    });
-  });
-
-  it('links a known source for a missing rule and skips a missing source without a phase', () => {
-    expect(
-      freshnessAction(
-        {
-          ...base,
-          indeterminacyCause: 'SourceAbsente',
-          upstreamStageId: 'phase-a',
-        },
-        'comp',
-        { canReplace: false },
-      ),
-    ).toMatchObject({
-      href: '/competitions/comp/structure?stage=phase-a',
-      labelKey: 'resolution.freshness.indeterminacy.SourceAbsente.action',
+      labelKey: 'resolution.freshness.indeterminacy.EgaliteClassement.action',
     });
 
     expect(
       freshnessAction(
-        { ...base, indeterminacyCause: 'SourceAbsente' },
+        { ...base, indeterminacyCause: 'EgaliteClassement' },
         'comp',
         { canReplace: false },
       ),
     ).toBeNull();
+  });
 
-    const autre = freshnessAction(
-      { ...base, indeterminacyCause: 'Autre', upstreamStageId: 'phase-a' },
-      'comp',
-      { canReplace: false },
-    );
-    expect(autre?.kind).toBe('navigate');
-    if (autre?.kind === 'navigate') {
-      expect(autre.href).toBe('/competitions/comp/structure?stage=phase-a');
-    }
+  it('opens the rules for an invalid source setup and does not release it', () => {
+    expect(
+      freshnessAction(
+        { ...base, indeterminacyCause: 'ConfigurationInvalide' },
+        'comp',
+        { canReplace: false },
+      ),
+    ).toEqual({
+      kind: 'navigate',
+      href: '/competitions/comp/regulation',
+      labelKey:
+        'resolution.freshness.indeterminacy.ConfigurationInvalide.action',
+    });
+  });
+
+  it('names the team and the unplayed match in the explanation', () => {
+    expect(
+      indeterminacyExplanation(
+        {
+          ...base,
+          indeterminacyCause: 'MatchNonJoue',
+          actionMatchLabel: 'Est – Sud',
+        },
+        'Nord',
+      ),
+    ).toEqual({
+      team: 'Nord',
+      detailKey: 'resolution.freshness.indeterminacy.MatchNonJoue.clauseNamed',
+      detailParams: { match: 'Est – Sud' },
+    });
 
     expect(
-      freshnessAction({ ...base, indeterminacyCause: 'Autre' }, 'comp', {
-        canReplace: false,
-      }),
+      indeterminacyExplanation(
+        { ...base, indeterminacyCause: 'ConfigurationInvalide' },
+        'Nord',
+      )?.detailKey,
+    ).toBe('resolution.freshness.indeterminacy.ConfigurationInvalide.clause');
+
+    expect(
+      indeterminacyExplanation(
+        { ...base, indeterminacyCause: 'MatchNonJoue' },
+        '  ',
+      ),
     ).toBeNull();
   });
 });

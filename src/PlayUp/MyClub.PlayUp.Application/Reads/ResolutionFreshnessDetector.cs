@@ -30,6 +30,10 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <see cref="StructureResolutionIndeterminacyCause.SourceAbsente"/>: a missing progression path is not a rule change.
 /// An unfinished progression match is <see cref="StructureResolutionIndeterminacyCause.MatchNonJoue"/>.
 /// A level score is <see cref="StructureResolutionIndeterminacyCause.Egalite"/>.
+/// A tied standing is <see cref="StructureResolutionIndeterminacyCause.EgaliteClassement"/>.
+/// A qualification condition that no longer holds is <see cref="StructureResolutionIndeterminacyCause.ConditionNonRemplie"/>.
+/// A configuration exception swallowed while reading a standing or assembling a fixture is
+/// <see cref="StructureResolutionIndeterminacyCause.ConfigurationInvalide"/>.
 /// </summary>
 public static class ResolutionFreshnessDetector
 {
@@ -213,13 +217,15 @@ public static class ResolutionFreshnessDetector
             return;
         }
 
-        var standing = standings.Resolve(source, path);
-        if (standing is null)
+        var standingRead = standings.Resolve(source, path);
+        if (standingRead.ConfigurationInvalid)
         {
             RememberSource(occupant, source.Id.Value);
-            MarkIndeterminate(occupant, StructureResolutionIndeterminacyCause.Autre);
+            MarkIndeterminate(occupant, StructureResolutionIndeterminacyCause.ConfigurationInvalide);
             return;
         }
+
+        var standing = standingRead.Standing!;
 
         RememberDependencies(occupant, source.Id.Value, standing.Rows.Select(row => row.EntryId.Value));
         var storedEntry = new EntryId(occupant.EntryId);
@@ -453,8 +459,8 @@ public static class ResolutionFreshnessDetector
             return;
         }
 
-        var standing = standings.Resolve(source, match);
-        if (standing is null)
+        var standingRead = standings.Resolve(source, match);
+        if (standingRead.Standing is not { } standing)
         {
             occupant.ClearReplay();
             return;
@@ -614,13 +620,19 @@ public static class ResolutionFreshnessDetector
     {
         if (selection.Status == PathOccupantSelectionStatus.Skipped)
         {
-            return StructureResolutionIndeterminacyCause.Autre;
+            return StructureResolutionIndeterminacyCause.ConditionNonRemplie;
         }
 
         if (selection.Status == PathOccupantSelectionStatus.Indeterminate
             && selection.Indeterminacy == PathOccupantIndeterminacyReason.Empty)
         {
             return StructureResolutionIndeterminacyCause.SelectionVide;
+        }
+
+        if (selection.Status == PathOccupantSelectionStatus.Indeterminate
+            && selection.Indeterminacy == PathOccupantIndeterminacyReason.Ambiguous)
+        {
+            return StructureResolutionIndeterminacyCause.EgaliteClassement;
         }
 
         return StructureResolutionIndeterminacyCause.Autre;
@@ -633,7 +645,7 @@ public static class ResolutionFreshnessDetector
                 StructureResolutionIndeterminacyCause.MatchNonJoue,
             DomainException { Code: StageErrorCodes.FixtureOutcomeUndecided } =>
                 StructureResolutionIndeterminacyCause.Egalite,
-            _ => StructureResolutionIndeterminacyCause.Autre,
+            _ => StructureResolutionIndeterminacyCause.ConfigurationInvalide,
         };
 
     private static void MarkCurrent(WorkingOccupant occupant)
@@ -793,6 +805,17 @@ public static class ResolutionFreshnessDetector
     }
 
     /// <summary>
+    /// A standing read for one qualification path.
+    /// <see cref="ConfigurationInvalid"/> is set when the cache swallowed a configuration exception.
+    /// </summary>
+    private readonly record struct StandingRead(Standing? Standing)
+    {
+        public static StandingRead Invalid => new(null);
+
+        public bool ConfigurationInvalid => Standing is null;
+    }
+
+    /// <summary>
     /// Standings built during this evaluation only. Discarded when the call returns.
     /// Not a cache from one Structure read to the next.
     /// </summary>
@@ -803,21 +826,22 @@ public static class ResolutionFreshnessDetector
         private readonly Dictionary<Guid, (Standing? Overall, IReadOnlyDictionary<GroupId, Standing> Groups)?> _built = [];
         private readonly Dictionary<(Guid StageId, int Position), Standing?> _across = [];
 
-        public Standing? Resolve(Stage source, QualificationPath path)
+        public StandingRead Resolve(Stage source, QualificationPath path)
         {
             try
             {
                 var built = Built(source);
                 if (built is null)
                 {
-                    return null;
+                    return StandingRead.Invalid;
                 }
 
-                return ResolveStanding(source, path, built.Value);
+                var standing = ResolveStanding(source, path, built.Value);
+                return standing is null ? StandingRead.Invalid : new StandingRead(standing);
             }
             catch (Exception ex) when (ex is DomainException or ApplicationFailureException)
             {
-                return null;
+                return StandingRead.Invalid;
             }
         }
 

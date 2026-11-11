@@ -66,6 +66,19 @@ describe('structureResolutionOccupants', () => {
     expect(resolutionOccupantNeedsBadge(slotOccupant)).toBe(true);
   });
 
+  it('hides the badge for an unverified occupant', () => {
+    expect(
+      resolutionOccupantNeedsBadge({
+        ...slotOccupant,
+        state: 'NonVerifiee',
+        provenanceKind: 'NonVerifiee',
+      }),
+    ).toBe(false);
+    expect(
+      resolutionOccupantNeedsBadge({ ...slotOccupant, state: 'Indetermine' }),
+    ).toBe(true);
+  });
+
   it('detects stale tirage occupants', () => {
     expect(
       hasStaleTirageResolutionOccupant([

@@ -80,6 +80,15 @@ public enum StructureResolutionIndeterminacyCause
 
     /// <summary>The selection could not be computed.</summary>
     Autre = 5,
+
+    /// <summary>Several teams are tied in the standing.</summary>
+    EgaliteClassement = 6,
+
+    /// <summary>The stored team no longer meets the qualification condition.</summary>
+    ConditionNonRemplie = 7,
+
+    /// <summary>Source-phase setup threw while the selection was evaluated.</summary>
+    ConfigurationInvalide = 8,
 }
 
 /// <summary>

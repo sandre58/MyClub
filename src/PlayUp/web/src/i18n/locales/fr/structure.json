@@ -844,7 +844,7 @@
     "freshness": {
       "state": {
         "Perime": "Périmé",
-        "Indetermine": "Indéterminé",
+        "Indetermine": "Non confirmée",
         "NonVerifiee": "Non vérifiée"
       },
       "cause": {
@@ -853,27 +853,48 @@
         "AmontPerime": "Phase amont périmée"
       },
       "upstreamLink": "Aller à la phase amont",
+      "unconfirmedSentence": "{{team}} n'est plus confirmée — {{detail}}",
       "indeterminacy": {
         "MatchNonJoue": {
           "cause": "Le match n'est pas joué",
+          "clause": "le match n'est pas joué",
+          "clauseNamed": "le match {{match}} n'est pas joué",
           "action": "Jouer le match",
           "actionNamed": "Jouer le match {{match}}"
         },
         "Egalite": {
           "cause": "Le score ne départage pas",
+          "clause": "le score ne départage pas",
           "action": "Départager l'égalité"
         },
         "SourceAbsente": {
           "cause": "La phase ou la règle source est introuvable",
+          "clause": "la phase ou la règle source est introuvable",
           "action": "Vérifier la source"
         },
         "SelectionVide": {
           "cause": "Le classement ne désigne aucune équipe",
+          "clause": "le classement ne désigne aucune équipe",
           "action": "Vérifier le classement"
         },
         "Autre": {
           "cause": "La sélection ne peut pas être calculée",
+          "clause": "la sélection ne peut pas être calculée",
           "action": "Vérifier la phase amont"
+        },
+        "EgaliteClassement": {
+          "cause": "Plusieurs équipes à égalité au classement",
+          "clause": "plusieurs équipes sont à égalité au classement",
+          "action": "Voir le classement"
+        },
+        "ConditionNonRemplie": {
+          "cause": "L'équipe ne remplit plus la condition de qualification",
+          "clause": "elle ne remplit plus la condition de qualification"
+        },
+        "ConfigurationInvalide": {
+          "cause": "Le réglage de la phase source est incomplet",
+          "clause": "le réglage de la phase source est incomplet",
+          "action": "Voir le règlement"
         }
       },
       "ariaWithCause": "{{label}} — {{cause}}",
