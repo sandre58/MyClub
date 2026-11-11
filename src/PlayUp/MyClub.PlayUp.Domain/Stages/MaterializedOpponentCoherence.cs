@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Matches;
 
 namespace MyClub.PlayUp.Domain.Stages;
 
@@ -14,7 +15,8 @@ namespace MyClub.PlayUp.Domain.Stages;
 /// </summary>
 /// <remarks>
 /// Cup: BracketPair slot occupants vs attached Fixture matches (final simulated pair state).
-/// Groups: remove/move of an entry that appears on an attached match is refused; Add is allowed.
+/// Groups draw removal still refuses an entry that appears on an attached match.
+/// Manual clear refuses when the stage has any attached match; manual assign refuses when the target group has one.
 /// </remarks>
 public static class MaterializedOpponentCoherence
 {

@@ -88,13 +88,13 @@ public sealed class MaterializedOpponentCoherenceTests
         var act = () => stage.RemoveEntryFromGroup(groupId, entryA, snapshots);
 
         act.Should().Throw<DomainException>()
-            .Which.Code.Should().Be(StageErrorCodes.MaterializedOpponentConflict);
+            .Which.Code.Should().Be(StageErrorCodes.GroupClearLockedByStageMatches);
         stage.FindGroup(groupId)!.EntryIds.Should().Contain(entryA);
         stage.FindGroup(groupId)!.EntryIds.Should().Contain(entryB);
     }
 
     [Fact]
-    public void Groups_add_entry_after_materialize_is_allowed()
+    public void Groups_add_entry_after_materialize_is_allowed_on_the_shared_assign_path()
     {
         var (stage, _, _, groupId, snapshots) = CreateMaterializedGroupsPair();
         var entryC = EntryId.New();
@@ -104,19 +104,22 @@ public sealed class MaterializedOpponentCoherenceTests
         stage.FindGroup(groupId)!.EntryIds.Should().Contain(entryC);
 
         var act = () => stage.RemoveEntryFromGroup(groupId, entryC, snapshots);
-        act.Should().NotThrow();
+        act.Should().Throw<DomainException>()
+            .Which.Code.Should().Be(StageErrorCodes.GroupClearLockedByStageMatches);
     }
 
     [Fact]
-    public void Groups_remove_entry_absent_from_matches_is_allowed()
+    public void Groups_remove_entry_absent_from_matches_is_refused_when_the_stage_has_a_match()
     {
         var (stage, entryA, entryB, groupId, snapshots) = CreateMaterializedGroupsPair();
         var entryC = EntryId.New();
         stage.AssignEntryToGroup(groupId, entryC);
 
-        stage.RemoveEntryFromGroup(groupId, entryC, snapshots);
+        var act = () => stage.RemoveEntryFromGroup(groupId, entryC, snapshots);
 
-        stage.FindGroup(groupId)!.EntryIds.Should().NotContain(entryC);
+        act.Should().Throw<DomainException>()
+            .Which.Code.Should().Be(StageErrorCodes.GroupClearLockedByStageMatches);
+        stage.FindGroup(groupId)!.EntryIds.Should().Contain(entryC);
         stage.FindGroup(groupId)!.EntryIds.Should().Contain(entryA);
         stage.FindGroup(groupId)!.EntryIds.Should().Contain(entryB);
     }
@@ -130,7 +133,7 @@ public sealed class MaterializedOpponentCoherenceTests
         var act = () => stage.RemoveEntryFromGroup(groupId, entryA, snapshots);
 
         act.Should().Throw<DomainException>()
-            .Which.Code.Should().Be(StageErrorCodes.MaterializedOpponentConflict);
+            .Which.Code.Should().Be(StageErrorCodes.GroupClearLockedByStageMatches);
         stage.FindGroup(groupId)!.EntryIds.Should().Contain(entryA);
         stage.FindGroup(groupId)!.EntryIds.Should().Contain(entryB);
         otherGroup.EntryIds.Should().BeEmpty();

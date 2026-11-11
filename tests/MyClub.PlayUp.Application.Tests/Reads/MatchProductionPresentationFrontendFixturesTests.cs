@@ -108,6 +108,7 @@ public sealed class MatchProductionPresentationFrontendFixturesTests
             StructureIntent.Groups(2, 2),
             _clock);
         var stage = configured.Stage;
+        stage.ReplaceAffectationAuthoring([e1.Id, e2.Id, e3.Id, e4.Id], _clock);
         stage.AssignEntryToGroup(stage.Groups[0].Id, e1.Id);
         stage.AssignEntryToGroup(stage.Groups[0].Id, e2.Id);
         stage.AssignEntryToGroup(stage.Groups[1].Id, e3.Id);

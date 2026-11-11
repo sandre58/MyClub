@@ -285,6 +285,11 @@ public static class ApplicationErrorCodes
     public const string AppliedDrawSlotPlacementProtected = "Application.AppliedDrawSlotPlacementProtected";
 
     /// <summary>
+    /// Gets the code when a manual group assignment would break a placement guaranteed by an Applied group draw.
+    /// </summary>
+    public const string AppliedDrawGroupPlacementProtected = "Application.AppliedDrawGroupPlacementProtected";
+
+    /// <summary>
     /// Gets the code when a draw resolution is obsolete for consumption.
     /// </summary>
     public const string DrawObsoleteForConsumption = "Application.DrawObsoleteForConsumption";

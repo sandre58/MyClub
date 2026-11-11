@@ -262,7 +262,7 @@ public static class CascadeReplace
                 stage.RemoveResolvedGroupEntry(groupId, previous, snapshots);
             }
 
-            stage.ApplyResolvedGroupEntry(groupId, next, provenance);
+            stage.ApplyResolvedGroupEntry(groupId, next, provenance, snapshots);
             if (!previous.Equals(next))
             {
                 replacements.Add(new CascadeReplacement(
@@ -293,7 +293,7 @@ public static class CascadeReplace
                 continue;
             }
 
-            stage.RemoveResolvedPopulationEntry(previous, clock);
+            stage.RemoveResolvedPopulationEntry(previous, clock, snapshots);
             replacements.Add(new CascadeReplacement(
                 stage.Id.Value,
                 StructureResolutionOccupantTarget.Population,

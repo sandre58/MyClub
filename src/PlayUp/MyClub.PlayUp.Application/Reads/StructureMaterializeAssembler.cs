@@ -138,10 +138,9 @@ internal static class StructureMaterializeAssembler
         var determined = rows.Count;
         var materializedCount = rows.Count(row => row.Materialized);
         var eligibleCount = rows.Count(row => row.Eligible);
-        var (groupsPlacementFilled, groupsPlacementCapacity) =
-            GroupsPlacementReadiness.GetPlacementProgress(stage);
+        var (groupsPlacementFilled, groupsPlacementCapacity, blocksProduction) =
+            GroupsPlacementReadiness.Evaluate(stage);
         var prospectiveConfrontations = CountGroupsProspectiveConfrontations(stage);
-        var blocksProduction = GroupsPlacementReadiness.BlocksProduction(stage);
         return Pack(
             competition,
             stage,
