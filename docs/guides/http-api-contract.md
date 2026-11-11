@@ -472,7 +472,35 @@ Locale non-destructive skeleton edits (Lot 3):
 
 Stage hub `actions` may include `RebuildStructure`, `RenameStage`, `AddMatchday`, `AddGroup`, `AddRound`, `AddSlot`, `ReplaceMatchGenerationFormat`, `ReplaceSwissSettings`, `AssignEntryToGroup`, `ClearEntryFromGroup`.
 
-`AssignEntryToGroup` and `ClearEntryFromGroup` are present for a Groups stage in Draft and in Ready, including when matches are attached. They are absent for Championship and Cup. Manual assign and clear use the same rule in Draft and Ready. Clear is refused when the stage has any attached match (`Stage.GroupClearLockedByStageMatches`, 409), including a match in another group. Assign is refused when the target group already has an attached match (`Stage.GroupAssignLockedByGroupMatches`, 409); an assign into a group with no match stays allowed when another group has matches. Putting an entry that is already in the target group stays 204. Running and Suspended → `Stage.StructureLocked` (409). Unknown group → `Stage.GroupNotFound` (409). Group already at `PlacesPerGroup` → `Stage.GroupFull` (409). Entry outside the phase composition → `Stage.GroupAssignmentEntryNotInComposition` (409). Placement sealed by an applied group draw → `Application.AppliedDrawGroupPlacementProtected` (409). Placement produced by qualification or progression → `Stage.GroupPlacementResolutionLocked` (409). Composition withdrawal blocked by a produced match or by that same qualification/progression placement → `Stage.CompositionWithdrawalGroupMembershipBlocked` (409).
+`AssignEntryToGroup` and `ClearEntryFromGroup` are present for a Groups stage in Draft and in Ready, including when matches are attached. They are absent for Championship and Cup. Manual assign and clear use the same rule in Draft and Ready. Clear is refused when the stage has any attached match (`Stage.GroupClearLockedByStageMatches`, 409), including a match in another group. Assign is refused when the target group already has an attached match (`Stage.GroupAssignLockedByGroupMatches`, 409); an assign into a group with no match stays allowed when another group has matches. Putting an entry that is already in the target group stays 204 in Draft and in Ready. In Running or Suspended the lifecycle check comes first, including a repeated assign of an entry already in the group, and the route returns `Stage.StructureLocked` (409). Unknown group → `Stage.GroupNotFound` (409). Group already at `PlacesPerGroup` → `Stage.GroupFull` (409). Entry outside the phase composition → `Stage.GroupAssignmentEntryNotInComposition` (409). Placement sealed by an applied group draw → `Application.AppliedDrawGroupPlacementProtected` (409). Placement produced by qualification or progression → `Stage.GroupPlacementResolutionLocked` (409). Composition withdrawal blocked by a produced match or by that same qualification/progression placement → `Stage.CompositionWithdrawalGroupMembershipBlocked` (409).
+
+Manual assign and clear are also refused while a non-cancelled, non-applied **Group** draw exists on the phase. That includes a draft, a published draw that is not applied yet, and a published draw that no longer matches the groups (for example after a pinned team leaves). The route returns `Application.ManualGroupPlacementBlockedByActiveDraw` (409). Cancel that draw, including a draft, or apply it only when it can still be applied, before placing or removing a team. After a pinned team leaves the composition, apply is refused as obsolete and cancel remains available in Draft and Ready. In Running or Suspended the first refusal is `Stage.StructureLocked`, including when such a draw remains. Assign (not clear, and not qualification or progression apply) is refused when the free places in the target group are fewer than or equal to the unresolved qualification/progression feeds into that group (`Application.GroupSeatReservedByInboundFeed`, 409). Free places are `PlacesPerGroup` minus current members. A feed is unresolved until that group still contains a member whose provenance source path id is that ForGroup path. The schematic paints those unresolved paths on empty seats. When free places exceed that count, assign stays allowed.
+
+`GET /stages/{stageId}/schematic` adds four optional fields on each `GroupPlace` case. They are omitted for Cup and roster cases.
+
+| Field | Meaning |
+| :--- | :--- |
+| `seatMode` | `Editable`, `QualProg`, `Draw`, `MatchLocked`, `Reserved`, or `DrawPending`. |
+| `canClear` | `true` only when a manual clear of that occupied seat would succeed. |
+| `excess` | `true` when the member is past `PlacesPerGroup`. Those members are projected; they are not hidden. |
+| `outsideComposition` | `true` when the member is absent from the phase composition. This is not a seventh mode. |
+
+Seat mode is the table of the first refusal the matching route would return. The route checks the lifecycle first (`Stage.StructureLocked`, which stays `Editable` because it is not a seat mode), then an unapplied group draw (`DrawPending`), then applied-draw protection (`Draw`), then the domain refusal. An empty seat whose target group already has a match is `MatchLocked`. An empty seat whose free places do not exceed the unresolved feeds is `Reserved`. Any other code, and a refusal of null, is `Editable`. `canClear` is true only when the clear refusal is null. An empty seat is probed with the first composition entry that is not in any group. When every composition entry is already placed, the probe skips entry-specific checks.
+
+When every group already holds exactly `PlacesPerGroup` members that are still in the composition, `drawExecutionBadge` is null even if draw rules are engaged and no draw execution exists. That means the draw is not required: the readiness next step is not `RunDraw`, and match production is not deferred for a draw. An active non-cancelled draw still reports `InProgress`, `ToApply`, or `Applied`. Cup badges are unchanged.
+
+```json
+{
+  "formPosition": { "kind": "GroupPlace", "groupId": "<guid>", "groupName": "A", "index": 5 },
+  "feedOrigin": null,
+  "entry": { "entryId": "<guid>", "displayName": "Extra" },
+  "assignment": null,
+  "seatMode": "Editable",
+  "canClear": true,
+  "excess": true,
+  "outsideComposition": false
+}
+```
 
 #### `POST /competitions/{competitionId}/stages` → 201 `AddCompetitionStageResponse`
 
@@ -924,6 +952,8 @@ ProblemDetails extensions:
 - `Application.DrawNotEnoughTeams`
 - `Application.DrawTooManyTeams`
 - `Application.AppliedDrawGroupPlacementProtected`
+- `Application.GroupSeatReservedByInboundFeed`
+- `Application.ManualGroupPlacementBlockedByActiveDraw`
 
 ### Application codes mapped to 404
 
