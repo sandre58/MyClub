@@ -124,8 +124,8 @@ public static class CascadeReplace
         return string.IsNullOrWhiteSpace(name) ? null : name;
     }
 
-    // A one-leg round with a single attachment stays null.
-    // More than one attachment counts as multi-leg when the stored format is omitted.
+    // A single attachment stays null, including a lone leg 1.
+    // More than one leg in the format, or more than one attachment on the fixture, exposes the leg.
     private static int? LegWhenMultiLeg(IReadOnlyList<Stage> stages, Guid stageId, Guid matchId)
     {
         var stage = stages.FirstOrDefault(candidate => candidate.Id.Value == stageId);

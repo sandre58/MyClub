@@ -163,13 +163,24 @@ async function openPlayed(match: CascadePlayedMatch) {
   const user = userEvent.setup();
   renderAction();
   await user.click(screen.getByRole('button', { name: staleButtonName() }));
-  return screen.findByRole('listitem');
+  const item = await screen.findByRole('listitem');
+  return { user, item };
 }
 
 function expectPlainLabel(item: HTMLElement, label: string) {
   expect(item).toHaveTextContent(label);
+  const dialog = item.closest('[role="dialog"]');
+  expect(dialog).not.toBeNull();
+  expect(dialog!.outerHTML).not.toContain(matchId);
+  const labelled = [
+    dialog!,
+    ...dialog!.querySelectorAll('[aria-label], [title]'),
+  ];
+  for (const node of labelled) {
+    expect(node.getAttribute('aria-label') ?? '').not.toContain(matchId);
+    expect(node.getAttribute('title') ?? '').not.toContain(matchId);
+  }
   const text = item.textContent ?? '';
-  expect(text).not.toContain(matchId);
   expect(text).not.toMatch(/domicile|extérieur|home|away/i);
 }
 
@@ -184,8 +195,10 @@ describe('StructureCascadeReplaceAction', () => {
       playedMatches: [],
       replacements: [],
     });
-    const user = userEvent.setup();
-    const item = await openPlayed(played());
+    const { user, item } = await openPlayed(played());
+    expect(
+      screen.queryByRole('button', { name: 'Remplacer Champ' }),
+    ).toBeNull();
     expectPlainLabel(item, 'Alpha – Beta');
     expect(item).not.toHaveTextContent('Finale');
     expect(item).not.toHaveTextContent('Manche');
@@ -203,7 +216,7 @@ describe('StructureCascadeReplaceAction', () => {
   it.each(frenchLabels)(
     'labels a played match in French (%s)',
     async (_name, match, label) => {
-      const item = await openPlayed(match);
+      const { item } = await openPlayed(match);
       expectPlainLabel(item, label);
       if (match.legIndex == null) {
         expect(item).not.toHaveTextContent('Manche');
@@ -218,7 +231,7 @@ describe('StructureCascadeReplaceAction', () => {
     'labels a played match in English (%s)',
     async (_name, match, label) => {
       await i18n.changeLanguage('en');
-      const item = await openPlayed(match);
+      const { item } = await openPlayed(match);
       expectPlainLabel(item, label);
       if (match.legIndex == null) {
         expect(item).not.toHaveTextContent('Leg');
