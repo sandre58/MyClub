@@ -54,6 +54,17 @@ export function buildStructureResolutionOccupantIndex(
   return { bySlotKey, byPopulationEntryId, byGroupMember };
 }
 
+/** Unconfirmed place the server says can no longer be confirmed. */
+export function isDefinitivelyUnconfirmed(
+  occupant: StructureResolutionOccupant | null | undefined,
+): occupant is StructureResolutionOccupant {
+  return (
+    occupant != null &&
+    occupant.state === 'Indetermine' &&
+    occupant.definitive === true
+  );
+}
+
 export function resolutionOccupantNeedsBadge(
   occupant: StructureResolutionOccupant | null | undefined,
 ): occupant is StructureResolutionOccupant {

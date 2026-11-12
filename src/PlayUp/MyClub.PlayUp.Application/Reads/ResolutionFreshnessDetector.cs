@@ -35,6 +35,9 @@ namespace MyClub.PlayUp.Application.Reads;
 /// A qualification condition that no longer holds is <see cref="StructureResolutionIndeterminacyCause.ConditionNonRemplie"/>.
 /// A configuration exception swallowed while reading a standing or assembling a fixture is
 /// <see cref="StructureResolutionIndeterminacyCause.ConfigurationInvalide"/>.
+/// <see cref="StructureResolutionIndeterminacyCause.SourceAbsente"/> records
+/// <see cref="ResolutionSourceAbsence"/>: the id does not parse, the stage was not loaded, or the path,
+/// fixture, or round is gone. A stage missing from this call is not treated as deleted.
 /// </summary>
 public static class ResolutionFreshnessDetector
 {
@@ -207,10 +210,22 @@ public static class ResolutionFreshnessDetector
         Dictionary<Guid, Stage> stagesById,
         StandingCache standings)
     {
-        if (!TryReadPrefixedId(occupant.SourcePathId, 'Q', out var sourceId)
-            || !stagesById.TryGetValue(sourceId, out var source))
+        if (!TryReadPrefixedId(occupant.SourcePathId, 'Q', out var sourceId))
         {
-            MarkIndeterminate(occupant, StructureResolutionIndeterminacyCause.SourceAbsente);
+            MarkIndeterminate(
+                occupant,
+                StructureResolutionIndeterminacyCause.SourceAbsente,
+                absence: ResolutionSourceAbsence.Unreadable);
+            return;
+        }
+
+        if (!stagesById.TryGetValue(sourceId, out var source))
+        {
+            MarkIndeterminate(
+                occupant,
+                StructureResolutionIndeterminacyCause.SourceAbsente,
+                absence: ResolutionSourceAbsence.StageNotLoaded,
+                parsedSourceStageId: sourceId);
             return;
         }
 
@@ -282,10 +297,22 @@ public static class ResolutionFreshnessDetector
         Dictionary<Guid, Stage> stagesById,
         OutcomeCache outcomes)
     {
-        if (!TryReadPrefixedId(occupant.SourcePathId, 'P', out var sourceId)
-            || !stagesById.TryGetValue(sourceId, out var source))
+        if (!TryReadPrefixedId(occupant.SourcePathId, 'P', out var sourceId))
         {
-            MarkIndeterminate(occupant, StructureResolutionIndeterminacyCause.SourceAbsente);
+            MarkIndeterminate(
+                occupant,
+                StructureResolutionIndeterminacyCause.SourceAbsente,
+                absence: ResolutionSourceAbsence.Unreadable);
+            return;
+        }
+
+        if (!stagesById.TryGetValue(sourceId, out var source))
+        {
+            MarkIndeterminate(
+                occupant,
+                StructureResolutionIndeterminacyCause.SourceAbsente,
+                absence: ResolutionSourceAbsence.StageNotLoaded,
+                parsedSourceStageId: sourceId);
             return;
         }
 
@@ -293,7 +320,11 @@ public static class ResolutionFreshnessDetector
         if (path is null)
         {
             RememberSource(occupant, source.Id.Value);
-            MarkIndeterminate(occupant, StructureResolutionIndeterminacyCause.SourceAbsente);
+            MarkIndeterminate(
+                occupant,
+                StructureResolutionIndeterminacyCause.SourceAbsente,
+                absence: ResolutionSourceAbsence.PathGone,
+                parsedSourceStageId: source.Id.Value);
             return;
         }
 
@@ -305,7 +336,9 @@ public static class ResolutionFreshnessDetector
                 occupant,
                 read.Failure ?? StructureResolutionIndeterminacyCause.Autre,
                 read.MatchId,
-                read.MatchLabel);
+                read.MatchLabel,
+                read.Absence,
+                source.Id.Value);
             return;
         }
 
@@ -442,28 +475,26 @@ public static class ResolutionFreshnessDetector
                 group => group.Key,
                 group => (IReadOnlyList<StructureResolutionOccupantDto>)group.Select(occupant =>
                 {
-                    var releasable = false;
-                    if (matchSummariesByStage is not null
-                        && stagesById.TryGetValue(occupant.StageId, out var stage))
+                    stagesById.TryGetValue(occupant.StageId, out var stage);
+                    var source = SourceStage(occupant, stagesById);
+                    IReadOnlyList<ResolutionReleaseMatch>? matches = null;
+                    if (matchSummariesByStage is not null)
                     {
                         // A missing stage key means this caller loaded no rows for it.
                         // The structure read writes an empty list for every stage, so a
                         // null dictionary is the case where matches were not loaded at all.
-                        matchesByStage.TryGetValue(occupant.StageId, out var matches);
-                        releasable = ResolutionReleaseRules.Refusal(
-                            stage,
-                            new ResolutionReleaseSubject(
-                                occupant.Target,
-                                occupant.EntryId,
-                                occupant.Kind,
-                                occupant.State,
-                                occupant.Indeterminacy,
-                                occupant.SlotKey,
-                                occupant.GroupId),
-                            matches ?? []) is null;
+                        matchesByStage.TryGetValue(occupant.StageId, out var loaded);
+                        matches = loaded ?? [];
                     }
 
-                    return occupant.ToDto(releasable);
+                    var verdict = ResolutionDefinitiveness.Evaluate(
+                        competition,
+                        source,
+                        QualificationPathOf(source, occupant),
+                        occupant.ToAssessment(),
+                        stage,
+                        matches);
+                    return occupant.ToDto(verdict.Releasable, verdict.Definitive);
                 }).ToArray());
     }
 
@@ -626,11 +657,30 @@ public static class ResolutionFreshnessDetector
     private static void RememberSource(WorkingOccupant occupant, Guid sourceStageId)
     {
         occupant.DependsOnStageId = sourceStageId;
+        occupant.ParsedSourceStageId = sourceStageId;
         if (occupant.Kind != ResolutionProvenanceKind.Tirage)
         {
             occupant.UpstreamStageId = sourceStageId;
         }
     }
+
+    private static Stage? SourceStage(WorkingOccupant occupant, Dictionary<Guid, Stage> stagesById)
+    {
+        if (occupant.ParsedSourceStageId is Guid parsed
+            && stagesById.TryGetValue(parsed, out var parsedStage))
+        {
+            return parsedStage;
+        }
+
+        return occupant.DependsOnStageId is Guid depends && stagesById.TryGetValue(depends, out var depended)
+            ? depended
+            : null;
+    }
+
+    private static QualificationPath? QualificationPathOf(Stage? source, WorkingOccupant occupant) =>
+        source is null || occupant.Kind != ResolutionProvenanceKind.Qualification
+            ? null
+            : FindQualificationPath(source, occupant.SourcePathId);
 
     private static void RememberDependencies(
         WorkingOccupant occupant,
@@ -699,6 +749,7 @@ public static class ResolutionFreshnessDetector
     {
         occupant.State = StructureResolutionFreshness.AJour;
         occupant.Cause = null;
+        occupant.SourceAbsence = null;
         occupant.ClearGuidance();
     }
 
@@ -706,6 +757,7 @@ public static class ResolutionFreshnessDetector
     {
         occupant.State = StructureResolutionFreshness.Perime;
         occupant.Cause = cause;
+        occupant.SourceAbsence = null;
         occupant.ClearGuidance();
     }
 
@@ -713,13 +765,22 @@ public static class ResolutionFreshnessDetector
         WorkingOccupant occupant,
         StructureResolutionIndeterminacyCause cause,
         Guid? matchId = null,
-        string? matchLabel = null)
+        string? matchLabel = null,
+        ResolutionSourceAbsence? absence = null,
+        Guid? parsedSourceStageId = null)
     {
         occupant.State = StructureResolutionFreshness.Indetermine;
         occupant.Cause = null;
         occupant.Indeterminacy = cause;
         occupant.ActionMatchId = matchId;
         occupant.ActionMatchLabel = matchLabel;
+        occupant.SourceAbsence = cause == StructureResolutionIndeterminacyCause.SourceAbsente
+            ? absence
+            : null;
+        if (parsedSourceStageId is Guid parsed)
+        {
+            occupant.ParsedSourceStageId = parsed;
+        }
     }
 
     private sealed class WorkingOccupant
@@ -764,6 +825,10 @@ public static class ResolutionFreshnessDetector
 
         public string? ReplayFingerprint { get; private set; }
 
+        public ResolutionSourceAbsence? SourceAbsence { get; set; }
+
+        public Guid? ParsedSourceStageId { get; set; }
+
         public static WorkingOccupant Create(
             Guid stageId,
             StructureResolutionOccupantTarget target,
@@ -807,7 +872,7 @@ public static class ResolutionFreshnessDetector
             ActionMatchLabel = null;
         }
 
-        public StructureResolutionOccupantDto ToDto(bool releasable)
+        public StructureResolutionOccupantDto ToDto(bool releasable, bool definitive)
         {
             var cascadeReplaceable = State == StructureResolutionFreshness.Perime
                 && (Kind == ResolutionProvenanceKind.Qualification
@@ -829,7 +894,8 @@ public static class ResolutionFreshnessDetector
                 ActionMatchId,
                 ActionMatchLabel,
                 cascadeReplaceable,
-                releasable);
+                releasable,
+                definitive);
         }
 
         public ResolutionOccupantAssessment ToAssessment() =>
@@ -849,7 +915,9 @@ public static class ResolutionFreshnessDetector
                 ReplayFingerprint,
                 Indeterminacy,
                 ActionMatchId,
-                ActionMatchLabel);
+                ActionMatchLabel,
+                SourceAbsence,
+                ParsedSourceStageId);
     }
 
     /// <summary>
@@ -1015,14 +1083,18 @@ public static class ResolutionFreshnessDetector
             var fixture = source.FindFixtureByBracketPairKey(path.SourcePairKey);
             if (fixture is null)
             {
-                return OutcomeRead.Failed(StructureResolutionIndeterminacyCause.SourceAbsente);
+                return OutcomeRead.Failed(
+                    StructureResolutionIndeterminacyCause.SourceAbsente,
+                    absence: ResolutionSourceAbsence.PathGone);
             }
 
             var round = source.Rounds.FirstOrDefault(candidate =>
                 candidate.Fixtures.Any(item => item.Id.Equals(fixture.Id)));
             if (round is null)
             {
-                return OutcomeRead.Failed(StructureResolutionIndeterminacyCause.SourceAbsente);
+                return OutcomeRead.Failed(
+                    StructureResolutionIndeterminacyCause.SourceAbsente,
+                    absence: ResolutionSourceAbsence.PathGone);
             }
 
             FixtureConfrontationSnapshot snapshot;
@@ -1079,14 +1151,16 @@ public static class ResolutionFreshnessDetector
         FixtureOutcome? Outcome,
         StructureResolutionIndeterminacyCause? Failure,
         Guid? MatchId,
-        string? MatchLabel)
+        string? MatchLabel,
+        ResolutionSourceAbsence? Absence = null)
     {
         public static OutcomeRead Resolved(FixtureOutcome outcome) => new(outcome, null, null, null);
 
         public static OutcomeRead Failed(
             StructureResolutionIndeterminacyCause cause,
             Guid? matchId = null,
-            string? matchLabel = null) =>
-            new(null, cause, matchId, matchLabel);
+            string? matchLabel = null,
+            ResolutionSourceAbsence? absence = null) =>
+            new(null, cause, matchId, matchLabel, absence);
     }
 }

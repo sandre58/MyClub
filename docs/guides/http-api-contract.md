@@ -320,6 +320,7 @@ Optional. Present when the phase stores resolution provenance (slot, group membe
 | `actionMatchId` | guid \| null | Match to open for `MatchNonJoue` or `Egalite`, when known |
 | `actionMatchLabel` | string \| null | Home and away names of `actionMatchId`, when both are known |
 | `releasable` | boolean | True when the shared release guards all pass: qualification or progression, `Indetermine`, cause other than `ConfigurationInvalide`, phase not `Completed`, and no direct assignment, played match, attached match, or holding draw blocks the place. False otherwise |
+| `definitive` | boolean | True when `state` is `Indetermine` and the cause can no longer be confirmed. Requires a completed source phase, except a removed source phase (the source id parses and is absent from the competition's stage ids). Overall `EgaliteClassement` and `ConditionNonRemplie` stay false while the competition is `Running` or `Suspended`. Overall `SelectionVide` stays false when the competition has no active entry. `ConfigurationInvalide`, `Autre`, and an unreadable source id are never true. False otherwise |
 
 `Directe` stays `AJour`. `NonVerifiee` stays `NonVerifiee`. An unresolved selection is `Indetermine`. `AmontPerime` means an upstream occupant this resolution depends on is already `Perime`.
 

@@ -518,6 +518,33 @@ describe('StructureResolutionFreshnessBadge', () => {
     );
     expect(onRelease).toHaveBeenCalledWith(releasable);
   });
+
+  it('shows that a definitive place can no longer be confirmed', () => {
+    renderWithI18n(
+      <StructureResolutionFreshnessBadge
+        occupant={{
+          target: 'Slot',
+          entryId: 'e1',
+          provenanceKind: 'Qualification',
+          sourcePathId: 'p1',
+          state: 'Indetermine',
+          slotKey: 'Dernier',
+          indeterminacyCause: 'SelectionVide',
+          releasable: true,
+          definitive: true,
+          cascadeReplaceable: false,
+        }}
+        entryName="Centre"
+      />,
+    );
+
+    expect(screen.getByText('Ne pourra plus être confirmée')).toBeVisible();
+    expect(
+      screen
+        .getByText('Ne pourra plus être confirmée')
+        .closest('.structure-freshness-definitive'),
+    ).not.toBeNull();
+  });
 });
 
 afterEach(() => {

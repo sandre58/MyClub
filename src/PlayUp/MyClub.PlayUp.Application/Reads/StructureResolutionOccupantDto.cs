@@ -108,6 +108,7 @@ public enum StructureResolutionIndeterminacyCause
 /// <param name="ActionMatchLabel">Entry names of <paramref name="ActionMatchId"/>, when both are known.</param>
 /// <param name="CascadeReplaceable">Whether a cascade replace preview can resolve a replay for this occupant.</param>
 /// <param name="Releasable">Whether this unconfirmed place can be released. False unless the shared release guards all pass.</param>
+/// <param name="Definitive">Whether this unconfirmed place can no longer be confirmed.</param>
 public sealed record StructureResolutionOccupantDto(
     StructureResolutionOccupantTarget Target,
     Guid EntryId,
@@ -122,4 +123,5 @@ public sealed record StructureResolutionOccupantDto(
     Guid? ActionMatchId = null,
     string? ActionMatchLabel = null,
     bool CascadeReplaceable = false,
-    bool Releasable = false);
+    bool Releasable = false,
+    bool Definitive = false);

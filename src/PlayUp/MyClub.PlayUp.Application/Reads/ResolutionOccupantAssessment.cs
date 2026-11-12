@@ -27,6 +27,8 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <param name="IndeterminacyCause">Cause when <paramref name="State"/> is indeterminate.</param>
 /// <param name="ActionMatchId">Match to open for an indeterminate progression, when known.</param>
 /// <param name="ActionMatchLabel">Entry names of <paramref name="ActionMatchId"/>, when both are known.</param>
+/// <param name="SourceAbsence">Detail when <paramref name="IndeterminacyCause"/> is a missing source.</param>
+/// <param name="ParsedSourceStageId">Stage id read from the source path, when the id parses.</param>
 public sealed record ResolutionOccupantAssessment(
     Guid StageId,
     StructureResolutionOccupantTarget Target,
@@ -43,4 +45,6 @@ public sealed record ResolutionOccupantAssessment(
     string? ReplayFingerprint,
     StructureResolutionIndeterminacyCause? IndeterminacyCause = null,
     Guid? ActionMatchId = null,
-    string? ActionMatchLabel = null);
+    string? ActionMatchLabel = null,
+    ResolutionSourceAbsence? SourceAbsence = null,
+    Guid? ParsedSourceStageId = null);

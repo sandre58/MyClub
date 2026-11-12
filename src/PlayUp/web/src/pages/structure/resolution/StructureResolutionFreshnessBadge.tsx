@@ -15,7 +15,10 @@ import {
   indeterminacyExplanation,
   type FreshnessAction,
 } from './freshnessGuidance';
-import { resolutionOccupantNeedsBadge } from './structureResolutionOccupants';
+import {
+  isDefinitivelyUnconfirmed,
+  resolutionOccupantNeedsBadge,
+} from './structureResolutionOccupants';
 
 type FreshnessBadgeVariant = 'full' | 'icon';
 
@@ -133,24 +136,28 @@ function FreshnessBadgeBody({
       })
     : null;
   const explained = sentence ?? causeLabel;
+  const definitiveLabel = isDefinitivelyUnconfirmed(occupant)
+    ? t('resolution.freshness.definitive')
+    : null;
+  const causeText = [explained, definitiveLabel].filter(Boolean).join(' — ');
   const actionLabel = actionText(t, action);
 
   const ariaLabel =
     control && actionLabel
-      ? explained
+      ? causeText
         ? t('resolution.freshness.ariaAction', {
             label,
-            cause: explained,
+            cause: causeText,
             action: actionLabel,
           })
         : t('resolution.freshness.ariaActionNoCause', {
             label,
             action: actionLabel,
           })
-      : explained
+      : causeText
         ? t('resolution.freshness.ariaWithCause', {
             label,
-            cause: explained,
+            cause: causeText,
           })
         : label;
 
@@ -189,6 +196,11 @@ function FreshnessBadgeBody({
       {explained ? (
         <span className="structure-freshness-replace__cause">{explained}</span>
       ) : null}
+      {definitiveLabel ? (
+        <span className="structure-freshness-replace__cause">
+          {definitiveLabel}
+        </span>
+      ) : null}
       {actionLabel ? (
         <span className="structure-freshness-replace__action">
           {actionLabel}
@@ -196,11 +208,16 @@ function FreshnessBadgeBody({
       ) : null}
     </span>
   );
-  const hasTip = iconOnly || explained != null || actionLabel != null;
+  const hasTip =
+    iconOnly ||
+    explained != null ||
+    definitiveLabel != null ||
+    actionLabel != null;
   const wrapped = hasTip ? <Tooltip content={tip}>{badge}</Tooltip> : badge;
+  const showSubtitle = !iconOnly && definitiveLabel != null;
 
   if (control === 'replace' || control === 'release') {
-    return (
+    return present(
       <Tooltip content={tip}>
         <button
           type="button"
@@ -217,12 +234,14 @@ function FreshnessBadgeBody({
         >
           {badge}
         </button>
-      </Tooltip>
+      </Tooltip>,
+      showSubtitle,
+      definitiveLabel,
     );
   }
 
   if (control === 'navigate' && action?.kind === 'navigate') {
-    return (
+    return present(
       <Tooltip content={tip}>
         <Link
           to={action.href}
@@ -234,11 +253,31 @@ function FreshnessBadgeBody({
         >
           {badge}
         </Link>
-      </Tooltip>
+      </Tooltip>,
+      showSubtitle,
+      definitiveLabel,
     );
   }
 
-  return wrapped;
+  return present(wrapped, showSubtitle, definitiveLabel);
+}
+
+function present(
+  node: ReactNode,
+  showSubtitle: boolean,
+  definitiveLabel: string | null,
+) {
+  if (!showSubtitle || definitiveLabel == null) {
+    return node;
+  }
+  return (
+    <span className="structure-freshness-definitive">
+      {node}
+      <span className="structure-freshness-definitive__label">
+        {definitiveLabel}
+      </span>
+    </span>
+  );
 }
 
 function actionText(

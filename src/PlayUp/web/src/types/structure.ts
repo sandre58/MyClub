@@ -314,6 +314,8 @@ export interface StructureResolutionOccupant {
   cascadeReplaceable: boolean;
   /** Host-computed: the shared release guards all pass for this unconfirmed place. */
   releasable?: boolean;
+  /** Host-computed: this unconfirmed place can no longer be confirmed. */
+  definitive?: boolean;
 }
 
 /** Hub projection — inbound feed seats (Structure GET, not schematic). */

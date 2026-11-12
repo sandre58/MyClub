@@ -7,6 +7,7 @@ import {
   lookupGroupResolutionOccupant,
   lookupPopulationResolutionOccupant,
   lookupSlotResolutionOccupant,
+  isDefinitivelyUnconfirmed,
   resolutionOccupantNeedsBadge,
 } from './structureResolutionOccupants';
 
@@ -77,6 +78,21 @@ describe('structureResolutionOccupants', () => {
     expect(
       resolutionOccupantNeedsBadge({ ...slotOccupant, state: 'Indetermine' }),
     ).toBe(true);
+    expect(isDefinitivelyUnconfirmed(slotOccupant)).toBe(false);
+    expect(
+      isDefinitivelyUnconfirmed({
+        ...slotOccupant,
+        state: 'Indetermine',
+        definitive: true,
+      }),
+    ).toBe(true);
+    expect(
+      isDefinitivelyUnconfirmed({
+        ...slotOccupant,
+        state: 'Perime',
+        definitive: true,
+      }),
+    ).toBe(false);
   });
 
   it('detects stale tirage occupants', () => {

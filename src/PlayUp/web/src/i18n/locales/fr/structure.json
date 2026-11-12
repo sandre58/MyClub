@@ -855,6 +855,7 @@
       },
       "upstreamLink": "Aller à la phase amont",
       "unconfirmedSentence": "{{team}} n'est plus confirmée — {{detail}}",
+      "definitive": "Ne pourra plus être confirmée",
       "indeterminacy": {
         "MatchNonJoue": {
           "cause": "Le match n'est pas joué",
