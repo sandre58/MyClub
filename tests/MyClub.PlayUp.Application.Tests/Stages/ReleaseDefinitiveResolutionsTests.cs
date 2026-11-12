@@ -299,6 +299,89 @@ public sealed class ReleaseDefinitiveResolutionsTests
     }
 
     [Fact]
+    public void A_completed_source_refuses_a_qualification_rule_edit()
+    {
+        var (_, league, terminal, entries, _) = League();
+        Stamp(league, terminal, ("Champ", entries[0]));
+        Complete(league);
+
+        var act = () => league.ReplaceQualificationRules(
+            new QualificationRules([Path(2, QualificationDestination.ForSlot(terminal.Id, "Champ"))]),
+            _clock);
+
+        // A rule change cannot reach the grouped confirmation: the source is frozen once completed.
+        // Completing the competition is the stand-in that still changes the token.
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
+    }
+
+    [Fact]
+    public void A_deleted_source_is_released_with_the_destination()
+    {
+        var (competition, league, terminal, entries, match) = League();
+        Stamp(league, terminal, ("Champ", entries[0]));
+        competition.RemoveStage(league.Id, _clock);
+        var stages = new List<Stage> { terminal };
+        var matches = new List<Match> { match };
+
+        var planned = ReleaseDefinitiveResolutions.Plan(
+            competition, null, terminal.Id, stages, matches, _clock);
+
+        Primary(planned).Select(row => row.SlotKey).Should().Equal("Champ");
+        planned.Releases.Should().Contain(row => row.SideEffect && row.Target == StructureResolutionOccupantTarget.Population);
+        planned.Exclusions.Should().NotContain(row => row.Code == ApplicationErrorCodes.ResolutionReleaseOccupantNotFound);
+        ReleaseDefinitiveResolutions.Execute(
+            competition, null, terminal.Id, planned.VersionToken, Places(planned), stages, matches, _clock);
+        terminal.FindSlot("Champ")!.EntryId.Should().BeNull();
+    }
+
+    [Fact]
+    public void A_living_source_is_outside_the_deleted_source_scope()
+    {
+        var (competition, league, terminal, entries, match) = League();
+        Stamp(league, terminal, ("Champ", entries[0]));
+        Complete(league);
+
+        var planned = ReleaseDefinitiveResolutions.Plan(
+            competition, null, terminal.Id, [league, terminal], [match], _clock);
+
+        planned.Releases.Should().BeEmpty();
+        planned.Exclusions.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void A_released_definitive_place_can_be_assigned_by_hand()
+    {
+        var (competition, league, terminal, entries, match) = League();
+        Stamp(league, terminal, ("Champ", entries[0]));
+        Complete(league);
+        var stages = new List<Stage> { league, terminal };
+        var matches = new List<Match> { match };
+        var planned = ReleaseDefinitiveResolutions.Plan(
+            competition, league.Id, null, stages, matches, _clock);
+        ReleaseDefinitiveResolutions.Execute(
+            competition, league.Id, null, planned.VersionToken, Places(planned), stages, matches, _clock);
+        var libre = AddEntry.Execute(competition, "Libre", _clock).Id;
+        terminal.AddResolvedPopulationEntry(libre, _clock);
+
+        terminal.AssignEntryToSlot("Champ", libre);
+
+        terminal.FindSlot("Champ")!.EntryId.Should().Be(libre);
+    }
+
+    [Fact]
+    public void Manual_overwrite_stays_closed_when_the_source_is_not_definitive()
+    {
+        var (competition, league, _, _, _) = League();
+        ManualPlacementSource.AllowsOverwrite(competition, league, league.Id.Value).Should().BeFalse();
+        Complete(league);
+        ManualPlacementSource.AllowsOverwrite(competition, league, league.Id.Value).Should().BeTrue();
+        ManualPlacementSource.AllowsOverwrite(competition, null, league.Id.Value).Should().BeFalse();
+        competition.RemoveStage(league.Id, _clock);
+        ManualPlacementSource.AllowsOverwrite(competition, null, league.Id.Value).Should().BeTrue();
+        ManualPlacementSource.AllowsOverwrite(competition, null, null).Should().BeFalse();
+    }
+
+    [Fact]
     public void Sixteen_places_are_released_without_a_quadratic_blow_up()
     {
         var competition = CreateCompetition.Execute("Seize", _clock);
@@ -342,6 +425,39 @@ public sealed class ReleaseDefinitiveResolutionsTests
 
         Primary(planned).Should().HaveCount(16);
         terminal.Slots.Should().OnlyContain(slot => slot.EntryId == null);
+
+        // Each place copies the two phases and re-inspects every occupant, so the cost
+        // grows with places × occupants. Ten seconds is a ceiling for this 16-place batch.
+        watch.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(10));
+    }
+
+    [Fact]
+    public void Four_places_stay_under_the_same_ceiling()
+    {
+        var competition = CreateCompetition.Execute("Quatre", _clock);
+        var entries = Enumerable.Range(0, 4)
+            .Select(index => AddEntry.Execute(competition, $"E{index:00}", _clock).Id)
+            .ToArray();
+        var league = Stage.Create(competition.Id, new StageName("League"), SampleRegulations.Standard(), _clock);
+        league.AddMatchday(1, _clock);
+        competition.AddStage(league.Id, _clock);
+        var terminal = Stage.Create(competition.Id, new StageName("Terminal"), SampleRegulations.Standard(), _clock);
+        competition.AddStage(terminal.Id, _clock);
+        var seats = entries.Select((entry, index) => ($"S{index}", terminal, entry)).ToArray();
+        Stamp(league, seats);
+        Complete(league);
+        var match = Match.Create(competition.Id, league.Id, entries[0], entries[1], _clock);
+        match.Start(_clock);
+        match.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
+        var watch = Stopwatch.StartNew();
+
+        var planned = ReleaseDefinitiveResolutions.Plan(
+            competition, league.Id, null, [league, terminal], [match], _clock);
+        ReleaseDefinitiveResolutions.Execute(
+            competition, league.Id, null, planned.VersionToken, Places(planned), [league, terminal], [match], _clock);
+        watch.Stop();
+
+        Primary(planned).Should().HaveCount(4);
         watch.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(10));
     }
 

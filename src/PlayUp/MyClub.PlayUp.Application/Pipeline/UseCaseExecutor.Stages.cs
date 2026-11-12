@@ -1565,6 +1565,61 @@ public sealed partial class UseCaseExecutor
         return result ?? throw new InvalidOperationException("Definitive resolution release did not run.");
     }
 
+    /// <summary>
+    /// Previews a grouped release of definitive places whose source phase was deleted.
+    /// The route is the surviving destination. A missing destination is not found.
+    /// </summary>
+    public async Task<DefinitiveResolutionReleaseResult> PreviewDeletedSourceDefinitiveReleaseAsync(
+        StageId destinationId,
+        CancellationToken cancellationToken = default)
+    {
+        var (competition, stageList, matchList) =
+            await LoadCascadeReadAsync(destinationId, cancellationToken).ConfigureAwait(false);
+        return ReleaseDefinitiveResolutions.Plan(
+            competition,
+            null,
+            destinationId,
+            stageList,
+            matchList,
+            clock);
+    }
+
+    /// <summary>
+    /// Confirms that deleted-source release when the token and the place list still match, then saves once.
+    /// </summary>
+    public async Task<DefinitiveResolutionReleaseResult> ConfirmDeletedSourceDefinitiveReleaseAsync(
+        StageId destinationId,
+        string versionToken,
+        IReadOnlyList<DefinitiveResolutionReleasePlace> places,
+        CancellationToken cancellationToken = default)
+    {
+        var competitionId = await stages.GetCompetitionIdReadOnlyAsync(destinationId, cancellationToken)
+                                .ConfigureAwait(false)
+                            ?? throw new ApplicationFailureException(
+                                $"Stage '{destinationId}' was not found.",
+                                ApplicationErrorCodes.StageNotFound);
+        DefinitiveResolutionReleaseResult? result = null;
+        await unitOfWork.ExecuteExclusiveAsync(
+            competitionId,
+            async innerToken =>
+            {
+                var (competition, stageList, matchList) =
+                    await LoadCascadeForUpdateAsync(destinationId, innerToken).ConfigureAwait(false);
+                result = ReleaseDefinitiveResolutions.Execute(
+                    competition,
+                    null,
+                    destinationId,
+                    versionToken,
+                    places,
+                    stageList,
+                    matchList,
+                    clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
+        return result ?? throw new InvalidOperationException("Definitive resolution release did not run.");
+    }
+
     private async Task<(Domain.Competitions.Competition Competition, List<Stage> Stages, List<Match> Matches)>
         LoadCascadeReadAsync(StageId stageId, CancellationToken cancellationToken)
     {

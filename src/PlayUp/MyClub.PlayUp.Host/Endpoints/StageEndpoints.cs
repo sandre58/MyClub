@@ -672,14 +672,56 @@ internal static class StageEndpoints
                 CancellationToken cancellationToken) =>
             {
                 ArgumentNullException.ThrowIfNull(request);
-                if (request.Places is null)
+                if (request.Places is null || string.IsNullOrWhiteSpace(request.VersionToken))
                 {
-                    return Results.BadRequest();
+                    return InvalidReleaseBody();
                 }
 
                 var result = await executor.ConfirmDefinitiveResolutionReleaseAsync(
                     new StageId(sourceId),
                     request.DestinationStageId is Guid destination ? new StageId(destination) : null,
+                    request.VersionToken,
+                    request.Places
+                        .Select(place => new DefinitiveResolutionReleasePlace(
+                            place.StageId,
+                            place.Target,
+                            place.EntryId,
+                            place.SlotKey,
+                            place.GroupId))
+                        .ToArray(),
+                    cancellationToken).ConfigureAwait(false);
+                return Results.Ok(ToDefinitiveResolutionReleaseResponse(result));
+            });
+
+        app.MapPost(
+            "/stages/{destinationId:guid}/resolution/release-definitive-deleted-preview",
+            async (
+                Guid destinationId,
+                UseCaseExecutor executor,
+                CancellationToken cancellationToken) =>
+            {
+                var result = await executor.PreviewDeletedSourceDefinitiveReleaseAsync(
+                    new StageId(destinationId),
+                    cancellationToken).ConfigureAwait(false);
+                return Results.Ok(ToDefinitiveResolutionReleaseResponse(result));
+            });
+
+        app.MapPost(
+            "/stages/{destinationId:guid}/resolution/release-definitive-deleted",
+            async (
+                Guid destinationId,
+                DeletedSourceDefinitiveReleaseConfirmRequest request,
+                UseCaseExecutor executor,
+                CancellationToken cancellationToken) =>
+            {
+                ArgumentNullException.ThrowIfNull(request);
+                if (request.Places is null || string.IsNullOrWhiteSpace(request.VersionToken))
+                {
+                    return InvalidReleaseBody();
+                }
+
+                var result = await executor.ConfirmDeletedSourceDefinitiveReleaseAsync(
+                    new StageId(destinationId),
                     request.VersionToken,
                     request.Places
                         .Select(place => new DefinitiveResolutionReleasePlace(
@@ -1049,4 +1091,7 @@ internal static class StageEndpoints
                     occupant.StageName,
                     occupant.PlaceLabel))
                 .ToArray());
+
+    private static IResult InvalidReleaseBody() =>
+        Results.BadRequest(new { code = ApplicationErrorCodes.InvalidStructureIntent });
 }

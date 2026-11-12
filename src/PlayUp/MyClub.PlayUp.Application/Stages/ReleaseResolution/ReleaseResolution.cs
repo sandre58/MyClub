@@ -135,6 +135,12 @@ public static class ReleaseResolution
         }
     }
 
+    internal static void EnsureReleasable(
+        Stage stage,
+        ResolutionOccupantAssessment origin,
+        IReadOnlyList<Match> matches) =>
+        RefuseUnlessReleasable(stage, origin, matches);
+
     internal static AppliedRelease Apply(
         Competition competition,
         Stage stage,
@@ -170,9 +176,11 @@ public static class ReleaseResolution
             stage.RemoveFormPathResolution(witness.PathFingerprint);
         }
 
+        var populationRemoved = false;
         if (!CascadeReplaceUseCase.Referenced(stage, entryId))
         {
             stage.RemoveResolvedPopulationEntry(entryId, clock, snapshots);
+            populationRemoved = true;
             if (origin.Target != StructureResolutionOccupantTarget.Population)
             {
                 releases.Add(new ResolutionReleaseRow(
@@ -185,7 +193,7 @@ public static class ReleaseResolution
             }
         }
 
-        return new AppliedRelease(releases, detached);
+        return new AppliedRelease(releases, detached, populationRemoved);
     }
 
     private static bool WitnessesReleasedPath(string fingerprint, string sourcePathId) =>
@@ -348,9 +356,14 @@ public static class ReleaseResolution
             .Name;
     }
 
+    /// <summary>One applied release. The requested place is first; a population row follows only when the team leaves the composition.</summary>
+    /// <param name="Releases">The requested place first. A second row is added only when the team leaves the composition.</param>
+    /// <param name="Detached">Unplayed bracket matches whose side becomes to be determined.</param>
+    /// <param name="PopulationRemoved">True when this release removed the team from the phase composition.</param>
     internal sealed record AppliedRelease(
         IReadOnlyList<ResolutionReleaseRow> Releases,
-        IReadOnlyList<ResolutionReleaseDetachedMatch> Detached);
+        IReadOnlyList<ResolutionReleaseDetachedMatch> Detached,
+        bool PopulationRemoved);
 
     private static bool SamePlace(ResolutionOccupantAssessment left, ResolutionOccupantAssessment right) =>
         left.StageId == right.StageId

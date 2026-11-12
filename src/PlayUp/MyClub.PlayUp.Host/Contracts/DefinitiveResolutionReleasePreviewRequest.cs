@@ -27,6 +27,15 @@ public sealed record DefinitiveResolutionReleaseConfirmRequest(
     IReadOnlyList<DefinitiveResolutionReleasePlaceRequest> Places);
 
 /// <summary>
+/// Body of <c>POST /stages/{destinationId}/resolution/release-definitive-deleted</c>.
+/// </summary>
+/// <param name="VersionToken">Token returned by the deleted-source preview.</param>
+/// <param name="Places">Primary places from that preview, in that order.</param>
+public sealed record DeletedSourceDefinitiveReleaseConfirmRequest(
+    string VersionToken,
+    IReadOnlyList<DefinitiveResolutionReleasePlaceRequest> Places);
+
+/// <summary>
 /// One primary place to confirm.
 /// </summary>
 public sealed record DefinitiveResolutionReleasePlaceRequest(

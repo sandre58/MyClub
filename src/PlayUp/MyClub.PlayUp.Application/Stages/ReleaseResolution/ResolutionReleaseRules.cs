@@ -111,17 +111,19 @@ public static class ResolutionReleaseRules
             return ApplicationErrorCodes.ResolutionReleaseBlockedByPlayedMatch;
         }
 
-        if (matches.Any(match => Involves(match, subject.EntryId)
-            && match.Status == MatchStatus.Cancelled))
-        {
-            return ApplicationErrorCodes.ResolutionReleaseBlockedByCancelledMatch;
-        }
-
+        // Groups and populations keep the attached-match codes from the single release.
+        // A cancelled sheet on those places is still an attached match, not a bracket detachment.
         if (!IsBracketSlot(stage, subject) && AttachedMatchInvolves(stage, matches, subject.EntryId))
         {
             return stage.Status is StageStatus.Running or StageStatus.Suspended
                 ? ApplicationErrorCodes.ResolutionReleaseBlockedByMatchesRunning
                 : ApplicationErrorCodes.ResolutionReleaseBlockedByMatches;
+        }
+
+        if (matches.Any(match => Involves(match, subject.EntryId)
+            && match.Status == MatchStatus.Cancelled))
+        {
+            return ApplicationErrorCodes.ResolutionReleaseBlockedByCancelledMatch;
         }
 
         if (DrawBlocks(stage, entryId))

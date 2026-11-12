@@ -480,6 +480,47 @@ public sealed class ReleaseResolutionTests
         cancelled.HomeEntryId.Should().Be(entries[0]);
     }
 
+    [Theory]
+    [InlineData(StageStatus.Draft, ApplicationErrorCodes.ResolutionReleaseBlockedByMatches)]
+    [InlineData(StageStatus.Running, ApplicationErrorCodes.ResolutionReleaseBlockedByMatchesRunning)]
+    public void A_group_with_a_cancelled_match_keeps_the_attached_match_code(StageStatus status, string code)
+    {
+        var (competition, league, terminal, entries, match) = Pair();
+        var group = terminal.AddGroup("A", _clock);
+        var path = new QualificationPath(
+            1,
+            QualificationSource.Overall(),
+            new QualificationSelection(SelectionMode.Position, 9),
+            QualificationDestination.ForGroup(terminal.Id, group.Id));
+        league.ReplaceQualificationRules(new QualificationRules([path]), _clock);
+        var provenance = new ResolutionProvenance(
+            ResolutionProvenanceKind.Qualification,
+            ResolutionPathIdentifier.ForQualification(league.Id, path),
+            "seed");
+        terminal.AddResolvedPopulationEntry(entries[0], _clock, provenance);
+        terminal.ApplyResolvedGroupEntry(group.Id, entries[0], provenance);
+        var matchday = terminal.AddMatchday(1, _clock);
+        var fixture = terminal.AddFixture(matchday.Id, _clock);
+        var attached = Match.Create(competition.Id, terminal.Id, entries[0], entries[1], _clock);
+        terminal.AttachMatch(fixture.Id, attached.Id, 1, _clock);
+        attached.Cancel(_clock);
+        if (status != StageStatus.Draft)
+        {
+            Move(terminal, status);
+        }
+
+        var act = () => ReleaseResolution.Plan(
+            competition,
+            terminal.Id,
+            new ResolutionReleaseTarget(StructureResolutionOccupantTarget.Group, entries[0].Value, null, group.Id.Value),
+            [league, terminal],
+            [match, attached],
+            _clock);
+
+        act.Should().Throw<ApplicationFailureException>().Which.Code.Should().Be(code);
+        terminal.Groups.Single().EntryIds.Should().Contain(entries[0]);
+    }
+
     [Fact]
     public void A_team_held_by_a_published_or_cancelled_draw_cannot_be_released()
     {

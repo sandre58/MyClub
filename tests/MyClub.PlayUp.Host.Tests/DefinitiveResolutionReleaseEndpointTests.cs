@@ -97,6 +97,7 @@ public sealed class DefinitiveResolutionReleaseEndpointTests(HostPostgresFixture
             new { destinationStageId = seeded.TerminalId, versionToken = "abc" },
             HostJson.Options);
         missingPlaces.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await ReadCodeAsync(missingPlaces)).Should().Be(ApplicationErrorCodes.InvalidStructureIntent);
 
         var place = new DefinitiveResolutionReleasePlaceRequest(
             seeded.TerminalId,
@@ -108,11 +109,27 @@ public sealed class DefinitiveResolutionReleaseEndpointTests(HostPostgresFixture
             $"/stages/{seeded.LeagueId}/resolution/release-definitive",
             new DefinitiveResolutionReleaseConfirmRequest(seeded.TerminalId, " ", [place]),
             HostJson.Options);
-        blank.StatusCode.Should().Be(HttpStatusCode.Conflict);
-        GetCode(await blank.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options))
-            .Should().Be(ApplicationErrorCodes.ResolutionReleaseConflict);
+        blank.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await ReadCodeAsync(blank)).Should().Be(ApplicationErrorCodes.InvalidStructureIntent);
         (await ReadOccupantsAsync(client, seeded.CompetitionId))
             .Should().Contain(occupant => occupant.SlotKey == "Champ");
+
+        var deletedPreview = await client.PostAsync(
+            $"/stages/{seeded.TerminalId}/resolution/release-definitive-deleted-preview",
+            new StringContent("{}", Encoding.UTF8, "application/json"));
+        deletedPreview.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var unknownDestination = await client.PostAsync(
+            $"/stages/{Guid.NewGuid()}/resolution/release-definitive-deleted-preview",
+            new StringContent("{}", Encoding.UTF8, "application/json"));
+        unknownDestination.StatusCode.Should().Be(HttpStatusCode.NotFound);
+
+        var blankDeleted = await client.PostAsJsonAsync(
+            $"/stages/{seeded.TerminalId}/resolution/release-definitive-deleted",
+            new DeletedSourceDefinitiveReleaseConfirmRequest(" ", [place]),
+            HostJson.Options);
+        blankDeleted.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await ReadCodeAsync(blankDeleted)).Should().Be(ApplicationErrorCodes.InvalidStructureIntent);
     }
 
     private async Task<Seed> SeedAsync(PlayUpWebApplicationFactory factory)
@@ -183,6 +200,14 @@ public sealed class DefinitiveResolutionReleaseEndpointTests(HostPostgresFixture
         var view = await response.Content.ReadFromJsonAsync<StructureViewDto>(HostJson.Options);
         view.Should().NotBeNull();
         return view.Stages.SelectMany(stage => stage.ResolutionOccupants ?? []).ToArray();
+    }
+
+    private static async Task<string?> ReadCodeAsync(HttpResponseMessage response)
+    {
+        var body = await response.Content.ReadFromJsonAsync<JsonElement>(HostJson.Options);
+        return body.ValueKind == JsonValueKind.Object && body.TryGetProperty("code", out var code)
+            ? code.GetString()
+            : null;
     }
 
     private static string? GetCode(ProblemDetails? problem) =>

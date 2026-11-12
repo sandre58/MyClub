@@ -27,10 +27,12 @@ public sealed record DefinitiveResolutionReleaseResult(
 /// One place cleared by the grouped release, or the population row removed with it.
 /// </summary>
 /// <remarks>
-/// <see cref="DefinitiveResolutionReleaseRow.PopulationRemoved"/> is true when this row is the place
-/// whose release also removed the team from the composition, or the place itself is that population.
-/// <see cref="DefinitiveResolutionReleaseRow.SideEffect"/> is true when this row is the population removed
-/// because another place on the same phase was released. Confirmation does not send side effects back.
+/// <see cref="ReleaseResolution.Apply"/> returns the requested place first and sets
+/// <see cref="ReleaseResolution.AppliedRelease.PopulationRemoved"/> when that release removes the team
+/// from the composition. A later row exists only in that case: it is the population side effect.
+/// <see cref="DefinitiveResolutionReleaseRow.PopulationRemoved"/> copies that flag onto the requested place.
+/// <see cref="DefinitiveResolutionReleaseRow.SideEffect"/> is true only for the appended population row.
+/// Confirmation does not send side effects back.
 /// </remarks>
 public sealed record DefinitiveResolutionReleaseRow(
     Guid StageId,

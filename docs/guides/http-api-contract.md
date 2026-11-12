@@ -860,7 +860,15 @@ Confirms the preview. One save. The body repeats `destinationStageId` and `versi
 }
 ```
 
-The confirmation rechecks the token and judges each place again. A blank or stale token → **409** `Application.ResolutionReleaseConflict`. A named place that is no longer definitive → **409** `Application.ResolutionReleaseNotDefinitive`. Any other difference in the primary list → **409** `Application.ResolutionReleaseBatchChanged`. Either conflict writes nothing. A missing `places` array or a malformed body is **400**. A missing source phase is **404**.
+The confirmation rechecks the token and judges each place again. A missing `places` array or a blank `versionToken` is **400** `Application.InvalidStructureIntent`. A malformed body is **400**. A stale non-blank token → **409** `Application.ResolutionReleaseConflict`. A named place that is no longer definitive → **409** `Application.ResolutionReleaseNotDefinitive`. Any other difference in the primary list → **409** `Application.ResolutionReleaseBatchChanged`. Either conflict writes nothing. A missing source phase is **404**.
+
+### `POST /stages/{destinationId}/resolution/release-definitive-deleted-preview` → `DefinitiveResolutionReleaseResponse`
+
+Read-only preview of the definitive places on that destination whose source phase was removed from the competition. The body is empty. The response is the same as the source-scoped preview, including `versionToken`, exclusions, and the same refusal codes. A missing destination is **404** `Application.StageNotFound`. Places whose source phase still exists are not included.
+
+### `POST /stages/{destinationId}/resolution/release-definitive-deleted` → `DefinitiveResolutionReleaseResponse`
+
+Confirms that preview. One save, under the same exclusive lock. The body is `versionToken` plus `places` (primary rows only, in preview order). A missing `places` array or a blank `versionToken` is **400** `Application.InvalidStructureIntent`. A stale token, a place that is no longer definitive, and any other change of the primary list return the same **409** codes as the source-scoped confirmation, and write nothing. A missing destination is **404**.
 
 ### `POST /stages/{stageId}/qualification/apply` → `QualificationApplyResponse`
 

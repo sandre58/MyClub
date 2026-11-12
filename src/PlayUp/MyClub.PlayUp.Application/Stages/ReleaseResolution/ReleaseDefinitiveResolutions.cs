@@ -28,7 +28,7 @@ public static class ReleaseDefinitiveResolutions
     /// Computes the grouped release without writing the caller's stages or matches.
     /// </summary>
     /// <param name="competition">Owning competition.</param>
-    /// <param name="sourceId">Source phase whose fed places are in scope.</param>
+    /// <param name="sourceId">Source phase whose fed places are in scope. Null means places whose source phase was deleted.</param>
     /// <param name="destinationId">When set, only places stored on this phase are in scope.</param>
     /// <param name="stages">Every phase of the competition.</param>
     /// <param name="matches">Every match of those phases.</param>
@@ -36,7 +36,7 @@ public static class ReleaseDefinitiveResolutions
     /// <returns>The token, the places that would be cleared, the exclusions, and the downstream freshness changes.</returns>
     public static DefinitiveResolutionReleaseResult Plan(
         Competition competition,
-        StageId sourceId,
+        StageId? sourceId,
         StageId? destinationId,
         IReadOnlyList<Stage> stages,
         IReadOnlyList<Match> matches,
@@ -51,7 +51,7 @@ public static class ReleaseDefinitiveResolutions
     /// Callers persist with a single save. This method does not. A mismatch throws before any caller aggregate is written.
     /// </summary>
     /// <param name="competition">Owning competition.</param>
-    /// <param name="sourceId">Source phase whose fed places are in scope.</param>
+    /// <param name="sourceId">Source phase whose fed places are in scope. Null means places whose source phase was deleted.</param>
     /// <param name="destinationId">Destination filter used by the preview. Null releases every destination.</param>
     /// <param name="versionToken">Token returned by <see cref="Plan"/>.</param>
     /// <param name="places">Primary places from the preview, in that order. Population side effects are omitted.</param>
@@ -61,7 +61,7 @@ public static class ReleaseDefinitiveResolutions
     /// <returns>The same shape as the preview, computed on the state that was confirmed.</returns>
     public static DefinitiveResolutionReleaseResult Execute(
         Competition competition,
-        StageId sourceId,
+        StageId? sourceId,
         StageId? destinationId,
         string versionToken,
         IReadOnlyList<DefinitiveResolutionReleasePlace> places,
@@ -98,6 +98,7 @@ public static class ReleaseDefinitiveResolutions
         {
             var live = Find(Inspect(competition, stages, matches), place);
             var stage = stages.Single(candidate => candidate.Id.Value == place.StageId);
+            ReleaseResolution.EnsureReleasable(stage, live, matches);
             ReleaseResolution.Apply(competition, stage, matches, live, clock);
         }
 
@@ -106,22 +107,22 @@ public static class ReleaseDefinitiveResolutions
 
     private static Simulation Simulate(
         Competition competition,
-        StageId sourceId,
+        StageId? sourceId,
         StageId? destinationId,
         IReadOnlyList<Stage> stages,
         IReadOnlyList<Match> matches,
         IClock clock)
     {
-        if (!stages.Any(stage => stage.Id.Equals(sourceId)))
+        if (sourceId is { } listed && !stages.Any(stage => stage.Id.Equals(listed)))
         {
-            throw Fail($"Stage '{sourceId}' was not found.", ApplicationErrorCodes.StageNotFound);
+            throw Fail($"Stage '{listed}' was not found.", ApplicationErrorCodes.StageNotFound);
         }
 
         var token = CascadeReplaceVersion.Compute(stages, matches);
         var before = Inspect(competition, stages, matches);
         var order = StageOrder(competition);
         var candidates = before
-            .Where(occupant => InScope(occupant, sourceId, destinationId))
+            .Where(occupant => InScope(competition, occupant, sourceId, destinationId))
             .Select(occupant => (Occupant: occupant, Verdict: Judge(competition, stages, matches, occupant)))
             .Where(row => row.Verdict.Definitive)
             .Select(row => row.Occupant)
@@ -148,12 +149,24 @@ public static class ReleaseDefinitiveResolutions
             var live = FindOrDefault(Inspect(competition, liveStages, liveMatches), place);
             if (live is null)
             {
+                if (!AlreadyReleased(releases, place))
+                {
+                    exclusions.Add(Exclusion(
+                        competition,
+                        liveStages,
+                        candidate,
+                        ApplicationErrorCodes.ResolutionReleaseOccupantNotFound));
+                    excluded.Add(place);
+                }
+
                 continue;
             }
 
             var verdict = Judge(competition, liveStages, liveMatches, live);
             if (!verdict.Definitive)
             {
+                exclusions.Add(Exclusion(competition, liveStages, live, ApplicationErrorCodes.ResolutionReleaseNotDefinitive));
+                excluded.Add(place);
                 continue;
             }
 
@@ -210,8 +223,9 @@ public static class ReleaseDefinitiveResolutions
     }
 
     private static bool InScope(
+        Competition competition,
         ResolutionOccupantAssessment occupant,
-        StageId sourceId,
+        StageId? sourceId,
         StageId? destinationId)
     {
         if (occupant.Kind is not (ResolutionProvenanceKind.Qualification or ResolutionProvenanceKind.Progression))
@@ -219,13 +233,29 @@ public static class ReleaseDefinitiveResolutions
             return false;
         }
 
-        if (occupant.ParsedSourceStageId != sourceId.Value)
+        if (destinationId is { } destination && occupant.StageId != destination.Value)
         {
             return false;
         }
 
-        return destinationId is not { } destination || occupant.StageId == destination.Value;
+        if (sourceId is { } source)
+        {
+            return occupant.ParsedSourceStageId == source.Value;
+        }
+
+        return occupant.ParsedSourceStageId is Guid parsed
+            && !competition.StageIds.Any(id => id.Value == parsed);
     }
+
+    private static bool AlreadyReleased(
+        IReadOnlyList<DefinitiveResolutionReleaseRow> releases,
+        DefinitiveResolutionReleasePlace place) =>
+        releases.Any(row =>
+            row.StageId == place.StageId
+            && row.Target == place.Target
+            && row.EntryId == place.EntryId
+            && string.Equals(row.SlotKey, place.SlotKey, StringComparison.Ordinal)
+            && row.GroupId == place.GroupId);
 
     private static ResolutionDefinitivenessVerdict Judge(
         Competition competition,
@@ -303,10 +333,9 @@ public static class ReleaseDefinitiveResolutions
         for (var index = 0; index < applied.Releases.Count; index++)
         {
             var row = applied.Releases[index];
-            var population = row.Target == StructureResolutionOccupantTarget.Population
-                || applied.Releases.Any(candidate =>
-                    candidate.Target == StructureResolutionOccupantTarget.Population
-                    && candidate.EntryId == row.EntryId);
+
+            // Index 0 is the place Apply was asked to release. Any later row is the population
+            // side effect Apply appends only when PopulationRemoved is true.
             rows.Add(new DefinitiveResolutionReleaseRow(
                 row.StageId,
                 row.Target,
@@ -316,7 +345,7 @@ public static class ReleaseDefinitiveResolutions
                 row.EntryName,
                 StageName(stages, row.StageId),
                 PlaceLabel(stages, row.StageId, row.SlotKey, row.GroupId),
-                index == 0 && population,
+                index == 0 && applied.PopulationRemoved,
                 index > 0));
         }
 
