@@ -372,6 +372,69 @@ export function confirmResolutionRelease(
   return sendJson('POST', `/stages/${stageId}/resolution/release`, request);
 }
 
+export type DefinitiveResolutionReleasePlace = {
+  stageId: string;
+  target: CascadeReplaceSurface;
+  entryId: string;
+  slotKey: string | null;
+  groupId: string | null;
+};
+
+export type DefinitiveResolutionReleaseRow = ResolutionReleaseRow & {
+  stageName?: string | null;
+  placeLabel?: string | null;
+  populationRemoved: boolean;
+  sideEffect: boolean;
+};
+
+export type DefinitiveResolutionReleaseExclusion = {
+  stageId: string;
+  target: CascadeReplaceSurface;
+  slotKey: string | null;
+  groupId: string | null;
+  entryId: string;
+  entryName?: string | null;
+  stageName?: string | null;
+  placeLabel?: string | null;
+  code: string;
+};
+
+export type DefinitiveResolutionReleaseResponse = {
+  versionToken: string;
+  releases: DefinitiveResolutionReleaseRow[];
+  detachedMatches: ResolutionReleaseDetachedMatch[];
+  exclusions: DefinitiveResolutionReleaseExclusion[];
+  affectedOccupants: ResolutionReleaseAffectedOccupant[];
+};
+
+/** POST /stages/{sourceId}/resolution/release-definitive-preview */
+export function previewDefinitiveResolutionRelease(
+  sourceId: string,
+  request: { destinationStageId: string | null },
+): Promise<DefinitiveResolutionReleaseResponse> {
+  return sendJson(
+    'POST',
+    `/stages/${sourceId}/resolution/release-definitive-preview`,
+    request,
+  );
+}
+
+/** POST /stages/{sourceId}/resolution/release-definitive */
+export function confirmDefinitiveResolutionRelease(
+  sourceId: string,
+  request: {
+    destinationStageId: string | null;
+    versionToken: string;
+    places: DefinitiveResolutionReleasePlace[];
+  },
+): Promise<DefinitiveResolutionReleaseResponse> {
+  return sendJson(
+    'POST',
+    `/stages/${sourceId}/resolution/release-definitive`,
+    request,
+  );
+}
+
 /** POST /stages/{stageId}/qualification/apply → QualificationApplyResponse */
 export function applyQualification(
   stageId: string,

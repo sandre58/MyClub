@@ -570,6 +570,126 @@ export async function createIsolatedReleaseCompetition(
   };
 }
 
+export type DefinitiveSelectionCompetition = {
+  competitionId: string;
+  sourceId: string;
+  destinationId: string;
+  team: string;
+};
+
+/**
+ * Finished league, overall places 1–4, four teams. The fourth is withdrawn
+ * afterwards, so that place is an empty selection on a completed source.
+ * A group ranking does not shrink when a team withdraws, and an empty
+ * selection cannot be applied, so the path is overall and the destination
+ * is a cup slot — the place manual placement can fill.
+ */
+export async function createDefinitiveSelectionCompetition(
+  request: APIRequestContext,
+): Promise<DefinitiveSelectionCompetition> {
+  const competitionId = await postId(request, '/competitions', {
+    name: `Définitif ${crypto.randomUUID()}`,
+  });
+  const nord = await addNamedEntry(request, competitionId, 'Nord');
+  const est = await addNamedEntry(request, competitionId, 'Est');
+  const sud = await addNamedEntry(request, competitionId, 'Sud');
+  const ouest = await addNamedEntry(request, competitionId, 'Ouest');
+  const sourceId = await addStage(request, competitionId, {
+    format: 'Championship',
+    name: 'Ligue',
+    matchGenerationFormat: 'SingleRoundRobin',
+  });
+  const destinationId = await addStage(request, competitionId, {
+    format: 'Cup',
+    name: 'Tableau',
+    bracketSize: 4,
+  });
+
+  await sendOk(request, 'PUT', `/stages/${sourceId}/affectation`, {
+    entryIds: [nord, est, sud, ouest],
+  });
+  await sendOk(request, 'PUT', `/stages/${sourceId}/qualification-rules`, {
+    intents: [
+      {
+        intentId: crypto.randomUUID(),
+        order: 1,
+        sourceKind: 'Overall',
+        positionFrom: 1,
+        positionTo: 4,
+        destinationStageId: destinationId,
+        destinationSlotKeys: ['S1', 'S2', 'S3', 'S4'],
+      },
+    ],
+  });
+  await sendOk(request, 'POST', `/stages/${sourceId}/prepare`);
+  await sendOk(request, 'POST', `/competitions/${competitionId}/prepare`);
+  await sendOk(request, 'POST', `/stages/${sourceId}/matches/materialize`);
+  await sendOk(request, 'POST', `/stages/${sourceId}/start`);
+  await sendOk(request, 'POST', `/competitions/${competitionId}/start`);
+
+  const strength = new Map<string, number>([
+    [nord, 4],
+    [est, 3],
+    [sud, 2],
+    [ouest, 1],
+  ]);
+  for (const match of await readStageMatches(request, sourceId)) {
+    const home = strength.get(match.homeEntryId) ?? 0;
+    const away = strength.get(match.awayEntryId) ?? 0;
+    const homeWins = home > away;
+    await sendOk(request, 'POST', `/matches/${match.matchId}/start`);
+    await sendOk(request, 'POST', `/matches/${match.matchId}/finish`, {
+      type: 'Played',
+      homeGoals: homeWins ? 1 : 0,
+      awayGoals: homeWins ? 0 : 1,
+    });
+  }
+
+  await sendOk(request, 'POST', `/stages/${sourceId}/qualification/apply`);
+  await sendOk(request, 'POST', `/stages/${sourceId}/complete`);
+  await sendOk(
+    request,
+    'POST',
+    `/competitions/${competitionId}/entries/${ouest}/withdraw`,
+  );
+
+  return {
+    competitionId,
+    sourceId,
+    destinationId,
+    team: 'Ouest',
+  };
+}
+
+async function readStageMatches(
+  request: APIRequestContext,
+  stageId: string,
+): Promise<{ matchId: string; homeEntryId: string; awayEntryId: string }[]> {
+  const response = await request.get(
+    `${playUpApiBase()}/stages/${stageId}/matches`,
+  );
+  if (!response.ok()) {
+    throw new Error(
+      `GET matches failed (${response.status()}): ${await response.text()}`,
+    );
+  }
+  const matches = (await response.json()) as {
+    matchId: string;
+    home?: { entryId?: string };
+    away?: { entryId?: string };
+  }[];
+  return matches.map((match) => {
+    if (!match.home?.entryId || !match.away?.entryId) {
+      throw new Error(`Stage ${stageId} has a match without both teams.`);
+    }
+    return {
+      matchId: match.matchId,
+      homeEntryId: match.home.entryId,
+      awayEntryId: match.away.entryId,
+    };
+  });
+}
+
 async function postId(
   request: APIRequestContext,
   path: string,

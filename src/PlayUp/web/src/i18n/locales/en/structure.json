@@ -924,6 +924,25 @@
         "Away": "away"
       }
     },
+    "definitiveRelease": {
+      "banner_one": "{{count}} place can no longer be confirmed.",
+      "banner_other": "{{count}} places can no longer be confirmed.",
+      "release": "Release…",
+      "excludedIntro": "These places stay: they cannot be released.",
+      "excluded": "{{team}} — {{place}}: {{reason}}",
+      "confirmTitle": "Release these places?",
+      "warning": "This release is irreversible. Emptied places are not filled again automatically.",
+      "confirm": "Release",
+      "cancel": "Cancel",
+      "pending": "Releasing…",
+      "close": "Close",
+      "summaryTitle": "Places released",
+      "place": "{{team}} — {{place}} ({{phase}})",
+      "population": "Population removed: {{team}}",
+      "detachedIntro": "Detached matches:",
+      "exclusionsIntro": "Places not released:",
+      "affectedIntro": "Downstream places:"
+    },
     "cascade": {
       "action": "Replace the stale occupant",
       "actionNamed": "Replace {{place}}",

@@ -40,6 +40,7 @@ import {
   isLifecycleRevertCode,
 } from '../fiche/structurePhaseStatusBandModel';
 import { useStructureStageLifecycleMutation } from '../fiche/useStructureStageLifecycleMutation';
+import { StructureDefinitiveReleaseDialog } from '../resolution/StructureDefinitiveReleaseDialog';
 
 const primaryBtn = 'ds-btn ds-btn--primary ds-btn--sm';
 const secondaryBtn = 'ds-btn ds-btn--secondary ds-btn--sm';
@@ -605,17 +606,36 @@ function StructurePhaseMatchsLifecycleBlockBody({
     </div>
   ) : null;
 
+  const definitiveDialog = (
+    <StructureDefinitiveReleaseDialog
+      open={transitionMutation.definitiveOffer !== null}
+      competitionId={competitionId}
+      sourceId={stage.stageId}
+      destinationStageId={null}
+      preview={transitionMutation.definitiveOffer}
+      onClose={transitionMutation.dismissDefinitiveOffer}
+    />
+  );
+  const withDefinitiveDialog = (node: ReactNode) => (
+    <>
+      {node}
+      {definitiveDialog}
+    </>
+  );
+
   if (part === 'headerAlerts') {
-    return transitionMutation.isError ? (
-      <LifecycleMutationAlert error={transitionMutation.error} t={t} />
-    ) : null;
+    return withDefinitiveDialog(
+      transitionMutation.isError ? (
+        <LifecycleMutationAlert error={transitionMutation.error} t={t} />
+      ) : null,
+    );
   }
 
   if (part === 'header') {
     if (!hasLifecycleActionsEnd) {
-      return null;
+      return withDefinitiveDialog(null);
     }
-    return (
+    return withDefinitiveDialog(
       <div className="structure-fiche__header-lifecycle-panel">
         <div
           className="structure-fiche__header-lifecycle-toolbar"
@@ -623,49 +643,49 @@ function StructurePhaseMatchsLifecycleBlockBody({
         >
           {lifecycleActionsEnd}
         </div>
-      </div>
+      </div>,
     );
   }
 
   if (part === 'actions') {
     if (!hasLifecycleActionsEnd) {
-      return null;
+      return withDefinitiveDialog(null);
     }
-    return (
+    return withDefinitiveDialog(
       <div
         className="structure-fiche__header-lifecycle-toolbar"
         aria-label={blockAriaLabel}
       >
         {lifecycleActionsEnd}
-      </div>
+      </div>,
     );
   }
 
   if (part === 'messages') {
     if (!messageStack) {
-      return null;
+      return withDefinitiveDialog(null);
     }
-    return (
+    return withDefinitiveDialog(
       <div
         className="structure-operational-strip__lifecycle"
         aria-label={blockAriaLabel}
       >
         {messageStack}
-      </div>
+      </div>,
     );
   }
 
   if (!hasCopy && !hasActions) {
-    return null;
+    return withDefinitiveDialog(null);
   }
 
-  return (
+  return withDefinitiveDialog(
     <div
       className="structure-operational-strip__lifecycle"
       aria-label={blockAriaLabel}
     >
       {actionsRow}
       {messageStack}
-    </div>
+    </div>,
   );
 }

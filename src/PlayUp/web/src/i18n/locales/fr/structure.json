@@ -924,6 +924,25 @@
         "Away": "extérieur"
       }
     },
+    "definitiveRelease": {
+      "banner_one": "{{count}} place ne pourra plus être confirmée.",
+      "banner_other": "{{count}} places ne pourront plus être confirmées.",
+      "release": "Libérer…",
+      "excludedIntro": "Ces places restent : elles ne peuvent pas être libérées.",
+      "excluded": "{{team}} — {{place}} : {{reason}}",
+      "confirmTitle": "Libérer ces places ?",
+      "warning": "Cette libération est irréversible. Les places vidées ne seront pas reprises automatiquement.",
+      "confirm": "Libérer",
+      "cancel": "Annuler",
+      "pending": "Libération…",
+      "close": "Fermer",
+      "summaryTitle": "Places libérées",
+      "place": "{{team}} — {{place}} ({{phase}})",
+      "population": "Population retirée : {{team}}",
+      "detachedIntro": "Matchs détachés :",
+      "exclusionsIntro": "Places non libérées :",
+      "affectedIntro": "Places en aval :"
+    },
     "cascade": {
       "action": "Remplacer l'occupant périmé",
       "actionNamed": "Remplacer {{place}}",

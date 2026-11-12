@@ -78,6 +78,7 @@ import {
   releaseFooterMode,
 } from '../draw/drawActions';
 import { StructureCascadeReplaceAction } from '../resolution/StructureCascadeReplaceAction';
+import { StructureDefinitiveReleaseBanner } from '../resolution/StructureDefinitiveReleaseBanner';
 import { StructureResolutionReleaseAction } from '../resolution/StructureResolutionReleaseAction';
 import { StructureStaleDrawResolutionActions } from '../resolution/StructureStaleDrawResolutionActions';
 import { hasStaleTirageResolutionOccupant } from '../resolution/structureResolutionOccupants';
@@ -1279,6 +1280,11 @@ export function StructurePhaseFiche({
               .filter(Boolean)
               .join(' ')}
           >
+            <StructureDefinitiveReleaseBanner
+              stage={stage}
+              stages={data.stages}
+              competitionId={data.competitionId}
+            />
             <StructurePhaseCompositionBand
               showCompositionBandEmpty={showCompositionBandEmpty}
               compositionGridClass={compositionGridClass}

@@ -20,6 +20,13 @@ export const queryKeys = {
   stages: {
     detail: (stageId: string) => ['stages', stageId] as const,
     schematic: (stageId: string) => ['stages', stageId, 'schematic'] as const,
+    definitiveReleasePreview: (sourceId: string, destinationId: string) =>
+      [
+        'stages',
+        sourceId,
+        'definitive-release-preview',
+        destinationId,
+      ] as const,
   },
   matches: {
     detail: (matchId: string) => ['matches', matchId] as const,
