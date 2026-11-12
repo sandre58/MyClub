@@ -56,6 +56,37 @@ public sealed class ResolutionDefinitivenessTests
         }
     }
 
+    public static IEnumerable<object[]> PrincipalRows()
+    {
+        yield return Row(StructureResolutionIndeterminacyCause.MatchNonJoue, string.Empty, "Completed", "Group", CompetitionStatus.Running, true);
+        yield return Row(StructureResolutionIndeterminacyCause.MatchNonJoue, string.Empty, "Running", "Group", CompetitionStatus.Running, false);
+        yield return Row(StructureResolutionIndeterminacyCause.Egalite, string.Empty, "Completed", "Overall", CompetitionStatus.Suspended, true);
+        yield return Row(StructureResolutionIndeterminacyCause.Egalite, string.Empty, "Draft", "Overall", CompetitionStatus.Completed, false);
+        yield return Row(StructureResolutionIndeterminacyCause.EgaliteClassement, string.Empty, "Completed", "Overall", CompetitionStatus.Running, false);
+        yield return Row(StructureResolutionIndeterminacyCause.EgaliteClassement, string.Empty, "Completed", "Overall", CompetitionStatus.Completed, true);
+        yield return Row(StructureResolutionIndeterminacyCause.EgaliteClassement, string.Empty, "Completed", "Group", CompetitionStatus.Running, true);
+        yield return Row(StructureResolutionIndeterminacyCause.ConditionNonRemplie, string.Empty, "Completed", "Overall", CompetitionStatus.Suspended, false);
+        yield return Row(StructureResolutionIndeterminacyCause.ConditionNonRemplie, string.Empty, "Completed", "AcrossGroups", CompetitionStatus.Running, true);
+        yield return Row(StructureResolutionIndeterminacyCause.SelectionVide, string.Empty, "Completed", "Overall", CompetitionStatus.Running, true);
+        yield return Row(StructureResolutionIndeterminacyCause.SelectionVide, string.Empty, "Running", "Overall", CompetitionStatus.Completed, false);
+        yield return Row(StructureResolutionIndeterminacyCause.SourceAbsente, nameof(ResolutionSourceAbsence.StageNotLoaded), "Deleted", "Overall", CompetitionStatus.Running, true);
+        yield return Row(StructureResolutionIndeterminacyCause.SourceAbsente, nameof(ResolutionSourceAbsence.StageNotLoaded), "Completed", "Group", CompetitionStatus.Completed, false);
+        yield return Row(StructureResolutionIndeterminacyCause.SourceAbsente, nameof(ResolutionSourceAbsence.PathGone), "Completed", "Group", CompetitionStatus.Running, true);
+        yield return Row(StructureResolutionIndeterminacyCause.SourceAbsente, nameof(ResolutionSourceAbsence.PathGone), "Running", "Overall", CompetitionStatus.Completed, false);
+        yield return Row(StructureResolutionIndeterminacyCause.SourceAbsente, nameof(ResolutionSourceAbsence.Unreadable), "Completed", "Overall", CompetitionStatus.Completed, false);
+        yield return Row(StructureResolutionIndeterminacyCause.ConfigurationInvalide, string.Empty, "Completed", "Overall", CompetitionStatus.Completed, false);
+        yield return Row(StructureResolutionIndeterminacyCause.Autre, string.Empty, "Completed", "Group", CompetitionStatus.Completed, false);
+    }
+
+    private static object[] Row(
+        StructureResolutionIndeterminacyCause cause,
+        string absenceName,
+        string sourceStatus,
+        string scope,
+        CompetitionStatus competitionStatus,
+        bool expected) =>
+        [cause, absenceName, sourceStatus, scope, competitionStatus, expected];
+
     [Theory]
     [MemberData(nameof(Matrix))]
     public void Definitive_follows_the_cause_table(
@@ -81,10 +112,21 @@ public sealed class ResolutionDefinitivenessTests
             destination,
             []);
 
-        var sourceCompleted = source is { Status: StageStatus.Completed }
-            && absence != ResolutionSourceAbsence.StageNotLoaded;
-        var idInCompetition = source is not null && competition.StageIds.Any(id => id.Value == source.Id.Value);
-        verdict.Definitive.Should().Be(Expected(cause, absence, sourceCompleted, scope == "Overall", competitionStatus, idInCompetition, parsedId, competition));
+        verdict.Definitive.Should().Be(DesignTable.IsDefinitive(cause, absenceName, sourceStatus, scope, competitionStatus));
+    }
+
+    [Theory]
+    [MemberData(nameof(PrincipalRows))]
+    public void Principal_causes_match_the_design_literals(
+        StructureResolutionIndeterminacyCause cause,
+        string absenceName,
+        string sourceStatus,
+        string scope,
+        CompetitionStatus competitionStatus,
+        bool expected)
+    {
+        DesignTable.IsDefinitive(cause, absenceName, sourceStatus, scope, competitionStatus).Should().Be(expected);
+        Definitive_follows_the_cause_table(cause, absenceName, sourceStatus, scope, competitionStatus);
     }
 
     [Fact]
@@ -293,31 +335,82 @@ public sealed class ResolutionDefinitivenessTests
         unloaded.Definitive.Should().Be(loaded.Definitive);
     }
 
-    private static bool Expected(
-        StructureResolutionIndeterminacyCause cause,
-        ResolutionSourceAbsence? absence,
-        bool sourceCompleted,
-        bool overall,
-        CompetitionStatus competitionStatus,
-        bool sourceIdInCompetition,
-        Guid parsedId,
-        Competition competition)
+    /// <summary>
+    /// Expected definitiveness from the locked design, not a copy of <see cref="ResolutionDefinitiveness"/>.
+    /// The matrix assumes one active entry. A deleted source is an id absent from the competition.
+    /// A loaded source that is not passed in (StageNotLoaded while the phase is still listed) is not definitive.
+    /// </summary>
+    private static class DesignTable
     {
-        var idAbsent = !competition.StageIds.Any(id => id.Value == parsedId);
-        return cause switch
+        private static readonly string[] Scopes = ["Group", "Overall", "AcrossGroups"];
+
+        private static readonly string[] Competitions = ["Running", "Suspended", "Completed"];
+
+        private static readonly HashSet<string> Definitive = Build();
+
+        private static HashSet<string> Build()
         {
-            StructureResolutionIndeterminacyCause.MatchNonJoue => sourceCompleted,
-            StructureResolutionIndeterminacyCause.Egalite => sourceCompleted,
-            StructureResolutionIndeterminacyCause.EgaliteClassement or StructureResolutionIndeterminacyCause.ConditionNonRemplie =>
-                sourceCompleted && (!overall || competitionStatus is not (CompetitionStatus.Running or CompetitionStatus.Suspended)),
-            StructureResolutionIndeterminacyCause.SelectionVide =>
-                sourceCompleted && !(overall && !competition.Entries.Any(entry => entry.Status == EntryStatus.Active)),
-            StructureResolutionIndeterminacyCause.SourceAbsente when absence == ResolutionSourceAbsence.Unreadable => false,
-            StructureResolutionIndeterminacyCause.SourceAbsente when absence == ResolutionSourceAbsence.StageNotLoaded =>
-                idAbsent && !sourceIdInCompetition,
-            StructureResolutionIndeterminacyCause.SourceAbsente when absence == ResolutionSourceAbsence.PathGone => sourceCompleted,
-            _ => false,
-        };
+            var rows = new HashSet<string>(StringComparer.Ordinal);
+
+            // Match not played, or a tie: definitive only once the source phase is completed.
+            Add(rows, nameof(StructureResolutionIndeterminacyCause.MatchNonJoue), string.Empty, "Completed", Scopes, Competitions);
+            Add(rows, nameof(StructureResolutionIndeterminacyCause.Egalite), string.Empty, "Completed", Scopes, Competitions);
+
+            // Standing tie and unmet condition: completed source. Overall also waits until the competition
+            // is neither running nor suspended, because a withdrawal can still change the ranking.
+            Add(rows, nameof(StructureResolutionIndeterminacyCause.EgaliteClassement), string.Empty, "Completed", ["Group", "AcrossGroups"], Competitions);
+            Add(rows, nameof(StructureResolutionIndeterminacyCause.EgaliteClassement), string.Empty, "Completed", ["Overall"], ["Completed"]);
+            Add(rows, nameof(StructureResolutionIndeterminacyCause.ConditionNonRemplie), string.Empty, "Completed", ["Group", "AcrossGroups"], Competitions);
+            Add(rows, nameof(StructureResolutionIndeterminacyCause.ConditionNonRemplie), string.Empty, "Completed", ["Overall"], ["Completed"]);
+
+            // Empty selection: completed source. Overall with zero active entries is the separate fallback fact.
+            Add(rows, nameof(StructureResolutionIndeterminacyCause.SelectionVide), string.Empty, "Completed", Scopes, Competitions);
+
+            // Deleted phase (A3): the readable id is not in the competition.
+            Add(rows, nameof(StructureResolutionIndeterminacyCause.SourceAbsente), nameof(ResolutionSourceAbsence.StageNotLoaded), "Deleted", Scopes, Competitions);
+
+            // Path or fixture gone: definitive only once the source phase is completed.
+            Add(rows, nameof(StructureResolutionIndeterminacyCause.SourceAbsente), nameof(ResolutionSourceAbsence.PathGone), "Completed", Scopes, Competitions);
+            return rows;
+        }
+
+        private static void Add(
+            HashSet<string> rows,
+            string cause,
+            string absence,
+            string status,
+            IEnumerable<string> scopes,
+            IEnumerable<string> competitions)
+        {
+            foreach (var key in Keys(cause, absence, status, scopes, competitions))
+            {
+                rows.Add(key);
+            }
+        }
+
+        public static bool IsDefinitive(
+            StructureResolutionIndeterminacyCause cause,
+            string absenceName,
+            string sourceStatus,
+            string scope,
+            CompetitionStatus competitionStatus) =>
+            Definitive.Contains($"{cause}|{absenceName}|{sourceStatus}|{scope}|{competitionStatus}");
+
+        private static IEnumerable<string> Keys(
+            string cause,
+            string absence,
+            string status,
+            IEnumerable<string> scopes,
+            IEnumerable<string> competitions)
+        {
+            foreach (var scope in scopes)
+            {
+                foreach (var competition in competitions)
+                {
+                    yield return $"{cause}|{absence}|{status}|{scope}|{competition}";
+                }
+            }
+        }
     }
 
     private static bool JudgeStanding(
