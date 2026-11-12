@@ -1,16 +1,21 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+  completeStage,
+  confirmDefinitiveResolutionRelease,
+  previewDefinitiveResolutionRelease,
   resumeStage,
   suspendStage,
   startStage,
   revertStageToReady,
+  type DefinitiveResolutionReleaseResponse,
 } from '../../../api';
 import type { StructureStageHubSummary } from '../../../types';
+import { StructureDefinitiveReleaseOffer } from '../resolution/StructureDefinitiveReleaseOffer';
 import { StructurePhaseMatchsLifecycleBlock } from './StructurePhaseMatchsLifecycleBlock';
 
 vi.mock('../../../api', async (importOriginal) => {
@@ -20,6 +25,8 @@ vi.mock('../../../api', async (importOriginal) => {
     prepareStage: vi.fn(),
     startStage: vi.fn(),
     completeStage: vi.fn(),
+    previewDefinitiveResolutionRelease: vi.fn(),
+    confirmDefinitiveResolutionRelease: vi.fn(),
     revertStageToDraft: vi.fn(),
     suspendStage: vi.fn(),
     resumeStage: vi.fn(),
@@ -72,6 +79,92 @@ describe('StructurePhaseMatchsLifecycleBlock', () => {
     });
 
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it('keeps the grouped dialog open after the phase becomes completed', async () => {
+    const user = userEvent.setup();
+    const preview: DefinitiveResolutionReleaseResponse = {
+      versionToken: 'token',
+      releases: [
+        {
+          stageId: 'dest',
+          target: 'Slot',
+          slotKey: 'A',
+          groupId: null,
+          entryId: 'nord',
+          entryName: 'Nord',
+          stageName: 'Terminal',
+          placeLabel: 'A',
+          populationRemoved: false,
+          sideEffect: false,
+        },
+      ],
+      detachedMatches: [],
+      exclusions: [],
+      affectedOccupants: [],
+    };
+    vi.mocked(completeStage).mockResolvedValue(undefined);
+    vi.mocked(previewDefinitiveResolutionRelease).mockResolvedValue(preview);
+    vi.mocked(confirmDefinitiveResolutionRelease).mockResolvedValue(preview);
+    const running = {
+      ...baseStage,
+      status: 'Running' as const,
+      lifecycle: {
+        transition: { code: 'CompleteStage' as const, enabled: true },
+      },
+    };
+    const completed = {
+      ...running,
+      status: 'Completed' as const,
+      lifecycle: { transition: { code: null, enabled: false } },
+    };
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+    const tree = (stage: StructureStageHubSummary) => (
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <StructureDefinitiveReleaseOffer
+            competitionId={competitionId}
+            stageId={baseStage.stageId}
+          >
+            <StructurePhaseMatchsLifecycleBlock
+              competitionId={competitionId}
+              stage={stage}
+            />
+          </StructureDefinitiveReleaseOffer>
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+    const { rerender } = render(tree(running));
+
+    await user.click(
+      screen.getByRole('button', { name: /clôturer la phase/i }),
+    );
+    expect(
+      await screen.findByRole('dialog', { name: 'Libérer ces places ?' }),
+    ).toBeVisible();
+    expect(screen.getByText(/Nord — A/)).toBeVisible();
+
+    rerender(tree(completed));
+
+    expect(
+      screen.getByRole('dialog', { name: 'Libérer ces places ?' }),
+    ).toBeVisible();
+    expect(screen.getByText(/Nord — A/)).toBeVisible();
+    await user.click(screen.getByRole('button', { name: /^Libérer$/ }));
+    const summary = await screen.findByRole('dialog', {
+      name: 'Places libérées',
+    });
+    expect(within(summary).getByText(/Nord — A/)).toBeVisible();
+
+    rerender(tree(completed));
+    const stillOpen = screen.getByRole('dialog', { name: 'Places libérées' });
+    expect(stillOpen).toBeVisible();
+    expect(within(stillOpen).getByText(/Nord — A/)).toBeVisible();
   });
 
   it('shows running complete action without open-matches banner', () => {

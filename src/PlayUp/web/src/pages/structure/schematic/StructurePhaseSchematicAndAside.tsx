@@ -176,6 +176,7 @@ export function StructurePhaseSchematicAndAside({
                 cupRoundCount={stage.roundCount}
                 cupPairProductionStates={cupPairProductionStates}
                 resolutionIndex={resolutionIndex}
+                manualPlacementStages={structureStages}
                 onPlaceActivate={
                   canManualPlace ? onManualPlaceActivate : undefined
                 }

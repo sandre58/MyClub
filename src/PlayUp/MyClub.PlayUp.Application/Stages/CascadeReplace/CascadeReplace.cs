@@ -9,6 +9,7 @@ using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
+using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using ApplicationErrorCodes = MyClub.PlayUp.Application.ApplicationErrorCodes;
 using ApplicationFailureException = MyClub.PlayUp.Application.ApplicationFailureException;
@@ -44,7 +45,7 @@ public static class CascadeReplace
             scratchStages,
             scratchMatches,
             clock);
-        return new CascadeReplaceResult(token, played, replacements);
+        return new CascadeReplaceResult(token, Describe(competition, stages, played), replacements);
     }
 
     /// <summary>
@@ -68,7 +69,7 @@ public static class CascadeReplace
             stages,
             matches,
             clock);
-        return new CascadeReplaceResult(token, played, replacements);
+        return new CascadeReplaceResult(token, Describe(competition, stages, played), replacements);
     }
 
     private static (List<CascadePlayedMatch> Played, List<CascadeReplacement> Replacements) ApplyAll(
@@ -88,6 +89,68 @@ public static class CascadeReplace
         }
 
         return (played, replacements);
+    }
+
+    // Names come from the entry ids stored on the row. Stages supply the phase and the leg.
+    // Matches are left unread: Execute may already have replaced the participants.
+    private static CascadePlayedMatch[] Describe(
+        Competition competition,
+        IReadOnlyList<Stage> stages,
+        IReadOnlyList<CascadePlayedMatch> played) =>
+        played
+            .Select(row => row with
+            {
+                HomeName = EntryDisplayName(competition, row.HomeEntryId),
+                AwayName = EntryDisplayName(competition, row.AwayEntryId),
+                StageName = PhaseName(stages, row.StageId),
+                LegIndex = LegWhenMultiLeg(stages, row.StageId, row.MatchId),
+            })
+            .ToArray();
+
+    private static string? EntryDisplayName(Competition competition, Guid? entryId)
+    {
+        if (entryId is not { } id)
+        {
+            return null;
+        }
+
+        var name = competition.Entries.FirstOrDefault(entry => entry.Id.Value == id)?.DisplayName;
+        return string.IsNullOrWhiteSpace(name) ? null : name;
+    }
+
+    private static string? PhaseName(IReadOnlyList<Stage> stages, Guid stageId)
+    {
+        var name = stages.FirstOrDefault(stage => stage.Id.Value == stageId)?.Name.Value;
+        return string.IsNullOrWhiteSpace(name) ? null : name;
+    }
+
+    // A single attachment stays null, including a lone leg 1.
+    // More than one leg in the format, or more than one attachment on the fixture, exposes the leg.
+    private static int? LegWhenMultiLeg(IReadOnlyList<Stage> stages, Guid stageId, Guid matchId)
+    {
+        var stage = stages.FirstOrDefault(candidate => candidate.Id.Value == stageId);
+        if (stage is null)
+        {
+            return null;
+        }
+
+        foreach (var round in stage.Rounds)
+        {
+            foreach (var fixture in round.Fixtures)
+            {
+                var attachment = fixture.Attachments.FirstOrDefault(row => row.MatchId.Value == matchId);
+                if (attachment is null)
+                {
+                    continue;
+                }
+
+                var legs = TieFormat.OrDefaultOneLeg(round.TieFormat).NumberOfLegs;
+                var multiLeg = legs > 1 || fixture.Attachments.Count > 1;
+                return multiLeg ? attachment.LegIndex : null;
+            }
+        }
+
+        return null;
     }
 
     private static void Require(
@@ -304,7 +367,7 @@ public static class CascadeReplace
         }
     }
 
-    private static bool Referenced(Stage stage, EntryId entryId) =>
+    internal static bool Referenced(Stage stage, EntryId entryId) =>
         stage.Slots.Any(slot => slot.EntryId is { } occupant && occupant.Equals(entryId))
         || stage.Groups.Any(group => group.EntryIds.Contains(entryId))
         || stage.DirectAssignments.Any(assignment => assignment.EntryId.Equals(entryId));

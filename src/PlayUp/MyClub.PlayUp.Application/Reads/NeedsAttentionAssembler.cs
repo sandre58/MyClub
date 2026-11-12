@@ -52,6 +52,12 @@ public static class NeedsAttentionAssembler
     /// </summary>
     public const string SourceInsufficientParticipants = "InsufficientParticipants";
 
+    /// <summary>A non-completed phase stores at least one stale resolution occupant.</summary>
+    public const string SourceResolutionPerime = "ResolutionPerime";
+
+    /// <summary>A non-completed phase stores at least one indeterminate resolution occupant.</summary>
+    public const string SourceResolutionIndetermine = "ResolutionIndetermine";
+
     /// <summary>Blocking severity.</summary>
     public const string SeverityBlocking = "Blocking";
 

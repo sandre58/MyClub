@@ -119,7 +119,7 @@ First-time Playwright browser install (local): `npx playwright install chromium`
 
 **Stub E2E** (`npm run test:e2e`) intercept Host JSON via Playwright routes — no Postgres / DevRunner (CI `web` job). The same run includes visual baselines of `/design-lab` and `/dev/foundations` (`e2e/stub/visual.spec.ts`). Regenerate the Linux screenshots with `npx playwright test e2e/stub/visual.spec.ts --update-snapshots` after `npm run build`. Details: [critical-paths.md](../../../docs/audit/critical-paths.md).
 
-**Host E2E** (`npm run test:e2e:host`) expects Postgres seeded (`dotnet run --project ../MyClub.PlayUp.DevRunner -- --reset --scenarios championship-ready,cup-composition-complete,structure-materialize-recette`), Host on `http://127.0.0.1:5287`, then runs Vite + `e2e/business/` (CI `e2e-integration` job). Readiness probe: `GET /health`. Matrix: [critical-paths.md](../../../docs/audit/critical-paths.md).
+**Host E2E** (`npm run test:e2e:host`) expects Postgres seeded (`dotnet run --project ../MyClub.PlayUp.DevRunner -- --reset --scenarios championship-ready,cup-composition-complete,structure-materialize-recette,resolution-freshness-qual-slot,freshness-actions-recette`), Host on `http://127.0.0.1:5287`, then runs Vite + `e2e/business/` (CI `e2e-integration` job). Readiness probe: `GET /health`. Matrix: [critical-paths.md](../../../docs/audit/critical-paths.md).
 
 ### Quality gates (CI `web` job)
 

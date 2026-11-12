@@ -6,9 +6,11 @@
 
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Stages;
+using MyClub.PlayUp.Application.Stages.ReleaseResolution;
 using MyClub.PlayUp.Application.Standings;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
+using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Qualification;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
@@ -25,7 +27,17 @@ namespace MyClub.PlayUp.Application.Reads;
 /// <see cref="StructureResolutionFreshness.Perime"/> with
 /// <see cref="StructureResolutionStalenessCause.RegleQualification"/>.
 /// A progression <c>SourcePathId</c> that matches no current path is
-/// <see cref="StructureResolutionFreshness.Indetermine"/>: a missing progression path is not a rule change.
+/// <see cref="StructureResolutionFreshness.Indetermine"/> with
+/// <see cref="StructureResolutionIndeterminacyCause.SourceAbsente"/>: a missing progression path is not a rule change.
+/// An unfinished progression match is <see cref="StructureResolutionIndeterminacyCause.MatchNonJoue"/>.
+/// A level score is <see cref="StructureResolutionIndeterminacyCause.Egalite"/>.
+/// A tied standing is <see cref="StructureResolutionIndeterminacyCause.EgaliteClassement"/>.
+/// A qualification condition that no longer holds is <see cref="StructureResolutionIndeterminacyCause.ConditionNonRemplie"/>.
+/// A configuration exception swallowed while reading a standing or assembling a fixture is
+/// <see cref="StructureResolutionIndeterminacyCause.ConfigurationInvalide"/>.
+/// <see cref="StructureResolutionIndeterminacyCause.SourceAbsente"/> records
+/// <see cref="ResolutionSourceAbsence"/>: the id does not parse, the stage was not loaded, or the path,
+/// fixture, or round is gone. A stage missing from this call is not treated as deleted.
 /// </summary>
 public static class ResolutionFreshnessDetector
 {
@@ -47,7 +59,11 @@ public static class ResolutionFreshnessDetector
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(stages);
 
-        return Project(competition, Analyze(competition, stages, matchSummariesByStage));
+        return Project(
+            competition,
+            stages,
+            matchSummariesByStage,
+            Analyze(competition, stages, matchSummariesByStage));
     }
 
     /// <summary>
@@ -77,7 +93,8 @@ public static class ResolutionFreshnessDetector
 
         var byId = stages.ToDictionary(stage => stage.Id.Value);
         var standings = new StandingCache(competition, summaries);
-        var outcomes = new OutcomeCache(summaries);
+        var names = competition.Entries.ToDictionary(entry => entry.Id.Value, entry => entry.DisplayName);
+        var outcomes = new OutcomeCache(summaries, names);
         foreach (var occupant in occupants)
         {
             try
@@ -86,8 +103,9 @@ public static class ResolutionFreshnessDetector
             }
             catch (Exception ex) when (ex is DomainException or ApplicationFailureException)
             {
-                MarkIndeterminate(occupant);
+                MarkIndeterminate(occupant, Classify(ex));
                 occupant.DependsOnStageId = null;
+                occupant.UpstreamStageId = null;
                 occupant.DependsOnEntryIds.Clear();
                 occupant.ClearReplay();
             }
@@ -163,6 +181,7 @@ public static class ResolutionFreshnessDetector
             case ResolutionProvenanceKind.NonVerifiee:
                 occupant.State = StructureResolutionFreshness.NonVerifiee;
                 occupant.Cause = null;
+                occupant.ClearGuidance();
                 return;
             case ResolutionProvenanceKind.Qualification:
                 AssessQualification(occupant, stagesById, standings);
@@ -174,7 +193,7 @@ public static class ResolutionFreshnessDetector
                 AssessDraw(occupant, stagesById);
                 return;
             default:
-                MarkIndeterminate(occupant);
+                MarkIndeterminate(occupant, StructureResolutionIndeterminacyCause.Autre);
                 return;
         }
     }
@@ -191,10 +210,22 @@ public static class ResolutionFreshnessDetector
         Dictionary<Guid, Stage> stagesById,
         StandingCache standings)
     {
-        if (!TryReadPrefixedId(occupant.SourcePathId, 'Q', out var sourceId)
-            || !stagesById.TryGetValue(sourceId, out var source))
+        if (!TryReadPrefixedId(occupant.SourcePathId, 'Q', out var sourceId))
         {
-            MarkIndeterminate(occupant);
+            MarkIndeterminate(
+                occupant,
+                StructureResolutionIndeterminacyCause.SourceAbsente,
+                absence: ResolutionSourceAbsence.Unreadable);
+            return;
+        }
+
+        if (!stagesById.TryGetValue(sourceId, out var source))
+        {
+            MarkIndeterminate(
+                occupant,
+                StructureResolutionIndeterminacyCause.SourceAbsente,
+                absence: ResolutionSourceAbsence.StageNotLoaded,
+                parsedSourceStageId: sourceId);
             return;
         }
 
@@ -206,12 +237,15 @@ public static class ResolutionFreshnessDetector
             return;
         }
 
-        var standing = standings.Resolve(source, path);
-        if (standing is null)
+        var standingRead = standings.Resolve(source, path);
+        if (standingRead.ConfigurationInvalid)
         {
-            MarkIndeterminate(occupant);
+            RememberSource(occupant, source.Id.Value);
+            MarkIndeterminate(occupant, StructureResolutionIndeterminacyCause.ConfigurationInvalide);
             return;
         }
+
+        var standing = standingRead.Standing!;
 
         RememberDependencies(occupant, source.Id.Value, standing.Rows.Select(row => row.EntryId.Value));
         var storedEntry = new EntryId(occupant.EntryId);
@@ -248,7 +282,7 @@ public static class ResolutionFreshnessDetector
         }
 
         occupant.ClearReplay();
-        MarkIndeterminate(occupant);
+        MarkIndeterminate(occupant, ClassifyQualification(selection));
     }
 
     /// <summary>
@@ -263,24 +297,48 @@ public static class ResolutionFreshnessDetector
         Dictionary<Guid, Stage> stagesById,
         OutcomeCache outcomes)
     {
-        if (!TryReadPrefixedId(occupant.SourcePathId, 'P', out var sourceId)
-            || !stagesById.TryGetValue(sourceId, out var source))
+        if (!TryReadPrefixedId(occupant.SourcePathId, 'P', out var sourceId))
         {
-            MarkIndeterminate(occupant);
+            MarkIndeterminate(
+                occupant,
+                StructureResolutionIndeterminacyCause.SourceAbsente,
+                absence: ResolutionSourceAbsence.Unreadable);
+            return;
+        }
+
+        if (!stagesById.TryGetValue(sourceId, out var source))
+        {
+            MarkIndeterminate(
+                occupant,
+                StructureResolutionIndeterminacyCause.SourceAbsente,
+                absence: ResolutionSourceAbsence.StageNotLoaded,
+                parsedSourceStageId: sourceId);
             return;
         }
 
         var path = FindProgressionPath(source, occupant.SourcePathId);
         if (path is null)
         {
-            MarkIndeterminate(occupant);
+            RememberSource(occupant, source.Id.Value);
+            MarkIndeterminate(
+                occupant,
+                StructureResolutionIndeterminacyCause.SourceAbsente,
+                absence: ResolutionSourceAbsence.PathGone,
+                parsedSourceStageId: source.Id.Value);
             return;
         }
 
-        var outcome = outcomes.Resolve(source, path);
-        if (outcome is null)
+        var read = outcomes.Resolve(source, path);
+        if (read.Outcome is not { } outcome)
         {
-            MarkIndeterminate(occupant);
+            RememberSource(occupant, source.Id.Value);
+            MarkIndeterminate(
+                occupant,
+                read.Failure ?? StructureResolutionIndeterminacyCause.Autre,
+                read.MatchId,
+                read.MatchLabel,
+                read.Absence,
+                source.Id.Value);
             return;
         }
 
@@ -312,7 +370,7 @@ public static class ResolutionFreshnessDetector
         }
 
         occupant.ClearReplay();
-        MarkIndeterminate(occupant);
+        MarkIndeterminate(occupant, StructureResolutionIndeterminacyCause.Autre);
     }
 
     private static void AssessDraw(WorkingOccupant occupant, Dictionary<Guid, Stage> stagesById)
@@ -320,14 +378,14 @@ public static class ResolutionFreshnessDetector
         if (!TryReadPrefixedId(occupant.SourcePathId, 'T', out var drawId)
             || !stagesById.TryGetValue(occupant.StageId, out var stage))
         {
-            MarkIndeterminate(occupant);
+            MarkIndeterminate(occupant, StructureResolutionIndeterminacyCause.SourceAbsente);
             return;
         }
 
         var draw = stage.Draws.FirstOrDefault(candidate => candidate.Id.Value == drawId);
         if (draw?.Inputs is null)
         {
-            MarkIndeterminate(occupant);
+            MarkIndeterminate(occupant, StructureResolutionIndeterminacyCause.SourceAbsente);
             return;
         }
 
@@ -380,12 +438,30 @@ public static class ResolutionFreshnessDetector
 
     private static Dictionary<Guid, IReadOnlyList<StructureResolutionOccupantDto>> Project(
         Competition competition,
+        IReadOnlyList<Stage> stages,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>>? matchSummariesByStage,
         List<WorkingOccupant> occupants)
     {
         var order = new Dictionary<Guid, int>(competition.StageIds.Count);
         for (var index = 0; index < competition.StageIds.Count; index++)
         {
             order[competition.StageIds[index].Value] = index;
+        }
+
+        var stagesById = stages.ToDictionary(stage => stage.Id.Value);
+        var matchesByStage = new Dictionary<Guid, ResolutionReleaseMatch[]>();
+        if (matchSummariesByStage is not null)
+        {
+            foreach (var (stageId, rows) in matchSummariesByStage)
+            {
+                matchesByStage[stageId.Value] = rows
+                    .Select(row => new ResolutionReleaseMatch(
+                        row.Id.Value,
+                        row.Status,
+                        row.HomeEntryId?.Value,
+                        row.AwayEntryId?.Value))
+                    .ToArray();
+            }
         }
 
         return occupants
@@ -397,7 +473,29 @@ public static class ResolutionFreshnessDetector
             .GroupBy(occupant => occupant.StageId)
             .ToDictionary(
                 group => group.Key,
-                group => (IReadOnlyList<StructureResolutionOccupantDto>)group.Select(occupant => occupant.ToDto()).ToArray());
+                group => (IReadOnlyList<StructureResolutionOccupantDto>)group.Select(occupant =>
+                {
+                    stagesById.TryGetValue(occupant.StageId, out var stage);
+                    var source = SourceStage(occupant, stagesById);
+                    IReadOnlyList<ResolutionReleaseMatch>? matches = null;
+                    if (matchSummariesByStage is not null)
+                    {
+                        // A missing stage key means this caller loaded no rows for it.
+                        // The structure read writes an empty list for every stage, so a
+                        // null dictionary is the case where matches were not loaded at all.
+                        matchesByStage.TryGetValue(occupant.StageId, out var loaded);
+                        matches = loaded ?? [];
+                    }
+
+                    var verdict = ResolutionDefinitiveness.Evaluate(
+                        competition,
+                        source,
+                        QualificationPathOf(source, occupant),
+                        occupant.ToAssessment(),
+                        stage,
+                        matches);
+                    return occupant.ToDto(verdict.Releasable, verdict.Definitive);
+                }).ToArray());
     }
 
     /// <summary>
@@ -439,8 +537,8 @@ public static class ResolutionFreshnessDetector
             return;
         }
 
-        var standing = standings.Resolve(source, match);
-        if (standing is null)
+        var standingRead = standings.Resolve(source, match);
+        if (standingRead.Standing is not { } standing)
         {
             occupant.ClearReplay();
             return;
@@ -551,12 +649,45 @@ public static class ResolutionFreshnessDetector
         return false;
     }
 
+    /// <summary>
+    /// Records the phase a selection was read from.
+    /// Draw propagation stays on <see cref="WorkingOccupant.DependsOnStageId"/> and does not
+    /// expose that same phase as a navigation target.
+    /// </summary>
+    private static void RememberSource(WorkingOccupant occupant, Guid sourceStageId)
+    {
+        occupant.DependsOnStageId = sourceStageId;
+        occupant.ParsedSourceStageId = sourceStageId;
+        if (occupant.Kind != ResolutionProvenanceKind.Tirage)
+        {
+            occupant.UpstreamStageId = sourceStageId;
+        }
+    }
+
+    private static Stage? SourceStage(WorkingOccupant occupant, Dictionary<Guid, Stage> stagesById)
+    {
+        if (occupant.ParsedSourceStageId is Guid parsed
+            && stagesById.TryGetValue(parsed, out var parsedStage))
+        {
+            return parsedStage;
+        }
+
+        return occupant.DependsOnStageId is Guid depends && stagesById.TryGetValue(depends, out var depended)
+            ? depended
+            : null;
+    }
+
+    private static QualificationPath? QualificationPathOf(Stage? source, WorkingOccupant occupant) =>
+        source is null || occupant.Kind != ResolutionProvenanceKind.Qualification
+            ? null
+            : FindQualificationPath(source, occupant.SourcePathId);
+
     private static void RememberDependencies(
         WorkingOccupant occupant,
         Guid sourceStageId,
         IEnumerable<Guid> entryIds)
     {
-        occupant.DependsOnStageId = sourceStageId;
+        RememberSource(occupant, sourceStageId);
         occupant.DependsOnEntryIds.Clear();
         foreach (var entryId in entryIds)
         {
@@ -581,22 +712,75 @@ public static class ResolutionFreshnessDetector
         return Guid.TryParseExact(sourcePathId[2..separator], "N", out id);
     }
 
+    private static StructureResolutionIndeterminacyCause ClassifyQualification(
+        PathOccupantSelectionResult selection)
+    {
+        if (selection.Status == PathOccupantSelectionStatus.Skipped)
+        {
+            return StructureResolutionIndeterminacyCause.ConditionNonRemplie;
+        }
+
+        if (selection.Status == PathOccupantSelectionStatus.Indeterminate
+            && selection.Indeterminacy == PathOccupantIndeterminacyReason.Empty)
+        {
+            return StructureResolutionIndeterminacyCause.SelectionVide;
+        }
+
+        if (selection.Status == PathOccupantSelectionStatus.Indeterminate
+            && selection.Indeterminacy == PathOccupantIndeterminacyReason.Ambiguous)
+        {
+            return StructureResolutionIndeterminacyCause.EgaliteClassement;
+        }
+
+        return StructureResolutionIndeterminacyCause.Autre;
+    }
+
+    private static StructureResolutionIndeterminacyCause Classify(Exception exception) =>
+        exception switch
+        {
+            DomainException { Code: StageErrorCodes.FixtureOutcomeNotFinished } =>
+                StructureResolutionIndeterminacyCause.MatchNonJoue,
+            DomainException { Code: StageErrorCodes.FixtureOutcomeUndecided } =>
+                StructureResolutionIndeterminacyCause.Egalite,
+            _ => StructureResolutionIndeterminacyCause.ConfigurationInvalide,
+        };
+
     private static void MarkCurrent(WorkingOccupant occupant)
     {
         occupant.State = StructureResolutionFreshness.AJour;
         occupant.Cause = null;
+        occupant.SourceAbsence = null;
+        occupant.ClearGuidance();
     }
 
     private static void MarkStale(WorkingOccupant occupant, StructureResolutionStalenessCause cause)
     {
         occupant.State = StructureResolutionFreshness.Perime;
         occupant.Cause = cause;
+        occupant.SourceAbsence = null;
+        occupant.ClearGuidance();
     }
 
-    private static void MarkIndeterminate(WorkingOccupant occupant)
+    private static void MarkIndeterminate(
+        WorkingOccupant occupant,
+        StructureResolutionIndeterminacyCause cause,
+        Guid? matchId = null,
+        string? matchLabel = null,
+        ResolutionSourceAbsence? absence = null,
+        Guid? parsedSourceStageId = null)
     {
         occupant.State = StructureResolutionFreshness.Indetermine;
         occupant.Cause = null;
+        occupant.Indeterminacy = cause;
+        occupant.ActionMatchId = matchId;
+        occupant.ActionMatchLabel = matchLabel;
+        occupant.SourceAbsence = cause == StructureResolutionIndeterminacyCause.SourceAbsente
+            ? absence
+            : null;
+        if (parsedSourceStageId is Guid parsed)
+        {
+            occupant.ParsedSourceStageId = parsed;
+        }
     }
 
     private sealed class WorkingOccupant
@@ -621,13 +805,29 @@ public static class ResolutionFreshnessDetector
 
         public StructureResolutionStalenessCause? Cause { get; set; }
 
+        public StructureResolutionIndeterminacyCause? Indeterminacy { get; set; }
+
+        public Guid? ActionMatchId { get; set; }
+
+        public string? ActionMatchLabel { get; set; }
+
         public Guid? DependsOnStageId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the phase the organizer should open. Distinct from
+        /// <see cref="DependsOnStageId"/>, which also carries draw propagation edges.
+        /// </summary>
+        public Guid? UpstreamStageId { get; set; }
 
         public HashSet<Guid> DependsOnEntryIds { get; } = [];
 
         public Guid? ReplayEntryId { get; private set; }
 
         public string? ReplayFingerprint { get; private set; }
+
+        public ResolutionSourceAbsence? SourceAbsence { get; set; }
+
+        public Guid? ParsedSourceStageId { get; set; }
 
         public static WorkingOccupant Create(
             Guid stageId,
@@ -665,8 +865,22 @@ public static class ResolutionFreshnessDetector
             ReplayFingerprint = null;
         }
 
-        public StructureResolutionOccupantDto ToDto() =>
-            new(
+        public void ClearGuidance()
+        {
+            Indeterminacy = null;
+            ActionMatchId = null;
+            ActionMatchLabel = null;
+        }
+
+        public StructureResolutionOccupantDto ToDto(bool releasable, bool definitive)
+        {
+            var cascadeReplaceable = State == StructureResolutionFreshness.Perime
+                && (Kind == ResolutionProvenanceKind.Qualification
+                    || Kind == ResolutionProvenanceKind.Progression)
+                && Cause != StructureResolutionStalenessCause.AmontPerime
+                && ReplayEntryId is not null
+                && ReplayFingerprint is not null;
+            return new(
                 Target,
                 EntryId,
                 Kind,
@@ -674,7 +888,15 @@ public static class ResolutionFreshnessDetector
                 State,
                 SlotKey,
                 GroupId,
-                Cause);
+                Cause,
+                UpstreamStageId,
+                Indeterminacy,
+                ActionMatchId,
+                ActionMatchLabel,
+                cascadeReplaceable,
+                releasable,
+                definitive);
+        }
 
         public ResolutionOccupantAssessment ToAssessment() =>
             new(
@@ -690,7 +912,23 @@ public static class ResolutionFreshnessDetector
                 DependsOnStageId,
                 [.. DependsOnEntryIds],
                 ReplayEntryId,
-                ReplayFingerprint);
+                ReplayFingerprint,
+                Indeterminacy,
+                ActionMatchId,
+                ActionMatchLabel,
+                SourceAbsence,
+                ParsedSourceStageId);
+    }
+
+    /// <summary>
+    /// A standing read for one qualification path.
+    /// <see cref="ConfigurationInvalid"/> is set when the cache swallowed a configuration exception.
+    /// </summary>
+    private readonly record struct StandingRead(Standing? Standing)
+    {
+        public static StandingRead Invalid => new(null);
+
+        public bool ConfigurationInvalid => Standing is null;
     }
 
     /// <summary>
@@ -704,21 +942,22 @@ public static class ResolutionFreshnessDetector
         private readonly Dictionary<Guid, (Standing? Overall, IReadOnlyDictionary<GroupId, Standing> Groups)?> _built = [];
         private readonly Dictionary<(Guid StageId, int Position), Standing?> _across = [];
 
-        public Standing? Resolve(Stage source, QualificationPath path)
+        public StandingRead Resolve(Stage source, QualificationPath path)
         {
             try
             {
                 var built = Built(source);
                 if (built is null)
                 {
-                    return null;
+                    return StandingRead.Invalid;
                 }
 
-                return ResolveStanding(source, path, built.Value);
+                var standing = ResolveStanding(source, path, built.Value);
+                return standing is null ? StandingRead.Invalid : new StandingRead(standing);
             }
             catch (Exception ex) when (ex is DomainException or ApplicationFailureException)
             {
-                return null;
+                return StandingRead.Invalid;
             }
         }
 
@@ -804,11 +1043,29 @@ public static class ResolutionFreshnessDetector
     /// Fixture outcomes built during this evaluation only. Discarded when the call returns.
     /// Not a cache from one Structure read to the next.
     /// </summary>
-    private sealed class OutcomeCache(IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>> summaries)
+    private sealed class OutcomeCache(
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>> summaries,
+        IReadOnlyDictionary<Guid, string> entryNames)
     {
-        private readonly Dictionary<(Guid StageId, string PairKey), FixtureOutcome?> _outcomes = [];
+        private readonly Dictionary<(Guid StageId, string PairKey), OutcomeRead> _outcomes = [];
 
-        public FixtureOutcome? Resolve(Stage source, ProgressionPath path)
+        private static FixtureLegSnapshot? GuidanceLeg(FixtureConfrontationSnapshot snapshot, DomainException exception)
+        {
+            if (snapshot.Legs.Count == 0)
+            {
+                return null;
+            }
+
+            var legs = snapshot.Legs.OrderBy(leg => leg.LegIndex).ToArray();
+            if (exception.Code == StageErrorCodes.FixtureOutcomeNotFinished)
+            {
+                return legs.FirstOrDefault(leg => leg.Status != MatchStatus.Finished) ?? legs[0];
+            }
+
+            return legs[^1];
+        }
+
+        public OutcomeRead Resolve(Stage source, ProgressionPath path)
         {
             var key = (source.Id.Value, path.SourcePairKey);
             if (_outcomes.TryGetValue(key, out var cached))
@@ -816,34 +1073,94 @@ public static class ResolutionFreshnessDetector
                 return cached;
             }
 
+            var read = Read(source, path);
+            _outcomes[key] = read;
+            return read;
+        }
+
+        private OutcomeRead Read(Stage source, ProgressionPath path)
+        {
+            var fixture = source.FindFixtureByBracketPairKey(path.SourcePairKey);
+            if (fixture is null)
+            {
+                return OutcomeRead.Failed(
+                    StructureResolutionIndeterminacyCause.SourceAbsente,
+                    absence: ResolutionSourceAbsence.PathGone);
+            }
+
+            var round = source.Rounds.FirstOrDefault(candidate =>
+                candidate.Fixtures.Any(item => item.Id.Equals(fixture.Id)));
+            if (round is null)
+            {
+                return OutcomeRead.Failed(
+                    StructureResolutionIndeterminacyCause.SourceAbsente,
+                    absence: ResolutionSourceAbsence.PathGone);
+            }
+
+            FixtureConfrontationSnapshot snapshot;
             try
             {
-                var fixture = source.FindFixtureByBracketPairKey(path.SourcePairKey);
-                if (fixture is null)
-                {
-                    _outcomes[key] = null;
-                    return null;
-                }
-
-                var round = source.Rounds.FirstOrDefault(candidate =>
-                    candidate.Fixtures.Any(item => item.Id.Equals(fixture.Id)));
-                if (round is null)
-                {
-                    _outcomes[key] = null;
-                    return null;
-                }
-
                 var rows = summaries.TryGetValue(source.Id, out var found) ? found : [];
-                var snapshot = FixtureConfrontationSnapshotAssembler.Assemble(fixture, rows);
-                var outcome = FixtureOutcomeResolver.Resolve(TieFormat.OrDefaultOneLeg(round.TieFormat), snapshot);
-                _outcomes[key] = outcome;
-                return outcome;
+                snapshot = FixtureConfrontationSnapshotAssembler.Assemble(fixture, rows);
             }
             catch (Exception ex) when (ex is DomainException or ApplicationFailureException)
             {
-                _outcomes[key] = null;
-                return null;
+                return OutcomeRead.Failed(Classify(ex));
+            }
+
+            var format = TieFormat.OrDefaultOneLeg(round.TieFormat);
+            if (snapshot.Legs.Count != format.NumberOfLegs)
+            {
+                var missing = snapshot.Legs.OrderBy(leg => leg.LegIndex).FirstOrDefault();
+                return OutcomeRead.Failed(
+                    StructureResolutionIndeterminacyCause.MatchNonJoue,
+                    missing?.MatchId.Value,
+                    MatchLabel(missing));
+            }
+
+            try
+            {
+                var outcome = FixtureOutcomeResolver.Resolve(format, snapshot);
+                return OutcomeRead.Resolved(outcome);
+            }
+            catch (DomainException ex)
+            {
+                var leg = GuidanceLeg(snapshot, ex);
+                return OutcomeRead.Failed(Classify(ex), leg?.MatchId.Value, MatchLabel(leg));
             }
         }
+
+        private string? MatchLabel(FixtureLegSnapshot? leg)
+        {
+            if (leg?.HomeEntryId is not { } home || leg.AwayEntryId is not { } away)
+            {
+                return null;
+            }
+
+            if (!entryNames.TryGetValue(home.Value, out var homeName)
+                || !entryNames.TryGetValue(away.Value, out var awayName))
+            {
+                return null;
+            }
+
+            return $"{homeName} – {awayName}";
+        }
+    }
+
+    private readonly record struct OutcomeRead(
+        FixtureOutcome? Outcome,
+        StructureResolutionIndeterminacyCause? Failure,
+        Guid? MatchId,
+        string? MatchLabel,
+        ResolutionSourceAbsence? Absence = null)
+    {
+        public static OutcomeRead Resolved(FixtureOutcome outcome) => new(outcome, null, null, null);
+
+        public static OutcomeRead Failed(
+            StructureResolutionIndeterminacyCause cause,
+            Guid? matchId = null,
+            string? matchLabel = null,
+            ResolutionSourceAbsence? absence = null) =>
+            new(null, cause, matchId, matchLabel, absence);
     }
 }

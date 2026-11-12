@@ -42,8 +42,61 @@ public static class StructurePresentedAttentionCollector
 
                 items.Add(CreateStageItem(code, stage, structureView));
             }
+
+            CollectResolutionFreshness(stage, items);
         }
     }
+
+    private static void CollectResolutionFreshness(
+        StructureStageHubSummaryDto stage,
+        IList<NeedsAttentionItemDto> items)
+    {
+        var occupants = stage.ResolutionOccupants;
+        if (occupants is null || occupants.Count == 0)
+        {
+            return;
+        }
+
+        var perime = 0;
+        var indetermine = 0;
+        foreach (var occupant in occupants)
+        {
+            switch (occupant.State)
+            {
+                case StructureResolutionFreshness.Perime:
+                    perime++;
+                    break;
+                case StructureResolutionFreshness.Indetermine:
+                    indetermine++;
+                    break;
+            }
+        }
+
+        if (perime > 0)
+        {
+            items.Add(FreshnessItem(NeedsAttentionAssembler.SourceResolutionPerime, stage, perime));
+        }
+
+        if (indetermine > 0)
+        {
+            items.Add(FreshnessItem(NeedsAttentionAssembler.SourceResolutionIndetermine, stage, indetermine));
+        }
+    }
+
+    private static NeedsAttentionItemDto FreshnessItem(
+        string source,
+        StructureStageHubSummaryDto stage,
+        int count) =>
+        new(
+            source,
+            NeedsAttentionAssembler.SeverityWarning,
+            "Stage",
+            stage.StageId.ToString(),
+            new Dictionary<string, string>
+            {
+                ["stageId"] = stage.StageId.ToString(),
+                ["count"] = count.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            });
 
     private static bool ShouldEmitAttention(
         string code,

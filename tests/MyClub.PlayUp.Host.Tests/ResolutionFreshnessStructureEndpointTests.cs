@@ -53,7 +53,22 @@ public sealed class ResolutionFreshnessStructureEndpointTests(HostPostgresFixtur
             occupant.Target == StructureResolutionOccupantTarget.Slot
             && occupant.EntryId == seeded.QualifierId
             && occupant.State == StructureResolutionFreshness.Perime
-            && occupant.StalenessCause == StructureResolutionStalenessCause.ResultatAmont);
+            && occupant.StalenessCause == StructureResolutionStalenessCause.ResultatAmont
+            && occupant.CascadeReplaceable
+            && occupant.UpstreamStageId == seeded.LeagueId
+            && occupant.IndeterminacyCause == null);
+
+        using var attentionResponse = await client.GetAsync(
+            $"/competitions/{seeded.CompetitionId}/attention");
+        attentionResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var attention = await attentionResponse.Content.ReadFromJsonAsync<NeedsAttentionDto>(HostJson.Options);
+        attention.Should().NotBeNull();
+        attention.Items.Should().Contain(item =>
+            item.Source == NeedsAttentionAssembler.SourceResolutionPerime
+            && item.Severity == NeedsAttentionAssembler.SeverityWarning
+            && item.TargetId == seeded.TerminalId.ToString());
+        attention.Items.Should().NotContain(item =>
+            item.Source == NeedsAttentionAssembler.SourceResolutionIndetermine);
     }
 
     [IntegrationFact]
@@ -84,7 +99,8 @@ public sealed class ResolutionFreshnessStructureEndpointTests(HostPostgresFixtur
             occupant.Target == StructureResolutionOccupantTarget.Slot
             && occupant.EntryId == seeded.QualifierId
             && occupant.State == StructureResolutionFreshness.Perime
-            && occupant.StalenessCause == StructureResolutionStalenessCause.RegleQualification);
+            && occupant.StalenessCause == StructureResolutionStalenessCause.RegleQualification
+            && occupant.CascadeReplaceable);
     }
 
     private async Task<Seed> SeedAppliedQualificationAsync(PlayUpWebApplicationFactory factory, bool startLeague)

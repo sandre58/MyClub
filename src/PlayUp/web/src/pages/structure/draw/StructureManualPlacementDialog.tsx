@@ -72,7 +72,10 @@ export function StructureManualPlacementDialog({
   const { t: tReg } = useTranslation('regulation');
   const queryClient = useQueryClient();
 
-  const places = useMemo(() => listCupManualPlaces(cases), [cases]);
+  const places = useMemo(
+    () => listCupManualPlaces(cases, structureStages),
+    [cases, structureStages],
+  );
   const editablePlaces = useMemo(
     () => places.filter((p) => p.mode === 'editable'),
     [places],

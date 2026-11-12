@@ -843,8 +843,9 @@
   "resolution": {
     "freshness": {
       "state": {
+        "AJour": "Current",
         "Perime": "Stale",
-        "Indetermine": "Indeterminate",
+        "Indetermine": "Unconfirmed",
         "NonVerifiee": "Unverified"
       },
       "cause": {
@@ -852,20 +853,109 @@
         "RegleQualification": "Qualification rule changed",
         "AmontPerime": "Upstream phase stale"
       },
-      "ariaWithCause": "{{label}} — {{cause}}"
+      "upstreamLink": "Go to the upstream phase",
+      "unconfirmedSentence": "{{team}} is no longer confirmed — {{detail}}",
+      "definitive": "Can no longer be confirmed",
+      "indeterminacy": {
+        "MatchNonJoue": {
+          "cause": "The match has not been played",
+          "clause": "the match has not been played",
+          "clauseNamed": "the match {{match}} has not been played",
+          "action": "Play the match",
+          "actionNamed": "Play the match {{match}}"
+        },
+        "Egalite": {
+          "cause": "The score does not separate the teams",
+          "clause": "the score does not separate the teams",
+          "action": "Break the tie"
+        },
+        "SourceAbsente": {
+          "cause": "The source phase or rule cannot be found",
+          "clause": "the source phase or rule cannot be found"
+        },
+        "SelectionVide": {
+          "cause": "The standing does not designate a team",
+          "clause": "the standing does not designate a team"
+        },
+        "Autre": {
+          "cause": "The selection cannot be calculated",
+          "clause": "the selection cannot be calculated"
+        },
+        "EgaliteClassement": {
+          "cause": "Several teams are tied in the standing",
+          "clause": "several teams are tied in the standing",
+          "action": "Open the standing"
+        },
+        "ConditionNonRemplie": {
+          "cause": "The team no longer meets the qualification condition",
+          "clause": "it no longer meets the qualification condition"
+        },
+        "ConfigurationInvalide": {
+          "cause": "The source phase setup is incomplete",
+          "clause": "the source phase setup is incomplete",
+          "action": "Open the rules"
+        }
+      },
+      "ariaWithCause": "{{label}} — {{cause}}",
+      "ariaAction": "{{label}} — {{cause}}. {{action}}",
+      "ariaActionNoCause": "{{label}}. {{action}}"
+    },
+    "release": {
+      "action": "Release the place",
+      "confirmTitle": "Release this place?",
+      "confirm": "Release",
+      "cancel": "Cancel",
+      "pending": "Releasing…",
+      "nonePlayed": "No match will change.",
+      "detachedIntro": "The team's side becomes to be determined:",
+      "detachedMatch": "Leg {{leg}} — {{side}}",
+      "detachedMatchNamed": "Leg {{leg}} — {{side}} — {{match}}",
+      "populationDropped": "{{team}} also leaves the composition.",
+      "affectedIntro": "Other places change state:",
+      "affectedOccupant": "{{team}} — {{place}}: {{before}} → {{after}}",
+      "affectedOccupantOtherPhase": "{{team}} — {{place}} ({{phase}}): {{before}} → {{after}}",
+      "target": {
+        "Slot": "Place",
+        "Group": "Group",
+        "Population": "Composition"
+      },
+      "side": {
+        "Home": "home",
+        "Away": "away"
+      }
+    },
+    "definitiveRelease": {
+      "banner_one": "{{count}} place can no longer be confirmed.",
+      "banner_other": "{{count}} places can no longer be confirmed.",
+      "release": "Release…",
+      "excludedIntro": "These places stay: they cannot be released.",
+      "excluded": "{{team}} — {{place}}: {{reason}}",
+      "confirmTitle": "Release these places?",
+      "warning": "This release is irreversible. Emptied places are not filled again automatically.",
+      "confirm": "Release",
+      "cancel": "Cancel",
+      "pending": "Releasing…",
+      "close": "Close",
+      "summaryTitle": "Places released",
+      "place": "{{team}} — {{place}} ({{phase}})",
+      "population": "Population removed: {{team}}",
+      "detachedIntro": "Detached matches:",
+      "exclusionsIntro": "Places not released:",
+      "affectedIntro": "Downstream places:"
     },
     "cascade": {
       "action": "Replace the stale occupant",
       "actionNamed": "Replace {{place}}",
       "replaceHint": "Click to replace the team with the expected occupant",
-      "replaceHintWithCause": "{{cause}}. {{action}}",
       "confirmTitle": "Confirm the cascade replacement?",
       "confirm": "Replace",
       "cancel": "Cancel",
       "pending": "Replacing…",
       "nonePlayed": "No downstream match that has already been played will change.",
       "playedIntro": "These played matches will lose their score and player stats:",
-      "playedMatch": "Match {{matchId}}"
+      "tbd": "to be determined",
+      "playedMatchUnknown": "Match to be determined",
+      "leg": "Leg {{leg}}"
     },
     "staleDraw": {
       "message": "The applied draw no longer matches this phase.",

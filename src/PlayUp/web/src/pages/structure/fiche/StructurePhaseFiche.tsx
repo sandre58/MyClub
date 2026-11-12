@@ -78,6 +78,9 @@ import {
   releaseFooterMode,
 } from '../draw/drawActions';
 import { StructureCascadeReplaceAction } from '../resolution/StructureCascadeReplaceAction';
+import { StructureDefinitiveReleaseBanner } from '../resolution/StructureDefinitiveReleaseBanner';
+import { StructureDefinitiveReleaseOffer } from '../resolution/StructureDefinitiveReleaseOffer';
+import { StructureResolutionReleaseAction } from '../resolution/StructureResolutionReleaseAction';
 import { StructureStaleDrawResolutionActions } from '../resolution/StructureStaleDrawResolutionActions';
 import { hasStaleTirageResolutionOccupant } from '../resolution/structureResolutionOccupants';
 import {
@@ -635,6 +638,7 @@ export function StructurePhaseFiche({
   /** Same capacity predicate as schematic click: at least one editable Cup place. */
   const editableManualPlaceCount = listCupManualPlaces(
     schematicQuery.data?.cases ?? [],
+    data.stages,
   ).filter((place) => place.mode === 'editable').length;
   const canManualPlace =
     canAssignEntryToSlot &&
@@ -1231,340 +1235,364 @@ export function StructurePhaseFiche({
   })();
 
   return (
-    <section
-      className="structure-fiche structure-fiche--flat"
-      aria-labelledby="phase-overview-heading"
+    <StructureDefinitiveReleaseOffer
+      competitionId={data.competitionId}
+      stageId={stage.stageId}
     >
-      <StructurePhaseFicheHeader
-        stage={stage}
-        competitionId={data.competitionId}
-        competitionStatus={data.status}
-        structureStages={data.stages}
-        formatLabel={formatLabel}
-        editingName={editingName}
-        nameDraft={nameDraft}
-        renameMutation={renameMutation}
-        canRename={canRename && !isCompletedStage}
-        compactIcon={compactIcon}
-        onNameDraftChange={setNameDraft}
-        onBeginRename={beginRename}
-        onCancelRename={cancelRename}
-        onCommitRename={commitRename}
-      />
-
-      <StructureCascadeReplaceAction
-        stage={stage}
-        competitionId={data.competitionId}
+      <section
+        className="structure-fiche structure-fiche--flat"
+        aria-labelledby="phase-overview-heading"
       >
-        <div
-          className={[
-            'structure-phase-tile',
-            'structure-phase-tile--composition',
-            'structure-phase-composition',
-            showCompositionBandEmpty
-              ? 'structure-phase-composition--band-empty'
-              : null,
-            compositionTileMode === 'exploitation'
-              ? 'structure-phase-composition--mode-exploitation'
-              : null,
-            compositionTileMode === 'historical'
-              ? 'structure-phase-composition--mode-historical'
-              : null,
-          ]
-            .filter(Boolean)
-            .join(' ')}
+        <StructurePhaseFicheHeader
+          stage={stage}
+          competitionId={data.competitionId}
+          competitionStatus={data.status}
+          structureStages={data.stages}
+          formatLabel={formatLabel}
+          editingName={editingName}
+          nameDraft={nameDraft}
+          renameMutation={renameMutation}
+          canRename={canRename && !isCompletedStage}
+          compactIcon={compactIcon}
+          onNameDraftChange={setNameDraft}
+          onBeginRename={beginRename}
+          onCancelRename={cancelRename}
+          onCommitRename={commitRename}
+        />
+
+        <StructureCascadeReplaceAction
+          stage={stage}
+          competitionId={data.competitionId}
         >
-          <StructurePhaseCompositionBand
-            showCompositionBandEmpty={showCompositionBandEmpty}
-            compositionGridClass={compositionGridClass}
-            compositionEmptyAction={compositionEmptyAction}
-            showQualifiersSection={showQualifiersSection}
-            structureHubBackgroundRefresh={structureHubBackgroundRefresh}
-            qualifiersResolvedEyebrow={qualifiersResolvedEyebrow}
-            compositionComposeToolbar={compositionComposeToolbar}
-            feedGroups={qualifiersPanelGroups}
-            inboundComposition={stage.inboundComposition}
-            entries={data.participants.entries}
-            formatKind={stage.formatKind}
-            schematicReady={schematicQuery.isSuccess}
-            entryPlaceProjections={entryPlaceProjections}
-            onViewPhase={onSelectStage}
-            renderAvalSourceAction={renderAvalSourceAction}
-            compositionPopulationGaugeFooter={compositionTeamsGaugeFooter}
-            sharedCompositionPopulationGauge={sharedCompositionPopulationGauge}
-            showTeamsSection={showTeamsSection}
-            showCompositionContentEmpty={showCompositionContentEmpty}
-            showPopulationColumn={showPopulationColumn}
-            showPlaceAssignmentSection={showPlaceAssignmentSection}
-            showCompositionDrawSection={showCompositionDrawSection}
-            entryProvenanceByEntryId={entryProvenanceByEntryId}
-            compositionTeamRows={compositionTeamRows}
-            canCompose={canComposeTeams}
-            teamsComposeActionLabel={teamsComposeActionLabel}
-            compactIcon={compactIcon}
-            openCompose={openCompose}
-            teamsHasListContent={teamsHasListContent}
-            teamsRuntimePresentation={teamsRuntimePresentation}
-            capacityIssueBanner={railIssueBanner(capacityBanners)}
+          <StructureResolutionReleaseAction
             stage={stage}
-            placedEntryIds={placedEntryIds}
-            populationFeedVolume={populationFeedVolume}
-            placementOperationalProps={placementOperationalProps}
-            showPlacementBlock={showPlacementBlock}
-            showDrawCta={showDrawCta}
-            showActivateDrawCta={showActivateDrawCta}
             competitionId={data.competitionId}
-            competitionStatus={data.status}
-            structureStages={data.stages}
-            materializePresentation={materializePresentation}
-            stageHasAppliedDraw={stageHasAppliedDraw}
-            compositionTileMode={compositionTileMode}
-            placesStripLayout={placesStripLayout}
-          />
-        </div>
+          >
+            <div
+              className={[
+                'structure-phase-tile',
+                'structure-phase-tile--composition',
+                'structure-phase-composition',
+                showCompositionBandEmpty
+                  ? 'structure-phase-composition--band-empty'
+                  : null,
+                compositionTileMode === 'exploitation'
+                  ? 'structure-phase-composition--mode-exploitation'
+                  : null,
+                compositionTileMode === 'historical'
+                  ? 'structure-phase-composition--mode-historical'
+                  : null,
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              <StructureDefinitiveReleaseBanner
+                stage={stage}
+                stages={data.stages}
+                competitionId={data.competitionId}
+              />
+              <StructurePhaseCompositionBand
+                showCompositionBandEmpty={showCompositionBandEmpty}
+                compositionGridClass={compositionGridClass}
+                compositionEmptyAction={compositionEmptyAction}
+                showQualifiersSection={showQualifiersSection}
+                structureHubBackgroundRefresh={structureHubBackgroundRefresh}
+                qualifiersResolvedEyebrow={qualifiersResolvedEyebrow}
+                compositionComposeToolbar={compositionComposeToolbar}
+                feedGroups={qualifiersPanelGroups}
+                inboundComposition={stage.inboundComposition}
+                entries={data.participants.entries}
+                formatKind={stage.formatKind}
+                schematicReady={schematicQuery.isSuccess}
+                entryPlaceProjections={entryPlaceProjections}
+                onViewPhase={onSelectStage}
+                renderAvalSourceAction={renderAvalSourceAction}
+                compositionPopulationGaugeFooter={compositionTeamsGaugeFooter}
+                sharedCompositionPopulationGauge={
+                  sharedCompositionPopulationGauge
+                }
+                showTeamsSection={showTeamsSection}
+                showCompositionContentEmpty={showCompositionContentEmpty}
+                showPopulationColumn={showPopulationColumn}
+                showPlaceAssignmentSection={showPlaceAssignmentSection}
+                showCompositionDrawSection={showCompositionDrawSection}
+                entryProvenanceByEntryId={entryProvenanceByEntryId}
+                compositionTeamRows={compositionTeamRows}
+                canCompose={canComposeTeams}
+                teamsComposeActionLabel={teamsComposeActionLabel}
+                compactIcon={compactIcon}
+                openCompose={openCompose}
+                teamsHasListContent={teamsHasListContent}
+                teamsRuntimePresentation={teamsRuntimePresentation}
+                capacityIssueBanner={railIssueBanner(capacityBanners)}
+                stage={stage}
+                placedEntryIds={placedEntryIds}
+                populationFeedVolume={populationFeedVolume}
+                placementOperationalProps={placementOperationalProps}
+                showPlacementBlock={showPlacementBlock}
+                showDrawCta={showDrawCta}
+                showActivateDrawCta={showActivateDrawCta}
+                competitionId={data.competitionId}
+                competitionStatus={data.status}
+                structureStages={data.stages}
+                materializePresentation={materializePresentation}
+                stageHasAppliedDraw={stageHasAppliedDraw}
+                compositionTileMode={compositionTileMode}
+                placesStripLayout={placesStripLayout}
+              />
+            </div>
 
-        <StructurePhaseSchematicAndAside
-          showHeroStats={showHeroStats}
-          heroFacts={heroFacts}
-          canRebuild={canRebuild}
-          onOpenSkeleton={() => setSkeletonOpen(true)}
-          schematicQuery={schematicQuery}
-          stage={stage}
-          hasExits={hasExits}
-          cupPairProductionStates={cupPairProductionStates}
-          canManualPlace={canManualPlace}
-          onManualPlaceActivate={(place) => {
-            const key = place.formPosition.slotKey?.trim();
-            if (!key) return;
-            setManualSlotKey(key);
-            setManualOpen(true);
-          }}
-          schematicIssuesBanner={(() => {
-            const placesBanner = !showPlacementBlock
-              ? railIssueBanner(placesBanners)
-              : undefined;
-            const hasCupBracketReadiness =
-              blockerDetailsForStage(data, stage.stageId, 'CupBracketInvalid')
-                .length > 0;
-            if (!placesBanner && !hasCupBracketReadiness) {
-              return undefined;
-            }
-            return (
-              <>
-                {placesBanner}
-                {hasCupBracketReadiness ? (
-                  <StructureReadinessAttributedBlockerBanner
-                    data={data}
-                    stageId={stage.stageId}
+            <StructurePhaseSchematicAndAside
+              showHeroStats={showHeroStats}
+              heroFacts={heroFacts}
+              canRebuild={canRebuild}
+              onOpenSkeleton={() => setSkeletonOpen(true)}
+              schematicQuery={schematicQuery}
+              stage={stage}
+              hasExits={hasExits}
+              cupPairProductionStates={cupPairProductionStates}
+              canManualPlace={canManualPlace}
+              onManualPlaceActivate={(place) => {
+                const key = place.formPosition.slotKey?.trim();
+                if (!key) return;
+                setManualSlotKey(key);
+                setManualOpen(true);
+              }}
+              schematicIssuesBanner={(() => {
+                const placesBanner = !showPlacementBlock
+                  ? railIssueBanner(placesBanners)
+                  : undefined;
+                const hasCupBracketReadiness =
+                  blockerDetailsForStage(
+                    data,
+                    stage.stageId,
+                    'CupBracketInvalid',
+                  ).length > 0;
+                if (!placesBanner && !hasCupBracketReadiness) {
+                  return undefined;
+                }
+                return (
+                  <>
+                    {placesBanner}
+                    {hasCupBracketReadiness ? (
+                      <StructureReadinessAttributedBlockerBanner
+                        data={data}
+                        stageId={stage.stageId}
+                      />
+                    ) : null}
+                  </>
+                );
+              })()}
+              showAsideMatchsSection={showAsideMatchsSection}
+              structureHubBackgroundRefresh={structureHubBackgroundRefresh}
+              placementOperationalProps={placementOperationalProps}
+              showPlacementBlock={showPlacementBlock}
+              showDrawCta={showDrawCta}
+              showActivateDrawCta={showActivateDrawCta}
+              competitionId={data.competitionId}
+              competitionStatus={data.status}
+              structureStages={data.stages}
+              materializePresentation={materializePresentation}
+              stageHasAppliedDraw={stageHasAppliedDraw}
+              showOutRail={showOutRail}
+              showSortiesRail={showSortiesRail}
+              showAttributionRail={showAttributionRail}
+              sortiesEditControl={sortiesEditControl}
+              exitsBanners={railIssueBanner(exitsBanners)}
+              outboundGroups={outboundGroups}
+              onSelectStage={onSelectStage}
+              attributionEditControl={attributionEditControl}
+              attributionBanners={railIssueBanner(attributionBanners)}
+              hasAttribution={hasAttribution}
+              placementAwards={placementAwards}
+            />
+
+            <StructurePhaseRegulationStrip
+              stage={stage}
+              regulationHref={regulationHref}
+              matchBound={matchBound}
+              standingBound={standingBound}
+              showStanding={standingBound !== null}
+              showConfrontation={showConfrontation}
+              canEditMatch={canEditMatch}
+              canRebind={canRebind}
+              canEditStanding={canEditStanding}
+              canEditTie={canEditTie}
+              onEditMatch={() =>
+                setEdit(canEditMatch ? 'matchs' : 'rebind-match')
+              }
+              onEditStanding={() =>
+                setEdit(canEditStanding ? 'classement' : 'rebind-standing')
+              }
+              onEditConfrontation={() => setEdit('confrontation')}
+              standingIssues={
+                standingBanners.length > 0
+                  ? railIssueBanner(standingBanners)
+                  : undefined
+              }
+              confrontationIssues={
+                confrontationBanners.length > 0
+                  ? railIssueBanner(confrontationBanners)
+                  : undefined
+              }
+            />
+
+            <EditSkeletonDialog
+              data={data}
+              stage={stage}
+              open={skeletonOpen}
+              onClose={() => setSkeletonOpen(false)}
+            />
+            <QualificationRulesDialog
+              data={data}
+              stage={rulesEditStage ?? stage}
+              open={edit === 'qualification'}
+              onClose={closeRulesEdit}
+              openedFromDestinationStageId={
+                rulesEditStage != null &&
+                rulesEditStage.stageId !== stage.stageId
+                  ? stage.stageId
+                  : null
+              }
+            />
+            <ProgressionRulesDialog
+              data={data}
+              stage={rulesEditStage ?? stage}
+              open={edit === 'progression'}
+              onClose={closeRulesEdit}
+              openedFromDestinationStageId={
+                rulesEditStage != null &&
+                rulesEditStage.stageId !== stage.stageId
+                  ? stage.stageId
+                  : null
+              }
+            />
+            <StructurePlacementAwardDialog
+              data={data}
+              stage={stage}
+              open={edit === 'placement'}
+              onClose={() => setEdit(null)}
+            />
+            <DrawRulesDialog
+              competitionId={data.competitionId}
+              stage={stage}
+              structureStages={data.stages}
+              open={
+                canAuthorDrawRulesP1 &&
+                (edit === 'tirage-activate' || edit === 'tirage-params')
+              }
+              onClose={() => setEdit(null)}
+              intent={edit === 'tirage-activate' ? 'activate' : 'params'}
+              rulesLocked={edit === 'tirage-params' && drawRulesLocked}
+            />
+            <ConfirmDialog
+              open={deactivateDrawOpen}
+              title={t('regulation.deactivateDrawConfirmTitle')}
+              message={t('regulation.deactivateDrawConfirmBody')}
+              confirmLabel={t('fiche.deactivateDraw')}
+              cancelLabel={tCommon('cancel')}
+              closeLabel={tCommon('close')}
+              danger
+              confirmPending={deactivateDrawMutation.isPending}
+              footerStatus={
+                deactivateDrawMutation.isError ? (
+                  <MutationError
+                    error={deactivateDrawMutation.error}
+                    structureStages={data.stages}
                   />
-                ) : null}
-              </>
-            );
-          })()}
-          showAsideMatchsSection={showAsideMatchsSection}
-          structureHubBackgroundRefresh={structureHubBackgroundRefresh}
-          placementOperationalProps={placementOperationalProps}
-          showPlacementBlock={showPlacementBlock}
-          showDrawCta={showDrawCta}
-          showActivateDrawCta={showActivateDrawCta}
-          competitionId={data.competitionId}
-          competitionStatus={data.status}
-          structureStages={data.stages}
-          materializePresentation={materializePresentation}
-          stageHasAppliedDraw={stageHasAppliedDraw}
-          showOutRail={showOutRail}
-          showSortiesRail={showSortiesRail}
-          showAttributionRail={showAttributionRail}
-          sortiesEditControl={sortiesEditControl}
-          exitsBanners={railIssueBanner(exitsBanners)}
-          outboundGroups={outboundGroups}
-          onSelectStage={onSelectStage}
-          attributionEditControl={attributionEditControl}
-          attributionBanners={railIssueBanner(attributionBanners)}
-          hasAttribution={hasAttribution}
-          placementAwards={placementAwards}
-        />
-
-        <StructurePhaseRegulationStrip
-          stage={stage}
-          regulationHref={regulationHref}
-          matchBound={matchBound}
-          standingBound={standingBound}
-          showStanding={standingBound !== null}
-          showConfrontation={showConfrontation}
-          canEditMatch={canEditMatch}
-          canRebind={canRebind}
-          canEditStanding={canEditStanding}
-          canEditTie={canEditTie}
-          onEditMatch={() => setEdit(canEditMatch ? 'matchs' : 'rebind-match')}
-          onEditStanding={() =>
-            setEdit(canEditStanding ? 'classement' : 'rebind-standing')
-          }
-          onEditConfrontation={() => setEdit('confrontation')}
-          standingIssues={
-            standingBanners.length > 0
-              ? railIssueBanner(standingBanners)
-              : undefined
-          }
-          confrontationIssues={
-            confrontationBanners.length > 0
-              ? railIssueBanner(confrontationBanners)
-              : undefined
-          }
-        />
-
-        <EditSkeletonDialog
-          data={data}
-          stage={stage}
-          open={skeletonOpen}
-          onClose={() => setSkeletonOpen(false)}
-        />
-        <QualificationRulesDialog
-          data={data}
-          stage={rulesEditStage ?? stage}
-          open={edit === 'qualification'}
-          onClose={closeRulesEdit}
-          openedFromDestinationStageId={
-            rulesEditStage != null && rulesEditStage.stageId !== stage.stageId
-              ? stage.stageId
-              : null
-          }
-        />
-        <ProgressionRulesDialog
-          data={data}
-          stage={rulesEditStage ?? stage}
-          open={edit === 'progression'}
-          onClose={closeRulesEdit}
-          openedFromDestinationStageId={
-            rulesEditStage != null && rulesEditStage.stageId !== stage.stageId
-              ? stage.stageId
-              : null
-          }
-        />
-        <StructurePlacementAwardDialog
-          data={data}
-          stage={stage}
-          open={edit === 'placement'}
-          onClose={() => setEdit(null)}
-        />
-        <DrawRulesDialog
-          competitionId={data.competitionId}
-          stage={stage}
-          structureStages={data.stages}
-          open={
-            canAuthorDrawRulesP1 &&
-            (edit === 'tirage-activate' || edit === 'tirage-params')
-          }
-          onClose={() => setEdit(null)}
-          intent={edit === 'tirage-activate' ? 'activate' : 'params'}
-          rulesLocked={edit === 'tirage-params' && drawRulesLocked}
-        />
-        <ConfirmDialog
-          open={deactivateDrawOpen}
-          title={t('regulation.deactivateDrawConfirmTitle')}
-          message={t('regulation.deactivateDrawConfirmBody')}
-          confirmLabel={t('fiche.deactivateDraw')}
-          cancelLabel={tCommon('cancel')}
-          closeLabel={tCommon('close')}
-          danger
-          confirmPending={deactivateDrawMutation.isPending}
-          footerStatus={
-            deactivateDrawMutation.isError ? (
-              <MutationError
-                error={deactivateDrawMutation.error}
-                structureStages={data.stages}
-              />
-            ) : null
-          }
-          onConfirm={() => deactivateDrawMutation.mutate()}
-          onCancel={() => setDeactivateDrawOpen(false)}
-        />
-        <ConfirmDialog
-          open={releaseConfirmOpen}
-          title={tDraw('confirmReleaseTitle')}
-          message={tDraw('confirmRelease')}
-          confirmLabel={tDraw('releasePlacements')}
-          confirmIcon={<UnlockIcon size="sm" />}
-          cancelLabel={tCommon('close')}
-          closeLabel={tCommon('close')}
-          confirmDisabled={releaseMutation.isPending}
-          confirmPending={releaseMutation.isPending}
-          confirmPendingLabel={tDraw('releasingPlacements')}
-          footerStatus={
-            releaseMutation.isError ? (
-              <MutationError
-                error={releaseMutation.error}
-                structureStages={data.stages}
-              />
-            ) : null
-          }
-          onCancel={() => {
-            if (releaseMutation.isPending) {
-              return;
-            }
-            setReleaseConfirmOpen(false);
-          }}
-          onConfirm={() => {
-            if (!releasableDraw || releaseMutation.isPending) {
-              return;
-            }
-            releaseMutation.mutate(releasableDraw.id);
-          }}
-        />
-        <StructureDrawDialogHost
-          competitionId={data.competitionId}
-          competitionStatus={data.status}
-          stage={stage}
-          structureStages={data.stages}
-          open={drawWorkflowOpen}
-          onClose={() => setDrawWorkflowOpen(false)}
-        />
-        <StructureCompositionDialog
-          open={composeOpen}
-          onClose={() => {
-            setComposeOpen(false);
-            setComposeFocusSearch(false);
-          }}
-          competitionId={data.competitionId}
-          stage={stage}
-          stages={data.stages}
-          entries={data.participants.entries}
-          reservedFromFeeds={populationFeedVolume}
-          focusSearch={composeFocusSearch}
-        />
-        <StructureManualPlacementDialog
-          open={manualOpen}
-          onClose={() => {
-            setManualOpen(false);
-            setManualSlotKey(null);
-          }}
-          competitionId={data.competitionId}
-          stage={stage}
-          structureStages={data.stages}
-          entries={data.participants.entries}
-          cases={schematicQuery.data?.cases ?? []}
-          initialSlotKey={manualSlotKey}
-        />
-        <TieFormatDialog
-          competitionId={data.competitionId}
-          stage={stage}
-          structureStages={data.stages}
-          open={edit === 'confrontation'}
-          onClose={() => setEdit(null)}
-        />
-        <MatchRulesDialog
-          data={data}
-          stage={stage}
-          open={edit === 'matchs' || edit === 'rebind-match'}
-          onClose={() => setEdit(null)}
-        />
-        <StandingRulesDialog
-          data={data}
-          stage={stage}
-          open={edit === 'classement' || edit === 'rebind-standing'}
-          onClose={() => setEdit(null)}
-        />
-      </StructureCascadeReplaceAction>
-    </section>
+                ) : null
+              }
+              onConfirm={() => deactivateDrawMutation.mutate()}
+              onCancel={() => setDeactivateDrawOpen(false)}
+            />
+            <ConfirmDialog
+              open={releaseConfirmOpen}
+              title={tDraw('confirmReleaseTitle')}
+              message={tDraw('confirmRelease')}
+              confirmLabel={tDraw('releasePlacements')}
+              confirmIcon={<UnlockIcon size="sm" />}
+              cancelLabel={tCommon('close')}
+              closeLabel={tCommon('close')}
+              confirmDisabled={releaseMutation.isPending}
+              confirmPending={releaseMutation.isPending}
+              confirmPendingLabel={tDraw('releasingPlacements')}
+              footerStatus={
+                releaseMutation.isError ? (
+                  <MutationError
+                    error={releaseMutation.error}
+                    structureStages={data.stages}
+                  />
+                ) : null
+              }
+              onCancel={() => {
+                if (releaseMutation.isPending) {
+                  return;
+                }
+                setReleaseConfirmOpen(false);
+              }}
+              onConfirm={() => {
+                if (!releasableDraw || releaseMutation.isPending) {
+                  return;
+                }
+                releaseMutation.mutate(releasableDraw.id);
+              }}
+            />
+            <StructureDrawDialogHost
+              competitionId={data.competitionId}
+              competitionStatus={data.status}
+              stage={stage}
+              structureStages={data.stages}
+              open={drawWorkflowOpen}
+              onClose={() => setDrawWorkflowOpen(false)}
+            />
+            <StructureCompositionDialog
+              open={composeOpen}
+              onClose={() => {
+                setComposeOpen(false);
+                setComposeFocusSearch(false);
+              }}
+              competitionId={data.competitionId}
+              stage={stage}
+              stages={data.stages}
+              entries={data.participants.entries}
+              reservedFromFeeds={populationFeedVolume}
+              focusSearch={composeFocusSearch}
+            />
+            <StructureManualPlacementDialog
+              open={manualOpen}
+              onClose={() => {
+                setManualOpen(false);
+                setManualSlotKey(null);
+              }}
+              competitionId={data.competitionId}
+              stage={stage}
+              structureStages={data.stages}
+              entries={data.participants.entries}
+              cases={schematicQuery.data?.cases ?? []}
+              initialSlotKey={manualSlotKey}
+            />
+            <TieFormatDialog
+              competitionId={data.competitionId}
+              stage={stage}
+              structureStages={data.stages}
+              open={edit === 'confrontation'}
+              onClose={() => setEdit(null)}
+            />
+            <MatchRulesDialog
+              data={data}
+              stage={stage}
+              open={edit === 'matchs' || edit === 'rebind-match'}
+              onClose={() => setEdit(null)}
+            />
+            <StandingRulesDialog
+              data={data}
+              stage={stage}
+              open={edit === 'classement' || edit === 'rebind-standing'}
+              onClose={() => setEdit(null)}
+            />
+          </StructureResolutionReleaseAction>
+        </StructureCascadeReplaceAction>
+      </section>
+    </StructureDefinitiveReleaseOffer>
   );
 }

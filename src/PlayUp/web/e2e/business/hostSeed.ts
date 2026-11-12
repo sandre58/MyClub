@@ -347,9 +347,31 @@ export async function expectCupDrawAppliedOnStructure(
   }
 }
 
+const RECETTE_FRESHNESS_ACTIONS_NAME = 'RECETTE — Actions de fraîcheur';
+
 const RECETTE_T3_QUAL_SLOT_NAME = 'RECETTE T3 — Qual slot fraîcheur';
 
 const RECETTE_T3_SCORE_UPSTREAM_NAME = 'RECETTE T3 — Score upstream fraîcheur';
+
+export async function findFreshnessActionsRecetteCompetition(
+  request: APIRequestContext,
+): Promise<CompetitionListItem> {
+  const response = await request.get(`${playUpApiBase()}/competitions`);
+  if (!response.ok()) {
+    throw new Error(
+      `GET /competitions failed (${response.status()}). Is Host running at ${playUpApiBase()}?`,
+    );
+  }
+
+  const list = (await response.json()) as CompetitionListItem[];
+  const hit = list.find((c) => c.name === RECETTE_FRESHNESS_ACTIONS_NAME);
+  if (!hit) {
+    throw new Error(
+      `Competition "${RECETTE_FRESHNESS_ACTIONS_NAME}" not found. Seed with DevRunner: --reset --scenarios freshness-actions-recette`,
+    );
+  }
+  return hit;
+}
 
 export async function findResolutionFreshnessScoreUpstreamCompetition(
   request: APIRequestContext,
@@ -463,6 +485,329 @@ export async function correctFinishedMatchResult(
       `PUT /matches/${matchId}/result failed (${response.status()}): ${body}`,
     );
   }
+}
+
+export type IsolatedReleaseCompetition = {
+  competitionId: string;
+  stageId: string;
+  team: string;
+  matchLabel: string | null;
+};
+
+/**
+ * A competition created for one release walkthrough. A retry builds another
+ * competition, so a previous release cannot empty the place under test.
+ * Nord is qualified while a win meets the points condition, then the score
+ * becomes a draw and the place is unconfirmed again.
+ */
+export async function createIsolatedReleaseCompetition(
+  request: APIRequestContext,
+  withMatch: boolean,
+): Promise<IsolatedReleaseCompetition> {
+  const competitionId = await postId(request, '/competitions', {
+    name: `Libérer ${crypto.randomUUID()}`,
+  });
+  const nord = await addNamedEntry(request, competitionId, 'Nord');
+  const est = await addNamedEntry(request, competitionId, 'Est');
+  const sourceId = await addStage(request, competitionId, {
+    format: 'Championship',
+    name: 'Source',
+    matchGenerationFormat: 'SingleRoundRobin',
+  });
+  const stageId = await addStage(request, competitionId, {
+    format: 'Cup',
+    name: withMatch ? 'Généré' : 'Vide',
+    bracketSize: 2,
+  });
+
+  await sendOk(request, 'PUT', `/stages/${sourceId}/affectation`, {
+    entryIds: [nord, est],
+  });
+  await sendOk(request, 'PUT', `/stages/${sourceId}/qualification-rules`, {
+    intents: [
+      {
+        ...intent(1, 1, stageId, 'S1'),
+        minimumPoints: 3,
+      },
+      ...(withMatch ? [intent(2, 2, stageId, 'S2')] : []),
+    ],
+  });
+  await sendOk(request, 'POST', `/stages/${sourceId}/prepare`);
+  await sendOk(request, 'POST', `/competitions/${competitionId}/prepare`);
+  await sendOk(request, 'POST', `/stages/${sourceId}/matches/materialize`);
+  await sendOk(request, 'POST', `/stages/${sourceId}/start`);
+  await sendOk(request, 'POST', `/competitions/${competitionId}/start`);
+
+  const sourceMatch = await readStageMatch(request, sourceId);
+  const nordAtHome = sourceMatch.homeEntryId === nord;
+  await sendOk(request, 'POST', `/matches/${sourceMatch.matchId}/start`);
+  await sendOk(request, 'POST', `/matches/${sourceMatch.matchId}/finish`, {
+    type: 'Played',
+    homeGoals: nordAtHome ? 2 : 0,
+    awayGoals: nordAtHome ? 0 : 2,
+  });
+  await sendOk(request, 'POST', `/stages/${sourceId}/qualification/apply`);
+  if (withMatch) {
+    await sendOk(request, 'POST', `/stages/${stageId}/prepare`);
+    await sendOk(
+      request,
+      'POST',
+      `/stages/${stageId}/matches/materialize-from-slots`,
+      { pairKeys: ['P1'] },
+    );
+  }
+  await sendOk(request, 'PUT', `/matches/${sourceMatch.matchId}/result`, {
+    type: 'Played',
+    homeGoals: 1,
+    awayGoals: 1,
+  });
+
+  return {
+    competitionId,
+    stageId,
+    team: 'Nord',
+    matchLabel: withMatch ? 'Nord – Est' : null,
+  };
+}
+
+export type DefinitiveSelectionCompetition = {
+  competitionId: string;
+  sourceId: string;
+  destinationId: string;
+  team: string;
+  cupEntryIds: string[];
+};
+
+/**
+ * Finished league, overall places 1–4, four teams. The fourth is withdrawn
+ * afterwards, so that place is an empty selection on a completed source.
+ * A group ranking does not shrink when a team withdraws, and an empty
+ * selection cannot be applied, so the path is overall and the destination
+ * is a cup slot — the place manual placement can fill.
+ */
+export async function createDefinitiveSelectionCompetition(
+  request: APIRequestContext,
+): Promise<DefinitiveSelectionCompetition> {
+  const competitionId = await postId(request, '/competitions', {
+    name: `Définitif ${crypto.randomUUID()}`,
+  });
+  const nord = await addNamedEntry(request, competitionId, 'Nord');
+  const est = await addNamedEntry(request, competitionId, 'Est');
+  const sud = await addNamedEntry(request, competitionId, 'Sud');
+  const ouest = await addNamedEntry(request, competitionId, 'Ouest');
+  const sourceId = await addStage(request, competitionId, {
+    format: 'Championship',
+    name: 'Ligue',
+    matchGenerationFormat: 'SingleRoundRobin',
+  });
+  const destinationId = await addStage(request, competitionId, {
+    format: 'Cup',
+    name: 'Tableau',
+    bracketSize: 4,
+  });
+
+  await sendOk(request, 'PUT', `/stages/${sourceId}/affectation`, {
+    entryIds: [nord, est, sud, ouest],
+  });
+  await sendOk(request, 'PUT', `/stages/${sourceId}/qualification-rules`, {
+    intents: [
+      {
+        intentId: crypto.randomUUID(),
+        order: 1,
+        sourceKind: 'Overall',
+        positionFrom: 1,
+        positionTo: 4,
+        destinationStageId: destinationId,
+        destinationSlotKeys: ['S1', 'S2', 'S3', 'S4'],
+      },
+    ],
+  });
+  await sendOk(request, 'POST', `/stages/${sourceId}/prepare`);
+  await sendOk(request, 'POST', `/competitions/${competitionId}/prepare`);
+  await sendOk(request, 'POST', `/stages/${sourceId}/matches/materialize`);
+  await sendOk(request, 'POST', `/stages/${sourceId}/start`);
+  await sendOk(request, 'POST', `/competitions/${competitionId}/start`);
+
+  const strength = new Map<string, number>([
+    [nord, 4],
+    [est, 3],
+    [sud, 2],
+    [ouest, 1],
+  ]);
+  for (const match of await readStageMatches(request, sourceId)) {
+    const home = strength.get(match.homeEntryId) ?? 0;
+    const away = strength.get(match.awayEntryId) ?? 0;
+    const homeWins = home > away;
+    await sendOk(request, 'POST', `/matches/${match.matchId}/start`);
+    await sendOk(request, 'POST', `/matches/${match.matchId}/finish`, {
+      type: 'Played',
+      homeGoals: homeWins ? 1 : 0,
+      awayGoals: homeWins ? 0 : 1,
+    });
+  }
+
+  await sendOk(request, 'POST', `/stages/${sourceId}/qualification/apply`);
+  await sendOk(request, 'POST', `/stages/${sourceId}/complete`);
+  await sendOk(
+    request,
+    'POST',
+    `/competitions/${competitionId}/entries/${ouest}/withdraw`,
+  );
+
+  return {
+    competitionId,
+    sourceId,
+    destinationId,
+    team: 'Ouest',
+    cupEntryIds: [nord, est, sud, ouest],
+  };
+}
+
+async function readStageMatches(
+  request: APIRequestContext,
+  stageId: string,
+): Promise<{ matchId: string; homeEntryId: string; awayEntryId: string }[]> {
+  const response = await request.get(
+    `${playUpApiBase()}/stages/${stageId}/matches`,
+  );
+  if (!response.ok()) {
+    throw new Error(
+      `GET matches failed (${response.status()}): ${await response.text()}`,
+    );
+  }
+  const matches = (await response.json()) as {
+    matchId: string;
+    home?: { entryId?: string };
+    away?: { entryId?: string };
+  }[];
+  return matches.map((match) => {
+    if (!match.home?.entryId || !match.away?.entryId) {
+      throw new Error(`Stage ${stageId} has a match without both teams.`);
+    }
+    return {
+      matchId: match.matchId,
+      homeEntryId: match.home.entryId,
+      awayEntryId: match.away.entryId,
+    };
+  });
+}
+
+async function postId(
+  request: APIRequestContext,
+  path: string,
+  data: unknown,
+): Promise<string> {
+  const response = await request.post(`${playUpApiBase()}${path}`, { data });
+  if (!response.ok()) {
+    throw new Error(
+      `POST ${path} failed (${response.status()}): ${await response.text()}`,
+    );
+  }
+  const body = (await response.json()) as {
+    id?: string;
+    stageId?: string;
+  };
+  const id = body.stageId ?? body.id;
+  if (!id) {
+    throw new Error(`POST ${path} returned no id.`);
+  }
+  return id;
+}
+
+async function addNamedEntry(
+  request: APIRequestContext,
+  competitionId: string,
+  displayName: string,
+): Promise<string> {
+  const response = await request.post(
+    `${playUpApiBase()}/competitions/${competitionId}/entries`,
+    { data: { displayName } },
+  );
+  if (!response.ok()) {
+    throw new Error(
+      `POST entry failed (${response.status()}): ${await response.text()}`,
+    );
+  }
+  const view = (await response.json()) as {
+    participants?: { entries?: { entryId: string; displayName?: string }[] };
+    entries?: { entryId: string; displayName?: string }[];
+  };
+  const entries = view.participants?.entries ?? view.entries ?? [];
+  const created = entries.find((entry) => entry.displayName === displayName);
+  if (!created) {
+    throw new Error(`Entry "${displayName}" was not returned.`);
+  }
+  return created.entryId;
+}
+
+async function addStage(
+  request: APIRequestContext,
+  competitionId: string,
+  data: {
+    format: string;
+    name: string;
+    matchGenerationFormat?: string;
+    bracketSize?: number;
+  },
+): Promise<string> {
+  return postId(request, `/competitions/${competitionId}/stages`, data);
+}
+
+function intent(
+  order: number,
+  position: number,
+  destinationStageId: string,
+  slotKey: string,
+) {
+  return {
+    intentId: crypto.randomUUID(),
+    order,
+    sourceKind: 'Overall',
+    positionFrom: position,
+    positionTo: position,
+    destinationStageId,
+    destinationSlotKeys: [slotKey],
+  };
+}
+
+async function sendOk(
+  request: APIRequestContext,
+  method: 'POST' | 'PUT',
+  path: string,
+  data?: unknown,
+): Promise<void> {
+  const response = await request.fetch(`${playUpApiBase()}${path}`, {
+    method,
+    data,
+  });
+  if (!response.ok()) {
+    throw new Error(
+      `${method} ${path} failed (${response.status()}): ${await response.text()}`,
+    );
+  }
+}
+
+async function readStageMatch(
+  request: APIRequestContext,
+  stageId: string,
+): Promise<{ matchId: string; homeEntryId: string }> {
+  const response = await request.get(
+    `${playUpApiBase()}/stages/${stageId}/matches`,
+  );
+  if (!response.ok()) {
+    throw new Error(
+      `GET matches failed (${response.status()}): ${await response.text()}`,
+    );
+  }
+  const matches = (await response.json()) as {
+    matchId: string;
+    home?: { entryId?: string };
+  }[];
+  const match = matches[0];
+  if (!match?.home?.entryId) {
+    throw new Error(`Stage ${stageId} has no match with a home team.`);
+  }
+  return { matchId: match.matchId, homeEntryId: match.home.entryId };
 }
 
 export async function replaceQualificationRulesForStaleBadge(

@@ -1,7 +1,14 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
+import { describe, expect, it, vi } from 'vitest';
 import i18n from '../../../i18n';
-import type { StageSchematic } from '../../../types';
+import type {
+  StageSchematic,
+  StructureResolutionOccupant,
+} from '../../../types';
+import { CascadeReplaceContext } from '../resolution/structureCascadeReplaceContext';
+import { buildStructureResolutionOccupantIndex } from '../resolution/structureResolutionOccupants';
 import { PhaseSchematic } from './phaseSchematic';
 import { buildSchematicCaseTooltipModel } from './phaseSchematicTooltip';
 
@@ -1011,5 +1018,146 @@ describe('PhaseSchematic', () => {
       />,
     );
     expect(container.querySelectorAll('.schematic-cup__round')).toHaveLength(3);
+  });
+
+  it('keeps a replayable stale badge beside the placement hit target', async () => {
+    const user = userEvent.setup();
+    const onActivate = vi.fn();
+    const requestReplace = vi.fn();
+    const stale: StructureResolutionOccupant = {
+      target: 'Slot',
+      entryId: 'e1',
+      provenanceKind: 'Qualification',
+      sourcePathId: 'p1',
+      state: 'Perime',
+      slotKey: 'A',
+      stalenessCause: 'ResultatAmont',
+      cascadeReplaceable: true,
+    };
+    const unverified: StructureResolutionOccupant = {
+      ...stale,
+      entryId: 'e2',
+      slotKey: 'B',
+      provenanceKind: 'NonVerifiee',
+      state: 'NonVerifiee',
+      stalenessCause: null,
+      cascadeReplaceable: false,
+    };
+    render(
+      <CascadeReplaceContext.Provider value={{ requestReplace }}>
+        <PhaseSchematic
+          schematic={cupSchematic({
+            cases: [
+              {
+                formPosition: { kind: 'CupSlot', slotKey: 'A' },
+                entry: { entryId: 'e1', displayName: 'Alpha' },
+                assignment: { entryId: 'e1', displayName: 'Alpha' },
+                feedOrigin: { kind: 'Direct', configuredEntryId: 'e1' },
+              },
+              {
+                formPosition: { kind: 'CupSlot', slotKey: 'B' },
+                entry: { entryId: 'e2', displayName: 'Beta' },
+                assignment: { entryId: 'e2', displayName: 'Beta' },
+                feedOrigin: { kind: 'Direct', configuredEntryId: 'e2' },
+              },
+            ],
+          })}
+          onPlaceActivate={onActivate}
+          resolutionIndex={buildStructureResolutionOccupantIndex([
+            stale,
+            unverified,
+          ])}
+        />
+      </CascadeReplaceContext.Provider>,
+    );
+
+    expect(document.querySelector('button button')).toBeNull();
+    const badge = screen.getByRole('button', { name: /Périmé/ });
+    expect(badge.closest('.schematic-slot__body')).not.toBeNull();
+    expect(
+      badge.querySelector('.structure-freshness-badge__icon'),
+    ).not.toBeNull();
+    await user.click(badge);
+    expect(requestReplace).toHaveBeenCalledOnce();
+    expect(onActivate).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: /^A$/ }));
+    expect(onActivate).toHaveBeenCalledOnce();
+    expect(requestReplace).toHaveBeenCalledOnce();
+
+    expect(screen.queryByLabelText(/Non vérifiée/)).toBeNull();
+    expect(screen.queryByText('Non vérifiée')).toBeNull();
+    await user.click(screen.getByRole('button', { name: /^B$/ }));
+    expect(onActivate).toHaveBeenCalledTimes(2);
+  });
+
+  it('navigates from an upstream-stale badge on an editable place', async () => {
+    const user = userEvent.setup();
+    const onActivate = vi.fn();
+    function Spy() {
+      const location = useLocation();
+      return (
+        <div
+          data-testid="slot-nav"
+          data-path={`${location.pathname}${location.search}`}
+        />
+      );
+    }
+    render(
+      <MemoryRouter initialEntries={['/competitions/comp/structure']}>
+        <Routes>
+          <Route
+            path="/competitions/:competitionId/structure"
+            element={
+              <>
+                <Spy />
+                <PhaseSchematic
+                  schematic={cupSchematic({
+                    cases: [
+                      {
+                        formPosition: { kind: 'CupSlot', slotKey: 'A' },
+                        entry: { entryId: 'e1', displayName: 'Alpha' },
+                        assignment: { entryId: 'e1', displayName: 'Alpha' },
+                        feedOrigin: { kind: 'Direct', configuredEntryId: 'e1' },
+                      },
+                      {
+                        formPosition: { kind: 'CupSlot', slotKey: 'B' },
+                        entry: null,
+                        assignment: null,
+                      },
+                    ],
+                  })}
+                  onPlaceActivate={onActivate}
+                  resolutionIndex={buildStructureResolutionOccupantIndex([
+                    {
+                      target: 'Slot',
+                      entryId: 'e1',
+                      provenanceKind: 'Progression',
+                      sourcePathId: 'p1',
+                      state: 'Perime',
+                      slotKey: 'A',
+                      stalenessCause: 'AmontPerime',
+                      upstreamStageId: 'phase-a',
+                      cascadeReplaceable: false,
+                    },
+                  ])}
+                />
+              </>
+            }
+          />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await user.click(
+      screen.getByRole('link', {
+        name: /Périmé.*Phase amont périmée.*Aller à la phase amont/,
+      }),
+    );
+    expect(screen.getByTestId('slot-nav')).toHaveAttribute(
+      'data-path',
+      '/competitions/comp/structure?stage=phase-a',
+    );
+    expect(onActivate).not.toHaveBeenCalled();
   });
 });

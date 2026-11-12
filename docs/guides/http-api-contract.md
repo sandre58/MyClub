@@ -315,8 +315,16 @@ Optional. Present when the phase stores resolution provenance (slot, group membe
 | `slotKey` | string \| null | Set when `target` is `Slot` |
 | `groupId` | guid \| null | Set when `target` is `Group` |
 | `stalenessCause` | string \| null | When `state` is `Perime`: `ResultatAmont` \| `RegleQualification` \| `AmontPerime`. Otherwise null |
+| `upstreamStageId` | guid \| null | Source stage the selection was read from, when known. `AmontPerime` uses it as the phase to open |
+| `indeterminacyCause` | string \| null | When `state` is `Indetermine`: `MatchNonJoue` \| `Egalite` \| `SourceAbsente` \| `SelectionVide` \| `Autre` \| `EgaliteClassement` \| `ConditionNonRemplie` \| `ConfigurationInvalide`. Otherwise null. `EgaliteClassement` is a tied standing. `ConditionNonRemplie` is a qualification condition that no longer holds. `ConfigurationInvalide` is a source-phase setup that threw while the selection was evaluated |
+| `actionMatchId` | guid \| null | Match to open for `MatchNonJoue` or `Egalite`, when known |
+| `actionMatchLabel` | string \| null | Home and away names of `actionMatchId`, when both are known |
+| `releasable` | boolean | True when the shared release guards all pass: qualification or progression, `Indetermine`, cause other than `ConfigurationInvalide`, phase not `Completed`, and no direct assignment, played or cancelled match, attached match, or holding draw blocks the place. False otherwise |
+| `definitive` | boolean | True when `state` is `Indetermine` and the cause can no longer be confirmed. Requires a completed source phase, except a removed source phase (the source id parses and is absent from the competition's stage ids). Overall `EgaliteClassement` and `ConditionNonRemplie` stay false while the competition is `Running` or `Suspended`. Overall `SelectionVide` stays false when the competition has no active entry. `ConfigurationInvalide`, `Autre`, and an unreadable source id are never true. False otherwise |
 
 `Directe` stays `AJour`. `NonVerifiee` stays `NonVerifiee`. An unresolved selection is `Indetermine`. `AmontPerime` means an upstream occupant this resolution depends on is already `Perime`.
+
+`GET /competitions/{id}/attention` also emits `ResolutionPerime` and `ResolutionIndetermine` (severity `Warning`, target `Stage`) for phases whose status is not `Completed`. `NonVerifiee` is not an attention source. One item per phase and source; `params.count` is the occupant count and `params.stageId` is the phase.
 
 ### Stage lifecycle commands
 
@@ -697,18 +705,170 @@ Read-only preview of an explicit cascade replacement. Computes the version token
       "matchId": "<guid>",
       "stageId": "<guid>",
       "homeEntryId": "<guid>",
-      "awayEntryId": "<guid>"
+      "awayEntryId": "<guid>",
+      "homeName": "Alpha",
+      "awayName": "Beta",
+      "stageName": "Final",
+      "legIndex": null
     }
   ],
   "replacements": []
 }
 ```
 
-`playedMatches` lists finished matches the confirmation will return to not played. `versionToken` is the state the confirmation must send back. Unknown occupant → **404** `Application.CascadeReplaceOccupantNotFound`. Direct assignment, a non-replayable kind, an occupant that is not stale, a completed phase in the chain, a cycle, an indeterminate origin, or a live match → **409** with `Application.CascadeReplaceDirectAssignment`, `Application.CascadeReplaceNotReplayable`, `Application.CascadeReplaceNotStale`, `Application.CascadeReplaceCompleted`, `Application.CascadeReplaceCycle`, `Application.CascadeReplaceIndeterminate`, or `Application.CascadeReplaceLiveBlocked`.
+`playedMatches` lists finished matches the confirmation will return to not played. `homeName` and `awayName` are the display names of the entries captured before the cascade; a missing entry or a blank name is `null`. `stageName` is the name of the match's phase. `legIndex` is set only when that confrontation has more than one leg and the fixture attachment is known; otherwise `null`. `versionToken` is the state the confirmation must send back. Unknown occupant → **404** `Application.CascadeReplaceOccupantNotFound`. Direct assignment, a non-replayable kind, an occupant that is not stale, a completed phase in the chain, a cycle, an indeterminate origin, or a live match → **409** with `Application.CascadeReplaceDirectAssignment`, `Application.CascadeReplaceNotReplayable`, `Application.CascadeReplaceNotStale`, `Application.CascadeReplaceCompleted`, `Application.CascadeReplaceCycle`, `Application.CascadeReplaceIndeterminate`, or `Application.CascadeReplaceLiveBlocked`.
 
 ### `POST /stages/{stageId}/resolution/cascade-replace` → `CascadeReplaceResponse`
 
 Confirms the preview. One save. The body is the preview body plus `versionToken`. A token that no longer matches the stored stages and matches → **409** `Application.CascadeReplaceConflict`. The same codes as the preview apply. `replacements` lists occupants whose entry changed. A finished match in `playedMatches` is left Scheduled, with no result and no player sheet, and drops out of standings until a new result is recorded.
+
+### `POST /stages/{stageId}/resolution/release-preview` → `ResolutionReleaseResponse`
+
+Read-only preview of releasing one unconfirmed place. Computes the version token, the place that would be cleared, the unplayed matches whose side becomes to be determined, and the other places whose freshness would change. Nothing is persisted. The body names the occupant.
+
+```json
+{
+  "target": "Slot",
+  "entryId": "<guid>",
+  "slotKey": "Champ",
+  "groupId": null
+}
+```
+
+```json
+{
+  "versionToken": "<sha256 hex>",
+  "releases": [
+    {
+      "stageId": "<guid>",
+      "target": "Slot",
+      "slotKey": "Champ",
+      "groupId": null,
+      "entryId": "<guid>",
+      "entryName": "Nord"
+    },
+    {
+      "stageId": "<guid>",
+      "target": "Population",
+      "slotKey": null,
+      "groupId": null,
+      "entryId": "<guid>",
+      "entryName": "Nord"
+    }
+  ],
+  "detachedMatches": [
+    {
+      "matchId": "<guid>",
+      "stageId": "<guid>",
+      "legIndex": 1,
+      "side": "Home",
+      "homeEntryId": "<guid>",
+      "awayEntryId": "<guid>",
+      "homeName": "Nord",
+      "awayName": "Sud"
+    }
+  ],
+  "affectedOccupants": [
+    {
+      "stageId": "<guid>",
+      "target": "Slot",
+      "slotKey": "Suite",
+      "groupId": null,
+      "entryId": "<guid>",
+      "stateBefore": "Perime",
+      "stateAfter": "AJour",
+      "entryName": "Nord",
+      "stageName": "Aval",
+      "placeLabel": "Suite"
+    }
+  ]
+}
+```
+
+`releases` lists the place that is cleared. It also lists a `Population` row when that release removes the team from the composition. The row is absent when a slot, a group, or a direct assignment on the same phase still holds the team. `entryName` is the competition display name. `detachedMatches` lists each leg of the bracket pair, with `homeName` and `awayName` when the competition still lists those entries. On leg 2, slot A is away. `affectedOccupants` lists other places whose freshness state changes after a full recalculation. `stateBefore` and `stateAfter` are `AJour`, `Perime`, or `Indetermine`. `placeLabel` is the slot key or the group name. `stageName` is the phase. An occupant that disappears is not a row here; the population removal is a `releases` row. Unknown occupant → **404** `Application.ResolutionReleaseOccupantNotFound`. A provenance other than qualification or progression, a configuration cause, or a population entry that is still referenced → **409** `Application.ResolutionReleaseNotReleasable`. A place that is not unconfirmed → **409** `Application.ResolutionReleaseNotIndeterminate`. A completed phase → **409** `Application.ResolutionReleaseCompleted`. A direct assignment → **409** `Application.ResolutionReleaseDirectAssignment`. A live or finished match that involves the team → **409** `Application.ResolutionReleaseBlockedByPlayedMatch`. A cancelled match that involves the team → **409** `Application.ResolutionReleaseBlockedByCancelledMatch`. The release guard and the detachment use that same code. An attached match on a group, a population, or a non-bracket place while the phase is Draft or Ready → **409** `Application.ResolutionReleaseBlockedByMatches`. The same case while the phase is Running or Suspended → **409** `Application.ResolutionReleaseBlockedByMatchesRunning`. A team still held by a published draw, or by a cancelled draw whose placements remain → **409** `Application.ResolutionReleaseBlockedByDraw`.
+
+A stored provenance of `Directe` returns `Application.ResolutionReleaseDirectAssignment` at the first kind check. The guard list also uses that code when a qualification or progression place still holds a direct assignment. `Application.ResolutionReleaseNotReleasable` stays the code for every other kind, including a draw. The direct-provenance message names the assignment the organiser can remove.
+
+Witnesses removed with the place are the form-path rows whose fingerprint is the released path. A witness for another path is left in place, including when the team remains seated in a group of the same phase. `releasable` is false when the structure read was given no match summaries. A summary dictionary that contains the phase with an empty list means that phase has no matches.
+
+### `POST /stages/{stageId}/resolution/release` → `ResolutionReleaseResponse`
+
+Confirms the preview. One save. The body is the preview body plus `versionToken`. A token that no longer matches → **409** `Application.ResolutionReleaseConflict`. The same codes as the preview apply, and the unconfirmed check is evaluated again under the exclusive lock. The place is left empty. A second confirmation conflicts because the token changed. A new preview of the empty place is **404**.
+
+### `POST /stages/{sourceId}/resolution/release-definitive-preview` → `DefinitiveResolutionReleaseResponse`
+
+Read-only preview of releasing every definitive place fed by the source phase. An optional `destinationStageId` keeps only the places stored on that phase. Nothing is persisted. A missing source phase is **404** `Application.StageNotFound`.
+
+```json
+{ "destinationStageId": "<guid>" }
+```
+
+```json
+{
+  "versionToken": "<sha256 hex>",
+  "releases": [
+    {
+      "stageId": "<guid>",
+      "target": "Slot",
+      "slotKey": "Champ",
+      "groupId": null,
+      "entryId": "<guid>",
+      "entryName": "Nord",
+      "stageName": "Terminal",
+      "placeLabel": "Champ",
+      "populationRemoved": true,
+      "sideEffect": false
+    }
+  ],
+  "detachedMatches": [],
+  "exclusions": [
+    {
+      "stageId": "<guid>",
+      "target": "Slot",
+      "slotKey": "B",
+      "groupId": null,
+      "entryId": "<guid>",
+      "entryName": "Sud",
+      "stageName": "Terminal",
+      "placeLabel": "B",
+      "code": "Application.ResolutionReleaseBlockedByCancelledMatch"
+    }
+  ],
+  "affectedOccupants": []
+}
+```
+
+`releases` lists each primary place, then a `Population` row with `sideEffect: true` when that release removes the team from the composition. `populationRemoved` is true on the primary row in that case, and on a primary row whose target is already `Population`. `detachedMatches` uses the same shape as the single release, with home and away names. `exclusions` lists definitive places the guards refuse, or a place whose release throws, each with the refusal or exception `code`. A place that is not definitive is omitted, not excluded. `affectedOccupants` lists other places whose freshness changes after a full recalculation, before and after the releases. The same definitiveness function feeds this preview, the structure occupant `definitive` / `releasable` fields, and the confirmation.
+
+### `POST /stages/{sourceId}/resolution/release-definitive` → `DefinitiveResolutionReleaseResponse`
+
+Confirms the preview. One save. The body repeats `destinationStageId` and `versionToken`, plus `places`: the primary rows only (`sideEffect` false), in the preview order.
+
+```json
+{
+  "destinationStageId": null,
+  "versionToken": "<sha256 hex>",
+  "places": [
+    {
+      "stageId": "<guid>",
+      "target": "Slot",
+      "entryId": "<guid>",
+      "slotKey": "Champ",
+      "groupId": null
+    }
+  ]
+}
+```
+
+The confirmation rechecks the token and judges each place again. A missing `places` array or a blank `versionToken` is **400** `Application.InvalidStructureIntent`. A malformed body is **400**. A stale non-blank token → **409** `Application.ResolutionReleaseConflict`. A named place that is no longer definitive → **409** `Application.ResolutionReleaseNotDefinitive`. Any other difference in the primary list → **409** `Application.ResolutionReleaseBatchChanged`. Either conflict writes nothing. A missing source phase is **404**.
+
+### `POST /stages/{destinationId}/resolution/release-definitive-deleted-preview` → `DefinitiveResolutionReleaseResponse`
+
+Read-only preview of the definitive places on that destination whose source phase was removed from the competition. The body is empty. The response is the same as the source-scoped preview, including `versionToken`, exclusions, and the same refusal codes. A missing destination is **404** `Application.StageNotFound`. Places whose source phase still exists are not included.
+
+### `POST /stages/{destinationId}/resolution/release-definitive-deleted` → `DefinitiveResolutionReleaseResponse`
+
+Confirms that preview. One save, under the same exclusive lock. The body is `versionToken` plus `places` (primary rows only, in preview order). A missing `places` array or a blank `versionToken` is **400** `Application.InvalidStructureIntent`. A stale token, a place that is no longer definitive, and any other change of the primary list return the same **409** codes as the source-scoped confirmation, and write nothing. A missing destination is **404**.
 
 ### `POST /stages/{stageId}/qualification/apply` → `QualificationApplyResponse`
 

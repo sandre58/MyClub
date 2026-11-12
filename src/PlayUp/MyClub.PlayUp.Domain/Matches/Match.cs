@@ -282,6 +282,47 @@ public sealed class Match : AggregateRoot<MatchId>
     }
 
     /// <summary>
+    /// Clears a known side so the match participant is to be determined again.
+    /// A side that is already unknown is left unchanged. A live or finished match is refused.
+    /// </summary>
+    /// <param name="side">Home or away.</param>
+    /// <param name="clock">The clock used for domain events.</param>
+    public void UnresolveParticipant(Side side, IClock clock)
+    {
+        ArgumentNullException.ThrowIfNull(clock);
+        if (!Enum.IsDefined(side))
+        {
+            throw new DomainException(
+                $"Unknown match side '{side}'.",
+                MatchErrorCodes.InvalidSide);
+        }
+
+        if (Status is MatchStatus.Live or MatchStatus.Finished)
+        {
+            throw new DomainException(
+                "A live or finished match participant cannot be cleared.",
+                MatchErrorCodes.ParticipantImmutable);
+        }
+
+        var current = side == Side.Home ? HomeEntryId : AwayEntryId;
+        if (current is not { } known)
+        {
+            return;
+        }
+
+        if (side == Side.Home)
+        {
+            HomeEntryId = null;
+        }
+        else
+        {
+            AwayEntryId = null;
+        }
+
+        Raise(new MatchParticipantUnresolved(Id, side, known, clock));
+    }
+
+    /// <summary>
     /// Returns a finished match to not played. The score and the player sheet of that match are deleted.
     /// </summary>
     /// <param name="clock">The clock used for domain events.</param>

@@ -260,6 +260,10 @@ export type CascadePlayedMatch = {
   stageId: string;
   homeEntryId: string | null;
   awayEntryId: string | null;
+  homeName: string | null;
+  awayName: string | null;
+  stageName: string | null;
+  legIndex: number | null;
 };
 
 export type CascadeReplacement = {
@@ -297,6 +301,162 @@ export function confirmCascadeReplace(
   return sendJson(
     'POST',
     `/stages/${stageId}/resolution/cascade-replace`,
+    request,
+  );
+}
+
+export type ResolutionReleaseRequest = {
+  target: CascadeReplaceSurface;
+  entryId: string;
+  slotKey?: string | null;
+  groupId?: string | null;
+};
+
+export type ResolutionReleaseRow = {
+  stageId: string;
+  target: CascadeReplaceSurface;
+  slotKey: string | null;
+  groupId: string | null;
+  entryId: string;
+  entryName?: string | null;
+};
+
+export type ResolutionReleaseDetachedMatch = {
+  matchId: string;
+  stageId: string;
+  legIndex: number;
+  side: 'Home' | 'Away';
+  homeEntryId: string | null;
+  awayEntryId: string | null;
+  homeName?: string | null;
+  awayName?: string | null;
+};
+
+export type ResolutionReleaseAffectedOccupant = {
+  stageId: string;
+  target: CascadeReplaceSurface;
+  slotKey: string | null;
+  groupId: string | null;
+  entryId: string;
+  stateBefore: string;
+  stateAfter: string;
+  entryName?: string | null;
+  stageName?: string | null;
+  placeLabel?: string | null;
+};
+
+export type ResolutionReleaseResponse = {
+  versionToken: string;
+  releases: ResolutionReleaseRow[];
+  detachedMatches: ResolutionReleaseDetachedMatch[];
+  affectedOccupants: ResolutionReleaseAffectedOccupant[];
+};
+
+/** POST /stages/{stageId}/resolution/release-preview → ResolutionReleaseResponse */
+export function previewResolutionRelease(
+  stageId: string,
+  request: ResolutionReleaseRequest,
+): Promise<ResolutionReleaseResponse> {
+  return sendJson(
+    'POST',
+    `/stages/${stageId}/resolution/release-preview`,
+    request,
+  );
+}
+
+/** POST /stages/{stageId}/resolution/release → ResolutionReleaseResponse */
+export function confirmResolutionRelease(
+  stageId: string,
+  request: ResolutionReleaseRequest & { versionToken: string },
+): Promise<ResolutionReleaseResponse> {
+  return sendJson('POST', `/stages/${stageId}/resolution/release`, request);
+}
+
+export type DefinitiveResolutionReleasePlace = {
+  stageId: string;
+  target: CascadeReplaceSurface;
+  entryId: string;
+  slotKey: string | null;
+  groupId: string | null;
+};
+
+export type DefinitiveResolutionReleaseRow = ResolutionReleaseRow & {
+  stageName?: string | null;
+  placeLabel?: string | null;
+  populationRemoved: boolean;
+  sideEffect: boolean;
+};
+
+export type DefinitiveResolutionReleaseExclusion = {
+  stageId: string;
+  target: CascadeReplaceSurface;
+  slotKey: string | null;
+  groupId: string | null;
+  entryId: string;
+  entryName?: string | null;
+  stageName?: string | null;
+  placeLabel?: string | null;
+  code: string;
+};
+
+export type DefinitiveResolutionReleaseResponse = {
+  versionToken: string;
+  releases: DefinitiveResolutionReleaseRow[];
+  detachedMatches: ResolutionReleaseDetachedMatch[];
+  exclusions: DefinitiveResolutionReleaseExclusion[];
+  affectedOccupants: ResolutionReleaseAffectedOccupant[];
+};
+
+/** POST /stages/{sourceId}/resolution/release-definitive-preview */
+export function previewDefinitiveResolutionRelease(
+  sourceId: string,
+  request: { destinationStageId: string | null },
+): Promise<DefinitiveResolutionReleaseResponse> {
+  return sendJson(
+    'POST',
+    `/stages/${sourceId}/resolution/release-definitive-preview`,
+    request,
+  );
+}
+
+/** POST /stages/{destinationId}/resolution/release-definitive-deleted-preview */
+export function previewDeletedSourceDefinitiveRelease(
+  destinationId: string,
+): Promise<DefinitiveResolutionReleaseResponse> {
+  return sendJson(
+    'POST',
+    `/stages/${destinationId}/resolution/release-definitive-deleted-preview`,
+    {},
+  );
+}
+
+/** POST /stages/{destinationId}/resolution/release-definitive-deleted */
+export function confirmDeletedSourceDefinitiveRelease(
+  destinationId: string,
+  request: {
+    versionToken: string;
+    places: DefinitiveResolutionReleasePlace[];
+  },
+): Promise<DefinitiveResolutionReleaseResponse> {
+  return sendJson(
+    'POST',
+    `/stages/${destinationId}/resolution/release-definitive-deleted`,
+    request,
+  );
+}
+
+/** POST /stages/{sourceId}/resolution/release-definitive */
+export function confirmDefinitiveResolutionRelease(
+  sourceId: string,
+  request: {
+    destinationStageId: string | null;
+    versionToken: string;
+    places: DefinitiveResolutionReleasePlace[];
+  },
+): Promise<DefinitiveResolutionReleaseResponse> {
+  return sendJson(
+    'POST',
+    `/stages/${sourceId}/resolution/release-definitive`,
     request,
   );
 }

@@ -54,29 +54,43 @@ export function buildStructureResolutionOccupantIndex(
   return { bySlotKey, byPopulationEntryId, byGroupMember };
 }
 
+/** Unconfirmed place the server says can no longer be confirmed. */
+export function isDefinitivelyUnconfirmed(
+  occupant: StructureResolutionOccupant | null | undefined,
+): occupant is StructureResolutionOccupant {
+  return (
+    occupant != null &&
+    occupant.state === 'Indetermine' &&
+    occupant.definitive === true
+  );
+}
+
 export function resolutionOccupantNeedsBadge(
   occupant: StructureResolutionOccupant | null | undefined,
 ): occupant is StructureResolutionOccupant {
   if (occupant == null) {
     return false;
   }
-  return (
-    occupant.state === 'Perime' ||
-    occupant.state === 'Indetermine' ||
-    occupant.state === 'NonVerifiee'
-  );
+  return occupant.state === 'Perime' || occupant.state === 'Indetermine';
 }
 
 /** Stale Qual/Prog occupant the cascade replace command can replay. */
 export function isReplayableStale(
   occupant: StructureResolutionOccupant | null | undefined,
 ): occupant is StructureResolutionOccupant {
-  return (
-    occupant != null &&
-    occupant.state === 'Perime' &&
-    (occupant.provenanceKind === 'Qualification' ||
-      occupant.provenanceKind === 'Progression')
-  );
+  if (occupant == null || occupant.state !== 'Perime') {
+    return false;
+  }
+  if (
+    occupant.provenanceKind !== 'Qualification' &&
+    occupant.provenanceKind !== 'Progression'
+  ) {
+    return false;
+  }
+  if (occupant.stalenessCause === 'AmontPerime') {
+    return false;
+  }
+  return occupant.cascadeReplaceable;
 }
 
 export function lookupSlotResolutionOccupant(

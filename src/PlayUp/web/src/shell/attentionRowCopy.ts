@@ -14,6 +14,10 @@ export function attentionSituationTitle(
     ...presentation.descriptionParams,
     ...params,
   };
+  const count = numericCount(mergedParams.count);
+  if (count != null) {
+    mergedParams.count = count;
+  }
   const translated = i18n.t(presentation.titleKey, {
     ns: presentation.titleNs,
     defaultValue: '',
@@ -26,11 +30,61 @@ export function attentionSituationTitle(
   return situationTitle(fallbackSource, params);
 }
 
+function numericCount(value: string | number | undefined): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Second line under the drawer title for runtime signals that need business context.
+ */
+export function attentionSituationSubtitle(
+  item: OverviewSituation,
+): string | null {
+  const { source, targetType } = item;
+  if (source === 'QualificationConflict') {
+    if (targetType === 'Form') {
+      return i18n.t('attention.rowSubtitle.qualificationConflictForm', {
+        ns: 'shell',
+      });
+    }
+    return i18n.t('attention.rowSubtitle.qualificationConflict', {
+      ns: 'shell',
+    });
+  }
+  if (source === 'ProgressionConflict') {
+    if (targetType === 'Form') {
+      return i18n.t('attention.rowSubtitle.progressionConflictForm', {
+        ns: 'shell',
+      });
+    }
+    return i18n.t('attention.rowSubtitle.progressionConflict', { ns: 'shell' });
+  }
+  if (source === 'QualificationPending') {
+    return i18n.t('attention.rowSubtitle.qualificationPending', {
+      ns: 'shell',
+    });
+  }
+  if (source === 'ProgressionPending') {
+    return i18n.t('attention.rowSubtitle.progressionPending', { ns: 'shell' });
+  }
+  return null;
+}
+
 export function attentionSituationMeta(
   item: OverviewSituation,
   stages: readonly CompetitionStageSummary[],
 ): string | null {
   const stageId =
+    item.params?.destinationStageId?.trim() ||
     item.params?.stageId?.trim() ||
     (item.targetType === 'Stage' ? item.targetId?.trim() : undefined);
 

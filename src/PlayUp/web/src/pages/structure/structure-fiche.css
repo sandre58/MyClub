@@ -813,6 +813,7 @@
   font: inherit;
   cursor: pointer;
   border-radius: 999px;
+  text-decoration: none;
 }
 
 .structure-freshness-replace .ds-status,
@@ -836,6 +837,41 @@
   height: 0.75rem;
 }
 
+.structure-freshness-definitive {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+  max-width: 14rem;
+}
+
+.structure-definitive-release {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  margin-block-end: var(--space-12);
+}
+
+.structure-definitive-release__source {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-8);
+}
+
+.structure-definitive-release__exclusions {
+  margin: 0;
+  padding-inline-start: var(--space-16);
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+}
+
+.structure-freshness-definitive__label {
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+  line-height: 1.2;
+}
+
 .structure-freshness-replace__tip {
   display: flex;
   flex-direction: column;
@@ -847,6 +883,10 @@
 .structure-freshness-replace__cause {
   color: var(--color-text-primary);
   font-style: normal;
+}
+
+.structure-freshness-replace__state {
+  font-weight: var(--font-weight-semibold);
 }
 
 .structure-freshness-replace__action {
