@@ -419,6 +419,32 @@ export function previewDefinitiveResolutionRelease(
   );
 }
 
+/** POST /stages/{destinationId}/resolution/release-definitive-deleted-preview */
+export function previewDeletedSourceDefinitiveRelease(
+  destinationId: string,
+): Promise<DefinitiveResolutionReleaseResponse> {
+  return sendJson(
+    'POST',
+    `/stages/${destinationId}/resolution/release-definitive-deleted-preview`,
+    {},
+  );
+}
+
+/** POST /stages/{destinationId}/resolution/release-definitive-deleted */
+export function confirmDeletedSourceDefinitiveRelease(
+  destinationId: string,
+  request: {
+    versionToken: string;
+    places: DefinitiveResolutionReleasePlace[];
+  },
+): Promise<DefinitiveResolutionReleaseResponse> {
+  return sendJson(
+    'POST',
+    `/stages/${destinationId}/resolution/release-definitive-deleted`,
+    request,
+  );
+}
+
 /** POST /stages/{sourceId}/resolution/release-definitive */
 export function confirmDefinitiveResolutionRelease(
   sourceId: string,

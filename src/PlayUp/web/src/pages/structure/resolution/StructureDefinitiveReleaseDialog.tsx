@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import {
   confirmDefinitiveResolutionRelease,
+  confirmDeletedSourceDefinitiveRelease,
   type DefinitiveResolutionReleaseResponse,
   type ResolutionReleaseAffectedOccupant,
   type ResolutionReleaseDetachedMatch,
@@ -14,6 +15,7 @@ import { Dialog } from '../../../design-system/components/Dialog';
 import { MutationError } from '../../../ui';
 import { scheduleStructureRefresh } from '../structureInvalidation';
 import {
+  definitivePlaceText,
   definitiveReleasePlaces,
   primaryDefinitiveReleases,
 } from './structureDefinitiveRelease';
@@ -25,6 +27,8 @@ type StructureDefinitiveReleaseDialogProps = {
   destinationStageId: string | null;
   preview: DefinitiveResolutionReleaseResponse | null;
   onClose: () => void;
+  /** Places whose source phase was deleted. The route is the destination. */
+  deletedSources?: boolean;
 };
 
 export function StructureDefinitiveReleaseDialog({
@@ -34,6 +38,7 @@ export function StructureDefinitiveReleaseDialog({
   destinationStageId,
   preview,
   onClose,
+  deletedSources = false,
 }: StructureDefinitiveReleaseDialogProps) {
   const { t } = useTranslation('structure');
   const { t: tErrors } = useTranslation('errors');
@@ -62,10 +67,20 @@ export function StructureDefinitiveReleaseDialog({
       if (!preview) {
         throw new Error('Definitive release preview is missing.');
       }
+      const places = definitiveReleasePlaces(preview);
+      if (deletedSources) {
+        if (!destinationStageId) {
+          throw new Error('Deleted-source release needs a destination.');
+        }
+        return confirmDeletedSourceDefinitiveRelease(destinationStageId, {
+          versionToken: preview.versionToken,
+          places,
+        });
+      }
       return confirmDefinitiveResolutionRelease(sourceId, {
         destinationStageId,
         versionToken: preview.versionToken,
-        places: definitiveReleasePlaces(preview),
+        places,
       });
     },
     onSuccess: (result) => {
@@ -150,7 +165,7 @@ function ReleaseBody({
           >
             {t('resolution.definitiveRelease.place', {
               team: row.entryName ?? '',
-              place: row.placeLabel ?? row.slotKey ?? row.target,
+              place: definitivePlaceText(t, row),
               phase: row.stageName ?? '',
             })}
             {row.populationRemoved ? (
@@ -195,7 +210,7 @@ function ReleaseBody({
               >
                 {t('resolution.definitiveRelease.excluded', {
                   team: row.entryName ?? '',
-                  place: row.placeLabel ?? row.slotKey ?? row.target,
+                  place: definitivePlaceText(t, row),
                   reason: exclusionReason(tErrors, row.code),
                 })}
               </li>
@@ -252,7 +267,7 @@ function affectedLabel(
 ): string {
   return t('resolution.release.affectedOccupantOtherPhase', {
     team: row.entryName ?? '',
-    place: row.placeLabel ?? row.slotKey ?? row.target,
+    place: definitivePlaceText(t, row),
     phase: row.stageName ?? '',
     before: t(`resolution.freshness.state.${row.stateBefore}`),
     after: t(`resolution.freshness.state.${row.stateAfter}`),

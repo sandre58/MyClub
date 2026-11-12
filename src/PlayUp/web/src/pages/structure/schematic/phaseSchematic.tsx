@@ -8,6 +8,7 @@ import type {
   SelectionMode,
   StageSchematic,
 } from '../../../types';
+import type { ManualPlacementStage } from '../draw/manualPlacementUi';
 import { TeamCrest } from '../../../design-system/TeamCrest';
 import { Tooltip } from '../../../design-system/components/Tooltip';
 import {
@@ -71,6 +72,7 @@ export function PhaseSchematic({
   resolutionIndex,
   /** Cup manual placement — click a place to open the shared dialog. */
   onPlaceActivate,
+  manualPlacementStages,
 }: {
   schematic: StageSchematic;
   terminal?: boolean;
@@ -78,6 +80,7 @@ export function PhaseSchematic({
   cupPairProductionStates?: Readonly<Record<string, CupPairProductionState>>;
   resolutionIndex?: StructureResolutionOccupantIndex | null;
   onPlaceActivate?: (place: SchematicCase) => void;
+  manualPlacementStages?: readonly ManualPlacementStage[];
 }): ReactElement {
   const { t } = useTranslation(['regulation', 'structure']);
   const format = schematic.formatKind;
@@ -102,6 +105,7 @@ export function PhaseSchematic({
         cupPairProductionStates={cupPairProductionStates}
         resolutionIndex={resolutionIndex}
         onPlaceActivate={onPlaceActivate}
+        manualPlacementStages={manualPlacementStages}
       />
     );
   }
@@ -157,6 +161,7 @@ function SlotBox({
   style,
   onActivate,
   resolutionIndex,
+  manualPlacementStages,
 }: {
   c?: SchematicCase | null;
   t: Translate;
@@ -165,6 +170,7 @@ function SlotBox({
   style?: CSSProperties;
   onActivate?: (place: SchematicCase) => void;
   resolutionIndex?: StructureResolutionOccupantIndex | null;
+  manualPlacementStages?: readonly ManualPlacementStage[];
 }) {
   const address = c ? placeChromeLabel(c.formPosition) : null;
   const { primary, secondary } = c
@@ -180,7 +186,10 @@ function SlotBox({
   // Dashed `--empty` = blank cell only — not "no EntryId".
   const hasSurface = !!(primary || secondary);
   const canManualPlace =
-    !!onActivate && !!c && !ghost && resolveManualPlaceMode(c) === 'editable';
+    !!onActivate &&
+    !!c &&
+    !ghost &&
+    resolveManualPlaceMode(c, manualPlacementStages) === 'editable';
   const interactive = canManualPlace;
   const className = [
     'schematic-slot',
@@ -609,6 +618,7 @@ function CupSchematic({
   cupPairProductionStates,
   resolutionIndex,
   onPlaceActivate,
+  manualPlacementStages,
 }: {
   schematic: StageSchematic;
   t: Translate;
@@ -617,6 +627,7 @@ function CupSchematic({
   cupPairProductionStates?: Readonly<Record<string, CupPairProductionState>>;
   resolutionIndex?: StructureResolutionOccupantIndex | null;
   onPlaceActivate?: (place: SchematicCase) => void;
+  manualPlacementStages?: readonly ManualPlacementStage[];
 }) {
   const roundCount = resolveCupRoundCount(
     schematic.cupRoundCount,
@@ -732,6 +743,7 @@ function CupSchematic({
       cupPairProductionStates={cupPairProductionStates}
       resolutionIndex={resolutionIndex}
       onPlaceActivate={onPlaceActivate}
+      manualPlacementStages={manualPlacementStages}
     />
   ) : (
     <CupSingleRoundSchematic
@@ -744,6 +756,7 @@ function CupSchematic({
       cupPairProductionStates={cupPairProductionStates}
       resolutionIndex={resolutionIndex}
       onPlaceActivate={onPlaceActivate}
+      manualPlacementStages={manualPlacementStages}
     />
   );
 
@@ -996,6 +1009,7 @@ function CupMultiRoundSchematic({
   cupPairProductionStates,
   resolutionIndex,
   onPlaceActivate,
+  manualPlacementStages,
 }: {
   columns: (SchematicCase | null)[][];
   connections: SchematicConnection[];
@@ -1006,6 +1020,7 @@ function CupMultiRoundSchematic({
   cupPairProductionStates?: Readonly<Record<string, CupPairProductionState>>;
   resolutionIndex?: StructureResolutionOccupantIndex | null;
   onPlaceActivate?: (place: SchematicCase) => void;
+  manualPlacementStages?: readonly ManualPlacementStage[];
 }) {
   const leafCount = columns[0]?.length ?? 0;
   if (leafCount < 2 || leafCount % 2 !== 0) {
@@ -1077,6 +1092,7 @@ function CupMultiRoundSchematic({
                     density={density}
                     onActivate={onPlaceActivate}
                     resolutionIndex={resolutionIndex}
+                    manualPlacementStages={manualPlacementStages}
                     style={{
                       position: 'absolute',
                       top: y - m.slotH / 2,
@@ -1174,6 +1190,7 @@ function CupSingleRoundSchematic({
   cupPairProductionStates,
   resolutionIndex,
   onPlaceActivate,
+  manualPlacementStages,
 }: {
   schematic: StageSchematic;
   t: Translate;
@@ -1184,6 +1201,7 @@ function CupSingleRoundSchematic({
   cupPairProductionStates?: Readonly<Record<string, CupPairProductionState>>;
   resolutionIndex?: StructureResolutionOccupantIndex | null;
   onPlaceActivate?: (place: SchematicCase) => void;
+  manualPlacementStages?: readonly ManualPlacementStage[];
 }) {
   const roundOrders = [
     ...new Set(schematic.connections.map((c) => c.roundOrder)),
@@ -1263,6 +1281,7 @@ function CupSingleRoundSchematic({
                 density={density}
                 onActivate={onPlaceActivate}
                 resolutionIndex={resolutionIndex}
+                manualPlacementStages={manualPlacementStages}
                 style={{
                   height: m.slotH,
                   minHeight: 0,

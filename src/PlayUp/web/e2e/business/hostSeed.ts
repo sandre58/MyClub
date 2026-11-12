@@ -575,6 +575,7 @@ export type DefinitiveSelectionCompetition = {
   sourceId: string;
   destinationId: string;
   team: string;
+  cupEntryIds: string[];
 };
 
 /**
@@ -658,6 +659,7 @@ export async function createDefinitiveSelectionCompetition(
     sourceId,
     destinationId,
     team: 'Ouest',
+    cupEntryIds: [nord, est, sud, ouest],
   };
 }
 

@@ -8,6 +8,8 @@ import {
   previewDefinitiveResolutionRelease,
   type DefinitiveResolutionReleaseResponse,
 } from '../../../api';
+import { I18nTestProvider } from '../../../test/renderWithI18n';
+import { StructureDefinitiveReleaseOffer } from '../resolution/StructureDefinitiveReleaseOffer';
 import { useStructureStageLifecycleMutation } from './useStructureStageLifecycleMutation';
 
 vi.mock('../../../api', async (importOriginal) => {
@@ -50,7 +52,16 @@ function createWrapper() {
   });
   return function Wrapper({ children }: { children: ReactNode }) {
     return (
-      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      <QueryClientProvider client={client}>
+        <I18nTestProvider>
+          <StructureDefinitiveReleaseOffer
+            competitionId="competition"
+            stageId="source"
+          >
+            {children}
+          </StructureDefinitiveReleaseOffer>
+        </I18nTestProvider>
+      </QueryClientProvider>
     );
   };
 }

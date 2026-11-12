@@ -27,6 +27,8 @@ export const queryKeys = {
         'definitive-release-preview',
         destinationId,
       ] as const,
+    definitiveDeletedReleasePreview: (destinationId: string) =>
+      ['stages', destinationId, 'definitive-deleted-release-preview'] as const,
   },
   matches: {
     detail: (matchId: string) => ['matches', matchId] as const,

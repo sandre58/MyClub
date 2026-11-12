@@ -1,6 +1,9 @@
 import { expect, test } from '@playwright/test';
 
-import { createDefinitiveSelectionCompetition } from './hostSeed';
+import {
+  createDefinitiveSelectionCompetition,
+  playUpApiBase,
+} from './hostSeed';
 
 /**
  * Host + PostgreSQL — grouped release of a place that can no longer be confirmed.
@@ -49,11 +52,28 @@ test('Structure — libération groupée d’une sélection vide puis placement 
     page.getByText('1 place ne pourra plus être confirmée.'),
   ).toHaveCount(0);
   await expect(page.getByText('Ouest')).toHaveCount(0);
-  // The qualification path still reserves the slot, so manual placement
-  // stays hidden. The seat shows the unresolved ranking instead of the team.
   await expect(page.getByText('Non résolue')).toBeVisible();
   await expect(page.getByText('4e du classement')).toBeVisible();
-  await expect(
-    page.getByRole('button', { name: 'Placer manuellement' }),
-  ).toHaveCount(0);
+
+  const restored = await request.put(
+    `${playUpApiBase()}/stages/${seeded.destinationId}/affectation`,
+    { data: { entryIds: seeded.cupEntryIds } },
+  );
+  if (!restored.ok()) {
+    throw new Error(
+      `PUT affectation failed (${restored.status()}): ${await restored.text()}`,
+    );
+  }
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Structure' })).toBeVisible();
+  await page.getByRole('button', { name: 'Placer manuellement' }).click();
+  const manual = page.getByRole('dialog', {
+    name: 'Placement manuel — Tableau',
+  });
+  await manual.getByRole('combobox', { name: 'Place' }).click();
+  await page.getByRole('option', { name: 'S4' }).click();
+  await manual.getByRole('checkbox', { name: 'Ouest' }).click();
+  await manual.getByRole('button', { name: 'Enregistrer' }).click();
+  await expect(manual).toHaveCount(0);
+  await expect(page.getByText('Ouest').first()).toBeVisible();
 });

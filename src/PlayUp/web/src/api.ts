@@ -75,6 +75,8 @@ export {
   confirmResolutionRelease,
   previewDefinitiveResolutionRelease,
   confirmDefinitiveResolutionRelease,
+  previewDeletedSourceDefinitiveRelease,
+  confirmDeletedSourceDefinitiveRelease,
 } from './api/stages';
 export type {
   CascadePlayedMatch,

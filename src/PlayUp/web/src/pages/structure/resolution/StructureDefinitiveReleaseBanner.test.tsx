@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   confirmDefinitiveResolutionRelease,
   previewDefinitiveResolutionRelease,
+  previewDeletedSourceDefinitiveRelease,
   type DefinitiveResolutionReleaseResponse,
 } from '../../../api';
 import { ApiError } from '../../../api/http';
@@ -28,6 +29,8 @@ vi.mock('../../../api', async (importOriginal) => {
     ...actual,
     previewDefinitiveResolutionRelease: vi.fn(),
     confirmDefinitiveResolutionRelease: vi.fn(),
+    previewDeletedSourceDefinitiveRelease: vi.fn(),
+    confirmDeletedSourceDefinitiveRelease: vi.fn(),
   };
 });
 
@@ -107,7 +110,13 @@ function stage(): StructureStageHubSummary {
   } as StructureStageHubSummary;
 }
 
-function renderBanner() {
+function renderBanner(
+  occupants = stage().resolutionOccupants,
+  knownStages: StructureStageHubSummary[] = [
+    { stageId: sourceId, name: 'League' } as StructureStageHubSummary,
+    stage(),
+  ],
+) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
@@ -116,25 +125,22 @@ function renderBanner() {
       <I18nTestProvider>{children}</I18nTestProvider>
     </QueryClientProvider>
   );
-  return render(
+  const view = render(
     <StructureDefinitiveReleaseBanner
-      stage={stage()}
-      stages={
-        [
-          { stageId: sourceId, name: 'League' },
-          stage(),
-        ] as StructureStageHubSummary[]
-      }
+      stage={{ ...stage(), resolutionOccupants: occupants }}
+      stages={knownStages}
       competitionId="competition-1"
     />,
     { wrapper },
   );
+  return { ...view, client };
 }
 
 describe('StructureDefinitiveReleaseBanner', () => {
   beforeEach(() => {
     vi.mocked(previewDefinitiveResolutionRelease).mockReset();
     vi.mocked(confirmDefinitiveResolutionRelease).mockReset();
+    vi.mocked(previewDeletedSourceDefinitiveRelease).mockReset();
     vi.mocked(scheduleStructureRefresh).mockReset();
   });
 
@@ -211,5 +217,65 @@ describe('StructureDefinitiveReleaseBanner', () => {
     expect(
       screen.getByRole('heading', { name: 'Libérer ces places ?' }),
     ).toBeInTheDocument();
+  });
+
+  it('keeps the summary when a refetch returns an empty preview', async () => {
+    vi.mocked(previewDefinitiveResolutionRelease).mockResolvedValue(preview);
+    vi.mocked(confirmDefinitiveResolutionRelease).mockResolvedValue(preview);
+    const user = userEvent.setup();
+    const { client } = renderBanner();
+
+    await user.click(await screen.findByRole('button', { name: 'Libérer…' }));
+    await user.click(screen.getByRole('button', { name: /^Libérer$/ }));
+    expect(
+      await screen.findByRole('dialog', { name: 'Places libérées' }),
+    ).toBeVisible();
+
+    vi.mocked(previewDefinitiveResolutionRelease).mockResolvedValue({
+      ...preview,
+      releases: [],
+      exclusions: [],
+    });
+    await client.invalidateQueries({ queryKey: ['stages'] });
+    await waitFor(() => {
+      expect(previewDefinitiveResolutionRelease).toHaveBeenCalledTimes(2);
+    });
+    const summary = screen.getByRole('dialog', { name: 'Places libérées' });
+    expect(summary).toBeVisible();
+    expect(within(summary).getByText(/Nord — A \(Terminal\)/)).toBeVisible();
+  });
+
+  it('counts places whose source phase was deleted', async () => {
+    vi.mocked(previewDeletedSourceDefinitiveRelease).mockResolvedValue(preview);
+    renderBanner(
+      [{ ...occupant(nord, 'A'), upstreamStageId: null }],
+      [stage()],
+    );
+
+    expect(
+      await screen.findByText('1 place ne pourra plus être confirmée.'),
+    ).toBeInTheDocument();
+    expect(previewDeletedSourceDefinitiveRelease).toHaveBeenCalledWith(
+      destinationId,
+    );
+    expect(previewDefinitiveResolutionRelease).not.toHaveBeenCalled();
+  });
+
+  it('names a place without a label in French', async () => {
+    vi.mocked(previewDefinitiveResolutionRelease).mockResolvedValue({
+      ...preview,
+      releases: [],
+      exclusions: [
+        {
+          ...preview.exclusions[0],
+          placeLabel: null,
+          slotKey: null,
+          target: 'Group',
+        },
+      ],
+    });
+    renderBanner();
+
+    expect(await screen.findByText(/Sud — Groupe :/)).toBeInTheDocument();
   });
 });

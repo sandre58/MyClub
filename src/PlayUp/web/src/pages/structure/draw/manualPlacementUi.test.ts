@@ -60,6 +60,26 @@ describe('resolveManualPlaceMode', () => {
     ).toBe('draw');
   });
 
+  it('opens a completed or deleted qualification source', () => {
+    const place = cupCase('S4', {
+      feedOrigin: { kind: 'Qualification', sourceStageId: 'league' },
+    });
+    expect(
+      resolveManualPlaceMode(place, [
+        { stageId: 'league', status: 'Completed' },
+      ]),
+    ).toBe('editable');
+    expect(
+      resolveManualPlaceMode(place, [{ stageId: 'cup', status: 'Running' }]),
+    ).toBe('editable');
+    expect(
+      resolveManualPlaceMode(place, [{ stageId: 'league', status: 'Running' }]),
+    ).toBe('qualProg');
+    expect(
+      resolveManualPlaceMode(place, [{ stageId: 'league', status: 'Draft' }]),
+    ).toBe('qualProg');
+  });
+
   it('blocks occupied places without Direct', () => {
     expect(
       resolveManualPlaceMode(cupCase('S1', { entry: { entryId: 'e1' } })),

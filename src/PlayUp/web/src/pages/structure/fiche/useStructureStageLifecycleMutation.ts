@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
 
 import {
   completeStage,
@@ -10,9 +9,9 @@ import {
   resumeStage,
   startStage,
   suspendStage,
-  type DefinitiveResolutionReleaseResponse,
 } from '../../../api';
 import type { StructureStageLifecycleMutationCode } from '../../../types';
+import { useDefinitiveReleaseOffer } from '../resolution/definitiveReleaseOfferContext';
 import { primaryDefinitiveReleases } from '../resolution/structureDefinitiveRelease';
 import { scheduleStructureRefresh } from '../structureInvalidation';
 
@@ -21,8 +20,7 @@ export function useStructureStageLifecycleMutation(
   stageId: string,
 ) {
   const queryClient = useQueryClient();
-  const [definitiveOffer, setDefinitiveOffer] =
-    useState<DefinitiveResolutionReleaseResponse | null>(null);
+  const offerHost = useDefinitiveReleaseOffer();
 
   const mutation = useMutation({
     mutationFn: async (code: StructureStageLifecycleMutationCode) => {
@@ -70,7 +68,7 @@ export function useStructureStageLifecycleMutation(
       })
         .then((preview) => {
           if (primaryDefinitiveReleases(preview).length > 0) {
-            setDefinitiveOffer(preview);
+            offerHost?.publish(stageId, preview);
           }
         })
         .catch(() => undefined);
@@ -79,7 +77,8 @@ export function useStructureStageLifecycleMutation(
 
   return {
     ...mutation,
-    definitiveOffer,
-    dismissDefinitiveOffer: () => setDefinitiveOffer(null),
+    definitiveOffer:
+      offerHost?.offer?.sourceId === stageId ? offerHost.offer.preview : null,
+    dismissDefinitiveOffer: () => offerHost?.dismiss(),
   };
 }
