@@ -21,16 +21,25 @@ public sealed record CascadeReplaceResult(
 
 /// <summary>
 /// A finished match the cascade returns to not played.
+/// Names and the leg are filled from the ids captured before the participants change.
 /// </summary>
 /// <param name="MatchId">Match identity.</param>
 /// <param name="StageId">Stage that owns the match.</param>
 /// <param name="HomeEntryId">Home entry before the cascade.</param>
 /// <param name="AwayEntryId">Away entry before the cascade.</param>
+/// <param name="HomeName">Display name of <paramref name="HomeEntryId"/>, or null when missing.</param>
+/// <param name="AwayName">Display name of <paramref name="AwayEntryId"/>, or null when missing.</param>
+/// <param name="StageName">Name of the stage that owns the match, or null when missing.</param>
+/// <param name="LegIndex">Leg of a multi-leg tie, or null for a single leg or an unknown attachment.</param>
 public sealed record CascadePlayedMatch(
     Guid MatchId,
     Guid StageId,
     Guid? HomeEntryId,
-    Guid? AwayEntryId);
+    Guid? AwayEntryId,
+    string? HomeName = null,
+    string? AwayName = null,
+    string? StageName = null,
+    int? LegIndex = null);
 
 /// <summary>
 /// One occupant whose stored entry changed.

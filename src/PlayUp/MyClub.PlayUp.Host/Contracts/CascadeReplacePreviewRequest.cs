@@ -50,11 +50,23 @@ public sealed record CascadeReplaceResponse(
 /// <summary>
 /// One finished match listed in the cascade warning.
 /// </summary>
+/// <param name="MatchId">Match identity.</param>
+/// <param name="StageId">Stage that owns the match.</param>
+/// <param name="HomeEntryId">Home entry before the cascade.</param>
+/// <param name="AwayEntryId">Away entry before the cascade.</param>
+/// <param name="HomeName">Display name of <paramref name="HomeEntryId"/>, or null when missing.</param>
+/// <param name="AwayName">Display name of <paramref name="AwayEntryId"/>, or null when missing.</param>
+/// <param name="StageName">Name of the stage that owns the match, or null when missing.</param>
+/// <param name="LegIndex">Leg of a multi-leg tie, or null for a single leg or an unknown attachment.</param>
 public sealed record CascadePlayedMatchDto(
     Guid MatchId,
     Guid StageId,
     Guid? HomeEntryId,
-    Guid? AwayEntryId);
+    Guid? AwayEntryId,
+    string? HomeName,
+    string? AwayName,
+    string? StageName,
+    int? LegIndex);
 
 /// <summary>
 /// One occupant the cascade rewrote.

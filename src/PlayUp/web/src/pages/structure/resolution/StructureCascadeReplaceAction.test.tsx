@@ -1,10 +1,15 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiError } from '../../../api/http';
-import { confirmCascadeReplace, previewCascadeReplace } from '../../../api';
+import {
+  confirmCascadeReplace,
+  previewCascadeReplace,
+  type CascadePlayedMatch,
+} from '../../../api';
+import i18n from '../../../i18n';
 import type {
   StructureResolutionOccupant,
   StructureStageHubSummary,
@@ -23,6 +28,7 @@ vi.mock('../../../api', async (importOriginal) => {
 });
 
 const stageId = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
+const otherStageId = 'ffffffff-ffff-ffff-ffff-ffffffffffff';
 const entryId = 'dddddddd-dddd-dddd-dddd-dddddddddddd';
 const matchId = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee';
 
@@ -82,37 +88,107 @@ function renderAction() {
   );
 }
 
+function played(
+  overrides: Partial<CascadePlayedMatch> = {},
+): CascadePlayedMatch {
+  return {
+    matchId,
+    stageId,
+    homeEntryId: entryId,
+    awayEntryId: null,
+    homeName: 'Alpha',
+    awayName: 'Beta',
+    stageName: 'Finale',
+    legIndex: null,
+    ...overrides,
+  };
+}
+
+const frenchLabels = [
+  ['two teams', played(), 'Alpha – Beta'],
+  ['home only', played({ awayName: null }), 'Alpha – à déterminer'],
+  ['away only', played({ homeName: null }), 'à déterminer – Beta'],
+  [
+    'neither team',
+    played({ homeName: null, awayName: null }),
+    'Match à déterminer',
+  ],
+  ['return leg', played({ legIndex: 2 }), 'Manche 2 — Alpha – Beta'],
+  [
+    'other phase',
+    played({ stageId: otherStageId, stageName: 'Demi-finale' }),
+    'Demi-finale — Alpha – Beta',
+  ],
+  [
+    'other phase and leg',
+    played({ stageId: otherStageId, stageName: 'Finale', legIndex: 2 }),
+    'Finale — Manche 2 — Alpha – Beta',
+  ],
+  [
+    'same phase single leg',
+    played({ stageName: 'Phase courante', legIndex: null }),
+    'Alpha – Beta',
+  ],
+] as const;
+
+const englishLabels = [
+  ['two teams', played(), 'Alpha – Beta'],
+  ['home only', played({ awayName: null }), 'Alpha – to be determined'],
+  ['away only', played({ homeName: null }), 'to be determined – Beta'],
+  [
+    'neither team',
+    played({ homeName: null, awayName: null }),
+    'Match to be determined',
+  ],
+  ['return leg', played({ legIndex: 2 }), 'Leg 2 — Alpha – Beta'],
+  [
+    'other phase',
+    played({ stageId: otherStageId, stageName: 'Demi-finale' }),
+    'Demi-finale — Alpha – Beta',
+  ],
+] as const;
+
+function staleButtonName() {
+  return i18n.language.startsWith('en')
+    ? 'Stale — Upstream result changed. Click to replace the team with the expected occupant'
+    : "Périmé — Résultat amont modifié. Cliquer pour remplacer l'équipe par l'occupant attendu";
+}
+
+async function openPlayed(match: CascadePlayedMatch) {
+  vi.mocked(previewCascadeReplace).mockResolvedValue({
+    versionToken: 'token-1',
+    playedMatches: [match],
+    replacements: [],
+  });
+  const user = userEvent.setup();
+  renderAction();
+  await user.click(screen.getByRole('button', { name: staleButtonName() }));
+  return screen.findByRole('listitem');
+}
+
+function expectPlainLabel(item: HTMLElement, label: string) {
+  expect(item).toHaveTextContent(label);
+  const text = item.textContent ?? '';
+  expect(text).not.toContain(matchId);
+  expect(text).not.toMatch(/domicile|extérieur|home|away/i);
+}
+
 describe('StructureCascadeReplaceAction', () => {
-  it('lists the played matches before confirming', async () => {
-    vi.mocked(previewCascadeReplace).mockResolvedValue({
-      versionToken: 'token-1',
-      playedMatches: [
-        {
-          matchId,
-          stageId,
-          homeEntryId: entryId,
-          awayEntryId: null,
-        },
-      ],
-      replacements: [],
-    });
+  afterEach(async () => {
+    await i18n.changeLanguage('fr');
+  });
+
+  it('lists the played match by team name before confirming', async () => {
     vi.mocked(confirmCascadeReplace).mockResolvedValue({
       versionToken: 'token-1',
       playedMatches: [],
       replacements: [],
     });
     const user = userEvent.setup();
-    renderAction();
-
-    expect(
-      screen.queryByRole('button', { name: 'Remplacer Champ' }),
-    ).toBeNull();
-    await user.click(
-      screen.getByRole('button', {
-        name: "Périmé — Résultat amont modifié. Cliquer pour remplacer l'équipe par l'occupant attendu",
-      }),
-    );
-    expect(await screen.findByText(`Match ${matchId}`)).toBeInTheDocument();
+    const item = await openPlayed(played());
+    expectPlainLabel(item, 'Alpha – Beta');
+    expect(item).not.toHaveTextContent('Finale');
+    expect(item).not.toHaveTextContent('Manche');
 
     await user.click(screen.getByRole('button', { name: 'Remplacer' }));
     expect(confirmCascadeReplace).toHaveBeenCalledWith(stageId, {
@@ -123,6 +199,32 @@ describe('StructureCascadeReplaceAction', () => {
       versionToken: 'token-1',
     });
   });
+
+  it.each(frenchLabels)(
+    'labels a played match in French (%s)',
+    async (_name, match, label) => {
+      const item = await openPlayed(match);
+      expectPlainLabel(item, label);
+      if (match.legIndex == null) {
+        expect(item).not.toHaveTextContent('Manche');
+      }
+      if (match.stageId === stageId) {
+        expect(item).not.toHaveTextContent(match.stageName ?? '');
+      }
+    },
+  );
+
+  it.each(englishLabels)(
+    'labels a played match in English (%s)',
+    async (_name, match, label) => {
+      await i18n.changeLanguage('en');
+      const item = await openPlayed(match);
+      expectPlainLabel(item, label);
+      if (match.legIndex == null) {
+        expect(item).not.toHaveTextContent('Leg');
+      }
+    },
+  );
 
   it('shows the server refusal and disables confirm', async () => {
     vi.mocked(previewCascadeReplace).mockResolvedValue({

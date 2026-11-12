@@ -933,7 +933,9 @@
       "pending": "Replacing…",
       "nonePlayed": "No downstream match that has already been played will change.",
       "playedIntro": "These played matches will lose their score and player stats:",
-      "playedMatch": "Match {{matchId}}"
+      "tbd": "to be determined",
+      "playedMatchUnknown": "Match to be determined",
+      "leg": "Leg {{leg}}"
     },
     "staleDraw": {
       "message": "The applied draw no longer matches this phase.",

@@ -260,6 +260,10 @@ export type CascadePlayedMatch = {
   stageId: string;
   homeEntryId: string | null;
   awayEntryId: string | null;
+  homeName: string | null;
+  awayName: string | null;
+  stageName: string | null;
+  legIndex: number | null;
 };
 
 export type CascadeReplacement = {

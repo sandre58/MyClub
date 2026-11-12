@@ -46,6 +46,9 @@ public sealed class CascadeReplaceTests
             slot,
             null);
 
+    private static string DisplayName(Competition competition, EntryId entryId) =>
+        competition.Entries.Single(entry => entry.Id.Equals(entryId)).DisplayName;
+
     [Fact]
     public void Cup_three_rounds_replaces_the_finalist_and_invalidates_only_the_final()
     {
@@ -122,6 +125,101 @@ public sealed class CascadeReplaceTests
         match.Status.Should().Be(MatchStatus.Scheduled);
         match.HomeEntryId.Should().Be(entries[1]);
         cup.FindSlot("F-A")!.EntryId.Should().Be(entries[1]);
+    }
+
+    [Fact]
+    public void Played_match_names_stay_on_the_entries_captured_before_execute()
+    {
+        var (competition, stages, _, _, final, entries, quarterMatch, semiMatch, finalMatch) =
+            CupThreeRounds();
+        semiMatch.CorrectMatchResult(new MatchResult(ResultType.Played, new Score(0, 2)), _clock);
+        var homeName = DisplayName(competition, entries[0]);
+        var awayName = DisplayName(competition, entries[3]);
+        var loaded = new List<Match> { quarterMatch, semiMatch, finalMatch };
+
+        var planned = CascadeReplace.Plan(
+            competition,
+            final.Id,
+            SlotTarget(final, "F-A"),
+            stages,
+            loaded,
+            _clock);
+        var plannedRow = planned.PlayedMatches.Should().ContainSingle().Subject;
+        plannedRow.HomeEntryId.Should().Be(entries[0].Value);
+        plannedRow.AwayEntryId.Should().Be(entries[3].Value);
+        plannedRow.HomeName.Should().Be(homeName);
+        plannedRow.AwayName.Should().Be(awayName);
+        plannedRow.StageName.Should().Be("Final");
+        plannedRow.LegIndex.Should().BeNull();
+
+        var executed = CascadeReplace.Execute(
+            competition,
+            final.Id,
+            SlotTarget(final, "F-A"),
+            stages,
+            loaded,
+            _clock);
+
+        executed.PlayedMatches.Should().ContainSingle().Which.Should().BeEquivalentTo(plannedRow);
+        finalMatch.HomeEntryId.Should().Be(entries[2]);
+        executed.PlayedMatches[0].HomeEntryId.Should().Be(entries[0].Value);
+        executed.PlayedMatches[0].HomeName.Should().Be(homeName);
+    }
+
+    [Fact]
+    public void A_two_leg_tie_exposes_each_leg_and_the_match_home_and_away()
+    {
+        var (competition, league, cup, entries, matches) = LeagueFeed(2);
+        var opponent = AddEntry.Execute(competition, "Gamma", _clock).Id;
+        ApplyOverall(league, cup, entries, matches, 1, "Champ");
+        var applied = cup.FindSlot("Champ")!.EntryId!.Value;
+        var appliedName = DisplayName(competition, applied);
+        cup.AddSlot("Finalist");
+        var round = cup.AddRound("Final", new TieFormat(TieFormat.TwoLegs, aggregateScoring: true), _clock);
+        cup.ReplaceBracketPairs([new BracketPair("P1", "Champ", "Finalist")]);
+        var fixture = cup.AddFixture(round.Id, _clock, "Champ", "Finalist", "P1");
+        cup.AddResolvedPopulationEntry(opponent, _clock);
+        cup.AssignEntryToSlot("Finalist", opponent);
+        var leg1 = Match.Create(competition.Id, cup.Id, applied, opponent, _clock);
+        var leg2 = Match.Create(competition.Id, cup.Id, opponent, applied, _clock);
+        cup.AttachMatch(fixture.Id, leg1.Id, legIndex: 1, _clock);
+        cup.AttachMatch(fixture.Id, leg2.Id, legIndex: 2, _clock);
+        leg1.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
+        leg2.Finish(new MatchResult(ResultType.Played, new Score(0, 1)), _clock);
+        SetScore(matches, entries[0], entries[1], 0, 2);
+        var loaded = matches.Append(leg1).Append(leg2).ToArray();
+
+        var planned = CascadeReplace.Plan(
+            competition,
+            cup.Id,
+            SlotTarget(cup, "Champ"),
+            [league, cup],
+            loaded,
+            _clock);
+        var executed = CascadeReplace.Execute(
+            competition,
+            cup.Id,
+            SlotTarget(cup, "Champ"),
+            [league, cup],
+            loaded,
+            _clock);
+
+        executed.PlayedMatches.Should().BeEquivalentTo(planned.PlayedMatches);
+        executed.PlayedMatches.Should().HaveCount(2);
+        var first = executed.PlayedMatches.Single(row => row.MatchId == leg1.Id.Value);
+        var second = executed.PlayedMatches.Single(row => row.MatchId == leg2.Id.Value);
+        first.LegIndex.Should().Be(1);
+        first.HomeName.Should().Be(appliedName);
+        first.AwayName.Should().Be("Gamma");
+        first.StageName.Should().Be("Terminal");
+        second.LegIndex.Should().Be(2);
+        second.HomeName.Should().Be("Gamma");
+        second.AwayName.Should().Be(appliedName);
+        second.HomeEntryId.Should().Be(opponent.Value);
+        second.AwayEntryId.Should().Be(applied.Value);
+        leg2.HomeEntryId.Should().Be(opponent);
+        leg2.AwayEntryId.Should().NotBe(applied);
+        leg1.HomeEntryId.Should().NotBe(applied);
     }
 
     [Fact]

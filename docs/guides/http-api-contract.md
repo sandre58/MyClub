@@ -704,14 +704,18 @@ Read-only preview of an explicit cascade replacement. Computes the version token
       "matchId": "<guid>",
       "stageId": "<guid>",
       "homeEntryId": "<guid>",
-      "awayEntryId": "<guid>"
+      "awayEntryId": "<guid>",
+      "homeName": "Alpha",
+      "awayName": "Beta",
+      "stageName": "Final",
+      "legIndex": null
     }
   ],
   "replacements": []
 }
 ```
 
-`playedMatches` lists finished matches the confirmation will return to not played. `versionToken` is the state the confirmation must send back. Unknown occupant → **404** `Application.CascadeReplaceOccupantNotFound`. Direct assignment, a non-replayable kind, an occupant that is not stale, a completed phase in the chain, a cycle, an indeterminate origin, or a live match → **409** with `Application.CascadeReplaceDirectAssignment`, `Application.CascadeReplaceNotReplayable`, `Application.CascadeReplaceNotStale`, `Application.CascadeReplaceCompleted`, `Application.CascadeReplaceCycle`, `Application.CascadeReplaceIndeterminate`, or `Application.CascadeReplaceLiveBlocked`.
+`playedMatches` lists finished matches the confirmation will return to not played. `homeName` and `awayName` are the display names of the entries captured before the cascade; a missing entry or a blank name is `null`. `stageName` is the name of the match's phase. `legIndex` is set only when that confrontation has more than one leg and the fixture attachment is known; otherwise `null`. `versionToken` is the state the confirmation must send back. Unknown occupant → **404** `Application.CascadeReplaceOccupantNotFound`. Direct assignment, a non-replayable kind, an occupant that is not stale, a completed phase in the chain, a cycle, an indeterminate origin, or a live match → **409** with `Application.CascadeReplaceDirectAssignment`, `Application.CascadeReplaceNotReplayable`, `Application.CascadeReplaceNotStale`, `Application.CascadeReplaceCompleted`, `Application.CascadeReplaceCycle`, `Application.CascadeReplaceIndeterminate`, or `Application.CascadeReplaceLiveBlocked`.
 
 ### `POST /stages/{stageId}/resolution/cascade-replace` → `CascadeReplaceResponse`
 

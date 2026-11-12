@@ -897,7 +897,11 @@ internal static class StageEndpoints
                     match.MatchId,
                     match.StageId,
                     match.HomeEntryId,
-                    match.AwayEntryId))
+                    match.AwayEntryId,
+                    match.HomeName,
+                    match.AwayName,
+                    match.StageName,
+                    match.LegIndex))
                 .ToArray(),
             result.Replacements
                 .Select(row => new CascadeReplacementDto(

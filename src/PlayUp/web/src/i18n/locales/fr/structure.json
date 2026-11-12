@@ -933,7 +933,9 @@
       "pending": "Remplacement…",
       "nonePlayed": "Aucun match aval déjà joué ne sera modifié.",
       "playedIntro": "Ces matchs joués perdront leur score et les stats de leurs joueurs :",
-      "playedMatch": "Match {{matchId}}"
+      "tbd": "à déterminer",
+      "playedMatchUnknown": "Match à déterminer",
+      "leg": "Manche {{leg}}"
     },
     "staleDraw": {
       "message": "Le tirage appliqué ne correspond plus à la phase.",
