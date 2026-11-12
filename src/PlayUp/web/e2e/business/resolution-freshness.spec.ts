@@ -237,7 +237,20 @@ async function expectAttentionRow(
   stageName: string,
   visible: boolean,
 ) {
-  await page.getByRole('button', { name: /À traiter, \d+ éléments?/ }).click();
+  const open = page.getByRole('button', { name: /À traiter, \d+ éléments?/ });
+  // ResolutionIndetermine is the only line this release removes. When that
+  // was the last item, the trigger stays visible and disabled.
+  const cleared = page.getByRole('button', {
+    name: 'À traiter, aucun élément',
+  });
+  if (!visible) {
+    await expect(cleared.or(open)).toBeVisible();
+    if (await cleared.isVisible()) {
+      await expect(cleared).toBeDisabled();
+      return;
+    }
+  }
+  await open.click();
   const row = page.getByRole('link', {
     name: new RegExp(`non confirmée.*${stageName}`),
   });
