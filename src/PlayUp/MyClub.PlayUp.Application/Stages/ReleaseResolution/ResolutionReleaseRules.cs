@@ -111,6 +111,12 @@ public static class ResolutionReleaseRules
             return ApplicationErrorCodes.ResolutionReleaseBlockedByPlayedMatch;
         }
 
+        if (matches.Any(match => Involves(match, subject.EntryId)
+            && match.Status == MatchStatus.Cancelled))
+        {
+            return ApplicationErrorCodes.ResolutionReleaseBlockedByCancelledMatch;
+        }
+
         if (!IsBracketSlot(stage, subject) && AttachedMatchInvolves(stage, matches, subject.EntryId))
         {
             return stage.Status is StageStatus.Running or StageStatus.Suspended

@@ -1509,6 +1509,62 @@ public sealed partial class UseCaseExecutor
         return result ?? throw new InvalidOperationException("Resolution release did not run.");
     }
 
+    /// <summary>
+    /// Previews a grouped release of definitive places fed by <paramref name="sourceId"/> without persisting it.
+    /// </summary>
+    public async Task<DefinitiveResolutionReleaseResult> PreviewDefinitiveResolutionReleaseAsync(
+        StageId sourceId,
+        StageId? destinationId,
+        CancellationToken cancellationToken = default)
+    {
+        var (competition, stageList, matchList) =
+            await LoadCascadeReadAsync(sourceId, cancellationToken).ConfigureAwait(false);
+        return ReleaseDefinitiveResolutions.Plan(
+            competition,
+            sourceId,
+            destinationId,
+            stageList,
+            matchList,
+            clock);
+    }
+
+    /// <summary>
+    /// Confirms a grouped release when the token and the place list still match, then saves once.
+    /// </summary>
+    public async Task<DefinitiveResolutionReleaseResult> ConfirmDefinitiveResolutionReleaseAsync(
+        StageId sourceId,
+        StageId? destinationId,
+        string versionToken,
+        IReadOnlyList<DefinitiveResolutionReleasePlace> places,
+        CancellationToken cancellationToken = default)
+    {
+        var competitionId = await stages.GetCompetitionIdReadOnlyAsync(sourceId, cancellationToken)
+                                .ConfigureAwait(false)
+                            ?? throw new ApplicationFailureException(
+                                $"Stage '{sourceId}' was not found.",
+                                ApplicationErrorCodes.StageNotFound);
+        DefinitiveResolutionReleaseResult? result = null;
+        await unitOfWork.ExecuteExclusiveAsync(
+            competitionId,
+            async innerToken =>
+            {
+                var (competition, stageList, matchList) =
+                    await LoadCascadeForUpdateAsync(sourceId, innerToken).ConfigureAwait(false);
+                result = ReleaseDefinitiveResolutions.Execute(
+                    competition,
+                    sourceId,
+                    destinationId,
+                    versionToken,
+                    places,
+                    stageList,
+                    matchList,
+                    clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
+        return result ?? throw new InvalidOperationException("Definitive resolution release did not run.");
+    }
+
     private async Task<(Domain.Competitions.Competition Competition, List<Stage> Stages, List<Match> Matches)>
         LoadCascadeReadAsync(StageId stageId, CancellationToken cancellationToken)
     {

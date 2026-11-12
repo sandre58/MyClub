@@ -168,6 +168,12 @@ internal sealed partial class PlayUpExceptionHandler(ILogger<PlayUpExceptionHand
                 (StatusCodes.Status409Conflict, "Direct assignment is not released", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.ResolutionReleaseBlockedByPlayedMatch } application =>
                 (StatusCodes.Status409Conflict, "Played match blocks the release", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.ResolutionReleaseBlockedByCancelledMatch } application =>
+                (StatusCodes.Status409Conflict, "Cancelled match blocks the release", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.ResolutionReleaseNotDefinitive } application =>
+                (StatusCodes.Status409Conflict, "Place is no longer definitive", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.ResolutionReleaseBatchChanged } application =>
+                (StatusCodes.Status409Conflict, "Definitive release list changed", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.ResolutionReleaseBlockedByMatches } application =>
                 (StatusCodes.Status409Conflict, "Generated matches block the release", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.ResolutionReleaseBlockedByMatchesRunning } application =>

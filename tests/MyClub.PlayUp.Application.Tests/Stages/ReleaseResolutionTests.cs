@@ -459,6 +459,28 @@ public sealed class ReleaseResolutionTests
     }
 
     [Fact]
+    public void A_cancelled_match_on_the_phase_blocks_the_release_before_detachment()
+    {
+        var (competition, league, terminal, entries, match) = Pair();
+        StampSlot(league, terminal, entries[0], position: 9);
+        var cancelled = Match.Create(competition.Id, terminal.Id, entries[0], entries[1], _clock);
+        cancelled.Cancel(_clock);
+
+        var act = () => ReleaseResolution.Plan(
+            competition,
+            terminal.Id,
+            SlotTarget(entries[0]),
+            [league, terminal],
+            [match, cancelled],
+            _clock);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.ResolutionReleaseBlockedByCancelledMatch);
+        terminal.FindSlot("Champ")!.EntryId.Should().Be(entries[0]);
+        cancelled.HomeEntryId.Should().Be(entries[0]);
+    }
+
+    [Fact]
     public void A_team_held_by_a_published_or_cancelled_draw_cannot_be_released()
     {
         var (competition, league, terminal, entries, match) = Pair();

@@ -648,6 +648,52 @@ internal static class StageEndpoints
             });
 
         app.MapPost(
+            "/stages/{sourceId:guid}/resolution/release-definitive-preview",
+            async (
+                Guid sourceId,
+                DefinitiveResolutionReleasePreviewRequest request,
+                UseCaseExecutor executor,
+                CancellationToken cancellationToken) =>
+            {
+                ArgumentNullException.ThrowIfNull(request);
+                var result = await executor.PreviewDefinitiveResolutionReleaseAsync(
+                    new StageId(sourceId),
+                    request.DestinationStageId is Guid destination ? new StageId(destination) : null,
+                    cancellationToken).ConfigureAwait(false);
+                return Results.Ok(ToDefinitiveResolutionReleaseResponse(result));
+            });
+
+        app.MapPost(
+            "/stages/{sourceId:guid}/resolution/release-definitive",
+            async (
+                Guid sourceId,
+                DefinitiveResolutionReleaseConfirmRequest request,
+                UseCaseExecutor executor,
+                CancellationToken cancellationToken) =>
+            {
+                ArgumentNullException.ThrowIfNull(request);
+                if (request.Places is null)
+                {
+                    return Results.BadRequest();
+                }
+
+                var result = await executor.ConfirmDefinitiveResolutionReleaseAsync(
+                    new StageId(sourceId),
+                    request.DestinationStageId is Guid destination ? new StageId(destination) : null,
+                    request.VersionToken,
+                    request.Places
+                        .Select(place => new DefinitiveResolutionReleasePlace(
+                            place.StageId,
+                            place.Target,
+                            place.EntryId,
+                            place.SlotKey,
+                            place.GroupId))
+                        .ToArray(),
+                    cancellationToken).ConfigureAwait(false);
+                return Results.Ok(ToDefinitiveResolutionReleaseResponse(result));
+            });
+
+        app.MapPost(
             "/stages/{stageId:guid}/qualification/apply",
             async (Guid stageId, UseCaseExecutor executor, CancellationToken cancellationToken) =>
             {
@@ -911,6 +957,60 @@ internal static class StageEndpoints
                     row.GroupId,
                     row.PreviousEntryId,
                     row.EntryId))
+                .ToArray());
+
+    private static DefinitiveResolutionReleaseResponse ToDefinitiveResolutionReleaseResponse(
+        DefinitiveResolutionReleaseResult result) =>
+        new(
+            result.VersionToken,
+            result.Releases
+                .Select(row => new DefinitiveResolutionReleaseRowDto(
+                    row.StageId,
+                    row.Target,
+                    row.SlotKey,
+                    row.GroupId,
+                    row.EntryId,
+                    row.EntryName,
+                    row.StageName,
+                    row.PlaceLabel,
+                    row.PopulationRemoved,
+                    row.SideEffect))
+                .ToArray(),
+            result.DetachedMatches
+                .Select(match => new ResolutionReleaseDetachedMatchDto(
+                    match.MatchId,
+                    match.StageId,
+                    match.LegIndex,
+                    match.Side,
+                    match.HomeEntryId,
+                    match.AwayEntryId,
+                    match.HomeName,
+                    match.AwayName))
+                .ToArray(),
+            result.Exclusions
+                .Select(row => new DefinitiveResolutionReleaseExclusionDto(
+                    row.StageId,
+                    row.Target,
+                    row.SlotKey,
+                    row.GroupId,
+                    row.EntryId,
+                    row.EntryName,
+                    row.StageName,
+                    row.PlaceLabel,
+                    row.Code))
+                .ToArray(),
+            result.AffectedOccupants
+                .Select(occupant => new ResolutionReleaseAffectedOccupantDto(
+                    occupant.StageId,
+                    occupant.Target,
+                    occupant.SlotKey,
+                    occupant.GroupId,
+                    occupant.EntryId,
+                    occupant.StateBefore,
+                    occupant.StateAfter,
+                    occupant.EntryName,
+                    occupant.StageName,
+                    occupant.PlaceLabel))
                 .ToArray());
 
     private static ResolutionReleaseResponse ToResolutionReleaseResponse(ResolutionReleaseResult result) =>

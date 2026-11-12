@@ -135,7 +135,7 @@ public static class ReleaseResolution
         }
     }
 
-    private static AppliedRelease Apply(
+    internal static AppliedRelease Apply(
         Competition competition,
         Stage stage,
         IReadOnlyList<Match> matches,
@@ -241,6 +241,13 @@ public static class ReleaseResolution
         IClock clock,
         List<ResolutionReleaseDetachedMatch> detached)
     {
+        if (match.Status == MatchStatus.Cancelled)
+        {
+            throw Fail(
+                "A cancelled match involves this team.",
+                ApplicationErrorCodes.ResolutionReleaseBlockedByCancelledMatch);
+        }
+
         if (match.Status is not (MatchStatus.Scheduled or MatchStatus.Postponed))
         {
             throw Fail(
@@ -341,7 +348,7 @@ public static class ReleaseResolution
             .Name;
     }
 
-    private sealed record AppliedRelease(
+    internal sealed record AppliedRelease(
         IReadOnlyList<ResolutionReleaseRow> Releases,
         IReadOnlyList<ResolutionReleaseDetachedMatch> Detached);
 
@@ -386,6 +393,8 @@ public static class ReleaseResolution
                 "A direct assignment is not released.",
             ApplicationErrorCodes.ResolutionReleaseBlockedByPlayedMatch =>
                 "A live or finished match involves this team.",
+            ApplicationErrorCodes.ResolutionReleaseBlockedByCancelledMatch =>
+                "A cancelled match involves this team.",
             ApplicationErrorCodes.ResolutionReleaseBlockedByMatches =>
                 "Generated matches involve this team. Remove them before releasing the place.",
             ApplicationErrorCodes.ResolutionReleaseBlockedByMatchesRunning =>

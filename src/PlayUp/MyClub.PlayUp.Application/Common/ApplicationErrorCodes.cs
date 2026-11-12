@@ -612,6 +612,24 @@ public static class ApplicationErrorCodes
     public const string ResolutionReleaseBlockedByPlayedMatch = "Application.ResolutionReleaseBlockedByPlayedMatch";
 
     /// <summary>
+    /// Gets the code when a cancelled match involves the team.
+    /// Mapped to HTTP 409.
+    /// </summary>
+    public const string ResolutionReleaseBlockedByCancelledMatch = "Application.ResolutionReleaseBlockedByCancelledMatch";
+
+    /// <summary>
+    /// Gets the code when a grouped confirmation names a place that is no longer definitive.
+    /// Mapped to HTTP 409.
+    /// </summary>
+    public const string ResolutionReleaseNotDefinitive = "Application.ResolutionReleaseNotDefinitive";
+
+    /// <summary>
+    /// Gets the code when the places a grouped confirmation would release are not the places it was given.
+    /// Mapped to HTTP 409.
+    /// </summary>
+    public const string ResolutionReleaseBatchChanged = "Application.ResolutionReleaseBatchChanged";
+
+    /// <summary>
     /// Gets the code when an attached match involves the team and the phase is still Draft or Ready.
     /// Mapped to HTTP 409.
     /// </summary>
