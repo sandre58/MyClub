@@ -5,6 +5,7 @@ import {
   buildStructureResolutionOccupantIndex,
   hasStaleTirageResolutionOccupant,
   lookupGroupResolutionOccupant,
+  lookupListedResolutionOccupant,
   lookupPopulationResolutionOccupant,
   lookupSlotResolutionOccupant,
   isDefinitivelyUnconfirmed,
@@ -93,6 +94,167 @@ describe('structureResolutionOccupants', () => {
         definitive: true,
       }),
     ).toBe(false);
+  });
+
+  it('lookupListedResolutionOccupant picks Population when not placed', () => {
+    const index = buildStructureResolutionOccupantIndex([
+      {
+        ...slotOccupant,
+        target: 'Population',
+        entryId: 'e-pop',
+        slotKey: null,
+        groupId: null,
+        state: 'Indetermine',
+        releasable: true,
+      },
+    ]);
+  const result = lookupListedResolutionOccupant(index, 'e-pop');
+    expect(result.multiplePlacements).toBe(false);
+    expect(result.occupant?.target).toBe('Population');
+  });
+
+  it('lookupListedResolutionOccupant picks Slot when placed with matching provenance', () => {
+    const sourcePathId = 'path-qual';
+    const index = buildStructureResolutionOccupantIndex([
+      {
+        ...slotOccupant,
+        target: 'Population',
+        entryId: 'e1',
+        sourcePathId,
+        slotKey: null,
+        groupId: null,
+        state: 'Indetermine',
+        releasable: false,
+      },
+      {
+        ...slotOccupant,
+        target: 'Slot',
+        entryId: 'e1',
+        sourcePathId,
+        slotKey: 'A',
+        state: 'Indetermine',
+        releasable: true,
+      },
+    ]);
+    const result = lookupListedResolutionOccupant(index, 'e1');
+    expect(result.multiplePlacements).toBe(false);
+    expect(result.occupant?.target).toBe('Slot');
+    expect(result.occupant?.slotKey).toBe('A');
+  });
+
+  it('lookupListedResolutionOccupant picks Group when placed in poules', () => {
+    const sourcePathId = 'path-prog';
+    const index = buildStructureResolutionOccupantIndex([
+      {
+        ...slotOccupant,
+        target: 'Population',
+        entryId: 'e1',
+        provenanceKind: 'Progression',
+        sourcePathId,
+        slotKey: null,
+        groupId: null,
+        state: 'Indetermine',
+      },
+      {
+        ...slotOccupant,
+        target: 'Group',
+        entryId: 'e1',
+        provenanceKind: 'Progression',
+        sourcePathId,
+        groupId: 'g1',
+        slotKey: null,
+        state: 'Indetermine',
+        releasable: true,
+      },
+    ]);
+    const result = lookupListedResolutionOccupant(index, 'e1');
+    expect(result.occupant?.target).toBe('Group');
+  });
+
+  it('lookupListedResolutionOccupant keeps Population for Tirage placement', () => {
+    const sourcePathId = 'path-qual';
+    const index = buildStructureResolutionOccupantIndex([
+      {
+        ...slotOccupant,
+        target: 'Population',
+        entryId: 'e1',
+        sourcePathId,
+        slotKey: null,
+        groupId: null,
+        state: 'Indetermine',
+      },
+      {
+        ...slotOccupant,
+        target: 'Slot',
+        entryId: 'e1',
+        provenanceKind: 'Tirage',
+        sourcePathId: 'draw-path',
+        slotKey: 'A',
+        state: 'AJour',
+      },
+    ]);
+    const result = lookupListedResolutionOccupant(index, 'e1');
+    expect(result.occupant?.target).toBe('Population');
+    expect(result.multiplePlacements).toBe(false);
+  });
+
+  it('lookupListedResolutionOccupant keeps Population when sourcePathId differs', () => {
+    const index = buildStructureResolutionOccupantIndex([
+      {
+        ...slotOccupant,
+        target: 'Population',
+        entryId: 'e1',
+        sourcePathId: 'pop-path',
+        slotKey: null,
+        groupId: null,
+        state: 'Indetermine',
+      },
+      {
+        ...slotOccupant,
+        target: 'Slot',
+        entryId: 'e1',
+        sourcePathId: 'other-path',
+        slotKey: 'A',
+        state: 'Indetermine',
+        releasable: true,
+      },
+    ]);
+    const result = lookupListedResolutionOccupant(index, 'e1');
+    expect(result.occupant?.target).toBe('Population');
+  });
+
+  it('lookupListedResolutionOccupant flags multiple placements', () => {
+    const sourcePathId = 'path-qual';
+    const index = buildStructureResolutionOccupantIndex([
+      {
+        ...slotOccupant,
+        target: 'Population',
+        entryId: 'e1',
+        sourcePathId,
+        slotKey: null,
+        groupId: null,
+        state: 'Indetermine',
+      },
+      {
+        ...slotOccupant,
+        target: 'Slot',
+        entryId: 'e1',
+        sourcePathId,
+        slotKey: 'A',
+        state: 'Indetermine',
+      },
+      {
+        ...slotOccupant,
+        target: 'Slot',
+        entryId: 'e1',
+        sourcePathId,
+        slotKey: 'B',
+        state: 'Indetermine',
+      },
+    ]);
+    const result = lookupListedResolutionOccupant(index, 'e1');
+    expect(result.multiplePlacements).toBe(true);
+    expect(result.occupant?.target).toBe('Population');
   });
 
   it('detects stale tirage occupants', () => {

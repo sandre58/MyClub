@@ -5,7 +5,47 @@ export type StructureResolutionOccupantIndex = {
   byPopulationEntryId: ReadonlyMap<string, StructureResolutionOccupant>;
   /** Key: `${groupId}:${entryId}` */
   byGroupMember: ReadonlyMap<string, StructureResolutionOccupant>;
+  /** Slot and Group occupants indexed by team entry id (lists, no overwrite). */
+  byPlacementEntryId: ReadonlyMap<string, readonly StructureResolutionOccupant[]>;
 };
+
+export type ListedResolutionOccupantLookup = {
+  occupant: StructureResolutionOccupant | null;
+  multiplePlacements: boolean;
+};
+
+function appendPlacementOccupant(
+  map: Map<string, StructureResolutionOccupant[]>,
+  entryId: string,
+  occupant: StructureResolutionOccupant,
+): void {
+  const key = entryId.trim();
+  if (!key) {
+    return;
+  }
+  const list = map.get(key);
+  if (list) {
+    list.push(occupant);
+  } else {
+    map.set(key, [occupant]);
+  }
+}
+
+function isListedPlacementCandidate(
+  occupant: StructureResolutionOccupant,
+  population: StructureResolutionOccupant | null,
+): boolean {
+  if (
+    occupant.provenanceKind !== 'Qualification' &&
+    occupant.provenanceKind !== 'Progression'
+  ) {
+    return false;
+  }
+  if (population == null) {
+    return false;
+  }
+  return occupant.sourcePathId === population.sourcePathId;
+}
 
 function groupMemberKey(groupId: string, entryId: string): string {
   return `${groupId}:${entryId}`;
@@ -21,6 +61,7 @@ export function buildStructureResolutionOccupantIndex(
   const bySlotKey = new Map<string, StructureResolutionOccupant>();
   const byPopulationEntryId = new Map<string, StructureResolutionOccupant>();
   const byGroupMember = new Map<string, StructureResolutionOccupant>();
+  const byPlacementEntryId = new Map<string, StructureResolutionOccupant[]>();
 
   for (const occupant of occupants) {
     switch (occupant.target) {
@@ -29,6 +70,7 @@ export function buildStructureResolutionOccupantIndex(
         if (slotKey) {
           bySlotKey.set(slotKey, occupant);
         }
+        appendPlacementOccupant(byPlacementEntryId, occupant.entryId, occupant);
         break;
       }
       case 'Group': {
@@ -39,6 +81,7 @@ export function buildStructureResolutionOccupantIndex(
             occupant,
           );
         }
+        appendPlacementOccupant(byPlacementEntryId, occupant.entryId, occupant);
         break;
       }
       case 'Population':
@@ -51,7 +94,12 @@ export function buildStructureResolutionOccupantIndex(
     }
   }
 
-  return { bySlotKey, byPopulationEntryId, byGroupMember };
+  return {
+    bySlotKey,
+    byPopulationEntryId,
+    byGroupMember,
+    byPlacementEntryId,
+  };
 }
 
 /** Unconfirmed place the server says can no longer be confirmed. */
@@ -111,6 +159,26 @@ export function lookupPopulationResolutionOccupant(
     return null;
   }
   return index.byPopulationEntryId.get(entryId.trim()) ?? null;
+}
+
+export function lookupListedResolutionOccupant(
+  index: StructureResolutionOccupantIndex | null | undefined,
+  entryId: string | null | undefined,
+): ListedResolutionOccupantLookup {
+  const population = lookupPopulationResolutionOccupant(index, entryId);
+  if (index == null || !entryId?.trim()) {
+    return { occupant: population, multiplePlacements: false };
+  }
+  const candidates = (
+    index.byPlacementEntryId.get(entryId.trim()) ?? []
+  ).filter((occupant) => isListedPlacementCandidate(occupant, population));
+  if (candidates.length === 1) {
+    return { occupant: candidates[0], multiplePlacements: false };
+  }
+  if (candidates.length > 1) {
+    return { occupant: population, multiplePlacements: true };
+  }
+  return { occupant: population, multiplePlacements: false };
 }
 
 export function lookupGroupResolutionOccupant(
