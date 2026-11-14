@@ -607,7 +607,7 @@ function cupMetrics(density: SchematicDensity): CupMetrics {
   if (density === 'crest') {
     return { slotH: 34, pairGap: 5, groupGap: 12, colGap: 64, slotColW: 112 };
   }
-  return { slotH: 40, pairGap: 6, groupGap: 16, colGap: 76, slotColW: 148 };
+  return { slotH: 48, pairGap: 6, groupGap: 16, colGap: 76, slotColW: 148 };
 }
 
 const CUP_MIN_FIT_SCALE = 0.72;

@@ -172,7 +172,7 @@ describe('RootEntriesRail freshness badge', () => {
     );
   });
 
-  it('keeps gap between provenance chip and freshness badge on the rail', () => {
+  it('renders provenance chip and freshness badge together on the rail', () => {
     const { container } = renderRail(
       [populationFor(sourcePathId), slotOccupant()],
       vi.fn(),
@@ -187,12 +187,6 @@ describe('RootEntriesRail freshness badge', () => {
         ],
       ]),
     );
-
-    const action = container.querySelector(
-      '.structure-freshness-badge__action',
-    );
-    expect(action).toBeTruthy();
-    expect(getComputedStyle(action!).marginInlineStart).toMatch(/^0(px)?$/);
 
     const trailing = container.querySelector(
       '.structure-entries__cell-trailing',

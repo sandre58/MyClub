@@ -841,7 +841,8 @@
   cursor: default;
 }
 
-.structure-entries__cell-trailing :is(.structure-freshness-badge__action, .structure-freshness-badge__glyph) {
+.structure-entries__cell-trailing .structure-freshness-badge__action.ds-btn.ds-icon-button--xs,
+.structure-entries__cell-trailing .structure-freshness-badge__glyph {
   margin-inline-start: 0;
 }
 

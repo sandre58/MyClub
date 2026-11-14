@@ -4,6 +4,7 @@ import {
   findFreshnessActionsRecetteCompetition,
   getStageIdByName,
 } from './hostSeed';
+import { expectCupSlotsTextVisible } from './cupSlotTextFit';
 
 test.use({ ...devices['Pixel 7'] });
 
@@ -53,7 +54,7 @@ test('Structure — zone de tap du badge sans activer la case', async ({
 
   const qualifiers = page.locator('.structure-composition-qualifiers');
   const qualifierBadge = qualifiers.getByRole('button', {
-    name: /Libérer la place/,
+    name: /Nord.*Libérer la place/,
   });
   await expect(qualifierBadge).toHaveCount(1);
   const qualifierChrome = await measureFreshnessChrome(qualifierBadge);
@@ -61,7 +62,66 @@ test('Structure — zone de tap du badge sans activer la case', async ({
   expect(qualifierChrome.hitH).toBeGreaterThanOrEqual(28);
   expectPaintNear20(qualifierChrome);
 
+  const railChromeSample = await page.evaluate(() => {
+    const trailing = document.createElement('span');
+    trailing.className = 'structure-entries__cell-trailing';
+    trailing.innerHTML = `<span class="structure-entries__team-provenance-badge"><span class="structure-entries__team-provenance-badge-inner ds-chip ds-chip--win"><span>P1</span></span></span><button type="button" class="structure-freshness-badge__action ds-btn ds-btn--ghost ds-icon-button ds-icon-button--xs" aria-label="test">×</button>`;
+    trailing.style.cssText = 'position:fixed;left:0;top:0;visibility:hidden;';
+    document.body.appendChild(trailing);
+    const action = trailing.querySelector('.structure-freshness-badge__action');
+    const prov = trailing.querySelector(
+      '.structure-entries__team-provenance-badge',
+    );
+    if (!action || !prov) {
+      trailing.remove();
+      return null;
+    }
+    const marginStart = getComputedStyle(action).marginInlineStart;
+    const gapPx =
+      action.getBoundingClientRect().left - prov.getBoundingClientRect().right;
+    trailing.remove();
+    return { marginStart, gapPx };
+  });
+  expect(railChromeSample).not.toBeNull();
+  expect(railChromeSample!.marginStart).toMatch(/^0(px)?$/);
+  expect(railChromeSample!.gapPx).toBeGreaterThanOrEqual(2);
+
+  const tableauId = await getStageIdByName(request, competition.id, 'Tableau');
+  const barrageId = await getStageIdByName(request, competition.id, 'Barrage');
+
+  await page.goto(
+    `/competitions/${competition.id}/structure?stage=${tableauId}`,
+  );
+  const teteSlot = page
+    .locator('.schematic-cup .schematic-slot')
+    .filter({ hasText: 'Nord' });
+  await expect(
+    teteSlot.getByRole('button', { name: /Périmé.*remplacer/i }),
+  ).toHaveCount(1);
+  await expectCupSlotsTextVisible(page);
+
+  for (const phaseId of [tableauId, barrageId, stageId]) {
+    await page.goto(
+      `/competitions/${competition.id}/structure?stage=${phaseId}`,
+    );
+    await expect(
+      page.locator('.schematic-cup .schematic-slot').first(),
+    ).toBeVisible();
+    await expectCupSlotsTextVisible(page);
+  }
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(
+    `/competitions/${competition.id}/structure?stage=${tableauId}`,
+  );
+  await expect(
+    page.locator('.schematic-cup .schematic-slot').first(),
+  ).toBeVisible();
+  await expectCupSlotsTextVisible(page);
+  await page.setViewportSize({ width: 412, height: 915 });
+
   const slot = page.locator('.schematic-slot').filter({ hasText: 'Nord' });
+  await page.goto(`/competitions/${competition.id}/structure?stage=${stageId}`);
   await expect(
     slot.locator('.schematic-slot__name-row .schematic-slot__freshness'),
   ).toBeVisible();
@@ -78,27 +138,4 @@ test('Structure — zone de tap du badge sans activer la case', async ({
   await expect(
     page.getByRole('dialog', { name: /Placement manuel/ }),
   ).toHaveCount(0);
-
-  const tableauId = await getStageIdByName(request, competition.id, 'Tableau');
-  await page.goto(
-    `/competitions/${competition.id}/structure?stage=${tableauId}`,
-  );
-  const cupSlot = page
-    .locator('.schematic-cup .schematic-slot')
-    .filter({ has: page.locator('.schematic-slot__address') })
-    .first();
-  await expect(cupSlot).toBeVisible();
-  const addressFitsSlot = await cupSlot.evaluate((el) => {
-    const address = el.querySelector('.schematic-slot__address');
-    if (!address) {
-      return true;
-    }
-    const slotRect = el.getBoundingClientRect();
-    const addressRect = address.getBoundingClientRect();
-    return (
-      addressRect.top >= slotRect.top - 1 &&
-      addressRect.bottom <= slotRect.bottom + 1
-    );
-  });
-  expect(addressFitsSlot).toBe(true);
 });
