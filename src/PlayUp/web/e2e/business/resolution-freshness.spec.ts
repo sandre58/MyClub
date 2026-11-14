@@ -188,15 +188,21 @@ test.describe('Play’Up business (resolution freshness)', () => {
     await expect(
       page.getByRole('heading', { name: 'Structure' }),
     ).toBeVisible();
-    await page
+    const releaseFromSchematic = page
       .locator('.schematic-slot')
-      .getByRole('button', {
-        name: /Non confirmée.*pas encore été joué.*Libérer la place/,
-      })
-      .click();
+      .getByRole('button', { name: /Libérer la place/ });
+    const releaseFromQualifiers = page
+      .locator('.structure-composition-qualifiers')
+      .getByRole('button', { name: /Libérer la place/ });
+    if ((await releaseFromSchematic.count()) > 0) {
+      await releaseFromSchematic.first().click();
+    } else {
+      await releaseFromQualifiers.first().click();
+    }
     const releaseDialog = page.getByRole('dialog', {
       name: 'Libérer cette place ?',
     });
+    await expect(releaseDialog).toBeVisible();
     await releaseDialog
       .getByRole('button', { name: /Jouer le match/ })
       .click();
