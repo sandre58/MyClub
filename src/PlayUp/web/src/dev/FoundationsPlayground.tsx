@@ -735,7 +735,7 @@ export function FoundationsPlayground() {
                   className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--xs"
                   aria-label="Ghost"
                 >
-                  <PencilIcon size="sm" />
+                  <PencilIcon size="xs" />
                 </button>
               </Tooltip>
               <Tooltip content="Attention">
@@ -744,7 +744,7 @@ export function FoundationsPlayground() {
                   className="ds-btn ds-btn--attention ds-icon-button ds-icon-button--xs"
                   aria-label="Attention"
                 >
-                  <PencilIcon size="sm" />
+                  <PencilIcon size="xs" />
                 </button>
               </Tooltip>
               <Tooltip content="Destructive">
@@ -753,7 +753,7 @@ export function FoundationsPlayground() {
                   className="ds-btn ds-btn--destructive ds-icon-button ds-icon-button--xs"
                   aria-label="Destructive"
                 >
-                  <TrashIcon size="sm" />
+                  <TrashIcon size="xs" />
                 </button>
               </Tooltip>
             </div>

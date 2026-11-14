@@ -335,7 +335,7 @@
   pointer-events: auto;
 }
 
-.schematic-slot__freshness .structure-freshness-badge__action,
+.schematic-slot__freshness .structure-freshness-badge__action.ds-btn.ds-icon-button--xs,
 .schematic-slot__freshness .structure-freshness-badge__glyph {
   padding: 0.125rem;
   margin: -0.125rem;

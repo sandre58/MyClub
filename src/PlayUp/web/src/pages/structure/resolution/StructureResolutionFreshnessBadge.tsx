@@ -42,14 +42,14 @@ function stateIcon(
   className: string,
 ): ReactNode {
   if (occupant.state === 'Perime') {
-    return <RefreshIcon size="sm" className={className} aria-hidden="true" />;
+    return <RefreshIcon size="xs" className={className} aria-hidden="true" />;
   }
   if (isDefinitivelyUnconfirmed(occupant)) {
     return (
-      <UnconfirmableIcon size="sm" className={className} aria-hidden="true" />
+      <UnconfirmableIcon size="xs" className={className} aria-hidden="true" />
     );
   }
-  return <HourglassIcon size="sm" className={className} aria-hidden="true" />;
+  return <HourglassIcon size="xs" className={className} aria-hidden="true" />;
 }
 
 function controlIcon(
@@ -58,10 +58,10 @@ function controlIcon(
   className: string,
 ): ReactNode {
   if (control === 'release') {
-    return <UnlockIcon size="sm" className={className} aria-hidden="true" />;
+    return <UnlockIcon size="xs" className={className} aria-hidden="true" />;
   }
   if (control === 'replace') {
-    return <RefreshIcon size="sm" className={className} aria-hidden="true" />;
+    return <RefreshIcon size="xs" className={className} aria-hidden="true" />;
   }
   return stateIcon(occupant, className);
 }

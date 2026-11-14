@@ -1,4 +1,4 @@
-import { expect, test, devices } from '@playwright/test';
+import { expect, test, devices, type Locator } from '@playwright/test';
 
 import {
   findFreshnessActionsRecetteCompetition,
@@ -6,6 +6,37 @@ import {
 } from './hostSeed';
 
 test.use({ ...devices['Pixel 7'] });
+
+type FreshnessChromeSize = {
+  hitW: number;
+  hitH: number;
+  paintW: number;
+  paintH: number;
+};
+
+async function measureFreshnessChrome(
+  control: Locator,
+): Promise<FreshnessChromeSize> {
+  return control.evaluate((el) => {
+    const cs = getComputedStyle(el);
+    const padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+    const padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+    const hit = el.getBoundingClientRect();
+    return {
+      hitW: hit.width,
+      hitH: hit.height,
+      paintW: hit.width - padX,
+      paintH: hit.height - padY,
+    };
+  });
+}
+
+function expectPaintNear20(size: FreshnessChromeSize) {
+  expect(size.paintW).toBeGreaterThanOrEqual(19);
+  expect(size.paintW).toBeLessThanOrEqual(21);
+  expect(size.paintH).toBeGreaterThanOrEqual(19);
+  expect(size.paintH).toBeLessThanOrEqual(21);
+}
 
 /**
  * Host + PostgreSQL — tactile hit target for freshness badges.
@@ -22,35 +53,23 @@ test('Structure — zone de tap du badge sans activer la case', async ({
 
   const qualifiers = page.locator('.structure-composition-qualifiers');
   const qualifierBadge = qualifiers.getByRole('button', {
-    name: /Nord.*Libérer la place/,
+    name: /Libérer la place/,
   });
   await expect(qualifierBadge).toHaveCount(1);
-  const qualifierHitBox = await qualifierBadge.boundingBox();
-  expect(qualifierHitBox).not.toBeNull();
-  expect(qualifierHitBox!.width).toBeGreaterThanOrEqual(28);
-  expect(qualifierHitBox!.height).toBeGreaterThanOrEqual(28);
-
-  const qualifierVisual = qualifierBadge.locator('svg').first();
-  const qualifierVisualBox = await qualifierVisual.boundingBox();
-  expect(qualifierVisualBox).not.toBeNull();
-  expect(qualifierVisualBox!.width).toBeLessThanOrEqual(20);
-  expect(qualifierVisualBox!.height).toBeLessThanOrEqual(20);
+  const qualifierChrome = await measureFreshnessChrome(qualifierBadge);
+  expect(qualifierChrome.hitW).toBeGreaterThanOrEqual(28);
+  expect(qualifierChrome.hitH).toBeGreaterThanOrEqual(28);
+  expectPaintNear20(qualifierChrome);
 
   const slot = page.locator('.schematic-slot').filter({ hasText: 'Nord' });
   await expect(
     slot.locator('.schematic-slot__name-row .schematic-slot__freshness'),
   ).toBeVisible();
   const slotBadge = slot.getByRole('button', { name: /Libérer la place/ });
-  const slotHitBox = await slotBadge.boundingBox();
-  expect(slotHitBox).not.toBeNull();
-  expect(slotHitBox!.width).toBeGreaterThanOrEqual(24);
-  expect(slotHitBox!.height).toBeGreaterThanOrEqual(24);
-
-  const slotVisual = slotBadge.locator('svg').first();
-  const slotVisualBox = await slotVisual.boundingBox();
-  expect(slotVisualBox).not.toBeNull();
-  expect(slotVisualBox!.width).toBeLessThanOrEqual(20);
-  expect(slotVisualBox!.height).toBeLessThanOrEqual(20);
+  const slotChrome = await measureFreshnessChrome(slotBadge);
+  expect(slotChrome.hitW).toBeGreaterThanOrEqual(24);
+  expect(slotChrome.hitH).toBeGreaterThanOrEqual(24);
+  expectPaintNear20(slotChrome);
 
   await slotBadge.tap();
   await expect(

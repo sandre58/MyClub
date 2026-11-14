@@ -87,6 +87,10 @@ function populationFor(sourcePathIdValue: string): StructureResolutionOccupant {
 function renderRail(
   occupants: StructureResolutionOccupant[],
   requestRelease = vi.fn(),
+  entryProvenanceByEntryId?: Map<
+    string,
+    { full: string; badge: string; chipTone?: 'win' | 'loss' | 'soft' }
+  >,
 ) {
   const stage = {
     ...baseStage,
@@ -103,6 +107,7 @@ function renderRail(
           schematicReady={true}
           compositionTileMode="exploitation"
           variant="composition-band"
+          entryProvenanceByEntryId={entryProvenanceByEntryId}
         />
       </ResolutionReleaseContext.Provider>
     </MemoryRouter>,
@@ -165,6 +170,37 @@ describe('RootEntriesRail freshness badge', () => {
     expect(requestReplace).toHaveBeenCalledWith(
       expect.objectContaining({ target: 'Slot', slotKey: 'Tete' }),
     );
+  });
+
+  it('keeps gap between provenance chip and freshness badge on the rail', () => {
+    const { container } = renderRail(
+      [populationFor(sourcePathId), slotOccupant()],
+      vi.fn(),
+      new Map([
+        [
+          'e1',
+          {
+            full: 'Barrage — Vainqueur P1',
+            badge: 'Vainqueur P1',
+            chipTone: 'win',
+          },
+        ],
+      ]),
+    );
+
+    const action = container.querySelector(
+      '.structure-freshness-badge__action',
+    );
+    expect(action).toBeTruthy();
+    expect(getComputedStyle(action!).marginInlineStart).toMatch(/^0(px)?$/);
+
+    const trailing = container.querySelector(
+      '.structure-entries__cell-trailing',
+    );
+    expect(
+      trailing?.querySelector('.structure-entries__team-provenance-badge'),
+    ).toBeTruthy();
+    expect(trailing?.querySelector('.structure-freshness-badge')).toBeTruthy();
   });
 
   it('releases via Group when the team is placed in poules', async () => {

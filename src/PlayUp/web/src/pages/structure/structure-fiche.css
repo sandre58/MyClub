@@ -813,14 +813,16 @@
   margin: -0.25rem;
   color: var(--color-attention);
   background: color-mix(in srgb, var(--color-attention) 10%, var(--color-canvas));
+  background-clip: content-box;
   border: 0;
   border-radius: var(--radius-control);
   text-decoration: none;
   cursor: pointer;
 }
 
-.structure-freshness-badge__action:hover:not(:disabled) {
+.structure-freshness-badge__action.ds-btn.ds-icon-button--xs:hover:not(:disabled) {
   background: color-mix(in srgb, var(--color-attention) 16%, var(--color-canvas));
+  background-clip: content-box;
 }
 
 .structure-freshness-badge__glyph {
@@ -839,15 +841,13 @@
   cursor: default;
 }
 
+.structure-entries__cell-trailing :is(.structure-freshness-badge__action, .structure-freshness-badge__glyph) {
+  margin-inline-start: 0;
+}
+
 .structure-freshness-badge__icon {
   display: inline-flex;
   flex: none;
-}
-
-.structure-freshness-badge__glyph .structure-freshness-badge__icon svg,
-.structure-freshness-badge__glyph svg {
-  width: var(--icon-size-sm);
-  height: var(--icon-size-sm);
 }
 
 .structure-definitive-release {
