@@ -260,6 +260,7 @@ function SlotBox({
       <StructureResolutionFreshnessBadge
         occupant={slotResolutionOccupant}
         entryName={resolvedName}
+        manualPlacementHint={canManualPlace}
         onReplace={cascade?.requestReplace}
         onRelease={release?.requestRelease}
       />

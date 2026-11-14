@@ -8,6 +8,7 @@ import {
   Clipboard,
   ClockPlus,
   Copy,
+  CornerLeftUp,
   Dices,
   Equal,
   Eye,
@@ -353,6 +354,11 @@ export function PlayIcon({ size, ...props }: ContentIconProps) {
 /** Revert / undo a workflow step. */
 export function UndoIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Undo2} size={size} {...props} />;
+}
+
+/** Go to the upstream / source phase (freshness upstream link). */
+export function UpstreamIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={CornerLeftUp} size={size} {...props} />;
 }
 
 /** Step not yet reached — dashed circle. */

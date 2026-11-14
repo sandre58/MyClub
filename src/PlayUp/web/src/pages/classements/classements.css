@@ -22,6 +22,11 @@
   gap: var(--space-16);
 }
 
+.classements-panel--focus {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
 .page--classements .ds-panel {
   display: flex;
   flex-direction: column;

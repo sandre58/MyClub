@@ -854,44 +854,37 @@
         "AmontPerime": "Upstream phase stale"
       },
       "upstreamLink": "Go to the upstream phase",
+      "upstreamPhaseLink": "Open the upstream phase",
       "unconfirmedSentence": "{{team}} is no longer confirmed — {{detail}}",
       "definitive": "Can no longer be confirmed",
       "indeterminacy": {
         "MatchNonJoue": {
-          "cause": "The match has not been played",
           "clause": "the match has not been played",
           "clauseNamed": "the match {{match}} has not been played",
           "action": "Play the match",
           "actionNamed": "Play the match {{match}}"
         },
         "Egalite": {
-          "cause": "The score does not separate the teams",
           "clause": "the score does not separate the teams",
           "action": "Break the tie"
         },
         "SourceAbsente": {
-          "cause": "The source phase or rule cannot be found",
           "clause": "the source phase or rule cannot be found"
         },
         "SelectionVide": {
-          "cause": "The standing does not designate a team",
           "clause": "the standing does not designate a team"
         },
         "Autre": {
-          "cause": "The selection cannot be calculated",
           "clause": "the selection cannot be calculated"
         },
         "EgaliteClassement": {
-          "cause": "Several teams are tied in the standing",
           "clause": "several teams are tied in the standing",
           "action": "Open the standing"
         },
         "ConditionNonRemplie": {
-          "cause": "The team no longer meets the qualification condition",
           "clause": "it no longer meets the qualification condition"
         },
         "ConfigurationInvalide": {
-          "cause": "The source phase setup is incomplete",
           "clause": "the source phase setup is incomplete",
           "action": "Open the rules"
         }

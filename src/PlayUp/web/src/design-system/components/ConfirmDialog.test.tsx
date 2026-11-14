@@ -186,6 +186,38 @@ describe('ConfirmDialog', () => {
     expect(screen.queryByRole('button', { name: 'Aller' })).toBeNull();
   });
 
+  it('keeps footer buttons inside the dialog panel when the secondary label is long', () => {
+    render(
+      <div className="ds-root" data-font="plex" data-palette="slate">
+        <ConfirmDialog
+          open
+          title="Libérer cette place ?"
+          message="Le match Nord – Est n'a pas encore été joué : cette place n'est pas confirmée."
+          confirmLabel="Libérer"
+          cancelLabel="Annuler"
+          secondaryLabel="Jouer le match Nord – Est avec un libellé volontairement long"
+          onSecondary={() => undefined}
+          onCancel={() => undefined}
+          onConfirm={() => undefined}
+        />
+      </div>,
+    );
+
+    const dialog = screen.getByRole('dialog', {
+      name: 'Libérer cette place ?',
+    });
+    const panel = dialog;
+    const panelRect = panel.getBoundingClientRect();
+    for (const name of ['Annuler', 'Libérer', /Jouer le match/]) {
+      const button = within(dialog).getByRole('button', { name });
+      const rect = button.getBoundingClientRect();
+      expect(rect.left).toBeGreaterThanOrEqual(panelRect.left - 1);
+      expect(rect.top).toBeGreaterThanOrEqual(panelRect.top - 1);
+      expect(rect.right).toBeLessThanOrEqual(panelRect.right + 1);
+      expect(rect.bottom).toBeLessThanOrEqual(panelRect.bottom + 1);
+    }
+  });
+
   it('disables the secondary action while confirm is pending', () => {
     render(
       <div className="ds-root" data-font="plex" data-palette="slate">

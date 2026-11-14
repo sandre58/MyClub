@@ -239,9 +239,8 @@ describe('StructureResolutionFreshnessBadge', () => {
     const badge = screen.getByRole('link', {
       name: /Périmé.*Phase amont périmée.*Aller à la phase amont/,
     });
-    expect(
-      badge.querySelector('.structure-freshness-badge__icon'),
-    ).not.toBeNull();
+    expect(badge.querySelector('.lucide-corner-left-up')).not.toBeNull();
+    expect(badge.querySelector('.lucide-chevron-right')).toBeNull();
     await user.click(badge);
     expect(screen.getByTestId('navigation-spy')).toHaveAttribute(
       'data-path',
@@ -265,12 +264,65 @@ describe('StructureResolutionFreshnessBadge', () => {
         onReplace={vi.fn()}
       />,
     );
+    const inert = screen.getByRole('img', {
+      name: /Périmé.*ne peut pas être remplacée automatiquement/i,
+    });
+    expect(inert.getAttribute('aria-label')).not.toMatch(/placement manuel/i);
+    expect(inert).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Remplacer/ })).toBeNull();
+  });
+
+  it('shows the manual-placement hint on schematic inert Périmé badges', () => {
+    renderWithI18n(
+      <StructureResolutionFreshnessBadge
+        manualPlacementHint
+        occupant={{
+          target: 'Slot',
+          entryId: 'e1',
+          provenanceKind: 'Qualification',
+          sourcePathId: 'p1',
+          state: 'Perime',
+          slotKey: 'A',
+          stalenessCause: 'RegleQualification',
+          cascadeReplaceable: false,
+        }}
+        onReplace={vi.fn()}
+      />,
+    );
     expect(
       screen.getByRole('img', {
-        name: /Périmé.*ne peut pas être remplacée automatiquement.*placement manuel reste possible/i,
+        name: /Périmé.*placement manuel reste possible/i,
       }),
     ).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Remplacer/ })).toBeNull();
+  });
+
+  it('uses ChevronRight on destination navigate controls', () => {
+    renderWithI18n(
+      <MemoryRouter initialEntries={['/competitions/comp/structure']}>
+        <Routes>
+          <Route
+            path="/competitions/:competitionId/structure"
+            element={
+              <StructureResolutionFreshnessBadge
+                occupant={{
+                  target: 'Slot',
+                  entryId: 'e1',
+                  provenanceKind: 'Progression',
+                  sourcePathId: 'p1',
+                  state: 'Indetermine',
+                  indeterminacyCause: 'EgaliteClassement',
+                  upstreamStageId: 'poules',
+                  cascadeReplaceable: false,
+                }}
+              />
+            }
+          />
+        </Routes>
+      </MemoryRouter>,
+    );
+    const link = screen.getByRole('link', { name: /Voir le classement/ });
+    expect(link.querySelector('.lucide-chevron-right')).not.toBeNull();
+    expect(link.querySelector('.lucide-corner-left-up')).toBeNull();
   });
 
   it('navigates to the match when an unplayed match is clicked', async () => {
@@ -306,7 +358,7 @@ describe('StructureResolutionFreshnessBadge', () => {
 
     await user.click(
       screen.getByRole('link', {
-        name: /Non confirmée.*le match n'est pas joué.*Jouer le match Nord/,
+        name: /Non confirmée.*match Nord – Est n'est pas joué.*Jouer le match Nord/,
       }),
     );
     expect(screen.getByTestId('navigation-spy')).toHaveAttribute(
@@ -340,7 +392,7 @@ describe('StructureResolutionFreshnessBadge', () => {
       </MemoryRouter>,
     );
     const badge = screen.getByRole('img', {
-      name: /Non confirmée.*la sélection ne peut pas être calculée/,
+      name: /Non confirmée.*sélection ne peut pas être calculée/i,
     });
     expect(badge).toHaveClass('structure-freshness-badge__glyph');
     expect(

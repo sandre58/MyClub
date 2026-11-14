@@ -45,6 +45,7 @@ import {
   TrashIcon,
   HourglassIcon,
   RefreshIcon,
+  UpstreamIcon,
   UnconfirmableIcon,
 } from '../design-system/icons/contentIcons';
 import './foundations-playground.css';
@@ -947,6 +948,7 @@ export function FoundationsPlayground() {
           <p className="ds-label">Resolution freshness</p>
           <div className="ds-icon-grid">
             <RefreshIcon />
+            <UpstreamIcon />
             <HourglassIcon />
             <UnconfirmableIcon />
           </div>

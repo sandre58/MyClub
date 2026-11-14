@@ -202,6 +202,37 @@ describe('ClassementsPage', () => {
     vi.mocked(fetchStructureView).mockResolvedValue(structureView());
   });
 
+  it('highlights the standings panel when a stage query parameter is present', async () => {
+    vi.mocked(fetchConsultation).mockResolvedValue(consultationView());
+    render(
+      <QueryClientProvider
+        client={
+          new QueryClient({
+            defaultOptions: { queries: { retry: false } },
+          })
+        }
+      >
+        <MemoryRouter
+          initialEntries={[
+            `/competitions/${competitionId}/classements?stage=${stageId}`,
+          ]}
+        >
+          <Routes>
+            <Route
+              path="/competitions/:competitionId/classements"
+              element={<ClassementsPage />}
+            />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    await screen.findByTestId('standings-tables');
+    const panel = document.getElementById(`standings-panel-${stageId}:Overall`);
+    expect(panel).not.toBeNull();
+    expect(panel).toHaveClass('classements-panel--focus');
+  });
+
   it('shows loading while consultation is pending', () => {
     vi.mocked(fetchConsultation).mockReturnValue(new Promise(() => {}));
 

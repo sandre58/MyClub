@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
 import { fetchConsultation, fetchStructureView } from '../../api';
 import { StatChipPanel } from '../../design-system/components/Chip';
 import {
@@ -59,6 +60,8 @@ export function ClassementsPage() {
 
 function ClassementsView({ data }: { data: ConsultationView }) {
   const { t } = useTranslation('classements');
+  const [searchParams] = useSearchParams();
+  const focusStageId = searchParams.get('stage')?.trim() || null;
   const structureHref = `/competitions/${data.competitionId}/structure`;
 
   const orgQuery = useQuery({
@@ -72,7 +75,10 @@ function ClassementsView({ data }: { data: ConsultationView }) {
 
       <ContextBand data={data} />
 
-      <StandingsSection standings={data.standings} />
+      <StandingsSection
+        standings={data.standings}
+        focusStageId={focusStageId}
+      />
 
       <div className="ds-grid-2 ds-grid-2--major classements__bottom">
         <LastMatchdayPanel
@@ -116,8 +122,10 @@ function ContextBand({ data }: { data: ConsultationView }) {
 
 function StandingsSection({
   standings,
+  focusStageId,
 }: {
   standings: ConsultationStandingsSection;
+  focusStageId: string | null;
 }) {
   const { t } = useTranslation('classements');
 
@@ -156,17 +164,73 @@ function StandingsSection({
   return (
     <div className="classements__tables" data-testid="standings-tables">
       {standings.tables.map((table) => (
-        <StandingTableBlock key={tableKey(table)} table={table} />
+        <StandingTableBlock
+          key={tableKey(table)}
+          table={table}
+          highlight={
+            focusStageId != null &&
+            focusStageId.length > 0 &&
+            table.stageId === focusStageId
+          }
+        />
       ))}
+      {focusStageId ? (
+        <StandingsStageFocus
+          focusStageId={focusStageId}
+          tableKeys={standings.tables.map((table) => tableKey(table))}
+        />
+      ) : null}
     </div>
   );
+}
+
+function StandingsStageFocus({
+  focusStageId,
+  tableKeys,
+}: {
+  focusStageId: string;
+  tableKeys: string[];
+}) {
+  const didFocus = useRef(false);
+
+  useEffect(() => {
+    if (didFocus.current) {
+      return;
+    }
+    const matchKey = tableKeys.find((key) =>
+      key.startsWith(`${focusStageId}:`),
+    );
+    if (!matchKey) {
+      return;
+    }
+    const element = document.getElementById(`standings-panel-${matchKey}`);
+    if (!element) {
+      return;
+    }
+    didFocus.current = true;
+    element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    element.classList.add('classements-panel--focus');
+    element.focus({ preventScroll: true });
+    const timeout = window.setTimeout(() => {
+      element.classList.remove('classements-panel--focus');
+    }, 2_500);
+    return () => window.clearTimeout(timeout);
+  }, [focusStageId, tableKeys]);
+
+  return null;
 }
 
 function tableKey(table: ConsultationStandingTable): string {
   return `${table.stageId}:${table.groupId ?? table.scope}`;
 }
 
-function StandingTableBlock({ table }: { table: ConsultationStandingTable }) {
+function StandingTableBlock({
+  table,
+  highlight = false,
+}: {
+  table: ConsultationStandingTable;
+  highlight?: boolean;
+}) {
   const { t } = useTranslation('classements');
   const heading =
     table.scope === 'Group' && table.groupName
@@ -175,10 +239,15 @@ function StandingTableBlock({ table }: { table: ConsultationStandingTable }) {
         ? t('table.overall')
         : t('table.stage', { name: table.stageName });
 
+  const panelId = tableKey(table);
   return (
     <section
-      className="ds-panel"
-      aria-labelledby={`standings-${tableKey(table)}`}
+      id={`standings-panel-${panelId}`}
+      tabIndex={-1}
+      className={['ds-panel', highlight ? 'classements-panel--focus' : '']
+        .filter(Boolean)
+        .join(' ')}
+      aria-labelledby={`standings-${panelId}`}
     >
       <PanelHead
         id={`standings-${tableKey(table)}`}

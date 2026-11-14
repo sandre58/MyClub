@@ -215,9 +215,7 @@ describe('StructureResolutionReleaseAction', () => {
     });
 
     await user.click(screen.getByRole('button', { name: 'open' }));
-    await user.click(
-      screen.getByRole('button', { name: 'Jouer le match Nord – Est' }),
-    );
+    await user.click(screen.getByRole('button', { name: /^Jouer le match$/ }));
 
     expect(confirmResolutionRelease).not.toHaveBeenCalled();
     expect(navigate).toHaveBeenCalledWith(`/matches/${matchId}`);

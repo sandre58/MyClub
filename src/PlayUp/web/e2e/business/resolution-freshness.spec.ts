@@ -1,9 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
-
-function playUpE2eArtifactsDir(): string | null {
-  const dir = process.env.PLAYUP_E2E_ARTIFACTS?.trim();
-  return dir && dir.length > 0 ? dir : null;
-}
+import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import {
   correctFinishedMatchResult,
@@ -125,21 +120,6 @@ test.describe('Play’Up business (resolution freshness)', () => {
       }),
     ).toBeVisible();
     await expect(place.getByRole('button', { name: /Périmé/ })).toHaveCount(0);
-    const artifactDir = playUpE2eArtifactsDir();
-    if (artifactDir) {
-      await place
-        .getByRole('img', {
-          name: /Périmé.*ne peut pas être remplacée automatiquement/i,
-        })
-        .hover();
-      await page.waitForTimeout(450);
-      await page.screenshot({
-        path: `${artifactDir}/recette3-perime-non-remplacable.png`,
-      });
-      await page.screenshot({
-        path: `${artifactDir}/recette3-tooltip-separator-perime.png`,
-      });
-    }
     await place.getByRole('button', { name: 'Rejouable', exact: true }).click();
     await expect(
       page.getByRole('dialog', { name: /Placement manuel/ }),
@@ -169,46 +149,6 @@ test.describe('Play’Up business (resolution freshness)', () => {
     await expect(cascadeDialog).toBeVisible();
   });
 
-  test('Structure — capture toast 409 cascade preview', async ({
-    page,
-    request,
-  }) => {
-    const artifactDir = playUpE2eArtifactsDir();
-    test.skip(!artifactDir, 'Set PLAYUP_E2E_ARTIFACTS to capture screenshots.');
-
-    const competition = await findFreshnessActionsRecetteCompetition(request);
-    const stageId = await getStageIdByName(request, competition.id, 'Tableau');
-    await page.goto(
-      `/competitions/${competition.id}/structure?stage=${stageId}`,
-    );
-    await expect(
-      page.getByRole('heading', { name: 'Structure' }),
-    ).toBeVisible();
-    const replace = page
-      .locator('.schematic-slot')
-      .getByRole('button', { name: /Périmé/ })
-      .first();
-    await expect(replace).toBeVisible({ timeout: 30_000 });
-    await page.route('**/resolution/cascade-preview', async (route) => {
-      await route.fulfill({
-        status: 409,
-        contentType: 'application/problem+json',
-        body: JSON.stringify({
-          type: 'Application.CascadeReplaceDirectAssignment',
-          title: 'Direct assignment',
-          status: 409,
-        }),
-      });
-    });
-    await replace.click();
-    const toast = page.locator('.ds-toast');
-    await expect(toast.first()).toBeVisible({ timeout: 15_000 });
-    await page.waitForTimeout(300);
-    await page.screenshot({
-      path: `${artifactDir}/recette3-toast-409.png`,
-    });
-  });
-
   test('Structure — clic Amont périmé ouvre la phase amont', async ({
     page,
     request,
@@ -227,12 +167,11 @@ test.describe('Play’Up business (resolution freshness)', () => {
     await expect(
       page.getByRole('heading', { name: 'Structure' }),
     ).toBeVisible();
-    await page
-      .locator('.schematic-slot')
-      .getByRole('link', {
-        name: /Périmé.*Phase amont périmée.*Aller à la phase amont/,
-      })
-      .click();
+    const upstream = page.locator('.schematic-slot').getByRole('link', {
+      name: /Périmé.*Phase amont périmée.*Aller à la phase amont/,
+    });
+    await expect(upstream.locator('.lucide-corner-left-up')).toBeVisible();
+    await upstream.click();
     await expect(page).toHaveURL(new RegExp(`stage=${tableauId}`));
   });
 
@@ -260,13 +199,10 @@ test.describe('Play’Up business (resolution freshness)', () => {
       name: 'Libérer cette place ?',
     });
     await expect(releaseDialog).toBeVisible();
-    const artifactDir = playUpE2eArtifactsDir();
-    if (artifactDir) {
-      await releaseDialog.screenshot({
-        path: `${artifactDir}/recette3-release-dialog-secondary.png`,
-      });
-    }
-    await releaseDialog.getByRole('button', { name: /Jouer le match/ }).click();
+    await expectFooterButtonsInsidePanel(releaseDialog);
+    await releaseDialog
+      .getByRole('button', { name: 'Jouer le match', exact: true })
+      .click();
     await expect(page).toHaveURL(/\/matches\/[0-9a-f-]+/);
     await expect(page.getByRole('heading').first()).toBeVisible();
   });
@@ -282,38 +218,23 @@ test.describe('Play’Up business (resolution freshness)', () => {
     await releasePlace(page, generated, true);
   });
 
-  test('Structure — dialog égalité pour captures recette', async ({
+  test('Structure — focus classement amont via ?stage=', async ({
     page,
     request,
   }) => {
-    const artifactDir = playUpE2eArtifactsDir();
-    test.skip(!artifactDir, 'Set PLAYUP_E2E_ARTIFACTS to capture screenshots.');
-
     const competition = await findFreshnessActionsRecetteCompetition(request);
-    const stageId = await getStageIdByName(
-      request,
-      competition.id,
-      'A départager',
-    );
+    const poulesId = await getStageIdByName(request, competition.id, 'Poules');
+
     await page.goto(
-      `/competitions/${competition.id}/structure?stage=${stageId}`,
+      `/competitions/${competition.id}/classements?stage=${poulesId}`,
     );
     await expect(
-      page.getByRole('heading', { name: 'Structure' }),
+      page.getByRole('heading', { name: 'Classements' }),
     ).toBeVisible();
-    await page
-      .locator('.schematic-slot')
-      .filter({ hasText: 'Nord' })
-      .getByRole('button', { name: /Libérer la place/ })
-      .click();
-    const dialog = page.getByRole('dialog', {
-      name: 'Libérer cette place ?',
-    });
-    await expect(dialog).toBeVisible();
-    await dialog.screenshot({
-      path: `${artifactDir}/recette3-release-dialog-egalite.png`,
-    });
-    await dialog.getByRole('button', { name: 'Annuler' }).click();
+    await expect(page.getByTestId('standings-tables')).toBeVisible();
+    await expect(
+      page.locator(`[id="standings-panel-${poulesId}:Overall"]`),
+    ).toHaveClass(/classements-panel--focus/);
   });
 
   test('Structure — libération depuis Qualifiés alignée sur la schématique', async ({
@@ -429,4 +350,27 @@ async function expectAttentionRow(
     await expect(row).toHaveCount(0);
   }
   await page.getByRole('button', { name: 'Fermer À traiter' }).click();
+}
+
+async function expectFooterButtonsInsidePanel(dialog: Locator) {
+  const panel = dialog;
+  const panelBox = await panel.boundingBox();
+  expect(panelBox).not.toBeNull();
+  for (const name of [/Annuler/, /Jouer le match/, /Libérer/]) {
+    const button = panel.getByRole('button', { name });
+    await expect(button).toBeVisible();
+    const box = await button.boundingBox();
+    expect(box).not.toBeNull();
+    if (!panelBox || !box) {
+      continue;
+    }
+    expect(box.x).toBeGreaterThanOrEqual(panelBox.x - 1);
+    expect(box.y).toBeGreaterThanOrEqual(panelBox.y - 1);
+    expect(box.x + box.width).toBeLessThanOrEqual(
+      panelBox.x + panelBox.width + 1,
+    );
+    expect(box.y + box.height).toBeLessThanOrEqual(
+      panelBox.y + panelBox.height + 1,
+    );
+  }
 }

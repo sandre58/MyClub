@@ -8,6 +8,7 @@ import {
   RefreshIcon,
   UnconfirmableIcon,
   UnlockIcon,
+  UpstreamIcon,
 } from '../../../design-system/icons/contentIcons';
 import { ChevronRightIcon } from '../../../design-system/icons/shellIcons';
 import type { StructureResolutionOccupant } from '../../../types';
@@ -15,6 +16,7 @@ import {
   freshnessAction,
   indeterminacyExplanation,
   type FreshnessAction,
+  type FreshnessNavigateIcon,
 } from './freshnessGuidance';
 import {
   isDefinitivelyUnconfirmed,
@@ -36,7 +38,17 @@ type StructureResolutionFreshnessBadgeProps = {
   onRelease?: (occupant: StructureResolutionOccupant) => void;
   /** Stored team, used to name who is no longer confirmed. */
   entryName?: string | null;
+  /** Show the manual-placement hint on inert Périmé cascade badges (schematic slots only). */
+  manualPlacementHint?: boolean;
 };
+
+function capitalizeClause(clause: string): string {
+  const trimmed = clause.trim();
+  if (!trimmed) {
+    return trimmed;
+  }
+  return trimmed.charAt(0).toLocaleUpperCase('fr-FR') + trimmed.slice(1);
+}
 
 function stateIcon(
   occupant: StructureResolutionOccupant,
@@ -56,6 +68,7 @@ function stateIcon(
 function controlIcon(
   occupant: StructureResolutionOccupant,
   control: FreshnessControl,
+  navigateIcon: FreshnessNavigateIcon | undefined,
   className: string,
 ): ReactNode {
   if (control === 'release') {
@@ -65,7 +78,9 @@ function controlIcon(
     return <RefreshIcon size="xs" className={className} aria-hidden="true" />;
   }
   if (control === 'navigate') {
-    return (
+    return navigateIcon === 'upstream' ? (
+      <UpstreamIcon size="xs" className={className} aria-hidden="true" />
+    ) : (
       <ChevronRightIcon size="xs" className={className} aria-hidden="true" />
     );
   }
@@ -118,6 +133,7 @@ function FreshnessBadgeBody({
   onReplace,
   onRelease,
   entryName,
+  manualPlacementHint = false,
   competitionId,
   linked,
 }: StructureResolutionFreshnessBadgeProps & {
@@ -154,13 +170,20 @@ function FreshnessBadgeBody({
     : null;
   const indeterminacyClause =
     occupant.state === 'Indetermine' && occupant.indeterminacyCause && !sentence
-      ? t(
-          `resolution.freshness.indeterminacy.${occupant.indeterminacyCause}.clause` as const,
-          occupant.indeterminacyCause === 'MatchNonJoue' &&
-            occupant.actionMatchLabel?.trim()
-            ? { match: occupant.actionMatchLabel.trim() }
-            : undefined,
-        )
+      ? (() => {
+          const cause = occupant.indeterminacyCause;
+          const matchLabel = occupant.actionMatchLabel?.trim();
+          const useNamed =
+            cause === 'MatchNonJoue' && matchLabel && matchLabel.length > 0;
+          const clauseKey = useNamed
+            ? (`resolution.freshness.indeterminacy.${cause}.clauseNamed` as const)
+            : (`resolution.freshness.indeterminacy.${cause}.clause` as const);
+          const clause = t(
+            clauseKey,
+            useNamed ? { match: matchLabel } : undefined,
+          );
+          return capitalizeClause(clause);
+        })()
       : null;
   const stalenessCauseLabel =
     occupant.state === 'Perime' && occupant.stalenessCause
@@ -183,7 +206,7 @@ function FreshnessBadgeBody({
       ? t('resolution.freshness.cascadeNotReplaceable')
       : null;
   const cascadeBlockedHint =
-    cascadeBlockedNote != null
+    cascadeBlockedNote != null && manualPlacementHint
       ? t('resolution.freshness.cascadeNotReplaceableHint')
       : null;
   const causeText = [
@@ -217,9 +240,15 @@ function FreshnessBadgeBody({
           })
         : label;
 
+  const navigateIcon = action?.kind === 'navigate' ? action.icon : undefined;
   const icon =
     control === 'replace' || control === 'release' || control === 'navigate'
-      ? controlIcon(occupant, control, 'structure-freshness-badge__icon')
+      ? controlIcon(
+          occupant,
+          control,
+          navigateIcon,
+          'structure-freshness-badge__icon',
+        )
       : stateIcon(occupant, 'structure-freshness-badge__icon');
 
   const tip = (

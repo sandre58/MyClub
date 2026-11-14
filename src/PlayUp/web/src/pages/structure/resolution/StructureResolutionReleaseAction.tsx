@@ -13,6 +13,7 @@ import {
 } from '../../../api';
 import { ConfirmDialog } from '../../../design-system/components/ConfirmDialog';
 import { UnlockIcon } from '../../../design-system/icons/contentIcons';
+import { UpstreamIcon } from '../../../design-system/icons/contentIcons';
 import { ChevronRightIcon } from '../../../design-system/icons/shellIcons';
 import type {
   StructureResolutionOccupant,
@@ -214,12 +215,18 @@ export function StructureResolutionReleaseAction({
         confirmIcon={<UnlockIcon size="sm" aria-hidden="true" />}
         secondaryLabel={
           secondaryNavigate
-            ? t(secondaryNavigate.labelKey, secondaryNavigate.labelParams)
+            ? occupant?.indeterminacyCause === 'MatchNonJoue'
+              ? t('resolution.freshness.indeterminacy.MatchNonJoue.action')
+              : t(secondaryNavigate.labelKey, secondaryNavigate.labelParams)
             : undefined
         }
         secondaryIcon={
           secondaryNavigate ? (
-            <ChevronRightIcon size="sm" aria-hidden="true" />
+            secondaryNavigate.icon === 'upstream' ? (
+              <UpstreamIcon size="sm" aria-hidden="true" />
+            ) : (
+              <ChevronRightIcon size="sm" aria-hidden="true" />
+            )
           ) : undefined
         }
         onSecondary={
