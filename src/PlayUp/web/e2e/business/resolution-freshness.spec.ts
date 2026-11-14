@@ -197,7 +197,7 @@ test.describe('Play’Up business (resolution freshness)', () => {
       .click();
     await page
       .getByRole('dialog', { name: 'Libérer cette place ?' })
-      .getByRole('link', { name: /Jouer le match/ })
+      .getByRole('button', { name: /Jouer le match/ })
       .click();
     await expect(page).toHaveURL(/\/matches\/[0-9a-f-]+/);
     await expect(page.getByRole('heading').first()).toBeVisible();
@@ -244,7 +244,7 @@ test.describe('Play’Up business (resolution freshness)', () => {
       page.getByRole('dialog', { name: 'Libérer cette place ?' }),
     ).toBeVisible();
     await expect(
-      page.getByText(`${team} quitte aussi la composition.`),
+      page.getByText(`${team} quittera aussi la composition de cette phase.`),
     ).toBeVisible();
     await page.getByRole('button', { name: 'Libérer', exact: true }).click();
     await expect(dialog).toHaveCount(0);
@@ -274,13 +274,19 @@ async function releasePlace(
   ).toBeVisible();
   if (withMatch) {
     await expect(
-      page.getByText(`Manche 1 — domicile — ${seeded.matchLabel}`),
+      page.getByText(
+        new RegExp(
+          `Manche 1 \\(${seeded.matchLabel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\) : le côté domicile redevient à déterminer`,
+        ),
+      ),
     ).toBeVisible();
   } else {
     await expect(page.getByText('Aucun match ne sera modifié.')).toBeVisible();
   }
   await expect(
-    page.getByText(`${seeded.team} quitte aussi la composition.`),
+    page.getByText(
+      `${seeded.team} quittera aussi la composition de cette phase.`,
+    ),
   ).toBeVisible();
   await page.getByRole('button', { name: 'Libérer', exact: true }).click();
   await expect(
