@@ -120,7 +120,6 @@ test.describe('Play’Up business (resolution freshness)', () => {
       }),
     ).toBeVisible();
     await expect(place.getByRole('button', { name: /Périmé/ })).toHaveCount(0);
-
     await place.getByRole('button', { name: 'Rejouable', exact: true }).click();
     await expect(
       page.getByRole('dialog', { name: /Placement manuel/ }),
@@ -192,11 +191,13 @@ test.describe('Play’Up business (resolution freshness)', () => {
     await page
       .locator('.schematic-slot')
       .getByRole('button', {
-        name: /Non confirmée.*n'est pas joué.*Libérer la place/,
+        name: /Non confirmée.*pas encore été joué.*Libérer la place/,
       })
       .click();
-    await page
-      .getByRole('dialog', { name: 'Libérer cette place ?' })
+    const releaseDialog = page.getByRole('dialog', {
+      name: 'Libérer cette place ?',
+    });
+    await releaseDialog
       .getByRole('button', { name: /Jouer le match/ })
       .click();
     await expect(page).toHaveURL(/\/matches\/[0-9a-f-]+/);
@@ -268,11 +269,11 @@ async function releasePlace(
   const place = page.locator('.schematic-slot').filter({
     hasText: seeded.team,
   });
-  await place.getByRole('button', { name: /Libérer la place/ }).click();
-  await expect(
-    page.getByRole('dialog', { name: 'Libérer cette place ?' }),
-  ).toBeVisible();
-  if (withMatch) {
+    await place.getByRole('button', { name: /Libérer la place/ }).click();
+    await expect(
+      page.getByRole('dialog', { name: 'Libérer cette place ?' }),
+    ).toBeVisible();
+    if (withMatch) {
     await expect(
       page.getByText(
         new RegExp(
