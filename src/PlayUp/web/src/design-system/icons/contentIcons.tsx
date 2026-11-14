@@ -41,6 +41,7 @@ import {
   SlidersHorizontal,
   SquareOff,
   Timer,
+  TimerOff,
   Trash2,
   Trophy,
   ThumbsUp,
@@ -390,6 +391,11 @@ export function TimerIcon({ size, ...props }: ContentIconProps) {
 
 export function HourglassIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Hourglass} size={size} {...props} />;
+}
+
+/** Selection can no longer be confirmed (definitive indeterminate place). */
+export function UnconfirmableIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={TimerOff} size={size} {...props} />;
 }
 
 /** Penalties / goal — shootout token. */

@@ -43,6 +43,9 @@ import {
   RegulationIcon,
   StructureIcon,
   TrashIcon,
+  HourglassIcon,
+  RefreshIcon,
+  UnconfirmableIcon,
 } from '../design-system/icons/contentIcons';
 import './foundations-playground.css';
 
@@ -908,6 +911,12 @@ export function FoundationsPlayground() {
             <CheckIcon />
             <PendingCircleIcon />
             <ArrowRightIcon />
+          </div>
+          <p className="ds-label">Resolution freshness</p>
+          <div className="ds-icon-grid">
+            <RefreshIcon />
+            <HourglassIcon />
+            <UnconfirmableIcon />
           </div>
           <p className="ds-label">Sur chrome</p>
           <div className="ds-icon-grid ds-icon-grid--chrome">
