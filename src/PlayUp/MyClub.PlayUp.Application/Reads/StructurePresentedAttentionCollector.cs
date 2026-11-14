@@ -27,7 +27,7 @@ public static class StructurePresentedAttentionCollector
 
         if (structureView.Stages.Count == 0)
         {
-            AppendCoalesced(items, coalescedQualificationSlots);
+            AppendCoalesced(items, coalescedQualificationSlots, structureView);
             return;
         }
 
@@ -52,7 +52,7 @@ public static class StructurePresentedAttentionCollector
             CollectResolutionFreshness(stage, items, coalescedSlots);
         }
 
-        AppendCoalesced(items, coalescedQualificationSlots);
+        AppendCoalesced(items, coalescedQualificationSlots, structureView);
     }
 
     private static HashSet<string> BuildCoalescedSlotKeys(
@@ -71,7 +71,8 @@ public static class StructurePresentedAttentionCollector
 
     private static void AppendCoalesced(
         IList<NeedsAttentionItemDto> items,
-        IReadOnlyList<NeedsAttentionItemDto>? coalescedQualificationSlots)
+        IReadOnlyList<NeedsAttentionItemDto>? coalescedQualificationSlots,
+        StructureViewDto structureView)
     {
         if (coalescedQualificationSlots is null)
         {
@@ -80,6 +81,15 @@ public static class StructurePresentedAttentionCollector
 
         foreach (var item in coalescedQualificationSlots)
         {
+            var stageIdRaw = item.Params?.GetValueOrDefault("stageId");
+            if (stageIdRaw is not null
+                && Guid.TryParse(stageIdRaw, out var stageId)
+                && structureView.Stages.FirstOrDefault(stage => stage.StageId == stageId)
+                    is { Status: StageStatus.Completed })
+            {
+                continue;
+            }
+
             items.Add(item);
         }
     }
@@ -95,6 +105,7 @@ public static class StructurePresentedAttentionCollector
             return;
         }
 
+        var slotPerimeCount = 0;
         var indetermine = 0;
         foreach (var occupant in occupants)
         {
@@ -105,15 +116,10 @@ public static class StructurePresentedAttentionCollector
                         && !string.IsNullOrEmpty(occupant.SlotKey))
                     {
                         var targetId = $"{stage.StageId}:{occupant.SlotKey}";
-                        if (coalescedSlots.Contains(targetId))
+                        if (!coalescedSlots.Contains(targetId))
                         {
-                            break;
+                            slotPerimeCount++;
                         }
-
-                        items.Add(SlotFreshnessItem(
-                            NeedsAttentionAssembler.SourceResolutionPerime,
-                            stage,
-                            occupant.SlotKey));
                     }
 
                     break;
@@ -126,37 +132,19 @@ public static class StructurePresentedAttentionCollector
         var nonSlotPerime = occupants.Count(occupant =>
             occupant.State == StructureResolutionFreshness.Perime
             && occupant.Target != StructureResolutionOccupantTarget.Slot);
-        if (nonSlotPerime > 0)
+        var totalPerime = slotPerimeCount + nonSlotPerime;
+        if (totalPerime > 0)
         {
             items.Add(FreshnessItem(
                 NeedsAttentionAssembler.SourceResolutionPerime,
                 stage,
-                nonSlotPerime));
+                totalPerime));
         }
 
         if (indetermine > 0)
         {
             items.Add(FreshnessItem(NeedsAttentionAssembler.SourceResolutionIndetermine, stage, indetermine));
         }
-    }
-
-    private static NeedsAttentionItemDto SlotFreshnessItem(
-        string source,
-        StructureStageHubSummaryDto stage,
-        string slotKey)
-    {
-        var targetId = $"{stage.StageId}:{slotKey}";
-        return new NeedsAttentionItemDto(
-            source,
-            NeedsAttentionAssembler.SeverityWarning,
-            "Slot",
-            targetId,
-            new Dictionary<string, string>
-            {
-                ["stageId"] = stage.StageId.ToString(),
-                ["slotKey"] = slotKey,
-                ["count"] = "1",
-            });
     }
 
     private static NeedsAttentionItemDto FreshnessItem(

@@ -122,7 +122,7 @@ describe('RootEntriesRail freshness badge', () => {
 
     await user.click(
       screen.getByRole('button', {
-        name: /Non confirmée.*Libérer la place/,
+        name: /Non déterminé.*Libérer la place/,
       }),
     );
     expect(requestRelease).toHaveBeenCalledWith(
@@ -172,7 +172,7 @@ describe('RootEntriesRail freshness badge', () => {
     );
   });
 
-  it('renders provenance chip and freshness badge together on the rail', () => {
+  it('renders provenance meta and freshness action on the team line', () => {
     const { container } = renderRail(
       [populationFor(sourcePathId), slotOccupant()],
       vi.fn(),
@@ -188,13 +188,13 @@ describe('RootEntriesRail freshness badge', () => {
       ]),
     );
 
-    const trailing = container.querySelector(
-      '.structure-entries__cell-trailing',
-    );
     expect(
-      trailing?.querySelector('.structure-entries__team-provenance-badge'),
+      container.querySelector('.structure-entries__provenance'),
+    ).toHaveTextContent('Vainqueur P1');
+    expect(
+      container.querySelector('.structure-freshness-badge__action'),
     ).toBeTruthy();
-    expect(trailing?.querySelector('.structure-freshness-badge')).toBeTruthy();
+    expect(screen.getByText('Non déterminé')).toBeInTheDocument();
   });
 
   it('releases via Group when the team is placed in poules', async () => {
@@ -211,7 +211,7 @@ describe('RootEntriesRail freshness badge', () => {
 
     await user.click(
       screen.getByRole('button', {
-        name: /Non confirmée.*Libérer la place/,
+        name: /Non déterminé.*Libérer la place/,
       }),
     );
     expect(requestRelease).toHaveBeenCalledWith(

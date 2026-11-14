@@ -106,7 +106,7 @@ describe('CompositionQualifiersPanel freshness badge', () => {
 
     await user.click(
       screen.getByRole('button', {
-        name: /Non confirmée.*Libérer la place/,
+        name: /Non déterminé.*Libérer la place/,
       }),
     );
     expect(requestRelease).toHaveBeenCalledWith(
@@ -134,7 +134,7 @@ describe('CompositionQualifiersPanel freshness badge', () => {
 
     await user.click(
       screen.getByRole('button', {
-        name: /Non confirmée.*Libérer la place/,
+        name: /Non déterminé.*Libérer la place/,
       }),
     );
     expect(requestRelease).toHaveBeenCalledWith(
@@ -191,8 +191,6 @@ describe('CompositionQualifiersPanel freshness badge', () => {
     );
 
     expect(screen.queryByRole('button', { name: /Libérer/ })).toBeNull();
-    expect(
-      screen.getByLabelText(/agir depuis la schématique/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText('Non déterminé')).toBeInTheDocument();
   });
 });

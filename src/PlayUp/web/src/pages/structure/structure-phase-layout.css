@@ -434,12 +434,14 @@
 }
 
 .structure-entries__teams--band .structure-entries__team {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  column-gap: var(--space-4);
-  row-gap: var(--space-4);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-8);
   min-width: 0;
+}
+
+.structure-entries__teams--band .structure-entries__team--line {
+  grid-column: 1 / -1;
 }
 
 .structure-entries__teams--band .structure-entries__team > :first-child {
@@ -720,6 +722,14 @@
 
 .structure-composition-qualifiers__rule-line--unplaced {
   opacity: 0.9;
+}
+
+.structure-composition-qualifiers__rule-line--after .structure-composition-qualifiers__rule-outcome {
+  min-width: 0;
+}
+
+.structure-composition-qualifiers__rule-line--after .structure-entries__team--line {
+  width: 100%;
 }
 
 .structure-composition-qualifiers__rule-outcome {

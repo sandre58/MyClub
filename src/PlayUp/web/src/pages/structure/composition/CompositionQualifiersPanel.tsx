@@ -1,10 +1,7 @@
 import type { ReactNode } from 'react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  EntryCell,
-  EntryCellPlacedMarker,
-} from '../../../design-system/components/EntryCell';
+import { StructurePhaseTeamLine } from './StructurePhaseTeamLine';
 import type {
   StructureEntry,
   StructureFormatKind,
@@ -22,7 +19,6 @@ import {
 import type { EntryPlaceProjection } from '../draw/structureEntryPlacementProjection';
 import { useStructureCascadeReplace } from '../resolution/structureCascadeReplaceContext';
 import { useStructureResolutionRelease } from '../resolution/structureResolutionReleaseContext';
-import { StructureResolutionFreshnessBadge } from '../resolution/StructureResolutionFreshnessBadge';
 import {
   buildStructureResolutionOccupantIndex,
   lookupListedResolutionOccupant,
@@ -119,6 +115,7 @@ export function CompositionQualifiersPanel({
                       key={`${rule.key}-${seatIndex}`}
                       className={[
                         'structure-feed-group__rule-line',
+                        'structure-composition-qualifiers__rule-line--after',
                         showUnplacedOpacity
                           ? 'structure-composition-qualifiers__rule-line--unplaced'
                           : null,
@@ -130,50 +127,39 @@ export function CompositionQualifiersPanel({
                         <CompositionQualifierRuleLabel rule={rule} />
                       </div>
                       <div className="structure-composition-qualifiers__rule-outcome">
-                        {seat.resolved ? (
-                          <EntryCell
-                            variant="chip"
-                            displayName={
-                              seat.teamName ??
-                              entry?.displayName ??
-                              t('manualPlacement.unknownTeam')
-                            }
-                            logoMediaId={entry?.logoMediaId}
-                            primaryColor={entry?.primaryColor}
-                          />
-                        ) : (
-                          <EntryCell
-                            variant="chip"
-                            displayName=""
-                            pending
-                            pendingLabel={t(
-                              'composition.qualifiers.unresolved',
-                            )}
-                          />
-                        )}
-                        {placedInPhase ? (
-                          <EntryCellPlacedMarker
-                            tooltip={
-                              placedTooltip ?? t('entries.entryPlacedStatus')
-                            }
-                          />
-                        ) : (
-                          <span
-                            className="structure-composition-qualifiers__slot-placed-slot"
-                            aria-hidden="true"
-                          />
-                        )}
-                        {listedResolution ? (
-                          <StructureResolutionFreshnessBadge
-                            occupant={listedResolution.occupant}
-                            multiplePlacements={
-                              listedResolution.multiplePlacements
-                            }
-                            entryName={seat.teamName ?? entry?.displayName}
-                            onReplace={cascade?.requestReplace}
-                            onRelease={release?.requestRelease}
-                          />
-                        ) : null}
+                        <div className="structure-entries__team structure-entries__team--line">
+                          {seat.resolved ? (
+                            <StructurePhaseTeamLine
+                              displayName={
+                                seat.teamName ??
+                                entry?.displayName ??
+                                t('manualPlacement.unknownTeam')
+                              }
+                              logoMediaId={entry?.logoMediaId}
+                              primaryColor={entry?.primaryColor}
+                              withdrawn={entry?.status === 'Withdrawn'}
+                              ineligible={entry?.status !== 'Active'}
+                              placed={placedInPhase}
+                              placedPlaceLabel={placeLabel}
+                              placedTooltip={placedTooltip}
+                              resolutionOccupant={listedResolution?.occupant}
+                              multiplePlacements={
+                                listedResolution?.multiplePlacements
+                              }
+                              entryName={seat.teamName ?? entry?.displayName}
+                              onReplace={cascade?.requestReplace}
+                              onRelease={release?.requestRelease}
+                            />
+                          ) : (
+                            <StructurePhaseTeamLine
+                              displayName=""
+                              pending
+                              pendingLabel={t(
+                                'composition.qualifiers.unresolved',
+                              )}
+                            />
+                          )}
+                        </div>
                       </div>
                     </li>
                   );

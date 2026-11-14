@@ -24,6 +24,13 @@ public sealed class NeedsAttentionAssemblerTests
 {
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 8, 16, 12, 0, 0, TimeSpan.Zero));
 
+    private static QualificationPath OverallPath(int position, StageId destinationId, string slot) =>
+        new(
+            position,
+            QualificationSource.Overall(),
+            new QualificationSelection(SelectionMode.Position, position),
+            QualificationDestination.ForSlot(destinationId, slot));
+
     [Fact]
     public void Assemble_when_finished_match_without_consequence_rules_returns_empty()
     {
@@ -407,13 +414,6 @@ public sealed class NeedsAttentionAssemblerTests
         mB.Finish(new MatchResult(ResultType.Played, new Score(2, 0)), _clock);
         return [mA, mB];
     }
-
-    private static QualificationPath OverallPath(int position, StageId destinationId, string slot) =>
-        new(
-            position,
-            QualificationSource.Overall(),
-            new QualificationSelection(SelectionMode.Position, position),
-            QualificationDestination.ForSlot(destinationId, slot));
 
     private (Competition Competition, Stage League, Stage Terminal, EntryId[] Entries, List<Match> Matches)
         LeagueFeed(int teams)

@@ -34,6 +34,11 @@
   background: color-mix(in srgb, var(--color-surface) 55%, transparent);
 }
 
+.schematic-slot--focus {
+  box-shadow: var(--focus-halo);
+  outline: none;
+}
+
 .schematic-slot--ghost {
   visibility: hidden;
 }

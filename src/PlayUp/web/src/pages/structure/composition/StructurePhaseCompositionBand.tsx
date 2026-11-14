@@ -233,7 +233,6 @@ export function StructurePhaseCompositionBand({
               ) : undefined
             }
           />
-          {capacityIssueBanner}
           {teamsRuntimePresentation.kind === 'empty' ? (
             <EmptyState
               variant="idle"
@@ -265,6 +264,7 @@ export function StructurePhaseCompositionBand({
               suppressRuntimeEmptyPresentation
             />
           )}
+          {capacityIssueBanner}
           {compositionPopulationGaugeFooter &&
           showTeamsSection &&
           !sharedCompositionPopulationGauge

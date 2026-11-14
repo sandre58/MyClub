@@ -128,7 +128,7 @@
 
 .ds-dialog__footer-status {
   display: flex;
-  flex: 1 1 auto;
+  flex: 1 1 0;
   flex-direction: column;
   gap: var(--space-8);
   min-width: 0;
@@ -149,7 +149,7 @@
 
 .ds-dialog__footer-actions {
   display: flex;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;

@@ -172,6 +172,7 @@ export function StructurePhaseFiche({
   initialFocus,
   initialManual,
   initialDrawWorkflow,
+  initialHighlightSlotKey,
   onInitialEditConsumed,
 }: {
   data: StructureView;
@@ -182,6 +183,7 @@ export function StructurePhaseFiche({
   initialFocus?: StructureFocusId | null;
   initialManual?: boolean;
   initialDrawWorkflow?: boolean;
+  initialHighlightSlotKey?: string | null;
   onInitialEditConsumed?: () => void;
 }) {
   const { t, i18n } = useTranslation('structure');
@@ -366,7 +368,8 @@ export function StructurePhaseFiche({
         !initialEdit &&
         !initialCompose &&
         !initialManual &&
-        !initialDrawWorkflow
+        !initialDrawWorkflow &&
+        !initialHighlightSlotKey
       ) {
         onInitialEditConsumed?.();
       }
@@ -379,6 +382,7 @@ export function StructurePhaseFiche({
     initialCompose,
     initialManual,
     initialDrawWorkflow,
+    initialHighlightSlotKey,
     onInitialEditConsumed,
   ]);
 
@@ -1349,6 +1353,8 @@ export function StructurePhaseFiche({
               onOpenSkeleton={() => setSkeletonOpen(true)}
               schematicQuery={schematicQuery}
               stage={stage}
+              initialHighlightSlotKey={initialHighlightSlotKey}
+              onInitialHighlightConsumed={onInitialEditConsumed}
               hasExits={hasExits}
               cupPairProductionStates={cupPairProductionStates}
               canManualPlace={canManualPlace}

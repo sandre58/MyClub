@@ -2,6 +2,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import {
   correctFinishedMatchResult,
+  readFinishedMatchScore,
   findFirstFinishedMatchOnStage,
   createIsolatedReleaseCompetition,
   findFreshnessActionsRecetteCompetition,
@@ -19,9 +20,11 @@ async function countPerimeBadgeControls(page: Page) {
   );
 }
 
-/** No visible « Périmé » copy before mutation (labels live in tooltips / aria). */
+/** No visible freshness state copy on the schematic before mutation. */
 async function expectFreshnessNotSurfacedAsText(page: Page) {
-  await expect(page.getByText('Périmé')).toHaveCount(0);
+  const schematic = page.locator('#tile-places');
+  await expect(schematic.getByText('Périmé')).toHaveCount(0);
+  await expect(schematic.getByText('Non déterminé')).toHaveCount(0);
 }
 
 async function expectNoPerimeBadgeControls(page: Page) {
@@ -29,11 +32,15 @@ async function expectNoPerimeBadgeControls(page: Page) {
 }
 
 async function expectFirstPerimeBadgeVisible(page: Page) {
+  const buttons = page.getByRole('button', { name: /Périmé/ });
+  if ((await buttons.count()) > 0) {
+    await expect(buttons.first()).toBeVisible();
+    return;
+  }
   await expect(
     page
-      .getByRole('button', { name: /Périmé/ })
-      .or(page.getByRole('img', { name: /Périmé/ }))
-      .or(page.getByRole('link', { name: /Périmé/ }))
+      .locator('.structure-entries__freshness-state')
+      .filter({ hasText: 'Périmé' })
       .first(),
   ).toBeVisible();
 }
@@ -55,19 +62,29 @@ test.describe('Play’Up business (resolution freshness)', () => {
       'Terminal',
     );
     const matchId = await findFirstFinishedMatchOnStage(request, leagueId);
+    const before = await readFinishedMatchScore(request, matchId);
 
-    await page.goto(
-      `/competitions/${competition.id}/structure?stage=${terminalId}`,
-    );
-    await expect(
-      page.getByRole('heading', { name: 'Structure' }),
-    ).toBeVisible();
-    await expectFreshnessNotSurfacedAsText(page);
-    await expectNoPerimeBadgeControls(page);
-    await correctFinishedMatchResult(request, matchId, 0, 2);
+    try {
+      await page.goto(
+        `/competitions/${competition.id}/structure?stage=${terminalId}`,
+      );
+      await expect(
+        page.getByRole('heading', { name: 'Structure' }),
+      ).toBeVisible();
+      await expectFreshnessNotSurfacedAsText(page);
+      await expectNoPerimeBadgeControls(page);
+      await correctFinishedMatchResult(request, matchId, 0, 2);
 
-    await page.reload();
-    await expectFirstPerimeBadgeVisible(page);
+      await page.reload();
+      await expectFirstPerimeBadgeVisible(page);
+    } finally {
+      await correctFinishedMatchResult(
+        request,
+        matchId,
+        before.homeGoals,
+        before.awayGoals,
+      );
+    }
   });
 
   test('Structure — badge Périmé after qualification rule replace', async ({
@@ -188,12 +205,9 @@ test.describe('Play’Up business (resolution freshness)', () => {
     await expect(
       page.getByRole('heading', { name: 'Structure' }),
     ).toBeVisible();
-    await page
-      .locator('.schematic-slot')
-      .filter({ hasText: 'Nord' })
-      .getByRole('button', {
-        name: /Non confirmée — .*le match.*n'est pas joué\. Libérer la place/,
-      })
+    const qualifiers = page.locator('.structure-composition-qualifiers');
+    await qualifiers
+      .getByRole('button', { name: /Nord.*Libérer la place/ })
       .click();
     const releaseDialog = page.getByRole('dialog', {
       name: 'Libérer cette place ?',
@@ -257,7 +271,17 @@ test.describe('Play’Up business (resolution freshness)', () => {
     const drawer = page.getByRole('dialog', { name: /À traiter/ });
     await expect(drawer).toBeVisible();
     await expect(drawer.getByText(/Conflit de qualification/)).toHaveCount(0);
-    await page.getByRole('button', { name: 'Fermer À traiter' }).click();
+    await drawer
+      .getByRole('link', { name: /autre équipe|different team/i })
+      .click();
+    await expect(page).toHaveURL(/focus=tile-places&slot=Tete/);
+    const slot = page.locator('[data-slot-key="Tete"]');
+    await expect(slot).toHaveClass(/schematic-slot--focus/);
+    await expect(
+      slot.locator('.structure-freshness-badge__action'),
+    ).toBeFocused();
+    await page.waitForTimeout(2_800);
+    await expect(slot).not.toHaveClass(/schematic-slot--focus/);
   });
 
   test('Structure — dialog Placement manuel garde Annuler sur la même ligne', async ({
@@ -292,8 +316,14 @@ test.describe('Play’Up business (resolution freshness)', () => {
       page.getByRole('heading', { name: 'Structure' }),
     ).toBeVisible();
 
-    const slot = page.locator('.schematic-slot').filter({ hasText: team });
-    await slot.getByRole('button', { name: /Libérer la place/ }).click();
+    const slot = page
+      .locator('.schematic-cup .schematic-slot')
+      .filter({ hasText: team });
+    await slot
+      .getByRole('button', {
+        name: new RegExp(`Non déterminé.*${team}.*Libérer la place`),
+      })
+      .click();
     const dialog = page.getByRole('dialog', {
       name: 'Libérer cette place ?',
     });
@@ -302,7 +332,9 @@ test.describe('Play’Up business (resolution freshness)', () => {
     await expect(dialog).toHaveCount(0);
 
     const qualifiers = page.locator('.structure-composition-qualifiers');
-    await qualifiers.getByRole('button', { name: /Libérer la place/ }).click();
+    await qualifiers
+      .getByRole('button', { name: new RegExp(`${team}.*Libérer la place`) })
+      .click();
     await expect(
       page.getByRole('dialog', { name: 'Libérer cette place ?' }),
     ).toBeVisible();
@@ -382,7 +414,7 @@ async function expectAttentionRow(
   }
   await open.click();
   const row = page.getByRole('link', {
-    name: new RegExp(`non confirmée.*${stageName}`),
+    name: new RegExp(`non déterminé.*${stageName}`, 'i'),
   });
   if (visible) {
     await expect(row).toBeVisible();

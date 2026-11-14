@@ -325,8 +325,13 @@ function SlotBox({
     : tip
       ? fillStyle
       : style;
+  const slotDataKey = c?.formPosition.slotKey?.trim();
   const slot = interactive ? (
-    <div className={className} style={shellStyle}>
+    <div
+      className={className}
+      style={shellStyle}
+      {...(slotDataKey ? { 'data-slot-key': slotDataKey } : {})}
+    >
       <button
         type="button"
         className="schematic-slot__hit"
@@ -340,6 +345,7 @@ function SlotBox({
       className={className}
       style={shellStyle}
       aria-hidden={ghost || undefined}
+      {...(slotDataKey ? { 'data-slot-key': slotDataKey } : {})}
     >
       {slotInner}
     </span>

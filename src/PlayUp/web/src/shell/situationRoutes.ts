@@ -185,12 +185,18 @@ export function situationHref(
     situation.targetType === 'Slot' &&
     situation.targetId
   ) {
-    const stageFromSlot = situation.targetId.split(':')[0];
-    if (stageFromSlot) {
+    const colon = situation.targetId.indexOf(':');
+    const stageFromSlot =
+      colon >= 0 ? situation.targetId.slice(0, colon) : situation.targetId;
+    const slotKey =
+      situation.params?.slotKey?.trim() ||
+      (colon >= 0 ? situation.targetId.slice(colon + 1).trim() : null);
+    if (stageFromSlot && slotKey) {
       return structureDeepLink({
         competitionId,
         stageId: stageFromSlot,
-        focus: 'operational-placement',
+        focus: 'tile-places',
+        slotKey,
       });
     }
   }

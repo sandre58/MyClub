@@ -1,18 +1,14 @@
 // Population (Équipes) rail — affectation list + cardinality meter.
 import { useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Chip, type ChipTone } from '../../../design-system/components/Chip';
 import { Tooltip } from '../../../design-system/components/Tooltip';
 import {
   EmptySelectionIcon,
   PencilIcon,
   PlusIcon,
-  LossIcon,
-  WinIcon,
-  WithdrawIcon,
 } from '../../../design-system/icons/contentIcons';
 import { StructureDiagnosticIssueIcon } from '../issues/StructureDiagnosticIssueIcon';
-import { EntryCell } from '../../../design-system/components/EntryCell';
+import { StructurePhaseTeamLine } from '../composition/StructurePhaseTeamLine';
 import { entryCellListItemClassName } from '../../../design-system/components/entryCellListItemClassName';
 import { EmptyState } from '../../../ui';
 import type {
@@ -46,7 +42,6 @@ import type {
 } from '../composition/compositionTeamsInboundRows';
 import { useStructureCascadeReplace } from '../resolution/structureCascadeReplaceContext';
 import { useStructureResolutionRelease } from '../resolution/structureResolutionReleaseContext';
-import { StructureResolutionFreshnessBadge } from '../resolution/StructureResolutionFreshnessBadge';
 import {
   buildStructureResolutionOccupantIndex,
   lookupListedResolutionOccupant,
@@ -54,46 +49,6 @@ import {
 
 const compactIcon =
   'ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact';
-
-function compositionTeamProvenanceBadge(
-  provenance: CompositionTeamProvenance,
-): ReactNode {
-  const tone: ChipTone = provenance.chipTone ?? 'soft';
-  const outcome = provenance.progressionOutcome;
-  return (
-    <Tooltip content={provenance.full}>
-      <Chip
-        tone={tone}
-        className="structure-entries__team-provenance-badge"
-        aria-label={provenance.full}
-      >
-        {outcome ? (
-          <span
-            className="structure-entries__team-provenance-badge-inner"
-            aria-hidden={false}
-          >
-            {outcome === 'Loser' ? (
-              <LossIcon
-                size="sm"
-                className="structure-entries__team-provenance-outcome-icon"
-                aria-hidden
-              />
-            ) : (
-              <WinIcon
-                size="sm"
-                className="structure-entries__team-provenance-outcome-icon"
-                aria-hidden
-              />
-            )}
-            <span>{provenance.badge}</span>
-          </span>
-        ) : (
-          provenance.badge
-        )}
-      </Chip>
-    </Tooltip>
-  );
-}
 
 /** Cardinality gauge — expected Population vs Places N (phase-aware chrome). */
 export function CompositionMeter({
@@ -336,7 +291,10 @@ export function RootEntriesRail({
     entry: StructureEntry,
     provenance?: CompositionTeamProvenance | null,
   ) => {
-    const placed = showPlacementChrome
+    const trackPlacement =
+      (showPlacementChrome || variant === 'composition-band') &&
+      showPerEntryPlacement(formatKind ?? stage.formatKind);
+    const placed = trackPlacement
       ? isEntryPlacedInPhase(
           entry.entryId,
           placedIds,
@@ -345,10 +303,7 @@ export function RootEntriesRail({
         )
       : false;
     const showUnplacedOpacity =
-      showPlacementChrome &&
-      schematicReady &&
-      entry.status === 'Active' &&
-      !placed;
+      trackPlacement && schematicReady && entry.status === 'Active' && !placed;
     const provenanceLabel =
       provenance ?? entryProvenanceByEntryId?.get(entry.entryId) ?? null;
     const projection = entryPlaceProjections?.get(entry.entryId);
@@ -363,24 +318,18 @@ export function RootEntriesRail({
       resolutionIndex,
       entry.entryId,
     );
-    const trailingParts = [
-      provenanceLabel ? compositionTeamProvenanceBadge(provenanceLabel) : null,
-      <StructureResolutionFreshnessBadge
-        key="freshness"
-        occupant={listedResolution.occupant}
-        multiplePlacements={listedResolution.multiplePlacements}
-        entryName={entry.displayName}
-        onReplace={cascade?.requestReplace}
-        onRelease={release?.requestRelease}
-      />,
-    ].filter(Boolean);
     return (
       <li
         key={entry.entryId}
-        className={entryCellListItemClassName({
-          ineligible: entry.status !== 'Active',
-          unplaced: showUnplacedOpacity,
-        })}
+        className={[
+          entryCellListItemClassName({
+            ineligible: entry.status !== 'Active',
+            unplaced: showUnplacedOpacity,
+          }),
+          'structure-entries__team--line',
+        ]
+          .filter(Boolean)
+          .join(' ')}
         aria-label={
           showPlacementChrome && schematicReady && entry.status === 'Active'
             ? placed
@@ -389,42 +338,22 @@ export function RootEntriesRail({
             : undefined
         }
       >
-        <EntryCell
+        <StructurePhaseTeamLine
           displayName={entry.displayName}
           logoMediaId={entry.logoMediaId}
           primaryColor={entry.primaryColor}
+          withdrawn={entry.status === 'Withdrawn'}
           ineligible={entry.status !== 'Active'}
-          ineligibleLabel={
-            entry.status !== 'Active' && entry.status !== 'Withdrawn'
-              ? t('composition.noLongerEligible')
-              : undefined
-          }
-          nameSuffix={
-            entry.status === 'Withdrawn' ? (
-              <Tooltip content={t('teams:withdrawnBadge')}>
-                <span
-                  className="structure-entries__team-withdrawn-inline"
-                  role="img"
-                  aria-label={t('teams:withdrawnBadge')}
-                >
-                  <WithdrawIcon size="sm" aria-hidden="true" />
-                </span>
-              </Tooltip>
-            ) : undefined
-          }
           placed={placed}
-          placedTooltip={
-            placedTooltip ?? (placed ? t('entries.entryPlacedStatus') : null)
-          }
-          trailing={
-            trailingParts.length > 0 ? (
-              <span className="structure-entries__cell-trailing">
-                {trailingParts.map((part, index) => (
-                  <span key={index}>{part}</span>
-                ))}
-              </span>
-            ) : undefined
-          }
+          placedPlaceLabel={placeLabel}
+          placedTooltip={placedTooltip}
+          provenanceMeta={provenanceLabel?.badge ?? null}
+          provenanceTitle={provenanceLabel?.full ?? null}
+          resolutionOccupant={listedResolution.occupant}
+          multiplePlacements={listedResolution.multiplePlacements}
+          entryName={entry.displayName}
+          onReplace={cascade?.requestReplace}
+          onRelease={release?.requestRelease}
         />
       </li>
     );
@@ -455,12 +384,16 @@ export function RootEntriesRail({
           <ul className={teamListClass}>
             {compositionTeamRows.map((row) =>
               row.kind === 'unresolved' ? (
-                <li key={row.key} className="structure-entries__team">
-                  <EntryCell
+                <li
+                  key={row.key}
+                  className="structure-entries__team structure-entries__team--line"
+                >
+                  <StructurePhaseTeamLine
                     displayName=""
                     pending
                     pendingLabel={t('composition.qualifiers.unresolved')}
-                    trailing={compositionTeamProvenanceBadge(row.provenance)}
+                    provenanceMeta={row.provenance.badge}
+                    provenanceTitle={row.provenance.full}
                   />
                 </li>
               ) : (

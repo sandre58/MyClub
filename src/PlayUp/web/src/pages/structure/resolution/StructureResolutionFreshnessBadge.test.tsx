@@ -88,9 +88,9 @@ describe('StructureResolutionFreshnessBadge', () => {
       </>,
     );
     expect(
-      screen.getByRole('img', { name: /Non confirmée/ }),
+      screen.getByRole('img', { name: /Non déterminé/ }),
     ).toBeInTheDocument();
-    expect(screen.queryByText('Non confirmée')).toBeNull();
+    expect(screen.queryByText('Non déterminé')).toBeNull();
     expect(screen.queryByText('Non vérifiée')).toBeNull();
   });
 
@@ -358,7 +358,7 @@ describe('StructureResolutionFreshnessBadge', () => {
 
     await user.click(
       screen.getByRole('link', {
-        name: /Non confirmée.*match Nord – Est n'est pas joué.*Jouer le match Nord/,
+        name: /Non déterminé.*match Nord – Est n'est pas joué.*Jouer le match Nord/,
       }),
     );
     expect(screen.getByTestId('navigation-spy')).toHaveAttribute(
@@ -392,7 +392,7 @@ describe('StructureResolutionFreshnessBadge', () => {
       </MemoryRouter>,
     );
     const badge = screen.getByRole('img', {
-      name: /Non confirmée.*sélection ne peut pas être calculée/i,
+      name: /Non déterminé.*sélection ne peut pas être calculée/i,
     });
     expect(badge).toHaveClass('structure-freshness-badge__glyph');
     expect(
@@ -448,12 +448,12 @@ describe('StructureResolutionFreshnessBadge', () => {
     );
 
     expect(screen.queryByText('Périmé')).toBeNull();
-    expect(screen.queryByText('Non confirmée')).toBeNull();
+    expect(screen.queryByText('Non déterminé')).toBeNull();
     const button = screen.getByRole('button', {
       name: "Périmé — Résultat amont modifié. Cliquer pour remplacer l'équipe par l'occupant attendu",
     });
     expect(button).toHaveClass('structure-freshness-badge__action');
-    const inert = screen.getByRole('img', { name: /Non confirmée/ });
+    const inert = screen.getByRole('img', { name: /Non déterminé/ });
     expect(inert).toHaveClass('structure-freshness-badge__glyph');
 
     await user.hover(button);
@@ -747,7 +747,7 @@ describe('StructureResolutionFreshnessBadge', () => {
     ).toBeTruthy();
     expect(
       screen
-        .getByRole('img', { name: /Non confirmée/ })
+        .getByRole('img', { name: /Non déterminé/ })
         .querySelector('.lucide-hourglass'),
     ).toBeTruthy();
   });
@@ -787,32 +787,32 @@ describe('StructureResolutionFreshnessBadge', () => {
 
     expect(
       screen.getByRole('img', {
-        name: /Non confirmée.*Ne pourra plus être confirmée/,
+        name: /Non déterminé.*Ne pourra plus être confirmée/,
       }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('button', {
-        name: /Non confirmée.*Ne pourra plus être confirmée.*Libérer/,
+        name: /Non déterminé.*Ne pourra plus être confirmée.*Libérer/,
       }),
     ).toBeInTheDocument();
     expect(
       screen
         .getByRole('img', {
-          name: /Non confirmée.*Ne pourra plus être confirmée/,
+          name: /Non déterminé.*Ne pourra plus être confirmée/,
         })
         .querySelector('.lucide-timer-off'),
     ).toBeTruthy();
     expect(
       screen
         .getByRole('button', {
-          name: /Non confirmée.*Ne pourra plus être confirmée.*Libérer/,
+          name: /Non déterminé.*Ne pourra plus être confirmée.*Libérer/,
         })
         .querySelector('.lucide-unlock'),
     ).toBeTruthy();
     expect(
       screen
         .getByRole('button', {
-          name: /Non confirmée.*Ne pourra plus être confirmée.*Libérer/,
+          name: /Non déterminé.*Ne pourra plus être confirmée.*Libérer/,
         })
         .querySelector('.lucide-timer-off'),
     ).toBeNull();
@@ -896,7 +896,7 @@ describe('StructureResolutionFreshnessBadge', () => {
       </span>,
     );
 
-    await user.click(screen.getByRole('img', { name: /Non confirmée/ }));
+    await user.click(screen.getByRole('img', { name: /Non déterminé/ }));
     expect(await screen.findByRole('tooltip')).toBeInTheDocument();
     expect(screen.getAllByRole('tooltip')).toHaveLength(1);
   });

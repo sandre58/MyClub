@@ -11,6 +11,7 @@ test.describe('Recette captures (opt-in)', () => {
   test.skip(!artifactsDir, 'Set PLAYUP_E2E_ARTIFACTS to enable capture specs');
 
   test('recette5 screenshots', async ({ page, request }) => {
+    test.setTimeout(120_000);
     const competition = await findFreshnessActionsRecetteCompetition(request);
     const poulesId = await getStageIdByName(request, competition.id, 'Poules');
     const aJouerId = await getStageIdByName(request, competition.id, 'A jouer');
@@ -20,13 +21,12 @@ test.describe('Recette captures (opt-in)', () => {
     await expect(
       page.getByRole('heading', { name: 'Structure' }),
     ).toBeVisible();
-    await page
-      .locator('.schematic-slot')
-      .filter({ hasText: 'Nord' })
-      .getByRole('button', {
-        name: /Non confirmée — .*le match.*n'est pas joué\. Libérer la place/,
-      })
-      .click();
+    const releaseInQualifiers = page
+      .locator('.structure-composition-qualifiers')
+      .getByRole('button', { name: /Libérer la place/ })
+      .first();
+    await expect(releaseInQualifiers).toBeVisible();
+    await releaseInQualifiers.click();
     const releaseDialog = page.getByRole('dialog', {
       name: 'Libérer cette place ?',
     });
@@ -87,23 +87,31 @@ test.describe('Recette captures (opt-in)', () => {
     await drawer
       .getByRole('link', { name: /autre équipe|different team/i })
       .click();
-    await expect(page).toHaveURL(/focus=operational-placement/);
+    await expect(page).toHaveURL(/focus=tile-places&slot=Tete/);
+    await expect(page.locator('[data-slot-key="Tete"]')).toHaveClass(
+      /schematic-slot--focus/,
+    );
     await expect(page.locator('.schematic-slot').first()).toBeVisible();
     await page.screenshot({
       path: `${artifactsDir}/m5-structure-place-focus.png`,
       fullPage: false,
     });
+    await page.locator('#rail-entries').screenshot({
+      path: `${artifactsDir}/m6-team-lines-equipes.png`,
+    });
+    await page.locator('.structure-composition-qualifiers').screenshot({
+      path: `${artifactsDir}/m6-team-lines-qualifies.png`,
+    });
 
     await page.goto(
       `/competitions/${competition.id}/structure?stage=${aJouerId}`,
     );
-    await page
-      .locator('.schematic-slot')
-      .filter({ hasText: 'Nord' })
-      .getByRole('button', {
-        name: /Non confirmée — .*le match.*n'est pas joué\. Libérer la place/,
-      })
-      .click();
+    const releaseForErrorMock = page
+      .locator('.structure-composition-qualifiers')
+      .getByRole('button', { name: /Libérer la place/ })
+      .first();
+    await expect(releaseForErrorMock).toBeVisible();
+    await releaseForErrorMock.click();
     const releaseWithErrorDialog = page.getByRole('dialog', {
       name: 'Libérer cette place ?',
     });

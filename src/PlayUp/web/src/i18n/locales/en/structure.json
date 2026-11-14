@@ -845,7 +845,7 @@
       "state": {
         "AJour": "Current",
         "Perime": "Stale",
-        "Indetermine": "Unconfirmed",
+        "Indetermine": "Undetermined",
         "NonVerifiee": "Unverified"
       },
       "cause": {

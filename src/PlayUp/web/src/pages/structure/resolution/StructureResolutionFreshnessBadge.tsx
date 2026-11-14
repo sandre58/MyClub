@@ -40,6 +40,8 @@ type StructureResolutionFreshnessBadgeProps = {
   entryName?: string | null;
   /** Show the manual-placement hint on inert Périmé cascade badges (schematic slots only). */
   manualPlacementHint?: boolean;
+  /** Team list layout: render only actionable controls; inert state lives on the row meta. */
+  actionOnly?: boolean;
 };
 
 function capitalizeClause(clause: string): string {
@@ -134,6 +136,7 @@ function FreshnessBadgeBody({
   onRelease,
   entryName,
   manualPlacementHint = false,
+  actionOnly = false,
   competitionId,
   linked,
 }: StructureResolutionFreshnessBadgeProps & {
@@ -324,6 +327,10 @@ function FreshnessBadgeBody({
         </Tooltip>
       </BadgeActivationGuard>
     );
+  }
+
+  if (actionOnly) {
+    return null;
   }
 
   return (

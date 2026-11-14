@@ -25,7 +25,7 @@ test('Structure — libération groupée d’une sélection vide puis placement 
   await expect(
     page
       .getByRole('button', {
-        name: /Non confirmée.*Ne pourra plus être confirmée/,
+        name: /Non déterminé.*Ne pourra plus être confirmée/,
       })
       .first(),
   ).toBeVisible();

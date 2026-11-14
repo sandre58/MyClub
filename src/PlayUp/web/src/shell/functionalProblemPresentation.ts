@@ -245,6 +245,9 @@ export function functionalProblemPresentation(
           params: {
             ...(params ?? {}),
             ...(stageFromTarget ? { stageId: stageFromTarget } : {}),
+            ...(structureDiagnosticContext?.stageStatus
+              ? { stageStatus: structureDiagnosticContext.stageStatus }
+              : {}),
           },
         } satisfies OverviewSituation,
         competitionId,
@@ -278,14 +281,15 @@ export function functionalProblemPresentation(
   }
 
   if (source === 'ResolutionPerime' || source === 'ResolutionIndetermine') {
+    const slotAction = targetType === 'Slot';
     const overviewSituation = {
       source,
       nature: 'Warning',
       targetType: targetType ?? null,
       targetId: targetId ?? null,
       matchId: matchId ?? null,
-      actionable: true,
-      actionCode: 'ConfigureStructure',
+      actionable: slotAction,
+      actionCode: slotAction ? 'ViewResolutionPlace' : null,
       impactCode: null,
       params: params ?? {},
     } satisfies OverviewSituation;
@@ -298,7 +302,7 @@ export function functionalProblemPresentation(
       titleNs: 'enums',
       descriptionParams,
       sotHref,
-      cta: targetType === 'Slot' ? { actionCode: 'ConfigureStructure' } : null,
+      cta: slotAction ? { actionCode: 'ViewResolutionPlace' } : null,
       canal: 'attention-drawer',
     };
   }

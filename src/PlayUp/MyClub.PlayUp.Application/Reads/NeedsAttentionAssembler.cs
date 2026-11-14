@@ -271,6 +271,7 @@ public static class NeedsAttentionAssembler
                 {
                     var targetId = ResolveAttentionTargetId(destination, path.Destination);
                     if (path.Destination.TargetsSlot
+                        && destination.Status != StageStatus.Completed
                         && ResolutionPerimeSlotAttention.TryMatchQualificationConflict(
                             perimeSlotKeys,
                             destination,

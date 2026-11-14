@@ -35,9 +35,9 @@ describe('functionalProblemPresentation', () => {
     expect(presentation.tone).toBe('attention');
     expect(presentation.titleKey).toBe('attentionSource.ResolutionPerime');
     expect(presentation.sotHref).toBe(
-      '/competitions/comp-1/structure?stage=phase-1&focus=operational-placement',
+      '/competitions/comp-1/structure?stage=phase-1&focus=tile-places&slot=Champ',
     );
-    expect(presentation.cta?.actionCode).toBe('ConfigureStructure');
+    expect(presentation.cta?.actionCode).toBe('ViewResolutionPlace');
   });
 
   it('links stage-level stale resolution rows to the phase without CTA', () => {

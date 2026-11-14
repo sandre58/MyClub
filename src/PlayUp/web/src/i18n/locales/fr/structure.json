@@ -845,7 +845,7 @@
       "state": {
         "AJour": "À jour",
         "Perime": "Périmé",
-        "Indetermine": "Non confirmée",
+        "Indetermine": "Non déterminé",
         "NonVerifiee": "Non vérifiée"
       },
       "cause": {

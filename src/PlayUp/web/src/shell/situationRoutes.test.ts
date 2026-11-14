@@ -84,7 +84,7 @@ describe('situationRoutes', () => {
       'comp-1',
     );
     expect(href).toBe(
-      '/competitions/comp-1/structure?stage=stage-d&focus=operational-placement',
+      '/competitions/comp-1/structure?stage=stage-d&focus=tile-places&slot=Tete',
     );
   });
 
