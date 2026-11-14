@@ -528,6 +528,7 @@ describe('StructureResolutionFreshnessBadge', () => {
           cascadeReplaceable: false,
         }}
         entryName="Centre"
+        onRelease={() => undefined}
       />,
     );
 

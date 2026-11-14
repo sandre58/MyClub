@@ -43,16 +43,13 @@ function stateIcon(
       <UnconfirmableIcon size="sm" className={className} aria-hidden="true" />
     );
   }
-  switch (occupant.state) {
-    case 'Perime':
-      return <RefreshIcon size="sm" className={className} aria-hidden="true" />;
-    case 'Indetermine':
-      return (
-        <HourglassIcon size="sm" className={className} aria-hidden="true" />
-      );
-    default:
-      return null;
+  if (occupant.state === 'Perime') {
+    return <RefreshIcon size="sm" className={className} aria-hidden="true" />;
   }
+  if (occupant.state === 'Indetermine') {
+    return <HourglassIcon size="sm" className={className} aria-hidden="true" />;
+  }
+  return null;
 }
 
 function stopSlotActivation(event: SyntheticEvent) {
