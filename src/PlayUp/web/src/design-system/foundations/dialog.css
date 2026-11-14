@@ -158,12 +158,6 @@
   max-width: 100%;
 }
 
-.ds-dialog__footer-actions .ds-btn--secondary {
-  flex: 1 1 100%;
-  order: -1;
-  justify-content: flex-end;
-}
-
 /* Truly narrow panel (below sm 28rem): status full width above actions.
  * sm (28rem) keeps status left of actions — the documented footer contract. */
 @container ds-dialog (max-width: 24rem) {

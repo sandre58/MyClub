@@ -318,7 +318,7 @@
       "SlotFeedMissing": "Place non alimentée",
       "SlotFeedInvalid": "Alimentation invalide",
       "SlotFeedMultiple": "Alimentations conflictuelles",
-      "ConfrontationUndecidable": "Tirage pas toujours possible",
+      "ConfrontationUndecidable": "Match nul sans départage",
       "CycleDetected": "Cycle entre phases",
       "NonRootUnfed": "Pas d’équipes entrantes",
       "AwaitingInboundQualification": "En attente des qualifiés",

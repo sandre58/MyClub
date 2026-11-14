@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { fetchConsultation, fetchStructureView } from '../../api';
 import { StatChipPanel } from '../../design-system/components/Chip';
 import {
@@ -161,6 +161,48 @@ function StandingsSection({
     );
   }
 
+  const tablesReady = standings.tables.length > 0 ? 'ready' : 'pending';
+  return (
+    <StandingsTables
+      key={`${focusStageId ?? ''}:${tablesReady}`}
+      standings={standings}
+      focusStageId={focusStageId}
+    />
+  );
+}
+
+function StandingsTables({
+  standings,
+  focusStageId,
+}: {
+  standings: ConsultationStandingsSection;
+  focusStageId: string | null;
+}) {
+  const [highlightStageId, setHighlightStageId] = useState(() =>
+    focusStageId &&
+    standings.tables.some((table) => table.stageId === focusStageId)
+      ? focusStageId
+      : null,
+  );
+
+  useEffect(() => {
+    if (!highlightStageId) {
+      return;
+    }
+    const scrollKey = standings.tables
+      .map((table) => tableKey(table))
+      .find((key) => key.startsWith(`${highlightStageId}:`));
+    if (scrollKey) {
+      const element = document.getElementById(`standings-panel-${scrollKey}`);
+      element?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      element?.focus({ preventScroll: true });
+    }
+    const timeout = window.setTimeout(() => {
+      setHighlightStageId(null);
+    }, 2_500);
+    return () => window.clearTimeout(timeout);
+  }, [highlightStageId, standings.tables]);
+
   return (
     <div className="classements__tables" data-testid="standings-tables">
       {standings.tables.map((table) => (
@@ -168,56 +210,12 @@ function StandingsSection({
           key={tableKey(table)}
           table={table}
           highlight={
-            focusStageId != null &&
-            focusStageId.length > 0 &&
-            table.stageId === focusStageId
+            highlightStageId != null && table.stageId === highlightStageId
           }
         />
       ))}
-      {focusStageId ? (
-        <StandingsStageFocus
-          focusStageId={focusStageId}
-          tableKeys={standings.tables.map((table) => tableKey(table))}
-        />
-      ) : null}
     </div>
   );
-}
-
-function StandingsStageFocus({
-  focusStageId,
-  tableKeys,
-}: {
-  focusStageId: string;
-  tableKeys: string[];
-}) {
-  const didFocus = useRef(false);
-
-  useEffect(() => {
-    if (didFocus.current) {
-      return;
-    }
-    const matchKey = tableKeys.find((key) =>
-      key.startsWith(`${focusStageId}:`),
-    );
-    if (!matchKey) {
-      return;
-    }
-    const element = document.getElementById(`standings-panel-${matchKey}`);
-    if (!element) {
-      return;
-    }
-    didFocus.current = true;
-    element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    element.classList.add('classements-panel--focus');
-    element.focus({ preventScroll: true });
-    const timeout = window.setTimeout(() => {
-      element.classList.remove('classements-panel--focus');
-    }, 2_500);
-    return () => window.clearTimeout(timeout);
-  }, [focusStageId, tableKeys]);
-
-  return null;
 }
 
 function tableKey(table: ConsultationStandingTable): string {

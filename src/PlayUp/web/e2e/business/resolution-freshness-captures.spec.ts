@@ -5,32 +5,50 @@ import {
   getStageIdByName,
 } from './hostSeed';
 
-const out = '/opt/cursor/artifacts';
+const artifactsDir = process.env.PLAYUP_E2E_ARTIFACTS?.trim();
 
-test.describe('Recette 4 captures (local only)', () => {
-  test.skip(!!process.env.CI, 'Skipped in CI');
+test.describe('Recette captures (opt-in)', () => {
+  test.skip(!artifactsDir, 'Set PLAYUP_E2E_ARTIFACTS to enable capture specs');
 
-  test('recette4 screenshots', async ({ page, request }) => {
+  test('recette5 screenshots', async ({ page, request }) => {
     const competition = await findFreshnessActionsRecetteCompetition(request);
     const avalId = await getStageIdByName(request, competition.id, 'Aval');
     const poulesId = await getStageIdByName(request, competition.id, 'Poules');
     const aJouerId = await getStageIdByName(request, competition.id, 'A jouer');
-
     await page.goto(
-      `/competitions/${competition.id}/structure?stage=${avalId}`,
+      `/competitions/${competition.id}/structure?stage=${aJouerId}`,
     );
     await expect(
       page.getByRole('heading', { name: 'Structure' }),
     ).toBeVisible();
-    const upstream = page.locator('.schematic-slot').getByRole('link', {
-      name: /Périmé.*Phase amont périmée.*Aller à la phase amont/,
+    await page
+      .locator('.schematic-slot')
+      .filter({ hasText: 'Nord' })
+      .getByRole('button', {
+        name: /Non confirmée — .*le match.*n'est pas joué\. Libérer la place/,
+      })
+      .click();
+    const releaseDialog = page.getByRole('dialog', {
+      name: 'Libérer cette place ?',
     });
-    await expect(upstream.locator('.lucide-corner-left-up')).toBeVisible();
-    await upstream.hover();
-    await page.waitForTimeout(350);
-    await page.screenshot({
-      path: `${out}/recette4-upstream-icon-tooltip.png`,
+    await expect(releaseDialog).toBeVisible();
+    await releaseDialog.screenshot({
+      path: `${artifactsDir}/recette5-release-dialog-one-row.png`,
     });
+
+    const manuelId = await getStageIdByName(request, competition.id, 'Manuel');
+    await page.goto(
+      `/competitions/${competition.id}/structure?stage=${manuelId}`,
+    );
+    await page.getByRole('button', { name: 'Placer manuellement' }).click();
+    const placementDialog = page.getByRole('dialog', {
+      name: /Placement manuel/,
+    });
+    await expect(placementDialog).toBeVisible();
+    await placementDialog.screenshot({
+      path: `${artifactsDir}/recette5-placement-dialog-cancel-row.png`,
+    });
+    await placementDialog.getByRole('button', { name: 'Annuler' }).click();
 
     await page.goto(
       `/competitions/${competition.id}/classements?stage=${poulesId}`,
@@ -39,27 +57,28 @@ test.describe('Recette 4 captures (local only)', () => {
     await expect(
       page.locator(`[id="standings-panel-${poulesId}:Overall"]`),
     ).toHaveClass(/classements-panel--focus/);
+    await page.waitForTimeout(2_800);
+    await expect(
+      page.locator(`[id="standings-panel-${poulesId}:Overall"]`),
+    ).not.toHaveClass(/classements-panel--focus/);
     await page.screenshot({
-      path: `${out}/recette4-classements-stage-focus.png`,
+      path: `${artifactsDir}/recette5-classements-after-focus.png`,
       fullPage: false,
     });
 
     await page.goto(
-      `/competitions/${competition.id}/structure?stage=${aJouerId}`,
+      `/competitions/${competition.id}/structure?stage=${avalId}`,
     );
-    await page
-      .locator('.schematic-slot')
-      .filter({ hasText: 'Nord' })
-      .getByRole('button', {
-        name: /Non confirmée — .*le match.*n'est pas joué\. Libérer la place/,
-      })
-      .click();
-    const dialog = page.getByRole('dialog', {
-      name: 'Libérer cette place ?',
+    await expect(
+      page.getByRole('heading', { name: 'Structure' }),
+    ).toBeVisible();
+    await page.getByRole('button', { name: /À traiter/ }).click();
+    const drawer = page.getByRole('dialog', { name: /À traiter/ });
+    await expect(drawer).toBeVisible();
+    await expect(drawer.getByText(/Conflit de qualification/)).toHaveCount(0);
+    await drawer.screenshot({
+      path: `${artifactsDir}/recette5-attention-drawer-coalesced.png`,
     });
-    await expect(dialog).toBeVisible();
-    await dialog.screenshot({
-      path: `${out}/recette4-release-dialog-three-buttons.png`,
-    });
+    await page.getByRole('button', { name: 'Fermer À traiter' }).click();
   });
 });

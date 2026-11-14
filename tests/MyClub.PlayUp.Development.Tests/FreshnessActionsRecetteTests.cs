@@ -119,6 +119,12 @@ public sealed class FreshnessActionsRecetteTests(DevelopmentPostgresFixture fixt
         attention.Items.Should().Contain(item =>
             item.Source == NeedsAttentionAssembler.SourceResolutionPerime
             && item.TargetId == StageId(stages, "Tableau").ToString());
+        attention.Items.Should().NotContain(item =>
+            item.Source == NeedsAttentionAssembler.SourceQualificationConflict
+            && item.TargetId != null
+            && item.TargetId.StartsWith(
+                $"{StageId(stages, "Tableau")}:",
+                StringComparison.Ordinal));
         attention.Items.Should().Contain(item =>
             item.Source == NeedsAttentionAssembler.SourceResolutionPerime
             && item.TargetId == StageId(stages, "Aval").ToString());

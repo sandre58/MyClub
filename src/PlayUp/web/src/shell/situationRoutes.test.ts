@@ -35,6 +35,23 @@ describe('situationRoutes', () => {
     );
   });
 
+  it('deep-links ConfrontationUndecidable to confrontation section', () => {
+    const href = situationHref(
+      {
+        ...baseSituation(),
+        source: 'ConfrontationUndecidable',
+        nature: 'Blocking',
+        targetType: 'Stage',
+        targetId: 'stage-cup',
+        params: { stageId: 'stage-cup' },
+      },
+      'comp-1',
+    );
+    expect(href).toBe(
+      '/competitions/comp-1/structure?stage=stage-cup&section=confrontation',
+    );
+  });
+
   it('deep-links ProgressionConflict on a slot to progression + attribution rail', () => {
     const href = situationHref(
       {

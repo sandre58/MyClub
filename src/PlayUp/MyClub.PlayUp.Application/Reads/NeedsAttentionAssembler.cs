@@ -108,16 +108,20 @@ public static class NeedsAttentionAssembler
 
         var items = new List<NeedsAttentionItemDto>();
         CollectInsufficientParticipants(competition, items);
+        var matchSummariesByStage = ToMatchSummaryRowsByStage(matchesByStage);
+        var perimeOccupiedSlots = BuildPerimeSlotAttentionKeys(
+            competition,
+            stages,
+            matchSummariesByStage);
         foreach (var stage in stages)
         {
             CollectDrawNoSolutions(stage, items);
             var matches = matchesByStage.TryGetValue(stage.Id, out var list) ? list : [];
-            CollectQualificationAttentions(stage, stages, matches, items);
+            CollectQualificationAttentions(stage, stages, matches, items, perimeOccupiedSlots);
             CollectProgressionAttentions(stage, stages, matches, items);
         }
 
         if (stages.Count == 0) return new NeedsAttentionDto(competition.Id.Value, items);
-        var matchSummariesByStage = ToMatchSummaryRowsByStage(matchesByStage);
         var structureView = StructureViewAssembler.Assemble(
             competition,
             stages,
@@ -173,11 +177,40 @@ public static class NeedsAttentionAssembler
                     ["stageId"] = stage.Id.Value.ToString()
                 }));
 
+    private static HashSet<string> BuildPerimeSlotAttentionKeys(
+        Competition competition,
+        IReadOnlyList<Stage> stages,
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>> matchSummariesByStage)
+    {
+        var keys = new HashSet<string>(StringComparer.Ordinal);
+        var occupantsByStage = ResolutionFreshnessDetector.Evaluate(
+            competition,
+            stages,
+            matchSummariesByStage);
+        foreach (var (stageId, occupants) in occupantsByStage)
+        {
+            foreach (var occupant in occupants)
+            {
+                if (occupant.State != StructureResolutionFreshness.Perime
+                    || occupant.Target != StructureResolutionOccupantTarget.Slot
+                    || string.IsNullOrEmpty(occupant.SlotKey))
+                {
+                    continue;
+                }
+
+                keys.Add($"{stageId}:{occupant.SlotKey}");
+            }
+        }
+
+        return keys;
+    }
+
     private static void CollectQualificationAttentions(
         Stage source,
         IReadOnlyList<Stage> stages,
         IReadOnlyList<MatchAttentionSlice> matches,
-        List<NeedsAttentionItemDto> items)
+        List<NeedsAttentionItemDto> items,
+        HashSet<string> perimeOccupiedSlots)
     {
         var paths = source.Regulation.QualificationRules?.Paths;
         if (paths is null || paths.Count == 0)
@@ -245,12 +278,22 @@ public static class NeedsAttentionAssembler
                         ResolveAttentionTargetId(destination, path.Destination)));
                     break;
                 case DestinationSatisfaction.Kind.Conflict:
+                {
+                    var targetId = ResolveAttentionTargetId(destination, path.Destination);
+                    if (path.Destination.TargetsSlot
+                        && perimeOccupiedSlots.Contains(targetId))
+                    {
+                        break;
+                    }
+
                     items.Add(new NeedsAttentionItemDto(
                         SourceQualificationConflict,
                         SeverityBlocking,
                         ResolveAttentionTargetType(path.Destination),
-                        ResolveAttentionTargetId(destination, path.Destination)));
+                        targetId));
                     break;
+                }
+
                 case DestinationSatisfaction.Kind.Satisfied:
                 default:
                     break;

@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError, fetchConsultation, fetchStructureView } from '../../api';
 import { queryKeys } from '../../queryKeys';
 import type {
@@ -231,6 +231,49 @@ describe('ClassementsPage', () => {
     const panel = document.getElementById(`standings-panel-${stageId}:Overall`);
     expect(panel).not.toBeNull();
     expect(panel).toHaveClass('classements-panel--focus');
+  });
+
+  it('removes stage highlight after a short delay', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.mocked(fetchConsultation).mockResolvedValue(consultationView());
+    render(
+      <QueryClientProvider
+        client={
+          new QueryClient({
+            defaultOptions: { queries: { retry: false } },
+          })
+        }
+      >
+        <MemoryRouter
+          initialEntries={[
+            `/competitions/${competitionId}/classements?stage=${stageId}`,
+          ]}
+        >
+          <Routes>
+            <Route
+              path="/competitions/:competitionId/classements"
+              element={<ClassementsPage />}
+            />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    await vi.waitFor(() => {
+      expect(
+        document.getElementById(`standings-panel-${stageId}:Overall`),
+      ).toHaveClass('classements-panel--focus');
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2_500);
+    });
+    expect(
+      document.getElementById(`standings-panel-${stageId}:Overall`),
+    ).not.toHaveClass('classements-panel--focus');
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('shows loading while consultation is pending', () => {

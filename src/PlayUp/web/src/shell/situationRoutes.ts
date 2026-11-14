@@ -145,6 +145,14 @@ export function situationHref(
     situation.source === 'MissingPotRules';
 
   if (isStructureCatalogueSource) {
+    if (situation.source === 'ConfrontationUndecidable' && stageId) {
+      return structureDeepLink({
+        competitionId,
+        stageId,
+        section: 'confrontation',
+      });
+    }
+
     return `/competitions/${competitionId}/structure${
       stageId ? `?stage=${encodeURIComponent(stageId)}` : ''
     }`;

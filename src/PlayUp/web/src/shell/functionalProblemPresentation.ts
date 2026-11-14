@@ -11,6 +11,7 @@
  * AttentionDrawer = T5 + Structure catalogue; birth denylist in attentionPartition.
  */
 
+import { structureDeepLink } from '../pages/structure/structureNavigation';
 import { situationHref } from './situationRoutes';
 import { organizerProblemPresentationCode } from './organizerProblemRead';
 import type {
@@ -228,12 +229,20 @@ export function functionalProblemPresentation(
       canal,
       structureDiagnosticContext,
     );
+    const sotHref =
+      source === 'ConfrontationUndecidable' && stageFromTarget
+        ? structureDeepLink({
+            competitionId,
+            stageId: stageFromTarget,
+            section: 'confrontation',
+          })
+        : structureHref(competitionId, stageFromTarget);
     return {
       tone: fields.tone,
       titleKey: fields.titleKey,
       titleNs: fields.titleNs,
       descriptionParams,
-      sotHref: structureHref(competitionId, stageFromTarget),
+      sotHref,
       cta: { actionCode: actionCode ?? 'ConfigureStructure' },
       canal: 'attention-drawer',
     };

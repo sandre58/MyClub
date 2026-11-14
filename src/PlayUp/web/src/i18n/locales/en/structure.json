@@ -318,7 +318,7 @@
       "SlotFeedMissing": "Place not fed",
       "SlotFeedInvalid": "Invalid place feed",
       "SlotFeedMultiple": "Conflicting place feeds",
-      "ConfrontationUndecidable": "Draw not always decidable",
+      "ConfrontationUndecidable": "Draw without tiebreak",
       "CycleDetected": "Cycle between phases",
       "NonRootUnfed": "No inbound teams yet",
       "AwaitingInboundQualification": "Waiting for qualifiers",

@@ -200,6 +200,7 @@ test.describe('Play’Up business (resolution freshness)', () => {
     });
     await expect(releaseDialog).toBeVisible();
     await expectFooterButtonsInsidePanel(releaseDialog);
+    await expectFooterButtonsOnOneRow(releaseDialog);
     await releaseDialog
       .getByRole('button', { name: 'Jouer le match', exact: true })
       .click();
@@ -232,9 +233,48 @@ test.describe('Play’Up business (resolution freshness)', () => {
       page.getByRole('heading', { name: 'Classements' }),
     ).toBeVisible();
     await expect(page.getByTestId('standings-tables')).toBeVisible();
-    await expect(
-      page.locator(`[id="standings-panel-${poulesId}:Overall"]`),
-    ).toHaveClass(/classements-panel--focus/);
+    const panel = page.locator(`[id="standings-panel-${poulesId}:Overall"]`);
+    await expect(panel).toHaveClass(/classements-panel--focus/);
+    await page.waitForTimeout(2_800);
+    await expect(panel).not.toHaveClass(/classements-panel--focus/);
+  });
+
+  test('Structure — qualification conflict coalesced when place is périmée', async ({
+    page,
+    request,
+  }) => {
+    const competition = await findFreshnessActionsRecetteCompetition(request);
+    const tableauId = await getStageIdByName(
+      request,
+      competition.id,
+      'Tableau',
+    );
+
+    await page.goto(
+      `/competitions/${competition.id}/structure?stage=${tableauId}`,
+    );
+    await page.getByRole('button', { name: /À traiter/ }).click();
+    const drawer = page.getByRole('dialog', { name: /À traiter/ });
+    await expect(drawer).toBeVisible();
+    await expect(drawer.getByText(/Conflit de qualification/)).toHaveCount(0);
+    await page.getByRole('button', { name: 'Fermer À traiter' }).click();
+  });
+
+  test('Structure — dialog Placement manuel garde Annuler sur la même ligne', async ({
+    page,
+    request,
+  }) => {
+    const competition = await findFreshnessActionsRecetteCompetition(request);
+    const manuelId = await getStageIdByName(request, competition.id, 'Manuel');
+
+    await page.goto(
+      `/competitions/${competition.id}/structure?stage=${manuelId}`,
+    );
+    await page.getByRole('button', { name: 'Placer manuellement' }).click();
+    const dialog = page.getByRole('dialog', { name: /Placement manuel/ });
+    await expect(dialog).toBeVisible();
+    await expectFooterButtonsOnOneRow(dialog);
+    await dialog.getByRole('button', { name: 'Annuler' }).click();
   });
 
   test('Structure — libération depuis Qualifiés alignée sur la schématique', async ({
@@ -350,6 +390,26 @@ async function expectAttentionRow(
     await expect(row).toHaveCount(0);
   }
   await page.getByRole('button', { name: 'Fermer À traiter' }).click();
+}
+
+async function expectFooterButtonsOnOneRow(dialog: Locator) {
+  const names = [/Annuler/, /Jouer le match/, /Libérer/, /Enregistrer/];
+  const boxes: { y: number; height: number }[] = [];
+  for (const name of names) {
+    const button = dialog.getByRole('button', { name });
+    if ((await button.count()) === 0) {
+      continue;
+    }
+    const box = await button.first().boundingBox();
+    if (box) {
+      boxes.push({ y: box.y, height: box.height });
+    }
+  }
+  expect(boxes.length).toBeGreaterThanOrEqual(2);
+  const baseline = boxes[0]!.y;
+  for (const box of boxes) {
+    expect(Math.abs(box.y - baseline)).toBeLessThan(4);
+  }
 }
 
 async function expectFooterButtonsInsidePanel(dialog: Locator) {
