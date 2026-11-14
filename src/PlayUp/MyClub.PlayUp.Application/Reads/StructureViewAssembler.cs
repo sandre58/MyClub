@@ -215,12 +215,16 @@ public static class StructureViewAssembler
     /// <param name="matchSummariesByStage">
     /// Optional match list rows (home/away) for Structure materialize coverage. Empty when omitted.
     /// </param>
+    /// <param name="resolutionByStage">
+    /// Optional precomputed resolution occupants (one pass shared with Needs Attention).
+    /// </param>
     /// <returns>Structure view DTO.</returns>
     public static StructureViewDto Assemble(
         Competition competition,
         IReadOnlyList<Stage> stages,
         IReadOnlyList<MatchSheetMemberRef>? sheetMemberRefs = null,
-        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>>? matchSummariesByStage = null)
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>>? matchSummariesByStage = null,
+        IReadOnlyDictionary<Guid, IReadOnlyList<StructureResolutionOccupantDto>>? resolutionByStage = null)
     {
         ArgumentNullException.ThrowIfNull(competition);
         ArgumentNullException.ThrowIfNull(stages);
@@ -230,7 +234,11 @@ public static class StructureViewAssembler
         var structure = BuildStructureSummary(primary);
         var participants = BuildParticipants(competition, sheetMemberRefs ?? []);
         var regulation = BuildRegulation(competition);
-        var stageHubs = BuildStageHubSummaries(competition, stages, matchSummariesByStage);
+        var stageHubs = BuildStageHubSummaries(
+            competition,
+            stages,
+            matchSummariesByStage,
+            resolutionByStage);
         var attachedMatchCount = CountAttachedMatches(primary);
         var readiness = BuildReadiness(
             competition,
@@ -285,7 +293,8 @@ public static class StructureViewAssembler
     private static List<StructureStageHubSummaryDto> BuildStageHubSummaries(
         Competition competition,
         IReadOnlyList<Stage> stages,
-        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>>? matchSummariesByStage)
+        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>>? matchSummariesByStage,
+        IReadOnlyDictionary<Guid, IReadOnlyList<StructureResolutionOccupantDto>>? precomputedResolution)
     {
         var analysis = CompetitionFlowAnalyzer.Analyze(competition, stages);
         var flowIssuesByStage = analysis.Feed
@@ -302,10 +311,11 @@ public static class StructureViewAssembler
                     .Distinct(StringComparer.Ordinal)]);
 
         var byId = stages.ToDictionary(stage => stage.Id);
-        var resolutionByStage = ResolutionFreshnessDetector.Evaluate(
-            competition,
-            stages,
-            matchSummariesByStage);
+        var resolutionByStage = precomputedResolution
+            ?? ResolutionFreshnessDetector.Evaluate(
+                competition,
+                stages,
+                matchSummariesByStage);
         var ordered = new List<StructureStageHubSummaryDto>(competition.StageIds.Count);
         foreach (var stageId in competition.StageIds)
         {

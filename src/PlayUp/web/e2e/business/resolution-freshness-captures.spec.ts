@@ -12,7 +12,6 @@ test.describe('Recette captures (opt-in)', () => {
 
   test('recette5 screenshots', async ({ page, request }) => {
     const competition = await findFreshnessActionsRecetteCompetition(request);
-    const avalId = await getStageIdByName(request, competition.id, 'Aval');
     const poulesId = await getStageIdByName(request, competition.id, 'Poules');
     const aJouerId = await getStageIdByName(request, competition.id, 'A jouer');
     await page.goto(
@@ -66,8 +65,13 @@ test.describe('Recette captures (opt-in)', () => {
       fullPage: false,
     });
 
+    const tableauId = await getStageIdByName(
+      request,
+      competition.id,
+      'Tableau',
+    );
     await page.goto(
-      `/competitions/${competition.id}/structure?stage=${avalId}`,
+      `/competitions/${competition.id}/structure?stage=${tableauId}`,
     );
     await expect(
       page.getByRole('heading', { name: 'Structure' }),
@@ -76,9 +80,60 @@ test.describe('Recette captures (opt-in)', () => {
     const drawer = page.getByRole('dialog', { name: /À traiter/ });
     await expect(drawer).toBeVisible();
     await expect(drawer.getByText(/Conflit de qualification/)).toHaveCount(0);
+    await expect(drawer.getByText(/autre équipe/)).toBeVisible();
     await drawer.screenshot({
-      path: `${artifactsDir}/recette5-attention-drawer-coalesced.png`,
+      path: `${artifactsDir}/m5-attention-drawer-coalesced-slot.png`,
     });
-    await page.getByRole('button', { name: 'Fermer À traiter' }).click();
+    await drawer
+      .getByRole('link', { name: /autre équipe|different team/i })
+      .click();
+    await expect(page).toHaveURL(/focus=operational-placement/);
+    await expect(page.locator('.schematic-slot').first()).toBeVisible();
+    await page.screenshot({
+      path: `${artifactsDir}/m5-structure-place-focus.png`,
+      fullPage: false,
+    });
+
+    await page.goto(
+      `/competitions/${competition.id}/structure?stage=${aJouerId}`,
+    );
+    await page
+      .locator('.schematic-slot')
+      .filter({ hasText: 'Nord' })
+      .getByRole('button', {
+        name: /Non confirmée — .*le match.*n'est pas joué\. Libérer la place/,
+      })
+      .click();
+    const releaseWithErrorDialog = page.getByRole('dialog', {
+      name: 'Libérer cette place ?',
+    });
+    await expect(releaseWithErrorDialog).toBeVisible();
+    const longMessage =
+      'This release could not be completed because the upstream qualification path, bracket pairing, and match schedule are inconsistent with the current place assignment and regulation checksum.';
+    await page.route('**/stages/*/resolution/release', async (route) => {
+      if (route.request().method() === 'POST') {
+        await route.fulfill({
+          status: 409,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            title: 'Conflict',
+            detail: longMessage,
+            status: 409,
+          }),
+        });
+        return;
+      }
+      await route.continue();
+    });
+    await releaseWithErrorDialog
+      .getByRole('button', { name: 'Libérer', exact: true })
+      .click();
+    await expect(releaseWithErrorDialog.getByText(longMessage)).toBeVisible();
+    await releaseWithErrorDialog.screenshot({
+      path: `${artifactsDir}/m5-release-dialog-long-footer-error.png`,
+    });
+    await releaseWithErrorDialog
+      .getByRole('button', { name: 'Annuler' })
+      .click();
   });
 });

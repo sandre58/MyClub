@@ -107,17 +107,29 @@ public static class NeedsAttentionAssembler
         ArgumentNullException.ThrowIfNull(matchesByStage);
 
         var items = new List<NeedsAttentionItemDto>();
+        var coalescedQualificationSlots = new List<NeedsAttentionItemDto>();
         CollectInsufficientParticipants(competition, items);
         var matchSummariesByStage = ToMatchSummaryRowsByStage(matchesByStage);
-        var perimeOccupiedSlots = BuildPerimeSlotAttentionKeys(
+        var resolutionByStage = ResolutionFreshnessDetector.Evaluate(
             competition,
             stages,
             matchSummariesByStage);
+        var perimeSlotKeys = ResolutionPerimeSlotAttention.Build(
+            competition,
+            stages,
+            resolutionByStage);
         foreach (var stage in stages)
         {
             CollectDrawNoSolutions(stage, items);
             var matches = matchesByStage.TryGetValue(stage.Id, out var list) ? list : [];
-            CollectQualificationAttentions(stage, stages, matches, items, perimeOccupiedSlots);
+            CollectQualificationAttentions(
+                competition,
+                stage,
+                stages,
+                matches,
+                items,
+                perimeSlotKeys,
+                coalescedQualificationSlots);
             CollectProgressionAttentions(stage, stages, matches, items);
         }
 
@@ -125,8 +137,9 @@ public static class NeedsAttentionAssembler
         var structureView = StructureViewAssembler.Assemble(
             competition,
             stages,
-            matchSummariesByStage: matchSummariesByStage);
-        StructurePresentedAttentionCollector.Collect(structureView, items);
+            matchSummariesByStage: matchSummariesByStage,
+            resolutionByStage: resolutionByStage);
+        StructurePresentedAttentionCollector.Collect(structureView, items, coalescedQualificationSlots);
 
         return new NeedsAttentionDto(competition.Id.Value, items);
     }
@@ -177,40 +190,17 @@ public static class NeedsAttentionAssembler
                     ["stageId"] = stage.Id.Value.ToString()
                 }));
 
-    private static HashSet<string> BuildPerimeSlotAttentionKeys(
-        Competition competition,
-        IReadOnlyList<Stage> stages,
-        IReadOnlyDictionary<StageId, IReadOnlyList<MatchSummaryRow>> matchSummariesByStage)
-    {
-        var keys = new HashSet<string>(StringComparer.Ordinal);
-        var occupantsByStage = ResolutionFreshnessDetector.Evaluate(
-            competition,
-            stages,
-            matchSummariesByStage);
-        foreach (var (stageId, occupants) in occupantsByStage)
-        {
-            foreach (var occupant in occupants)
-            {
-                if (occupant.State != StructureResolutionFreshness.Perime
-                    || occupant.Target != StructureResolutionOccupantTarget.Slot
-                    || string.IsNullOrEmpty(occupant.SlotKey))
-                {
-                    continue;
-                }
-
-                keys.Add($"{stageId}:{occupant.SlotKey}");
-            }
-        }
-
-        return keys;
-    }
+    /// <summary>Attention params flag when a qualification conflict is merged with a périmé slot occupant.</summary>
+    public const string QualificationCoalescedParam = "qualificationCoalesced";
 
     private static void CollectQualificationAttentions(
+        Competition competition,
         Stage source,
         IReadOnlyList<Stage> stages,
         IReadOnlyList<MatchAttentionSlice> matches,
         List<NeedsAttentionItemDto> items,
-        HashSet<string> perimeOccupiedSlots)
+        HashSet<ResolutionPerimeSlotAttentionKey> perimeSlotKeys,
+        List<NeedsAttentionItemDto> coalescedQualificationSlots)
     {
         var paths = source.Regulation.QualificationRules?.Paths;
         if (paths is null || paths.Count == 0)
@@ -281,8 +271,37 @@ public static class NeedsAttentionAssembler
                 {
                     var targetId = ResolveAttentionTargetId(destination, path.Destination);
                     if (path.Destination.TargetsSlot
-                        && perimeOccupiedSlots.Contains(targetId))
+                        && ResolutionPerimeSlotAttention.TryMatchQualificationConflict(
+                            perimeSlotKeys,
+                            destination,
+                            path,
+                            source.Id,
+                            out _))
                     {
+                        var slotKey = path.Destination.SlotKey!;
+                        var actualEntryId = destination.FindSlot(slotKey)?.EntryId;
+                        coalescedQualificationSlots.Add(
+                            new NeedsAttentionItemDto(
+                                SourceResolutionPerime,
+                                SeverityWarning,
+                                "Slot",
+                                targetId,
+                                new Dictionary<string, string>
+                                {
+                                    ["stageId"] = destination.Id.Value.ToString(),
+                                    ["slotKey"] = slotKey,
+                                    ["count"] = "1",
+                                    [QualificationCoalescedParam] = bool.TrueString,
+                                    ["expectedEntryName"] =
+                                        ResolutionPerimeSlotAttention.EntryDisplayName(
+                                            competition,
+                                            instruction.EntryId),
+                                    ["actualEntryName"] = actualEntryId is { } actualId
+                                        ? ResolutionPerimeSlotAttention.EntryDisplayName(
+                                            competition,
+                                            actualId)
+                                        : string.Empty,
+                                }));
                         break;
                     }
 

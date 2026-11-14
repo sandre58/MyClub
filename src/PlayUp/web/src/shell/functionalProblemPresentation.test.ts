@@ -22,17 +22,34 @@ describe('functionalProblemPresentation', () => {
     expect(presentation.titleNs).toBe('enums');
   });
 
-  it('links stale and indeterminate resolution rows to the phase', () => {
+  it('links stale resolution on a slot to operational placement with CTA', () => {
+    const presentation = functionalProblemPresentation({
+      source: 'ResolutionPerime',
+      competitionId: 'comp-1',
+      targetType: 'Slot',
+      targetId: 'phase-1:Champ',
+      params: { stageId: 'phase-1', slotKey: 'Champ', count: '1' },
+      canal: 'attention-drawer',
+    });
+
+    expect(presentation.tone).toBe('attention');
+    expect(presentation.titleKey).toBe('attentionSource.ResolutionPerime');
+    expect(presentation.sotHref).toBe(
+      '/competitions/comp-1/structure?stage=phase-1&focus=operational-placement',
+    );
+    expect(presentation.cta?.actionCode).toBe('ConfigureStructure');
+  });
+
+  it('links stage-level stale resolution rows to the phase without CTA', () => {
     const presentation = functionalProblemPresentation({
       source: 'ResolutionPerime',
       competitionId: 'comp-1',
       targetType: 'Stage',
       targetId: 'phase-1',
       params: { stageId: 'phase-1', count: '2' },
+      canal: 'attention-drawer',
     });
 
-    expect(presentation.tone).toBe('attention');
-    expect(presentation.titleKey).toBe('attentionSource.ResolutionPerime');
     expect(presentation.sotHref).toBe(
       '/competitions/comp-1/structure?stage=phase-1',
     );

@@ -119,9 +119,25 @@ export function runtimeQualificationProgressionHref(
   });
 }
 
+export type SituationHrefOptions = {
+  /** When false, ConfrontationUndecidable opens the fiche without `section=confrontation`. */
+  stageEditable?: boolean;
+};
+
+export function isStructurePhaseRegulationEditable(
+  stageStatus: string | null | undefined,
+): boolean {
+  return (
+    stageStatus === 'Draft' ||
+    stageStatus === 'Ready' ||
+    stageStatus === 'Running'
+  );
+}
+
 export function situationHref(
   situation: OverviewSituation,
   competitionId: string,
+  options?: SituationHrefOptions,
 ): string | null {
   if (situation.source === 'InsufficientParticipants') {
     return `/competitions/${competitionId}/teams`;
@@ -146,16 +162,37 @@ export function situationHref(
 
   if (isStructureCatalogueSource) {
     if (situation.source === 'ConfrontationUndecidable' && stageId) {
+      const stageStatus = situation.params?.stageStatus;
+      const openEditor =
+        options?.stageEditable !== false &&
+        (stageStatus == null ||
+          isStructurePhaseRegulationEditable(stageStatus));
       return structureDeepLink({
         competitionId,
         stageId,
-        section: 'confrontation',
+        section: openEditor ? 'confrontation' : undefined,
       });
     }
 
     return `/competitions/${competitionId}/structure${
       stageId ? `?stage=${encodeURIComponent(stageId)}` : ''
     }`;
+  }
+
+  if (
+    (situation.source === 'ResolutionPerime' ||
+      situation.source === 'ResolutionIndetermine') &&
+    situation.targetType === 'Slot' &&
+    situation.targetId
+  ) {
+    const stageFromSlot = situation.targetId.split(':')[0];
+    if (stageFromSlot) {
+      return structureDeepLink({
+        competitionId,
+        stageId: stageFromSlot,
+        focus: 'operational-placement',
+      });
+    }
   }
 
   const runtimeStructure = runtimeQualificationProgressionHref(

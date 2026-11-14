@@ -52,6 +52,42 @@ describe('situationRoutes', () => {
     );
   });
 
+  it('opens ConfrontationUndecidable on fiche only when phase is not editable', () => {
+    const href = situationHref(
+      {
+        ...baseSituation(),
+        source: 'ConfrontationUndecidable',
+        nature: 'Blocking',
+        targetType: 'Stage',
+        targetId: 'stage-cup',
+        params: { stageId: 'stage-cup', stageStatus: 'Completed' },
+      },
+      'comp-1',
+      { stageEditable: false },
+    );
+    expect(href).toBe('/competitions/comp-1/structure?stage=stage-cup');
+  });
+
+  it('deep-links ResolutionPerime on a slot to operational placement', () => {
+    const href = situationHref(
+      {
+        ...baseSituation(),
+        source: 'ResolutionPerime',
+        nature: 'Warning',
+        targetType: 'Slot',
+        targetId: 'stage-d:Tete',
+        actionable: true,
+        actionCode: 'ConfigureStructure',
+        impactCode: null,
+        params: { stageId: 'stage-d', slotKey: 'Tete', count: '1' },
+      },
+      'comp-1',
+    );
+    expect(href).toBe(
+      '/competitions/comp-1/structure?stage=stage-d&focus=operational-placement',
+    );
+  });
+
   it('deep-links ProgressionConflict on a slot to progression + attribution rail', () => {
     const href = situationHref(
       {
