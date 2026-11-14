@@ -858,46 +858,46 @@
       "definitive": "Ne pourra plus être confirmée",
       "indeterminacy": {
         "MatchNonJoue": {
-          "cause": "Le match n'a pas encore été joué : cette place n'est pas confirmée.",
-          "causeNamed": "Le match {{match}} n'a pas encore été joué : cette place n'est pas confirmée.",
+          "cause": "Le match n'est pas joué",
           "clause": "le match n'est pas joué",
           "clauseNamed": "le match {{match}} n'est pas joué",
           "action": "Jouer le match",
           "actionNamed": "Jouer le match {{match}}"
         },
         "Egalite": {
-          "cause": "Le match n'a pas permis de départager les équipes : cette place n'est plus confirmée.",
+          "cause": "Le score ne départage pas",
           "clause": "le score ne départage pas",
           "action": "Départager l'égalité"
         },
         "SourceAbsente": {
-          "cause": "La phase ou la règle qui alimente cette place est introuvable.",
+          "cause": "La phase ou la règle source est introuvable",
           "clause": "la phase ou la règle source est introuvable"
         },
         "SelectionVide": {
-          "cause": "Le classement amont ne désigne plus aucune équipe pour cette place.",
+          "cause": "Le classement ne désigne aucune équipe",
           "clause": "le classement ne désigne aucune équipe"
         },
         "Autre": {
-          "cause": "La sélection de cette place ne peut pas être calculée.",
+          "cause": "La sélection ne peut pas être calculée",
           "clause": "la sélection ne peut pas être calculée"
         },
         "EgaliteClassement": {
-          "cause": "Plusieurs équipes sont à égalité au classement : cette place n'est plus confirmée.",
+          "cause": "Plusieurs équipes à égalité au classement",
           "clause": "plusieurs équipes sont à égalité au classement",
           "action": "Voir le classement"
         },
         "ConditionNonRemplie": {
-          "cause": "L'équipe ne remplit plus la condition de qualification : cette place n'est plus confirmée.",
+          "cause": "L'équipe ne remplit plus la condition de qualification",
           "clause": "elle ne remplit plus la condition de qualification"
         },
         "ConfigurationInvalide": {
-          "cause": "Le réglage de la phase source est incomplet : cette place ne peut pas être confirmée.",
+          "cause": "Le réglage de la phase source est incomplet",
           "clause": "le réglage de la phase source est incomplet",
           "action": "Voir le règlement"
         }
       },
-      "cascadeNotReplaceable": "Cette place a une affectation directe : elle ne se remplace pas en cascade.",
+      "cascadeNotReplaceable": "Cette place ne peut pas être remplacée automatiquement.",
+      "cascadeNotReplaceableHint": "Le placement manuel reste possible.",
       "multiplePlacements": "Placée à plusieurs endroits : agir depuis la schématique.",
       "ariaWithCause": "{{label}} — {{cause}}",
       "ariaAction": "{{label}} — {{cause}}. {{action}}",
@@ -910,7 +910,18 @@
       "cancel": "Annuler",
       "pending": "Libération…",
       "nonePlayed": "Aucun match ne sera modifié.",
-      "detachedIntro": "Dans ces matchs non joués, le côté indiqué redeviendra à déterminer :",
+      "detachedIntro": "Dans ces matchs non joués :",
+      "cause": {
+        "MatchNonJoue": "Le match n'a pas encore été joué : cette place n'est pas confirmée.",
+        "MatchNonJoueNamed": "Le match {{match}} n'a pas encore été joué : cette place n'est pas confirmée.",
+        "Egalite": "Le match n'a pas permis de départager les équipes : cette place n'est plus confirmée.",
+        "SourceAbsente": "La phase ou la règle qui alimente cette place est introuvable.",
+        "SelectionVide": "Le classement amont ne désigne plus aucune équipe pour cette place.",
+        "Autre": "La sélection de cette place ne peut pas être calculée.",
+        "EgaliteClassement": "Plusieurs équipes sont à égalité au classement : cette place n'est plus confirmée.",
+        "ConditionNonRemplie": "L'équipe ne remplit plus la condition de qualification : cette place n'est plus confirmée.",
+        "ConfigurationInvalide": "Le réglage de la phase source est incomplet : cette place ne peut pas être confirmée."
+      },
       "detachedMatch": "Manche {{leg}} : le côté {{side}} redevient à déterminer.",
       "detachedMatchNamed": "Manche {{leg}} ({{match}}) : le côté {{side}} redevient à déterminer.",
       "populationDropped": "{{team}} quittera aussi la composition de cette phase.",

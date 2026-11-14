@@ -145,13 +145,6 @@ function FreshnessBadgeBody({
           : null;
   const labelKey = `resolution.freshness.state.${occupant.state}` as const;
   const label = t(labelKey);
-  const causeKey =
-    occupant.state === 'Perime' && occupant.stalenessCause
-      ? (`resolution.freshness.cause.${occupant.stalenessCause}` as const)
-      : occupant.state === 'Indetermine' && occupant.indeterminacyCause
-        ? (`resolution.freshness.indeterminacy.${occupant.indeterminacyCause}.cause` as const)
-        : null;
-  const causeLabel = causeKey ? t(causeKey) : null;
   const explanation = indeterminacyExplanation(occupant, entryName);
   const sentence = explanation
     ? t('resolution.freshness.unconfirmedSentence', {
@@ -159,7 +152,21 @@ function FreshnessBadgeBody({
         detail: t(explanation.detailKey, explanation.detailParams),
       })
     : null;
-  const explained = sentence ?? causeLabel;
+  const indeterminacyClause =
+    occupant.state === 'Indetermine' && occupant.indeterminacyCause && !sentence
+      ? t(
+          `resolution.freshness.indeterminacy.${occupant.indeterminacyCause}.clause` as const,
+          occupant.indeterminacyCause === 'MatchNonJoue' &&
+            occupant.actionMatchLabel?.trim()
+            ? { match: occupant.actionMatchLabel.trim() }
+            : undefined,
+        )
+      : null;
+  const stalenessCauseLabel =
+    occupant.state === 'Perime' && occupant.stalenessCause
+      ? t(`resolution.freshness.cause.${occupant.stalenessCause}` as const)
+      : null;
+  const explained = sentence ?? indeterminacyClause ?? stalenessCauseLabel;
   const definitiveLabel = isDefinitivelyUnconfirmed(occupant)
     ? t('resolution.freshness.definitive')
     : null;
@@ -175,10 +182,15 @@ function FreshnessBadgeBody({
       occupant.stalenessCause === 'RegleQualification')
       ? t('resolution.freshness.cascadeNotReplaceable')
       : null;
+  const cascadeBlockedHint =
+    cascadeBlockedNote != null
+      ? t('resolution.freshness.cascadeNotReplaceableHint')
+      : null;
   const causeText = [
     explained,
     definitiveLabel,
     cascadeBlockedNote,
+    cascadeBlockedHint,
     multiplePlacementsNote,
   ]
     .filter(Boolean)
@@ -224,6 +236,11 @@ function FreshnessBadgeBody({
       {cascadeBlockedNote ? (
         <span className="structure-freshness-replace__cause">
           {cascadeBlockedNote}
+        </span>
+      ) : null}
+      {cascadeBlockedHint ? (
+        <span className="structure-freshness-replace__cause">
+          {cascadeBlockedHint}
         </span>
       ) : null}
       {multiplePlacementsNote ? (

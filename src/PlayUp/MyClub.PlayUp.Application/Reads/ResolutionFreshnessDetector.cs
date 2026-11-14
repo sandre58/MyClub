@@ -899,13 +899,12 @@ public static class ResolutionFreshnessDetector
                 definitive);
         }
 
+        /// <summary>
+        /// True when the clicked slot carries a direct assignment (same rule as cascade origin guard).
+        /// Does not walk downstream closure members; preview may still refuse and the client shows a toast.
+        /// </summary>
         private bool BlocksCascadeReplace(Stage? stage)
         {
-            if (Kind == ResolutionProvenanceKind.Directe)
-            {
-                return true;
-            }
-
             if (stage is null
                 || Target != StructureResolutionOccupantTarget.Slot
                 || SlotKey is null)

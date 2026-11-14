@@ -858,46 +858,46 @@
       "definitive": "Can no longer be confirmed",
       "indeterminacy": {
         "MatchNonJoue": {
-          "cause": "The match has not been played yet: this place is not confirmed.",
-          "causeNamed": "The match {{match}} has not been played yet: this place is not confirmed.",
+          "cause": "The match has not been played",
           "clause": "the match has not been played",
           "clauseNamed": "the match {{match}} has not been played",
           "action": "Play the match",
           "actionNamed": "Play the match {{match}}"
         },
         "Egalite": {
-          "cause": "The match did not break the tie: this place is no longer confirmed.",
+          "cause": "The score does not separate the teams",
           "clause": "the score does not separate the teams",
           "action": "Break the tie"
         },
         "SourceAbsente": {
-          "cause": "The phase or rule that feeds this place cannot be found.",
+          "cause": "The source phase or rule cannot be found",
           "clause": "the source phase or rule cannot be found"
         },
         "SelectionVide": {
-          "cause": "The upstream standing no longer designates a team for this place.",
+          "cause": "The standing does not designate a team",
           "clause": "the standing does not designate a team"
         },
         "Autre": {
-          "cause": "The selection for this place cannot be calculated.",
+          "cause": "The selection cannot be calculated",
           "clause": "the selection cannot be calculated"
         },
         "EgaliteClassement": {
-          "cause": "Several teams are tied in the standing: this place is no longer confirmed.",
+          "cause": "Several teams are tied in the standing",
           "clause": "several teams are tied in the standing",
           "action": "Open the standing"
         },
         "ConditionNonRemplie": {
-          "cause": "The team no longer meets the qualification condition: this place is no longer confirmed.",
+          "cause": "The team no longer meets the qualification condition",
           "clause": "it no longer meets the qualification condition"
         },
         "ConfigurationInvalide": {
-          "cause": "The source phase setup is incomplete: this place cannot be confirmed.",
+          "cause": "The source phase setup is incomplete",
           "clause": "the source phase setup is incomplete",
           "action": "Open the rules"
         }
       },
-      "cascadeNotReplaceable": "This place has a direct assignment: it cannot be replaced in a cascade.",
+      "cascadeNotReplaceable": "This place cannot be replaced automatically.",
+      "cascadeNotReplaceableHint": "Manual placement remains available.",
       "multiplePlacements": "Placed in several spots: act from the schematic.",
       "ariaWithCause": "{{label}} — {{cause}}",
       "ariaAction": "{{label}} — {{cause}}. {{action}}",
@@ -910,7 +910,18 @@
       "cancel": "Cancel",
       "pending": "Releasing…",
       "nonePlayed": "No match will change.",
-      "detachedIntro": "In these unplayed matches, the indicated side will become to be determined:",
+      "detachedIntro": "In these unplayed matches:",
+      "cause": {
+        "MatchNonJoue": "The match has not been played yet: this place is not confirmed.",
+        "MatchNonJoueNamed": "The match {{match}} has not been played yet: this place is not confirmed.",
+        "Egalite": "The match did not break the tie: this place is no longer confirmed.",
+        "SourceAbsente": "The phase or rule that feeds this place cannot be found.",
+        "SelectionVide": "The upstream standing no longer designates a team for this place.",
+        "Autre": "The selection for this place cannot be calculated.",
+        "EgaliteClassement": "Several teams are tied in the standing: this place is no longer confirmed.",
+        "ConditionNonRemplie": "The team no longer meets the qualification condition: this place is no longer confirmed.",
+        "ConfigurationInvalide": "The source phase setup is incomplete: this place cannot be confirmed."
+      },
       "detachedMatch": "Leg {{leg}}: the {{side}} side becomes to be determined.",
       "detachedMatchNamed": "Leg {{leg}} ({{match}}): the {{side}} side becomes to be determined.",
       "populationDropped": "{{team}} will also leave this phase's composition.",

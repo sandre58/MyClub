@@ -1,5 +1,10 @@
 import { expect, test, type Page } from '@playwright/test';
 
+function playUpE2eArtifactsDir(): string | null {
+  const dir = process.env.PLAYUP_E2E_ARTIFACTS?.trim();
+  return dir && dir.length > 0 ? dir : null;
+}
+
 import {
   correctFinishedMatchResult,
   findFirstFinishedMatchOnStage,
@@ -116,10 +121,25 @@ test.describe('Play’Up business (resolution freshness)', () => {
     });
     await expect(
       place.getByRole('img', {
-        name: /Périmé.*affectation directe.*ne se remplace pas en cascade/i,
+        name: /Périmé.*ne peut pas être remplacée automatiquement/i,
       }),
     ).toBeVisible();
     await expect(place.getByRole('button', { name: /Périmé/ })).toHaveCount(0);
+    const artifactDir = playUpE2eArtifactsDir();
+    if (artifactDir) {
+      await place
+        .getByRole('img', {
+          name: /Périmé.*ne peut pas être remplacée automatiquement/i,
+        })
+        .hover();
+      await page.waitForTimeout(450);
+      await page.screenshot({
+        path: `${artifactDir}/recette3-perime-non-remplacable.png`,
+      });
+      await page.screenshot({
+        path: `${artifactDir}/recette3-tooltip-separator-perime.png`,
+      });
+    }
     await place.getByRole('button', { name: 'Rejouable', exact: true }).click();
     await expect(
       page.getByRole('dialog', { name: /Placement manuel/ }),
@@ -143,9 +163,50 @@ test.describe('Play’Up business (resolution freshness)', () => {
       .locator('.schematic-slot')
       .getByRole('button', { name: /Périmé/ })
       .click();
+    const cascadeDialog = page.getByRole('dialog', {
+      name: /remplacement en cascade/i,
+    });
+    await expect(cascadeDialog).toBeVisible();
+  });
+
+  test('Structure — capture toast 409 cascade preview', async ({
+    page,
+    request,
+  }) => {
+    const artifactDir = playUpE2eArtifactsDir();
+    test.skip(!artifactDir, 'Set PLAYUP_E2E_ARTIFACTS to capture screenshots.');
+
+    const competition = await findFreshnessActionsRecetteCompetition(request);
+    const stageId = await getStageIdByName(request, competition.id, 'Tableau');
+    await page.goto(
+      `/competitions/${competition.id}/structure?stage=${stageId}`,
+    );
     await expect(
-      page.getByRole('dialog', { name: /remplacement en cascade/i }),
+      page.getByRole('heading', { name: 'Structure' }),
     ).toBeVisible();
+    const replace = page
+      .locator('.schematic-slot')
+      .getByRole('button', { name: /Périmé/ })
+      .first();
+    await expect(replace).toBeVisible({ timeout: 30_000 });
+    await page.route('**/resolution/cascade-preview', async (route) => {
+      await route.fulfill({
+        status: 409,
+        contentType: 'application/problem+json',
+        body: JSON.stringify({
+          type: 'Application.CascadeReplaceDirectAssignment',
+          title: 'Direct assignment',
+          status: 409,
+        }),
+      });
+    });
+    await replace.click();
+    const toast = page.locator('.ds-toast');
+    await expect(toast.first()).toBeVisible({ timeout: 15_000 });
+    await page.waitForTimeout(300);
+    await page.screenshot({
+      path: `${artifactDir}/recette3-toast-409.png`,
+    });
   });
 
   test('Structure — clic Amont périmé ouvre la phase amont', async ({
@@ -188,24 +249,24 @@ test.describe('Play’Up business (resolution freshness)', () => {
     await expect(
       page.getByRole('heading', { name: 'Structure' }),
     ).toBeVisible();
-    const releaseFromSchematic = page
+    await page
       .locator('.schematic-slot')
-      .getByRole('button', { name: /Libérer la place/ });
-    const releaseFromQualifiers = page
-      .locator('.structure-composition-qualifiers')
-      .getByRole('button', { name: /Libérer la place/ });
-    if ((await releaseFromSchematic.count()) > 0) {
-      await releaseFromSchematic.first().click();
-    } else {
-      await releaseFromQualifiers.first().click();
-    }
+      .filter({ hasText: 'Nord' })
+      .getByRole('button', {
+        name: /Non confirmée — .*le match.*n'est pas joué\. Libérer la place/,
+      })
+      .click();
     const releaseDialog = page.getByRole('dialog', {
       name: 'Libérer cette place ?',
     });
     await expect(releaseDialog).toBeVisible();
-    await releaseDialog
-      .getByRole('button', { name: /Jouer le match/ })
-      .click();
+    const artifactDir = playUpE2eArtifactsDir();
+    if (artifactDir) {
+      await releaseDialog.screenshot({
+        path: `${artifactDir}/recette3-release-dialog-secondary.png`,
+      });
+    }
+    await releaseDialog.getByRole('button', { name: /Jouer le match/ }).click();
     await expect(page).toHaveURL(/\/matches\/[0-9a-f-]+/);
     await expect(page.getByRole('heading').first()).toBeVisible();
   });
@@ -219,6 +280,40 @@ test.describe('Play’Up business (resolution freshness)', () => {
 
     const generated = await createIsolatedReleaseCompetition(request, true);
     await releasePlace(page, generated, true);
+  });
+
+  test('Structure — dialog égalité pour captures recette', async ({
+    page,
+    request,
+  }) => {
+    const artifactDir = playUpE2eArtifactsDir();
+    test.skip(!artifactDir, 'Set PLAYUP_E2E_ARTIFACTS to capture screenshots.');
+
+    const competition = await findFreshnessActionsRecetteCompetition(request);
+    const stageId = await getStageIdByName(
+      request,
+      competition.id,
+      'A départager',
+    );
+    await page.goto(
+      `/competitions/${competition.id}/structure?stage=${stageId}`,
+    );
+    await expect(
+      page.getByRole('heading', { name: 'Structure' }),
+    ).toBeVisible();
+    await page
+      .locator('.schematic-slot')
+      .filter({ hasText: 'Nord' })
+      .getByRole('button', { name: /Libérer la place/ })
+      .click();
+    const dialog = page.getByRole('dialog', {
+      name: 'Libérer cette place ?',
+    });
+    await expect(dialog).toBeVisible();
+    await dialog.screenshot({
+      path: `${artifactDir}/recette3-release-dialog-egalite.png`,
+    });
+    await dialog.getByRole('button', { name: 'Annuler' }).click();
   });
 
   test('Structure — libération depuis Qualifiés alignée sur la schématique', async ({
@@ -275,11 +370,11 @@ async function releasePlace(
   const place = page.locator('.schematic-slot').filter({
     hasText: seeded.team,
   });
-    await place.getByRole('button', { name: /Libérer la place/ }).click();
-    await expect(
-      page.getByRole('dialog', { name: 'Libérer cette place ?' }),
-    ).toBeVisible();
-    if (withMatch) {
+  await place.getByRole('button', { name: /Libérer la place/ }).click();
+  await expect(
+    page.getByRole('dialog', { name: 'Libérer cette place ?' }),
+  ).toBeVisible();
+  if (withMatch) {
     await expect(
       page.getByText(
         new RegExp(

@@ -896,8 +896,6 @@
 }
 
 .structure-freshness-replace__action {
-  align-self: stretch;
-  width: 100%;
   margin-top: 0.15rem;
   padding-top: 0.15rem;
   border-top: var(--border-width) solid var(--color-border);

@@ -33,6 +33,7 @@ export type ConfirmDialogProps = {
   footerStatus?: ReactNode;
   /** Optional middle action (e.g. navigate without confirming). */
   secondaryLabel?: string;
+  secondaryIcon?: ReactNode;
   onSecondary?: () => void;
   onConfirm: () => void;
   onCancel: () => void;
@@ -59,6 +60,7 @@ export function ConfirmDialog({
   confirmPendingLabel,
   footerStatus,
   secondaryLabel,
+  secondaryIcon,
   onSecondary,
   onConfirm,
   onCancel,
@@ -95,6 +97,7 @@ export function ConfirmDialog({
               disabled={busy}
               onClick={onSecondary}
             >
+              {secondaryIcon}
               {secondaryLabel}
             </button>
           ) : null}

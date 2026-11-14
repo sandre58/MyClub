@@ -13,6 +13,7 @@ import {
 } from '../../../api';
 import { ConfirmDialog } from '../../../design-system/components/ConfirmDialog';
 import { UnlockIcon } from '../../../design-system/icons/contentIcons';
+import { ChevronRightIcon } from '../../../design-system/icons/shellIcons';
 import type {
   StructureResolutionOccupant,
   StructureStageHubSummary,
@@ -125,8 +126,8 @@ export function StructureResolutionReleaseAction({
     occupant?.indeterminacyCause != null
       ? occupant.indeterminacyCause === 'MatchNonJoue' &&
         occupant.actionMatchLabel?.trim()
-        ? ('resolution.freshness.indeterminacy.MatchNonJoue.causeNamed' as const)
-        : (`resolution.freshness.indeterminacy.${occupant.indeterminacyCause}.cause` as const)
+        ? ('resolution.release.cause.MatchNonJoueNamed' as const)
+        : (`resolution.release.cause.${occupant.indeterminacyCause}` as const)
       : null;
 
   const closeWithoutRelease = () => {
@@ -215,6 +216,11 @@ export function StructureResolutionReleaseAction({
           secondaryNavigate
             ? t(secondaryNavigate.labelKey, secondaryNavigate.labelParams)
             : undefined
+        }
+        secondaryIcon={
+          secondaryNavigate ? (
+            <ChevronRightIcon size="sm" aria-hidden="true" />
+          ) : undefined
         }
         onSecondary={
           secondaryNavigate

@@ -239,11 +239,38 @@ describe('StructureResolutionFreshnessBadge', () => {
     const badge = screen.getByRole('link', {
       name: /Périmé.*Phase amont périmée.*Aller à la phase amont/,
     });
+    expect(
+      badge.querySelector('.structure-freshness-badge__icon'),
+    ).not.toBeNull();
     await user.click(badge);
     expect(screen.getByTestId('navigation-spy')).toHaveAttribute(
       'data-path',
       '/competitions/comp/structure?stage=phase-a',
     );
+  });
+
+  it('shows neutral cascade copy when replace is unavailable', () => {
+    renderWithI18n(
+      <StructureResolutionFreshnessBadge
+        occupant={{
+          target: 'Slot',
+          entryId: 'e1',
+          provenanceKind: 'Qualification',
+          sourcePathId: 'p1',
+          state: 'Perime',
+          slotKey: 'A',
+          stalenessCause: 'RegleQualification',
+          cascadeReplaceable: false,
+        }}
+        onReplace={vi.fn()}
+      />,
+    );
+    expect(
+      screen.getByRole('img', {
+        name: /Périmé.*ne peut pas être remplacée automatiquement.*placement manuel reste possible/i,
+      }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Remplacer/ })).toBeNull();
   });
 
   it('navigates to the match when an unplayed match is clicked', async () => {
@@ -279,7 +306,7 @@ describe('StructureResolutionFreshnessBadge', () => {
 
     await user.click(
       screen.getByRole('link', {
-        name: /Non confirmée.*pas encore été joué.*Jouer le match Nord/,
+        name: /Non confirmée.*le match n'est pas joué.*Jouer le match Nord/,
       }),
     );
     expect(screen.getByTestId('navigation-spy')).toHaveAttribute(
@@ -313,7 +340,7 @@ describe('StructureResolutionFreshnessBadge', () => {
       </MemoryRouter>,
     );
     const badge = screen.getByRole('img', {
-      name: /Non confirmée.*sélection de cette place ne peut pas être calculée/,
+      name: /Non confirmée.*la sélection ne peut pas être calculée/,
     });
     expect(badge).toHaveClass('structure-freshness-badge__glyph');
     expect(
