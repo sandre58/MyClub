@@ -7,6 +7,7 @@ import {
   HourglassIcon,
   RefreshIcon,
   UnconfirmableIcon,
+  UnlockIcon,
 } from '../../../design-system/icons/contentIcons';
 import type { StructureResolutionOccupant } from '../../../types';
 import {
@@ -20,7 +21,9 @@ import {
 } from './structureResolutionOccupants';
 
 const actionButtonClass =
-  'ds-btn ds-icon-button ds-icon-button--compact structure-freshness-badge__action';
+  'ds-btn ds-btn--ghost ds-icon-button ds-icon-button--xs structure-freshness-badge__action';
+
+type FreshnessControl = 'replace' | 'release' | 'navigate';
 
 type StructureResolutionFreshnessBadgeProps = {
   occupant: StructureResolutionOccupant | null | undefined;
@@ -47,6 +50,20 @@ function stateIcon(
     );
   }
   return <HourglassIcon size="sm" className={className} aria-hidden="true" />;
+}
+
+function controlIcon(
+  occupant: StructureResolutionOccupant,
+  control: FreshnessControl,
+  className: string,
+): ReactNode {
+  if (control === 'release') {
+    return <UnlockIcon size="sm" className={className} aria-hidden="true" />;
+  }
+  if (control === 'replace') {
+    return <RefreshIcon size="sm" className={className} aria-hidden="true" />;
+  }
+  return stateIcon(occupant, className);
 }
 
 function stopSlotActivation(event: SyntheticEvent) {
@@ -168,7 +185,10 @@ function FreshnessBadgeBody({
           })
         : label;
 
-  const icon = stateIcon(occupant, 'structure-freshness-badge__icon');
+  const icon =
+    control === 'replace' || control === 'release' || control === 'navigate'
+      ? controlIcon(occupant, control, 'structure-freshness-badge__icon')
+      : stateIcon(occupant, 'structure-freshness-badge__icon');
 
   const tip = (
     <span className="structure-freshness-replace__tip">

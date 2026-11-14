@@ -802,33 +802,52 @@
   gap: var(--space-4);
 }
 
-.structure-freshness-badge__action {
+.structure-freshness-badge__action.ds-btn.ds-icon-button--xs {
   flex: none;
+  box-sizing: content-box;
+  width: 1.25rem;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  min-height: 1.25rem;
+  padding: 0.25rem;
+  margin: -0.25rem;
   color: var(--color-attention);
-  background: color-mix(in srgb, var(--color-attention) 12%, var(--color-canvas));
+  background: color-mix(in srgb, var(--color-attention) 10%, var(--color-canvas));
   border: 0;
   border-radius: var(--radius-control);
   text-decoration: none;
+  cursor: pointer;
 }
 
 .structure-freshness-badge__action:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--color-attention) 20%, var(--color-canvas));
+  background: color-mix(in srgb, var(--color-attention) 16%, var(--color-canvas));
 }
 
 .structure-freshness-badge__glyph {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.75rem;
-  min-width: 1.75rem;
-  height: 1.75rem;
+  box-sizing: content-box;
+  width: 1.25rem;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  min-height: 1.25rem;
+  padding: 0.25rem;
+  margin: -0.25rem;
   flex: none;
-  color: var(--color-attention);
+  color: color-mix(in srgb, var(--color-attention) 70%, var(--color-text-secondary));
+  cursor: default;
 }
 
 .structure-freshness-badge__icon {
   display: inline-flex;
   flex: none;
+}
+
+.structure-freshness-badge__glyph .structure-freshness-badge__icon svg,
+.structure-freshness-badge__glyph svg {
+  width: var(--icon-size-sm);
+  height: var(--icon-size-sm);
 }
 
 .structure-definitive-release {

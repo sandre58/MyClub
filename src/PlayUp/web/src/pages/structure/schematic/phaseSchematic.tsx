@@ -265,6 +265,8 @@ function SlotBox({
       />
     </span>
   ) : null;
+  const freshnessInNameRow =
+    density === 'full' && !!primary && !!freshnessBadge;
   const slotInner = (
     <>
       {density === 'crest' && showTeamCrest ? (
@@ -297,6 +299,7 @@ function SlotBox({
                   {withdrawn && resolvedName ? (
                     <SchematicSlotWithdrawnMarker label={withdrawnBadgeLabel} />
                   ) : null}
+                  {freshnessInNameRow ? freshnessBadge : null}
                 </span>
               ) : null}
               {secondary && secondary !== primary ? (
@@ -304,7 +307,7 @@ function SlotBox({
               ) : null}
             </span>
           ) : null}
-          {freshnessBadge}
+          {freshnessBadge && !freshnessInNameRow ? freshnessBadge : null}
         </span>
       ) : null}
     </>

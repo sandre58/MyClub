@@ -610,7 +610,70 @@ describe('StructureResolutionFreshnessBadge', () => {
     // CA7: Enter activates buttons and links; Space activates buttons only (native <a>).
   });
 
-  it('uses UnconfirmableIcon on definitive inert and actionable badges', () => {
+  it('uses Unlock on release, Refresh on replace, and state icons when inert', () => {
+    renderWithI18n(
+      <>
+        <StructureResolutionFreshnessBadge
+          occupant={{
+            target: 'Slot',
+            entryId: 'e1',
+            provenanceKind: 'Qualification',
+            sourcePathId: 'p1',
+            state: 'Indetermine',
+            slotKey: 'A',
+            indeterminacyCause: 'SelectionVide',
+            releasable: true,
+            cascadeReplaceable: false,
+          }}
+          onRelease={() => undefined}
+        />
+        <StructureResolutionFreshnessBadge
+          occupant={{
+            target: 'Slot',
+            entryId: 'e2',
+            provenanceKind: 'Qualification',
+            sourcePathId: 'p2',
+            state: 'Perime',
+            slotKey: 'B',
+            stalenessCause: 'ResultatAmont',
+            cascadeReplaceable: true,
+            releasable: false,
+          }}
+          onReplace={() => undefined}
+        />
+        <StructureResolutionFreshnessBadge
+          occupant={{
+            target: 'Slot',
+            entryId: 'e3',
+            provenanceKind: 'Qualification',
+            sourcePathId: 'p3',
+            state: 'Indetermine',
+            slotKey: 'C',
+            indeterminacyCause: 'Autre',
+            cascadeReplaceable: false,
+          }}
+        />
+      </>,
+    );
+
+    expect(
+      screen
+        .getByRole('button', { name: /Libérer la place/ })
+        .querySelector('.lucide-unlock'),
+    ).toBeTruthy();
+    expect(
+      screen
+        .getByRole('button', { name: /remplacer/i })
+        .querySelector('.lucide-refresh-cw'),
+    ).toBeTruthy();
+    expect(
+      screen
+        .getByRole('img', { name: /Non confirmée/ })
+        .querySelector('.lucide-hourglass'),
+    ).toBeTruthy();
+  });
+
+  it('uses UnconfirmableIcon on definitive inert and Unlock on definitive release', () => {
     renderWithI18n(
       <>
         <StructureResolutionFreshnessBadge
@@ -665,8 +728,15 @@ describe('StructureResolutionFreshnessBadge', () => {
         .getByRole('button', {
           name: /Non confirmée.*Ne pourra plus être confirmée.*Libérer/,
         })
-        .querySelector('.lucide-timer-off'),
+        .querySelector('.lucide-unlock'),
     ).toBeTruthy();
+    expect(
+      screen
+        .getByRole('button', {
+          name: /Non confirmée.*Ne pourra plus être confirmée.*Libérer/,
+        })
+        .querySelector('.lucide-timer-off'),
+    ).toBeNull();
   });
 
   it('opens badge tooltip on long-press without firing release (coarse pointer)', async () => {

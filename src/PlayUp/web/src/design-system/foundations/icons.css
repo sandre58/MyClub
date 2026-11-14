@@ -2,6 +2,7 @@
  * Icon style — stroke monocolor, currentColor only.
  *
  * Scale:
+ *   xs 13px — extra-compact icon buttons (freshness badges)
  *   sm 16px — dense rows, badges
  *   md 20px — nav, header actions (default)
  *   lg 24px — empty states, emphasis
@@ -17,6 +18,11 @@
   flex: none;
   width: var(--icon-size-md);
   height: var(--icon-size-md);
+}
+
+.ds-icon--xs {
+  width: var(--icon-size-xs);
+  height: var(--icon-size-xs);
 }
 
 .ds-icon--sm {
@@ -35,6 +41,7 @@
 }
 
 .ds-root {
+  --icon-size-xs: 0.8125rem;
   --icon-size-sm: 1rem;
   --icon-size-md: 1.25rem;
   --icon-size-lg: 1.5rem;

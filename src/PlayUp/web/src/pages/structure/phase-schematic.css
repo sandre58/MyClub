@@ -310,6 +310,11 @@
   min-width: 0;
 }
 
+.schematic-slot__name-row .schematic-slot__freshness {
+  flex: none;
+  align-self: center;
+}
+
 .schematic-slot__withdrawn-marker {
   flex: none;
   display: inline-flex;
@@ -332,10 +337,8 @@
 
 .schematic-slot__freshness .structure-freshness-badge__action,
 .schematic-slot__freshness .structure-freshness-badge__glyph {
-  width: 1.5rem;
-  min-width: 1.5rem;
-  height: 1.5rem;
-  min-height: 1.5rem;
+  padding: 0.125rem;
+  margin: -0.125rem;
 }
 
 .structure-stale-draw-actions {
