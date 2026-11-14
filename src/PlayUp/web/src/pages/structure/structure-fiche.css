@@ -802,47 +802,53 @@
   gap: var(--space-4);
 }
 
-.structure-freshness-replace {
+.structure-freshness-badge__action.ds-btn.ds-icon-button--xs {
+  flex: none;
+  box-sizing: content-box;
+  width: 1.25rem;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  min-height: 1.25rem;
+  padding: 0.25rem;
+  margin: -0.25rem;
+  color: var(--color-attention);
+  background: color-mix(in srgb, var(--color-attention) 10%, var(--color-canvas));
+  background-clip: content-box;
+  border: 0;
+  border-radius: var(--radius-control);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.structure-freshness-badge__action.ds-btn.ds-icon-button--xs:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-attention) 16%, var(--color-canvas));
+  background-clip: content-box;
+}
+
+.structure-freshness-badge__glyph {
   display: inline-flex;
   align-items: center;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-  border-radius: 999px;
-  text-decoration: none;
+  justify-content: center;
+  box-sizing: content-box;
+  width: 1.25rem;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  min-height: 1.25rem;
+  padding: 0.25rem;
+  margin: -0.25rem;
+  flex: none;
+  color: color-mix(in srgb, var(--color-attention) 70%, var(--color-text-secondary));
+  cursor: default;
 }
 
-.structure-freshness-replace .ds-status,
-.structure-freshness-badge--icon.ds-status {
-  gap: 0.15rem;
+.structure-entries__cell-trailing .structure-freshness-badge__action.ds-btn.ds-icon-button--xs,
+.structure-entries__cell-trailing .structure-freshness-badge__glyph {
+  margin-inline-start: 0;
 }
 
-.structure-freshness-badge--icon.ds-status {
-  padding-inline: 0.28rem;
-}
-
-.structure-freshness-badge__icon,
-.structure-freshness-badge__chevron {
+.structure-freshness-badge__icon {
   display: inline-flex;
   flex: none;
-}
-
-.structure-freshness-badge__icon.ds-icon,
-.structure-freshness-badge__chevron.ds-icon {
-  width: 0.75rem;
-  height: 0.75rem;
-}
-
-.structure-freshness-definitive {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-4);
-  max-width: 14rem;
 }
 
 .structure-definitive-release {
@@ -875,7 +881,7 @@
 .structure-freshness-replace__tip {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 0.1rem;
 }
 

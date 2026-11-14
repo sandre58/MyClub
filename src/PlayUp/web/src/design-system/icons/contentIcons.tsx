@@ -8,6 +8,7 @@ import {
   Clipboard,
   ClockPlus,
   Copy,
+  CornerLeftUp,
   Dices,
   Equal,
   Eye,
@@ -41,6 +42,7 @@ import {
   SlidersHorizontal,
   SquareOff,
   Timer,
+  TimerOff,
   Trash2,
   Trophy,
   ThumbsUp,
@@ -354,6 +356,11 @@ export function UndoIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Undo2} size={size} {...props} />;
 }
 
+/** Go to the upstream / source phase (freshness upstream link). */
+export function UpstreamIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={CornerLeftUp} size={size} {...props} />;
+}
+
 /** Step not yet reached — dashed circle. */
 export function PendingCircleIcon({ size, ...props }: ContentIconProps) {
   return (
@@ -390,6 +397,11 @@ export function TimerIcon({ size, ...props }: ContentIconProps) {
 
 export function HourglassIcon({ size, ...props }: ContentIconProps) {
   return <LucideIcon icon={Hourglass} size={size} {...props} />;
+}
+
+/** Selection can no longer be confirmed (definitive indeterminate place). */
+export function UnconfirmableIcon({ size, ...props }: ContentIconProps) {
+  return <LucideIcon icon={TimerOff} size={size} {...props} />;
 }
 
 /** Penalties / goal — shootout token. */

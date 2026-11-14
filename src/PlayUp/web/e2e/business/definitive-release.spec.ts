@@ -23,7 +23,11 @@ test('Structure — libération groupée d’une sélection vide puis placement 
     page.getByText('1 place ne pourra plus être confirmée.'),
   ).toBeVisible();
   await expect(
-    page.getByText('Ne pourra plus être confirmée', { exact: true }),
+    page
+      .getByRole('button', {
+        name: /Non confirmée.*Ne pourra plus être confirmée/,
+      })
+      .first(),
   ).toBeVisible();
 
   await page.getByRole('button', { name: 'Libérer…' }).click();

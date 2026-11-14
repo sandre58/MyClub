@@ -31,6 +31,10 @@ export type ConfirmDialogProps = {
    * Same slot as Dialog `footerStatus`; do not put MutationError in `message`.
    */
   footerStatus?: ReactNode;
+  /** Optional middle action (e.g. navigate without confirming). */
+  secondaryLabel?: string;
+  secondaryIcon?: ReactNode;
+  onSecondary?: () => void;
   onConfirm: () => void;
   onCancel: () => void;
 };
@@ -55,6 +59,9 @@ export function ConfirmDialog({
   confirmPending = false,
   confirmPendingLabel,
   footerStatus,
+  secondaryLabel,
+  secondaryIcon,
+  onSecondary,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -83,6 +90,17 @@ export function ConfirmDialog({
             <CloseIcon size="sm" />
             {cancelLabel}
           </button>
+          {secondaryLabel && onSecondary ? (
+            <button
+              type="button"
+              className="ds-btn ds-btn--secondary"
+              disabled={busy}
+              onClick={onSecondary}
+            >
+              {secondaryIcon}
+              {secondaryLabel}
+            </button>
+          ) : null}
           <button
             type="button"
             className={

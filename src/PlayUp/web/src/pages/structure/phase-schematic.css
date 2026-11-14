@@ -310,6 +310,11 @@
   min-width: 0;
 }
 
+.schematic-slot__name-row .schematic-slot__freshness {
+  flex: none;
+  align-self: center;
+}
+
 .schematic-slot__withdrawn-marker {
   flex: none;
   display: inline-flex;
@@ -326,8 +331,14 @@
   pointer-events: none;
 }
 
-.schematic-slot__freshness :is(button, a) {
+.schematic-slot__freshness :is(button, a, [role='img']) {
   pointer-events: auto;
+}
+
+.schematic-slot__freshness .structure-freshness-badge__action.ds-btn.ds-icon-button--xs,
+.schematic-slot__freshness .structure-freshness-badge__glyph {
+  padding: 0.125rem;
+  margin: -0.125rem;
 }
 
 .structure-stale-draw-actions {
@@ -556,6 +567,18 @@
 .schematic-cup .schematic-slot {
   /* Geometry owns height — do not let the shared min-height inflate/clip slots. */
   min-height: 0;
+  justify-content: flex-start;
+}
+
+.schematic-cup .schematic-slot__address,
+.schematic-cup .schematic-slot__secondary {
+  flex-shrink: 0;
+  min-height: 1lh;
+}
+
+.schematic-cup .schematic-slot-tip,
+.schematic-cup .schematic-slot-tip > .ds-tooltip-trigger {
+  overflow: visible;
 }
 
 .schematic-cup__wires {

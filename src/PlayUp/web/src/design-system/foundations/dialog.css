@@ -149,11 +149,13 @@
 
 .ds-dialog__footer-actions {
   display: flex;
-  flex: none;
+  flex: 1 1 auto;
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
   gap: var(--space-8);
+  min-width: 0;
+  max-width: 100%;
 }
 
 /* Truly narrow panel (below sm 28rem): status full width above actions.

@@ -22,6 +22,11 @@
   gap: var(--space-16);
 }
 
+.classements-panel--focus {
+  outline: none;
+  box-shadow: var(--focus-halo);
+}
+
 .page--classements .ds-panel {
   display: flex;
   flex-direction: column;

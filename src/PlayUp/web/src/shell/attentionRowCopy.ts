@@ -76,6 +76,20 @@ export function attentionSituationSubtitle(
   if (source === 'ProgressionPending') {
     return i18n.t('attention.rowSubtitle.progressionPending', { ns: 'shell' });
   }
+  if (
+    source === 'ResolutionPerime' &&
+    item.params?.qualificationCoalesced === 'True'
+  ) {
+    return i18n.t(
+      'attention.rowSubtitle.resolutionPerimeQualificationCoalesced',
+      {
+        ns: 'shell',
+        slotKey: item.params.slotKey ?? '',
+        expectedEntryName: item.params.expectedEntryName ?? '',
+        actualEntryName: item.params.actualEntryName ?? '',
+      },
+    );
+  }
   return null;
 }
 

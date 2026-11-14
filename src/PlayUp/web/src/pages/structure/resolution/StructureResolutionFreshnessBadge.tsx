@@ -1,12 +1,14 @@
-import type { ReactNode } from 'react';
+import type { ReactNode, SyntheticEvent } from 'react';
 import { Link, useInRouterContext, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 import { Tooltip } from '../../../design-system/components/Tooltip';
-import { Status } from '../../../design-system/components/Status';
 import {
   HourglassIcon,
   RefreshIcon,
+  UnconfirmableIcon,
+  UnlockIcon,
+  UpstreamIcon,
 } from '../../../design-system/icons/contentIcons';
 import { ChevronRightIcon } from '../../../design-system/icons/shellIcons';
 import type { StructureResolutionOccupant } from '../../../types';
@@ -14,54 +16,92 @@ import {
   freshnessAction,
   indeterminacyExplanation,
   type FreshnessAction,
+  type FreshnessNavigateIcon,
 } from './freshnessGuidance';
 import {
   isDefinitivelyUnconfirmed,
   resolutionOccupantNeedsBadge,
 } from './structureResolutionOccupants';
 
-type FreshnessBadgeVariant = 'full' | 'icon';
+const actionButtonClass =
+  'ds-btn ds-btn--ghost ds-icon-button ds-icon-button--xs structure-freshness-badge__action';
+
+type FreshnessControl = 'replace' | 'release' | 'navigate';
 
 type StructureResolutionFreshnessBadgeProps = {
   occupant: StructureResolutionOccupant | null | undefined;
-  density?: 'context' | 'compact';
-  /**
-   * `icon` hides the state word (schematic slots). The word moves into the tooltip.
-   * Lists and details keep the default `full` pill.
-   */
-  variant?: FreshnessBadgeVariant;
+  /** Team listed on several Qual/Prog places — informational only. */
+  multiplePlacements?: boolean;
   /** Opens the cascade preview. Ignored unless the occupant is replayable. */
   onReplace?: (occupant: StructureResolutionOccupant) => void;
   /** Opens the release preview. Ignored unless the occupant is releasable. */
   onRelease?: (occupant: StructureResolutionOccupant) => void;
   /** Stored team, used to name who is no longer confirmed. */
   entryName?: string | null;
+  /** Show the manual-placement hint on inert Périmé cascade badges (schematic slots only). */
+  manualPlacementHint?: boolean;
 };
 
-function badgeTone(
-  state: StructureResolutionOccupant['state'],
-): 'attention' | 'error' | 'neutral' {
-  switch (state) {
-    case 'Perime':
-    case 'Indetermine':
-      return 'attention';
-    default:
-      return 'neutral';
+function capitalizeClause(clause: string): string {
+  const trimmed = clause.trim();
+  if (!trimmed) {
+    return trimmed;
   }
+  return trimmed.charAt(0).toLocaleUpperCase('fr-FR') + trimmed.slice(1);
 }
 
-function stateIcon(state: StructureResolutionOccupant['state']): ReactNode {
-  const className = 'structure-freshness-badge__icon';
-  switch (state) {
-    case 'Perime':
-      return <RefreshIcon size="sm" className={className} aria-hidden="true" />;
-    case 'Indetermine':
-      return (
-        <HourglassIcon size="sm" className={className} aria-hidden="true" />
-      );
-    default:
-      return null;
+function stateIcon(
+  occupant: StructureResolutionOccupant,
+  className: string,
+): ReactNode {
+  if (occupant.state === 'Perime') {
+    return <RefreshIcon size="xs" className={className} aria-hidden="true" />;
   }
+  if (isDefinitivelyUnconfirmed(occupant)) {
+    return (
+      <UnconfirmableIcon size="xs" className={className} aria-hidden="true" />
+    );
+  }
+  return <HourglassIcon size="xs" className={className} aria-hidden="true" />;
+}
+
+function controlIcon(
+  occupant: StructureResolutionOccupant,
+  control: FreshnessControl,
+  navigateIcon: FreshnessNavigateIcon | undefined,
+  className: string,
+): ReactNode {
+  if (control === 'release') {
+    return <UnlockIcon size="xs" className={className} aria-hidden="true" />;
+  }
+  if (control === 'replace') {
+    return <RefreshIcon size="xs" className={className} aria-hidden="true" />;
+  }
+  if (control === 'navigate') {
+    return navigateIcon === 'upstream' ? (
+      <UpstreamIcon size="xs" className={className} aria-hidden="true" />
+    ) : (
+      <ChevronRightIcon size="xs" className={className} aria-hidden="true" />
+    );
+  }
+  return stateIcon(occupant, className);
+}
+
+function stopSlotActivation(event: SyntheticEvent) {
+  event.stopPropagation();
+}
+
+/** Stops schematic slot hit / case tooltip from seeing the event; sits above Tooltip. */
+function BadgeActivationGuard({ children }: { children: ReactNode }) {
+  return (
+    <span
+      className="structure-freshness-badge"
+      onPointerDown={stopSlotActivation}
+      onTouchStart={stopSlotActivation}
+    >
+      {children}
+    </span>
+  );
 }
 
 export function StructureResolutionFreshnessBadge(
@@ -89,16 +129,15 @@ function FreshnessBadgeInRouter(props: StructureResolutionFreshnessBadgeProps) {
 
 function FreshnessBadgeBody({
   occupant,
-  density = 'compact',
-  variant = 'full',
+  multiplePlacements = false,
   onReplace,
   onRelease,
   entryName,
+  manualPlacementHint = false,
   competitionId,
   linked,
 }: StructureResolutionFreshnessBadgeProps & {
   competitionId: string | null;
-  /** False outside a router: navigation stays a tooltip, with no link. */
   linked: boolean;
 }) {
   const { t } = useTranslation('structure');
@@ -111,8 +150,9 @@ function FreshnessBadgeBody({
     canReplace: !!onReplace,
     canRelease: !!onRelease,
   });
-  const control =
-    action?.kind === 'replace'
+  const control = multiplePlacements
+    ? null
+    : action?.kind === 'replace'
       ? 'replace'
       : action?.kind === 'release'
         ? 'release'
@@ -121,13 +161,6 @@ function FreshnessBadgeBody({
           : null;
   const labelKey = `resolution.freshness.state.${occupant.state}` as const;
   const label = t(labelKey);
-  const causeKey =
-    occupant.state === 'Perime' && occupant.stalenessCause
-      ? (`resolution.freshness.cause.${occupant.stalenessCause}` as const)
-      : occupant.state === 'Indetermine' && occupant.indeterminacyCause
-        ? (`resolution.freshness.indeterminacy.${occupant.indeterminacyCause}.cause` as const)
-        : null;
-  const causeLabel = causeKey ? t(causeKey) : null;
   const explanation = indeterminacyExplanation(occupant, entryName);
   const sentence = explanation
     ? t('resolution.freshness.unconfirmedSentence', {
@@ -135,12 +168,58 @@ function FreshnessBadgeBody({
         detail: t(explanation.detailKey, explanation.detailParams),
       })
     : null;
-  const explained = sentence ?? causeLabel;
+  const indeterminacyClause =
+    occupant.state === 'Indetermine' && occupant.indeterminacyCause && !sentence
+      ? (() => {
+          const cause = occupant.indeterminacyCause;
+          const matchLabel = occupant.actionMatchLabel?.trim();
+          const useNamed =
+            cause === 'MatchNonJoue' && matchLabel && matchLabel.length > 0;
+          const clauseKey = useNamed
+            ? (`resolution.freshness.indeterminacy.${cause}.clauseNamed` as const)
+            : (`resolution.freshness.indeterminacy.${cause}.clause` as const);
+          const clause = t(
+            clauseKey,
+            useNamed ? { match: matchLabel } : undefined,
+          );
+          return capitalizeClause(clause);
+        })()
+      : null;
+  const stalenessCauseLabel =
+    occupant.state === 'Perime' && occupant.stalenessCause
+      ? t(`resolution.freshness.cause.${occupant.stalenessCause}` as const)
+      : null;
+  const explained = sentence ?? indeterminacyClause ?? stalenessCauseLabel;
   const definitiveLabel = isDefinitivelyUnconfirmed(occupant)
     ? t('resolution.freshness.definitive')
     : null;
-  const causeText = [explained, definitiveLabel].filter(Boolean).join(' — ');
-  const actionLabel = actionText(t, action);
+  const multiplePlacementsNote = multiplePlacements
+    ? t('resolution.freshness.multiplePlacements')
+    : null;
+  const cascadeBlockedNote =
+    occupant.state === 'Perime' &&
+    !action &&
+    !multiplePlacements &&
+    !occupant.cascadeReplaceable &&
+    (occupant.stalenessCause === 'ResultatAmont' ||
+      occupant.stalenessCause === 'RegleQualification')
+      ? t('resolution.freshness.cascadeNotReplaceable')
+      : null;
+  const cascadeBlockedHint =
+    cascadeBlockedNote != null && manualPlacementHint
+      ? t('resolution.freshness.cascadeNotReplaceableHint')
+      : null;
+  const causeText = [
+    explained,
+    definitiveLabel,
+    cascadeBlockedNote,
+    cascadeBlockedHint,
+    multiplePlacementsNote,
+  ]
+    .filter(Boolean)
+    .join(' — ');
+  const actionLabel =
+    multiplePlacements || !action ? null : actionText(t, action);
 
   const ariaLabel =
     control && actionLabel
@@ -161,44 +240,41 @@ function FreshnessBadgeBody({
           })
         : label;
 
-  const iconOnly = variant === 'icon';
-  const showStateIcon =
-    iconOnly ||
-    occupant.state === 'Indetermine' ||
-    (control === 'replace' && occupant.state === 'Perime');
-
-  const badge = (
-    <Status
-      density={density}
-      tone={badgeTone(occupant.state)}
-      variant="soft"
-      shape="pill"
-      className={iconOnly ? 'structure-freshness-badge--icon' : undefined}
-      aria-label={control ? undefined : ariaLabel}
-    >
-      {showStateIcon ? stateIcon(occupant.state) : null}
-      {iconOnly ? null : label}
-      {control ? (
-        <ChevronRightIcon
-          size="sm"
-          className="structure-freshness-badge__chevron"
-          aria-hidden="true"
-        />
-      ) : null}
-    </Status>
-  );
+  const navigateIcon = action?.kind === 'navigate' ? action.icon : undefined;
+  const icon =
+    control === 'replace' || control === 'release' || control === 'navigate'
+      ? controlIcon(
+          occupant,
+          control,
+          navigateIcon,
+          'structure-freshness-badge__icon',
+        )
+      : stateIcon(occupant, 'structure-freshness-badge__icon');
 
   const tip = (
     <span className="structure-freshness-replace__tip">
-      {iconOnly ? (
-        <span className="structure-freshness-replace__state">{label}</span>
-      ) : null}
+      <span className="structure-freshness-replace__state">{label}</span>
       {explained ? (
         <span className="structure-freshness-replace__cause">{explained}</span>
       ) : null}
       {definitiveLabel ? (
         <span className="structure-freshness-replace__cause">
           {definitiveLabel}
+        </span>
+      ) : null}
+      {cascadeBlockedNote ? (
+        <span className="structure-freshness-replace__cause">
+          {cascadeBlockedNote}
+        </span>
+      ) : null}
+      {cascadeBlockedHint ? (
+        <span className="structure-freshness-replace__cause">
+          {cascadeBlockedHint}
+        </span>
+      ) : null}
+      {multiplePlacementsNote ? (
+        <span className="structure-freshness-replace__cause">
+          {multiplePlacementsNote}
         </span>
       ) : null}
       {actionLabel ? (
@@ -208,75 +284,61 @@ function FreshnessBadgeBody({
       ) : null}
     </span>
   );
-  const hasTip =
-    iconOnly ||
-    explained != null ||
-    definitiveLabel != null ||
-    actionLabel != null;
-  const wrapped = hasTip ? <Tooltip content={tip}>{badge}</Tooltip> : badge;
-  const showSubtitle = !iconOnly && definitiveLabel != null;
 
   if (control === 'replace' || control === 'release') {
-    return present(
-      <Tooltip content={tip}>
-        <button
-          type="button"
-          className="structure-freshness-replace"
-          aria-label={ariaLabel}
-          onClick={(event) => {
-            event.stopPropagation();
-            if (control === 'release') {
-              onRelease?.(occupant);
-              return;
-            }
-            onReplace?.(occupant);
-          }}
-        >
-          {badge}
-        </button>
-      </Tooltip>,
-      showSubtitle,
-      definitiveLabel,
+    return (
+      <BadgeActivationGuard>
+        <Tooltip content={tip}>
+          <button
+            type="button"
+            className={actionButtonClass}
+            aria-label={ariaLabel}
+            onClick={(event) => {
+              stopSlotActivation(event);
+              if (control === 'release') {
+                onRelease?.(occupant);
+                return;
+              }
+              onReplace?.(occupant);
+            }}
+          >
+            {icon}
+          </button>
+        </Tooltip>
+      </BadgeActivationGuard>
     );
   }
 
   if (control === 'navigate' && action?.kind === 'navigate') {
-    return present(
-      <Tooltip content={tip}>
-        <Link
-          to={action.href}
-          className="structure-freshness-replace"
-          aria-label={ariaLabel}
-          onClick={(event) => {
-            event.stopPropagation();
-          }}
-        >
-          {badge}
-        </Link>
-      </Tooltip>,
-      showSubtitle,
-      definitiveLabel,
+    return (
+      <BadgeActivationGuard>
+        <Tooltip content={tip}>
+          <Link
+            to={action.href}
+            className={actionButtonClass}
+            aria-label={ariaLabel}
+            onClick={stopSlotActivation}
+          >
+            {icon}
+          </Link>
+        </Tooltip>
+      </BadgeActivationGuard>
     );
   }
 
-  return present(wrapped, showSubtitle, definitiveLabel);
-}
-
-function present(
-  node: ReactNode,
-  showSubtitle: boolean,
-  definitiveLabel: string | null,
-) {
-  if (!showSubtitle || definitiveLabel == null) {
-    return node;
-  }
   return (
-    <span className="structure-freshness-definitive">
-      {node}
-      <span className="structure-freshness-definitive__label">
-        {definitiveLabel}
-      </span>
-    </span>
+    <BadgeActivationGuard>
+      <Tooltip content={tip}>
+        <span
+          className="structure-freshness-badge__glyph"
+          role="img"
+          tabIndex={0}
+          aria-label={ariaLabel}
+        >
+          {icon}
+        </span>
+      </Tooltip>
+    </BadgeActivationGuard>
   );
 }
 

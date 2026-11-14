@@ -259,13 +259,15 @@ function SlotBox({
     <span className="schematic-slot__freshness">
       <StructureResolutionFreshnessBadge
         occupant={slotResolutionOccupant}
-        variant="icon"
         entryName={resolvedName}
+        manualPlacementHint={canManualPlace}
         onReplace={cascade?.requestReplace}
         onRelease={release?.requestRelease}
       />
     </span>
   ) : null;
+  const freshnessInNameRow =
+    density === 'full' && !!primary && !!freshnessBadge;
   const slotInner = (
     <>
       {density === 'crest' && showTeamCrest ? (
@@ -298,6 +300,7 @@ function SlotBox({
                   {withdrawn && resolvedName ? (
                     <SchematicSlotWithdrawnMarker label={withdrawnBadgeLabel} />
                   ) : null}
+                  {freshnessInNameRow ? freshnessBadge : null}
                 </span>
               ) : null}
               {secondary && secondary !== primary ? (
@@ -305,7 +308,7 @@ function SlotBox({
               ) : null}
             </span>
           ) : null}
-          {freshnessBadge}
+          {freshnessBadge && !freshnessInNameRow ? freshnessBadge : null}
         </span>
       ) : null}
     </>
@@ -605,7 +608,7 @@ function cupMetrics(density: SchematicDensity): CupMetrics {
   if (density === 'crest') {
     return { slotH: 34, pairGap: 5, groupGap: 12, colGap: 64, slotColW: 112 };
   }
-  return { slotH: 40, pairGap: 6, groupGap: 16, colGap: 76, slotColW: 148 };
+  return { slotH: 48, pairGap: 6, groupGap: 16, colGap: 76, slotColW: 148 };
 }
 
 const CUP_MIN_FIT_SCALE = 0.72;

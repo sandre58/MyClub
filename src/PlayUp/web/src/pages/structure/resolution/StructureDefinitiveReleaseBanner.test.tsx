@@ -173,7 +173,9 @@ describe('StructureDefinitiveReleaseBanner', () => {
       name: 'Libérer ces places ?',
     });
     expect(
-      within(confirmDialog).getByText(/Manche 1 — domicile — Nord – Sud/),
+      within(confirmDialog).getByText(
+        /Manche 1 \(Nord – Sud\) : le côté domicile redevient à déterminer/,
+      ),
     ).toBeInTheDocument();
     await user.click(
       within(confirmDialog).getByRole('button', { name: /^Libérer$/ }),

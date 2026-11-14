@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import {
   confirmResolutionRelease,
@@ -12,6 +12,11 @@ import {
   type ResolutionReleaseResponse,
 } from '../../../api';
 import { ConfirmDialog } from '../../../design-system/components/ConfirmDialog';
+import {
+  UnlockIcon,
+  UpstreamIcon,
+} from '../../../design-system/icons/contentIcons';
+import { ChevronRightIcon } from '../../../design-system/icons/shellIcons';
 import type {
   StructureResolutionOccupant,
   StructureStageHubSummary,
@@ -44,6 +49,7 @@ export function StructureResolutionReleaseAction({
   children,
 }: StructureResolutionReleaseActionProps) {
   const { t } = useTranslation('structure');
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [occupant, setOccupant] = useState<StructureResolutionOccupant | null>(
     null,
@@ -112,7 +118,7 @@ export function StructureResolutionReleaseAction({
   const populationDropped = (previewBody?.releases ?? []).filter(
     (row) => row.target === 'Population' && occupant?.target !== 'Population',
   );
-  const link =
+  const navigateAction =
     occupant === null
       ? null
       : freshnessAction(occupant, competitionId, {
@@ -121,8 +127,27 @@ export function StructureResolutionReleaseAction({
         });
   const causeKey =
     occupant?.indeterminacyCause != null
-      ? (`resolution.freshness.indeterminacy.${occupant.indeterminacyCause}.cause` as const)
+      ? occupant.indeterminacyCause === 'MatchNonJoue' &&
+        occupant.actionMatchLabel?.trim()
+        ? ('resolution.release.cause.MatchNonJoueNamed' as const)
+        : (`resolution.release.cause.${occupant.indeterminacyCause}` as const)
       : null;
+
+  const closeWithoutRelease = () => {
+    if (confirm.isPending) {
+      return;
+    }
+    if (confirm.isError || preview.isError) {
+      refresh();
+    }
+    setOccupant(null);
+    setPreviewBody(null);
+    preview.reset();
+    confirm.reset();
+  };
+
+  const secondaryNavigate =
+    navigateAction?.kind === 'navigate' ? navigateAction : null;
 
   return (
     <ResolutionReleaseContext.Provider value={{ requestRelease }}>
@@ -132,47 +157,56 @@ export function StructureResolutionReleaseAction({
         title={t('resolution.release.confirmTitle')}
         message={
           <div>
-            {causeKey ? <p>{t(causeKey)}</p> : null}
-            {link?.kind === 'navigate' ? (
+            {causeKey ? (
               <p>
-                <Link to={link.href}>{t(link.labelKey, link.labelParams)}</Link>
+                {t(
+                  causeKey,
+                  occupant?.indeterminacyCause === 'MatchNonJoue' &&
+                    occupant.actionMatchLabel?.trim()
+                    ? { match: occupant.actionMatchLabel.trim() }
+                    : undefined,
+                )}
               </p>
             ) : null}
-            {populationDropped.map((row) => (
-              <p key={`${row.stageId}-${row.entryId}`}>
-                {t('resolution.release.populationDropped', {
-                  team: row.entryName ?? '',
-                })}
-              </p>
-            ))}
-            {previewBody === null ? null : detached.length === 0 ? (
-              <p>{t('resolution.release.nonePlayed')}</p>
-            ) : (
-              <div>
-                <p>{t('resolution.release.detachedIntro')}</p>
-                <ul>
-                  {detached.map((match) => (
-                    <li key={`${match.matchId}-${match.legIndex}`}>
-                      {detachedLabel(t, match)}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+            {previewBody === null ? null : (
+              <>
+                {populationDropped.map((row) => (
+                  <p key={`${row.stageId}-${row.entryId}`}>
+                    {t('resolution.release.populationDropped', {
+                      team: row.entryName ?? '',
+                    })}
+                  </p>
+                ))}
+                {detached.length === 0 ? (
+                  <p>{t('resolution.release.nonePlayed')}</p>
+                ) : (
+                  <div>
+                    <p>{t('resolution.release.detachedIntro')}</p>
+                    <ul>
+                      {detached.map((match) => (
+                        <li key={`${match.matchId}-${match.legIndex}`}>
+                          {detachedLabel(t, match)}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {affected.length > 0 ? (
+                  <div>
+                    <p>{t('resolution.release.affectedIntro')}</p>
+                    <ul>
+                      {affected.map((row) => (
+                        <li
+                          key={`${row.stageId}-${row.entryId}-${row.slotKey}-${row.groupId}`}
+                        >
+                          {affectedLabel(t, row, stageId)}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </>
             )}
-            {affected.length > 0 ? (
-              <div>
-                <p>{t('resolution.release.affectedIntro')}</p>
-                <ul>
-                  {affected.map((row) => (
-                    <li
-                      key={`${row.stageId}-${row.entryId}-${row.slotKey}-${row.groupId}`}
-                    >
-                      {affectedLabel(t, row, stageId)}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
           </div>
         }
         confirmLabel={t('resolution.release.confirm')}
@@ -180,7 +214,33 @@ export function StructureResolutionReleaseAction({
         confirmPending={confirm.isPending}
         confirmPendingLabel={t('resolution.release.pending')}
         confirmDisabled={blocked || confirm.isPending}
-        danger={detached.length > 0}
+        confirmIcon={<UnlockIcon size="sm" aria-hidden="true" />}
+        secondaryLabel={
+          secondaryNavigate
+            ? secondaryNavigate.labelKey ===
+                'resolution.freshness.indeterminacy.MatchNonJoue.actionNamed' &&
+              occupant?.actionMatchId
+              ? t('resolution.freshness.indeterminacy.MatchNonJoue.action')
+              : t(secondaryNavigate.labelKey, secondaryNavigate.labelParams)
+            : undefined
+        }
+        secondaryIcon={
+          secondaryNavigate ? (
+            secondaryNavigate.icon === 'upstream' ? (
+              <UpstreamIcon size="sm" aria-hidden="true" />
+            ) : (
+              <ChevronRightIcon size="sm" aria-hidden="true" />
+            )
+          ) : undefined
+        }
+        onSecondary={
+          secondaryNavigate
+            ? () => {
+                closeWithoutRelease();
+                navigate(secondaryNavigate.href);
+              }
+            : undefined
+        }
         footerStatus={
           preview.isError ? (
             <MutationError error={preview.error} />
@@ -189,18 +249,7 @@ export function StructureResolutionReleaseAction({
           ) : null
         }
         onConfirm={() => confirm.mutate()}
-        onCancel={() => {
-          if (confirm.isPending) {
-            return;
-          }
-          if (confirm.isError || preview.isError) {
-            refresh();
-          }
-          setOccupant(null);
-          setPreviewBody(null);
-          preview.reset();
-          confirm.reset();
-        }}
+        onCancel={closeWithoutRelease}
       />
     </ResolutionReleaseContext.Provider>
   );

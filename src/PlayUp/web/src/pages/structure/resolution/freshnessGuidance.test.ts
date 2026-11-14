@@ -30,6 +30,7 @@ describe('freshnessAction', () => {
       kind: 'navigate',
       href: '/competitions/comp/structure?stage=phase-a',
       labelKey: 'resolution.freshness.upstreamLink',
+      icon: 'upstream',
     });
   });
 
@@ -97,6 +98,7 @@ describe('freshnessAction', () => {
       kind: 'navigate',
       href: '/matches/match-1',
       labelKey: 'resolution.freshness.indeterminacy.MatchNonJoue.actionNamed',
+      icon: 'open',
       labelParams: { match: 'Nord – Est' },
     });
 
@@ -115,6 +117,7 @@ describe('freshnessAction', () => {
       kind: 'navigate',
       href: '/matches/match-2',
       labelKey: 'resolution.freshness.indeterminacy.Egalite.action',
+      icon: 'open',
     });
 
     const upstreamMatch = freshnessAction(
@@ -126,12 +129,12 @@ describe('freshnessAction', () => {
       'comp',
       { canReplace: false },
     );
-    expect(upstreamMatch?.kind).toBe('navigate');
-    if (upstreamMatch?.kind === 'navigate') {
-      expect(upstreamMatch.href).toBe(
-        '/competitions/comp/structure?stage=phase-a',
-      );
-    }
+    expect(upstreamMatch).toEqual({
+      kind: 'navigate',
+      href: '/competitions/comp/structure?stage=phase-a',
+      labelKey: 'resolution.freshness.upstreamPhaseLink',
+      icon: 'upstream',
+    });
   });
 
   it('drops dead-end checks for an empty selection, a missing source, and Autre', () => {
@@ -168,8 +171,9 @@ describe('freshnessAction', () => {
       ),
     ).toMatchObject({
       kind: 'navigate',
-      href: '/competitions/comp/structure?stage=poules&section=classement',
+      href: '/competitions/comp/classements?stage=poules',
       labelKey: 'resolution.freshness.indeterminacy.EgaliteClassement.action',
+      icon: 'open',
     });
 
     expect(
@@ -195,8 +199,8 @@ describe('freshnessAction', () => {
     ).toEqual({
       kind: 'navigate',
       href: '/competitions/comp/structure?stage=poules',
-      labelKey:
-        'resolution.freshness.indeterminacy.ConfigurationInvalide.action',
+      labelKey: 'resolution.freshness.upstreamPhaseLink',
+      icon: 'upstream',
     });
 
     expect(
@@ -205,7 +209,12 @@ describe('freshnessAction', () => {
         'comp',
         { canReplace: false },
       ),
-    ).toMatchObject({ href: '/competitions/comp/regulation' });
+    ).toMatchObject({
+      href: '/competitions/comp/regulation',
+      labelKey:
+        'resolution.freshness.indeterminacy.ConfigurationInvalide.action',
+      icon: 'open',
+    });
   });
 
   it('names the team and the unplayed match in the explanation', () => {

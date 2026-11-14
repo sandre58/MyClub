@@ -5,11 +5,15 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
+using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
+using MyClub.PlayUp.Application.Stages;
+using MyClub.PlayUp.Application.Standings;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
+using MyClub.PlayUp.Domain.Qualification;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using Xunit;
@@ -189,6 +193,81 @@ public sealed class NeedsAttentionAssemblerTests
     }
 
     [Fact]
+    public void Assemble_coalesces_qualification_conflict_when_matching_slot_is_perime()
+    {
+        var (competition, league, terminal, entries, matches) = LeagueFeed(2);
+        ApplyOverall(league, terminal, entries, matches, position: 1, "Champ");
+        matches.Single().CorrectMatchResult(
+            new MatchResult(ResultType.Played, new Score(0, 2)),
+            _clock);
+
+        var attention = NeedsAttentionAssembler.Assemble(
+            competition,
+            [league, terminal],
+            new Dictionary<StageId, IReadOnlyList<Match>> { [league.Id] = matches });
+
+        attention.Items.Should().NotContain(item =>
+            item.Source == NeedsAttentionAssembler.SourceQualificationConflict);
+        attention.Items.Should().ContainSingle(item =>
+            item.Source == NeedsAttentionAssembler.SourceResolutionPerime
+            && item.Severity == NeedsAttentionAssembler.SeverityWarning
+            && item.TargetType == "Slot"
+            && item.TargetId == $"{terminal.Id.Value}:Champ"
+            && item.Params != null
+            && item.Params[NeedsAttentionAssembler.QualificationCoalescedParam] == bool.TrueString);
+    }
+
+    [Fact]
+    public void Assemble_keeps_qualification_conflict_blocking_for_direct_slot_assignment()
+    {
+        var (competition, league, terminal, entries, matches) = LeagueFeed(2);
+        ApplyOverall(league, terminal, entries, matches, position: 1, "Champ");
+        terminal.AddResolvedPopulationEntry(entries[1], _clock);
+        terminal.AssignEntryToSlot("Champ", entries[1]);
+
+        var attention = NeedsAttentionAssembler.Assemble(
+            competition,
+            [league, terminal],
+            new Dictionary<StageId, IReadOnlyList<Match>> { [league.Id] = matches });
+
+        attention.Items.Should().ContainSingle(item =>
+            item.Source == NeedsAttentionAssembler.SourceQualificationConflict
+            && item.Severity == NeedsAttentionAssembler.SeverityBlocking
+            && item.TargetType == "Slot"
+            && item.TargetId == $"{terminal.Id.Value}:Champ");
+        attention.Items.Should().NotContain(item =>
+            item.Params != null
+            && item.Params.ContainsKey(NeedsAttentionAssembler.QualificationCoalescedParam));
+    }
+
+    [Fact]
+    public void Assemble_without_slot_occupant_emits_qualification_pending_not_coalesced()
+    {
+        var (competition, league, terminal, entries, matches) = LeagueFeed(2);
+        league.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.Overall(),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    QualificationDestination.ForSlot(terminal.Id, "Champ")),
+            ]),
+            _clock);
+
+        var attention = NeedsAttentionAssembler.Assemble(
+            competition,
+            [league, terminal],
+            new Dictionary<StageId, IReadOnlyList<Match>> { [league.Id] = matches });
+
+        attention.Items.Should().ContainSingle(item =>
+            item.Source == NeedsAttentionAssembler.SourceQualificationPending);
+        attention.Items.Should().NotContain(item =>
+            item.Params != null
+            && item.Params.ContainsKey(NeedsAttentionAssembler.QualificationCoalescedParam));
+    }
+
+    [Fact]
     public void Assemble_prog_group_pending_until_group_membership()
     {
         var competition = Competition.Create(new CompetitionName("ProgGroup"), SampleRegulations.Standard(), _clock);
@@ -327,5 +406,71 @@ public sealed class NeedsAttentionAssemblerTests
         mB.Start(_clock);
         mB.Finish(new MatchResult(ResultType.Played, new Score(2, 0)), _clock);
         return [mA, mB];
+    }
+
+    private static QualificationPath OverallPath(int position, StageId destinationId, string slot) =>
+        new(
+            position,
+            QualificationSource.Overall(),
+            new QualificationSelection(SelectionMode.Position, position),
+            QualificationDestination.ForSlot(destinationId, slot));
+
+    private (Competition Competition, Stage League, Stage Terminal, EntryId[] Entries, List<Match> Matches)
+        LeagueFeed(int teams)
+    {
+        var competition = CreateCompetition.Execute($"League {teams}", _clock);
+        var entries = AddTeams(competition, teams);
+        var league = Stage.Create(competition.Id, new StageName("League"), SampleRegulations.Standard(), _clock);
+        league.AddMatchday(1, _clock);
+        competition.AddStage(league.Id, _clock);
+        var terminal = Stage.Create(competition.Id, new StageName("Terminal"), SampleRegulations.Standard(), _clock);
+        terminal.AddSlot("Champ");
+        competition.AddStage(terminal.Id, _clock);
+        return (competition, league, terminal, entries, RoundRobin(league, entries));
+    }
+
+    private void ApplyOverall(
+        Stage source,
+        Stage destination,
+        EntryId[] entries,
+        IReadOnlyList<Match> matches,
+        int position,
+        string slot)
+    {
+        var standing = CalculateStanding.Execute(entries, matches, source.Regulation.StandingRules!);
+        source.ReplaceQualificationRules(
+            new QualificationRules([OverallPath(position, destination.Id, slot)]),
+            _clock);
+        ApplyQualification.Execute(source, standing, [source, destination], _clock);
+    }
+
+    private EntryId[] AddTeams(Competition competition, int count)
+    {
+        var ids = new EntryId[count];
+        for (var index = 0; index < count; index++)
+        {
+            ids[index] = AddEntry.Execute(competition, $"T{index}", _clock).Id;
+        }
+
+        return ids;
+    }
+
+    private List<Match> RoundRobin(Stage stage, EntryId[] entries)
+    {
+        var matches = new List<Match>();
+        for (var home = 0; home < entries.Length; home++)
+        {
+            for (var away = home + 1; away < entries.Length; away++)
+            {
+                var match = Match.Create(stage.CompetitionId, stage.Id, entries[home], entries[away], _clock);
+                match.Start(_clock);
+                match.Finish(
+                    new MatchResult(ResultType.Played, new Score(entries.Length - home, 0)),
+                    _clock);
+                matches.Add(match);
+            }
+        }
+
+        return matches;
     }
 }
