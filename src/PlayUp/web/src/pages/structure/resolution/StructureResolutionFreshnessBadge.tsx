@@ -53,6 +53,19 @@ function stopSlotActivation(event: SyntheticEvent) {
   event.stopPropagation();
 }
 
+/** Stops schematic slot hit / case tooltip from seeing the event; sits above Tooltip. */
+function BadgeActivationGuard({ children }: { children: ReactNode }) {
+  return (
+    <span
+      className="structure-freshness-badge"
+      onPointerDown={stopSlotActivation}
+      onTouchStart={stopSlotActivation}
+    >
+      {children}
+    </span>
+  );
+}
+
 export function StructureResolutionFreshnessBadge(
   props: StructureResolutionFreshnessBadgeProps,
 ) {
@@ -183,54 +196,58 @@ function FreshnessBadgeBody({
 
   if (control === 'replace' || control === 'release') {
     return (
-      <Tooltip content={tip}>
-        <button
-          type="button"
-          className={actionButtonClass}
-          aria-label={ariaLabel}
-          onPointerDown={stopSlotActivation}
-          onClick={(event) => {
-            stopSlotActivation(event);
-            if (control === 'release') {
-              onRelease?.(occupant);
-              return;
-            }
-            onReplace?.(occupant);
-          }}
-        >
-          {icon}
-        </button>
-      </Tooltip>
+      <BadgeActivationGuard>
+        <Tooltip content={tip}>
+          <button
+            type="button"
+            className={actionButtonClass}
+            aria-label={ariaLabel}
+            onClick={(event) => {
+              stopSlotActivation(event);
+              if (control === 'release') {
+                onRelease?.(occupant);
+                return;
+              }
+              onReplace?.(occupant);
+            }}
+          >
+            {icon}
+          </button>
+        </Tooltip>
+      </BadgeActivationGuard>
     );
   }
 
   if (control === 'navigate' && action?.kind === 'navigate') {
     return (
-      <Tooltip content={tip}>
-        <Link
-          to={action.href}
-          className={actionButtonClass}
-          aria-label={ariaLabel}
-          onPointerDown={stopSlotActivation}
-          onClick={stopSlotActivation}
-        >
-          {icon}
-        </Link>
-      </Tooltip>
+      <BadgeActivationGuard>
+        <Tooltip content={tip}>
+          <Link
+            to={action.href}
+            className={actionButtonClass}
+            aria-label={ariaLabel}
+            onClick={stopSlotActivation}
+          >
+            {icon}
+          </Link>
+        </Tooltip>
+      </BadgeActivationGuard>
     );
   }
 
   return (
-    <Tooltip content={tip}>
-      <span
-        className="structure-freshness-badge__glyph"
-        role="img"
-        aria-label={ariaLabel}
-        onPointerDown={stopSlotActivation}
-      >
-        {icon}
-      </span>
-    </Tooltip>
+    <BadgeActivationGuard>
+      <Tooltip content={tip}>
+        <span
+          className="structure-freshness-badge__glyph"
+          role="img"
+          tabIndex={0}
+          aria-label={ariaLabel}
+        >
+          {icon}
+        </span>
+      </Tooltip>
+    </BadgeActivationGuard>
   );
 }
 

@@ -330,6 +330,14 @@
   pointer-events: auto;
 }
 
+.schematic-slot__freshness .structure-freshness-badge__action,
+.schematic-slot__freshness .structure-freshness-badge__glyph {
+  width: 1.5rem;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  min-height: 1.5rem;
+}
+
 .structure-stale-draw-actions {
   display: flex;
   flex-direction: column;
