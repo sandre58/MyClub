@@ -812,11 +812,7 @@
 }
 
 .structure-freshness-badge__action:hover:not(:disabled) {
-  background: color-mix(
-    in srgb,
-    var(--color-attention) 20%,
-    var(--color-canvas)
-  );
+  background: color-mix(in srgb, var(--color-attention) 20%, var(--color-canvas));
 }
 
 .structure-freshness-badge__glyph {

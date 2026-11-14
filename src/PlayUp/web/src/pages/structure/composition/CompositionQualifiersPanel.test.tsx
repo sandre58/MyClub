@@ -84,9 +84,7 @@ function renderPanel(
         <CompositionQualifiersPanel
           groups={[qualifierGroup(true)]}
           inboundComposition={undefined}
-          entries={[
-            { entryId: 'e1', displayName: 'Nord', status: 'Active' },
-          ]}
+          entries={[{ entryId: 'e1', displayName: 'Nord', status: 'Active' }]}
           formatKind="Cup"
           entryPlaceProjections={new Map()}
           resolutionOccupants={resolutionOccupants}
@@ -124,9 +122,7 @@ describe('CompositionQualifiersPanel freshness badge', () => {
           <CompositionQualifiersPanel
             groups={[qualifierGroup(false)]}
             inboundComposition={undefined}
-            entries={[
-              { entryId: 'e1', displayName: 'Nord', status: 'Active' },
-            ]}
+            entries={[{ entryId: 'e1', displayName: 'Nord', status: 'Active' }]}
             formatKind="Cup"
             entryPlaceProjections={new Map()}
             resolutionOccupants={[populationOccupant({ releasable: true })]}

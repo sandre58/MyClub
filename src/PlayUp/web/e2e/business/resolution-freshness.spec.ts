@@ -35,9 +35,7 @@ test.describe('Play’Up business (resolution freshness)', () => {
     await expect(
       page.getByRole('heading', { name: 'Structure' }),
     ).toBeVisible();
-    await expect(
-      page.getByRole('button', { name: /Périmé/ }),
-    ).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /Périmé/ })).toHaveCount(0);
 
     await correctFinishedMatchResult(request, matchId, 0, 2);
 
@@ -66,9 +64,7 @@ test.describe('Play’Up business (resolution freshness)', () => {
     await expect(
       page.getByRole('heading', { name: 'Structure' }),
     ).toBeVisible();
-    await expect(
-      page.getByRole('button', { name: /Périmé/ }),
-    ).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /Périmé/ })).toHaveCount(0);
 
     await replaceQualificationRulesForStaleBadge(request, leagueId, terminalId);
 
@@ -214,7 +210,7 @@ test.describe('Play’Up business (resolution freshness)', () => {
     ).toBeVisible();
 
     const slot = page.locator('.schematic-slot').filter({ hasText: 'Nord' });
-  const schematicRelease = slot.getByRole('button', {
+    const schematicRelease = slot.getByRole('button', {
       name: /Non confirmée.*Libérer la place/,
     });
     await schematicRelease.click();

@@ -51,7 +51,9 @@ describe('StructureResolutionFreshnessBadge', () => {
       />,
     );
     expect(
-      screen.getByRole('img', { name: /Périmé.*Règle de qualification modifiée/ }),
+      screen.getByRole('img', {
+        name: /Périmé.*Règle de qualification modifiée/,
+      }),
     ).toBeInTheDocument();
     expect(screen.queryByText('Périmé')).toBeNull();
   });

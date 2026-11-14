@@ -69,14 +69,13 @@ function groupOccupant(
   };
 }
 
-function populationFor(
-  sourcePathIdValue: string,
-): StructureResolutionOccupant {
+function populationFor(sourcePathIdValue: string): StructureResolutionOccupant {
   return {
     target: 'Population',
     entryId: 'e1',
-    provenanceKind:
-      sourcePathIdValue.startsWith('P') ? 'Progression' : 'Qualification',
+    provenanceKind: sourcePathIdValue.startsWith('P')
+      ? 'Progression'
+      : 'Qualification',
     sourcePathId: sourcePathIdValue,
     state: 'Indetermine',
     releasable: false,
@@ -130,7 +129,10 @@ describe('RootEntriesRail freshness badge', () => {
     const user = userEvent.setup();
     const progressionPath = 'P|barrage|winner';
     renderRail(
-      [populationFor(progressionPath), groupOccupant({ sourcePathId: progressionPath })],
+      [
+        populationFor(progressionPath),
+        groupOccupant({ sourcePathId: progressionPath }),
+      ],
       requestRelease,
     );
 

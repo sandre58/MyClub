@@ -38,18 +38,15 @@ function stateIcon(
   occupant: StructureResolutionOccupant,
   className: string,
 ): ReactNode {
+  if (occupant.state === 'Perime') {
+    return <RefreshIcon size="sm" className={className} aria-hidden="true" />;
+  }
   if (isDefinitivelyUnconfirmed(occupant)) {
     return (
       <UnconfirmableIcon size="sm" className={className} aria-hidden="true" />
     );
   }
-  if (occupant.state === 'Perime') {
-    return <RefreshIcon size="sm" className={className} aria-hidden="true" />;
-  }
-  if (occupant.state === 'Indetermine') {
-    return <HourglassIcon size="sm" className={className} aria-hidden="true" />;
-  }
-  return null;
+  return <HourglassIcon size="sm" className={className} aria-hidden="true" />;
 }
 
 function stopSlotActivation(event: SyntheticEvent) {

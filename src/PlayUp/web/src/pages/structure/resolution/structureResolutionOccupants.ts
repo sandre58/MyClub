@@ -6,7 +6,10 @@ export type StructureResolutionOccupantIndex = {
   /** Key: `${groupId}:${entryId}` */
   byGroupMember: ReadonlyMap<string, StructureResolutionOccupant>;
   /** Slot and Group occupants indexed by team entry id (lists, no overwrite). */
-  byPlacementEntryId: ReadonlyMap<string, readonly StructureResolutionOccupant[]>;
+  byPlacementEntryId: ReadonlyMap<
+    string,
+    readonly StructureResolutionOccupant[]
+  >;
 };
 
 export type ListedResolutionOccupantLookup = {
