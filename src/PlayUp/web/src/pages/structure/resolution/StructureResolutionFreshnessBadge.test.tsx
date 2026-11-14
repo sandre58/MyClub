@@ -279,7 +279,7 @@ describe('StructureResolutionFreshnessBadge', () => {
 
     await user.click(
       screen.getByRole('link', {
-        name: /Non confirmée.*n'est pas joué.*Jouer le match Nord/,
+        name: /Non confirmée.*pas encore été joué.*Jouer le match Nord/,
       }),
     );
     expect(screen.getByTestId('navigation-spy')).toHaveAttribute(
@@ -313,7 +313,7 @@ describe('StructureResolutionFreshnessBadge', () => {
       </MemoryRouter>,
     );
     const badge = screen.getByRole('img', {
-      name: /Non confirmée.*La sélection ne peut pas être calculée/,
+      name: /Non confirmée.*sélection de cette place ne peut pas être calculée/,
     });
     expect(badge).toHaveClass('structure-freshness-badge__glyph');
     expect(

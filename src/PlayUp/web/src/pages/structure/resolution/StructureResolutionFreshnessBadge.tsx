@@ -166,7 +166,21 @@ function FreshnessBadgeBody({
   const multiplePlacementsNote = multiplePlacements
     ? t('resolution.freshness.multiplePlacements')
     : null;
-  const causeText = [explained, definitiveLabel, multiplePlacementsNote]
+  const cascadeBlockedNote =
+    occupant.state === 'Perime' &&
+    !action &&
+    !multiplePlacements &&
+    !occupant.cascadeReplaceable &&
+    (occupant.stalenessCause === 'ResultatAmont' ||
+      occupant.stalenessCause === 'RegleQualification')
+      ? t('resolution.freshness.cascadeNotReplaceable')
+      : null;
+  const causeText = [
+    explained,
+    definitiveLabel,
+    cascadeBlockedNote,
+    multiplePlacementsNote,
+  ]
     .filter(Boolean)
     .join(' — ');
   const actionLabel =
@@ -205,6 +219,11 @@ function FreshnessBadgeBody({
       {definitiveLabel ? (
         <span className="structure-freshness-replace__cause">
           {definitiveLabel}
+        </span>
+      ) : null}
+      {cascadeBlockedNote ? (
+        <span className="structure-freshness-replace__cause">
+          {cascadeBlockedNote}
         </span>
       ) : null}
       {multiplePlacementsNote ? (

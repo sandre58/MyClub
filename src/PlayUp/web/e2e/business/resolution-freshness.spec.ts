@@ -114,16 +114,12 @@ test.describe('Play’Up business (resolution freshness)', () => {
     const place = page.locator('.schematic-slot').filter({
       has: page.getByRole('button', { name: 'Rejouable', exact: true }),
     });
-    // Editable because the feed is a direct assignment. CascadeReplace
-    // refuses that assignment, so the badge reaches the preview and the
-    // case still opens placement. The two controls are siblings.
-    await place.getByRole('button', { name: /Périmé/ }).click();
     await expect(
-      page.getByText('Une affectation directe n’est jamais remplacée.'),
+      place.getByRole('img', {
+        name: /Périmé.*affectation directe.*ne se remplace pas en cascade/i,
+      }),
     ).toBeVisible();
-    await expect(
-      page.getByRole('dialog', { name: /Placement manuel/ }),
-    ).toHaveCount(0);
+    await expect(place.getByRole('button', { name: /Périmé/ })).toHaveCount(0);
 
     await place.getByRole('button', { name: 'Rejouable', exact: true }).click();
     await expect(
