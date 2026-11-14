@@ -30,6 +30,8 @@ type StructureResolutionFreshnessBadgeProps = {
    * Lists and details keep the default `full` pill.
    */
   variant?: FreshnessBadgeVariant;
+  /** Team listed on several Qual/Prog places — informational only. */
+  multiplePlacements?: boolean;
   /** Opens the cascade preview. Ignored unless the occupant is replayable. */
   onReplace?: (occupant: StructureResolutionOccupant) => void;
   /** Opens the release preview. Ignored unless the occupant is releasable. */
@@ -91,6 +93,7 @@ function FreshnessBadgeBody({
   occupant,
   density = 'compact',
   variant = 'full',
+  multiplePlacements = false,
   onReplace,
   onRelease,
   entryName,
@@ -111,8 +114,9 @@ function FreshnessBadgeBody({
     canReplace: !!onReplace,
     canRelease: !!onRelease,
   });
-  const control =
-    action?.kind === 'replace'
+  const control = multiplePlacements
+    ? null
+    : action?.kind === 'replace'
       ? 'replace'
       : action?.kind === 'release'
         ? 'release'
@@ -139,8 +143,14 @@ function FreshnessBadgeBody({
   const definitiveLabel = isDefinitivelyUnconfirmed(occupant)
     ? t('resolution.freshness.definitive')
     : null;
-  const causeText = [explained, definitiveLabel].filter(Boolean).join(' — ');
-  const actionLabel = actionText(t, action);
+  const multiplePlacementsNote = multiplePlacements
+    ? t('resolution.freshness.multiplePlacements')
+    : null;
+  const causeText = [explained, definitiveLabel, multiplePlacementsNote]
+    .filter(Boolean)
+    .join(' — ');
+  const actionLabel =
+    multiplePlacements || !action ? null : actionText(t, action);
 
   const ariaLabel =
     control && actionLabel
@@ -199,6 +209,11 @@ function FreshnessBadgeBody({
       {definitiveLabel ? (
         <span className="structure-freshness-replace__cause">
           {definitiveLabel}
+        </span>
+      ) : null}
+      {multiplePlacementsNote ? (
+        <span className="structure-freshness-replace__cause">
+          {multiplePlacementsNote}
         </span>
       ) : null}
       {actionLabel ? (

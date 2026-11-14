@@ -896,6 +896,7 @@
           "action": "Voir le règlement"
         }
       },
+      "multiplePlacements": "Placée à plusieurs endroits : agir depuis la schématique.",
       "ariaWithCause": "{{label}} — {{cause}}",
       "ariaAction": "{{label}} — {{cause}}. {{action}}",
       "ariaActionNoCause": "{{label}}. {{action}}"

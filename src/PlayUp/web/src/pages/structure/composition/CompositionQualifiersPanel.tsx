@@ -25,7 +25,7 @@ import { useStructureResolutionRelease } from '../resolution/structureResolution
 import { StructureResolutionFreshnessBadge } from '../resolution/StructureResolutionFreshnessBadge';
 import {
   buildStructureResolutionOccupantIndex,
-  lookupPopulationResolutionOccupant,
+  lookupListedResolutionOccupant,
 } from '../resolution/structureResolutionOccupants';
 
 export function CompositionQualifiersPanel({
@@ -106,6 +106,13 @@ export function CompositionQualifiersPanel({
                       : placedInPhase
                         ? t('entries.entryPlacedStatus')
                         : null;
+                  const listedResolution =
+                    seat.entryId != null
+                      ? lookupListedResolutionOccupant(
+                          resolutionIndex,
+                          seat.entryId,
+                        )
+                      : null;
 
                   return (
                     <li
@@ -156,12 +163,12 @@ export function CompositionQualifiersPanel({
                             aria-hidden="true"
                           />
                         )}
-                        {seat.entryId ? (
+                        {listedResolution ? (
                           <StructureResolutionFreshnessBadge
-                            occupant={lookupPopulationResolutionOccupant(
-                              resolutionIndex,
-                              seat.entryId,
-                            )}
+                            occupant={listedResolution.occupant}
+                            multiplePlacements={
+                              listedResolution.multiplePlacements
+                            }
                             entryName={seat.teamName ?? entry?.displayName}
                             onReplace={cascade?.requestReplace}
                             onRelease={release?.requestRelease}

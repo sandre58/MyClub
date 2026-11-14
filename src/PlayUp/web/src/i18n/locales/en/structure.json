@@ -896,6 +896,7 @@
           "action": "Open the rules"
         }
       },
+      "multiplePlacements": "Placed in several spots: act from the schematic.",
       "ariaWithCause": "{{label}} — {{cause}}",
       "ariaAction": "{{label}} — {{cause}}. {{action}}",
       "ariaActionNoCause": "{{label}}. {{action}}"

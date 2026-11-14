@@ -49,7 +49,7 @@ import { useStructureResolutionRelease } from '../resolution/structureResolution
 import { StructureResolutionFreshnessBadge } from '../resolution/StructureResolutionFreshnessBadge';
 import {
   buildStructureResolutionOccupantIndex,
-  lookupPopulationResolutionOccupant,
+  lookupListedResolutionOccupant,
 } from '../resolution/structureResolutionOccupants';
 
 const compactIcon =
@@ -359,7 +359,7 @@ export function RootEntriesRail({
         : placed
           ? t('entries.entryPlacedStatus')
           : null;
-    const populationOccupant = lookupPopulationResolutionOccupant(
+    const listedResolution = lookupListedResolutionOccupant(
       resolutionIndex,
       entry.entryId,
     );
@@ -367,7 +367,8 @@ export function RootEntriesRail({
       provenanceLabel ? compositionTeamProvenanceBadge(provenanceLabel) : null,
       <StructureResolutionFreshnessBadge
         key="freshness"
-        occupant={populationOccupant}
+        occupant={listedResolution.occupant}
+        multiplePlacements={listedResolution.multiplePlacements}
         entryName={entry.displayName}
         onReplace={cascade?.requestReplace}
         onRelease={release?.requestRelease}
