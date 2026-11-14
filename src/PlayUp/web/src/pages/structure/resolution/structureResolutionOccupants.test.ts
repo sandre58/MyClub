@@ -108,7 +108,7 @@ describe('structureResolutionOccupants', () => {
         releasable: true,
       },
     ]);
-  const result = lookupListedResolutionOccupant(index, 'e-pop');
+    const result = lookupListedResolutionOccupant(index, 'e-pop');
     expect(result.multiplePlacements).toBe(false);
     expect(result.occupant?.target).toBe('Population');
   });

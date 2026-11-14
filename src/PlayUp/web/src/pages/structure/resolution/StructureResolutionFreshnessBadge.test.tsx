@@ -50,8 +50,10 @@ describe('StructureResolutionFreshnessBadge', () => {
         }}
       />,
     );
-    expect(screen.getByLabelText(/Périmé/)).toBeInTheDocument();
-    expect(screen.getByText('Périmé')).toBeInTheDocument();
+    expect(
+      screen.getByRole('img', { name: /Périmé.*Règle de qualification modifiée/ }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Périmé')).toBeNull();
   });
 
   it('renders Indetermine and NonVerifiee labels', () => {
@@ -79,7 +81,10 @@ describe('StructureResolutionFreshnessBadge', () => {
         />
       </>,
     );
-    expect(screen.getByText('Non confirmée')).toBeInTheDocument();
+    expect(
+      screen.getByRole('img', { name: /Non confirmée/ }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Non confirmée')).toBeNull();
     expect(screen.queryByText('Non vérifiée')).toBeNull();
   });
 
@@ -131,13 +136,8 @@ describe('StructureResolutionFreshnessBadge', () => {
       name: "Périmé — Résultat amont modifié. Cliquer pour remplacer l'équipe par l'occupant attendu",
     });
     expect(button).toBeInTheDocument();
-    expect(
-      button.querySelector('.structure-freshness-badge__chevron'),
-    ).not.toBeNull();
-    expect(
-      document.querySelectorAll('.structure-freshness-badge__chevron'),
-    ).toHaveLength(1);
-    expect(button).toHaveTextContent('Périmé');
+    expect(button).toHaveClass('structure-freshness-badge__action');
+    expect(screen.queryByText('Périmé')).toBeNull();
     expect(screen.getAllByRole('button')).toHaveLength(1);
     await user.click(button);
     expect(onReplace).toHaveBeenCalledOnce();
@@ -282,7 +282,7 @@ describe('StructureResolutionFreshnessBadge', () => {
     );
   });
 
-  it('shows the hourglass on Indetermine full variant', () => {
+  it('shows the hourglass on inert Indetermine badges', () => {
     renderWithI18n(
       <MemoryRouter initialEntries={['/competitions/comp/structure']}>
         <Routes>
@@ -306,16 +306,17 @@ describe('StructureResolutionFreshnessBadge', () => {
         </Routes>
       </MemoryRouter>,
     );
-    const badge = screen.getByLabelText(
-      /Non confirmée.*La sélection ne peut pas être calculée/,
-    );
+    const badge = screen.getByRole('img', {
+      name: /Non confirmée.*La sélection ne peut pas être calculée/,
+    });
+    expect(badge).toHaveClass('structure-freshness-badge__glyph');
     expect(
       badge.querySelector('.structure-freshness-badge__icon'),
     ).not.toBeNull();
     expect(screen.queryByRole('link')).toBeNull();
   });
 
-  it('schematic variant keeps the state word in the tooltip and the chevron only when clickable', async () => {
+  it('keeps the state word in the tooltip for clickable and inert badges', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     Object.defineProperty(window, 'matchMedia', {
       writable: true,
@@ -335,7 +336,6 @@ describe('StructureResolutionFreshnessBadge', () => {
     renderWithI18n(
       <>
         <StructureResolutionFreshnessBadge
-          variant="icon"
           occupant={{
             target: 'Slot',
             entryId: 'e1',
@@ -349,7 +349,6 @@ describe('StructureResolutionFreshnessBadge', () => {
           onReplace={() => undefined}
         />
         <StructureResolutionFreshnessBadge
-          variant="icon"
           occupant={{
             target: 'Population',
             entryId: 'e2',
@@ -368,15 +367,9 @@ describe('StructureResolutionFreshnessBadge', () => {
     const button = screen.getByRole('button', {
       name: "Périmé — Résultat amont modifié. Cliquer pour remplacer l'équipe par l'occupant attendu",
     });
-    expect(
-      button.querySelector('.structure-freshness-badge__chevron'),
-    ).not.toBeNull();
-    expect(screen.getByLabelText(/Non confirmée/)).toBeInTheDocument();
-    expect(
-      screen
-        .getByLabelText(/Non confirmée/)
-        .querySelector('.structure-freshness-badge__chevron'),
-    ).toBeNull();
+    expect(button).toHaveClass('structure-freshness-badge__action');
+    const inert = screen.getByRole('img', { name: /Non confirmée/ });
+    expect(inert).toHaveClass('structure-freshness-badge__glyph');
 
     await user.hover(button);
     await act(async () => {
@@ -538,12 +531,157 @@ describe('StructureResolutionFreshnessBadge', () => {
       />,
     );
 
-    expect(screen.getByText('Ne pourra plus être confirmée')).toBeVisible();
+    const button = screen.getByRole('button', {
+      name: /Centre.*Ne pourra plus être confirmée.*Libérer la place/,
+    });
+    expect(button.querySelector('svg')).toBeTruthy();
+    expect(screen.queryByText('Ne pourra plus être confirmée')).toBeNull();
+  });
+
+  it('renders action containers for links and buttons and glyphs when inert', () => {
+    renderWithI18n(
+      <MemoryRouter initialEntries={['/competitions/comp/structure']}>
+        <Routes>
+          <Route
+            path="/competitions/:competitionId/structure"
+            element={
+              <>
+                <StructureResolutionFreshnessBadge
+                  occupant={{
+                    target: 'Slot',
+                    entryId: 'e1',
+                    provenanceKind: 'Qualification',
+                    sourcePathId: 'p1',
+                    state: 'Perime',
+                    slotKey: 'A',
+                    stalenessCause: 'RegleQualification',
+                    cascadeReplaceable: false,
+                  }}
+                />
+                <StructureResolutionFreshnessBadge
+                  occupant={{
+                    target: 'Slot',
+                    entryId: 'e2',
+                    provenanceKind: 'Qualification',
+                    sourcePathId: 'p2',
+                    state: 'Perime',
+                    slotKey: 'B',
+                    stalenessCause: 'ResultatAmont',
+                    cascadeReplaceable: true,
+                  }}
+                  onReplace={() => undefined}
+                />
+                <StructureResolutionFreshnessBadge
+                  occupant={{
+                    target: 'Slot',
+                    entryId: 'e3',
+                    provenanceKind: 'Progression',
+                    sourcePathId: 'p3',
+                    state: 'Perime',
+                    slotKey: 'C',
+                    stalenessCause: 'AmontPerime',
+                    upstreamStageId: 'upstream',
+                    cascadeReplaceable: false,
+                  }}
+                />
+              </>
+            }
+          />
+        </Routes>
+      </MemoryRouter>,
+    );
+
     expect(
-      screen
-        .getByText('Ne pourra plus être confirmée')
-        .closest('.structure-freshness-definitive'),
-    ).not.toBeNull();
+      screen.getByRole('img', { name: /Périmé.*Règle de qualification/ }),
+    ).toHaveClass('structure-freshness-badge__glyph');
+    expect(
+      screen.getByRole('button', { name: /Périmé.*remplacer/i }),
+    ).toHaveClass('structure-freshness-badge__action');
+    expect(
+      screen.getByRole('link', { name: /Périmé.*phase amont/i }),
+    ).toHaveClass('structure-freshness-badge__action');
+  });
+
+  it('uses UnconfirmableIcon on definitive inert and actionable badges', () => {
+    renderWithI18n(
+      <>
+        <StructureResolutionFreshnessBadge
+          occupant={{
+            target: 'Slot',
+            entryId: 'e1',
+            provenanceKind: 'Qualification',
+            sourcePathId: 'p1',
+            state: 'Indetermine',
+            slotKey: 'A',
+            definitive: true,
+            cascadeReplaceable: false,
+          }}
+        />
+        <StructureResolutionFreshnessBadge
+          occupant={{
+            target: 'Slot',
+            entryId: 'e2',
+            provenanceKind: 'Qualification',
+            sourcePathId: 'p2',
+            state: 'Indetermine',
+            slotKey: 'B',
+            indeterminacyCause: 'SelectionVide',
+            releasable: true,
+            definitive: true,
+            cascadeReplaceable: false,
+          }}
+          onRelease={() => undefined}
+        />
+      </>,
+    );
+
+    expect(
+      screen.getByRole('img', {
+        name: /Non confirmée.*Ne pourra plus être confirmée/,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', {
+        name: /Non confirmée.*Ne pourra plus être confirmée.*Libérer/,
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it('opens only the badge tooltip on long-press when pointer is coarse', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: (query: string) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: () => undefined,
+        removeListener: () => undefined,
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined,
+        dispatchEvent: () => false,
+      }),
+    });
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    renderWithI18n(
+      <StructureResolutionFreshnessBadge
+        occupant={{
+          target: 'Slot',
+          entryId: 'e1',
+          provenanceKind: 'Qualification',
+          sourcePathId: 'p1',
+          state: 'Indetermine',
+          slotKey: 'A',
+          indeterminacyCause: 'Autre',
+          cascadeReplaceable: false,
+        }}
+      />,
+    );
+
+    const badge = screen.getByRole('img', { name: /Non confirmée/ });
+    await user.click(badge);
+    expect(await screen.findByRole('tooltip')).toBeInTheDocument();
+    expect(screen.getAllByRole('tooltip')).toHaveLength(1);
   });
 });
 

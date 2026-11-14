@@ -1,14 +1,13 @@
-import type { ReactNode } from 'react';
+import type { ReactNode, SyntheticEvent } from 'react';
 import { Link, useInRouterContext, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 import { Tooltip } from '../../../design-system/components/Tooltip';
-import { Status } from '../../../design-system/components/Status';
 import {
   HourglassIcon,
   RefreshIcon,
+  UnconfirmableIcon,
 } from '../../../design-system/icons/contentIcons';
-import { ChevronRightIcon } from '../../../design-system/icons/shellIcons';
 import type { StructureResolutionOccupant } from '../../../types';
 import {
   freshnessAction,
@@ -20,16 +19,11 @@ import {
   resolutionOccupantNeedsBadge,
 } from './structureResolutionOccupants';
 
-type FreshnessBadgeVariant = 'full' | 'icon';
+const actionButtonClass =
+  'ds-btn ds-icon-button ds-icon-button--compact structure-freshness-badge__action';
 
 type StructureResolutionFreshnessBadgeProps = {
   occupant: StructureResolutionOccupant | null | undefined;
-  density?: 'context' | 'compact';
-  /**
-   * `icon` hides the state word (schematic slots). The word moves into the tooltip.
-   * Lists and details keep the default `full` pill.
-   */
-  variant?: FreshnessBadgeVariant;
   /** Team listed on several Qual/Prog places — informational only. */
   multiplePlacements?: boolean;
   /** Opens the cascade preview. Ignored unless the occupant is replayable. */
@@ -40,21 +34,16 @@ type StructureResolutionFreshnessBadgeProps = {
   entryName?: string | null;
 };
 
-function badgeTone(
-  state: StructureResolutionOccupant['state'],
-): 'attention' | 'error' | 'neutral' {
-  switch (state) {
-    case 'Perime':
-    case 'Indetermine':
-      return 'attention';
-    default:
-      return 'neutral';
+function stateIcon(
+  occupant: StructureResolutionOccupant,
+  className: string,
+): ReactNode {
+  if (isDefinitivelyUnconfirmed(occupant)) {
+    return (
+      <UnconfirmableIcon size="sm" className={className} aria-hidden="true" />
+    );
   }
-}
-
-function stateIcon(state: StructureResolutionOccupant['state']): ReactNode {
-  const className = 'structure-freshness-badge__icon';
-  switch (state) {
+  switch (occupant.state) {
     case 'Perime':
       return <RefreshIcon size="sm" className={className} aria-hidden="true" />;
     case 'Indetermine':
@@ -64,6 +53,10 @@ function stateIcon(state: StructureResolutionOccupant['state']): ReactNode {
     default:
       return null;
   }
+}
+
+function stopSlotActivation(event: SyntheticEvent) {
+  event.stopPropagation();
 }
 
 export function StructureResolutionFreshnessBadge(
@@ -91,8 +84,6 @@ function FreshnessBadgeInRouter(props: StructureResolutionFreshnessBadgeProps) {
 
 function FreshnessBadgeBody({
   occupant,
-  density = 'compact',
-  variant = 'full',
   multiplePlacements = false,
   onReplace,
   onRelease,
@@ -101,7 +92,6 @@ function FreshnessBadgeBody({
   linked,
 }: StructureResolutionFreshnessBadgeProps & {
   competitionId: string | null;
-  /** False outside a router: navigation stays a tooltip, with no link. */
   linked: boolean;
 }) {
   const { t } = useTranslation('structure');
@@ -171,38 +161,11 @@ function FreshnessBadgeBody({
           })
         : label;
 
-  const iconOnly = variant === 'icon';
-  const showStateIcon =
-    iconOnly ||
-    occupant.state === 'Indetermine' ||
-    (control === 'replace' && occupant.state === 'Perime');
-
-  const badge = (
-    <Status
-      density={density}
-      tone={badgeTone(occupant.state)}
-      variant="soft"
-      shape="pill"
-      className={iconOnly ? 'structure-freshness-badge--icon' : undefined}
-      aria-label={control ? undefined : ariaLabel}
-    >
-      {showStateIcon ? stateIcon(occupant.state) : null}
-      {iconOnly ? null : label}
-      {control ? (
-        <ChevronRightIcon
-          size="sm"
-          className="structure-freshness-badge__chevron"
-          aria-hidden="true"
-        />
-      ) : null}
-    </Status>
-  );
+  const icon = stateIcon(occupant, 'structure-freshness-badge__icon');
 
   const tip = (
     <span className="structure-freshness-replace__tip">
-      {iconOnly ? (
-        <span className="structure-freshness-replace__state">{label}</span>
-      ) : null}
+      <span className="structure-freshness-replace__state">{label}</span>
       {explained ? (
         <span className="structure-freshness-replace__cause">{explained}</span>
       ) : null}
@@ -223,23 +186,17 @@ function FreshnessBadgeBody({
       ) : null}
     </span>
   );
-  const hasTip =
-    iconOnly ||
-    explained != null ||
-    definitiveLabel != null ||
-    actionLabel != null;
-  const wrapped = hasTip ? <Tooltip content={tip}>{badge}</Tooltip> : badge;
-  const showSubtitle = !iconOnly && definitiveLabel != null;
 
   if (control === 'replace' || control === 'release') {
-    return present(
+    return (
       <Tooltip content={tip}>
         <button
           type="button"
-          className="structure-freshness-replace"
+          className={actionButtonClass}
           aria-label={ariaLabel}
+          onPointerDown={stopSlotActivation}
           onClick={(event) => {
-            event.stopPropagation();
+            stopSlotActivation(event);
             if (control === 'release') {
               onRelease?.(occupant);
               return;
@@ -247,51 +204,39 @@ function FreshnessBadgeBody({
             onReplace?.(occupant);
           }}
         >
-          {badge}
+          {icon}
         </button>
-      </Tooltip>,
-      showSubtitle,
-      definitiveLabel,
+      </Tooltip>
     );
   }
 
   if (control === 'navigate' && action?.kind === 'navigate') {
-    return present(
+    return (
       <Tooltip content={tip}>
         <Link
           to={action.href}
-          className="structure-freshness-replace"
+          className={actionButtonClass}
           aria-label={ariaLabel}
-          onClick={(event) => {
-            event.stopPropagation();
-          }}
+          onPointerDown={stopSlotActivation}
+          onClick={stopSlotActivation}
         >
-          {badge}
+          {icon}
         </Link>
-      </Tooltip>,
-      showSubtitle,
-      definitiveLabel,
+      </Tooltip>
     );
   }
 
-  return present(wrapped, showSubtitle, definitiveLabel);
-}
-
-function present(
-  node: ReactNode,
-  showSubtitle: boolean,
-  definitiveLabel: string | null,
-) {
-  if (!showSubtitle || definitiveLabel == null) {
-    return node;
-  }
   return (
-    <span className="structure-freshness-definitive">
-      {node}
-      <span className="structure-freshness-definitive__label">
-        {definitiveLabel}
+    <Tooltip content={tip}>
+      <span
+        className="structure-freshness-badge__glyph"
+        role="img"
+        aria-label={ariaLabel}
+        onPointerDown={stopSlotActivation}
+      >
+        {icon}
       </span>
-    </span>
+    </Tooltip>
   );
 }
 

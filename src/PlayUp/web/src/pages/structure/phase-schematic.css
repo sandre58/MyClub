@@ -326,7 +326,7 @@
   pointer-events: none;
 }
 
-.schematic-slot__freshness :is(button, a) {
+.schematic-slot__freshness :is(button, a, [role='img']) {
   pointer-events: auto;
 }
 

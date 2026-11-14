@@ -45,6 +45,7 @@ function slotOccupant(
     sourcePathId,
     state: 'Indetermine',
     slotKey: 'Tete',
+    indeterminacyCause: 'SelectionVide',
     releasable: true,
     cascadeReplaceable: false,
     ...overrides,
@@ -61,6 +62,7 @@ function groupOccupant(
     sourcePathId: 'P|barrage|winner',
     groupId: 'g1',
     state: 'Indetermine',
+    indeterminacyCause: 'SelectionVide',
     releasable: true,
     cascadeReplaceable: false,
     ...overrides,
@@ -100,6 +102,7 @@ function renderRail(
           formatKind="Cup"
           schematicReady={true}
           compositionTileMode="exploitation"
+          variant="composition-band"
         />
       </ResolutionReleaseContext.Provider>
     </MemoryRouter>,

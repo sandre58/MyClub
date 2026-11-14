@@ -129,10 +129,7 @@ describe('CompositionQualifiersPanel freshness badge', () => {
             ]}
             formatKind="Cup"
             entryPlaceProjections={new Map()}
-            resolutionOccupants={[
-              populationOccupant({ releasable: true }),
-              releasableSlotOccupant(),
-            ]}
+            resolutionOccupants={[populationOccupant({ releasable: true })]}
           />
         </ResolutionReleaseContext.Provider>
       </MemoryRouter>,

@@ -259,7 +259,6 @@ function SlotBox({
     <span className="schematic-slot__freshness">
       <StructureResolutionFreshnessBadge
         occupant={slotResolutionOccupant}
-        variant="icon"
         entryName={resolvedName}
         onReplace={cascade?.requestReplace}
         onRelease={release?.requestRelease}
