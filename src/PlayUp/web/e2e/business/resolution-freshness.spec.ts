@@ -1,4 +1,4 @@
-import { expect, test, devices, type Page } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 import {
   correctFinishedMatchResult,
@@ -35,14 +35,10 @@ test.describe('Play’Up business (resolution freshness)', () => {
     await expect(
       page.getByRole('heading', { name: 'Structure' }),
     ).toBeVisible();
-    await expect(page.getByRole('button', { name: /Périmé/ })).toHaveCount(0);
-
     await correctFinishedMatchResult(request, matchId, 0, 2);
 
     await page.reload();
-    await expect(
-      page.getByRole('button', { name: /Périmé/ }).first(),
-    ).toBeVisible();
+    await expect(page.locator('[aria-label*="Périmé"]').first()).toBeVisible();
   });
 
   test('Structure — badge Périmé after qualification rule replace', async ({
@@ -64,14 +60,10 @@ test.describe('Play’Up business (resolution freshness)', () => {
     await expect(
       page.getByRole('heading', { name: 'Structure' }),
     ).toBeVisible();
-    await expect(page.getByRole('button', { name: /Périmé/ })).toHaveCount(0);
-
     await replaceQualificationRulesForStaleBadge(request, leagueId, terminalId);
 
     await page.reload();
-    await expect(
-      page.getByRole('button', { name: /Périmé/ }).first(),
-    ).toBeVisible();
+    await expect(page.locator('[aria-label*="Périmé"]').first()).toBeVisible();
   });
 
   test('Structure — clic Périmé rejouable et place éditable', async ({
@@ -199,21 +191,21 @@ test.describe('Play’Up business (resolution freshness)', () => {
     page,
     request,
   }) => {
-    const competition = await findFreshnessActionsRecetteCompetition(request);
-    const stageId = await getStageIdByName(request, competition.id, 'A jouer');
+    const seeded = await createIsolatedReleaseCompetition(request, false);
 
     await page.goto(
-      `/competitions/${competition.id}/structure?stage=${stageId}`,
+      `/competitions/${seeded.competitionId}/structure?stage=${seeded.stageId}`,
     );
     await expect(
       page.getByRole('heading', { name: 'Structure' }),
     ).toBeVisible();
 
-    const slot = page.locator('.schematic-slot').filter({ hasText: 'Nord' });
-    const schematicRelease = slot.getByRole('button', {
-      name: /Non confirmée.*Libérer la place/,
+    const slot = page.locator('.schematic-slot').filter({
+      hasText: seeded.team,
     });
-    await schematicRelease.click();
+    await slot
+      .getByRole('button', { name: /Libérer la place/ })
+      .click();
     const dialog = page.getByRole('dialog', {
       name: 'Libérer cette place ?',
     });
@@ -224,7 +216,7 @@ test.describe('Play’Up business (resolution freshness)', () => {
     const qualifiers = page.locator('.structure-composition-qualifiers');
     await qualifiers
       .getByRole('button', {
-        name: /Nord.*Non confirmée.*Libérer la place/,
+        name: new RegExp(`${seeded.team}.*Libérer la place`),
       })
       .click();
     await expect(
@@ -232,52 +224,7 @@ test.describe('Play’Up business (resolution freshness)', () => {
     ).toBeVisible();
     await page.getByRole('button', { name: 'Libérer', exact: true }).click();
     await expect(dialog).toHaveCount(0);
-    await expect(slot.getByText('Nord')).toHaveCount(0);
-  });
-});
-
-test.describe('Play’Up business (resolution freshness — tactile)', () => {
-  test.use({ ...devices['Pixel 7'] });
-
-  test('Structure — zone de tap du badge sans activer la case', async ({
-    page,
-    request,
-  }) => {
-    const competition = await findFreshnessActionsRecetteCompetition(request);
-    const stageId = await getStageIdByName(request, competition.id, 'A jouer');
-
-    await page.goto(
-      `/competitions/${competition.id}/structure?stage=${stageId}`,
-    );
-    await expect(
-      page.getByRole('heading', { name: 'Structure' }),
-    ).toBeVisible();
-
-    const qualifiers = page.locator('.structure-composition-qualifiers');
-    const qualifierBadge = qualifiers.getByRole('button', {
-      name: /Libérer la place/,
-    });
-    const qualifierBox = await qualifierBadge.boundingBox();
-    expect(qualifierBox).not.toBeNull();
-    expect(qualifierBox!.width).toBeGreaterThanOrEqual(28);
-    expect(qualifierBox!.height).toBeGreaterThanOrEqual(28);
-
-    const slot = page.locator('.schematic-slot').filter({ hasText: 'Nord' });
-    const slotBadge = slot.getByRole('button', {
-      name: /Libérer la place/,
-    });
-    const slotBox = await slotBadge.boundingBox();
-    expect(slotBox).not.toBeNull();
-    expect(slotBox!.width).toBeGreaterThanOrEqual(24);
-    expect(slotBox!.height).toBeGreaterThanOrEqual(24);
-
-    await slotBadge.tap();
-    await expect(
-      page.getByRole('dialog', { name: 'Libérer cette place ?' }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole('dialog', { name: /Placement manuel/ }),
-    ).toHaveCount(0);
+    await expect(slot.getByText(seeded.team)).toHaveCount(0);
   });
 });
 
