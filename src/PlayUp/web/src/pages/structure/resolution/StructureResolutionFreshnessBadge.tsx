@@ -9,6 +9,7 @@ import {
   UnconfirmableIcon,
   UnlockIcon,
 } from '../../../design-system/icons/contentIcons';
+import { ChevronRightIcon } from '../../../design-system/icons/shellIcons';
 import type { StructureResolutionOccupant } from '../../../types';
 import {
   freshnessAction,
@@ -62,6 +63,11 @@ function controlIcon(
   }
   if (control === 'replace') {
     return <RefreshIcon size="xs" className={className} aria-hidden="true" />;
+  }
+  if (control === 'navigate') {
+    return (
+      <ChevronRightIcon size="xs" className={className} aria-hidden="true" />
+    );
   }
   return stateIcon(occupant, className);
 }
