@@ -10,6 +10,7 @@ import type {
 import { renderWithI18n } from '../../../test/renderWithI18n';
 import { RootEntriesRail } from './structurePhaseEntriesRail';
 import { ResolutionReleaseContext } from '../resolution/structureResolutionReleaseContext';
+import { CascadeReplaceContext } from '../resolution/structureCascadeReplaceContext';
 
 const sourcePathId = 'Q|poules|1';
 
@@ -120,6 +121,48 @@ describe('RootEntriesRail freshness badge', () => {
       }),
     );
     expect(requestRelease).toHaveBeenCalledWith(
+      expect.objectContaining({ target: 'Slot', slotKey: 'Tete' }),
+    );
+  });
+
+  it('replaces via Slot when the team is placed and replayable on a cup slot', async () => {
+    const requestReplace = vi.fn();
+    const user = userEvent.setup();
+    const stage = {
+      ...baseStage,
+      resolutionOccupants: [
+        populationFor(sourcePathId),
+        {
+          ...slotOccupant(),
+          state: 'Perime',
+          stalenessCause: 'ResultatAmont',
+          cascadeReplaceable: true,
+          releasable: false,
+        },
+      ],
+    } as StructureStageHubSummary;
+    renderWithI18n(
+      <MemoryRouter initialEntries={['/competitions/comp/structure']}>
+        <CascadeReplaceContext.Provider value={{ requestReplace }}>
+          <RootEntriesRail
+            stage={stage}
+            entries={[{ entryId: 'e1', displayName: 'Nord', status: 'Active' }]}
+            placedEntryIds={new Set(['e1'])}
+            formatKind="Cup"
+            schematicReady={true}
+            compositionTileMode="exploitation"
+            variant="composition-band"
+          />
+        </CascadeReplaceContext.Provider>
+      </MemoryRouter>,
+    );
+
+    await user.click(
+      screen.getByRole('button', {
+        name: /Périmé.*remplacer/i,
+      }),
+    );
+    expect(requestReplace).toHaveBeenCalledWith(
       expect.objectContaining({ target: 'Slot', slotKey: 'Tete' }),
     );
   });

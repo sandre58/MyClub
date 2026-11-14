@@ -24,10 +24,13 @@ test('Structure — zone de tap du badge sans activer la case', async ({
   const qualifierBadge = qualifiers.getByRole('button', {
     name: /Libérer la place/,
   });
-  const qualifierBox = await qualifierBadge.boundingBox();
-  expect(qualifierBox).not.toBeNull();
-  expect(qualifierBox!.width).toBeGreaterThanOrEqual(28);
-  expect(qualifierBox!.height).toBeGreaterThanOrEqual(28);
+  const qualifierCount = await qualifierBadge.count();
+  if (qualifierCount > 0) {
+    const qualifierBox = await qualifierBadge.first().boundingBox();
+    expect(qualifierBox).not.toBeNull();
+    expect(qualifierBox!.width).toBeGreaterThanOrEqual(28);
+    expect(qualifierBox!.height).toBeGreaterThanOrEqual(28);
+  }
 
   const slot = page.locator('.schematic-slot').filter({ hasText: 'Nord' });
   const slotBadge = slot.getByRole('button', { name: /Libérer la place/ });

@@ -8,6 +8,7 @@ import { renderWithI18n } from '../../../test/renderWithI18n';
 import { CompositionQualifiersPanel } from './CompositionQualifiersPanel';
 import type { CompositionQualifierFeedGroup } from './structureCompositionQualifierFeeds';
 import { ResolutionReleaseContext } from '../resolution/structureResolutionReleaseContext';
+import { CascadeReplaceContext } from '../resolution/structureCascadeReplaceContext';
 
 const sourcePathId = 'Q|poules|1';
 
@@ -138,6 +139,43 @@ describe('CompositionQualifiersPanel freshness badge', () => {
     );
     expect(requestRelease).toHaveBeenCalledWith(
       expect.objectContaining({ target: 'Population' }),
+    );
+  });
+
+  it('uses the place occupant for replace on Slot when the team is placed', async () => {
+    const requestReplace = vi.fn();
+    const user = userEvent.setup();
+    renderWithI18n(
+      <MemoryRouter initialEntries={['/competitions/comp/structure']}>
+        <CascadeReplaceContext.Provider value={{ requestReplace }}>
+          <CompositionQualifiersPanel
+            groups={[qualifierGroup(true)]}
+            inboundComposition={undefined}
+            entries={[{ entryId: 'e1', displayName: 'Nord', status: 'Active' }]}
+            formatKind="Cup"
+            entryPlaceProjections={new Map()}
+            resolutionOccupants={[
+              populationOccupant(),
+              {
+                ...releasableSlotOccupant(),
+                state: 'Perime',
+                stalenessCause: 'ResultatAmont',
+                cascadeReplaceable: true,
+                releasable: false,
+              },
+            ]}
+          />
+        </CascadeReplaceContext.Provider>
+      </MemoryRouter>,
+    );
+
+    await user.click(
+      screen.getByRole('button', {
+        name: /Périmé.*remplacer/i,
+      }),
+    );
+    expect(requestReplace).toHaveBeenCalledWith(
+      expect.objectContaining({ target: 'Slot', slotKey: 'Tete' }),
     );
   });
 

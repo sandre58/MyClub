@@ -11,6 +11,33 @@ import {
   replaceQualificationRulesForStaleBadge,
 } from './hostSeed';
 
+async function countPerimeBadgeControls(page: Page) {
+  return (
+    (await page.getByRole('img', { name: /Périmé/ }).count()) +
+    (await page.getByRole('button', { name: /Périmé/ }).count()) +
+    (await page.getByRole('link', { name: /Périmé/ }).count())
+  );
+}
+
+/** No visible « Périmé » copy before mutation (labels live in tooltips / aria). */
+async function expectFreshnessNotSurfacedAsText(page: Page) {
+  await expect(page.getByText('Périmé')).toHaveCount(0);
+}
+
+async function expectNoPerimeBadgeControls(page: Page) {
+  await expect(await countPerimeBadgeControls(page)).toBe(0);
+}
+
+async function expectFirstPerimeBadgeVisible(page: Page) {
+  await expect(
+    page
+      .getByRole('button', { name: /Périmé/ })
+      .or(page.getByRole('img', { name: /Périmé/ }))
+      .or(page.getByRole('link', { name: /Périmé/ }))
+      .first(),
+  ).toBeVisible();
+}
+
 /**
  * Host + PostgreSQL — resolution freshness badges on Structure.
  */
@@ -35,10 +62,12 @@ test.describe('Play’Up business (resolution freshness)', () => {
     await expect(
       page.getByRole('heading', { name: 'Structure' }),
     ).toBeVisible();
+    await expectFreshnessNotSurfacedAsText(page);
+    await expectNoPerimeBadgeControls(page);
     await correctFinishedMatchResult(request, matchId, 0, 2);
 
     await page.reload();
-    await expect(page.locator('[aria-label*="Périmé"]').first()).toBeVisible();
+    await expectFirstPerimeBadgeVisible(page);
   });
 
   test('Structure — badge Périmé after qualification rule replace', async ({
@@ -60,10 +89,12 @@ test.describe('Play’Up business (resolution freshness)', () => {
     await expect(
       page.getByRole('heading', { name: 'Structure' }),
     ).toBeVisible();
+    await expectFreshnessNotSurfacedAsText(page);
+    await expectNoPerimeBadgeControls(page);
     await replaceQualificationRulesForStaleBadge(request, leagueId, terminalId);
 
     await page.reload();
-    await expect(page.locator('[aria-label*="Périmé"]').first()).toBeVisible();
+    await expectFirstPerimeBadgeVisible(page);
   });
 
   test('Structure — clic Périmé rejouable et place éditable', async ({
@@ -191,18 +222,18 @@ test.describe('Play’Up business (resolution freshness)', () => {
     page,
     request,
   }) => {
-    const seeded = await createIsolatedReleaseCompetition(request, false);
+    const competition = await findFreshnessActionsRecetteCompetition(request);
+    const stageId = await getStageIdByName(request, competition.id, 'A jouer');
+    const team = 'Nord';
 
     await page.goto(
-      `/competitions/${seeded.competitionId}/structure?stage=${seeded.stageId}`,
+      `/competitions/${competition.id}/structure?stage=${stageId}`,
     );
     await expect(
       page.getByRole('heading', { name: 'Structure' }),
     ).toBeVisible();
 
-    const slot = page.locator('.schematic-slot').filter({
-      hasText: seeded.team,
-    });
+    const slot = page.locator('.schematic-slot').filter({ hasText: team });
     await slot.getByRole('button', { name: /Libérer la place/ }).click();
     const dialog = page.getByRole('dialog', {
       name: 'Libérer cette place ?',
@@ -212,17 +243,17 @@ test.describe('Play’Up business (resolution freshness)', () => {
     await expect(dialog).toHaveCount(0);
 
     const qualifiers = page.locator('.structure-composition-qualifiers');
-    await qualifiers
-      .getByRole('button', {
-        name: new RegExp(`${seeded.team}.*Libérer la place`),
-      })
-      .click();
+    await qualifiers.getByRole('button', { name: /Libérer la place/ }).click();
     await expect(
       page.getByRole('dialog', { name: 'Libérer cette place ?' }),
     ).toBeVisible();
+    await expect(
+      page.getByText(`${team} quitte aussi la composition.`),
+    ).toBeVisible();
     await page.getByRole('button', { name: 'Libérer', exact: true }).click();
     await expect(dialog).toHaveCount(0);
-    await expect(slot.getByText(seeded.team)).toHaveCount(0);
+    await expect(slot.getByText(team)).toHaveCount(0);
+    await expect(qualifiers.getByText(team)).toHaveCount(0);
   });
 });
 
