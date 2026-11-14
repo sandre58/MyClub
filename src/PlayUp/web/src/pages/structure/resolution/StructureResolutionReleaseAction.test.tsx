@@ -116,7 +116,9 @@ describe('StructureResolutionReleaseAction', () => {
       await screen.findByRole('dialog', { name: 'Libérer cette place ?' }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText('Le classement ne désigne aucune équipe'),
+      screen.getByText(
+        'Le classement amont ne désigne plus aucune équipe pour cette place.',
+      ),
     ).toBeInTheDocument();
     expect(
       screen.getByText('Aucun match ne sera modifié.'),
@@ -161,17 +163,21 @@ describe('StructureResolutionReleaseAction', () => {
     await user.click(screen.getByRole('button', { name: 'open' }));
 
     expect(
-      await screen.findByText('Manche 1 — domicile — Nord – Est'),
+      await screen.findByText(
+        'Manche 1 (Nord – Est) : le côté domicile redevient à déterminer.',
+      ),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Le côté de l'équipe redevient à déterminer :"),
+      screen.getByText(
+        'Dans ces matchs non joués, le côté indiqué redeviendra à déterminer :',
+      ),
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Libérer' })).toHaveClass(
-      'ds-btn--destructive',
+      'ds-btn--primary',
     );
     expect(
-      screen.getByRole('link', { name: 'Jouer le match' }),
-    ).toHaveAttribute('href', `/matches/${matchId}`);
+      screen.getByRole('button', { name: 'Jouer le match' }),
+    ).toBeInTheDocument();
   });
 
   it('keeps a refusal in the dialog footer and disables confirm', async () => {
@@ -274,7 +280,9 @@ describe('StructureResolutionReleaseAction', () => {
     await user.click(screen.getByRole('button', { name: 'open' }));
 
     expect(
-      await screen.findByText('Centre quitte aussi la composition.'),
+      await screen.findByText(
+        'Centre quittera aussi la composition de cette phase.',
+      ),
     ).toBeInTheDocument();
     expect(
       screen.getByText('Centre — Suite (Aval) : Périmé → À jour'),
