@@ -107,7 +107,7 @@ public sealed class FreshnessActionsRecetteTests(DevelopmentPostgresFixture fixt
             occupant.SlotKey == "Rejouable"
             && occupant.State == StructureResolutionFreshness.Perime
             && occupant.StalenessCause == StructureResolutionStalenessCause.ResultatAmont
-            && occupant.CascadeReplaceable
+            && !occupant.CascadeReplaceable
             && occupant.ProvenanceKind == ResolutionProvenanceKind.Qualification);
         byOccupantStage[seuleId].Should().NotBeEmpty()
             .And.OnlyContain(occupant => occupant.State == StructureResolutionFreshness.NonVerifiee);
