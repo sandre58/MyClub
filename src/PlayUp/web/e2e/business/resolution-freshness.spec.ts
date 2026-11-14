@@ -203,9 +203,7 @@ test.describe('Play’Up business (resolution freshness)', () => {
     const slot = page.locator('.schematic-slot').filter({
       hasText: seeded.team,
     });
-    await slot
-      .getByRole('button', { name: /Libérer la place/ })
-      .click();
+    await slot.getByRole('button', { name: /Libérer la place/ }).click();
     const dialog = page.getByRole('dialog', {
       name: 'Libérer cette place ?',
     });
