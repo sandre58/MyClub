@@ -33,6 +33,8 @@ export type StructurePhaseTeamLineProps = {
   onRelease?: (occupant: StructureResolutionOccupant) => void;
   /** Qualifiers panel — compact hint row under the rule label (option B). */
   layout?: 'default' | 'qualifierHint';
+  /** Équipes composition band — caption meta line with middle-dot units. */
+  captionMeta?: boolean;
 };
 
 function freshnessStateMetaLabel(
@@ -45,14 +47,49 @@ function freshnessStateMetaLabel(
   return null;
 }
 
-function qualifierHintSeparator() {
+function middleDotSeparator(className: string) {
   return (
-    <span
-      className="structure-composition-qualifiers__hint-sep"
-      aria-hidden="true"
-    >
+    <span className={className} aria-hidden="true">
       ·
     </span>
+  );
+}
+
+function dotSeparatedUnits(
+  units: ReactNode[],
+  unitClassName: string,
+  chunkClassName: string,
+  sepClassName: string,
+) {
+  if (units.length === 0) {
+    return null;
+  }
+  return (
+    <>
+      <span className={unitClassName}>{units[0]}</span>
+      {units.slice(1).map((unit, index) => (
+        <span key={index} className={chunkClassName}>
+          {middleDotSeparator(sepClassName)}
+          <span className={unitClassName}>{unit}</span>
+        </span>
+      ))}
+    </>
+  );
+}
+
+function captionMetaRow(units: ReactNode[]) {
+  if (units.length === 0) {
+    return null;
+  }
+  return (
+    <div className="structure-entries__meta structure-entries__meta--caption">
+      {dotSeparatedUnits(
+        units,
+        'structure-entries__meta-unit',
+        'structure-entries__meta-chunk',
+        'structure-entries__meta-sep',
+      )}
+    </div>
   );
 }
 
@@ -188,6 +225,7 @@ export function StructurePhaseTeamLine(props: StructurePhaseTeamLineProps) {
     onReplace,
     onRelease,
     layout = 'default',
+    captionMeta = false,
   } = props;
   const { t } = useTranslation(['structure', 'teams']);
   const metaParts = getTeamLineMeta(props, t);
@@ -206,20 +244,32 @@ export function StructurePhaseTeamLine(props: StructurePhaseTeamLineProps) {
 
   if (layout === 'qualifierHint') {
     if (pending) {
+      const trailingUnits = qualifierHintTrailingUnits(props, t);
       return (
         <div className="structure-composition-qualifiers__outcome">
           <span className="structure-composition-qualifiers__hint structure-composition-qualifiers__hint--pending">
             <span className="structure-composition-qualifiers__hint-unit structure-composition-qualifiers__hint-unit--identity">
               <span
-                className="structure-entries__team-pending-icon"
+                className="structure-entries__team-pending-icon structure-entries__team-pending-icon--caption"
                 aria-hidden="true"
               >
-                <HourglassIcon size="sm" />
+                <HourglassIcon size="xs" />
               </span>
-              <span className="structure-entries__team-name structure-entries__team-name--pending">
+              <span className="structure-composition-qualifiers__hint-pending-label">
                 {pendingLabel}
               </span>
             </span>
+            {trailingUnits.map((unit, index) => (
+              <span
+                key={index}
+                className="structure-composition-qualifiers__hint-chunk"
+              >
+                {middleDotSeparator(
+                  'structure-composition-qualifiers__hint-sep',
+                )}
+                {unit}
+              </span>
+            ))}
           </span>
           <div
             className="structure-entries__action"
@@ -278,7 +328,7 @@ export function StructurePhaseTeamLine(props: StructurePhaseTeamLineProps) {
               key={index}
               className="structure-composition-qualifiers__hint-chunk"
             >
-              {qualifierHintSeparator()}
+              {middleDotSeparator('structure-composition-qualifiers__hint-sep')}
               {unit}
             </span>
           ))}
@@ -308,7 +358,9 @@ export function StructurePhaseTeamLine(props: StructurePhaseTeamLineProps) {
               {pendingLabel}
             </span>
           </div>
-          {metaParts.length > 0 ? (
+          {captionMeta ? (
+            captionMetaRow(metaParts)
+          ) : metaParts.length > 0 ? (
             <div className="structure-entries__meta">{metaParts}</div>
           ) : null}
         </div>
@@ -363,7 +415,9 @@ export function StructurePhaseTeamLine(props: StructurePhaseTeamLineProps) {
             </Tooltip>
           ) : null}
         </div>
-        {metaParts.length > 0 ? (
+        {captionMeta ? (
+          captionMetaRow(metaParts)
+        ) : metaParts.length > 0 ? (
           <div className="structure-entries__meta">{metaParts}</div>
         ) : null}
       </div>

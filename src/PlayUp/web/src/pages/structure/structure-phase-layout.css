@@ -713,6 +713,18 @@
   color: var(--color-text-secondary);
 }
 
+.structure-composition-qualifiers__hint-pending-label {
+  font-weight: var(--font-weight-regular);
+  font-style: italic;
+  color: var(--color-text-secondary);
+}
+
+.structure-entries__team-pending-icon--caption {
+  display: inline-flex;
+  align-items: center;
+  line-height: var(--leading-caption);
+}
+
 .structure-composition-qualifiers__hint-unit {
   display: inline-flex;
   align-items: center;

@@ -1312,6 +1312,9 @@ export function StructurePhaseFiche({
                 entries={data.participants.entries}
                 formatKind={stage.formatKind}
                 schematicReady={schematicQuery.isSuccess}
+                schematic={
+                  schematicQuery.isSuccess ? schematicQuery.data : undefined
+                }
                 entryPlaceProjections={entryPlaceProjections}
                 onViewPhase={onSelectStage}
                 renderAvalSourceAction={renderAvalSourceAction}

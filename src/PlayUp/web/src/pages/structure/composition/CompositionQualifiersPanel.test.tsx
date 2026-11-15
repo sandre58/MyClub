@@ -92,6 +92,7 @@ function renderPanel(
           entries={[{ entryId: 'e1', displayName: 'Nord', status: 'Active' }]}
           formatKind="Cup"
           entryPlaceProjections={entryPlaceProjections}
+          schematic={undefined}
           resolutionOccupants={resolutionOccupants}
         />
       </ResolutionReleaseContext.Provider>
@@ -130,6 +131,7 @@ describe('CompositionQualifiersPanel freshness badge', () => {
             entries={[{ entryId: 'e1', displayName: 'Nord', status: 'Active' }]}
             formatKind="Cup"
             entryPlaceProjections={new Map()}
+            schematic={undefined}
             resolutionOccupants={[populationOccupant({ releasable: true })]}
           />
         </ResolutionReleaseContext.Provider>
@@ -158,6 +160,7 @@ describe('CompositionQualifiersPanel freshness badge', () => {
             entries={[{ entryId: 'e1', displayName: 'Nord', status: 'Active' }]}
             formatKind="Cup"
             entryPlaceProjections={new Map()}
+            schematic={undefined}
             resolutionOccupants={[
               populationOccupant(),
               {
@@ -247,11 +250,97 @@ describe('CompositionQualifiersPanel freshness badge', () => {
           entries={[]}
           formatKind="Cup"
           entryPlaceProjections={new Map()}
+          schematic={undefined}
         />
       </MemoryRouter>,
     );
     expect(screen.getByText('Non résolue')).toBeInTheDocument();
     expect(screen.getByText('Vainqueur')).toBeInTheDocument();
+  });
+
+  it('shows placed chrome on unresolved seats when the hub marks them placed', () => {
+    const { container } = renderWithI18n(
+      <MemoryRouter>
+        <CompositionQualifiersPanel
+          groups={[
+            {
+              peerId: 'src',
+              peerName: 'Poules',
+              peerOrder: 0,
+              volume: 1,
+              rules: [
+                {
+                  key: 'q-src-1',
+                  volume: 1,
+                  badge: '1er',
+                  badgeTone: 'accent',
+                  context: 'Poule A',
+                  family: 'place',
+                  sortPrimary: 1,
+                  sortSecondary: '1',
+                  qualPathOrder: 1,
+                  hubSeats: [
+                    {
+                      resolved: false,
+                      placed: true,
+                      teamName: null,
+                      entryId: null,
+                    },
+                  ],
+                },
+              ],
+            },
+          ]}
+          inboundComposition={{
+            configuredVolume: 1,
+            resolvedCount: 0,
+            rules: [
+              {
+                feedKey: 'q-src-1',
+                sourceStageId: 'src',
+                seats: [{ entryId: null, displayName: null, placed: true }],
+                qualificationPath: {
+                  order: 1,
+                  selectionMode: 'Position' as const,
+                  selectionValue: 1,
+                  destinationStageId: 'dest',
+                  destinationSlotKey: 'Tete',
+                },
+              },
+            ],
+          }}
+          entries={[]}
+          formatKind="Cup"
+          entryPlaceProjections={new Map()}
+          schematic={{
+            stageId: 'dest',
+            competitionId: 'c1',
+            name: 'Tableau',
+            status: 'Ready',
+            formatKind: 'Cup',
+            cases: [
+              {
+                formPosition: {
+                  kind: 'CupSlot',
+                  slotKey: 'Tete',
+                  roundName: 'Finale',
+                  pairOrdinal: null,
+                  side: 'A',
+                },
+                assignment: null,
+                entry: null,
+              },
+            ],
+            connections: [],
+          }}
+        />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText('Non résolue')).toBeInTheDocument();
+    expect(screen.getByText('Tete')).toBeInTheDocument();
+    expect(
+      container.querySelectorAll('.structure-composition-qualifiers__hint-sep'),
+    ).toHaveLength(1);
   });
 
   it('renders the placed reminder in the qualifier hint meta', () => {

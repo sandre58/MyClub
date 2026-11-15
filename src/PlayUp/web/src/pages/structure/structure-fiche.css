@@ -384,6 +384,39 @@
   line-height: var(--leading-tight);
 }
 
+.structure-entries__meta--caption {
+  gap: 0;
+  font-size: var(--text-caption);
+  line-height: var(--leading-caption);
+  font-weight: var(--font-weight-regular);
+}
+
+.structure-entries__meta-chunk {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.structure-entries__meta-sep {
+  flex: none;
+  margin-inline: var(--space-4);
+  color: var(--color-text-secondary);
+}
+
+.structure-entries__meta-unit {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.structure-entries__meta--caption .structure-entries__freshness-state {
+  font-weight: var(--font-weight-regular);
+}
+
 .structure-entries__provenance {
   min-width: 0;
   overflow: hidden;

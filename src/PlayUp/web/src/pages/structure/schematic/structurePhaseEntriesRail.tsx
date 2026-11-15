@@ -354,6 +354,7 @@ export function RootEntriesRail({
           entryName={entry.displayName}
           onReplace={cascade?.requestReplace}
           onRelease={release?.requestRelease}
+          captionMeta
         />
       </li>
     );

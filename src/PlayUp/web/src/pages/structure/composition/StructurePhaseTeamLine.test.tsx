@@ -238,6 +238,52 @@ describe('StructurePhaseTeamLine', () => {
     ).toHaveLength(2);
   });
 
+  it('shows placed unit on unresolved qualifier hint rows', () => {
+    const { container } = renderWithI18n(
+      <MemoryRouter>
+        <div className="structure-composition-qualifiers__outcome">
+          <StructurePhaseTeamLine
+            layout="qualifierHint"
+            displayName=""
+            pending
+            pendingLabel="Non résolue"
+            placed
+            placedPlaceLabel="Tete"
+          />
+        </div>
+      </MemoryRouter>,
+    );
+    expect(screen.getByText('Non résolue')).toBeInTheDocument();
+    expect(screen.getByText('Tete')).toBeInTheDocument();
+    expect(
+      container.querySelectorAll('.structure-composition-qualifiers__hint-sep'),
+    ).toHaveLength(1);
+  });
+
+  it('uses caption meta separators on the équipes band', () => {
+    const { container } = renderWithI18n(
+      <MemoryRouter>
+        <ul>
+          <li className="structure-entries__team structure-entries__team--line">
+            <StructurePhaseTeamLine
+              displayName="Nord"
+              captionMeta
+              placed
+              placedPlaceLabel="Tête"
+              resolutionOccupant={occupant()}
+            />
+          </li>
+        </ul>
+      </MemoryRouter>,
+    );
+    expect(
+      container.querySelector('.structure-entries__meta--caption'),
+    ).not.toBeNull();
+    expect(
+      container.querySelectorAll('.structure-entries__meta-sep'),
+    ).toHaveLength(1);
+  });
+
   it('qualifier hint pending row has no middle-dot separators', () => {
     const { container } = renderWithI18n(
       <MemoryRouter>

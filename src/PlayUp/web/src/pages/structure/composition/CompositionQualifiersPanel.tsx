@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StructurePhaseTeamLine } from './StructurePhaseTeamLine';
 import type {
+  StageSchematic,
   StructureEntry,
   StructureFormatKind,
   StructureInboundComposition,
@@ -12,11 +13,12 @@ import type { CompositionQualifierFeedGroup } from './structureCompositionQualif
 import { CompositionQualifierRuleLabel } from './CompositionQualifierRuleLabel';
 import { FeedGroupPhaseHead } from './FeedGroupPhaseHead';
 import { inboundSeatsForFeedRule } from './structureCompositionInboundHub';
-import {
-  primaryPlaceLabel,
-  showPerEntryPlacement,
-} from '../draw/structureEntryPlacementProjection';
+import { showPerEntryPlacement } from '../draw/structureEntryPlacementProjection';
 import type { EntryPlaceProjection } from '../draw/structureEntryPlacementProjection';
+import {
+  qualifierSeatPlaceLabel,
+  qualifierSeatPlacedTooltip,
+} from './compositionQualifierSeatPlaceLabel';
 import { useStructureCascadeReplace } from '../resolution/structureCascadeReplaceContext';
 import { useStructureResolutionRelease } from '../resolution/structureResolutionReleaseContext';
 import {
@@ -30,6 +32,7 @@ export function CompositionQualifiersPanel({
   entries,
   formatKind,
   entryPlaceProjections,
+  schematic,
   resolutionOccupants,
   onViewPhase,
   renderGroupAction,
@@ -39,6 +42,7 @@ export function CompositionQualifiersPanel({
   entries: readonly StructureEntry[];
   formatKind: StructureFormatKind | null | undefined;
   entryPlaceProjections: ReadonlyMap<string, EntryPlaceProjection>;
+  schematic: StageSchematic | null | undefined;
   resolutionOccupants?: StructureResolutionOccupant[] | null;
   onViewPhase?: (peerId: string) => void;
   renderGroupAction?: (group: CompositionQualifierFeedGroup) => ReactNode;
@@ -65,6 +69,9 @@ export function CompositionQualifiersPanel({
             />
             <ul className="structure-feed-group__rules">
               {group.rules.flatMap((rule) => {
+                const inboundRule = inboundComposition?.rules.find(
+                  (row) => row.feedKey === rule.key,
+                );
                 const seats =
                   rule.hubSeats ??
                   inboundSeatsForFeedRule(
@@ -90,18 +97,17 @@ export function CompositionQualifiersPanel({
                     seat.entryId != null &&
                     !placedInPhase &&
                     entry?.status === 'Active';
-                  const placeLabel =
-                    seat.entryId != null
-                      ? primaryPlaceLabel(
-                          entryPlaceProjections.get(seat.entryId),
-                        )
-                      : null;
-                  const placedTooltip =
-                    placedInPhase && placeLabel
-                      ? t('entries.entryPlacedTooltip', { place: placeLabel })
-                      : placedInPhase
-                        ? t('entries.entryPlacedStatus')
-                        : null;
+                  const placeLabel = qualifierSeatPlaceLabel({
+                    seat,
+                    inboundRule,
+                    schematic,
+                    entryPlaceProjections,
+                  });
+                  const placedTooltip = qualifierSeatPlacedTooltip(
+                    placedInPhase,
+                    placeLabel,
+                    t,
+                  );
                   const listedResolution =
                     seat.entryId != null
                       ? lookupListedResolutionOccupant(
@@ -157,6 +163,9 @@ export function CompositionQualifiersPanel({
                           displayName=""
                           pending
                           pendingLabel={t('composition.qualifiers.unresolved')}
+                          placed={placedInPhase}
+                          placedPlaceLabel={placeLabel}
+                          placedTooltip={placedTooltip}
                         />
                       )}
                     </li>

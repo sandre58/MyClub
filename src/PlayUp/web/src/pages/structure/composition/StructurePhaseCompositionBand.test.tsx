@@ -86,6 +86,7 @@ function renderBand(
     entries: [],
     formatKind: 'Cup',
     schematicReady: false,
+    schematic: undefined,
     entryPlaceProjections: new Map(),
     renderAvalSourceAction: () => null,
     compositionPopulationGaugeFooter: null,
