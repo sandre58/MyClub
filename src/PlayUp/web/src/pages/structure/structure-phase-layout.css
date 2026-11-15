@@ -445,6 +445,9 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: var(--text-caption);
+  line-height: var(--leading-caption);
+  font-weight: var(--font-weight-medium);
 }
 
 .structure-entries__teams--band .structure-entries__team-pending-icon {
@@ -706,7 +709,7 @@
   min-width: 0;
   font-size: var(--text-caption);
   line-height: var(--leading-caption);
-  font-weight: var(--font-weight-regular);
+  font-weight: var(--font-weight-medium);
 }
 
 .structure-composition-qualifiers__hint--pending {
@@ -714,7 +717,7 @@
 }
 
 .structure-composition-qualifiers__hint-pending-label {
-  font-weight: var(--font-weight-regular);
+  font-weight: var(--font-weight-medium);
   font-style: italic;
   color: var(--color-text-secondary);
 }
@@ -757,7 +760,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-weight: var(--font-weight-regular);
+  font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
 }
 
@@ -766,11 +769,15 @@
 }
 
 .structure-composition-qualifiers__hint .structure-entries__placed-hint {
-  font-weight: var(--font-weight-regular);
+  font-weight: var(--font-weight-medium);
 }
 
 .structure-composition-qualifiers__hint .structure-entries__freshness-state {
-  font-weight: var(--font-weight-regular);
+  font-weight: var(--font-weight-medium);
+}
+
+.structure-composition-qualifiers__hint .structure-entries__eligibility-meta {
+  font-weight: var(--font-weight-medium);
 }
 
 .structure-composition-qualifiers__hint .structure-entries__team-name {

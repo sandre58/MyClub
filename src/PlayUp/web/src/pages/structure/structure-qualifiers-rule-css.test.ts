@@ -35,7 +35,17 @@ describe('composition qualifiers rule and hint (iter4)', () => {
     expect(block).not.toBeNull();
     expect(block![0]).toMatch(/var\(--text-caption\)/);
     expect(block![0]).toMatch(/var\(--leading-caption\)/);
-    expect(block![0]).toMatch(/var\(--font-weight-regular\)/);
+    expect(block![0]).toMatch(/var\(--font-weight-medium\)/);
+  });
+
+  it('types équipes band team names in caption (iter5)', () => {
+    const block = layoutCss.match(
+      /\.structure-entries__teams--band \.structure-entries__team-name\s*\{[^}]+\}/,
+    );
+    expect(block).not.toBeNull();
+    expect(block![0]).toMatch(/var\(--text-caption\)/);
+    expect(block![0]).toMatch(/var\(--leading-caption\)/);
+    expect(block![0]).toMatch(/var\(--font-weight-medium\)/);
   });
 
   it('styles hint middle dots as secondary with symmetric inline spacing', () => {
