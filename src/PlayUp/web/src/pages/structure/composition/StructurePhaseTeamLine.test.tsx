@@ -186,6 +186,76 @@ describe('StructurePhaseTeamLine', () => {
     expect(requestRelease).toHaveBeenCalled();
   });
 
+  it('qualifier hint uses middle-dot separators only between units', () => {
+    const { container, rerender } = renderWithI18n(
+      <MemoryRouter>
+        <div className="structure-composition-qualifiers__outcome">
+          <StructurePhaseTeamLine layout="qualifierHint" displayName="Sud" />
+        </div>
+      </MemoryRouter>,
+    );
+    expect(
+      container.querySelectorAll('.structure-composition-qualifiers__hint-sep'),
+    ).toHaveLength(0);
+
+    rerender(
+      <MemoryRouter initialEntries={['/competitions/comp/structure']}>
+        <div className="structure-composition-qualifiers__outcome">
+          <StructurePhaseTeamLine
+            layout="qualifierHint"
+            displayName="Ouest"
+            resolutionOccupant={occupant()}
+          />
+        </div>
+      </MemoryRouter>,
+    );
+    const seps = container.querySelectorAll(
+      '.structure-composition-qualifiers__hint-sep',
+    );
+    expect(seps).toHaveLength(1);
+    seps.forEach((sep) => {
+      expect(sep).toHaveAttribute('aria-hidden', 'true');
+      expect(sep).toHaveTextContent('·');
+    });
+  });
+
+  it('qualifier hint joins place and freshness with two separators', () => {
+    const { container } = renderWithI18n(
+      <MemoryRouter>
+        <div className="structure-composition-qualifiers__outcome">
+          <StructurePhaseTeamLine
+            layout="qualifierHint"
+            displayName="Nord"
+            placed
+            placedPlaceLabel="Tête"
+            resolutionOccupant={occupant()}
+          />
+        </div>
+      </MemoryRouter>,
+    );
+    expect(
+      container.querySelectorAll('.structure-composition-qualifiers__hint-sep'),
+    ).toHaveLength(2);
+  });
+
+  it('qualifier hint pending row has no middle-dot separators', () => {
+    const { container } = renderWithI18n(
+      <MemoryRouter>
+        <div className="structure-composition-qualifiers__outcome">
+          <StructurePhaseTeamLine
+            layout="qualifierHint"
+            displayName=""
+            pending
+            pendingLabel="Non résolue"
+          />
+        </div>
+      </MemoryRouter>,
+    );
+    expect(
+      container.querySelectorAll('.structure-composition-qualifiers__hint-sep'),
+    ).toHaveLength(0);
+  });
+
   it('qualifier hint shows place reminder, freshness state and release action', async () => {
     const requestRelease = vi.fn();
     const user = userEvent.setup();

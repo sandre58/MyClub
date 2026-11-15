@@ -128,7 +128,8 @@
 }
 
 .ds-ratio-message-gauge--compact .ds-ratio-message-gauge__message {
-  font-size: 0.6875rem;
+  font-size: var(--text-caption);
+  line-height: var(--leading-caption);
 }
 
 .ds-ratio-message-gauge__message[data-kind='attention'],
