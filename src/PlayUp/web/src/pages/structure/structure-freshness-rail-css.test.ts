@@ -8,23 +8,17 @@ const structureFicheCss = readFileSync(
   'utf8',
 );
 
-describe('structure-fiche freshness rail spacing', () => {
-  it('resets inline-start margin on trailing xs actions after the base xs rule', () => {
-    const baseRule =
-      '.structure-freshness-badge__action.ds-btn.ds-icon-button--xs';
-    const railRule =
-      '.structure-entries__cell-trailing .structure-freshness-badge__action.ds-btn.ds-icon-button--xs';
-    const railIdx = structureFicheCss.indexOf(railRule);
-    const baseIdx = structureFicheCss.indexOf(baseRule);
+describe('structure-fiche freshness actions', () => {
+  it('does not ship removed trailing-rail overrides', () => {
+    expect(structureFicheCss).not.toContain('structure-entries__cell-trailing');
+  });
 
-    expect(railIdx).toBeGreaterThanOrEqual(0);
-    expect(baseIdx).toBeGreaterThanOrEqual(0);
-    expect(railIdx).toBeGreaterThan(baseIdx);
-
-    const railBlock = structureFicheCss.slice(
-      railIdx,
-      structureFicheCss.indexOf('}', railIdx) + 1,
+  it('keeps a 28px min hit area on team-line actions', () => {
+    const actionRule = structureFicheCss.match(
+      /\.structure-entries__action\s*\{[^}]+\}/,
     );
-    expect(railBlock).toMatch(/margin-inline-start:\s*0/);
+    expect(actionRule).not.toBeNull();
+    expect(actionRule![0]).toMatch(/min-height:\s*28px/);
+    expect(actionRule![0]).toMatch(/min-width:\s*28px/);
   });
 });

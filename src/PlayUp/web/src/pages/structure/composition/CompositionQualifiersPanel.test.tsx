@@ -78,6 +78,10 @@ function qualifierGroup(placed: boolean): CompositionQualifierFeedGroup {
 function renderPanel(
   resolutionOccupants: StructureResolutionOccupant[],
   requestRelease = vi.fn(),
+  entryPlaceProjections: ReadonlyMap<
+    string,
+    { labels: readonly string[]; details: readonly (string | null)[] }
+  > = new Map(),
 ) {
   return renderWithI18n(
     <MemoryRouter initialEntries={['/competitions/comp/structure']}>
@@ -87,7 +91,7 @@ function renderPanel(
           inboundComposition={undefined}
           entries={[{ entryId: 'e1', displayName: 'Nord', status: 'Active' }]}
           formatKind="Cup"
-          entryPlaceProjections={new Map()}
+          entryPlaceProjections={entryPlaceProjections}
           resolutionOccupants={resolutionOccupants}
         />
       </ResolutionReleaseContext.Provider>
@@ -248,6 +252,19 @@ describe('CompositionQualifiersPanel freshness badge', () => {
     );
     expect(screen.getByText('Non résolue')).toBeInTheDocument();
     expect(screen.getByText('Vainqueur')).toBeInTheDocument();
+  });
+
+  it('renders the placed reminder in the qualifier hint meta', () => {
+    renderPanel(
+      [populationOccupant(), releasableSlotOccupant()],
+      vi.fn(),
+      new Map([['e1', { labels: ['Tête'], details: [null] }]]),
+    );
+    expect(screen.getByText('Tête')).toBeInTheDocument();
+    expect(screen.getByText('Non déterminé')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Non déterminé.*Libérer la place/ }),
+    ).toBeInTheDocument();
   });
 
   it('shows an inert badge without release when several places match', () => {

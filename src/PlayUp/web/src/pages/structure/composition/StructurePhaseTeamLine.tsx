@@ -45,7 +45,7 @@ function freshnessStateMetaLabel(
   return null;
 }
 
-function useTeamLineMeta(props: StructurePhaseTeamLineProps, t: TFunction) {
+function getTeamLineMeta(props: StructurePhaseTeamLineProps, t: TFunction) {
   const {
     ineligible,
     withdrawn,
@@ -115,7 +115,7 @@ function useTeamLineMeta(props: StructurePhaseTeamLineProps, t: TFunction) {
     );
   }
 
-  return { metaParts, freshnessMeta };
+  return metaParts;
 }
 
 export function StructurePhaseTeamLine(props: StructurePhaseTeamLineProps) {
@@ -135,7 +135,7 @@ export function StructurePhaseTeamLine(props: StructurePhaseTeamLineProps) {
     layout = 'default',
   } = props;
   const { t } = useTranslation(['structure', 'teams']);
-  const { metaParts } = useTeamLineMeta(props, t);
+  const metaParts = getTeamLineMeta(props, t);
 
   const freshnessAction =
     resolutionOccupant && !pending ? (

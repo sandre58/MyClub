@@ -447,44 +447,6 @@
   white-space: nowrap;
 }
 
-.structure-entries__teams--band .structure-entries__team-provenance-badge {
-  display: inline-block;
-  max-width: min(9.5rem, 34vw);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  vertical-align: middle;
-  padding-block: 0.0625rem;
-  font-size: 0.6875rem;
-  font-weight: 500;
-  line-height: 1.2;
-}
-
-.structure-entries__teams--band .structure-entries__team-provenance-badge:not(.ds-chip--win):not(.ds-chip--loss) {
-  color: var(--color-text-secondary);
-}
-
-.structure-entries__team-provenance-badge-inner {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  min-width: 0;
-  max-width: 100%;
-  line-height: var(--leading-tight);
-}
-
-.structure-entries__team-provenance-badge-inner > span:last-child {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.structure-entries__team-provenance-outcome-icon {
-  flex-shrink: 0;
-  width: 0.75rem;
-  height: 0.75rem;
-}
-
 .structure-entries__teams--band .structure-entries__team-pending-icon {
   display: inline-flex;
   align-items: center;
@@ -684,11 +646,6 @@
   width: 100%;
 }
 
-.structure-composition-qualifiers__rule-feed {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
 .structure-feed-group__rule-label {
   display: inline-flex;
   flex-wrap: wrap;
@@ -764,7 +721,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: var(--text-meta);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
 }
 

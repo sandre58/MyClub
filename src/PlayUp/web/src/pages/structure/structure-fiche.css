@@ -415,7 +415,7 @@
 
 .structure-entries__freshness-state {
   flex: none;
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-attention);
 }
 
@@ -884,11 +884,6 @@
   font-size: var(--text-label);
 }
 
-.structure-entries__cell-trailing {
-  display: flex;
-  gap: var(--space-4);
-}
-
 .structure-freshness-badge__action.ds-btn.ds-icon-button--xs {
   flex: none;
   box-sizing: content-box;
@@ -926,11 +921,6 @@
   flex: none;
   color: color-mix(in srgb, var(--color-attention) 70%, var(--color-text-secondary));
   cursor: default;
-}
-
-.structure-entries__cell-trailing .structure-freshness-badge__action.ds-btn.ds-icon-button--xs,
-.structure-entries__cell-trailing .structure-freshness-badge__glyph {
-  margin-inline-start: 0;
 }
 
 .structure-freshness-badge__icon {

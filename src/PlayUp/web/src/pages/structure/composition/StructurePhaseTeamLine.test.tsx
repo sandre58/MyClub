@@ -186,6 +186,34 @@ describe('StructurePhaseTeamLine', () => {
     expect(requestRelease).toHaveBeenCalled();
   });
 
+  it('qualifier hint shows place reminder, freshness state and release action', async () => {
+    const requestRelease = vi.fn();
+    const user = userEvent.setup();
+    const { container } = renderWithI18n(
+      <MemoryRouter initialEntries={['/competitions/comp/structure']}>
+        <ResolutionReleaseContext.Provider value={{ requestRelease }}>
+          <div className="structure-composition-qualifiers__outcome">
+            <StructurePhaseTeamLine
+              layout="qualifierHint"
+              displayName="Nord"
+              placed
+              placedPlaceLabel="Tête"
+              resolutionOccupant={occupant()}
+              onRelease={requestRelease}
+            />
+          </div>
+        </ResolutionReleaseContext.Provider>
+      </MemoryRouter>,
+    );
+    expect(
+      container.querySelector('.structure-composition-qualifiers__hint'),
+    ).not.toBeNull();
+    expect(screen.getByText('Tête')).toBeInTheDocument();
+    expect(screen.getByText('Non déterminé')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /Libérer/ }));
+    expect(requestRelease).toHaveBeenCalled();
+  });
+
   it('shows no-longer-eligible meta for inactive non-withdrawn entries', () => {
     renderWithI18n(
       <MemoryRouter>
