@@ -14,11 +14,14 @@ export function inboundRuleDestinationSlotKey(
   if (!rule) {
     return null;
   }
-  return (
-    rule.qualificationPath?.destinationSlotKey?.trim() ??
-    rule.progressionPath?.destinationSlotKey?.trim() ??
-    null
-  );
+  const qualificationSlotKey =
+    rule.qualificationPath?.destinationSlotKey?.trim() ?? '';
+  if (qualificationSlotKey) {
+    return qualificationSlotKey;
+  }
+  const progressionSlotKey =
+    rule.progressionPath?.destinationSlotKey?.trim() ?? '';
+  return progressionSlotKey || null;
 }
 
 export function qualifierSeatPlaceLabel(input: {

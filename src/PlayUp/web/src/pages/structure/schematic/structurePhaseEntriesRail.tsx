@@ -395,6 +395,7 @@ export function RootEntriesRail({
                     pendingLabel={t('composition.qualifiers.unresolved')}
                     provenanceMeta={row.provenance.badge}
                     provenanceTitle={row.provenance.full}
+                    captionMeta
                   />
                 </li>
               ) : (

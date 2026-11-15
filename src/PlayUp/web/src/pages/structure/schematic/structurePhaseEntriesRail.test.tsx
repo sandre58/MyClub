@@ -219,3 +219,29 @@ describe('RootEntriesRail freshness badge', () => {
     );
   });
 });
+
+describe('RootEntriesRail équipes band unresolved meta', () => {
+  it('styles unresolved inbound row meta with caption separators', () => {
+    const { container } = renderWithI18n(
+      <MemoryRouter>
+        <RootEntriesRail
+          variant="composition-band"
+          stage={baseStage}
+          entries={[]}
+          compositionTeamRows={[
+            {
+              key: 'unresolved-1',
+              kind: 'unresolved',
+              provenance: { badge: '1er · Poule A', full: '1er · Poule A' },
+            },
+          ]}
+        />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText('Non résolue')).toBeInTheDocument();
+    expect(screen.getByText('1er · Poule A')).toBeInTheDocument();
+    expect(
+      container.querySelector('.structure-entries__meta--caption'),
+    ).not.toBeNull();
+  });
+});

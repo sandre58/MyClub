@@ -214,6 +214,55 @@ describe('CompositionQualifiersPanel freshness badge', () => {
     expect(line!.querySelector('.team-crest--xs')).not.toBeNull();
   });
 
+  it('does not show place on unresolved unplaced qualifier seats', () => {
+    const { container } = renderWithI18n(
+      <MemoryRouter>
+        <CompositionQualifiersPanel
+          groups={[
+            {
+              peerId: 'src',
+              peerName: 'Barrage',
+              peerOrder: 0,
+              volume: 1,
+              rules: [
+                {
+                  key: 'p1',
+                  volume: 1,
+                  badge: 'Vainqueur',
+                  badgeTone: 'win',
+                  context: 'P1',
+                  family: 'place',
+                  sortPrimary: 1,
+                  sortSecondary: '1',
+                  hubSeats: [
+                    {
+                      resolved: false,
+                      placed: false,
+                      teamName: null,
+                      entryId: null,
+                    },
+                  ],
+                },
+              ],
+            },
+          ]}
+          inboundComposition={undefined}
+          entries={[]}
+          formatKind="Cup"
+          entryPlaceProjections={new Map()}
+          schematic={undefined}
+        />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText('Non résolue')).toBeInTheDocument();
+    expect(
+      container.querySelector('.structure-entries__placed-hint'),
+    ).toBeNull();
+    expect(
+      container.querySelectorAll('.structure-composition-qualifiers__hint-sep'),
+    ).toHaveLength(0);
+  });
+
   it('shows unresolved seats as hourglass hint under the rule', () => {
     renderWithI18n(
       <MemoryRouter>

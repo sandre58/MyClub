@@ -77,4 +77,53 @@ describe('qualifierSeatPlaceLabel', () => {
       }),
     ).toBe('Tete');
   });
+
+  it('returns no place label when the seat is unresolved and not placed', () => {
+    expect(
+      qualifierSeatPlaceLabel({
+        seat: {
+          resolved: false,
+          entryId: null,
+          teamName: null,
+          placed: false,
+        },
+        inboundRule: {
+          feedKey: 'p-src-P1-Winner',
+          sourceStageId: 'src',
+          seats: [],
+          progressionPath: {
+            sourcePairKey: 'P1',
+            outcome: 'Winner',
+            destinationStageId: 'dest',
+            destinationSlotKey: 'Jouer',
+          },
+        },
+        schematic,
+        entryPlaceProjections: new Map(),
+      }),
+    ).toBeNull();
+  });
+
+  it('falls back to progression slot key when qualification slot key is blank', () => {
+    expect(
+      inboundRuleDestinationSlotKey({
+        feedKey: 'p-src-P1-Winner',
+        sourceStageId: 'src',
+        seats: [],
+        qualificationPath: {
+          order: 1,
+          selectionMode: 'Position' as SelectionMode,
+          selectionValue: 1,
+          destinationStageId: 'dest',
+          destinationSlotKey: '   ',
+        },
+        progressionPath: {
+          sourcePairKey: 'P1',
+          outcome: 'Winner',
+          destinationStageId: 'dest',
+          destinationSlotKey: 'Jouer',
+        },
+      }),
+    ).toBe('Jouer');
+  });
 });
