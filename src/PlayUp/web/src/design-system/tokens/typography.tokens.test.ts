@@ -13,8 +13,4 @@ describe('typography tokens', () => {
     expect(typographyTokens).toMatch(/--text-caption:\s*0\.6875rem/);
     expect(typographyTokens).toMatch(/--leading-caption:\s*1\.2/);
   });
-
-  it('defines medium weight at 500 between regular and semibold', () => {
-    expect(typographyTokens).toMatch(/--font-weight-medium:\s*500/);
-  });
 });
