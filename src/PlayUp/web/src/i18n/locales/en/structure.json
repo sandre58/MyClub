@@ -855,8 +855,8 @@
       },
       "upstreamLink": "Go to the upstream phase",
       "upstreamPhaseLink": "Open the upstream phase",
-      "unconfirmedSentence": "{{team}} is no longer confirmed — {{detail}}",
-      "definitive": "Can no longer be confirmed",
+      "unconfirmedSentence": "{{team}} is no longer determined — {{detail}}",
+      "definitive": "Can no longer be determined",
       "indeterminacy": {
         "MatchNonJoue": {
           "clause": "the match has not been played",
@@ -905,15 +905,15 @@
       "nonePlayed": "No match will change.",
       "detachedIntro": "In these unplayed matches:",
       "cause": {
-        "MatchNonJoue": "The match has not been played yet: this place is not confirmed.",
-        "MatchNonJoueNamed": "The match {{match}} has not been played yet: this place is not confirmed.",
-        "Egalite": "The match did not break the tie: this place is no longer confirmed.",
+        "MatchNonJoue": "The match has not been played yet: this place is undetermined.",
+        "MatchNonJoueNamed": "The match {{match}} has not been played yet: this place is undetermined.",
+        "Egalite": "The match did not break the tie: this place is no longer determined.",
         "SourceAbsente": "The phase or rule that feeds this place cannot be found.",
         "SelectionVide": "The upstream standing no longer designates a team for this place.",
         "Autre": "The selection for this place cannot be calculated.",
-        "EgaliteClassement": "Several teams are tied in the standing: this place is no longer confirmed.",
-        "ConditionNonRemplie": "The team no longer meets the qualification condition: this place is no longer confirmed.",
-        "ConfigurationInvalide": "The source phase setup is incomplete: this place cannot be confirmed."
+        "EgaliteClassement": "Several teams are tied in the standing: this place is no longer determined.",
+        "ConditionNonRemplie": "The team no longer meets the qualification condition: this place is no longer determined.",
+        "ConfigurationInvalide": "The source phase setup is incomplete: this place cannot be determined."
       },
       "detachedMatch": "Leg {{leg}}: the {{side}} side becomes to be determined.",
       "detachedMatchNamed": "Leg {{leg}} ({{match}}): the {{side}} side becomes to be determined.",
@@ -932,8 +932,8 @@
       }
     },
     "definitiveRelease": {
-      "banner_one": "{{count}} place can no longer be confirmed.",
-      "banner_other": "{{count}} places can no longer be confirmed.",
+      "banner_one": "{{count}} place can no longer be determined.",
+      "banner_other": "{{count}} places can no longer be determined.",
       "release": "Release…",
       "excludedIntro": "These places stay: they cannot be released.",
       "excluded": "{{team}} — {{place}}: {{reason}}",
@@ -989,6 +989,7 @@
     "entryPlacedAria": "{{name}} — placed on the form",
     "entryNotPlacedAria": "{{name}} — not placed yet",
     "entryPlacedStatus": "Placed",
+    "entryPlacedAriaPrefix": "Placed:",
     "entryPlacedTooltip": "Placed — {{place}}",
     "meterAria": "Expected teams / places",
     "meter": {

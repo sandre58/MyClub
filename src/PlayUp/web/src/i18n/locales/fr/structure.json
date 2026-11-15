@@ -855,8 +855,8 @@
       },
       "upstreamLink": "Aller à la phase amont",
       "upstreamPhaseLink": "Voir la phase amont",
-      "unconfirmedSentence": "{{team}} n'est plus confirmée — {{detail}}",
-      "definitive": "Ne pourra plus être confirmée",
+      "unconfirmedSentence": "{{team}} n'est plus déterminée — {{detail}}",
+      "definitive": "Ne pourra plus être déterminée",
       "indeterminacy": {
         "MatchNonJoue": {
           "clause": "le match n'est pas joué",
@@ -905,15 +905,15 @@
       "nonePlayed": "Aucun match ne sera modifié.",
       "detachedIntro": "Dans ces matchs non joués :",
       "cause": {
-        "MatchNonJoue": "Le match n'a pas encore été joué : cette place n'est pas confirmée.",
-        "MatchNonJoueNamed": "Le match {{match}} n'a pas encore été joué : cette place n'est pas confirmée.",
-        "Egalite": "Le match n'a pas permis de départager les équipes : cette place n'est plus confirmée.",
+        "MatchNonJoue": "Le match n'a pas encore été joué : cette place n'est pas déterminée.",
+        "MatchNonJoueNamed": "Le match {{match}} n'a pas encore été joué : cette place n'est pas déterminée.",
+        "Egalite": "Le match n'a pas permis de départager les équipes : cette place n'est plus déterminée.",
         "SourceAbsente": "La phase ou la règle qui alimente cette place est introuvable.",
         "SelectionVide": "Le classement amont ne désigne plus aucune équipe pour cette place.",
         "Autre": "La sélection de cette place ne peut pas être calculée.",
-        "EgaliteClassement": "Plusieurs équipes sont à égalité au classement : cette place n'est plus confirmée.",
-        "ConditionNonRemplie": "L'équipe ne remplit plus la condition de qualification : cette place n'est plus confirmée.",
-        "ConfigurationInvalide": "Le réglage de la phase source est incomplet : cette place ne peut pas être confirmée."
+        "EgaliteClassement": "Plusieurs équipes sont à égalité au classement : cette place n'est plus déterminée.",
+        "ConditionNonRemplie": "L'équipe ne remplit plus la condition de qualification : cette place n'est plus déterminée.",
+        "ConfigurationInvalide": "Le réglage de la phase source est incomplet : cette place ne peut pas être déterminée."
       },
       "detachedMatch": "Manche {{leg}} : le côté {{side}} redevient à déterminer.",
       "detachedMatchNamed": "Manche {{leg}} ({{match}}) : le côté {{side}} redevient à déterminer.",
@@ -932,8 +932,8 @@
       }
     },
     "definitiveRelease": {
-      "banner_one": "{{count}} place ne pourra plus être confirmée.",
-      "banner_other": "{{count}} places ne pourront plus être confirmées.",
+      "banner_one": "{{count}} place ne pourra plus être déterminée.",
+      "banner_other": "{{count}} places ne pourront plus être déterminées.",
       "release": "Libérer…",
       "excludedIntro": "Ces places restent : elles ne peuvent pas être libérées.",
       "excluded": "{{team}} — {{place}} : {{reason}}",
@@ -989,6 +989,7 @@
     "entryPlacedAria": "{{name}} — placée sur la forme",
     "entryNotPlacedAria": "{{name}} — pas encore placée",
     "entryPlacedStatus": "Placée",
+    "entryPlacedAriaPrefix": "Placée :",
     "entryPlacedTooltip": "Placée — {{place}}",
     "meterAria": "Équipes attendues / places",
     "meter": {

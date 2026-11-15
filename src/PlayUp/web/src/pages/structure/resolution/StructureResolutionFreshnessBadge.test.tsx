@@ -527,7 +527,7 @@ describe('StructureResolutionFreshnessBadge', () => {
     expect(screen.queryByRole('link')).toBeNull();
     expect(
       screen.getByLabelText(
-        /Nord n'est plus confirmée — le classement ne désigne aucune équipe/,
+        /Nord n'est plus déterminée — le classement ne désigne aucune équipe/,
       ),
     ).toBeInTheDocument();
   });
@@ -562,7 +562,7 @@ describe('StructureResolutionFreshnessBadge', () => {
 
     expect(
       screen.getByRole('link', {
-        name: /Nord n'est plus confirmée — le match Est – Sud n'est pas joué.*Jouer le match Est – Sud/,
+        name: /Nord n'est plus déterminée — le match Est – Sud n'est pas joué.*Jouer le match Est – Sud/,
       }),
     ).toBeInTheDocument();
   });
@@ -591,7 +591,7 @@ describe('StructureResolutionFreshnessBadge', () => {
 
     await user.click(
       screen.getByRole('button', {
-        name: /Centre n'est plus confirmée — le classement ne désigne aucune équipe.*Libérer la place/,
+        name: /Centre n'est plus déterminée — le classement ne désigne aucune équipe.*Libérer la place/,
       }),
     );
     expect(onRelease).toHaveBeenCalledWith(releasable);
@@ -618,10 +618,10 @@ describe('StructureResolutionFreshnessBadge', () => {
     );
 
     const button = screen.getByRole('button', {
-      name: /Centre.*Ne pourra plus être confirmée.*Libérer la place/,
+      name: /Centre.*Ne pourra plus être déterminée.*Libérer la place/,
     });
     expect(button.querySelector('svg')).toBeTruthy();
-    expect(screen.queryByText('Ne pourra plus être confirmée')).toBeNull();
+    expect(screen.queryByText('Ne pourra plus être déterminée')).toBeNull();
   });
 
   it('renders action containers for links and buttons and glyphs when inert', () => {
@@ -787,32 +787,32 @@ describe('StructureResolutionFreshnessBadge', () => {
 
     expect(
       screen.getByRole('img', {
-        name: /Non déterminé.*Ne pourra plus être confirmée/,
+        name: /Non déterminé.*Ne pourra plus être déterminée/,
       }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('button', {
-        name: /Non déterminé.*Ne pourra plus être confirmée.*Libérer/,
+        name: /Non déterminé.*Ne pourra plus être déterminée.*Libérer/,
       }),
     ).toBeInTheDocument();
     expect(
       screen
         .getByRole('img', {
-          name: /Non déterminé.*Ne pourra plus être confirmée/,
+          name: /Non déterminé.*Ne pourra plus être déterminée/,
         })
         .querySelector('.lucide-timer-off'),
     ).toBeTruthy();
     expect(
       screen
         .getByRole('button', {
-          name: /Non déterminé.*Ne pourra plus être confirmée.*Libérer/,
+          name: /Non déterminé.*Ne pourra plus être déterminée.*Libérer/,
         })
         .querySelector('.lucide-unlock'),
     ).toBeTruthy();
     expect(
       screen
         .getByRole('button', {
-          name: /Non déterminé.*Ne pourra plus être confirmée.*Libérer/,
+          name: /Non déterminé.*Ne pourra plus être déterminée.*Libérer/,
         })
         .querySelector('.lucide-timer-off'),
     ).toBeNull();

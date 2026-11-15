@@ -10,14 +10,26 @@ export function useStructureSlotFocus(
   schematicReady: boolean,
   onConsumed?: () => void,
 ): void {
-  const consumedRef = useRef(false);
+  const onConsumedRef = useRef(onConsumed);
+  useEffect(() => {
+    onConsumedRef.current = onConsumed;
+  });
+
+  const visualSlotRef = useRef<string | null>(null);
+  const consumedOnceRef = useRef(false);
 
   useEffect(() => {
-    consumedRef.current = false;
+    if (slotKey) {
+      consumedOnceRef.current = false;
+      if (slotKey !== visualSlotRef.current) {
+        visualSlotRef.current = null;
+      }
+    }
   }, [slotKey]);
 
   useEffect(() => {
-    if (!slotKey || !schematicReady || consumedRef.current) {
+    const highlightKey = slotKey ?? visualSlotRef.current;
+    if (!highlightKey || !schematicReady) {
       return;
     }
 
@@ -25,13 +37,18 @@ export function useStructureSlotFocus(
     let timer: number | undefined;
     const frame = requestAnimationFrame(() => {
       slot = document.querySelector<HTMLElement>(
-        `[data-slot-key="${CSS.escape(slotKey)}"]`,
+        `[data-slot-key="${CSS.escape(highlightKey)}"]`,
       );
       if (!slot) {
         return;
       }
 
-      consumedRef.current = true;
+      if (slotKey && !consumedOnceRef.current) {
+        consumedOnceRef.current = true;
+        visualSlotRef.current = slotKey;
+        onConsumedRef.current?.();
+      }
+
       slot.scrollIntoView({ behavior: 'smooth', block: 'center' });
       slot.classList.add('schematic-slot--focus');
 
@@ -40,9 +57,14 @@ export function useStructureSlotFocus(
       );
       action?.focus({ preventScroll: true });
 
+      if (timer !== undefined) {
+        window.clearTimeout(timer);
+      }
       timer = window.setTimeout(() => {
         slot?.classList.remove('schematic-slot--focus');
-        onConsumed?.();
+        if (visualSlotRef.current === highlightKey) {
+          visualSlotRef.current = null;
+        }
       }, SLOT_FOCUS_MS);
     });
 
@@ -51,7 +73,9 @@ export function useStructureSlotFocus(
       if (timer !== undefined) {
         window.clearTimeout(timer);
       }
-      slot?.classList.remove('schematic-slot--focus');
+      if (slotKey && slotKey !== visualSlotRef.current) {
+        slot?.classList.remove('schematic-slot--focus');
+      }
     };
-  }, [slotKey, schematicReady, onConsumed]);
+  }, [slotKey, schematicReady]);
 }

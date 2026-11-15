@@ -69,6 +69,13 @@ export function StructurePhaseTeamLine({
       : null;
 
   const metaParts: ReactNode[] = [];
+  if (ineligible && !withdrawn) {
+    metaParts.push(
+      <span key="ineligible" className="structure-entries__freshness-state">
+        {t('composition.noLongerEligible')}
+      </span>,
+    );
+  }
   if (provenanceMeta) {
     metaParts.push(
       <span
@@ -80,14 +87,21 @@ export function StructurePhaseTeamLine({
       </span>,
     );
   }
-  if (placed && placedPlaceLabel) {
+  if (placed) {
+    const placeText =
+      placedPlaceLabel?.trim() || t('entries.entryPlacedStatus');
     const tip =
       placedTooltip ??
-      t('entries.entryPlacedTooltip', { place: placedPlaceLabel });
+      (placedPlaceLabel
+        ? t('entries.entryPlacedTooltip', { place: placedPlaceLabel })
+        : t('entries.entryPlacedStatus'));
     metaParts.push(
       <span key="placed" className="structure-entries__placed-hint" title={tip}>
         <LocateIcon size="sm" aria-hidden="true" />
-        {placedPlaceLabel}
+        <span className="ds-visually-hidden">
+          {t('entries.entryPlacedAriaPrefix')}
+        </span>
+        {placeText}
       </span>,
     );
   }

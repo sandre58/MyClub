@@ -103,5 +103,84 @@ describe('StructurePhaseTeamLine', () => {
       </MemoryRouter>,
     );
     expect(screen.getByText('Tête')).toBeInTheDocument();
+    expect(screen.getByText('Placée :')).toHaveClass('ds-visually-hidden');
+  });
+
+  it('shows placed status without a place label', () => {
+    renderWithI18n(
+      <MemoryRouter>
+        <ul>
+          <li className="structure-entries__team structure-entries__team--line">
+            <StructurePhaseTeamLine displayName="Nord" placed />
+          </li>
+        </ul>
+      </MemoryRouter>,
+    );
+    expect(screen.getByText('Placée')).toBeInTheDocument();
+  });
+
+  it('shows Perime state without a focusable action on list rows', () => {
+    renderWithI18n(
+      <MemoryRouter>
+        <ul>
+          <li className="structure-entries__team structure-entries__team--line">
+            <StructurePhaseTeamLine
+              displayName="Nord"
+              resolutionOccupant={occupant({
+                state: 'Perime',
+                releasable: false,
+                cascadeReplaceable: false,
+                stalenessCause: 'ResultatAmont',
+              })}
+            />
+          </li>
+        </ul>
+      </MemoryRouter>,
+    );
+    expect(screen.getByText('Périmé')).toBeInTheDocument();
+    expect(screen.queryByRole('button')).toBeNull();
+    expect(screen.queryByRole('link')).toBeNull();
+  });
+
+  it('stacks provenance, place, state and action on one row', async () => {
+    const requestRelease = vi.fn();
+    const user = userEvent.setup();
+    renderWithI18n(
+      <MemoryRouter initialEntries={['/competitions/comp/structure']}>
+        <ResolutionReleaseContext.Provider value={{ requestRelease }}>
+          <ul>
+            <li className="structure-entries__team structure-entries__team--line">
+              <StructurePhaseTeamLine
+                displayName="Nord"
+                placed
+                placedPlaceLabel="Jouer"
+                provenanceMeta="Barrage · Vainqueur P1"
+                resolutionOccupant={occupant()}
+                onRelease={requestRelease}
+              />
+            </li>
+          </ul>
+        </ResolutionReleaseContext.Provider>
+      </MemoryRouter>,
+    );
+    expect(screen.getByText('Barrage · Vainqueur P1')).toBeInTheDocument();
+    expect(screen.getByText('Jouer')).toBeInTheDocument();
+    expect(screen.getByText('Non déterminé')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /Libérer/ }));
+    expect(requestRelease).toHaveBeenCalled();
+  });
+
+  it('shows no-longer-eligible meta for inactive non-withdrawn entries', () => {
+    renderWithI18n(
+      <MemoryRouter>
+        <ul>
+          <li className="structure-entries__team structure-entries__team--line">
+            <StructurePhaseTeamLine displayName="Archive" ineligible />
+          </li>
+        </ul>
+      </MemoryRouter>,
+    );
+    expect(screen.getByText('Plus éligible')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Forfait')).toBeNull();
   });
 });

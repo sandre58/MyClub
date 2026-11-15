@@ -440,17 +440,7 @@
   min-width: 0;
 }
 
-.structure-entries__teams--band .structure-entries__team--line {
-  grid-column: 1 / -1;
-}
-
-.structure-entries__teams--band .structure-entries__team > :first-child {
-  grid-column: 1;
-  grid-row: 1;
-}
-
 .structure-entries__teams--band .structure-entries__team-name {
-  grid-column: 2;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;

@@ -4,7 +4,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useSyncWhen } from '../../../design-system/useRenderSync';
 import { useTranslation } from 'react-i18next';
 import {
@@ -354,8 +354,13 @@ export function StructurePhaseFiche({
     onInitialEditConsumed?.();
   });
 
+  const onInitialEditConsumedRef = useRef(onInitialEditConsumed);
   useEffect(() => {
-    if (!stage || !initialFocus) {
+    onInitialEditConsumedRef.current = onInitialEditConsumed;
+  });
+
+  useEffect(() => {
+    if (!stage || !initialFocus || initialHighlightSlotKey) {
       return;
     }
     const id = initialFocus;
@@ -371,7 +376,7 @@ export function StructurePhaseFiche({
         !initialDrawWorkflow &&
         !initialHighlightSlotKey
       ) {
-        onInitialEditConsumed?.();
+        onInitialEditConsumedRef.current?.();
       }
     });
     return () => cancelAnimationFrame(frame);
@@ -383,7 +388,6 @@ export function StructurePhaseFiche({
     initialManual,
     initialDrawWorkflow,
     initialHighlightSlotKey,
-    onInitialEditConsumed,
   ]);
 
   const schematicQuery = useQuery({

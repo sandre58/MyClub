@@ -149,7 +149,7 @@ describe('StructureDefinitiveReleaseBanner', () => {
     renderBanner();
 
     expect(
-      await screen.findByText('1 place ne pourra plus être confirmée.'),
+      await screen.findByText('1 place ne pourra plus être déterminée.'),
     ).toBeInTheDocument();
     expect(
       screen.getByText(/Sud — B : Un match annulé implique cette équipe/),
@@ -255,7 +255,7 @@ describe('StructureDefinitiveReleaseBanner', () => {
     );
 
     expect(
-      await screen.findByText('1 place ne pourra plus être confirmée.'),
+      await screen.findByText('1 place ne pourra plus être déterminée.'),
     ).toBeInTheDocument();
     expect(previewDeletedSourceDefinitiveRelease).toHaveBeenCalledWith(
       destinationId,

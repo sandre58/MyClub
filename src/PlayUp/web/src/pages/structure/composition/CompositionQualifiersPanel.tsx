@@ -138,7 +138,9 @@ export function CompositionQualifiersPanel({
                               logoMediaId={entry?.logoMediaId}
                               primaryColor={entry?.primaryColor}
                               withdrawn={entry?.status === 'Withdrawn'}
-                              ineligible={entry?.status !== 'Active'}
+                              ineligible={
+                                entry != null && entry.status !== 'Active'
+                              }
                               placed={placedInPhase}
                               placedPlaceLabel={placeLabel}
                               placedTooltip={placedTooltip}
