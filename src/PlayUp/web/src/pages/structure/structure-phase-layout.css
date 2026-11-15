@@ -735,6 +735,7 @@
 
 .structure-composition-qualifiers__hint-sep {
   flex: none;
+  margin-inline: var(--space-4);
   color: var(--color-text-secondary);
 }
 

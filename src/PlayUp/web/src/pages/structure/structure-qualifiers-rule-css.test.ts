@@ -38,12 +38,21 @@ describe('composition qualifiers rule and hint (iter4)', () => {
     expect(block![0]).toMatch(/var\(--font-weight-regular\)/);
   });
 
-  it('styles hint middle dots as secondary and decoration-only', () => {
+  it('styles hint middle dots as secondary with symmetric inline spacing', () => {
     const block = layoutCss.match(
       /\.structure-composition-qualifiers__hint-sep\s*\{[^}]+\}/,
     );
     expect(block).not.toBeNull();
     expect(block![0]).toMatch(/var\(--color-text-secondary\)/);
+    expect(block![0]).toMatch(/margin-inline:\s*var\(--space-4\)/);
+  });
+
+  it('keeps each separator glued to the following unit on wrap', () => {
+    const block = layoutCss.match(
+      /\.structure-composition-qualifiers__hint-chunk\s*\{[^}]+\}/,
+    );
+    expect(block).not.toBeNull();
+    expect(block![0]).toMatch(/flex-wrap:\s*nowrap/);
   });
 
   it('keeps the global feed rule label on meta size for non-qualifier rails', () => {
