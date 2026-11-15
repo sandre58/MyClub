@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
 import { Tooltip } from '../../../design-system/components/Tooltip';
@@ -30,6 +31,8 @@ export type StructurePhaseTeamLineProps = {
   entryName?: string | null;
   onReplace?: (occupant: StructureResolutionOccupant) => void;
   onRelease?: (occupant: StructureResolutionOccupant) => void;
+  /** Qualifiers panel — compact hint row under the rule label (option B). */
+  layout?: 'default' | 'qualifierHint';
 };
 
 function freshnessStateMetaLabel(
@@ -42,26 +45,18 @@ function freshnessStateMetaLabel(
   return null;
 }
 
-export function StructurePhaseTeamLine({
-  displayName,
-  logoMediaId,
-  primaryColor,
-  withdrawn = false,
-  ineligible = false,
-  pending = false,
-  pendingLabel,
-  placed = false,
-  placedPlaceLabel,
-  placedTooltip,
-  provenanceMeta,
-  provenanceTitle,
-  resolutionOccupant,
-  multiplePlacements = false,
-  entryName,
-  onReplace,
-  onRelease,
-}: StructurePhaseTeamLineProps) {
-  const { t } = useTranslation(['structure', 'teams']);
+function useTeamLineMeta(props: StructurePhaseTeamLineProps, t: TFunction) {
+  const {
+    ineligible,
+    withdrawn,
+    provenanceMeta,
+    provenanceTitle,
+    placed,
+    placedPlaceLabel,
+    placedTooltip,
+    resolutionOccupant,
+    layout,
+  } = props;
 
   const freshnessMeta =
     resolutionOccupant && resolutionOccupantNeedsBadge(resolutionOccupant)
@@ -71,12 +66,12 @@ export function StructurePhaseTeamLine({
   const metaParts: ReactNode[] = [];
   if (ineligible && !withdrawn) {
     metaParts.push(
-      <span key="ineligible" className="structure-entries__freshness-state">
+      <span key="ineligible" className="structure-entries__eligibility-meta">
         {t('composition.noLongerEligible')}
       </span>,
     );
   }
-  if (provenanceMeta) {
+  if (provenanceMeta && layout !== 'qualifierHint') {
     metaParts.push(
       <span
         key="provenance"
@@ -88,20 +83,27 @@ export function StructurePhaseTeamLine({
     );
   }
   if (placed) {
-    const placeText =
-      placedPlaceLabel?.trim() || t('entries.entryPlacedStatus');
+    const placeLabel = placedPlaceLabel?.trim() ?? '';
     const tip =
       placedTooltip ??
-      (placedPlaceLabel
-        ? t('entries.entryPlacedTooltip', { place: placedPlaceLabel })
+      (placeLabel
+        ? t('entries.entryPlacedTooltip', { place: placeLabel })
         : t('entries.entryPlacedStatus'));
     metaParts.push(
       <span key="placed" className="structure-entries__placed-hint" title={tip}>
         <LocateIcon size="sm" aria-hidden="true" />
-        <span className="ds-visually-hidden">
-          {t('entries.entryPlacedAriaPrefix')}
-        </span>
-        {placeText}
+        {placeLabel ? (
+          <>
+            <span className="ds-visually-hidden">
+              {t('entries.entryPlacedAriaPrefix')}
+            </span>
+            {placeLabel}
+          </>
+        ) : (
+          <span className="ds-visually-hidden">
+            {t('entries.entryPlacedStatus')}
+          </span>
+        )}
       </span>,
     );
   }
@@ -112,6 +114,28 @@ export function StructurePhaseTeamLine({
       </span>,
     );
   }
+
+  return { metaParts, freshnessMeta };
+}
+
+export function StructurePhaseTeamLine(props: StructurePhaseTeamLineProps) {
+  const {
+    displayName,
+    logoMediaId,
+    primaryColor,
+    withdrawn = false,
+    ineligible = false,
+    pending = false,
+    pendingLabel,
+    resolutionOccupant,
+    multiplePlacements = false,
+    entryName,
+    onReplace,
+    onRelease,
+    layout = 'default',
+  } = props;
+  const { t } = useTranslation(['structure', 'teams']);
+  const { metaParts } = useTeamLineMeta(props, t);
 
   const freshnessAction =
     resolutionOccupant && !pending ? (
@@ -124,6 +148,80 @@ export function StructurePhaseTeamLine({
         actionOnly
       />
     ) : null;
+
+  if (layout === 'qualifierHint') {
+    if (pending) {
+      return (
+        <div className="structure-composition-qualifiers__outcome">
+          <span className="structure-composition-qualifiers__hint structure-composition-qualifiers__hint--pending">
+            <span
+              className="structure-entries__team-pending-icon"
+              aria-hidden="true"
+            >
+              <HourglassIcon size="sm" />
+            </span>
+            <span className="structure-entries__team-name structure-entries__team-name--pending">
+              {pendingLabel}
+            </span>
+          </span>
+          <div
+            className="structure-entries__action"
+            aria-hidden={!freshnessAction}
+          >
+            {freshnessAction}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="structure-composition-qualifiers__outcome">
+        <span className="structure-composition-qualifiers__hint">
+          <TeamCrest
+            name={displayName}
+            logoMediaId={logoMediaId}
+            primaryColor={primaryColor}
+            size="xs"
+            className="structure-composition-qualifiers__hint-crest"
+          />
+          <span
+            className={[
+              'structure-composition-qualifiers__hint-name',
+              ineligible
+                ? 'structure-composition-qualifiers__hint-name--ineligible'
+                : null,
+            ]
+              .filter(Boolean)
+              .join(' ')}
+          >
+            {displayName}
+          </span>
+          {withdrawn ? (
+            <Tooltip content={t('teams:withdrawnBadge')}>
+              <span
+                className="structure-entries__team-withdrawn-inline"
+                role="img"
+                aria-label={t('teams:withdrawnBadge')}
+              >
+                <WithdrawIcon size="sm" aria-hidden="true" />
+              </span>
+            </Tooltip>
+          ) : null}
+          {metaParts.length > 0 ? (
+            <span className="structure-composition-qualifiers__hint-meta">
+              {metaParts}
+            </span>
+          ) : null}
+        </span>
+        <div
+          className="structure-entries__action"
+          aria-hidden={freshnessAction == null}
+        >
+          {freshnessAction}
+        </div>
+      </div>
+    );
+  }
 
   if (pending) {
     return (
@@ -163,7 +261,16 @@ export function StructurePhaseTeamLine({
         size="sm"
       />
       <div className="structure-entries__identity">
-        <div className="structure-entries__identity-head">
+        <div
+          className={[
+            'structure-entries__identity-head',
+            metaParts.length === 0
+              ? 'structure-entries__identity-head--solo'
+              : null,
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
           <span
             className={[
               'structure-entries__team-name',

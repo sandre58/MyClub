@@ -179,6 +179,77 @@ describe('CompositionQualifiersPanel freshness badge', () => {
     );
   });
 
+  it('stacks the rule label before the team hint and spans the full width', () => {
+    const { container } = renderPanel([
+      populationOccupant(),
+      releasableSlotOccupant(),
+    ]);
+
+    const line = container.querySelector(
+      '.structure-composition-qualifiers__rule-line--after',
+    );
+    expect(line).not.toBeNull();
+    const rulePrimary = line!.querySelector(
+      '.structure-composition-qualifiers__rule-primary',
+    );
+    const outcome = line!.querySelector(
+      '.structure-composition-qualifiers__outcome',
+    );
+    expect(rulePrimary).not.toBeNull();
+    expect(outcome).not.toBeNull();
+    expect(
+      rulePrimary!.compareDocumentPosition(outcome!) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      line!.querySelector('.structure-composition-qualifiers__hint-name'),
+    ).toHaveTextContent('Nord');
+    expect(line!.querySelector('.team-crest--xs')).not.toBeNull();
+  });
+
+  it('shows unresolved seats as hourglass hint under the rule', () => {
+    renderWithI18n(
+      <MemoryRouter>
+        <CompositionQualifiersPanel
+          groups={[
+            {
+              peerId: 'src',
+              peerName: 'Barrage',
+              peerOrder: 0,
+              volume: 1,
+              rules: [
+                {
+                  key: 'p1',
+                  volume: 1,
+                  badge: 'Vainqueur',
+                  badgeTone: 'win',
+                  context: 'P1',
+                  family: 'place',
+                  sortPrimary: 1,
+                  sortSecondary: '1',
+                  hubSeats: [
+                    {
+                      resolved: false,
+                      placed: false,
+                      teamName: null,
+                      entryId: null,
+                    },
+                  ],
+                },
+              ],
+            },
+          ]}
+          inboundComposition={undefined}
+          entries={[]}
+          formatKind="Cup"
+          entryPlaceProjections={new Map()}
+        />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText('Non résolue')).toBeInTheDocument();
+    expect(screen.getByText('Vainqueur')).toBeInTheDocument();
+  });
+
   it('shows an inert badge without release when several places match', () => {
     const requestRelease = vi.fn();
     renderPanel(

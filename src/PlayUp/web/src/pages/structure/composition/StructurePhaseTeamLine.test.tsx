@@ -106,7 +106,7 @@ describe('StructurePhaseTeamLine', () => {
     expect(screen.getByText('Placée :')).toHaveClass('ds-visually-hidden');
   });
 
-  it('shows placed status without a place label', () => {
+  it('announces placed without duplicating visible copy when place name is missing', () => {
     renderWithI18n(
       <MemoryRouter>
         <ul>
@@ -116,7 +116,23 @@ describe('StructurePhaseTeamLine', () => {
         </ul>
       </MemoryRouter>,
     );
-    expect(screen.getByText('Placée')).toBeInTheDocument();
+    expect(screen.getAllByText('Placée')).toHaveLength(1);
+    expect(screen.getByText('Placée')).toHaveClass('ds-visually-hidden');
+  });
+
+  it('centers the name on the crest when no meta is shown', () => {
+    const { container } = renderWithI18n(
+      <MemoryRouter>
+        <ul>
+          <li className="structure-entries__team structure-entries__team--line">
+            <StructurePhaseTeamLine displayName="Sud" />
+          </li>
+        </ul>
+      </MemoryRouter>,
+    );
+    expect(
+      container.querySelector('.structure-entries__identity-head--solo'),
+    ).not.toBeNull();
   });
 
   it('shows Perime state without a focusable action on list rows', () => {
@@ -180,7 +196,8 @@ describe('StructurePhaseTeamLine', () => {
         </ul>
       </MemoryRouter>,
     );
-    expect(screen.getByText('Plus éligible')).toBeInTheDocument();
+    const label = screen.getByText('Plus éligible');
+    expect(label).toHaveClass('structure-entries__eligibility-meta');
     expect(screen.queryByLabelText('Forfait')).toBeNull();
   });
 });

@@ -123,46 +123,42 @@ export function CompositionQualifiersPanel({
                         .filter(Boolean)
                         .join(' ')}
                     >
-                      <div className="structure-composition-qualifiers__rule-feed">
+                      <div className="structure-composition-qualifiers__rule-primary">
                         <CompositionQualifierRuleLabel rule={rule} />
                       </div>
-                      <div className="structure-composition-qualifiers__rule-outcome">
-                        <div className="structure-entries__team structure-entries__team--line">
-                          {seat.resolved ? (
-                            <StructurePhaseTeamLine
-                              displayName={
-                                seat.teamName ??
-                                entry?.displayName ??
-                                t('manualPlacement.unknownTeam')
-                              }
-                              logoMediaId={entry?.logoMediaId}
-                              primaryColor={entry?.primaryColor}
-                              withdrawn={entry?.status === 'Withdrawn'}
-                              ineligible={
-                                entry != null && entry.status !== 'Active'
-                              }
-                              placed={placedInPhase}
-                              placedPlaceLabel={placeLabel}
-                              placedTooltip={placedTooltip}
-                              resolutionOccupant={listedResolution?.occupant}
-                              multiplePlacements={
-                                listedResolution?.multiplePlacements
-                              }
-                              entryName={seat.teamName ?? entry?.displayName}
-                              onReplace={cascade?.requestReplace}
-                              onRelease={release?.requestRelease}
-                            />
-                          ) : (
-                            <StructurePhaseTeamLine
-                              displayName=""
-                              pending
-                              pendingLabel={t(
-                                'composition.qualifiers.unresolved',
-                              )}
-                            />
-                          )}
-                        </div>
-                      </div>
+                      {seat.resolved ? (
+                        <StructurePhaseTeamLine
+                          layout="qualifierHint"
+                          displayName={
+                            seat.teamName ??
+                            entry?.displayName ??
+                            t('manualPlacement.unknownTeam')
+                          }
+                          logoMediaId={entry?.logoMediaId}
+                          primaryColor={entry?.primaryColor}
+                          withdrawn={entry?.status === 'Withdrawn'}
+                          ineligible={
+                            entry != null && entry.status !== 'Active'
+                          }
+                          placed={placedInPhase}
+                          placedPlaceLabel={placeLabel}
+                          placedTooltip={placedTooltip}
+                          resolutionOccupant={listedResolution?.occupant}
+                          multiplePlacements={
+                            listedResolution?.multiplePlacements
+                          }
+                          entryName={seat.teamName ?? entry?.displayName}
+                          onReplace={cascade?.requestReplace}
+                          onRelease={release?.requestRelease}
+                        />
+                      ) : (
+                        <StructurePhaseTeamLine
+                          layout="qualifierHint"
+                          displayName=""
+                          pending
+                          pendingLabel={t('composition.qualifiers.unresolved')}
+                        />
+                      )}
                     </li>
                   );
                 });
