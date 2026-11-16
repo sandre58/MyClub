@@ -726,6 +726,19 @@
   font-weight: var(--font-weight-regular);
 }
 
+.structure-composition-qualifiers__hint--as-team-line {
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: var(--space-8);
+  font-size: var(--text-meta);
+  line-height: var(--leading-tight);
+}
+
+.structure-composition-qualifiers__hint--as-team-line .structure-entries__meta--caption {
+  font-size: var(--text-caption);
+  line-height: var(--leading-caption);
+}
+
 .structure-composition-qualifiers__hint--pending {
   color: var(--color-text-secondary);
 }
@@ -763,35 +776,15 @@
   width: 100%;
 }
 
-.structure-composition-qualifiers__hint-name {
-  flex: 0 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.structure-composition-qualifiers__hint--as-team-line .structure-entries__placed-hint,
+.structure-composition-qualifiers__hint--as-team-line .structure-entries__freshness-state,
+.structure-composition-qualifiers__hint--as-team-line .structure-entries__eligibility-meta {
   font-weight: var(--font-weight-regular);
-  color: var(--color-text-primary);
-}
-
-.structure-composition-qualifiers__hint-name--ineligible {
-  color: var(--color-text-secondary);
-}
-
-.structure-composition-qualifiers__hint .structure-entries__placed-hint {
-  font-weight: var(--font-weight-regular);
-}
-
-.structure-composition-qualifiers__hint .structure-entries__freshness-state {
-  font-weight: var(--font-weight-regular);
-}
-
-.structure-composition-qualifiers__hint .structure-entries__team-name {
-  font-size: inherit;
-  line-height: inherit;
 }
 
 .structure-composition-qualifiers__hint-crest {
   flex: none;
+  align-self: flex-start;
 }
 
 .structure-composition-qualifiers__status-chip {

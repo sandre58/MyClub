@@ -6,6 +6,7 @@ import {
   entryPlaceProjectionFromSchematic,
   isEntryPlacedInPhase,
   placedEntryIdsFromSchematic,
+  placedTooltipLines,
   primaryPlaceLabel,
   showPerEntryPlacement,
 } from './structureEntryPlacementProjection';
@@ -14,18 +15,21 @@ const t = (key: string, opts?: Record<string, unknown>) => {
   if (key === 'place.group' && opts?.name) {
     return `Group ${opts.name}`;
   }
-  if (key === 'place.groupPlacedWithoutIndex' && opts?.name) {
-    return `Placée en Groupe ${opts.name}`;
+  if (key === 'place.groupWhere' && opts?.name) {
+    return `Groupe ${opts.name}`;
   }
   if (
-    key === 'place.groupPlaced' &&
+    key === 'place.groupWhereIndexed' &&
     opts?.name != null &&
     opts?.index != null
   ) {
-    return `Placée en Groupe ${opts.name}, place ${opts.index}`;
+    return `Groupe ${opts.name}, place ${opts.index}`;
   }
-  if (key === 'entries.entryPlacedTooltip' && opts?.place != null) {
-    return `Placée — ${opts.place}`;
+  if (key === 'entries.teamAlreadyPlaced' && opts?.where != null) {
+    return `Cette équipe est déjà placée : ${opts.where}`;
+  }
+  if (key === 'entries.teamAlreadyPlacedCup' && opts?.where != null) {
+    return `Cette équipe est déjà placée : Coupe — ${opts.where}`;
   }
   if (key === 'place.side' && opts?.side) {
     return `side ${opts.side}`;
@@ -90,7 +94,7 @@ describe('structureEntryPlacementProjection', () => {
     expect(primaryPlaceLabel(map.get('e1'))).toBe('SF-1-A');
   });
 
-  it('uses Placée en Groupe when group place has no index', () => {
+  it('uses group where label without index', () => {
     const cases: SchematicCase[] = [
       {
         formPosition: {
@@ -103,8 +107,12 @@ describe('structureEntryPlacementProjection', () => {
     ];
     const map = entryPlaceProjectionFromSchematic(cases, 'Groups', t);
     expect(primaryPlaceLabel(map.get('e1'))).toBe('Group A');
+    expect(map.get('e1')?.details[0]).toBe('Groupe A');
+    expect(placedTooltipLines(map.get('e1'), t)).toEqual([
+      'Cette équipe est déjà placée : Groupe A',
+    ]);
     expect(entryPlaceAccessibilityLabel(map.get('e1'), t)).toBe(
-      'Placée en Groupe A',
+      'Cette équipe est déjà placée : Groupe A',
     );
   });
 
@@ -123,15 +131,15 @@ describe('structureEntryPlacementProjection', () => {
     const map = entryPlaceProjectionFromSchematic(cases, 'Groups', t);
     expect(primaryPlaceLabel(map.get('e1'))).toBe('Group A');
     expect(map.get('e1')?.kinds[0]).toBe('group');
-    expect(map.get('e1')?.details[0]).toBe('Placée en Groupe A, place 3');
+    expect(map.get('e1')?.details[0]).toBe('Groupe A, place 3');
     expect(entryPlaceAccessibilityLabel(map.get('e1'), t)).toBe(
-      'Placée en Groupe A, place 3',
+      'Cette équipe est déjà placée : Groupe A, place 3',
     );
   });
 
-  it('wraps cup projection tooltips with Placée and short plus detail', () => {
+  it('uses cup sentences with long topology in where', () => {
     expect(
-      entryPlaceAccessibilityLabel(
+      placedTooltipLines(
         {
           labels: ['Tête'],
           details: ['Demi-finale 1 · côté A'],
@@ -139,16 +147,31 @@ describe('structureEntryPlacementProjection', () => {
         },
         t,
       ),
-    ).toBe('Placée — Tête — Demi-finale 1 · côté A');
+    ).toEqual([
+      'Cette équipe est déjà placée : Coupe — Demi-finale 1 · côté A',
+    ]);
     expect(
-      entryPlaceAccessibilityLabel(
+      placedTooltipLines(
         { labels: ['SF-1-A'], details: [null], kinds: ['cup'] },
         t,
       ),
-    ).toBe('Placée — SF-1-A');
+    ).toEqual(['Cette équipe est déjà placée : Coupe — SF-1-A']);
   });
 
-  it('uses a single Placée prefix for multiple cup placements', () => {
+  it('emits one sentence per cup placement', () => {
+    expect(
+      placedTooltipLines(
+        {
+          labels: ['Tête', 'Demi-finale 1'],
+          details: [null, 'côté A'],
+          kinds: ['cup', 'cup'],
+        },
+        t,
+      ),
+    ).toEqual([
+      'Cette équipe est déjà placée : Coupe — Tête',
+      'Cette équipe est déjà placée : Coupe — côté A',
+    ]);
     expect(
       entryPlaceAccessibilityLabel(
         {
@@ -158,23 +181,24 @@ describe('structureEntryPlacementProjection', () => {
         },
         t,
       ),
-    ).toBe('Placée — Tête ; Demi-finale 1 — côté A');
+    ).toBe(
+      'Cette équipe est déjà placée : Coupe — Tête ; Cette équipe est déjà placée : Coupe — côté A',
+    );
   });
 
-  it('separates multiple group placements with semicolons', () => {
+  it('separates multiple group placements with semicolons in aria text', () => {
     expect(
       entryPlaceAccessibilityLabel(
         {
           labels: ['Group A', 'Group B'],
-          details: [
-            'Placée en Groupe A, place 1',
-            'Placée en Groupe B, place 2',
-          ],
+          details: ['Groupe A, place 1', 'Groupe B, place 2'],
           kinds: ['group', 'group'],
         },
         t,
       ),
-    ).toBe('Placée en Groupe A, place 1 ; Placée en Groupe B, place 2');
+    ).toBe(
+      'Cette équipe est déjà placée : Groupe A, place 1 ; Cette équipe est déjà placée : Groupe B, place 2',
+    );
   });
 
   it('keeps multiple place labels for the same entry', () => {
@@ -200,8 +224,9 @@ describe('structureEntryPlacementProjection', () => {
     ];
     const map = entryPlaceProjectionFromSchematic(cases, 'Groups', t);
     expect(map.get('e1')?.labels).toEqual(['Group A', 'Group B']);
+    expect(placedTooltipLines(map.get('e1'), t)).toHaveLength(2);
     expect(entryPlaceAccessibilityLabel(map.get('e1'), t)).toBe(
-      'Placée en Groupe A, place 1 ; Placée en Groupe B, place 2',
+      'Cette équipe est déjà placée : Groupe A, place 1 ; Cette équipe est déjà placée : Groupe B, place 2',
     );
   });
 });

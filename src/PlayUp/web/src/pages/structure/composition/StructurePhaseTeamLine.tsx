@@ -64,10 +64,28 @@ function freshnessStateMetaNode(
   );
 }
 
+function placedTooltipBody(
+  lines: readonly string[] | undefined,
+  singleLine: string,
+): ReactNode {
+  if (lines && lines.length > 1) {
+    return (
+      <span className="structure-entries__placed-tooltip-body">
+        {lines.map((line) => (
+          <span key={line} className="structure-entries__placed-tooltip-line">
+            {line}
+          </span>
+        ))}
+      </span>
+    );
+  }
+  return singleLine;
+}
+
 function placedHintNode(
   props: Pick<
     StructurePhaseTeamLineProps,
-    'placed' | 'placedPlaceLabel' | 'placedTooltip'
+    'placed' | 'placedPlaceLabel' | 'placedTooltip' | 'placedTooltipLines'
   >,
   t: TFunction,
 ) {
@@ -75,23 +93,33 @@ function placedHintNode(
     return null;
   }
   const placeLabel = props.placedPlaceLabel?.trim() ?? '';
+  const lines = props.placedTooltipLines?.filter((line) => line.trim()) ?? [];
   const tip =
     props.placedTooltip ??
-    (placeLabel
-      ? t('entries.entryPlacedTooltip', { place: placeLabel })
-      : t('entries.entryPlacedStatus'));
+    (lines.length > 0
+      ? lines.join(' ; ')
+      : placeLabel
+        ? t('entries.teamAlreadyPlaced', { where: placeLabel })
+        : t('entries.entryPlacedStatus'));
+  const tooltipContent = placedTooltipBody(
+    lines.length > 0 ? lines : undefined,
+    tip,
+  );
   return (
-    <span className="structure-entries__placed-hint" title={tip}>
-      <LocateIcon size="xs" aria-hidden="true" />
-      {placeLabel ? (
-        <>
-          <span className="ds-visually-hidden">{tip}</span>
+    <Tooltip content={tooltipContent}>
+      <span
+        className="structure-entries__placed-hint"
+        role="img"
+        aria-label={tip}
+      >
+        <LocateIcon size="xs" aria-hidden="true" />
+        {placeLabel ? (
           <span aria-hidden="true">{placeLabel}</span>
-        </>
-      ) : (
-        <span className="ds-visually-hidden">{tip}</span>
-      )}
-    </span>
+        ) : (
+          <span className="ds-visually-hidden">{tip}</span>
+        )}
+      </span>
+    </Tooltip>
   );
 }
 
@@ -144,22 +172,22 @@ function qualifierHintTrailingUnits(
   props: StructurePhaseTeamLineProps,
   t: TFunction,
 ): ReactNode[] {
-  const { resolutionOccupant, placed } = props;
+  const { resolutionOccupant, placed, ineligible, withdrawn } = props;
 
   const units: ReactNode[] = [];
-  if (placed) {
+  if (ineligible && !withdrawn) {
     units.push(
-      <span key="place" className="structure-composition-qualifiers__hint-unit">
-        {placedHintNode(props, t)}
+      <span key="ineligible">
+        {eligibilityMetaNode(t('composition.noLongerEligible'))}
       </span>,
     );
   }
+  if (placed) {
+    units.push(<span key="place">{placedHintNode(props, t)}</span>);
+  }
   if (resolutionOccupant && resolutionOccupantNeedsBadge(resolutionOccupant)) {
     units.push(
-      <span
-        key="freshness"
-        className="structure-composition-qualifiers__hint-unit"
-      >
+      <span key="freshness">
         {freshnessStateMetaNode(resolutionOccupant, t)}
       </span>,
     );
@@ -206,25 +234,36 @@ export function StructurePhaseTeamLine(props: StructurePhaseTeamLineProps) {
       const trailingUnits = qualifierHintTrailingUnits(props, t);
       return (
         <div className="structure-composition-qualifiers__outcome">
-          <span
+          <div
             className={[
               'structure-composition-qualifiers__hint',
+              'structure-composition-qualifiers__hint--as-team-line',
               'structure-composition-qualifiers__hint--pending',
             ].join(' ')}
           >
-            <span className="structure-composition-qualifiers__hint-unit structure-composition-qualifiers__hint-unit--identity">
-              <span
-                className="structure-entries__team-pending-icon structure-entries__team-pending-icon--caption"
-                aria-hidden="true"
-              >
-                <HourglassIcon size="xs" />
-              </span>
-              <span className="structure-composition-qualifiers__hint-pending-label">
-                {pendingLabel}
-              </span>
+            <span
+              className="structure-entries__team-pending-icon"
+              aria-hidden="true"
+            >
+              <HourglassIcon size="sm" />
             </span>
-            {trailingUnits}
-          </span>
+            <div className="structure-entries__identity">
+              <div className="structure-entries__identity-head">
+                <span className="structure-entries__team-name structure-entries__team-name--pending">
+                  {pendingLabel}
+                </span>
+              </div>
+              {trailingUnits.length > 0 ? (
+                <div className="structure-entries__meta structure-entries__meta--caption">
+                  {trailingUnits.map((unit, index) => (
+                    <span key={index} className="structure-entries__meta-unit">
+                      {unit}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          </div>
           {hintFreshnessAction != null ? (
             <div className="structure-entries__action">
               {hintFreshnessAction}
@@ -238,44 +277,65 @@ export function StructurePhaseTeamLine(props: StructurePhaseTeamLineProps) {
 
     return (
       <div className="structure-composition-qualifiers__outcome">
-        <span className="structure-composition-qualifiers__hint">
-          <span className="structure-composition-qualifiers__hint-unit structure-composition-qualifiers__hint-unit--identity">
-            <TeamCrest
-              name={displayName}
-              logoMediaId={logoMediaId}
-              primaryColor={primaryColor}
-              size="xs"
-              className="structure-composition-qualifiers__hint-crest"
-            />
-            <span
+        <div
+          className={[
+            'structure-composition-qualifiers__hint',
+            'structure-composition-qualifiers__hint--as-team-line',
+          ].join(' ')}
+        >
+          <TeamCrest
+            name={displayName}
+            logoMediaId={logoMediaId}
+            primaryColor={primaryColor}
+            size="sm"
+            className="structure-composition-qualifiers__hint-crest"
+          />
+          <div className="structure-entries__identity">
+            <div
               className={[
-                'structure-composition-qualifiers__hint-name',
-                ineligible
-                  ? 'structure-composition-qualifiers__hint-name--ineligible'
+                'structure-entries__identity-head',
+                trailingUnits.length === 0
+                  ? 'structure-entries__identity-head--solo'
                   : null,
               ]
                 .filter(Boolean)
                 .join(' ')}
             >
-              {displayName}
-            </span>
-            {withdrawn ? (
-              <Tooltip content={t('teams:withdrawnBadge')}>
-                <span
-                  className="structure-entries__team-withdrawn-inline"
-                  role="img"
-                  aria-label={t('teams:withdrawnBadge')}
-                >
-                  <WithdrawIcon size="xs" aria-hidden="true" />
-                </span>
-              </Tooltip>
+              <span
+                className={[
+                  'structure-entries__team-name',
+                  ineligible
+                    ? 'structure-entries__team-name--ineligible'
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+              >
+                {displayName}
+              </span>
+              {withdrawn ? (
+                <Tooltip content={t('teams:withdrawnBadge')}>
+                  <span
+                    className="structure-entries__team-withdrawn-inline"
+                    role="img"
+                    aria-label={t('teams:withdrawnBadge')}
+                  >
+                    <WithdrawIcon size="sm" aria-hidden="true" />
+                  </span>
+                </Tooltip>
+              ) : null}
+            </div>
+            {trailingUnits.length > 0 ? (
+              <div className="structure-entries__meta structure-entries__meta--caption">
+                {trailingUnits.map((unit, index) => (
+                  <span key={index} className="structure-entries__meta-unit">
+                    {unit}
+                  </span>
+                ))}
+              </div>
             ) : null}
-            {ineligible && !withdrawn
-              ? eligibilityMetaNode(t('composition.noLongerEligible'))
-              : null}
-          </span>
-          {trailingUnits}
-        </span>
+          </div>
+        </div>
         {hintFreshnessAction != null ? (
           <div className="structure-entries__action">{hintFreshnessAction}</div>
         ) : null}

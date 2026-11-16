@@ -213,9 +213,9 @@ describe('CompositionQualifiersPanel freshness badge', () => {
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     expect(
-      line!.querySelector('.structure-composition-qualifiers__hint-name'),
+      line!.querySelector('.structure-entries__team-name'),
     ).toHaveTextContent('Nord');
-    expect(line!.querySelector('.team-crest--xs')).not.toBeNull();
+    expect(line!.querySelector('.team-crest--sm')).not.toBeNull();
     const outcomeAction = outcome!.querySelector('.structure-entries__action');
     expect(outcomeAction).toBeNull();
     expect(
@@ -273,12 +273,10 @@ describe('CompositionQualifiersPanel freshness badge', () => {
     ).toHaveTextContent('Tête');
     const hint = container.querySelector('.structure-entries__placed-hint');
     expect(hint).toHaveAttribute(
-      'title',
-      'Placée — Tête — Demi-finale 1 · côté A',
+      'aria-label',
+      'Cette équipe est déjà placée : Coupe — Demi-finale 1 · côté A',
     );
-    expect(hint?.querySelector('.ds-visually-hidden')).toHaveTextContent(
-      'Placée — Tête — Demi-finale 1 · côté A',
-    );
+    expect(hint).not.toHaveAttribute('title');
   });
 
   it('renders group place chip with short visible label and full Placée en phrase for assistive tech', () => {
@@ -312,7 +310,7 @@ describe('CompositionQualifiersPanel freshness badge', () => {
                 'e1',
                 {
                   labels: ['Groupe A'],
-                  details: ['Placée en Groupe A, place 2'],
+                  details: ['Groupe A, place 2'],
                   kinds: ['group'],
                 },
               ],
@@ -327,10 +325,11 @@ describe('CompositionQualifiersPanel freshness badge', () => {
     );
     expect(visibleChip).toHaveTextContent('Groupe A');
     const hint = container.querySelector('.structure-entries__placed-hint');
-    expect(hint).toHaveAttribute('title', 'Placée en Groupe A, place 2');
-    expect(hint?.querySelector('.ds-visually-hidden')).toHaveTextContent(
-      'Placée en Groupe A, place 2',
+    expect(hint).toHaveAttribute(
+      'aria-label',
+      'Cette équipe est déjà placée : Groupe A, place 2',
     );
+    expect(hint).not.toHaveAttribute('title');
   });
 
   it('does not show place on unresolved unplaced qualifier seats', () => {
@@ -510,9 +509,9 @@ describe('CompositionQualifiersPanel freshness badge', () => {
       container.querySelectorAll('.structure-composition-qualifiers__hint-sep'),
     ).toHaveLength(0);
     expect(
-      container.querySelectorAll('.structure-composition-qualifiers__hint-unit')
-        .length,
-    ).toBeGreaterThanOrEqual(2);
+      container.querySelectorAll('.structure-entries__meta-unit').length,
+    ).toBeGreaterThanOrEqual(1);
+    expect(container.querySelector('.structure-entries__placed-hint')).not.toBeNull();
   });
 
   it('renders the placed reminder in the qualifier hint meta', () => {

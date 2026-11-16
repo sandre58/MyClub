@@ -838,8 +838,8 @@
     "cup": "{{round}} · {{side}}",
     "cupWithOrdinal": "{{round}} {{ordinal}} · {{side}}",
     "group": "Group {{name}}",
-    "groupPlaced": "Placed in Group {{name}}, slot {{index}}",
-    "groupPlacedWithoutIndex": "Placed in Group {{name}}",
+    "groupWhere": "Group {{name}}",
+    "groupWhereIndexed": "Group {{name}}, slot {{index}}",
     "form": "Organisation"
   },
   "resolution": {
@@ -991,7 +991,8 @@
     "entryPlacedAria": "{{name}} — placed on the form",
     "entryNotPlacedAria": "{{name}} — not placed yet",
     "entryPlacedStatus": "Placed",
-    "entryPlacedTooltip": "Placed — {{place}}",
+    "teamAlreadyPlaced": "This team is already placed: {{where}}",
+    "teamAlreadyPlacedCup": "This team is already placed: Cup — {{where}}",
     "meterAria": "Expected teams / places",
     "meter": {
       "population": "Teams",

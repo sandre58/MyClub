@@ -838,8 +838,8 @@
     "cup": "{{round}} · {{side}}",
     "cupWithOrdinal": "{{round}} {{ordinal}} · {{side}}",
     "group": "Groupe {{name}}",
-    "groupPlaced": "Placée en Groupe {{name}}, place {{index}}",
-    "groupPlacedWithoutIndex": "Placée en Groupe {{name}}",
+    "groupWhere": "Groupe {{name}}",
+    "groupWhereIndexed": "Groupe {{name}}, place {{index}}",
     "form": "Organisation"
   },
   "resolution": {
@@ -991,7 +991,8 @@
     "entryPlacedAria": "{{name}} — placée sur la forme",
     "entryNotPlacedAria": "{{name}} — pas encore placée",
     "entryPlacedStatus": "Placée",
-    "entryPlacedTooltip": "Placée — {{place}}",
+    "teamAlreadyPlaced": "Cette équipe est déjà placée : {{where}}",
+    "teamAlreadyPlacedCup": "Cette équipe est déjà placée : Coupe — {{where}}",
     "meterAria": "Équipes attendues / places",
     "meter": {
       "population": "Équipes",

@@ -11,6 +11,8 @@ export type StructurePhaseTeamLineProps = {
   placed?: boolean;
   placedPlaceLabel?: string | null;
   placedTooltip?: string | null;
+  /** One sentence per resolved place — multiline Tooltip when length > 1. */
+  placedTooltipLines?: readonly string[] | null;
   provenanceMeta?: string | null;
   provenanceTitle?: string | null;
   resolutionOccupant?: StructureResolutionOccupant | null;

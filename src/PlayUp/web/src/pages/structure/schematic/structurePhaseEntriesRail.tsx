@@ -22,6 +22,7 @@ import {
   type EntryPlaceProjection,
   entryPlaceAccessibilityLabel,
   isEntryPlacedInPhase,
+  placedTooltipLines,
   primaryPlaceLabel,
   showPerEntryPlacement,
 } from '../draw/structureEntryPlacementProjection';
@@ -324,14 +325,15 @@ export function RootEntriesRail({
       trackPlacement && schematicReady && entry.status === 'Active' && !placed;
     const projection = placeProjections.get(entry.entryId);
     const placeLabel = primaryPlaceLabel(projection);
+    const tooltipLineList =
+      placed && projection ? placedTooltipLines(projection, t) : [];
     const placedTooltip =
-      placed && projection
-        ? (entryPlaceAccessibilityLabel(projection, t) ??
-          (placeLabel
-            ? t('entries.entryPlacedTooltip', { place: placeLabel })
-            : t('entries.entryPlacedStatus')))
+      placed && tooltipLineList.length > 0
+        ? (entryPlaceAccessibilityLabel(projection, t) ?? null)
         : placed
-          ? t('entries.entryPlacedStatus')
+          ? placeLabel
+            ? t('entries.teamAlreadyPlaced', { where: placeLabel })
+            : t('entries.entryPlacedStatus')
           : null;
     const provenanceLabel =
       provenance ?? entryProvenanceByEntryId?.get(entry.entryId) ?? null;
@@ -368,6 +370,9 @@ export function RootEntriesRail({
           placed={placed}
           placedPlaceLabel={placeLabel}
           placedTooltip={placedTooltip}
+          placedTooltipLines={
+            tooltipLineList.length > 0 ? tooltipLineList : null
+          }
           provenanceMeta={provenanceLabel?.badge ?? null}
           provenanceTitle={provenanceLabel?.full ?? null}
           resolutionOccupant={listedResolution.occupant}

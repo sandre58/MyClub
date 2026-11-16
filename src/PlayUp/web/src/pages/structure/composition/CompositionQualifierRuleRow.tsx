@@ -16,6 +16,7 @@ import {
 } from './compositionQualifierSeatPlaceLabel';
 import {
   entryPlaceAccessibilityLabel,
+  placedTooltipLines,
   type EntryPlaceProjection,
 } from '../draw/structureEntryPlacementProjection';
 import type { StructureResolutionOccupant } from '../../../types';
@@ -54,10 +55,12 @@ export function CompositionQualifierRuleRow({
   });
   const entryProjection =
     entry != null ? entryPlaceProjections.get(entry.entryId) : undefined;
+  const tooltipLineList = entryProjection
+    ? placedTooltipLines(entryProjection, t)
+    : [];
   const placedTooltip =
-    placedInPhase && entryProjection
-      ? (entryPlaceAccessibilityLabel(entryProjection, t) ??
-        qualifierSeatPlacedTooltip(placedInPhase, placeLabel, t))
+    placedInPhase && tooltipLineList.length > 0
+      ? entryPlaceAccessibilityLabel(entryProjection, t)
       : qualifierSeatPlacedTooltip(placedInPhase, placeLabel, t);
 
   const teamName =
@@ -74,6 +77,7 @@ export function CompositionQualifierRuleRow({
         placed: placedInPhase,
         placedPlaceLabel: placeLabel,
         placedTooltip: placedTooltip,
+        placedTooltipLines: tooltipLineList.length > 0 ? tooltipLineList : null,
         resolutionOccupant: listedResolution?.occupant ?? null,
         multiplePlacements: listedResolution?.multiplePlacements ?? false,
         entryName: teamName,
@@ -89,6 +93,7 @@ export function CompositionQualifierRuleRow({
         placed: placedInPhase,
         placedPlaceLabel: placeLabel,
         placedTooltip: placedTooltip,
+        placedTooltipLines: tooltipLineList.length > 0 ? tooltipLineList : null,
         omitFreshnessAction: true,
       };
 

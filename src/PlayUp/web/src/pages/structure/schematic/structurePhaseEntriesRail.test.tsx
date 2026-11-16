@@ -220,7 +220,7 @@ describe('RootEntriesRail équipes band inbound qual format', () => {
                 'e2',
                 {
                   labels: ['Groupe A'],
-                  details: ['Placée en Groupe A, place 2'],
+                  details: ['Groupe A, place 2'],
                   kinds: ['group'],
                 },
               ],
@@ -252,10 +252,11 @@ describe('RootEntriesRail équipes band inbound qual format', () => {
     expect(screen.getByText('1er')).toBeInTheDocument();
     expect(screen.getByText('Groupe A')).toBeInTheDocument();
     const hint = container.querySelector('.structure-entries__placed-hint');
-    expect(hint).toHaveAttribute('title', 'Placée en Groupe A, place 2');
-    expect(hint?.querySelector('.ds-visually-hidden')).toHaveTextContent(
-      'Placée en Groupe A, place 2',
+    expect(hint).toHaveAttribute(
+      'aria-label',
+      'Cette équipe est déjà placée : Groupe A, place 2',
     );
+    expect(hint).not.toHaveAttribute('title');
     expect(hint?.querySelector('span[aria-hidden="true"]')).toHaveTextContent(
       'Groupe A',
     );
@@ -278,7 +279,7 @@ describe('RootEntriesRail équipes band inbound qual format', () => {
                 'e2',
                 {
                   labels: ['Groupe B'],
-                  details: ['Placée en Groupe B, place 1'],
+                  details: ['Groupe B, place 1'],
                   kinds: ['group'],
                 },
               ],
@@ -303,10 +304,11 @@ describe('RootEntriesRail équipes band inbound qual format', () => {
     expect(hint?.querySelector('span[aria-hidden="true"]')).toHaveTextContent(
       'Groupe B',
     );
-    expect(hint).toHaveAttribute('title', 'Placée en Groupe B, place 1');
-    expect(hint?.querySelector('.ds-visually-hidden')).toHaveTextContent(
-      'Placée en Groupe B, place 1',
+    expect(hint).toHaveAttribute(
+      'aria-label',
+      'Cette équipe est déjà placée : Groupe B, place 1',
     );
+    expect(hint).not.toHaveAttribute('title');
   });
 
   it('renders resolved inbound qual line with crest, place, freshness and action', () => {

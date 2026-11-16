@@ -111,7 +111,8 @@ function groupPlaceShortLabel(
   return t('place.group', { name });
 }
 
-function groupPlaceAccessibilityDetail(
+/** Short where-phrase for placement tooltips (not the full « already placed » sentence). */
+function groupPlaceWhereLabel(
   formPosition: SchematicFormPosition,
   t: PlaceTranslate,
 ): string | null {
@@ -125,9 +126,9 @@ function groupPlaceAccessibilityDetail(
   }
   const index = formPosition.index;
   if (index == null || index < 1) {
-    return t('place.groupPlacedWithoutIndex', { name });
+    return t('place.groupWhere', { name });
   }
-  return t('place.groupPlaced', { name, index });
+  return t('place.groupWhereIndexed', { name, index });
 }
 
 function cupPlaceLabels(
@@ -218,7 +219,7 @@ export function entryPlaceProjectionFromSchematic(
       if (!short) {
         continue;
       }
-      const detail = groupPlaceAccessibilityDetail(place.formPosition, t);
+      const detail = groupPlaceWhereLabel(place.formPosition, t);
       addPlaceForEntry(map, entryId, short, detail, 'group');
     }
   }
@@ -235,42 +236,41 @@ export function primaryPlaceLabel(
   return projection.labels.join(' · ');
 }
 
-export function placeTooltipDetail(
+/** One user-facing tooltip sentence per resolved place. */
+export function placedTooltipLines(
   projection: EntryPlaceProjection | undefined,
   t: PlaceTranslate,
-): string | null {
+): readonly string[] {
   if (!projection || projection.labels.length === 0) {
-    return null;
+    return [];
   }
-  const output: string[] = [];
-  const cupPlaceParts: string[] = [];
-
-  const flushCupParts = () => {
-    if (cupPlaceParts.length === 0) {
-      return;
-    }
-    output.push(
-      t('entries.entryPlacedTooltip', {
-        place: cupPlaceParts.join(PLACE_PROJECTION_SEGMENT_SEP),
-      }),
-    );
-    cupPlaceParts.length = 0;
-  };
-
+  const lines: string[] = [];
   for (let i = 0; i < projection.labels.length; i += 1) {
     const short = projection.labels[i];
     const detail = projection.details[i];
     const kind = projection.kinds[i];
-    if (kind === 'group') {
-      flushCupParts();
-      output.push(detail ?? short);
+    const where = (detail ?? short)?.trim();
+    if (!where) {
       continue;
     }
-    const placePart = detail ? `${short} — ${detail}` : short;
-    cupPlaceParts.push(placePart);
+    if (kind === 'group') {
+      lines.push(t('entries.teamAlreadyPlaced', { where }));
+    } else {
+      lines.push(t('entries.teamAlreadyPlacedCup', { where }));
+    }
   }
-  flushCupParts();
-  return output.join(PLACE_PROJECTION_SEGMENT_SEP);
+  return lines;
+}
+
+export function placeTooltipDetail(
+  projection: EntryPlaceProjection | undefined,
+  t: PlaceTranslate,
+): string | null {
+  const lines = placedTooltipLines(projection, t);
+  if (lines.length === 0) {
+    return null;
+  }
+  return lines.join(PLACE_PROJECTION_SEGMENT_SEP);
 }
 
 /** Full place phrase for tooltip and accessible name (group index localized). */

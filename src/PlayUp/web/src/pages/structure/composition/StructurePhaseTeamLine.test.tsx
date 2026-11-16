@@ -102,11 +102,12 @@ describe('StructurePhaseTeamLine', () => {
         '.structure-entries__placed-hint span[aria-hidden="true"]',
       ),
     ).toHaveTextContent('Tête');
-    expect(
-      container.querySelector(
-        '.structure-entries__placed-hint .ds-visually-hidden',
-      ),
-    ).toHaveTextContent('Placée — Tête');
+    const hint = container.querySelector('.structure-entries__placed-hint');
+    expect(hint).toHaveAttribute(
+      'aria-label',
+      'Cette équipe est déjà placée : Tête',
+    );
+    expect(hint).not.toHaveAttribute('title');
   });
 
   it('announces placed without duplicating visible copy when place name is missing', () => {
@@ -205,8 +206,7 @@ describe('StructurePhaseTeamLine', () => {
       container.querySelectorAll('.structure-composition-qualifiers__hint-sep'),
     ).toHaveLength(0);
     expect(
-      container.querySelectorAll('.structure-composition-qualifiers__hint-unit')
-        .length,
+      container.querySelectorAll('.structure-entries__meta-unit').length,
     ).toBeGreaterThanOrEqual(2);
   });
 
@@ -239,7 +239,7 @@ describe('StructurePhaseTeamLine', () => {
           displayName="Nord"
           placed
           placedPlaceLabel="Groupe A"
-          placedTooltip="Placée en Groupe A, place 3"
+          placedTooltip="Cette équipe est déjà placée : Groupe A, place 3"
           ineligible
           provenanceMeta="1er"
           provenanceTitle="1er de Poule A"
@@ -256,13 +256,32 @@ describe('StructurePhaseTeamLine', () => {
     expect(screen.getByText('Groupe A')).toBeInTheDocument();
     expect(screen.getByText('Périmé')).toBeInTheDocument();
     const hint = container.querySelector('.structure-entries__placed-hint');
-    expect(hint).toHaveAttribute('title', 'Placée en Groupe A, place 3');
-    expect(hint?.querySelector('.ds-visually-hidden')).toHaveTextContent(
-      'Placée en Groupe A, place 3',
+    expect(hint).toHaveAttribute(
+      'aria-label',
+      'Cette équipe est déjà placée : Groupe A, place 3',
     );
+    expect(hint).not.toHaveAttribute('title');
     expect(hint?.querySelector('span[aria-hidden="true"]')).toHaveTextContent(
       'Groupe A',
     );
+  });
+
+  it('uses design-system Tooltip for placed hint instead of native title', () => {
+    const { container } = renderWithI18n(
+      <MemoryRouter>
+        <StructurePhaseTeamLine
+          displayName="Nord"
+          placed
+          placedPlaceLabel="Groupe B"
+          placedTooltip="Cette équipe est déjà placée : Groupe B, place 2"
+        />
+      </MemoryRouter>,
+    );
+    const trigger = container.querySelector('.ds-tooltip-trigger');
+    expect(trigger).not.toBeNull();
+    expect(
+      container.querySelector('.structure-entries__placed-hint'),
+    ).not.toHaveAttribute('title');
   });
 
   it('qualifier hint pending row has no middle-dot separators', () => {
@@ -303,7 +322,9 @@ describe('StructurePhaseTeamLine', () => {
       </MemoryRouter>,
     );
     expect(
-      container.querySelector('.structure-composition-qualifiers__hint'),
+      container.querySelector(
+        '.structure-composition-qualifiers__hint--as-team-line',
+      ),
     ).not.toBeNull();
     expect(screen.getByText('Tête')).toBeInTheDocument();
     expect(screen.getByText('Non déterminé')).toBeInTheDocument();

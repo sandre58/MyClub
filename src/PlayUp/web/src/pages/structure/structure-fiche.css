@@ -355,7 +355,7 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: 0;
 }
 
 .structure-entries__identity-head {
@@ -436,6 +436,17 @@
 
 .structure-entries__placed-hint .ds-icon {
   flex: none;
+}
+
+.structure-entries__placed-tooltip-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  text-align: start;
+}
+
+.structure-entries__placed-tooltip-line {
+  display: block;
 }
 
 .structure-entries__freshness-state {

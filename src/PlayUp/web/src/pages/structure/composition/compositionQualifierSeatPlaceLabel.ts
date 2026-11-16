@@ -53,7 +53,7 @@ export function qualifierSeatPlacedTooltip(
     return null;
   }
   if (placeLabel) {
-    return t('entries.entryPlacedTooltip', { place: placeLabel });
+    return t('entries.teamAlreadyPlaced', { where: placeLabel });
   }
   return t('entries.entryPlacedStatus');
 }
