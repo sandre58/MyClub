@@ -13,7 +13,10 @@ import {
   qualifierSeatPlaceLabel,
   qualifierSeatPlacedTooltip,
 } from './compositionQualifierSeatPlaceLabel';
-import type { EntryPlaceProjection } from '../draw/structureEntryPlacementProjection';
+import {
+  entryPlaceAccessibilityLabel,
+  type EntryPlaceProjection,
+} from '../draw/structureEntryPlacementProjection';
 import type { StructureResolutionOccupant } from '../../../types';
 
 export function CompositionQualifierRuleRow({
@@ -37,7 +40,6 @@ export function CompositionQualifierRuleRow({
     occupant: StructureResolutionOccupant | null;
     multiplePlacements: boolean;
   } | null;
-  showUnplacedOpacity?: boolean;
   onReplace?: (occupant: StructureResolutionOccupant) => void;
   onRelease?: (occupant: StructureResolutionOccupant) => void;
 }) {
@@ -49,11 +51,13 @@ export function CompositionQualifierRuleRow({
     schematic,
     entryPlaceProjections,
   });
-  const placedTooltip = qualifierSeatPlacedTooltip(
-    placedInPhase,
-    placeLabel,
-    t,
-  );
+  const entryProjection =
+    entry != null ? entryPlaceProjections.get(entry.entryId) : undefined;
+  const placedTooltip =
+    placedInPhase && entryProjection
+      ? (entryPlaceAccessibilityLabel(entryProjection) ??
+        qualifierSeatPlacedTooltip(placedInPhase, placeLabel, t))
+      : qualifierSeatPlacedTooltip(placedInPhase, placeLabel, t);
 
   const teamName =
     seat.teamName ?? entry?.displayName ?? t('manualPlacement.unknownTeam');

@@ -104,15 +104,23 @@ function groupPlaceShortLabel(
   return t('place.group', { name });
 }
 
-function groupPlaceDetail(formPosition: SchematicFormPosition): string | null {
+function groupPlaceAccessibilityDetail(
+  formPosition: SchematicFormPosition,
+  t: PlaceTranslate,
+): string | null {
   if (formPosition.kind !== 'GroupPlace') {
     return null;
   }
   const index = formPosition.index;
-  if (index != null && index >= 1) {
-    return String(index);
+  if (index == null || index < 1) {
+    return null;
   }
-  return null;
+  const name =
+    formPosition.groupName?.trim() || formPosition.groupId?.trim() || '';
+  if (!name) {
+    return null;
+  }
+  return t('place.groupWithIndex', { name, index });
 }
 
 function cupPlaceLabels(
@@ -197,7 +205,7 @@ export function entryPlaceProjectionFromSchematic(
       if (!short) {
         continue;
       }
-      const detail = groupPlaceDetail(place.formPosition);
+      const detail = groupPlaceAccessibilityDetail(place.formPosition, t);
       addPlaceForEntry(map, entryId, short, detail);
     }
   }
@@ -224,7 +232,18 @@ export function placeTooltipDetail(
   for (let i = 0; i < projection.labels.length; i += 1) {
     const short = projection.labels[i];
     const detail = projection.details[i];
-    parts.push(detail ? `${short} — ${detail}` : short);
+    if (detail && detail.includes(short)) {
+      parts.push(detail);
+    } else {
+      parts.push(detail ? `${short} — ${detail}` : short);
+    }
   }
   return parts.join(' · ');
+}
+
+/** Full place phrase for tooltip and accessible name (group index localized). */
+export function entryPlaceAccessibilityLabel(
+  projection: EntryPlaceProjection | undefined,
+): string | null {
+  return placeTooltipDetail(projection);
 }

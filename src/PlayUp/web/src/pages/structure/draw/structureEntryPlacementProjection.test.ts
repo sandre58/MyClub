@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { SchematicCase } from '../../../types';
 import {
+  entryPlaceAccessibilityLabel,
   entryPlaceProjectionFromSchematic,
   isEntryPlacedInPhase,
   placedEntryIdsFromSchematic,
@@ -12,6 +13,13 @@ import {
 const t = (key: string, opts?: Record<string, unknown>) => {
   if (key === 'place.group' && opts?.name) {
     return `Group ${opts.name}`;
+  }
+  if (
+    key === 'place.groupWithIndex' &&
+    opts?.name != null &&
+    opts?.index != null
+  ) {
+    return `Group ${opts.name}, slot ${opts.index}`;
   }
   if (key === 'place.side' && opts?.side) {
     return `side ${opts.side}`;
@@ -90,7 +98,8 @@ describe('structureEntryPlacementProjection', () => {
     ];
     const map = entryPlaceProjectionFromSchematic(cases, 'Groups', t);
     expect(primaryPlaceLabel(map.get('e1'))).toBe('Group A');
-    expect(map.get('e1')?.details[0]).toBe('3');
+    expect(map.get('e1')?.details[0]).toBe('Group A, slot 3');
+    expect(entryPlaceAccessibilityLabel(map.get('e1'))).toBe('Group A, slot 3');
   });
 
   it('keeps multiple place labels for the same entry', () => {
@@ -116,6 +125,9 @@ describe('structureEntryPlacementProjection', () => {
     ];
     const map = entryPlaceProjectionFromSchematic(cases, 'Groups', t);
     expect(map.get('e1')?.labels).toEqual(['Group A', 'Group B']);
-    expect(map.get('e1')?.details).toEqual(['1', '2']);
+    expect(map.get('e1')?.details).toEqual([
+      'Group A, slot 1',
+      'Group B, slot 2',
+    ]);
   });
 });

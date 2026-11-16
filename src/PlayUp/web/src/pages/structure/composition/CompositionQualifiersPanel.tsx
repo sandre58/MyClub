@@ -11,7 +11,7 @@ import type { CompositionQualifierFeedGroup } from './structureCompositionQualif
 import { CompositionQualifierRuleRow } from './CompositionQualifierRuleRow';
 import { FeedGroupPhaseHead } from './FeedGroupPhaseHead';
 import { inboundSeatsForFeedRule } from './structureCompositionInboundHub';
-import { showPerEntryPlacement } from '../draw/structureEntryPlacementProjection';
+import { qualifierSeatShowUnplacedOpacity } from './qualifierSeatPresentation';
 import type { EntryPlaceProjection } from '../draw/structureEntryPlacementProjection';
 import { useStructureCascadeReplace } from '../resolution/structureCascadeReplaceContext';
 import { useStructureResolutionRelease } from '../resolution/structureResolutionReleaseContext';
@@ -48,8 +48,6 @@ export function CompositionQualifiersPanel({
     [resolutionOccupants],
   );
   const entryById = new Map(entries.map((entry) => [entry.entryId, entry]));
-  const perEntryPlacement = showPerEntryPlacement(formatKind);
-
   return (
     <div className="structure-composition-qualifiers">
       <ul className="structure-flux-groups">
@@ -83,12 +81,11 @@ export function CompositionQualifiersPanel({
                     seat.entryId != null
                       ? entryById.get(seat.entryId)
                       : undefined;
-                  const showUnplacedOpacity =
-                    perEntryPlacement &&
-                    seat.resolved &&
-                    seat.entryId != null &&
-                    !seat.placed &&
-                    entry?.status === 'Active';
+                  const showUnplacedOpacity = qualifierSeatShowUnplacedOpacity(
+                    formatKind,
+                    seat,
+                    entry,
+                  );
                   const listedResolution =
                     seat.entryId != null
                       ? lookupListedResolutionOccupant(

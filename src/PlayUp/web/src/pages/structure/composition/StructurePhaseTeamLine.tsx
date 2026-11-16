@@ -62,7 +62,11 @@ function placedHintNode(
       ? t('entries.entryPlacedTooltip', { place: placeLabel })
       : t('entries.entryPlacedStatus'));
   return (
-    <span className="structure-entries__placed-hint" title={tip}>
+    <span
+      className="structure-entries__placed-hint"
+      title={tip}
+      aria-label={tip}
+    >
       <LocateIcon size="xs" aria-hidden="true" />
       {placeLabel ? (
         <>
@@ -78,6 +82,56 @@ function placedHintNode(
       )}
     </span>
   );
+}
+
+function directTeamCaptionUnits(
+  props: StructurePhaseTeamLineProps,
+  t: TFunction,
+): ReactNode[] {
+  const {
+    ineligible,
+    withdrawn,
+    provenanceMeta,
+    provenanceTitle,
+    placed,
+    resolutionOccupant,
+  } = props;
+
+  const freshnessMeta =
+    resolutionOccupant && resolutionOccupantNeedsBadge(resolutionOccupant)
+      ? freshnessStateMetaLabel(resolutionOccupant, t)
+      : null;
+
+  const units: ReactNode[] = [];
+  if (ineligible && !withdrawn) {
+    units.push(
+      <span key="ineligible" className="structure-entries__eligibility-meta">
+        {t('composition.noLongerEligible')}
+      </span>,
+    );
+  }
+  if (provenanceMeta) {
+    units.push(
+      <span
+        key="provenance"
+        className="structure-entries__provenance"
+        title={provenanceTitle ?? provenanceMeta}
+      >
+        {provenanceMeta}
+      </span>,
+    );
+  }
+  if (placed) {
+    units.push(<span key="place">{placedHintNode(props, t)}</span>);
+  }
+  if (freshnessMeta) {
+    units.push(
+      <span key="freshness" className="structure-entries__freshness-state">
+        {freshnessMeta}
+      </span>,
+    );
+  }
+  return units;
 }
 
 function qualifierHintTrailingUnits(
@@ -130,6 +184,8 @@ export function StructurePhaseTeamLine(props: StructurePhaseTeamLineProps) {
     layout = 'default',
   } = props;
   const { t } = useTranslation(['structure', 'teams']);
+  const captionUnits =
+    layout === 'default' ? directTeamCaptionUnits(props, t) : [];
 
   const freshnessAction =
     resolutionOccupant && !pending ? (
@@ -269,7 +325,9 @@ export function StructurePhaseTeamLine(props: StructurePhaseTeamLineProps) {
         <div
           className={[
             'structure-entries__identity-head',
-            'structure-entries__identity-head--solo',
+            captionUnits.length === 0
+              ? 'structure-entries__identity-head--solo'
+              : null,
           ]
             .filter(Boolean)
             .join(' ')}
@@ -296,6 +354,15 @@ export function StructurePhaseTeamLine(props: StructurePhaseTeamLineProps) {
             </Tooltip>
           ) : null}
         </div>
+        {captionUnits.length > 0 ? (
+          <div className="structure-entries__meta structure-entries__meta--caption">
+            {captionUnits.map((unit, index) => (
+              <span key={index} className="structure-entries__meta-unit">
+                {unit}
+              </span>
+            ))}
+          </div>
+        ) : null}
       </div>
       <div
         className="structure-entries__action"

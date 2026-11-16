@@ -194,5 +194,17 @@ describe('compositionTeamsInboundRows', () => {
         capacity: 8,
       }),
     ).toEqual({ resolved: 8, total: 8 });
+    expect(
+      resolveCompositionResolvedGaugeStats('exploitation', null, {
+        resolved: 12,
+        capacity: 8,
+      }),
+    ).toEqual({ resolved: 8, total: 8 });
+    expect(
+      resolveCompositionResolvedGaugeStats('exploitation', null, {
+        resolved: 3,
+        capacity: 0,
+      }),
+    ).toBeNull();
   });
 });

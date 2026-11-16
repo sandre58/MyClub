@@ -746,16 +746,6 @@
   width: 100%;
 }
 
-.structure-composition-qualifiers__hint .structure-entries__placed-hint .ds-icon {
-  width: var(--icon-size-xs);
-  height: var(--icon-size-xs);
-}
-
-.structure-entries__team-pending-icon--caption .ds-icon {
-  width: var(--icon-size-xs);
-  height: var(--icon-size-xs);
-}
-
 .structure-composition-qualifiers__hint-name {
   flex: 0 1 auto;
   min-width: 0;

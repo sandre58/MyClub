@@ -224,14 +224,32 @@ describe('StructurePhaseTeamLine', () => {
     ).toHaveLength(0);
   });
 
-  it('default layout shows team name with sm crest only on the first line', () => {
+  it('default layout shows team name on the first line and caption meta on the second', () => {
     const { container } = renderWithI18n(
       <MemoryRouter>
-        <StructurePhaseTeamLine displayName="Nord" />
+        <StructurePhaseTeamLine
+          displayName="Nord"
+          placed
+          placedPlaceLabel="Groupe A"
+          placedTooltip="Groupe A, place 3"
+          ineligible
+          provenanceMeta="1er"
+          provenanceTitle="1er de Poule A"
+          resolutionOccupant={occupant({ state: 'Perime' })}
+        />
       </MemoryRouter>,
     );
     expect(screen.getByText('Nord')).toBeInTheDocument();
-    expect(container.querySelector('.structure-entries__meta')).toBeNull();
+    expect(
+      container.querySelector('.structure-entries__meta--caption'),
+    ).not.toBeNull();
+    expect(screen.getByText('Plus éligible')).toBeInTheDocument();
+    expect(screen.getByText('1er')).toBeInTheDocument();
+    expect(screen.getByText('Groupe A')).toBeInTheDocument();
+    expect(screen.getByText('Périmé')).toBeInTheDocument();
+    expect(
+      container.querySelector('.structure-entries__placed-hint'),
+    ).toHaveAttribute('aria-label', 'Groupe A, place 3');
   });
 
   it('qualifier hint pending row has no middle-dot separators', () => {

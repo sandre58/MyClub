@@ -51,12 +51,6 @@ describe('composition qualifiers rule and hint (iter4)', () => {
     expect(block![0]).toMatch(/gap:\s*var\(--space-8\)/);
   });
 
-  it('sizes hint placed icons with icon-size-xs token', () => {
-    expect(layoutCss).toMatch(
-      /\.structure-composition-qualifiers__hint \.structure-entries__placed-hint \.ds-icon[\s\S]*var\(--icon-size-xs\)/,
-    );
-  });
-
   it('keeps the global feed rule label on meta size for non-qualifier rails', () => {
     const block = layoutCss.match(
       /^\.structure-feed-group__rule-label\s*\{[^}]+\}/m,

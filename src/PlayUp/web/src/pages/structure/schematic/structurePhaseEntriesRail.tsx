@@ -20,11 +20,12 @@ import type {
 } from '../../../types';
 import {
   type EntryPlaceProjection,
+  entryPlaceAccessibilityLabel,
   isEntryPlacedInPhase,
-  placeTooltipDetail,
   primaryPlaceLabel,
   showPerEntryPlacement,
 } from '../draw/structureEntryPlacementProjection';
+import { qualifierSeatShowUnplacedOpacity } from '../composition/qualifierSeatPresentation';
 import { CompositionQualifierRuleRow } from '../composition/CompositionQualifierRuleRow';
 import { resolvePlacesN } from '../composition/structurePlaces';
 import { structureDiagnosticPresentation } from '../issues/structureDiagnosticPresentationPolicy';
@@ -40,13 +41,18 @@ import {
   resolveEngagedPoolResolution,
   type CompositionTileMode,
 } from '../composition/compositionTilePresentation';
-import type { CompositionTeamRow } from '../composition/compositionTeamsInboundRows';
+import type {
+  CompositionTeamProvenance,
+  CompositionTeamRow,
+} from '../composition/compositionTeamsInboundRows';
 import { useStructureCascadeReplace } from '../resolution/structureCascadeReplaceContext';
 import { useStructureResolutionRelease } from '../resolution/structureResolutionReleaseContext';
 import {
   buildStructureResolutionOccupantIndex,
   lookupListedResolutionOccupant,
 } from '../resolution/structureResolutionOccupants';
+
+const emptyPlaceProjections = new Map<string, EntryPlaceProjection>();
 
 const compactIcon =
   'ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact';
@@ -186,6 +192,7 @@ export function RootEntriesRail({
   compositionTeamRows = null,
   inboundComposition = null,
   schematic = null,
+  entryProvenanceByEntryId,
   suppressRuntimeEmptyPresentation = false,
 }: {
   stage: StructureStageHubSummary;
@@ -205,6 +212,7 @@ export function RootEntriesRail({
   compositionTeamRows?: CompositionTeamRow[] | null;
   inboundComposition?: StructureInboundComposition | null;
   schematic?: StageSchematic | null;
+  entryProvenanceByEntryId?: ReadonlyMap<string, CompositionTeamProvenance>;
   /** Runtime empty / undetermined rendered by Composition band header zone. */
   suppressRuntimeEmptyPresentation?: boolean;
 }) {
@@ -215,6 +223,13 @@ export function RootEntriesRail({
     () => buildStructureResolutionOccupantIndex(stage.resolutionOccupants),
     [stage.resolutionOccupants],
   );
+  const inboundRulesByFeedKey = useMemo(() => {
+    const map = new Map(
+      (inboundComposition?.rules ?? []).map((rule) => [rule.feedKey, rule]),
+    );
+    return map;
+  }, [inboundComposition]);
+  const placeProjections = entryPlaceProjections ?? emptyPlaceProjections;
   const fromAffectation = stage.affectationEntryCount ?? 0;
   const fromFeeds = sourcesConfiguredVolume;
   const n = resolvePlacesN(stage);
@@ -290,7 +305,10 @@ export function RootEntriesRail({
   const showPlacementChrome =
     variant !== 'composition-band' && perEntryPlacement;
 
-  const renderTeamCell = (entry: StructureEntry) => {
+  const renderTeamCell = (
+    entry: StructureEntry,
+    provenance?: CompositionTeamProvenance | null,
+  ) => {
     const trackPlacement =
       (showPlacementChrome || variant === 'composition-band') &&
       showPerEntryPlacement(formatKind ?? stage.formatKind);
@@ -304,17 +322,19 @@ export function RootEntriesRail({
       : false;
     const showUnplacedOpacity =
       trackPlacement && schematicReady && entry.status === 'Active' && !placed;
-    const projection = entryPlaceProjections?.get(entry.entryId);
+    const projection = placeProjections.get(entry.entryId);
     const placeLabel = primaryPlaceLabel(projection);
     const placedTooltip =
       placed && projection
-        ? (placeTooltipDetail(projection) ??
+        ? (entryPlaceAccessibilityLabel(projection) ??
           (placeLabel
             ? t('entries.entryPlacedTooltip', { place: placeLabel })
             : t('entries.entryPlacedStatus')))
         : placed
           ? t('entries.entryPlacedStatus')
           : null;
+    const provenanceLabel =
+      provenance ?? entryProvenanceByEntryId?.get(entry.entryId) ?? null;
     const listedResolution = lookupListedResolutionOccupant(
       resolutionIndex,
       entry.entryId,
@@ -348,6 +368,8 @@ export function RootEntriesRail({
           placed={placed}
           placedPlaceLabel={placeLabel}
           placedTooltip={placedTooltip}
+          provenanceMeta={provenanceLabel?.badge ?? null}
+          provenanceTitle={provenanceLabel?.full ?? null}
           resolutionOccupant={listedResolution.occupant}
           multiplePlacements={listedResolution.multiplePlacements}
           entryName={entry.displayName}
@@ -381,42 +403,51 @@ export function RootEntriesRail({
       >
         {compositionTeamRows && compositionTeamRows.length > 0 ? (
           <ul className={teamListClass}>
-            {compositionTeamRows.map((row) =>
-              row.kind === 'inbound' ? (
-                <li
-                  key={row.key}
-                  className={[
-                    'structure-entries__team',
-                    'structure-entries__team--line',
-                    'structure-entries__team--inbound',
-                    'structure-composition-qualifiers__rule-line--after',
-                  ].join(' ')}
-                >
-                  <CompositionQualifierRuleRow
-                    rule={row.rule}
-                    seat={row.seat}
-                    entry={row.entry}
-                    inboundRule={inboundComposition?.rules.find(
-                      (hubRule) => hubRule.feedKey === row.rule.key,
-                    )}
-                    schematic={schematic}
-                    entryPlaceProjections={entryPlaceProjections ?? new Map()}
-                    listedResolution={
-                      row.entry
-                        ? lookupListedResolutionOccupant(
-                            resolutionIndex,
-                            row.entry.entryId,
-                          )
-                        : null
-                    }
-                    onReplace={cascade?.requestReplace}
-                    onRelease={release?.requestRelease}
-                  />
-                </li>
-              ) : (
-                renderTeamCell(row.entry)
-              ),
-            )}
+            {compositionTeamRows.map((row) => {
+              if (row.kind === 'inbound') {
+                const showUnplacedOpacity = qualifierSeatShowUnplacedOpacity(
+                  formatKind ?? stage.formatKind,
+                  row.seat,
+                  row.entry,
+                );
+                return (
+                  <li
+                    key={row.key}
+                    className={[
+                      'structure-entries__team',
+                      'structure-entries__team--line',
+                      'structure-entries__team--inbound',
+                      'structure-composition-qualifiers__rule-line--after',
+                      showUnplacedOpacity
+                        ? 'structure-composition-qualifiers__rule-line--unplaced'
+                        : null,
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                  >
+                    <CompositionQualifierRuleRow
+                      rule={row.rule}
+                      seat={row.seat}
+                      entry={row.entry}
+                      inboundRule={inboundRulesByFeedKey.get(row.rule.key)}
+                      schematic={schematic}
+                      entryPlaceProjections={placeProjections}
+                      listedResolution={
+                        row.entry
+                          ? lookupListedResolutionOccupant(
+                              resolutionIndex,
+                              row.entry.entryId,
+                            )
+                          : null
+                      }
+                      onReplace={cascade?.requestReplace}
+                      onRelease={release?.requestRelease}
+                    />
+                  </li>
+                );
+              }
+              return renderTeamCell(row.entry, row.provenance);
+            })}
           </ul>
         ) : engagedPoolUndetermined ? (
           suppressRuntimeEmptyPresentation ? null : (

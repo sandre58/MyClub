@@ -214,6 +214,52 @@ describe('CompositionQualifiersPanel freshness badge', () => {
     expect(line!.querySelector('.team-crest--xs')).not.toBeNull();
   });
 
+  it('exposes group place index in tooltip and aria on the placed hint', () => {
+    const { container } = renderWithI18n(
+      <MemoryRouter>
+        <CompositionQualifiersPanel
+          groups={[
+            {
+              ...qualifierGroup(true),
+              rules: [
+                {
+                  ...qualifierGroup(true).rules[0],
+                  hubSeats: [
+                    {
+                      entryId: 'e1',
+                      teamName: 'Nord',
+                      placed: true,
+                      resolved: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ]}
+          inboundComposition={undefined}
+          entries={[{ entryId: 'e1', displayName: 'Nord', status: 'Active' }]}
+          formatKind="Groups"
+          entryPlaceProjections={
+            new Map([
+              [
+                'e1',
+                {
+                  labels: ['Groupe A'],
+                  details: ['Groupe A, place 2'],
+                },
+              ],
+            ])
+          }
+          schematic={undefined}
+        />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText('Groupe A')).toBeInTheDocument();
+    const hint = container.querySelector('.structure-entries__placed-hint');
+    expect(hint).toHaveAttribute('title', 'Groupe A, place 2');
+    expect(hint).toHaveAttribute('aria-label', 'Groupe A, place 2');
+  });
+
   it('does not show place on unresolved unplaced qualifier seats', () => {
     const { container } = renderWithI18n(
       <MemoryRouter>

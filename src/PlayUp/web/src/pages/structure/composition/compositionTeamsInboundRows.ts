@@ -187,9 +187,12 @@ export function resolveCompositionResolvedGaugeStats(
   if (fromInbound != null && fromInbound.total > 0) {
     return fromInbound;
   }
-  if (engagedPoolFallback != null) {
+  if (engagedPoolFallback != null && engagedPoolFallback.capacity > 0) {
     return {
-      resolved: engagedPoolFallback.resolved,
+      resolved: Math.min(
+        engagedPoolFallback.resolved,
+        engagedPoolFallback.capacity,
+      ),
       total: engagedPoolFallback.capacity,
     };
   }
