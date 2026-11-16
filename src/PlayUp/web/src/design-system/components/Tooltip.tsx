@@ -486,22 +486,11 @@ function TooltipActive({
   }
 
   const describedBy = open || present ? tooltipId : undefined;
-  const childA11y = child.props as {
-    'aria-describedby'?: string;
-    'aria-label'?: string;
-  };
+  const childDescribed = child.props as { 'aria-describedby'?: string };
   const mergedDescribedBy =
-    [childA11y['aria-describedby'], describedBy].filter(Boolean).join(' ') ||
-    undefined;
-  const triggerProps = describedBy
-    ? {
-        'aria-describedby': mergedDescribedBy,
-        'aria-label': undefined,
-      }
-    : {
-        'aria-describedby': childA11y['aria-describedby'],
-        'aria-label': childA11y['aria-label'],
-      };
+    [childDescribed['aria-describedby'], describedBy]
+      .filter(Boolean)
+      .join(' ') || undefined;
 
   return (
     <>
@@ -521,7 +510,9 @@ function TooltipActive({
         onKeyDown={onKeyDownTrigger}
         onContextMenu={onContextMenu}
       >
-        {cloneElement(child, triggerProps as Partial<typeof child.props>)}
+        {cloneElement(child, {
+          'aria-describedby': mergedDescribedBy,
+        } as Partial<typeof child.props>)}
       </span>
       {present && placement && typeof document !== 'undefined'
         ? createPortal(

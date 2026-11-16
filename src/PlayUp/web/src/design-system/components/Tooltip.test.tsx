@@ -74,23 +74,6 @@ describe('Tooltip', () => {
     expect(await screen.findByRole('tooltip')).toHaveTextContent('Focus tip');
   });
 
-  it('drops aria-label on the trigger while the tip is shown', async () => {
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
-    render(
-      <Tooltip content="Focus tip">
-        <button type="button" aria-label="Full label">
-          Tête
-        </button>
-      </Tooltip>,
-    );
-
-    const trigger = screen.getByRole('button', { name: 'Full label' });
-    await user.tab();
-    expect(trigger).toHaveFocus();
-    expect(trigger).not.toHaveAttribute('aria-label');
-    expect(await screen.findByRole('tooltip')).toHaveTextContent('Focus tip');
-  });
-
   it('closes on Escape', async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     render(

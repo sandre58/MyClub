@@ -252,10 +252,7 @@ describe('RootEntriesRail équipes band inbound qual format', () => {
     expect(screen.getByText('1er')).toBeInTheDocument();
     expect(screen.getByText('Groupe A')).toBeInTheDocument();
     const hint = container.querySelector('.structure-entries__placed-hint');
-    expect(hint).toHaveAttribute(
-      'aria-label',
-      'Cette équipe est déjà placée : Groupe A, place 2',
-    );
+    expect(hint).toHaveAttribute('aria-label', 'Placée : Groupe A');
     expect(hint).not.toHaveAttribute('title');
     expect(hint).toHaveTextContent('Groupe A');
   });
@@ -300,10 +297,7 @@ describe('RootEntriesRail équipes band inbound qual format', () => {
     );
     const hint = container.querySelector('.structure-entries__placed-hint');
     expect(hint).toHaveTextContent('Groupe B');
-    expect(hint).toHaveAttribute(
-      'aria-label',
-      'Cette équipe est déjà placée : Groupe B, place 1',
-    );
+    expect(hint).toHaveAttribute('aria-label', 'Placée : Groupe B');
     expect(hint).not.toHaveAttribute('title');
   });
 

@@ -120,9 +120,7 @@ describe('StructurePhaseTeamLine', () => {
       </MemoryRouter>,
     );
     expect(
-      screen.getByRole('button', {
-        name: 'Cette équipe est déjà placée : Tableau — Tête',
-      }),
+      screen.getByRole('button', { name: 'Placée : Tête' }),
     ).toBeInTheDocument();
     expect(screen.getByText('Tête')).toHaveAttribute('aria-hidden', 'true');
   });
@@ -290,14 +288,12 @@ describe('StructurePhaseTeamLine', () => {
     expect(screen.getByText('Groupe A')).toBeInTheDocument();
     expect(screen.getByText('Périmé')).toBeInTheDocument();
     expect(
-      screen.getByRole('button', {
-        name: 'Cette équipe est déjà placée : Groupe A, place 3',
-      }),
+      screen.getByRole('button', { name: 'Placée : Groupe A' }),
     ).toBeInTheDocument();
     expect(screen.getByText('Groupe A')).toHaveAttribute('aria-hidden', 'true');
   });
 
-  it('opens placed hint Tooltip on keyboard focus without aria-label on the trigger', async () => {
+  it('keeps a short stable aria-label on focus and exposes full placement in the tooltip', async () => {
     mockFinePointer();
     const user = userEvent.setup();
     const { container } = renderWithI18n(
@@ -318,16 +314,15 @@ describe('StructurePhaseTeamLine', () => {
     const hint = container.querySelector(
       '.structure-entries__placed-hint',
     ) as HTMLButtonElement;
-    expect(hint).toHaveAttribute(
-      'aria-label',
-      'Cette équipe est déjà placée : Généré — Tête ; Tour 1 · côté A',
-    );
+    expect(hint).toHaveAttribute('aria-label', 'Placée : Tête');
     await user.tab();
     expect(hint).toHaveFocus();
-    expect(hint).not.toHaveAttribute('aria-label');
+    expect(hint).toHaveAttribute('aria-label', 'Placée : Tête');
     expect(hint.getAttribute('aria-describedby')).toBeTruthy();
     await waitFor(() => {
-      expect(screen.getByRole('tooltip')).toHaveTextContent('Généré — Tête');
+      const tip = screen.getByRole('tooltip');
+      expect(tip).toHaveTextContent('Cette équipe est déjà placée :');
+      expect(tip).toHaveTextContent('Généré — Tête');
     });
   });
 

@@ -101,12 +101,9 @@ function placedHintNode(
     model != null
       ? placedTooltipBody(model)
       : (props.placedTooltip ?? t('entries.entryPlacedStatus'));
-  const accessibleName =
-    model?.ariaLabel ??
-    props.placedTooltip ??
-    (placeLabel
-      ? `${t('entries.teamAlreadyPlacedIntro')} ${placeLabel}`
-      : t('entries.entryPlacedStatus'));
+  const accessibleName = placeLabel
+    ? t('entries.placedHintShort', { place: placeLabel })
+    : t('entries.entryPlacedStatus');
   return (
     <Tooltip content={tooltipContent}>
       <button
