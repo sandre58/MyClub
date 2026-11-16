@@ -76,6 +76,23 @@ describe('structureEntryPlacementProjection', () => {
     expect(primaryPlaceLabel(map.get('e1'))).toBe('SF-1-A');
   });
 
+  it('shows group place as Groupe name only with index in details', () => {
+    const cases: SchematicCase[] = [
+      {
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId: 'g1',
+          groupName: 'A',
+          index: 3,
+        },
+        entry: { entryId: 'e1', displayName: 'Alpha' },
+      },
+    ];
+    const map = entryPlaceProjectionFromSchematic(cases, 'Groups', t);
+    expect(primaryPlaceLabel(map.get('e1'))).toBe('Group A');
+    expect(map.get('e1')?.details[0]).toBe('3');
+  });
+
   it('keeps multiple place labels for the same entry', () => {
     const cases: SchematicCase[] = [
       {
@@ -98,6 +115,7 @@ describe('structureEntryPlacementProjection', () => {
       },
     ];
     const map = entryPlaceProjectionFromSchematic(cases, 'Groups', t);
-    expect(map.get('e1')?.labels).toEqual(['Group A · 1', 'Group B · 2']);
+    expect(map.get('e1')?.labels).toEqual(['Group A', 'Group B']);
+    expect(map.get('e1')?.details).toEqual(['1', '2']);
   });
 });

@@ -1,7 +1,5 @@
 import type { ReactNode } from 'react';
 import { useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
-import { StructurePhaseTeamLine } from './StructurePhaseTeamLine';
 import type {
   StageSchematic,
   StructureEntry,
@@ -10,15 +8,11 @@ import type {
   StructureResolutionOccupant,
 } from '../../../types';
 import type { CompositionQualifierFeedGroup } from './structureCompositionQualifierFeeds';
-import { CompositionQualifierRuleLabel } from './CompositionQualifierRuleLabel';
+import { CompositionQualifierRuleRow } from './CompositionQualifierRuleRow';
 import { FeedGroupPhaseHead } from './FeedGroupPhaseHead';
 import { inboundSeatsForFeedRule } from './structureCompositionInboundHub';
 import { showPerEntryPlacement } from '../draw/structureEntryPlacementProjection';
 import type { EntryPlaceProjection } from '../draw/structureEntryPlacementProjection';
-import {
-  qualifierSeatPlaceLabel,
-  qualifierSeatPlacedTooltip,
-} from './compositionQualifierSeatPlaceLabel';
 import { useStructureCascadeReplace } from '../resolution/structureCascadeReplaceContext';
 import { useStructureResolutionRelease } from '../resolution/structureResolutionReleaseContext';
 import {
@@ -47,7 +41,6 @@ export function CompositionQualifiersPanel({
   onViewPhase?: (peerId: string) => void;
   renderGroupAction?: (group: CompositionQualifierFeedGroup) => ReactNode;
 }) {
-  const { t } = useTranslation('structure');
   const cascade = useStructureCascadeReplace();
   const release = useStructureResolutionRelease();
   const resolutionIndex = useMemo(
@@ -90,24 +83,12 @@ export function CompositionQualifiersPanel({
                     seat.entryId != null
                       ? entryById.get(seat.entryId)
                       : undefined;
-                  const placedInPhase = seat.placed;
                   const showUnplacedOpacity =
                     perEntryPlacement &&
                     seat.resolved &&
                     seat.entryId != null &&
-                    !placedInPhase &&
+                    !seat.placed &&
                     entry?.status === 'Active';
-                  const placeLabel = qualifierSeatPlaceLabel({
-                    seat,
-                    inboundRule,
-                    schematic,
-                    entryPlaceProjections,
-                  });
-                  const placedTooltip = qualifierSeatPlacedTooltip(
-                    placedInPhase,
-                    placeLabel,
-                    t,
-                  );
                   const listedResolution =
                     seat.entryId != null
                       ? lookupListedResolutionOccupant(
@@ -129,45 +110,17 @@ export function CompositionQualifiersPanel({
                         .filter(Boolean)
                         .join(' ')}
                     >
-                      <div className="structure-composition-qualifiers__rule-primary">
-                        <CompositionQualifierRuleLabel rule={rule} />
-                      </div>
-                      {seat.resolved ? (
-                        <StructurePhaseTeamLine
-                          layout="qualifierHint"
-                          displayName={
-                            seat.teamName ??
-                            entry?.displayName ??
-                            t('manualPlacement.unknownTeam')
-                          }
-                          logoMediaId={entry?.logoMediaId}
-                          primaryColor={entry?.primaryColor}
-                          withdrawn={entry?.status === 'Withdrawn'}
-                          ineligible={
-                            entry != null && entry.status !== 'Active'
-                          }
-                          placed={placedInPhase}
-                          placedPlaceLabel={placeLabel}
-                          placedTooltip={placedTooltip}
-                          resolutionOccupant={listedResolution?.occupant}
-                          multiplePlacements={
-                            listedResolution?.multiplePlacements
-                          }
-                          entryName={seat.teamName ?? entry?.displayName}
-                          onReplace={cascade?.requestReplace}
-                          onRelease={release?.requestRelease}
-                        />
-                      ) : (
-                        <StructurePhaseTeamLine
-                          layout="qualifierHint"
-                          displayName=""
-                          pending
-                          pendingLabel={t('composition.qualifiers.unresolved')}
-                          placed={placedInPhase}
-                          placedPlaceLabel={placeLabel}
-                          placedTooltip={placedTooltip}
-                        />
-                      )}
+                      <CompositionQualifierRuleRow
+                        rule={rule}
+                        seat={seat}
+                        entry={entry}
+                        inboundRule={inboundRule}
+                        schematic={schematic}
+                        entryPlaceProjections={entryPlaceProjections}
+                        listedResolution={listedResolution}
+                        onReplace={cascade?.requestReplace}
+                        onRelease={release?.requestRelease}
+                      />
                     </li>
                   );
                 });

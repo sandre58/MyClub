@@ -87,10 +87,6 @@ function populationFor(sourcePathIdValue: string): StructureResolutionOccupant {
 function renderRail(
   occupants: StructureResolutionOccupant[],
   requestRelease = vi.fn(),
-  entryProvenanceByEntryId?: Map<
-    string,
-    { full: string; badge: string; chipTone?: 'win' | 'loss' | 'soft' }
-  >,
 ) {
   const stage = {
     ...baseStage,
@@ -107,7 +103,6 @@ function renderRail(
           schematicReady={true}
           compositionTileMode="exploitation"
           variant="composition-band"
-          entryProvenanceByEntryId={entryProvenanceByEntryId}
         />
       </ResolutionReleaseContext.Provider>
     </MemoryRouter>,
@@ -172,29 +167,16 @@ describe('RootEntriesRail freshness badge', () => {
     );
   });
 
-  it('renders provenance meta and freshness action on the team line', () => {
+  it('renders freshness action on a direct team line', () => {
     const { container } = renderRail(
       [populationFor(sourcePathId), slotOccupant()],
       vi.fn(),
-      new Map([
-        [
-          'e1',
-          {
-            full: 'Barrage — Vainqueur P1',
-            badge: 'Vainqueur P1',
-            chipTone: 'win',
-          },
-        ],
-      ]),
     );
 
-    expect(
-      container.querySelector('.structure-entries__provenance'),
-    ).toHaveTextContent('Vainqueur P1');
+    expect(screen.getByText('Nord')).toBeInTheDocument();
     expect(
       container.querySelector('.structure-freshness-badge__action'),
     ).toBeTruthy();
-    expect(screen.getByText('Non déterminé')).toBeInTheDocument();
   });
 
   it('releases via Group when the team is placed in poules', async () => {
@@ -220,8 +202,8 @@ describe('RootEntriesRail freshness badge', () => {
   });
 });
 
-describe('RootEntriesRail équipes band unresolved meta', () => {
-  it('styles unresolved inbound row meta with caption separators', () => {
+describe('RootEntriesRail équipes band inbound qual format', () => {
+  it('renders qual rule line and unresolved caption hint like Qualifiés', () => {
     const { container } = renderWithI18n(
       <MemoryRouter>
         <RootEntriesRail
@@ -231,17 +213,36 @@ describe('RootEntriesRail équipes band unresolved meta', () => {
           compositionTeamRows={[
             {
               key: 'unresolved-1',
-              kind: 'unresolved',
-              provenance: { badge: '1er · Poule A', full: '1er · Poule A' },
+              kind: 'inbound',
+              rule: {
+                key: 'q-src-1',
+                volume: 1,
+                badge: '1er',
+                badgeTone: 'accent',
+                context: 'Poule A',
+                family: 'place',
+                sortPrimary: 1,
+                sortSecondary: '1',
+                qualPathOrder: 1,
+              },
+              seat: {
+                resolved: false,
+                entryId: null,
+                teamName: null,
+                placed: false,
+              },
             },
           ]}
         />
       </MemoryRouter>,
     );
     expect(screen.getByText('Non résolue')).toBeInTheDocument();
-    expect(screen.getByText('1er · Poule A')).toBeInTheDocument();
+    expect(screen.getByText('1er')).toBeInTheDocument();
     expect(
-      container.querySelector('.structure-entries__meta--caption'),
+      container.querySelector('.structure-entries__team--inbound'),
     ).not.toBeNull();
+    expect(
+      container.querySelectorAll('.structure-composition-qualifiers__hint-sep'),
+    ).toHaveLength(0);
   });
 });

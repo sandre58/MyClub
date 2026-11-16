@@ -113,7 +113,7 @@ export function StructurePhaseCompositionBand({
   showPopulationColumn,
   showPlaceAssignmentSection,
   showCompositionDrawSection,
-  entryProvenanceByEntryId,
+  entryProvenanceByEntryId: _unusedEntryProvenanceByEntryId,
   compositionTeamRows,
   canCompose,
   teamsComposeActionLabel,
@@ -261,9 +261,10 @@ export function StructurePhaseCompositionBand({
               placedEntryIds={placedEntryIds}
               entryPlaceProjections={entryPlaceProjections}
               schematicReady={schematicReady}
+              schematic={schematic}
+              inboundComposition={inboundComposition}
               sourcesConfiguredVolume={populationFeedVolume}
               compositionTileMode={compositionTileMode}
-              entryProvenanceByEntryId={entryProvenanceByEntryId}
               compositionTeamRows={compositionTeamRows}
               suppressRuntimeEmptyPresentation
             />

@@ -702,7 +702,7 @@
   flex: 1 1 auto;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0;
+  gap: var(--space-8);
   min-width: 0;
   font-size: var(--text-caption);
   line-height: var(--leading-caption);
@@ -737,18 +737,23 @@
   flex: 0 1 auto;
 }
 
-.structure-composition-qualifiers__hint-chunk {
-  display: inline-flex;
-  align-items: center;
-  flex-wrap: nowrap;
+.structure-entries__teams--band .structure-entries__team--inbound {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
   min-width: 0;
-  max-width: 100%;
+  width: 100%;
 }
 
-.structure-composition-qualifiers__hint-sep {
-  flex: none;
-  margin-inline: var(--space-4);
-  color: var(--color-text-secondary);
+.structure-composition-qualifiers__hint .structure-entries__placed-hint .ds-icon {
+  width: var(--icon-size-xs);
+  height: var(--icon-size-xs);
+}
+
+.structure-entries__team-pending-icon--caption .ds-icon {
+  width: var(--icon-size-xs);
+  height: var(--icon-size-xs);
 }
 
 .structure-composition-qualifiers__hint-name {

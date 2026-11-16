@@ -62,13 +62,11 @@ describe('StructurePhaseTeamLine', () => {
       </MemoryRouter>,
     );
     expect(screen.getByLabelText('Forfait')).toBeInTheDocument();
-    expect(screen.getByText('Non déterminé')).toBeInTheDocument();
-    expect(screen.getByText('1er · Poules')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /Libérer/ }));
     expect(requestRelease).toHaveBeenCalled();
   });
 
-  it('renders unresolved seat with hourglass and meta provenance', () => {
+  it('renders pending band row with hourglass and unresolved label', () => {
     renderWithI18n(
       <MemoryRouter>
         <ul>
@@ -77,29 +75,26 @@ describe('StructurePhaseTeamLine', () => {
               displayName=""
               pending
               pendingLabel="Non résolue"
-              provenanceMeta="1er · Poules"
             />
           </li>
         </ul>
       </MemoryRouter>,
     );
     expect(screen.getByText('Non résolue')).toBeInTheDocument();
-    expect(screen.getByText('1er · Poules')).toBeInTheDocument();
     expect(screen.queryByRole('button')).toBeNull();
   });
 
-  it('shows placed hint on the secondary line', () => {
+  it('shows placed hint on the qualifier hint row', () => {
     renderWithI18n(
       <MemoryRouter>
-        <ul>
-          <li className="structure-entries__team structure-entries__team--line">
-            <StructurePhaseTeamLine
-              displayName="Nord"
-              placed
-              placedPlaceLabel="Tête"
-            />
-          </li>
-        </ul>
+        <div className="structure-composition-qualifiers__outcome">
+          <StructurePhaseTeamLine
+            layout="qualifierHint"
+            displayName="Nord"
+            placed
+            placedPlaceLabel="Tête"
+          />
+        </div>
       </MemoryRouter>,
     );
     expect(screen.getByText('Tête')).toBeInTheDocument();
@@ -109,11 +104,13 @@ describe('StructurePhaseTeamLine', () => {
   it('announces placed without duplicating visible copy when place name is missing', () => {
     renderWithI18n(
       <MemoryRouter>
-        <ul>
-          <li className="structure-entries__team structure-entries__team--line">
-            <StructurePhaseTeamLine displayName="Nord" placed />
-          </li>
-        </ul>
+        <div className="structure-composition-qualifiers__outcome">
+          <StructurePhaseTeamLine
+            layout="qualifierHint"
+            displayName="Nord"
+            placed
+          />
+        </div>
       </MemoryRouter>,
     );
     expect(screen.getAllByText('Placée')).toHaveLength(1);
@@ -153,73 +150,36 @@ describe('StructurePhaseTeamLine', () => {
         </ul>
       </MemoryRouter>,
     );
-    expect(screen.getByText('Périmé')).toBeInTheDocument();
     expect(screen.queryByRole('button')).toBeNull();
     expect(screen.queryByRole('link')).toBeNull();
   });
 
-  it('stacks provenance, place, state and action on one row', async () => {
+  it('stacks place, state and action on the qualifier hint row', async () => {
     const requestRelease = vi.fn();
     const user = userEvent.setup();
     renderWithI18n(
       <MemoryRouter initialEntries={['/competitions/comp/structure']}>
         <ResolutionReleaseContext.Provider value={{ requestRelease }}>
-          <ul>
-            <li className="structure-entries__team structure-entries__team--line">
-              <StructurePhaseTeamLine
-                displayName="Nord"
-                placed
-                placedPlaceLabel="Jouer"
-                provenanceMeta="Barrage · Vainqueur P1"
-                resolutionOccupant={occupant()}
-                onRelease={requestRelease}
-              />
-            </li>
-          </ul>
+          <div className="structure-composition-qualifiers__outcome">
+            <StructurePhaseTeamLine
+              layout="qualifierHint"
+              displayName="Nord"
+              placed
+              placedPlaceLabel="Jouer"
+              resolutionOccupant={occupant()}
+              onRelease={requestRelease}
+            />
+          </div>
         </ResolutionReleaseContext.Provider>
       </MemoryRouter>,
     );
-    expect(screen.getByText('Barrage · Vainqueur P1')).toBeInTheDocument();
     expect(screen.getByText('Jouer')).toBeInTheDocument();
     expect(screen.getByText('Non déterminé')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /Libérer/ }));
     expect(requestRelease).toHaveBeenCalled();
   });
 
-  it('qualifier hint uses middle-dot separators only between units', () => {
-    const { container, rerender } = renderWithI18n(
-      <MemoryRouter>
-        <div className="structure-composition-qualifiers__outcome">
-          <StructurePhaseTeamLine layout="qualifierHint" displayName="Sud" />
-        </div>
-      </MemoryRouter>,
-    );
-    expect(
-      container.querySelectorAll('.structure-composition-qualifiers__hint-sep'),
-    ).toHaveLength(0);
-
-    rerender(
-      <MemoryRouter initialEntries={['/competitions/comp/structure']}>
-        <div className="structure-composition-qualifiers__outcome">
-          <StructurePhaseTeamLine
-            layout="qualifierHint"
-            displayName="Ouest"
-            resolutionOccupant={occupant()}
-          />
-        </div>
-      </MemoryRouter>,
-    );
-    const seps = container.querySelectorAll(
-      '.structure-composition-qualifiers__hint-sep',
-    );
-    expect(seps).toHaveLength(1);
-    seps.forEach((sep) => {
-      expect(sep).toHaveAttribute('aria-hidden', 'true');
-      expect(sep).toHaveTextContent('·');
-    });
-  });
-
-  it('qualifier hint joins place and freshness with two separators', () => {
+  it('qualifier hint uses spaced units without middle-dot separators', () => {
     const { container } = renderWithI18n(
       <MemoryRouter>
         <div className="structure-composition-qualifiers__outcome">
@@ -235,7 +195,11 @@ describe('StructurePhaseTeamLine', () => {
     );
     expect(
       container.querySelectorAll('.structure-composition-qualifiers__hint-sep'),
-    ).toHaveLength(2);
+    ).toHaveLength(0);
+    expect(
+      container.querySelectorAll('.structure-composition-qualifiers__hint-unit')
+        .length,
+    ).toBeGreaterThanOrEqual(2);
   });
 
   it('shows placed unit on unresolved qualifier hint rows', () => {
@@ -257,31 +221,17 @@ describe('StructurePhaseTeamLine', () => {
     expect(screen.getByText('Tete')).toBeInTheDocument();
     expect(
       container.querySelectorAll('.structure-composition-qualifiers__hint-sep'),
-    ).toHaveLength(1);
+    ).toHaveLength(0);
   });
 
-  it('uses caption meta separators on the équipes band', () => {
+  it('default layout shows team name with sm crest only on the first line', () => {
     const { container } = renderWithI18n(
       <MemoryRouter>
-        <ul>
-          <li className="structure-entries__team structure-entries__team--line">
-            <StructurePhaseTeamLine
-              displayName="Nord"
-              captionMeta
-              placed
-              placedPlaceLabel="Tête"
-              resolutionOccupant={occupant()}
-            />
-          </li>
-        </ul>
+        <StructurePhaseTeamLine displayName="Nord" />
       </MemoryRouter>,
     );
-    expect(
-      container.querySelector('.structure-entries__meta--caption'),
-    ).not.toBeNull();
-    expect(
-      container.querySelectorAll('.structure-entries__meta-sep'),
-    ).toHaveLength(1);
+    expect(screen.getByText('Nord')).toBeInTheDocument();
+    expect(container.querySelector('.structure-entries__meta')).toBeNull();
   });
 
   it('qualifier hint pending row has no middle-dot separators', () => {
@@ -333,11 +283,13 @@ describe('StructurePhaseTeamLine', () => {
   it('shows no-longer-eligible meta for inactive non-withdrawn entries', () => {
     renderWithI18n(
       <MemoryRouter>
-        <ul>
-          <li className="structure-entries__team structure-entries__team--line">
-            <StructurePhaseTeamLine displayName="Archive" ineligible />
-          </li>
-        </ul>
+        <div className="structure-composition-qualifiers__outcome">
+          <StructurePhaseTeamLine
+            layout="qualifierHint"
+            displayName="Archive"
+            ineligible
+          />
+        </div>
       </MemoryRouter>,
     );
     const label = screen.getByText('Plus éligible');

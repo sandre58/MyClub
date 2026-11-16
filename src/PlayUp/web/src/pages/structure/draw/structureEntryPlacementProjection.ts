@@ -101,12 +101,18 @@ function groupPlaceShortLabel(
   if (!name) {
     return null;
   }
-  const base = t('place.group', { name });
+  return t('place.group', { name });
+}
+
+function groupPlaceDetail(formPosition: SchematicFormPosition): string | null {
+  if (formPosition.kind !== 'GroupPlace') {
+    return null;
+  }
   const index = formPosition.index;
   if (index != null && index >= 1) {
-    return `${base} · ${index}`;
+    return String(index);
   }
-  return base;
+  return null;
 }
 
 function cupPlaceLabels(
@@ -191,7 +197,8 @@ export function entryPlaceProjectionFromSchematic(
       if (!short) {
         continue;
       }
-      addPlaceForEntry(map, entryId, short, null);
+      const detail = groupPlaceDetail(place.formPosition);
+      addPlaceForEntry(map, entryId, short, detail);
     }
   }
 

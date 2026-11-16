@@ -12,16 +12,20 @@ import { StructurePhaseTeamLine } from '../composition/StructurePhaseTeamLine';
 import { entryCellListItemClassName } from '../../../design-system/components/entryCellListItemClassName';
 import { EmptyState } from '../../../ui';
 import type {
+  StageSchematic,
   StructureEntry,
   StructureFormatKind,
+  StructureInboundComposition,
   StructureStageHubSummary,
 } from '../../../types';
 import {
   type EntryPlaceProjection,
   isEntryPlacedInPhase,
+  placeTooltipDetail,
   primaryPlaceLabel,
   showPerEntryPlacement,
 } from '../draw/structureEntryPlacementProjection';
+import { CompositionQualifierRuleRow } from '../composition/CompositionQualifierRuleRow';
 import { resolvePlacesN } from '../composition/structurePlaces';
 import { structureDiagnosticPresentation } from '../issues/structureDiagnosticPresentationPolicy';
 import { OccupancyMeter } from '../composition/OccupancyMeter';
@@ -36,10 +40,7 @@ import {
   resolveEngagedPoolResolution,
   type CompositionTileMode,
 } from '../composition/compositionTilePresentation';
-import type {
-  CompositionTeamProvenance,
-  CompositionTeamRow,
-} from '../composition/compositionTeamsInboundRows';
+import type { CompositionTeamRow } from '../composition/compositionTeamsInboundRows';
 import { useStructureCascadeReplace } from '../resolution/structureCascadeReplaceContext';
 import { useStructureResolutionRelease } from '../resolution/structureResolutionReleaseContext';
 import {
@@ -182,8 +183,9 @@ export function RootEntriesRail({
   entryPlaceProjections,
   schematicReady = false,
   compositionTileMode = 'prep',
-  entryProvenanceByEntryId,
   compositionTeamRows = null,
+  inboundComposition = null,
+  schematic = null,
   suppressRuntimeEmptyPresentation = false,
 }: {
   stage: StructureStageHubSummary;
@@ -200,8 +202,9 @@ export function RootEntriesRail({
   entryPlaceProjections?: ReadonlyMap<string, EntryPlaceProjection>;
   schematicReady?: boolean;
   compositionTileMode?: CompositionTileMode;
-  entryProvenanceByEntryId?: ReadonlyMap<string, CompositionTeamProvenance>;
   compositionTeamRows?: CompositionTeamRow[] | null;
+  inboundComposition?: StructureInboundComposition | null;
+  schematic?: StageSchematic | null;
   /** Runtime empty / undetermined rendered by Composition band header zone. */
   suppressRuntimeEmptyPresentation?: boolean;
 }) {
@@ -287,10 +290,7 @@ export function RootEntriesRail({
   const showPlacementChrome =
     variant !== 'composition-band' && perEntryPlacement;
 
-  const renderTeamCell = (
-    entry: StructureEntry,
-    provenance?: CompositionTeamProvenance | null,
-  ) => {
+  const renderTeamCell = (entry: StructureEntry) => {
     const trackPlacement =
       (showPlacementChrome || variant === 'composition-band') &&
       showPerEntryPlacement(formatKind ?? stage.formatKind);
@@ -304,13 +304,14 @@ export function RootEntriesRail({
       : false;
     const showUnplacedOpacity =
       trackPlacement && schematicReady && entry.status === 'Active' && !placed;
-    const provenanceLabel =
-      provenance ?? entryProvenanceByEntryId?.get(entry.entryId) ?? null;
     const projection = entryPlaceProjections?.get(entry.entryId);
     const placeLabel = primaryPlaceLabel(projection);
     const placedTooltip =
-      placed && placeLabel
-        ? t('entries.entryPlacedTooltip', { place: placeLabel })
+      placed && projection
+        ? (placeTooltipDetail(projection) ??
+          (placeLabel
+            ? t('entries.entryPlacedTooltip', { place: placeLabel })
+            : t('entries.entryPlacedStatus')))
         : placed
           ? t('entries.entryPlacedStatus')
           : null;
@@ -347,14 +348,11 @@ export function RootEntriesRail({
           placed={placed}
           placedPlaceLabel={placeLabel}
           placedTooltip={placedTooltip}
-          provenanceMeta={provenanceLabel?.badge ?? null}
-          provenanceTitle={provenanceLabel?.full ?? null}
           resolutionOccupant={listedResolution.occupant}
           multiplePlacements={listedResolution.multiplePlacements}
           entryName={entry.displayName}
           onReplace={cascade?.requestReplace}
           onRelease={release?.requestRelease}
-          captionMeta
         />
       </li>
     );
@@ -384,22 +382,39 @@ export function RootEntriesRail({
         {compositionTeamRows && compositionTeamRows.length > 0 ? (
           <ul className={teamListClass}>
             {compositionTeamRows.map((row) =>
-              row.kind === 'unresolved' ? (
+              row.kind === 'inbound' ? (
                 <li
                   key={row.key}
-                  className="structure-entries__team structure-entries__team--line"
+                  className={[
+                    'structure-entries__team',
+                    'structure-entries__team--line',
+                    'structure-entries__team--inbound',
+                    'structure-composition-qualifiers__rule-line--after',
+                  ].join(' ')}
                 >
-                  <StructurePhaseTeamLine
-                    displayName=""
-                    pending
-                    pendingLabel={t('composition.qualifiers.unresolved')}
-                    provenanceMeta={row.provenance.badge}
-                    provenanceTitle={row.provenance.full}
-                    captionMeta
+                  <CompositionQualifierRuleRow
+                    rule={row.rule}
+                    seat={row.seat}
+                    entry={row.entry}
+                    inboundRule={inboundComposition?.rules.find(
+                      (hubRule) => hubRule.feedKey === row.rule.key,
+                    )}
+                    schematic={schematic}
+                    entryPlaceProjections={entryPlaceProjections ?? new Map()}
+                    listedResolution={
+                      row.entry
+                        ? lookupListedResolutionOccupant(
+                            resolutionIndex,
+                            row.entry.entryId,
+                          )
+                        : null
+                    }
+                    onReplace={cascade?.requestReplace}
+                    onRelease={release?.requestRelease}
                   />
                 </li>
               ) : (
-                renderTeamCell(row.entry, row.provenance)
+                renderTeamCell(row.entry)
               ),
             )}
           </ul>

@@ -389,7 +389,11 @@ describe('CompositionQualifiersPanel freshness badge', () => {
     expect(screen.getByText('Tete')).toBeInTheDocument();
     expect(
       container.querySelectorAll('.structure-composition-qualifiers__hint-sep'),
-    ).toHaveLength(1);
+    ).toHaveLength(0);
+    expect(
+      container.querySelectorAll('.structure-composition-qualifiers__hint-unit')
+        .length,
+    ).toBeGreaterThanOrEqual(2);
   });
 
   it('renders the placed reminder in the qualifier hint meta', () => {

@@ -33,8 +33,6 @@ export type StructurePhaseTeamLineProps = {
   onRelease?: (occupant: StructureResolutionOccupant) => void;
   /** Qualifiers panel — compact hint row under the rule label (option B). */
   layout?: 'default' | 'qualifierHint';
-  /** Équipes composition band — caption meta line with middle-dot units. */
-  captionMeta?: boolean;
 };
 
 function freshnessStateMetaLabel(
@@ -45,52 +43,6 @@ function freshnessStateMetaLabel(
     return translate(`resolution.freshness.state.${occupant.state}`);
   }
   return null;
-}
-
-function middleDotSeparator(className: string) {
-  return (
-    <span className={className} aria-hidden="true">
-      ·
-    </span>
-  );
-}
-
-function dotSeparatedUnits(
-  units: ReactNode[],
-  unitClassName: string,
-  chunkClassName: string,
-  sepClassName: string,
-) {
-  if (units.length === 0) {
-    return null;
-  }
-  return (
-    <>
-      <span className={unitClassName}>{units[0]}</span>
-      {units.slice(1).map((unit, index) => (
-        <span key={index} className={chunkClassName}>
-          {middleDotSeparator(sepClassName)}
-          <span className={unitClassName}>{unit}</span>
-        </span>
-      ))}
-    </>
-  );
-}
-
-function captionMetaRow(units: ReactNode[]) {
-  if (units.length === 0) {
-    return null;
-  }
-  return (
-    <div className="structure-entries__meta structure-entries__meta--caption">
-      {dotSeparatedUnits(
-        units,
-        'structure-entries__meta-unit',
-        'structure-entries__meta-chunk',
-        'structure-entries__meta-sep',
-      )}
-    </div>
-  );
 }
 
 function placedHintNode(
@@ -111,7 +63,7 @@ function placedHintNode(
       : t('entries.entryPlacedStatus'));
   return (
     <span className="structure-entries__placed-hint" title={tip}>
-      <LocateIcon size="sm" aria-hidden="true" />
+      <LocateIcon size="xs" aria-hidden="true" />
       {placeLabel ? (
         <>
           <span className="ds-visually-hidden">
@@ -126,55 +78,6 @@ function placedHintNode(
       )}
     </span>
   );
-}
-
-function getTeamLineMeta(props: StructurePhaseTeamLineProps, t: TFunction) {
-  const {
-    ineligible,
-    withdrawn,
-    provenanceMeta,
-    provenanceTitle,
-    placed,
-    resolutionOccupant,
-    layout,
-  } = props;
-
-  const freshnessMeta =
-    resolutionOccupant && resolutionOccupantNeedsBadge(resolutionOccupant)
-      ? freshnessStateMetaLabel(resolutionOccupant, t)
-      : null;
-
-  const metaParts: ReactNode[] = [];
-  if (ineligible && !withdrawn && layout !== 'qualifierHint') {
-    metaParts.push(
-      <span key="ineligible" className="structure-entries__eligibility-meta">
-        {t('composition.noLongerEligible')}
-      </span>,
-    );
-  }
-  if (provenanceMeta && layout !== 'qualifierHint') {
-    metaParts.push(
-      <span
-        key="provenance"
-        className="structure-entries__provenance"
-        title={provenanceTitle ?? provenanceMeta}
-      >
-        {provenanceMeta}
-      </span>,
-    );
-  }
-  if (placed && layout !== 'qualifierHint') {
-    metaParts.push(<span key="placed">{placedHintNode(props, t)}</span>);
-  }
-  if (freshnessMeta && layout !== 'qualifierHint') {
-    metaParts.push(
-      <span key="freshness" className="structure-entries__freshness-state">
-        {freshnessMeta}
-      </span>,
-    );
-  }
-
-  return metaParts;
 }
 
 function qualifierHintTrailingUnits(
@@ -225,10 +128,8 @@ export function StructurePhaseTeamLine(props: StructurePhaseTeamLineProps) {
     onReplace,
     onRelease,
     layout = 'default',
-    captionMeta = false,
   } = props;
   const { t } = useTranslation(['structure', 'teams']);
-  const metaParts = getTeamLineMeta(props, t);
 
   const freshnessAction =
     resolutionOccupant && !pending ? (
@@ -247,7 +148,12 @@ export function StructurePhaseTeamLine(props: StructurePhaseTeamLineProps) {
       const trailingUnits = qualifierHintTrailingUnits(props, t);
       return (
         <div className="structure-composition-qualifiers__outcome">
-          <span className="structure-composition-qualifiers__hint structure-composition-qualifiers__hint--pending">
+          <span
+            className={[
+              'structure-composition-qualifiers__hint',
+              'structure-composition-qualifiers__hint--pending',
+            ].join(' ')}
+          >
             <span className="structure-composition-qualifiers__hint-unit structure-composition-qualifiers__hint-unit--identity">
               <span
                 className="structure-entries__team-pending-icon structure-entries__team-pending-icon--caption"
@@ -259,17 +165,7 @@ export function StructurePhaseTeamLine(props: StructurePhaseTeamLineProps) {
                 {pendingLabel}
               </span>
             </span>
-            {trailingUnits.map((unit, index) => (
-              <span
-                key={index}
-                className="structure-composition-qualifiers__hint-chunk"
-              >
-                {middleDotSeparator(
-                  'structure-composition-qualifiers__hint-sep',
-                )}
-                {unit}
-              </span>
-            ))}
+            {trailingUnits}
           </span>
           <div
             className="structure-entries__action"
@@ -313,7 +209,7 @@ export function StructurePhaseTeamLine(props: StructurePhaseTeamLineProps) {
                   role="img"
                   aria-label={t('teams:withdrawnBadge')}
                 >
-                  <WithdrawIcon size="sm" aria-hidden="true" />
+                  <WithdrawIcon size="xs" aria-hidden="true" />
                 </span>
               </Tooltip>
             ) : null}
@@ -323,15 +219,7 @@ export function StructurePhaseTeamLine(props: StructurePhaseTeamLineProps) {
               </span>
             ) : null}
           </span>
-          {trailingUnits.map((unit, index) => (
-            <span
-              key={index}
-              className="structure-composition-qualifiers__hint-chunk"
-            >
-              {middleDotSeparator('structure-composition-qualifiers__hint-sep')}
-              {unit}
-            </span>
-          ))}
+          {trailingUnits}
         </span>
         <div
           className="structure-entries__action"
@@ -350,7 +238,7 @@ export function StructurePhaseTeamLine(props: StructurePhaseTeamLineProps) {
           className="structure-entries__team-pending-icon"
           aria-hidden="true"
         >
-          <HourglassIcon size="sm" />
+          <HourglassIcon size="xs" />
         </span>
         <div className="structure-entries__identity">
           <div className="structure-entries__identity-head">
@@ -358,11 +246,6 @@ export function StructurePhaseTeamLine(props: StructurePhaseTeamLineProps) {
               {pendingLabel}
             </span>
           </div>
-          {captionMeta ? (
-            captionMetaRow(metaParts)
-          ) : metaParts.length > 0 ? (
-            <div className="structure-entries__meta">{metaParts}</div>
-          ) : null}
         </div>
         <div
           className="structure-entries__action"
@@ -386,9 +269,7 @@ export function StructurePhaseTeamLine(props: StructurePhaseTeamLineProps) {
         <div
           className={[
             'structure-entries__identity-head',
-            metaParts.length === 0
-              ? 'structure-entries__identity-head--solo'
-              : null,
+            'structure-entries__identity-head--solo',
           ]
             .filter(Boolean)
             .join(' ')}
@@ -415,11 +296,6 @@ export function StructurePhaseTeamLine(props: StructurePhaseTeamLineProps) {
             </Tooltip>
           ) : null}
         </div>
-        {captionMeta ? (
-          captionMetaRow(metaParts)
-        ) : metaParts.length > 0 ? (
-          <div className="structure-entries__meta">{metaParts}</div>
-        ) : null}
       </div>
       <div
         className="structure-entries__action"

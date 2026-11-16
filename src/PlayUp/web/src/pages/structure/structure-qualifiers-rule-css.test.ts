@@ -38,21 +38,18 @@ describe('composition qualifiers rule and hint (iter4)', () => {
     expect(block![0]).toMatch(/var\(--font-weight-regular\)/);
   });
 
-  it('styles hint middle dots as secondary with symmetric inline spacing', () => {
+  it('spaces qualifier hint units with space-8', () => {
     const block = layoutCss.match(
-      /\.structure-composition-qualifiers__hint-sep\s*\{[^}]+\}/,
+      /\.structure-composition-qualifiers__hint\s*\{[^}]+\}/,
     );
     expect(block).not.toBeNull();
-    expect(block![0]).toMatch(/var\(--color-text-secondary\)/);
-    expect(block![0]).toMatch(/margin-inline:\s*var\(--space-4\)/);
+    expect(block![0]).toMatch(/gap:\s*var\(--space-8\)/);
   });
 
-  it('keeps each separator glued to the following unit on wrap', () => {
-    const block = layoutCss.match(
-      /\.structure-composition-qualifiers__hint-chunk\s*\{[^}]+\}/,
+  it('sizes hint placed icons with icon-size-xs token', () => {
+    expect(layoutCss).toMatch(
+      /\.structure-composition-qualifiers__hint \.structure-entries__placed-hint \.ds-icon[\s\S]*var\(--icon-size-xs\)/,
     );
-    expect(block).not.toBeNull();
-    expect(block![0]).toMatch(/flex-wrap:\s*nowrap/);
   });
 
   it('keeps the global feed rule label on meta size for non-qualifier rails', () => {
