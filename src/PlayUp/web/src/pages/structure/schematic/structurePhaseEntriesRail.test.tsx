@@ -221,6 +221,7 @@ describe('RootEntriesRail équipes band inbound qual format', () => {
                 {
                   labels: ['Groupe A'],
                   details: ['Placée en Groupe A, place 2'],
+                  kinds: ['group'],
                 },
               ],
             ])
@@ -278,6 +279,7 @@ describe('RootEntriesRail équipes band inbound qual format', () => {
                 {
                   labels: ['Groupe B'],
                   details: ['Placée en Groupe B, place 1'],
+                  kinds: ['group'],
                 },
               ],
             ])
@@ -330,7 +332,14 @@ describe('RootEntriesRail équipes band inbound qual format', () => {
             placedEntryIds={new Set(['e1'])}
             entryPlaceProjections={
               new Map([
-                ['e1', { labels: ['Tête'], details: ['Tête de tableau'] }],
+                [
+                  'e1',
+                  {
+                    labels: ['Tête'],
+                    details: ['Tête de tableau'],
+                    kinds: ['cup'],
+                  },
+                ],
               ])
             }
             compositionTeamRows={[

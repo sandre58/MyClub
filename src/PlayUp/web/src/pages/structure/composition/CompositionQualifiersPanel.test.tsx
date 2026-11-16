@@ -80,7 +80,11 @@ function renderPanel(
   requestRelease = vi.fn(),
   entryPlaceProjections: ReadonlyMap<
     string,
-    { labels: readonly string[]; details: readonly (string | null)[] }
+    {
+      labels: readonly string[];
+      details: readonly (string | null)[];
+      kinds: readonly ('cup' | 'group')[];
+    }
   > = new Map(),
 ) {
   return renderWithI18n(
@@ -253,6 +257,7 @@ describe('CompositionQualifiersPanel freshness badge', () => {
                 {
                   labels: ['Tête'],
                   details: ['Demi-finale 1 · côté A'],
+                  kinds: ['cup'],
                 },
               ],
             ])
@@ -308,6 +313,7 @@ describe('CompositionQualifiersPanel freshness badge', () => {
                 {
                   labels: ['Groupe A'],
                   details: ['Placée en Groupe A, place 2'],
+                  kinds: ['group'],
                 },
               ],
             ])
@@ -513,7 +519,9 @@ describe('CompositionQualifiersPanel freshness badge', () => {
     const { container } = renderPanel(
       [populationOccupant(), releasableSlotOccupant()],
       vi.fn(),
-      new Map([['e1', { labels: ['Tête'], details: [null] }]]),
+      new Map([
+        ['e1', { labels: ['Tête'], details: [null], kinds: ['cup'] as const }],
+      ]),
     );
     expect(
       container.querySelector(

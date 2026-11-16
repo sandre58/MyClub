@@ -18,30 +18,10 @@ import {
   isDefinitivelyUnconfirmed,
   resolutionOccupantNeedsBadge,
 } from '../resolution/structureResolutionOccupants';
+import { structurePhaseTeamFreshnessAction } from './structurePhaseTeamFreshnessAction';
+import type { StructurePhaseTeamLineProps } from './structurePhaseTeamLineTypes';
 
-export type StructurePhaseTeamLineProps = {
-  displayName: string;
-  logoMediaId?: string | null;
-  primaryColor?: string | null;
-  withdrawn?: boolean;
-  ineligible?: boolean;
-  pending?: boolean;
-  pendingLabel?: string;
-  placed?: boolean;
-  placedPlaceLabel?: string | null;
-  placedTooltip?: string | null;
-  provenanceMeta?: string | null;
-  provenanceTitle?: string | null;
-  resolutionOccupant?: StructureResolutionOccupant | null;
-  multiplePlacements?: boolean;
-  entryName?: string | null;
-  onReplace?: (occupant: StructureResolutionOccupant) => void;
-  onRelease?: (occupant: StructureResolutionOccupant) => void;
-  /** Qualifiers panel — compact hint row under the rule label (option B). */
-  layout?: 'default' | 'qualifierHint';
-  /** Qualifier rule row — action rendered in the parent grid (option A). */
-  omitFreshnessAction?: boolean;
-};
+export type { StructurePhaseTeamLineProps } from './structurePhaseTeamLineTypes';
 
 function freshnessStateMetaLabel(
   occupant: StructureResolutionOccupant,
@@ -83,8 +63,6 @@ function freshnessStateMetaNode(
     </span>
   );
 }
-
-import { structurePhaseTeamFreshnessAction } from './structurePhaseTeamFreshnessAction';
 
 function placedHintNode(
   props: Pick<

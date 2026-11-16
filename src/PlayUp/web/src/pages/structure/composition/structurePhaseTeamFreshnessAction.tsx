@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
 import { StructureResolutionFreshnessBadge } from '../resolution/StructureResolutionFreshnessBadge';
-import type { StructurePhaseTeamLineProps } from './StructurePhaseTeamLine';
+import type { StructurePhaseTeamLineProps } from './structurePhaseTeamLineTypes';
 
 export function structurePhaseTeamFreshnessAction(
   props: Pick<

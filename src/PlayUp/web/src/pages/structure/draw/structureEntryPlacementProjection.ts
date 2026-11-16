@@ -9,11 +9,15 @@ import type {
   StructureFormatKind,
 } from '../../../types';
 
+export type EntryPlaceKind = 'group' | 'cup';
+
 export type EntryPlaceProjection = {
   /** Short chrome labels (one per resolved schematic place). */
   labels: readonly string[];
   /** Optional long topology per label when distinct from chrome. */
   details: readonly (string | null)[];
+  /** Per-label place family for tooltip composition. */
+  kinds: readonly EntryPlaceKind[];
 };
 
 function resolvedEntryId(place: SchematicCase): string | null {
@@ -141,10 +145,15 @@ function addPlaceForEntry(
   entryId: string,
   short: string,
   detail: string | null,
+  kind: EntryPlaceKind,
 ) {
   const existing = map.get(entryId);
   if (!existing) {
-    map.set(entryId, { labels: [short], details: [detail] });
+    map.set(entryId, {
+      labels: [short],
+      details: [detail],
+      kinds: [kind],
+    });
     return;
   }
   if (existing.labels.includes(short)) {
@@ -153,6 +162,7 @@ function addPlaceForEntry(
   map.set(entryId, {
     labels: [...existing.labels, short],
     details: [...existing.details, detail],
+    kinds: [...existing.kinds, kind],
   });
 }
 
@@ -187,7 +197,7 @@ export function entryPlaceProjectionFromSchematic(
       if (!labels) {
         continue;
       }
-      addPlaceForEntry(map, entryId, labels.short, labels.detail);
+      addPlaceForEntry(map, entryId, labels.short, labels.detail, 'cup');
     }
     return map;
   }
@@ -206,7 +216,7 @@ export function entryPlaceProjectionFromSchematic(
         continue;
       }
       const detail = groupPlaceAccessibilityDetail(place.formPosition, t);
-      addPlaceForEntry(map, entryId, short, detail);
+      addPlaceForEntry(map, entryId, short, detail, 'group');
     }
   }
 
@@ -222,10 +232,6 @@ export function primaryPlaceLabel(
   return projection.labels.join(' · ');
 }
 
-function isGroupPlacedAccessibilityPhrase(detail: string): boolean {
-  return detail.startsWith('Placée en ') || detail.startsWith('Placed in ');
-}
-
 export function placeTooltipDetail(
   projection: EntryPlaceProjection | undefined,
   t: PlaceTranslate,
@@ -233,18 +239,33 @@ export function placeTooltipDetail(
   if (!projection || projection.labels.length === 0) {
     return null;
   }
-  const parts: string[] = [];
+  const output: string[] = [];
+  const cupPlaceParts: string[] = [];
+
+  const flushCupParts = () => {
+    if (cupPlaceParts.length === 0) {
+      return;
+    }
+    output.push(
+      t('entries.entryPlacedTooltip', { place: cupPlaceParts.join(' · ') }),
+    );
+    cupPlaceParts.length = 0;
+  };
+
   for (let i = 0; i < projection.labels.length; i += 1) {
     const short = projection.labels[i];
     const detail = projection.details[i];
-    if (detail && isGroupPlacedAccessibilityPhrase(detail)) {
-      parts.push(detail);
+    const kind = projection.kinds[i] ?? 'cup';
+    if (kind === 'group') {
+      flushCupParts();
+      output.push(detail ?? short);
       continue;
     }
     const placePart = detail ? `${short} — ${detail}` : short;
-    parts.push(t('entries.entryPlacedTooltip', { place: placePart }));
+    cupPlaceParts.push(placePart);
   }
-  return parts.join(' · ');
+  flushCupParts();
+  return output.join(' · ');
 }
 
 /** Full place phrase for tooltip and accessible name (group index localized). */

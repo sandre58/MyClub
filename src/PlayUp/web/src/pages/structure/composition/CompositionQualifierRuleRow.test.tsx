@@ -54,7 +54,9 @@ describe('CompositionQualifierRuleRow layout (iter6 option A)', () => {
             inboundRule={undefined}
             schematic={undefined}
             entryPlaceProjections={
-              new Map([['e1', { labels: ['Tête'], details: [null] }]])
+              new Map([
+                ['e1', { labels: ['Tête'], details: [null], kinds: ['cup'] }],
+              ])
             }
             listedResolution={{
               occupant: slotOccupant(),
@@ -82,5 +84,42 @@ describe('CompositionQualifierRuleRow layout (iter6 option A)', () => {
     expect(screen.getByText('Nord')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /Libérer/ }));
     expect(requestRelease).toHaveBeenCalled();
+  });
+
+  it('does not render an action column when no freshness action is available', () => {
+    const { container } = renderWithI18n(
+      <MemoryRouter>
+        <CompositionQualifierRuleRow
+          rule={{
+            key: 'q1',
+            volume: 1,
+            badge: '1er',
+            badgeTone: 'accent',
+            context: 'Poule A',
+            family: 'place',
+            sortPrimary: 1,
+            sortSecondary: '1',
+            qualPathOrder: 1,
+          }}
+          seat={{
+            resolved: false,
+            entryId: null,
+            teamName: null,
+            placed: false,
+          }}
+          entry={undefined}
+          inboundRule={undefined}
+          schematic={undefined}
+          entryPlaceProjections={new Map()}
+          listedResolution={null}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(
+      container.querySelector('.structure-composition-qualifiers__rule-grid'),
+    ).toBeNull();
+    expect(container.querySelector('.structure-entries__action')).toBeNull();
+    expect(screen.getByText('Non résolue')).toBeInTheDocument();
   });
 });

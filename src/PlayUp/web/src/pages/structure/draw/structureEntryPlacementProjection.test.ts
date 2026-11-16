@@ -101,6 +101,7 @@ describe('structureEntryPlacementProjection', () => {
     ];
     const map = entryPlaceProjectionFromSchematic(cases, 'Groups', t);
     expect(primaryPlaceLabel(map.get('e1'))).toBe('Group A');
+    expect(map.get('e1')?.kinds[0]).toBe('group');
     expect(map.get('e1')?.details[0]).toBe('Placée en Groupe A, place 3');
     expect(entryPlaceAccessibilityLabel(map.get('e1'), t)).toBe(
       'Placée en Groupe A, place 3',
@@ -113,13 +114,30 @@ describe('structureEntryPlacementProjection', () => {
         {
           labels: ['Tête'],
           details: ['Demi-finale 1 · côté A'],
+          kinds: ['cup'],
         },
         t,
       ),
     ).toBe('Placée — Tête — Demi-finale 1 · côté A');
     expect(
-      entryPlaceAccessibilityLabel({ labels: ['SF-1-A'], details: [null] }, t),
+      entryPlaceAccessibilityLabel(
+        { labels: ['SF-1-A'], details: [null], kinds: ['cup'] },
+        t,
+      ),
     ).toBe('Placée — SF-1-A');
+  });
+
+  it('uses a single Placée prefix for multiple cup placements', () => {
+    expect(
+      entryPlaceAccessibilityLabel(
+        {
+          labels: ['Tête', 'Demi-finale 1'],
+          details: [null, 'côté A'],
+          kinds: ['cup', 'cup'],
+        },
+        t,
+      ),
+    ).toBe('Placée — Tête · Demi-finale 1 — côté A');
   });
 
   it('keeps multiple place labels for the same entry', () => {

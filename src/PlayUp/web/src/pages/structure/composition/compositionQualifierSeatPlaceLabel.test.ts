@@ -41,7 +41,7 @@ describe('qualifierSeatPlaceLabel', () => {
         inboundRule: undefined,
         schematic,
         entryPlaceProjections: new Map([
-          ['e1', { labels: ['Tête'], details: [null] }],
+          ['e1', { labels: ['Tête'], details: [null], kinds: ['cup'] }],
         ]),
       }),
     ).toBe('Tête');

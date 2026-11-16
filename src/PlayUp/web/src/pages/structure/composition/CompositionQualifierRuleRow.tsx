@@ -94,20 +94,23 @@ export function CompositionQualifierRuleRow({
 
   const freshnessAction = structurePhaseTeamFreshnessAction(teamLineProps);
 
+  const ruleStack = (
+    <div className="structure-composition-qualifiers__rule-stack">
+      <div className="structure-composition-qualifiers__rule-primary">
+        <CompositionQualifierRuleLabel rule={rule} />
+      </div>
+      <StructurePhaseTeamLine {...teamLineProps} />
+    </div>
+  );
+
+  if (freshnessAction == null) {
+    return ruleStack;
+  }
+
   return (
     <div className="structure-composition-qualifiers__rule-grid">
-      <div className="structure-composition-qualifiers__rule-stack">
-        <div className="structure-composition-qualifiers__rule-primary">
-          <CompositionQualifierRuleLabel rule={rule} />
-        </div>
-        <StructurePhaseTeamLine {...teamLineProps} />
-      </div>
-      <div
-        className="structure-entries__action"
-        aria-hidden={freshnessAction == null}
-      >
-        {freshnessAction}
-      </div>
+      {ruleStack}
+      <div className="structure-entries__action">{freshnessAction}</div>
     </div>
   );
 }
