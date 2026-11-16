@@ -214,6 +214,61 @@ describe('CompositionQualifiersPanel freshness badge', () => {
     expect(line!.querySelector('.team-crest--xs')).not.toBeNull();
   });
 
+  it('renders cup place with Placée, short label and detail in tooltip and sr-only text', () => {
+    const { container } = renderWithI18n(
+      <MemoryRouter>
+        <CompositionQualifiersPanel
+          groups={[
+            {
+              ...qualifierGroup(true),
+              rules: [
+                {
+                  ...qualifierGroup(true).rules[0],
+                  hubSeats: [
+                    {
+                      entryId: 'e1',
+                      teamName: 'Nord',
+                      placed: true,
+                      resolved: true,
+                    },
+                  ],
+                },
+              ],
+            },
+          ]}
+          inboundComposition={undefined}
+          entries={[{ entryId: 'e1', displayName: 'Nord', status: 'Active' }]}
+          formatKind="Cup"
+          entryPlaceProjections={
+            new Map([
+              [
+                'e1',
+                {
+                  labels: ['Tête'],
+                  details: ['Demi-finale 1 · côté A'],
+                },
+              ],
+            ])
+          }
+          schematic={undefined}
+        />
+      </MemoryRouter>,
+    );
+    expect(
+      container.querySelector(
+        '.structure-entries__placed-hint span[aria-hidden="true"]',
+      ),
+    ).toHaveTextContent('Tête');
+    const hint = container.querySelector('.structure-entries__placed-hint');
+    expect(hint).toHaveAttribute(
+      'title',
+      'Placée — Tête — Demi-finale 1 · côté A',
+    );
+    expect(hint?.querySelector('.ds-visually-hidden')).toHaveTextContent(
+      'Placée — Tête — Demi-finale 1 · côté A',
+    );
+  });
+
   it('renders group place chip with short visible label and full Placée en phrase for assistive tech', () => {
     const { container } = renderWithI18n(
       <MemoryRouter>

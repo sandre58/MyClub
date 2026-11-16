@@ -103,7 +103,9 @@ describe('StructurePhaseTeamLine', () => {
       ),
     ).toHaveTextContent('Tête');
     expect(
-      container.querySelector('.structure-entries__placed-hint .ds-visually-hidden'),
+      container.querySelector(
+        '.structure-entries__placed-hint .ds-visually-hidden',
+      ),
     ).toHaveTextContent('Placée — Tête');
   });
 

@@ -326,7 +326,7 @@ export function RootEntriesRail({
     const placeLabel = primaryPlaceLabel(projection);
     const placedTooltip =
       placed && projection
-        ? (entryPlaceAccessibilityLabel(projection) ??
+        ? (entryPlaceAccessibilityLabel(projection, t) ??
           (placeLabel
             ? t('entries.entryPlacedTooltip', { place: placeLabel })
             : t('entries.entryPlacedStatus')))

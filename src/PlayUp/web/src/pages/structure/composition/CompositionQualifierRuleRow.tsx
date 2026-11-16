@@ -55,7 +55,7 @@ export function CompositionQualifierRuleRow({
     entry != null ? entryPlaceProjections.get(entry.entryId) : undefined;
   const placedTooltip =
     placedInPhase && entryProjection
-      ? (entryPlaceAccessibilityLabel(entryProjection) ??
+      ? (entryPlaceAccessibilityLabel(entryProjection, t) ??
         qualifierSeatPlacedTooltip(placedInPhase, placeLabel, t))
       : qualifierSeatPlacedTooltip(placedInPhase, placeLabel, t);
 

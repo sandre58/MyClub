@@ -838,7 +838,6 @@
     "cup": "{{round}} · {{side}}",
     "cupWithOrdinal": "{{round}} {{ordinal}} · {{side}}",
     "group": "Groupe {{name}}",
-    "groupWithIndex": "Groupe {{name}}, place {{index}}",
     "groupPlaced": "Placée en Groupe {{name}}, place {{index}}",
     "form": "Organisation"
   },
@@ -991,7 +990,6 @@
     "entryPlacedAria": "{{name}} — placée sur la forme",
     "entryNotPlacedAria": "{{name}} — pas encore placée",
     "entryPlacedStatus": "Placée",
-    "entryPlacedAriaPrefix": "Placée :",
     "entryPlacedTooltip": "Placée — {{place}}",
     "meterAria": "Équipes attendues / places",
     "meter": {

@@ -21,12 +21,8 @@ const t = (key: string, opts?: Record<string, unknown>) => {
   ) {
     return `Placée en Groupe ${opts.name}, place ${opts.index}`;
   }
-  if (
-    key === 'place.groupWithIndex' &&
-    opts?.name != null &&
-    opts?.index != null
-  ) {
-    return `Group ${opts.name}, slot ${opts.index}`;
+  if (key === 'entries.entryPlacedTooltip' && opts?.place != null) {
+    return `Placée — ${opts.place}`;
   }
   if (key === 'place.side' && opts?.side) {
     return `side ${opts.side}`;
@@ -106,9 +102,24 @@ describe('structureEntryPlacementProjection', () => {
     const map = entryPlaceProjectionFromSchematic(cases, 'Groups', t);
     expect(primaryPlaceLabel(map.get('e1'))).toBe('Group A');
     expect(map.get('e1')?.details[0]).toBe('Placée en Groupe A, place 3');
-    expect(entryPlaceAccessibilityLabel(map.get('e1'))).toBe(
+    expect(entryPlaceAccessibilityLabel(map.get('e1'), t)).toBe(
       'Placée en Groupe A, place 3',
     );
+  });
+
+  it('wraps cup projection tooltips with Placée and short plus detail', () => {
+    expect(
+      entryPlaceAccessibilityLabel(
+        {
+          labels: ['Tête'],
+          details: ['Demi-finale 1 · côté A'],
+        },
+        t,
+      ),
+    ).toBe('Placée — Tête — Demi-finale 1 · côté A');
+    expect(
+      entryPlaceAccessibilityLabel({ labels: ['SF-1-A'], details: [null] }, t),
+    ).toBe('Placée — SF-1-A');
   });
 
   it('keeps multiple place labels for the same entry', () => {

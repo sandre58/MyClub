@@ -222,8 +222,13 @@ export function primaryPlaceLabel(
   return projection.labels.join(' · ');
 }
 
+function isGroupPlacedAccessibilityPhrase(detail: string): boolean {
+  return detail.startsWith('Placée en ') || detail.startsWith('Placed in ');
+}
+
 export function placeTooltipDetail(
   projection: EntryPlaceProjection | undefined,
+  t: PlaceTranslate,
 ): string | null {
   if (!projection || projection.labels.length === 0) {
     return null;
@@ -232,7 +237,12 @@ export function placeTooltipDetail(
   for (let i = 0; i < projection.labels.length; i += 1) {
     const short = projection.labels[i];
     const detail = projection.details[i];
-    parts.push(detail ?? short);
+    if (detail && isGroupPlacedAccessibilityPhrase(detail)) {
+      parts.push(detail);
+      continue;
+    }
+    const placePart = detail ? `${short} — ${detail}` : short;
+    parts.push(t('entries.entryPlacedTooltip', { place: placePart }));
   }
   return parts.join(' · ');
 }
@@ -240,6 +250,7 @@ export function placeTooltipDetail(
 /** Full place phrase for tooltip and accessible name (group index localized). */
 export function entryPlaceAccessibilityLabel(
   projection: EntryPlaceProjection | undefined,
+  t: PlaceTranslate,
 ): string | null {
-  return placeTooltipDetail(projection);
+  return placeTooltipDetail(projection, t);
 }
