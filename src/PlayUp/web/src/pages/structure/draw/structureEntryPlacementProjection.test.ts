@@ -14,6 +14,9 @@ const t = (key: string, opts?: Record<string, unknown>) => {
   if (key === 'place.group' && opts?.name) {
     return `Group ${opts.name}`;
   }
+  if (key === 'place.groupPlacedWithoutIndex' && opts?.name) {
+    return `Placée en Groupe ${opts.name}`;
+  }
   if (
     key === 'place.groupPlaced' &&
     opts?.name != null &&
@@ -87,6 +90,24 @@ describe('structureEntryPlacementProjection', () => {
     expect(primaryPlaceLabel(map.get('e1'))).toBe('SF-1-A');
   });
 
+  it('uses Placée en Groupe when group place has no index', () => {
+    const cases: SchematicCase[] = [
+      {
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId: 'g1',
+          groupName: 'A',
+        },
+        entry: { entryId: 'e1', displayName: 'Alpha' },
+      },
+    ];
+    const map = entryPlaceProjectionFromSchematic(cases, 'Groups', t);
+    expect(primaryPlaceLabel(map.get('e1'))).toBe('Group A');
+    expect(entryPlaceAccessibilityLabel(map.get('e1'), t)).toBe(
+      'Placée en Groupe A',
+    );
+  });
+
   it('shows group place as Groupe name only with index in details', () => {
     const cases: SchematicCase[] = [
       {
@@ -137,7 +158,23 @@ describe('structureEntryPlacementProjection', () => {
         },
         t,
       ),
-    ).toBe('Placée — Tête · Demi-finale 1 — côté A');
+    ).toBe('Placée — Tête ; Demi-finale 1 — côté A');
+  });
+
+  it('separates multiple group placements with semicolons', () => {
+    expect(
+      entryPlaceAccessibilityLabel(
+        {
+          labels: ['Group A', 'Group B'],
+          details: [
+            'Placée en Groupe A, place 1',
+            'Placée en Groupe B, place 2',
+          ],
+          kinds: ['group', 'group'],
+        },
+        t,
+      ),
+    ).toBe('Placée en Groupe A, place 1 ; Placée en Groupe B, place 2');
   });
 
   it('keeps multiple place labels for the same entry', () => {
@@ -163,9 +200,8 @@ describe('structureEntryPlacementProjection', () => {
     ];
     const map = entryPlaceProjectionFromSchematic(cases, 'Groups', t);
     expect(map.get('e1')?.labels).toEqual(['Group A', 'Group B']);
-    expect(map.get('e1')?.details).toEqual([
-      'Placée en Groupe A, place 1',
-      'Placée en Groupe B, place 2',
-    ]);
+    expect(entryPlaceAccessibilityLabel(map.get('e1'), t)).toBe(
+      'Placée en Groupe A, place 1 ; Placée en Groupe B, place 2',
+    );
   });
 });

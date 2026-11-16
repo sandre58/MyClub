@@ -11,6 +11,7 @@ import type {
 
 export type EntryPlaceKind = 'group' | 'cup';
 
+/** Parallel arrays — `labels`, `details`, and `kinds` share the same length. */
 export type EntryPlaceProjection = {
   /** Short chrome labels (one per resolved schematic place). */
   labels: readonly string[];
@@ -19,6 +20,8 @@ export type EntryPlaceProjection = {
   /** Per-label place family for tooltip composition. */
   kinds: readonly EntryPlaceKind[];
 };
+
+const PLACE_PROJECTION_SEGMENT_SEP = ' ; ';
 
 function resolvedEntryId(place: SchematicCase): string | null {
   const id =
@@ -115,14 +118,14 @@ function groupPlaceAccessibilityDetail(
   if (formPosition.kind !== 'GroupPlace') {
     return null;
   }
-  const index = formPosition.index;
-  if (index == null || index < 1) {
-    return null;
-  }
   const name =
     formPosition.groupName?.trim() || formPosition.groupId?.trim() || '';
   if (!name) {
     return null;
+  }
+  const index = formPosition.index;
+  if (index == null || index < 1) {
+    return t('place.groupPlacedWithoutIndex', { name });
   }
   return t('place.groupPlaced', { name, index });
 }
@@ -247,7 +250,9 @@ export function placeTooltipDetail(
       return;
     }
     output.push(
-      t('entries.entryPlacedTooltip', { place: cupPlaceParts.join(' · ') }),
+      t('entries.entryPlacedTooltip', {
+        place: cupPlaceParts.join(PLACE_PROJECTION_SEGMENT_SEP),
+      }),
     );
     cupPlaceParts.length = 0;
   };
@@ -255,7 +260,7 @@ export function placeTooltipDetail(
   for (let i = 0; i < projection.labels.length; i += 1) {
     const short = projection.labels[i];
     const detail = projection.details[i];
-    const kind = projection.kinds[i] ?? 'cup';
+    const kind = projection.kinds[i];
     if (kind === 'group') {
       flushCupParts();
       output.push(detail ?? short);
@@ -265,7 +270,7 @@ export function placeTooltipDetail(
     cupPlaceParts.push(placePart);
   }
   flushCupParts();
-  return output.join(' · ');
+  return output.join(PLACE_PROJECTION_SEGMENT_SEP);
 }
 
 /** Full place phrase for tooltip and accessible name (group index localized). */
