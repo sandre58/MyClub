@@ -641,6 +641,22 @@
   gap: 0;
 }
 
+.structure-composition-qualifiers__rule-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-8);
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+}
+
+.structure-composition-qualifiers__rule-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+
 .structure-composition-qualifiers__rule-primary {
   min-width: 0;
   width: 100%;
@@ -690,11 +706,12 @@
 }
 
 .structure-composition-qualifiers__outcome {
-  display: flex;
-  align-items: center;
-  gap: var(--space-8);
   min-width: 0;
   width: 100%;
+}
+
+.structure-composition-qualifiers__rule-grid .structure-entries__action {
+  align-self: center;
 }
 
 .structure-composition-qualifiers__hint {

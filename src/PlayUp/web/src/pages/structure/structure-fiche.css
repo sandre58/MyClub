@@ -415,6 +415,9 @@
 }
 
 .structure-entries__eligibility-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
   flex: none;
   color: var(--color-text-secondary);
 }
@@ -436,6 +439,9 @@
 }
 
 .structure-entries__freshness-state {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
   flex: none;
   font-weight: var(--font-weight-semibold);
   color: var(--color-attention);

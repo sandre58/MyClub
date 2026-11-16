@@ -212,6 +212,13 @@ describe('CompositionQualifiersPanel freshness badge', () => {
       line!.querySelector('.structure-composition-qualifiers__hint-name'),
     ).toHaveTextContent('Nord');
     expect(line!.querySelector('.team-crest--xs')).not.toBeNull();
+    const outcomeAction = outcome!.querySelector('.structure-entries__action');
+    expect(outcomeAction).toBeNull();
+    expect(
+      line!.querySelector(
+        '.structure-composition-qualifiers__rule-grid > .structure-entries__action',
+      ),
+    ).not.toBeNull();
   });
 
   it('renders cup place with Placée, short label and detail in tooltip and sr-only text', () => {

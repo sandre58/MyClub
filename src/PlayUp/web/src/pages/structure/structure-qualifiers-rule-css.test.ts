@@ -17,6 +17,19 @@ describe('composition qualifiers rule and hint (iter4)', () => {
     expect(block![0]).toMatch(/gap:\s*0/);
   });
 
+  it('lays out qualifier rule rows as a two-column grid (iter6 option A)', () => {
+    const grid = layoutCss.match(
+      /\.structure-composition-qualifiers__rule-grid\s*\{[^}]+\}/,
+    );
+    const stack = layoutCss.match(
+      /\.structure-composition-qualifiers__rule-stack\s*\{[^}]+\}/,
+    );
+    expect(grid).not.toBeNull();
+    expect(stack).not.toBeNull();
+    expect(grid![0]).toMatch(/grid-template-columns/);
+    expect(stack![0]).toMatch(/gap:\s*0/);
+  });
+
   it('types the qualification rule like équipes team names', () => {
     const block = layoutCss.match(
       /\.structure-composition-qualifiers__rule-primary\s+\.structure-feed-group__rule-label\s*\{[^}]+\}/,

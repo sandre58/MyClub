@@ -5,13 +5,19 @@ import { useTranslation } from 'react-i18next';
 import { Tooltip } from '../../../design-system/components/Tooltip';
 import {
   HourglassIcon,
+  ListMinusIcon,
   LocateIcon,
+  PendingCircleIcon,
+  StructureIssueIcon,
+  UnconfirmableIcon,
   WithdrawIcon,
 } from '../../../design-system/icons/contentIcons';
 import { TeamCrest } from '../../../design-system/TeamCrest';
 import type { StructureResolutionOccupant } from '../../../types';
-import { StructureResolutionFreshnessBadge } from '../resolution/StructureResolutionFreshnessBadge';
-import { resolutionOccupantNeedsBadge } from '../resolution/structureResolutionOccupants';
+import {
+  isDefinitivelyUnconfirmed,
+  resolutionOccupantNeedsBadge,
+} from '../resolution/structureResolutionOccupants';
 
 export type StructurePhaseTeamLineProps = {
   displayName: string;
@@ -33,6 +39,8 @@ export type StructurePhaseTeamLineProps = {
   onRelease?: (occupant: StructureResolutionOccupant) => void;
   /** Qualifiers panel — compact hint row under the rule label (option B). */
   layout?: 'default' | 'qualifierHint';
+  /** Qualifier rule row — action rendered in the parent grid (option A). */
+  omitFreshnessAction?: boolean;
 };
 
 function freshnessStateMetaLabel(
@@ -44,6 +52,39 @@ function freshnessStateMetaLabel(
   }
   return null;
 }
+
+function eligibilityMetaNode(label: string) {
+  return (
+    <span className="structure-entries__eligibility-meta">
+      <ListMinusIcon size="xs" aria-hidden="true" />
+      {label}
+    </span>
+  );
+}
+
+function freshnessStateMetaNode(
+  occupant: StructureResolutionOccupant,
+  translate: (key: string) => string,
+) {
+  const label = freshnessStateMetaLabel(occupant, translate);
+  if (!label) {
+    return null;
+  }
+  const StateIcon =
+    occupant.state === 'Perime'
+      ? StructureIssueIcon
+      : isDefinitivelyUnconfirmed(occupant)
+        ? UnconfirmableIcon
+        : PendingCircleIcon;
+  return (
+    <span className="structure-entries__freshness-state">
+      <StateIcon size="xs" aria-hidden="true" />
+      {label}
+    </span>
+  );
+}
+
+import { structurePhaseTeamFreshnessAction } from './structurePhaseTeamFreshnessAction';
 
 function placedHintNode(
   props: Pick<
@@ -89,16 +130,11 @@ function directTeamCaptionUnits(
     resolutionOccupant,
   } = props;
 
-  const freshnessMeta =
-    resolutionOccupant && resolutionOccupantNeedsBadge(resolutionOccupant)
-      ? freshnessStateMetaLabel(resolutionOccupant, t)
-      : null;
-
   const units: ReactNode[] = [];
   if (ineligible && !withdrawn) {
     units.push(
-      <span key="ineligible" className="structure-entries__eligibility-meta">
-        {t('composition.noLongerEligible')}
+      <span key="ineligible">
+        {eligibilityMetaNode(t('composition.noLongerEligible'))}
       </span>,
     );
   }
@@ -116,10 +152,10 @@ function directTeamCaptionUnits(
   if (placed) {
     units.push(<span key="place">{placedHintNode(props, t)}</span>);
   }
-  if (freshnessMeta) {
+  if (resolutionOccupant && resolutionOccupantNeedsBadge(resolutionOccupant)) {
     units.push(
-      <span key="freshness" className="structure-entries__freshness-state">
-        {freshnessMeta}
+      <span key="freshness">
+        {freshnessStateMetaNode(resolutionOccupant, t)}
       </span>,
     );
   }
@@ -131,10 +167,6 @@ function qualifierHintTrailingUnits(
   t: TFunction,
 ): ReactNode[] {
   const { resolutionOccupant, placed } = props;
-  const freshnessMeta =
-    resolutionOccupant && resolutionOccupantNeedsBadge(resolutionOccupant)
-      ? freshnessStateMetaLabel(resolutionOccupant, t)
-      : null;
 
   const units: ReactNode[] = [];
   if (placed) {
@@ -144,15 +176,13 @@ function qualifierHintTrailingUnits(
       </span>,
     );
   }
-  if (freshnessMeta) {
+  if (resolutionOccupant && resolutionOccupantNeedsBadge(resolutionOccupant)) {
     units.push(
       <span
         key="freshness"
         className="structure-composition-qualifiers__hint-unit"
       >
-        <span className="structure-entries__freshness-state">
-          {freshnessMeta}
-        </span>
+        {freshnessStateMetaNode(resolutionOccupant, t)}
       </span>,
     );
   }
@@ -174,22 +204,24 @@ export function StructurePhaseTeamLine(props: StructurePhaseTeamLineProps) {
     onReplace,
     onRelease,
     layout = 'default',
+    omitFreshnessAction = false,
   } = props;
   const { t } = useTranslation(['structure', 'teams']);
   const captionUnits =
     layout === 'default' ? directTeamCaptionUnits(props, t) : [];
 
-  const freshnessAction =
-    resolutionOccupant && !pending ? (
-      <StructureResolutionFreshnessBadge
-        occupant={resolutionOccupant}
-        multiplePlacements={multiplePlacements}
-        entryName={entryName ?? displayName}
-        onReplace={onReplace}
-        onRelease={onRelease}
-        actionOnly
-      />
-    ) : null;
+  const freshnessAction = structurePhaseTeamFreshnessAction({
+    displayName,
+    resolutionOccupant,
+    multiplePlacements,
+    entryName,
+    onReplace,
+    onRelease,
+    pending,
+  });
+
+  const hintFreshnessAction =
+    layout === 'qualifierHint' && !omitFreshnessAction ? freshnessAction : null;
 
   if (layout === 'qualifierHint') {
     if (pending) {
@@ -215,12 +247,11 @@ export function StructurePhaseTeamLine(props: StructurePhaseTeamLineProps) {
             </span>
             {trailingUnits}
           </span>
-          <div
-            className="structure-entries__action"
-            aria-hidden={!freshnessAction}
-          >
-            {freshnessAction}
-          </div>
+          {hintFreshnessAction != null ? (
+            <div className="structure-entries__action">
+              {hintFreshnessAction}
+            </div>
+          ) : null}
         </div>
       );
     }
@@ -261,20 +292,15 @@ export function StructurePhaseTeamLine(props: StructurePhaseTeamLineProps) {
                 </span>
               </Tooltip>
             ) : null}
-            {ineligible && !withdrawn ? (
-              <span className="structure-entries__eligibility-meta">
-                {t('composition.noLongerEligible')}
-              </span>
-            ) : null}
+            {ineligible && !withdrawn
+              ? eligibilityMetaNode(t('composition.noLongerEligible'))
+              : null}
           </span>
           {trailingUnits}
         </span>
-        <div
-          className="structure-entries__action"
-          aria-hidden={freshnessAction == null}
-        >
-          {freshnessAction}
-        </div>
+        {hintFreshnessAction != null ? (
+          <div className="structure-entries__action">{hintFreshnessAction}</div>
+        ) : null}
       </div>
     );
   }

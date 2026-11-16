@@ -312,7 +312,7 @@ describe('StructurePhaseTeamLine', () => {
   });
 
   it('shows no-longer-eligible meta for inactive non-withdrawn entries', () => {
-    renderWithI18n(
+    const { container } = renderWithI18n(
       <MemoryRouter>
         <div className="structure-composition-qualifiers__outcome">
           <StructurePhaseTeamLine
@@ -323,8 +323,58 @@ describe('StructurePhaseTeamLine', () => {
         </div>
       </MemoryRouter>,
     );
-    const label = screen.getByText('Plus éligible');
-    expect(label).toHaveClass('structure-entries__eligibility-meta');
+    const meta = container.querySelector(
+      '.structure-entries__eligibility-meta',
+    );
+    expect(meta).toHaveTextContent('Plus éligible');
+    expect(meta?.querySelector('.lucide-list-minus')).not.toBeNull();
     expect(screen.queryByLabelText('Forfait')).toBeNull();
+  });
+
+  it('shows status icons on qualifier hint freshness units', () => {
+    const cases: {
+      occupant: StructureResolutionOccupant;
+      iconSelector: string;
+    }[] = [
+      {
+        occupant: occupant({
+          state: 'Perime',
+          releasable: false,
+          cascadeReplaceable: false,
+        }),
+        iconSelector: '.lucide-circle-alert',
+      },
+      {
+        occupant: occupant({ state: 'Indetermine' }),
+        iconSelector: 'svg[stroke-dasharray="3 3"]',
+      },
+      {
+        occupant: occupant({
+          state: 'Indetermine',
+          definitive: true,
+          releasable: false,
+        }),
+        iconSelector: '.lucide-timer-off',
+      },
+    ];
+
+    for (const { occupant: occ, iconSelector } of cases) {
+      const { container, unmount } = renderWithI18n(
+        <MemoryRouter>
+          <div className="structure-composition-qualifiers__outcome">
+            <StructurePhaseTeamLine
+              layout="qualifierHint"
+              displayName="Nord"
+              resolutionOccupant={occ}
+            />
+          </div>
+        </MemoryRouter>,
+      );
+      const freshness = container.querySelector(
+        '.structure-entries__freshness-state',
+      );
+      expect(freshness?.querySelector(iconSelector)).not.toBeNull();
+      unmount();
+    }
   });
 });
