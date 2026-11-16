@@ -85,7 +85,7 @@ describe('StructurePhaseTeamLine', () => {
   });
 
   it('shows placed hint on the qualifier hint row', () => {
-    renderWithI18n(
+    const { container } = renderWithI18n(
       <MemoryRouter>
         <div className="structure-composition-qualifiers__outcome">
           <StructurePhaseTeamLine
@@ -97,8 +97,14 @@ describe('StructurePhaseTeamLine', () => {
         </div>
       </MemoryRouter>,
     );
-    expect(screen.getByText('Tête')).toBeInTheDocument();
-    expect(screen.getByText('Placée :')).toHaveClass('ds-visually-hidden');
+    expect(
+      container.querySelector(
+        '.structure-entries__placed-hint span[aria-hidden="true"]',
+      ),
+    ).toHaveTextContent('Tête');
+    expect(
+      container.querySelector('.structure-entries__placed-hint .ds-visually-hidden'),
+    ).toHaveTextContent('Placée — Tête');
   });
 
   it('announces placed without duplicating visible copy when place name is missing', () => {
@@ -231,7 +237,7 @@ describe('StructurePhaseTeamLine', () => {
           displayName="Nord"
           placed
           placedPlaceLabel="Groupe A"
-          placedTooltip="Groupe A, place 3"
+          placedTooltip="Placée en Groupe A, place 3"
           ineligible
           provenanceMeta="1er"
           provenanceTitle="1er de Poule A"
@@ -247,9 +253,14 @@ describe('StructurePhaseTeamLine', () => {
     expect(screen.getByText('1er')).toBeInTheDocument();
     expect(screen.getByText('Groupe A')).toBeInTheDocument();
     expect(screen.getByText('Périmé')).toBeInTheDocument();
-    expect(
-      container.querySelector('.structure-entries__placed-hint'),
-    ).toHaveAttribute('aria-label', 'Groupe A, place 3');
+    const hint = container.querySelector('.structure-entries__placed-hint');
+    expect(hint).toHaveAttribute('title', 'Placée en Groupe A, place 3');
+    expect(hint?.querySelector('.ds-visually-hidden')).toHaveTextContent(
+      'Placée en Groupe A, place 3',
+    );
+    expect(hint?.querySelector('span[aria-hidden="true"]')).toHaveTextContent(
+      'Groupe A',
+    );
   });
 
   it('qualifier hint pending row has no middle-dot separators', () => {

@@ -220,7 +220,7 @@ describe('RootEntriesRail équipes band inbound qual format', () => {
                 'e2',
                 {
                   labels: ['Groupe A'],
-                  details: ['Groupe A, place 2'],
+                  details: ['Placée en Groupe A, place 2'],
                 },
               ],
             ])
@@ -250,9 +250,61 @@ describe('RootEntriesRail équipes band inbound qual format', () => {
     ).not.toBeNull();
     expect(screen.getByText('1er')).toBeInTheDocument();
     expect(screen.getByText('Groupe A')).toBeInTheDocument();
-    expect(
-      container.querySelector('.structure-entries__placed-hint'),
-    ).toHaveAttribute('aria-label', 'Groupe A, place 2');
+    const hint = container.querySelector('.structure-entries__placed-hint');
+    expect(hint).toHaveAttribute('title', 'Placée en Groupe A, place 2');
+    expect(hint?.querySelector('.ds-visually-hidden')).toHaveTextContent(
+      'Placée en Groupe A, place 2',
+    );
+    expect(hint?.querySelector('span[aria-hidden="true"]')).toHaveTextContent(
+      'Groupe A',
+    );
+  });
+
+  it('renders group place with Placée en tooltip on équipes direct team caption', () => {
+    const { container } = renderWithI18n(
+      <MemoryRouter>
+        <RootEntriesRail
+          variant="composition-band"
+          stage={{ ...baseStage, formatKind: 'Groups' }}
+          entries={[{ entryId: 'e2', displayName: 'Sud', status: 'Active' }]}
+          formatKind="Groups"
+          schematicReady
+          compositionTileMode="exploitation"
+          placedEntryIds={new Set(['e2'])}
+          entryPlaceProjections={
+            new Map([
+              [
+                'e2',
+                {
+                  labels: ['Groupe B'],
+                  details: ['Placée en Groupe B, place 1'],
+                },
+              ],
+            ])
+          }
+          compositionTeamRows={[
+            {
+              key: 'direct-e2',
+              kind: 'direct',
+              entry: {
+                entryId: 'e2',
+                displayName: 'Sud',
+                status: 'Active',
+              },
+              provenance: null,
+            },
+          ]}
+        />
+      </MemoryRouter>,
+    );
+    const hint = container.querySelector('.structure-entries__placed-hint');
+    expect(hint?.querySelector('span[aria-hidden="true"]')).toHaveTextContent(
+      'Groupe B',
+    );
+    expect(hint).toHaveAttribute('title', 'Placée en Groupe B, place 1');
+    expect(hint?.querySelector('.ds-visually-hidden')).toHaveTextContent(
+      'Placée en Groupe B, place 1',
+    );
   });
 
   it('renders resolved inbound qual line with crest, place, freshness and action', () => {

@@ -62,23 +62,15 @@ function placedHintNode(
       ? t('entries.entryPlacedTooltip', { place: placeLabel })
       : t('entries.entryPlacedStatus'));
   return (
-    <span
-      className="structure-entries__placed-hint"
-      title={tip}
-      aria-label={tip}
-    >
+    <span className="structure-entries__placed-hint" title={tip}>
       <LocateIcon size="xs" aria-hidden="true" />
       {placeLabel ? (
         <>
-          <span className="ds-visually-hidden">
-            {t('entries.entryPlacedAriaPrefix')}
-          </span>
-          {placeLabel}
+          <span className="ds-visually-hidden">{tip}</span>
+          <span aria-hidden="true">{placeLabel}</span>
         </>
       ) : (
-        <span className="ds-visually-hidden">
-          {t('entries.entryPlacedStatus')}
-        </span>
+        <span className="ds-visually-hidden">{tip}</span>
       )}
     </span>
   );

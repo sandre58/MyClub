@@ -15,6 +15,13 @@ const t = (key: string, opts?: Record<string, unknown>) => {
     return `Group ${opts.name}`;
   }
   if (
+    key === 'place.groupPlaced' &&
+    opts?.name != null &&
+    opts?.index != null
+  ) {
+    return `Placée en Groupe ${opts.name}, place ${opts.index}`;
+  }
+  if (
     key === 'place.groupWithIndex' &&
     opts?.name != null &&
     opts?.index != null
@@ -98,8 +105,10 @@ describe('structureEntryPlacementProjection', () => {
     ];
     const map = entryPlaceProjectionFromSchematic(cases, 'Groups', t);
     expect(primaryPlaceLabel(map.get('e1'))).toBe('Group A');
-    expect(map.get('e1')?.details[0]).toBe('Group A, slot 3');
-    expect(entryPlaceAccessibilityLabel(map.get('e1'))).toBe('Group A, slot 3');
+    expect(map.get('e1')?.details[0]).toBe('Placée en Groupe A, place 3');
+    expect(entryPlaceAccessibilityLabel(map.get('e1'))).toBe(
+      'Placée en Groupe A, place 3',
+    );
   });
 
   it('keeps multiple place labels for the same entry', () => {
@@ -126,8 +135,8 @@ describe('structureEntryPlacementProjection', () => {
     const map = entryPlaceProjectionFromSchematic(cases, 'Groups', t);
     expect(map.get('e1')?.labels).toEqual(['Group A', 'Group B']);
     expect(map.get('e1')?.details).toEqual([
-      'Group A, slot 1',
-      'Group B, slot 2',
+      'Placée en Groupe A, place 1',
+      'Placée en Groupe B, place 2',
     ]);
   });
 });

@@ -839,6 +839,7 @@
     "cupWithOrdinal": "{{round}} {{ordinal}} · {{side}}",
     "group": "Groupe {{name}}",
     "groupWithIndex": "Groupe {{name}}, place {{index}}",
+    "groupPlaced": "Placée en Groupe {{name}}, place {{index}}",
     "form": "Organisation"
   },
   "resolution": {

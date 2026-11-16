@@ -120,7 +120,7 @@ function groupPlaceAccessibilityDetail(
   if (!name) {
     return null;
   }
-  return t('place.groupWithIndex', { name, index });
+  return t('place.groupPlaced', { name, index });
 }
 
 function cupPlaceLabels(
@@ -232,11 +232,7 @@ export function placeTooltipDetail(
   for (let i = 0; i < projection.labels.length; i += 1) {
     const short = projection.labels[i];
     const detail = projection.details[i];
-    if (detail && detail.includes(short)) {
-      parts.push(detail);
-    } else {
-      parts.push(detail ? `${short} — ${detail}` : short);
-    }
+    parts.push(detail ?? short);
   }
   return parts.join(' · ');
 }

@@ -214,7 +214,7 @@ describe('CompositionQualifiersPanel freshness badge', () => {
     expect(line!.querySelector('.team-crest--xs')).not.toBeNull();
   });
 
-  it('exposes group place index in tooltip and aria on the placed hint', () => {
+  it('renders group place chip with short visible label and full Placée en phrase for assistive tech', () => {
     const { container } = renderWithI18n(
       <MemoryRouter>
         <CompositionQualifiersPanel
@@ -245,7 +245,7 @@ describe('CompositionQualifiersPanel freshness badge', () => {
                 'e1',
                 {
                   labels: ['Groupe A'],
-                  details: ['Groupe A, place 2'],
+                  details: ['Placée en Groupe A, place 2'],
                 },
               ],
             ])
@@ -254,10 +254,15 @@ describe('CompositionQualifiersPanel freshness badge', () => {
         />
       </MemoryRouter>,
     );
-    expect(screen.getByText('Groupe A')).toBeInTheDocument();
+    const visibleChip = container.querySelector(
+      '.structure-entries__placed-hint span[aria-hidden="true"]',
+    );
+    expect(visibleChip).toHaveTextContent('Groupe A');
     const hint = container.querySelector('.structure-entries__placed-hint');
-    expect(hint).toHaveAttribute('title', 'Groupe A, place 2');
-    expect(hint).toHaveAttribute('aria-label', 'Groupe A, place 2');
+    expect(hint).toHaveAttribute('title', 'Placée en Groupe A, place 2');
+    expect(hint?.querySelector('.ds-visually-hidden')).toHaveTextContent(
+      'Placée en Groupe A, place 2',
+    );
   });
 
   it('does not show place on unresolved unplaced qualifier seats', () => {
@@ -443,12 +448,16 @@ describe('CompositionQualifiersPanel freshness badge', () => {
   });
 
   it('renders the placed reminder in the qualifier hint meta', () => {
-    renderPanel(
+    const { container } = renderPanel(
       [populationOccupant(), releasableSlotOccupant()],
       vi.fn(),
       new Map([['e1', { labels: ['Tête'], details: [null] }]]),
     );
-    expect(screen.getByText('Tête')).toBeInTheDocument();
+    expect(
+      container.querySelector(
+        '.structure-entries__placed-hint span[aria-hidden="true"]',
+      ),
+    ).toHaveTextContent('Tête');
     expect(screen.getByText('Non déterminé')).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /Non déterminé.*Libérer la place/ }),

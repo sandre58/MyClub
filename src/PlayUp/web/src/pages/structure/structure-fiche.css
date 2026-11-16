@@ -394,20 +394,6 @@
   font-weight: var(--font-weight-regular);
 }
 
-.structure-entries__meta-chunk {
-  display: inline-flex;
-  align-items: center;
-  flex-wrap: nowrap;
-  min-width: 0;
-  max-width: 100%;
-}
-
-.structure-entries__meta-sep {
-  flex: none;
-  margin-inline: var(--space-4);
-  color: var(--color-text-secondary);
-}
-
 .structure-entries__meta-unit {
   display: inline-flex;
   align-items: center;
