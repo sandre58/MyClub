@@ -704,8 +704,8 @@
   align-items: center;
   gap: var(--space-8);
   min-width: 0;
-  font-size: var(--text-caption);
-  line-height: var(--leading-caption);
+  font-size: var(--text-meta);
+  line-height: var(--leading-tight);
   font-weight: var(--font-weight-regular);
 }
 
@@ -722,7 +722,7 @@
 .structure-entries__team-pending-icon--caption {
   display: inline-flex;
   align-items: center;
-  line-height: var(--leading-caption);
+  line-height: var(--leading-tight);
 }
 
 .structure-composition-qualifiers__hint-unit {
