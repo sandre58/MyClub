@@ -432,6 +432,23 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  text-align: inherit;
+  cursor: default;
+}
+
+.structure-entries__placed-hint:focus {
+  outline: none;
+}
+
+.structure-entries__placed-hint:focus-visible {
+  border-radius: var(--radius-sm);
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
 }
 
 .structure-entries__placed-hint .ds-icon {

@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
@@ -7,6 +7,23 @@ import type { StructureResolutionOccupant } from '../../../types';
 import { renderWithI18n } from '../../../test/renderWithI18n';
 import { StructurePhaseTeamLine } from './StructurePhaseTeamLine';
 import { ResolutionReleaseContext } from '../resolution/structureResolutionReleaseContext';
+
+function mockFinePointer() {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: (query: string) => ({
+      matches:
+        query.includes('hover: hover') && query.includes('pointer: fine'),
+      media: query,
+      onchange: null,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      dispatchEvent: () => false,
+    }),
+  });
+}
 
 function occupant(
   overrides: Partial<StructureResolutionOccupant> = {},
@@ -97,16 +114,12 @@ describe('StructurePhaseTeamLine', () => {
         </div>
       </MemoryRouter>,
     );
-    expect(
-      container.querySelector(
-        '.structure-entries__placed-hint span[aria-hidden="true"]',
-      ),
-    ).toHaveTextContent('Tête');
-    const hint = container.querySelector('.structure-entries__placed-hint');
-    expect(hint).toHaveAttribute(
-      'aria-label',
-      'Cette équipe est déjà placée : Tête',
-    );
+    const hint = container.querySelector(
+      '.structure-entries__placed-hint',
+    ) as HTMLButtonElement | null;
+    expect(hint).not.toBeNull();
+    expect(hint).toHaveTextContent('Tête');
+    expect(hint).not.toHaveAttribute('aria-label');
     expect(hint).not.toHaveAttribute('title');
   });
 
@@ -124,6 +137,19 @@ describe('StructurePhaseTeamLine', () => {
     );
     expect(screen.getAllByText('Placée')).toHaveLength(1);
     expect(screen.getByText('Placée')).toHaveClass('ds-visually-hidden');
+  });
+
+  it('does not mark qualifier hint identity head as solo when meta is empty', () => {
+    const { container } = renderWithI18n(
+      <MemoryRouter>
+        <div className="structure-composition-qualifiers__outcome">
+          <StructurePhaseTeamLine layout="qualifierHint" displayName="Nord" />
+        </div>
+      </MemoryRouter>,
+    );
+    expect(
+      container.querySelector('.structure-entries__identity-head--solo'),
+    ).toBeNull();
   });
 
   it('centers the name on the crest when no meta is shown', () => {
@@ -239,7 +265,11 @@ describe('StructurePhaseTeamLine', () => {
           displayName="Nord"
           placed
           placedPlaceLabel="Groupe A"
-          placedTooltip="Cette équipe est déjà placée : Groupe A, place 3"
+          placedTooltipModel={{
+            intro: 'Cette équipe est déjà placée :',
+            whereLines: ['Groupe A, place 3'],
+            ariaLabel: 'Cette équipe est déjà placée : Groupe A, place 3',
+          }}
           ineligible
           provenanceMeta="1er"
           provenanceTitle="1er de Poule A"
@@ -256,14 +286,39 @@ describe('StructurePhaseTeamLine', () => {
     expect(screen.getByText('Groupe A')).toBeInTheDocument();
     expect(screen.getByText('Périmé')).toBeInTheDocument();
     const hint = container.querySelector('.structure-entries__placed-hint');
-    expect(hint).toHaveAttribute(
-      'aria-label',
-      'Cette équipe est déjà placée : Groupe A, place 3',
-    );
+    expect(hint).not.toHaveAttribute('aria-label');
     expect(hint).not.toHaveAttribute('title');
-    expect(hint?.querySelector('span[aria-hidden="true"]')).toHaveTextContent(
-      'Groupe A',
+    expect(hint).toHaveTextContent('Groupe A');
+  });
+
+  it('opens placed hint Tooltip on keyboard focus without aria-label on the trigger', async () => {
+    mockFinePointer();
+    const user = userEvent.setup();
+    const { container } = renderWithI18n(
+      <MemoryRouter>
+        <StructurePhaseTeamLine
+          displayName="Nord"
+          placed
+          placedPlaceLabel="Tête"
+          placedTooltipModel={{
+            intro: 'Cette équipe est déjà placée :',
+            whereLines: ['Généré — Tête ; Tour 1 · côté A'],
+            ariaLabel:
+              'Cette équipe est déjà placée : Généré — Tête ; Tour 1 · côté A',
+          }}
+        />
+      </MemoryRouter>,
     );
+    const hint = container.querySelector(
+      '.structure-entries__placed-hint',
+    ) as HTMLButtonElement;
+    expect(hint).not.toHaveAttribute('aria-label');
+    await user.tab();
+    expect(hint).toHaveFocus();
+    expect(hint).not.toHaveAttribute('aria-label');
+    await waitFor(() => {
+      expect(screen.getByRole('tooltip')).toHaveTextContent('Généré — Tête');
+    });
   });
 
   it('uses design-system Tooltip for placed hint instead of native title', () => {
@@ -273,7 +328,11 @@ describe('StructurePhaseTeamLine', () => {
           displayName="Nord"
           placed
           placedPlaceLabel="Groupe B"
-          placedTooltip="Cette équipe est déjà placée : Groupe B, place 2"
+          placedTooltipModel={{
+            intro: 'Cette équipe est déjà placée :',
+            whereLines: ['Groupe B, place 2'],
+            ariaLabel: 'Cette équipe est déjà placée : Groupe B, place 2',
+          }}
         />
       </MemoryRouter>,
     );

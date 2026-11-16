@@ -64,28 +64,28 @@ function freshnessStateMetaNode(
   );
 }
 
-function placedTooltipBody(
-  lines: readonly string[] | undefined,
-  singleLine: string,
-): ReactNode {
-  if (lines && lines.length > 1) {
-    return (
-      <span className="structure-entries__placed-tooltip-body">
-        {lines.map((line) => (
-          <span key={line} className="structure-entries__placed-tooltip-line">
-            {line}
-          </span>
-        ))}
+function placedTooltipBody(model: {
+  intro: string;
+  whereLines: readonly string[];
+}): ReactNode {
+  return (
+    <span className="structure-entries__placed-tooltip-body">
+      <span className="structure-entries__placed-tooltip-intro">
+        {model.intro}
       </span>
-    );
-  }
-  return singleLine;
+      {model.whereLines.map((line) => (
+        <span key={line} className="structure-entries__placed-tooltip-line">
+          {line}
+        </span>
+      ))}
+    </span>
+  );
 }
 
 function placedHintNode(
   props: Pick<
     StructurePhaseTeamLineProps,
-    'placed' | 'placedPlaceLabel' | 'placedTooltip' | 'placedTooltipLines'
+    'placed' | 'placedPlaceLabel' | 'placedTooltipModel' | 'placedTooltip'
   >,
   t: TFunction,
 ) {
@@ -93,32 +93,23 @@ function placedHintNode(
     return null;
   }
   const placeLabel = props.placedPlaceLabel?.trim() ?? '';
-  const lines = props.placedTooltipLines?.filter((line) => line.trim()) ?? [];
-  const tip =
-    props.placedTooltip ??
-    (lines.length > 0
-      ? lines.join(' ; ')
-      : placeLabel
-        ? t('entries.teamAlreadyPlaced', { where: placeLabel })
-        : t('entries.entryPlacedStatus'));
-  const tooltipContent = placedTooltipBody(
-    lines.length > 0 ? lines : undefined,
-    tip,
-  );
+  const model = props.placedTooltipModel;
+  const tooltipContent =
+    model != null
+      ? placedTooltipBody(model)
+      : (props.placedTooltip ?? t('entries.entryPlacedStatus'));
   return (
     <Tooltip content={tooltipContent}>
-      <span
-        className="structure-entries__placed-hint"
-        role="img"
-        aria-label={tip}
-      >
+      <button type="button" className="structure-entries__placed-hint">
         <LocateIcon size="xs" aria-hidden="true" />
         {placeLabel ? (
-          <span aria-hidden="true">{placeLabel}</span>
+          <span>{placeLabel}</span>
         ) : (
-          <span className="ds-visually-hidden">{tip}</span>
+          <span className="ds-visually-hidden">
+            {t('entries.entryPlacedStatus')}
+          </span>
         )}
-      </span>
+      </button>
     </Tooltip>
   );
 }
@@ -291,16 +282,7 @@ export function StructurePhaseTeamLine(props: StructurePhaseTeamLineProps) {
             className="structure-composition-qualifiers__hint-crest"
           />
           <div className="structure-entries__identity">
-            <div
-              className={[
-                'structure-entries__identity-head',
-                trailingUnits.length === 0
-                  ? 'structure-entries__identity-head--solo'
-                  : null,
-              ]
-                .filter(Boolean)
-                .join(' ')}
-            >
+            <div className="structure-entries__identity-head">
               <span
                 className={[
                   'structure-entries__team-name',

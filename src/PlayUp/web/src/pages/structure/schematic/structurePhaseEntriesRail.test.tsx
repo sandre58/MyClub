@@ -252,14 +252,9 @@ describe('RootEntriesRail équipes band inbound qual format', () => {
     expect(screen.getByText('1er')).toBeInTheDocument();
     expect(screen.getByText('Groupe A')).toBeInTheDocument();
     const hint = container.querySelector('.structure-entries__placed-hint');
-    expect(hint).toHaveAttribute(
-      'aria-label',
-      'Cette équipe est déjà placée : Groupe A, place 2',
-    );
+    expect(hint).not.toHaveAttribute('aria-label');
     expect(hint).not.toHaveAttribute('title');
-    expect(hint?.querySelector('span[aria-hidden="true"]')).toHaveTextContent(
-      'Groupe A',
-    );
+    expect(hint).toHaveTextContent('Groupe A');
   });
 
   it('renders group place with Placée en tooltip on équipes direct team caption', () => {
@@ -301,13 +296,8 @@ describe('RootEntriesRail équipes band inbound qual format', () => {
       </MemoryRouter>,
     );
     const hint = container.querySelector('.structure-entries__placed-hint');
-    expect(hint?.querySelector('span[aria-hidden="true"]')).toHaveTextContent(
-      'Groupe B',
-    );
-    expect(hint).toHaveAttribute(
-      'aria-label',
-      'Cette équipe est déjà placée : Groupe B, place 1',
-    );
+    expect(hint).toHaveTextContent('Groupe B');
+    expect(hint).not.toHaveAttribute('aria-label');
     expect(hint).not.toHaveAttribute('title');
   });
 

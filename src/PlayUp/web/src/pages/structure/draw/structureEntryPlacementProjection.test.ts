@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { SchematicCase } from '../../../types';
 import {
+  buildPlacedTooltipModel,
   entryPlaceAccessibilityLabel,
   entryPlaceProjectionFromSchematic,
   isEntryPlacedInPhase,
@@ -25,11 +26,8 @@ const t = (key: string, opts?: Record<string, unknown>) => {
   ) {
     return `Groupe ${opts.name}, place ${opts.index}`;
   }
-  if (key === 'entries.teamAlreadyPlaced' && opts?.where != null) {
-    return `Cette équipe est déjà placée : ${opts.where}`;
-  }
-  if (key === 'entries.teamAlreadyPlacedCup' && opts?.where != null) {
-    return `Cette équipe est déjà placée : Coupe — ${opts.where}`;
+  if (key === 'entries.teamAlreadyPlacedIntro') {
+    return 'Cette équipe est déjà placée :';
   }
   if (key === 'place.side' && opts?.side) {
     return `side ${opts.side}`;
@@ -108,10 +106,10 @@ describe('structureEntryPlacementProjection', () => {
     const map = entryPlaceProjectionFromSchematic(cases, 'Groups', t);
     expect(primaryPlaceLabel(map.get('e1'))).toBe('Group A');
     expect(map.get('e1')?.details[0]).toBe('Groupe A');
-    expect(placedTooltipLines(map.get('e1'), t)).toEqual([
-      'Cette équipe est déjà placée : Groupe A',
-    ]);
-    expect(entryPlaceAccessibilityLabel(map.get('e1'), t)).toBe(
+    const model = buildPlacedTooltipModel(map.get('e1'), 'Poules', t);
+    expect(model?.whereLines).toEqual(['Groupe A']);
+    expect(model?.intro).toBe('Cette équipe est déjà placée :');
+    expect(entryPlaceAccessibilityLabel(map.get('e1'), t, 'Poules')).toBe(
       'Cette équipe est déjà placée : Groupe A',
     );
   });
@@ -132,45 +130,49 @@ describe('structureEntryPlacementProjection', () => {
     expect(primaryPlaceLabel(map.get('e1'))).toBe('Group A');
     expect(map.get('e1')?.kinds[0]).toBe('group');
     expect(map.get('e1')?.details[0]).toBe('Groupe A, place 3');
-    expect(entryPlaceAccessibilityLabel(map.get('e1'), t)).toBe(
+    expect(entryPlaceAccessibilityLabel(map.get('e1'), t, 'Poules')).toBe(
       'Cette équipe est déjà placée : Groupe A, place 3',
     );
   });
 
-  it('uses cup sentences with long topology in where', () => {
+  it('uses cup where lines with phase name, slot chrome and topology detail', () => {
+    const phase = 'Généré';
     expect(
-      placedTooltipLines(
+      buildPlacedTooltipModel(
         {
           labels: ['Tête'],
           details: ['Demi-finale 1 · côté A'],
           kinds: ['cup'],
         },
+        phase,
         t,
       ),
-    ).toEqual([
-      'Cette équipe est déjà placée : Coupe — Demi-finale 1 · côté A',
-    ]);
+    ).toMatchObject({
+      intro: 'Cette équipe est déjà placée :',
+      whereLines: ['Généré — Tête ; Demi-finale 1 · côté A'],
+    });
     expect(
       placedTooltipLines(
         { labels: ['SF-1-A'], details: [null], kinds: ['cup'] },
         t,
+        phase,
       ),
-    ).toEqual(['Cette équipe est déjà placée : Coupe — SF-1-A']);
+    ).toEqual(['Généré — SF-1-A']);
   });
 
-  it('emits one sentence per cup placement', () => {
-    expect(
-      placedTooltipLines(
-        {
-          labels: ['Tête', 'Demi-finale 1'],
-          details: [null, 'côté A'],
-          kinds: ['cup', 'cup'],
-        },
-        t,
-      ),
-    ).toEqual([
-      'Cette équipe est déjà placée : Coupe — Tête',
-      'Cette équipe est déjà placée : Coupe — côté A',
+  it('emits one where line per cup placement without repeating the intro', () => {
+    const model = buildPlacedTooltipModel(
+      {
+        labels: ['Tête', 'Demi-finale 1'],
+        details: [null, 'côté A'],
+        kinds: ['cup', 'cup'],
+      },
+      'Généré',
+      t,
+    );
+    expect(model?.whereLines).toEqual([
+      'Généré — Tête',
+      'Généré — Demi-finale 1 ; côté A',
     ]);
     expect(
       entryPlaceAccessibilityLabel(
@@ -180,9 +182,10 @@ describe('structureEntryPlacementProjection', () => {
           kinds: ['cup', 'cup'],
         },
         t,
+        'Généré',
       ),
     ).toBe(
-      'Cette équipe est déjà placée : Coupe — Tête ; Cette équipe est déjà placée : Coupe — côté A',
+      'Cette équipe est déjà placée : Généré — Tête ; Généré — Demi-finale 1 ; côté A',
     );
   });
 
@@ -195,9 +198,10 @@ describe('structureEntryPlacementProjection', () => {
           kinds: ['group', 'group'],
         },
         t,
+        'Poules',
       ),
     ).toBe(
-      'Cette équipe est déjà placée : Groupe A, place 1 ; Cette équipe est déjà placée : Groupe B, place 2',
+      'Cette équipe est déjà placée : Groupe A, place 1 ; Groupe B, place 2',
     );
   });
 
@@ -224,9 +228,11 @@ describe('structureEntryPlacementProjection', () => {
     ];
     const map = entryPlaceProjectionFromSchematic(cases, 'Groups', t);
     expect(map.get('e1')?.labels).toEqual(['Group A', 'Group B']);
-    expect(placedTooltipLines(map.get('e1'), t)).toHaveLength(2);
-    expect(entryPlaceAccessibilityLabel(map.get('e1'), t)).toBe(
-      'Cette équipe est déjà placée : Groupe A, place 1 ; Cette équipe est déjà placée : Groupe B, place 2',
+    expect(
+      buildPlacedTooltipModel(map.get('e1'), 'Poules', t)?.whereLines,
+    ).toHaveLength(2);
+    expect(entryPlaceAccessibilityLabel(map.get('e1'), t, 'Poules')).toBe(
+      'Cette équipe est déjà placée : Groupe A, place 1 ; Groupe B, place 2',
     );
   });
 });

@@ -184,6 +184,7 @@ export function StructurePhaseCompositionBand({
             resolutionOccupants={stage.resolutionOccupants}
             onViewPhase={onViewPhase}
             renderGroupAction={renderAvalSourceAction}
+            destinationPhaseName={stage.name}
           />
           {compositionPopulationGaugeFooter &&
           !sharedCompositionPopulationGauge &&

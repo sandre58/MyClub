@@ -743,30 +743,6 @@
   color: var(--color-text-secondary);
 }
 
-.structure-composition-qualifiers__hint-pending-label {
-  font-weight: var(--font-weight-regular);
-  font-style: italic;
-  color: var(--color-text-secondary);
-}
-
-.structure-entries__team-pending-icon--caption {
-  display: inline-flex;
-  align-items: center;
-  line-height: var(--leading-caption);
-}
-
-.structure-composition-qualifiers__hint-unit {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-4);
-  min-width: 0;
-  max-width: 100%;
-}
-
-.structure-composition-qualifiers__hint-unit--identity {
-  flex: 0 1 auto;
-}
-
 .structure-entries__teams--band .structure-entries__team--inbound {
   display: flex;
   flex-direction: column;

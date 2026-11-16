@@ -236,47 +236,91 @@ export function primaryPlaceLabel(
   return projection.labels.join(' · ');
 }
 
-/** One user-facing tooltip sentence per resolved place. */
-export function placedTooltipLines(
-  projection: EntryPlaceProjection | undefined,
-  t: PlaceTranslate,
-): readonly string[] {
-  if (!projection || projection.labels.length === 0) {
-    return [];
+function cupPlacementWhereLine(
+  destinationPhaseName: string,
+  slotChrome: string,
+  topologyDetail: string | null,
+): string {
+  const phase = destinationPhaseName.trim();
+  const slot = slotChrome.trim();
+  if (!phase || !slot) {
+    return topologyDetail?.trim() || slot;
   }
-  const lines: string[] = [];
+  const detail = topologyDetail?.trim();
+  if (detail && detail !== slot) {
+    return `${phase} — ${slot} ; ${detail}`;
+  }
+  return `${phase} — ${slot}`;
+}
+
+export type PlacedTooltipModel = {
+  /** Localized intro, e.g. « Cette équipe est déjà placée : » */
+  intro: string;
+  /** One fragment per resolved place (shown under the intro in the Tooltip). */
+  whereLines: readonly string[];
+  /** Single accessible phrase for the trigger (intro + joined where lines). */
+  ariaLabel: string;
+};
+
+export function buildPlacedTooltipModel(
+  projection: EntryPlaceProjection | undefined,
+  destinationPhaseName: string | null | undefined,
+  t: PlaceTranslate,
+): PlacedTooltipModel | null {
+  if (!projection || projection.labels.length === 0) {
+    return null;
+  }
+  const phaseName = destinationPhaseName?.trim() ?? '';
+  const whereLines: string[] = [];
   for (let i = 0; i < projection.labels.length; i += 1) {
     const short = projection.labels[i];
     const detail = projection.details[i];
     const kind = projection.kinds[i];
-    const where = (detail ?? short)?.trim();
-    if (!where) {
+    if (kind === 'group') {
+      const where = (detail ?? short)?.trim();
+      if (where) {
+        whereLines.push(where);
+      }
       continue;
     }
-    if (kind === 'group') {
-      lines.push(t('entries.teamAlreadyPlaced', { where }));
-    } else {
-      lines.push(t('entries.teamAlreadyPlacedCup', { where }));
+    const where = cupPlacementWhereLine(phaseName, short, detail);
+    if (where) {
+      whereLines.push(where);
     }
   }
-  return lines;
+  if (whereLines.length === 0) {
+    return null;
+  }
+  const intro = t('entries.teamAlreadyPlacedIntro');
+  const ariaLabel = `${intro} ${whereLines.join(PLACE_PROJECTION_SEGMENT_SEP)}`;
+  return { intro, whereLines, ariaLabel };
+}
+
+export function placedTooltipLines(
+  projection: EntryPlaceProjection | undefined,
+  t: PlaceTranslate,
+  destinationPhaseName?: string | null,
+): readonly string[] {
+  return (
+    buildPlacedTooltipModel(projection, destinationPhaseName, t)?.whereLines ??
+    []
+  );
 }
 
 export function placeTooltipDetail(
   projection: EntryPlaceProjection | undefined,
   t: PlaceTranslate,
+  destinationPhaseName?: string | null,
 ): string | null {
-  const lines = placedTooltipLines(projection, t);
-  if (lines.length === 0) {
-    return null;
-  }
-  return lines.join(PLACE_PROJECTION_SEGMENT_SEP);
+  const model = buildPlacedTooltipModel(projection, destinationPhaseName, t);
+  return model?.ariaLabel ?? null;
 }
 
 /** Full place phrase for tooltip and accessible name (group index localized). */
 export function entryPlaceAccessibilityLabel(
   projection: EntryPlaceProjection | undefined,
   t: PlaceTranslate,
+  destinationPhaseName?: string | null,
 ): string | null {
-  return placeTooltipDetail(projection, t);
+  return placeTooltipDetail(projection, t, destinationPhaseName);
 }

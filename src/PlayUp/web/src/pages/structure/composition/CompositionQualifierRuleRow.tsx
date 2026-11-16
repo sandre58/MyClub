@@ -12,11 +12,10 @@ import { StructurePhaseTeamLine } from './StructurePhaseTeamLine';
 import { structurePhaseTeamFreshnessAction } from './structurePhaseTeamFreshnessAction';
 import {
   qualifierSeatPlaceLabel,
-  qualifierSeatPlacedTooltip,
+  qualifierSeatPlacedTooltipModel,
 } from './compositionQualifierSeatPlaceLabel';
 import {
-  entryPlaceAccessibilityLabel,
-  placedTooltipLines,
+  buildPlacedTooltipModel,
   type EntryPlaceProjection,
 } from '../draw/structureEntryPlacementProjection';
 import type { StructureResolutionOccupant } from '../../../types';
@@ -31,6 +30,7 @@ export function CompositionQualifierRuleRow({
   listedResolution,
   onReplace,
   onRelease,
+  destinationPhaseName,
 }: {
   rule: CompositionQualifierRule;
   seat: InboundFeedSlotView;
@@ -44,6 +44,7 @@ export function CompositionQualifierRuleRow({
   } | null;
   onReplace?: (occupant: StructureResolutionOccupant) => void;
   onRelease?: (occupant: StructureResolutionOccupant) => void;
+  destinationPhaseName?: string | null;
 }) {
   const { t } = useTranslation('structure');
   const placedInPhase = seat.placed;
@@ -55,13 +56,15 @@ export function CompositionQualifierRuleRow({
   });
   const entryProjection =
     entry != null ? entryPlaceProjections.get(entry.entryId) : undefined;
-  const tooltipLineList = entryProjection
-    ? placedTooltipLines(entryProjection, t)
-    : [];
-  const placedTooltip =
-    placedInPhase && tooltipLineList.length > 0
-      ? entryPlaceAccessibilityLabel(entryProjection, t)
-      : qualifierSeatPlacedTooltip(placedInPhase, placeLabel, t);
+  const placedTooltipModel =
+    placedInPhase && entryProjection
+      ? buildPlacedTooltipModel(entryProjection, destinationPhaseName, t)
+      : qualifierSeatPlacedTooltipModel(
+          placedInPhase,
+          placeLabel,
+          destinationPhaseName,
+          t,
+        );
 
   const teamName =
     seat.teamName ?? entry?.displayName ?? t('manualPlacement.unknownTeam');
@@ -76,8 +79,7 @@ export function CompositionQualifierRuleRow({
         ineligible: entry != null && entry.status !== 'Active',
         placed: placedInPhase,
         placedPlaceLabel: placeLabel,
-        placedTooltip: placedTooltip,
-        placedTooltipLines: tooltipLineList.length > 0 ? tooltipLineList : null,
+        placedTooltipModel,
         resolutionOccupant: listedResolution?.occupant ?? null,
         multiplePlacements: listedResolution?.multiplePlacements ?? false,
         entryName: teamName,
@@ -92,8 +94,7 @@ export function CompositionQualifierRuleRow({
         pendingLabel: t('composition.qualifiers.unresolved'),
         placed: placedInPhase,
         placedPlaceLabel: placeLabel,
-        placedTooltip: placedTooltip,
-        placedTooltipLines: tooltipLineList.length > 0 ? tooltipLineList : null,
+        placedTooltipModel,
         omitFreshnessAction: true,
       };
 

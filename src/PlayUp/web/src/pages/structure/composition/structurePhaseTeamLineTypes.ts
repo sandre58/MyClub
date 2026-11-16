@@ -1,4 +1,5 @@
 import type { StructureResolutionOccupant } from '../../../types';
+import type { PlacedTooltipModel } from '../draw/structureEntryPlacementProjection';
 
 export type StructurePhaseTeamLineProps = {
   displayName: string;
@@ -10,9 +11,8 @@ export type StructurePhaseTeamLineProps = {
   pendingLabel?: string;
   placed?: boolean;
   placedPlaceLabel?: string | null;
+  placedTooltipModel?: PlacedTooltipModel | null;
   placedTooltip?: string | null;
-  /** One sentence per resolved place — multiline Tooltip when length > 1. */
-  placedTooltipLines?: readonly string[] | null;
   provenanceMeta?: string | null;
   provenanceTitle?: string | null;
   resolutionOccupant?: StructureResolutionOccupant | null;

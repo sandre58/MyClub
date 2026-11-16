@@ -20,9 +20,8 @@ import type {
 } from '../../../types';
 import {
   type EntryPlaceProjection,
-  entryPlaceAccessibilityLabel,
+  buildPlacedTooltipModel,
   isEntryPlacedInPhase,
-  placedTooltipLines,
   primaryPlaceLabel,
   showPerEntryPlacement,
 } from '../draw/structureEntryPlacementProjection';
@@ -325,16 +324,10 @@ export function RootEntriesRail({
       trackPlacement && schematicReady && entry.status === 'Active' && !placed;
     const projection = placeProjections.get(entry.entryId);
     const placeLabel = primaryPlaceLabel(projection);
-    const tooltipLineList =
-      placed && projection ? placedTooltipLines(projection, t) : [];
-    const placedTooltip =
-      placed && tooltipLineList.length > 0
-        ? (entryPlaceAccessibilityLabel(projection, t) ?? null)
-        : placed
-          ? placeLabel
-            ? t('entries.teamAlreadyPlaced', { where: placeLabel })
-            : t('entries.entryPlacedStatus')
-          : null;
+    const placedTooltipModel =
+      placed && projection
+        ? buildPlacedTooltipModel(projection, stage.name, t)
+        : null;
     const provenanceLabel =
       provenance ?? entryProvenanceByEntryId?.get(entry.entryId) ?? null;
     const listedResolution = lookupListedResolutionOccupant(
@@ -369,10 +362,7 @@ export function RootEntriesRail({
           ineligible={entry.status !== 'Active'}
           placed={placed}
           placedPlaceLabel={placeLabel}
-          placedTooltip={placedTooltip}
-          placedTooltipLines={
-            tooltipLineList.length > 0 ? tooltipLineList : null
-          }
+          placedTooltipModel={placedTooltipModel}
           provenanceMeta={provenanceLabel?.badge ?? null}
           provenanceTitle={provenanceLabel?.full ?? null}
           resolutionOccupant={listedResolution.occupant}
@@ -447,6 +437,7 @@ export function RootEntriesRail({
                       }
                       onReplace={cascade?.requestReplace}
                       onRelease={release?.requestRelease}
+                      destinationPhaseName={stage.name}
                     />
                   </li>
                 );

@@ -991,8 +991,7 @@
     "entryPlacedAria": "{{name}} — placée sur la forme",
     "entryNotPlacedAria": "{{name}} — pas encore placée",
     "entryPlacedStatus": "Placée",
-    "teamAlreadyPlaced": "Cette équipe est déjà placée : {{where}}",
-    "teamAlreadyPlacedCup": "Cette équipe est déjà placée : Coupe — {{where}}",
+    "teamAlreadyPlacedIntro": "Cette équipe est déjà placée :",
     "meterAria": "Équipes attendues / places",
     "meter": {
       "population": "Équipes",

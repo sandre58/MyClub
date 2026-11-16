@@ -98,6 +98,7 @@ function renderPanel(
           entryPlaceProjections={entryPlaceProjections}
           schematic={undefined}
           resolutionOccupants={resolutionOccupants}
+          destinationPhaseName="Généré"
         />
       </ResolutionReleaseContext.Provider>
     </MemoryRouter>,
@@ -263,19 +264,13 @@ describe('CompositionQualifiersPanel freshness badge', () => {
             ])
           }
           schematic={undefined}
+          destinationPhaseName="Généré"
         />
       </MemoryRouter>,
     );
-    expect(
-      container.querySelector(
-        '.structure-entries__placed-hint span[aria-hidden="true"]',
-      ),
-    ).toHaveTextContent('Tête');
     const hint = container.querySelector('.structure-entries__placed-hint');
-    expect(hint).toHaveAttribute(
-      'aria-label',
-      'Cette équipe est déjà placée : Coupe — Demi-finale 1 · côté A',
-    );
+    expect(hint).toHaveTextContent('Tête');
+    expect(hint).not.toHaveAttribute('aria-label');
     expect(hint).not.toHaveAttribute('title');
   });
 
@@ -317,18 +312,13 @@ describe('CompositionQualifiersPanel freshness badge', () => {
             ])
           }
           schematic={undefined}
+          destinationPhaseName="Poules"
         />
       </MemoryRouter>,
     );
-    const visibleChip = container.querySelector(
-      '.structure-entries__placed-hint span[aria-hidden="true"]',
-    );
-    expect(visibleChip).toHaveTextContent('Groupe A');
     const hint = container.querySelector('.structure-entries__placed-hint');
-    expect(hint).toHaveAttribute(
-      'aria-label',
-      'Cette équipe est déjà placée : Groupe A, place 2',
-    );
+    expect(hint).toHaveTextContent('Groupe A');
+    expect(hint).not.toHaveAttribute('aria-label');
     expect(hint).not.toHaveAttribute('title');
   });
 
@@ -511,7 +501,9 @@ describe('CompositionQualifiersPanel freshness badge', () => {
     expect(
       container.querySelectorAll('.structure-entries__meta-unit').length,
     ).toBeGreaterThanOrEqual(1);
-    expect(container.querySelector('.structure-entries__placed-hint')).not.toBeNull();
+    expect(
+      container.querySelector('.structure-entries__placed-hint'),
+    ).not.toBeNull();
   });
 
   it('renders the placed reminder in the qualifier hint meta', () => {
@@ -523,9 +515,7 @@ describe('CompositionQualifiersPanel freshness badge', () => {
       ]),
     );
     expect(
-      container.querySelector(
-        '.structure-entries__placed-hint span[aria-hidden="true"]',
-      ),
+      container.querySelector('.structure-entries__placed-hint'),
     ).toHaveTextContent('Tête');
     expect(screen.getByText('Non déterminé')).toBeInTheDocument();
     expect(

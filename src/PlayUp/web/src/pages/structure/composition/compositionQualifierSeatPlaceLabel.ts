@@ -4,6 +4,7 @@ import type { StageSchematic, StructureInboundFeedRule } from '../../../types';
 import {
   primaryPlaceLabel,
   type EntryPlaceProjection,
+  type PlacedTooltipModel,
 } from '../draw/structureEntryPlacementProjection';
 import { placeChromeForDestinationSlotKey } from '../draw/structurePlaceLabel';
 import type { InboundFeedSlotView } from './structureCompositionInboundHub';
@@ -44,16 +45,21 @@ export function qualifierSeatPlaceLabel(input: {
   return placeChromeForDestinationSlotKey(schematic, slotKey);
 }
 
-export function qualifierSeatPlacedTooltip(
+export function qualifierSeatPlacedTooltipModel(
   placed: boolean,
   placeLabel: string | null,
+  destinationPhaseName: string | null | undefined,
   t: TFunction,
-): string | null {
-  if (!placed) {
+): PlacedTooltipModel | null {
+  if (!placed || !placeLabel?.trim()) {
     return null;
   }
-  if (placeLabel) {
-    return t('entries.teamAlreadyPlaced', { where: placeLabel });
-  }
-  return t('entries.entryPlacedStatus');
+  const phase = destinationPhaseName?.trim() ?? '';
+  const where = phase ? `${phase} — ${placeLabel.trim()}` : placeLabel.trim();
+  const intro = t('entries.teamAlreadyPlacedIntro');
+  return {
+    intro,
+    whereLines: [where],
+    ariaLabel: `${intro} ${where}`,
+  };
 }
