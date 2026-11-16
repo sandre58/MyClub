@@ -243,10 +243,19 @@ function cupPlacementWhereLine(
 ): string {
   const phase = destinationPhaseName.trim();
   const slot = slotChrome.trim();
-  if (!phase || !slot) {
-    return topologyDetail?.trim() || slot;
-  }
   const detail = topologyDetail?.trim();
+  if (!phase) {
+    if (!slot) {
+      return detail ?? '';
+    }
+    if (detail && detail !== slot) {
+      return `${slot} ; ${detail}`;
+    }
+    return slot;
+  }
+  if (!slot) {
+    return detail ?? phase;
+  }
   if (detail && detail !== slot) {
     return `${phase} — ${slot} ; ${detail}`;
   }
@@ -294,33 +303,4 @@ export function buildPlacedTooltipModel(
   const intro = t('entries.teamAlreadyPlacedIntro');
   const ariaLabel = `${intro} ${whereLines.join(PLACE_PROJECTION_SEGMENT_SEP)}`;
   return { intro, whereLines, ariaLabel };
-}
-
-export function placedTooltipLines(
-  projection: EntryPlaceProjection | undefined,
-  t: PlaceTranslate,
-  destinationPhaseName?: string | null,
-): readonly string[] {
-  return (
-    buildPlacedTooltipModel(projection, destinationPhaseName, t)?.whereLines ??
-    []
-  );
-}
-
-export function placeTooltipDetail(
-  projection: EntryPlaceProjection | undefined,
-  t: PlaceTranslate,
-  destinationPhaseName?: string | null,
-): string | null {
-  const model = buildPlacedTooltipModel(projection, destinationPhaseName, t);
-  return model?.ariaLabel ?? null;
-}
-
-/** Full place phrase for tooltip and accessible name (group index localized). */
-export function entryPlaceAccessibilityLabel(
-  projection: EntryPlaceProjection | undefined,
-  t: PlaceTranslate,
-  destinationPhaseName?: string | null,
-): string | null {
-  return placeTooltipDetail(projection, t, destinationPhaseName);
 }

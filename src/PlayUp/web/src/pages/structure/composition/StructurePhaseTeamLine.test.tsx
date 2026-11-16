@@ -102,7 +102,7 @@ describe('StructurePhaseTeamLine', () => {
   });
 
   it('shows placed hint on the qualifier hint row', () => {
-    const { container } = renderWithI18n(
+    renderWithI18n(
       <MemoryRouter>
         <div className="structure-composition-qualifiers__outcome">
           <StructurePhaseTeamLine
@@ -110,17 +110,21 @@ describe('StructurePhaseTeamLine', () => {
             displayName="Nord"
             placed
             placedPlaceLabel="Tête"
+            placedTooltipModel={{
+              intro: 'Cette équipe est déjà placée :',
+              whereLines: ['Tableau — Tête'],
+              ariaLabel: 'Cette équipe est déjà placée : Tableau — Tête',
+            }}
           />
         </div>
       </MemoryRouter>,
     );
-    const hint = container.querySelector(
-      '.structure-entries__placed-hint',
-    ) as HTMLButtonElement | null;
-    expect(hint).not.toBeNull();
-    expect(hint).toHaveTextContent('Tête');
-    expect(hint).not.toHaveAttribute('aria-label');
-    expect(hint).not.toHaveAttribute('title');
+    expect(
+      screen.getByRole('button', {
+        name: 'Cette équipe est déjà placée : Tableau — Tête',
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Tête')).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('announces placed without duplicating visible copy when place name is missing', () => {
@@ -285,10 +289,12 @@ describe('StructurePhaseTeamLine', () => {
     expect(screen.getByText('1er')).toBeInTheDocument();
     expect(screen.getByText('Groupe A')).toBeInTheDocument();
     expect(screen.getByText('Périmé')).toBeInTheDocument();
-    const hint = container.querySelector('.structure-entries__placed-hint');
-    expect(hint).not.toHaveAttribute('aria-label');
-    expect(hint).not.toHaveAttribute('title');
-    expect(hint).toHaveTextContent('Groupe A');
+    expect(
+      screen.getByRole('button', {
+        name: 'Cette équipe est déjà placée : Groupe A, place 3',
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Groupe A')).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('opens placed hint Tooltip on keyboard focus without aria-label on the trigger', async () => {
@@ -312,10 +318,14 @@ describe('StructurePhaseTeamLine', () => {
     const hint = container.querySelector(
       '.structure-entries__placed-hint',
     ) as HTMLButtonElement;
-    expect(hint).not.toHaveAttribute('aria-label');
+    expect(hint).toHaveAttribute(
+      'aria-label',
+      'Cette équipe est déjà placée : Généré — Tête ; Tour 1 · côté A',
+    );
     await user.tab();
     expect(hint).toHaveFocus();
     expect(hint).not.toHaveAttribute('aria-label');
+    expect(hint.getAttribute('aria-describedby')).toBeTruthy();
     await waitFor(() => {
       expect(screen.getByRole('tooltip')).toHaveTextContent('Généré — Tête');
     });

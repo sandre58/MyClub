@@ -402,6 +402,14 @@
   max-width: 100%;
 }
 
+/* Placed hint Tooltip wrapper: avoid ds-tooltip-trigger vertical-align: middle drift vs freshness row */
+.structure-entries__meta--caption .ds-tooltip-trigger:has(.structure-entries__placed-hint) {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: baseline;
+  line-height: var(--leading-caption);
+}
+
 .structure-entries__meta--caption .structure-entries__freshness-state {
   font-weight: var(--font-weight-regular);
 }

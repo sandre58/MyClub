@@ -3,11 +3,9 @@ import { describe, expect, it } from 'vitest';
 import type { SchematicCase } from '../../../types';
 import {
   buildPlacedTooltipModel,
-  entryPlaceAccessibilityLabel,
   entryPlaceProjectionFromSchematic,
   isEntryPlacedInPhase,
   placedEntryIdsFromSchematic,
-  placedTooltipLines,
   primaryPlaceLabel,
   showPerEntryPlacement,
 } from './structureEntryPlacementProjection';
@@ -108,10 +106,7 @@ describe('structureEntryPlacementProjection', () => {
     expect(map.get('e1')?.details[0]).toBe('Groupe A');
     const model = buildPlacedTooltipModel(map.get('e1'), 'Poules', t);
     expect(model?.whereLines).toEqual(['Groupe A']);
-    expect(model?.intro).toBe('Cette équipe est déjà placée :');
-    expect(entryPlaceAccessibilityLabel(map.get('e1'), t, 'Poules')).toBe(
-      'Cette équipe est déjà placée : Groupe A',
-    );
+    expect(model?.ariaLabel).toBe('Cette équipe est déjà placée : Groupe A');
   });
 
   it('shows group place as Groupe name only with index in details', () => {
@@ -129,8 +124,7 @@ describe('structureEntryPlacementProjection', () => {
     const map = entryPlaceProjectionFromSchematic(cases, 'Groups', t);
     expect(primaryPlaceLabel(map.get('e1'))).toBe('Group A');
     expect(map.get('e1')?.kinds[0]).toBe('group');
-    expect(map.get('e1')?.details[0]).toBe('Groupe A, place 3');
-    expect(entryPlaceAccessibilityLabel(map.get('e1'), t, 'Poules')).toBe(
+    expect(buildPlacedTooltipModel(map.get('e1'), 'Poules', t)?.ariaLabel).toBe(
       'Cette équipe est déjà placée : Groupe A, place 3',
     );
   });
@@ -152,12 +146,36 @@ describe('structureEntryPlacementProjection', () => {
       whereLines: ['Généré — Tête ; Demi-finale 1 · côté A'],
     });
     expect(
-      placedTooltipLines(
+      buildPlacedTooltipModel(
         { labels: ['SF-1-A'], details: [null], kinds: ['cup'] },
-        t,
         phase,
-      ),
+        t,
+      )?.whereLines,
     ).toEqual(['Généré — SF-1-A']);
+  });
+
+  it('keeps slot chrome in cup tooltip when destination phase name is missing', () => {
+    expect(
+      buildPlacedTooltipModel(
+        {
+          labels: ['Tête'],
+          details: ['Tour 1 · côté A'],
+          kinds: ['cup'],
+        },
+        null,
+        t,
+      ),
+    ).toMatchObject({
+      whereLines: ['Tête ; Tour 1 · côté A'],
+      ariaLabel: 'Cette équipe est déjà placée : Tête ; Tour 1 · côté A',
+    });
+    expect(
+      buildPlacedTooltipModel(
+        { labels: ['Tête'], details: [null], kinds: ['cup'] },
+        '',
+        t,
+      )?.whereLines,
+    ).toEqual(['Tête']);
   });
 
   it('emits one where line per cup placement without repeating the intro', () => {
@@ -174,32 +192,22 @@ describe('structureEntryPlacementProjection', () => {
       'Généré — Tête',
       'Généré — Demi-finale 1 ; côté A',
     ]);
-    expect(
-      entryPlaceAccessibilityLabel(
-        {
-          labels: ['Tête', 'Demi-finale 1'],
-          details: [null, 'côté A'],
-          kinds: ['cup', 'cup'],
-        },
-        t,
-        'Généré',
-      ),
-    ).toBe(
+    expect(model?.ariaLabel).toBe(
       'Cette équipe est déjà placée : Généré — Tête ; Généré — Demi-finale 1 ; côté A',
     );
   });
 
   it('separates multiple group placements with semicolons in aria text', () => {
     expect(
-      entryPlaceAccessibilityLabel(
+      buildPlacedTooltipModel(
         {
           labels: ['Group A', 'Group B'],
           details: ['Groupe A, place 1', 'Groupe B, place 2'],
           kinds: ['group', 'group'],
         },
-        t,
         'Poules',
-      ),
+        t,
+      )?.ariaLabel,
     ).toBe(
       'Cette équipe est déjà placée : Groupe A, place 1 ; Groupe B, place 2',
     );
@@ -231,8 +239,5 @@ describe('structureEntryPlacementProjection', () => {
     expect(
       buildPlacedTooltipModel(map.get('e1'), 'Poules', t)?.whereLines,
     ).toHaveLength(2);
-    expect(entryPlaceAccessibilityLabel(map.get('e1'), t, 'Poules')).toBe(
-      'Cette équipe est déjà placée : Groupe A, place 1 ; Groupe B, place 2',
-    );
   });
 });

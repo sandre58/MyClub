@@ -269,8 +269,10 @@ describe('CompositionQualifiersPanel freshness badge', () => {
       </MemoryRouter>,
     );
     const hint = container.querySelector('.structure-entries__placed-hint');
-    expect(hint).toHaveTextContent('Tête');
-    expect(hint).not.toHaveAttribute('aria-label');
+    expect(hint).toHaveAttribute(
+      'aria-label',
+      'Cette équipe est déjà placée : Généré — Tête ; Demi-finale 1 · côté A',
+    );
     expect(hint).not.toHaveAttribute('title');
   });
 
@@ -317,8 +319,10 @@ describe('CompositionQualifiersPanel freshness badge', () => {
       </MemoryRouter>,
     );
     const hint = container.querySelector('.structure-entries__placed-hint');
-    expect(hint).toHaveTextContent('Groupe A');
-    expect(hint).not.toHaveAttribute('aria-label');
+    expect(hint).toHaveAttribute(
+      'aria-label',
+      'Cette équipe est déjà placée : Groupe A, place 2',
+    );
     expect(hint).not.toHaveAttribute('title');
   });
 

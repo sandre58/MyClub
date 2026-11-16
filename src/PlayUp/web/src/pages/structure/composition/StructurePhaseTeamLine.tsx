@@ -73,8 +73,11 @@ function placedTooltipBody(model: {
       <span className="structure-entries__placed-tooltip-intro">
         {model.intro}
       </span>
-      {model.whereLines.map((line) => (
-        <span key={line} className="structure-entries__placed-tooltip-line">
+      {model.whereLines.map((line, index) => (
+        <span
+          key={`${index}-${line}`}
+          className="structure-entries__placed-tooltip-line"
+        >
           {line}
         </span>
       ))}
@@ -98,12 +101,22 @@ function placedHintNode(
     model != null
       ? placedTooltipBody(model)
       : (props.placedTooltip ?? t('entries.entryPlacedStatus'));
+  const accessibleName =
+    model?.ariaLabel ??
+    props.placedTooltip ??
+    (placeLabel
+      ? `${t('entries.teamAlreadyPlacedIntro')} ${placeLabel}`
+      : t('entries.entryPlacedStatus'));
   return (
     <Tooltip content={tooltipContent}>
-      <button type="button" className="structure-entries__placed-hint">
+      <button
+        type="button"
+        className="structure-entries__placed-hint"
+        aria-label={accessibleName}
+      >
         <LocateIcon size="xs" aria-hidden="true" />
         {placeLabel ? (
-          <span>{placeLabel}</span>
+          <span aria-hidden="true">{placeLabel}</span>
         ) : (
           <span className="ds-visually-hidden">
             {t('entries.entryPlacedStatus')}
