@@ -101,8 +101,9 @@ function placedHintNode(
     model != null
       ? placedTooltipBody(model)
       : (props.placedTooltip ?? t('entries.entryPlacedStatus'));
-  const accessibleName = placeLabel
-    ? t('entries.placedHintShort', { place: placeLabel })
+  const shortPlace = (model?.shortPlace?.trim() || placeLabel).trim();
+  const accessibleName = shortPlace
+    ? t('entries.placedHintShort', { place: shortPlace })
     : t('entries.entryPlacedStatus');
   return (
     <Tooltip content={tooltipContent}>

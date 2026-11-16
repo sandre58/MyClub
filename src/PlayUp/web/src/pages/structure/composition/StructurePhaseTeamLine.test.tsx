@@ -113,7 +113,7 @@ describe('StructurePhaseTeamLine', () => {
             placedTooltipModel={{
               intro: 'Cette équipe est déjà placée :',
               whereLines: ['Tableau — Tête'],
-              ariaLabel: 'Cette équipe est déjà placée : Tableau — Tête',
+              shortPlace: 'Tête',
             }}
           />
         </div>
@@ -270,7 +270,7 @@ describe('StructurePhaseTeamLine', () => {
           placedTooltipModel={{
             intro: 'Cette équipe est déjà placée :',
             whereLines: ['Groupe A, place 3'],
-            ariaLabel: 'Cette équipe est déjà placée : Groupe A, place 3',
+            shortPlace: 'Groupe A, place 3',
           }}
           ineligible
           provenanceMeta="1er"
@@ -288,7 +288,7 @@ describe('StructurePhaseTeamLine', () => {
     expect(screen.getByText('Groupe A')).toBeInTheDocument();
     expect(screen.getByText('Périmé')).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: 'Placée : Groupe A' }),
+      screen.getByRole('button', { name: 'Placée : Groupe A, place 3' }),
     ).toBeInTheDocument();
     expect(screen.getByText('Groupe A')).toHaveAttribute('aria-hidden', 'true');
   });
@@ -305,8 +305,7 @@ describe('StructurePhaseTeamLine', () => {
           placedTooltipModel={{
             intro: 'Cette équipe est déjà placée :',
             whereLines: ['Généré — Tête ; Tour 1 · côté A'],
-            ariaLabel:
-              'Cette équipe est déjà placée : Généré — Tête ; Tour 1 · côté A',
+            shortPlace: 'Tête',
           }}
         />
       </MemoryRouter>,
@@ -336,7 +335,7 @@ describe('StructurePhaseTeamLine', () => {
           placedTooltipModel={{
             intro: 'Cette équipe est déjà placée :',
             whereLines: ['Groupe B, place 2'],
-            ariaLabel: 'Cette équipe est déjà placée : Groupe B, place 2',
+            shortPlace: 'Groupe B, place 2',
           }}
         />
       </MemoryRouter>,

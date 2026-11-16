@@ -316,7 +316,7 @@ describe('CompositionQualifiersPanel freshness badge', () => {
       </MemoryRouter>,
     );
     const hint = container.querySelector('.structure-entries__placed-hint');
-    expect(hint).toHaveAttribute('aria-label', 'Placée : Groupe A');
+    expect(hint).toHaveAttribute('aria-label', 'Placée : Groupe A, place 2');
     expect(hint).not.toHaveAttribute('title');
   });
 

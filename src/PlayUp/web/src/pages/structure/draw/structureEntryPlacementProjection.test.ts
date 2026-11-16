@@ -90,7 +90,7 @@ describe('structureEntryPlacementProjection', () => {
     expect(primaryPlaceLabel(map.get('e1'))).toBe('SF-1-A');
   });
 
-  it('uses group where label without index', () => {
+  it('uses group shortPlace without index and where line without index', () => {
     const cases: SchematicCase[] = [
       {
         formPosition: {
@@ -102,14 +102,12 @@ describe('structureEntryPlacementProjection', () => {
       },
     ];
     const map = entryPlaceProjectionFromSchematic(cases, 'Groups', t);
-    expect(primaryPlaceLabel(map.get('e1'))).toBe('Group A');
-    expect(map.get('e1')?.details[0]).toBe('Groupe A');
     const model = buildPlacedTooltipModel(map.get('e1'), 'Poules', t);
+    expect(model?.shortPlace).toBe('Groupe A');
     expect(model?.whereLines).toEqual(['Groupe A']);
-    expect(model?.ariaLabel).toBe('Cette équipe est déjà placée : Groupe A');
   });
 
-  it('shows group place as Groupe name only with index in details', () => {
+  it('uses group shortPlace with index for accessible hint', () => {
     const cases: SchematicCase[] = [
       {
         formPosition: {
@@ -122,15 +120,12 @@ describe('structureEntryPlacementProjection', () => {
       },
     ];
     const map = entryPlaceProjectionFromSchematic(cases, 'Groups', t);
-    expect(primaryPlaceLabel(map.get('e1'))).toBe('Group A');
-    expect(map.get('e1')?.kinds[0]).toBe('group');
-    expect(buildPlacedTooltipModel(map.get('e1'), 'Poules', t)?.ariaLabel).toBe(
-      'Cette équipe est déjà placée : Groupe A, place 3',
-    );
+    expect(
+      buildPlacedTooltipModel(map.get('e1'), 'Poules', t)?.shortPlace,
+    ).toBe('Groupe A, place 3');
   });
 
-  it('uses cup where lines with phase name, slot chrome and topology detail', () => {
-    const phase = 'Généré';
+  it('keeps cup shortPlace as slot chrome only', () => {
     expect(
       buildPlacedTooltipModel(
         {
@@ -138,13 +133,17 @@ describe('structureEntryPlacementProjection', () => {
           details: ['Demi-finale 1 · côté A'],
           kinds: ['cup'],
         },
-        phase,
+        'Généré',
         t,
       ),
     ).toMatchObject({
-      intro: 'Cette équipe est déjà placée :',
+      shortPlace: 'Tête',
       whereLines: ['Généré — Tête ; Demi-finale 1 · côté A'],
     });
+  });
+
+  it('uses cup where lines with phase name, slot chrome and topology detail', () => {
+    const phase = 'Généré';
     expect(
       buildPlacedTooltipModel(
         { labels: ['SF-1-A'], details: [null], kinds: ['cup'] },
@@ -167,15 +166,8 @@ describe('structureEntryPlacementProjection', () => {
       ),
     ).toMatchObject({
       whereLines: ['Tête ; Tour 1 · côté A'],
-      ariaLabel: 'Cette équipe est déjà placée : Tête ; Tour 1 · côté A',
+      shortPlace: 'Tête',
     });
-    expect(
-      buildPlacedTooltipModel(
-        { labels: ['Tête'], details: [null], kinds: ['cup'] },
-        '',
-        t,
-      )?.whereLines,
-    ).toEqual(['Tête']);
   });
 
   it('emits one where line per cup placement without repeating the intro', () => {
@@ -192,12 +184,10 @@ describe('structureEntryPlacementProjection', () => {
       'Généré — Tête',
       'Généré — Demi-finale 1 ; côté A',
     ]);
-    expect(model?.ariaLabel).toBe(
-      'Cette équipe est déjà placée : Généré — Tête ; Généré — Demi-finale 1 ; côté A',
-    );
+    expect(model?.shortPlace).toBe('Tête');
   });
 
-  it('separates multiple group placements with semicolons in aria text', () => {
+  it('shortPlace uses the first group when several places match', () => {
     expect(
       buildPlacedTooltipModel(
         {
@@ -207,10 +197,8 @@ describe('structureEntryPlacementProjection', () => {
         },
         'Poules',
         t,
-      )?.ariaLabel,
-    ).toBe(
-      'Cette équipe est déjà placée : Groupe A, place 1 ; Groupe B, place 2',
-    );
+      )?.shortPlace,
+    ).toBe('Groupe A, place 1');
   });
 
   it('keeps multiple place labels for the same entry', () => {

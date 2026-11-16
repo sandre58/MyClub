@@ -21,8 +21,6 @@ export type EntryPlaceProjection = {
   kinds: readonly EntryPlaceKind[];
 };
 
-const PLACE_PROJECTION_SEGMENT_SEP = ' ; ';
-
 function resolvedEntryId(place: SchematicCase): string | null {
   const id =
     place.assignment?.entryId?.trim() || place.entry?.entryId?.trim() || null;
@@ -267,9 +265,19 @@ export type PlacedTooltipModel = {
   intro: string;
   /** One fragment per resolved place (shown under the intro in the Tooltip). */
   whereLines: readonly string[];
-  /** Single accessible phrase for the trigger (intro + joined where lines). */
-  ariaLabel: string;
+  /** Fragment for `entries.placedHintShort` (group includes index when known). */
+  shortPlace: string;
 };
+
+function primaryShortPlace(projection: EntryPlaceProjection): string {
+  const short = projection.labels[0]?.trim() ?? '';
+  const detail = projection.details[0]?.trim() ?? '';
+  const kind = projection.kinds[0];
+  if (kind === 'group') {
+    return detail || short;
+  }
+  return short;
+}
 
 export function buildPlacedTooltipModel(
   projection: EntryPlaceProjection | undefined,
@@ -301,6 +309,5 @@ export function buildPlacedTooltipModel(
     return null;
   }
   const intro = t('entries.teamAlreadyPlacedIntro');
-  const ariaLabel = `${intro} ${whereLines.join(PLACE_PROJECTION_SEGMENT_SEP)}`;
-  return { intro, whereLines, ariaLabel };
+  return { intro, whereLines, shortPlace: primaryShortPlace(projection) };
 }

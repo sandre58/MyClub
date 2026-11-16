@@ -60,6 +60,6 @@ export function qualifierSeatPlacedTooltipModel(
   return {
     intro,
     whereLines: [where],
-    ariaLabel: `${intro} ${where}`,
+    shortPlace: placeLabel.trim(),
   };
 }
