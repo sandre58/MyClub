@@ -306,9 +306,10 @@ public static class StructureViewAssembler
             .GroupBy(diagnostic => diagnostic.StageId!.Value)
             .ToDictionary(
                 group => group.Key,
-                group => (IReadOnlyList<string>)[.. group
+                group => group
                     .Select(d => d.Code)
-                    .Distinct(StringComparer.Ordinal)]);
+                    .Distinct(StringComparer.Ordinal)
+                    .ToArray());
 
         var byId = stages.ToDictionary(stage => stage.Id);
         var resolutionByStage = precomputedResolution

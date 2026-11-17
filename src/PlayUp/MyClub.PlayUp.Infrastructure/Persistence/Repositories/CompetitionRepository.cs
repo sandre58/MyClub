@@ -34,9 +34,12 @@ internal sealed class CompetitionRepository(PlayUpDbContext context) : ICompetit
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        return [.. competitions
-            .OrderBy(competition => competition.Name.Value, StringComparer.OrdinalIgnoreCase)
-            .ThenBy(competition => competition.Id.Value)];
+        return
+        [
+            .. competitions
+                .OrderBy(competition => competition.Name.Value, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(competition => competition.Id.Value)
+        ];
     }
 
     /// <inheritdoc />

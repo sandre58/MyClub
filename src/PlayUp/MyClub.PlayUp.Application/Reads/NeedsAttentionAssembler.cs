@@ -565,12 +565,11 @@ public static class NeedsAttentionAssembler
         IReadOnlyDictionary<StageId, IReadOnlyList<MatchAttentionSlice>> matchesByStage) =>
         matchesByStage.ToDictionary(
             pair => pair.Key,
-            pair => (IReadOnlyList<MatchSummaryRow>)[
-                .. pair.Value.Select(match => new MatchSummaryRow(
+            pair => (IReadOnlyList<MatchSummaryRow>)pair.Value.Select(match => new MatchSummaryRow(
                     match.Id,
                     match.StageId,
                     match.Status,
                     match.HomeEntryId,
                     match.AwayEntryId,
-                    match.Result))]);
+                    match.Result)).ToArray());
 }

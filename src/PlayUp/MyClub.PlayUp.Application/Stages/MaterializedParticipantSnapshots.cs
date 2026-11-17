@@ -21,10 +21,13 @@ internal static class MaterializedParticipantSnapshots
     public static IReadOnlyList<MatchParticipantSnapshot> FromMatches(IEnumerable<Match> matches)
     {
         ArgumentNullException.ThrowIfNull(matches);
-        return [.. matches.Select(match => new MatchParticipantSnapshot(
-            match.Id,
-            match.HomeEntryId,
-            match.AwayEntryId))];
+        return
+        [
+            .. matches.Select(match => new MatchParticipantSnapshot(
+                match.Id,
+                match.HomeEntryId,
+                match.AwayEntryId))
+        ];
     }
 
     /// <summary>
@@ -33,9 +36,12 @@ internal static class MaterializedParticipantSnapshots
     internal static IReadOnlyList<MatchParticipantSnapshot> FromSummaryRows(IEnumerable<MatchSummaryRow> rows)
     {
         ArgumentNullException.ThrowIfNull(rows);
-        return [.. rows.Select(row => new MatchParticipantSnapshot(
-            row.Id,
-            row.HomeEntryId,
-            row.AwayEntryId))];
+        return
+        [
+            .. rows.Select(row => new MatchParticipantSnapshot(
+                row.Id,
+                row.HomeEntryId,
+                row.AwayEntryId))
+        ];
     }
 }
