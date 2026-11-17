@@ -1043,11 +1043,14 @@ public static class OverviewAssembler
         IReadOnlyDictionary<EntryId, string> names)
     {
         var instructions = ResolvePlacementAwards.Execute(stages, matchesByStage);
-        return [.. instructions.Select(instruction =>
-        {
-            var displayName = EntryDisplayNames.Resolve(names, instruction.EntryId) ?? instruction.EntryId.Value.ToString();
-            return new FinalPlacementDto(instruction.Rank, instruction.EntryId.Value, displayName);
-        })];
+        return
+        [
+            .. instructions.Select(instruction =>
+            {
+                var displayName = EntryDisplayNames.Resolve(names, instruction.EntryId) ?? instruction.EntryId.Value.ToString();
+                return new FinalPlacementDto(instruction.Rank, instruction.EntryId.Value, displayName);
+            })
+        ];
     }
 
     private static IReadOnlyList<FinalPlacementDto>? ProjectStandingOutcomePlaces(

@@ -57,10 +57,13 @@ public static class QualificationStandingFactory
                 .ToArray();
             if (participants.Length == 0)
             {
-                participants = [.. matches
-                    .Where(match => match is { Status: MatchStatus.Finished, Result: not null })
-                    .SelectMany(match => StandingMatchAssembler.StandingParticipantIds(match.HomeEntryId, match.AwayEntryId))
-                    .Distinct()];
+                participants =
+                [
+                    .. matches
+                        .Where(match => match is { Status: MatchStatus.Finished, Result: not null })
+                        .SelectMany(match => StandingMatchAssembler.StandingParticipantIds(match.HomeEntryId, match.AwayEntryId))
+                        .Distinct()
+                ];
             }
 
             overall = CalculateStanding.Execute(participants, matches, rules, MatchFilter.All, penalties);
@@ -118,10 +121,13 @@ public static class QualificationStandingFactory
                 .ToArray();
             if (participants.Length == 0)
             {
-                participants = [.. matches
-                    .Where(match => match is { Status: MatchStatus.Finished, Result: not null })
-                    .SelectMany(match => StandingMatchAssembler.StandingParticipantIds(match.HomeEntryId, match.AwayEntryId))
-                    .Distinct()];
+                participants =
+                [
+                    .. matches
+                        .Where(match => match is { Status: MatchStatus.Finished, Result: not null })
+                        .SelectMany(match => StandingMatchAssembler.StandingParticipantIds(match.HomeEntryId, match.AwayEntryId))
+                        .Distinct()
+                ];
             }
 
             overall = CalculateStanding.Execute(participants, matches, rules, MatchFilter.All, penalties);

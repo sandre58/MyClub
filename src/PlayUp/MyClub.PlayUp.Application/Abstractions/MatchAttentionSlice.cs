@@ -59,8 +59,7 @@ public sealed record MatchAttentionSlice(
         ArgumentNullException.ThrowIfNull(matchesByStage);
         return matchesByStage.ToDictionary(
             pair => pair.Key,
-            pair => (IReadOnlyList<MatchAttentionSlice>)[
-                .. pair.Value.Select(FromSummaryRow)]);
+            pair => (IReadOnlyList<MatchAttentionSlice>)pair.Value.Select(FromSummaryRow).ToArray());
     }
 
     /// <summary>Maps full aggregates keyed by stage.</summary>
@@ -70,7 +69,6 @@ public sealed record MatchAttentionSlice(
         ArgumentNullException.ThrowIfNull(matchesByStage);
         return matchesByStage.ToDictionary(
             pair => pair.Key,
-            pair => (IReadOnlyList<MatchAttentionSlice>)[
-                .. pair.Value.Select(FromMatch)]);
+            pair => (IReadOnlyList<MatchAttentionSlice>)pair.Value.Select(FromMatch).ToArray());
     }
 }

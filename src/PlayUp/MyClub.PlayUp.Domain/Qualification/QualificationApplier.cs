@@ -97,8 +97,9 @@ public static class QualificationApplier
         IReadOnlyList<StandingRow> rows,
         int from,
         int to) =>
-        [.. rows.Where(r => r.Position >= from && r.Position <= to)
-            .OrderBy(r => r.Position)
-            .Select(r => r.EntryId)
+        [
+            .. rows.Where(r => r.Position >= from && r.Position <= to)
+                .OrderBy(r => r.Position)
+                .Select(r => r.EntryId)
         ];
 }
