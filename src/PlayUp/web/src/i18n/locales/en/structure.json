@@ -318,7 +318,7 @@
       "SlotFeedMissing": "Place not fed",
       "SlotFeedInvalid": "Invalid place feed",
       "SlotFeedMultiple": "Conflicting place feeds",
-      "ConfrontationUndecidable": "Draw not always decidable",
+      "ConfrontationUndecidable": "Tied match has no decider",
       "CycleDetected": "Cycle between phases",
       "NonRootUnfed": "No inbound teams yet",
       "AwaitingInboundQualification": "Waiting for qualifiers",
@@ -838,6 +838,8 @@
     "cup": "{{round}} · {{side}}",
     "cupWithOrdinal": "{{round}} {{ordinal}} · {{side}}",
     "group": "Group {{name}}",
+    "groupWhere": "Group {{name}}",
+    "groupWhereIndexed": "Group {{name}}, slot {{index}}",
     "form": "Organisation"
   },
   "resolution": {
@@ -845,7 +847,7 @@
       "state": {
         "AJour": "Current",
         "Perime": "Stale",
-        "Indetermine": "Unconfirmed",
+        "Indetermine": "Undetermined",
         "NonVerifiee": "Unverified"
       },
       "cause": {
@@ -854,48 +856,44 @@
         "AmontPerime": "Upstream phase stale"
       },
       "upstreamLink": "Go to the upstream phase",
-      "unconfirmedSentence": "{{team}} is no longer confirmed — {{detail}}",
-      "definitive": "Can no longer be confirmed",
+      "upstreamPhaseLink": "Open the upstream phase",
+      "unconfirmedSentence": "{{team}} is no longer determined — {{detail}}",
+      "definitive": "Can no longer be determined",
       "indeterminacy": {
         "MatchNonJoue": {
-          "cause": "The match has not been played",
           "clause": "the match has not been played",
           "clauseNamed": "the match {{match}} has not been played",
           "action": "Play the match",
           "actionNamed": "Play the match {{match}}"
         },
         "Egalite": {
-          "cause": "The score does not separate the teams",
           "clause": "the score does not separate the teams",
           "action": "Break the tie"
         },
         "SourceAbsente": {
-          "cause": "The source phase or rule cannot be found",
           "clause": "the source phase or rule cannot be found"
         },
         "SelectionVide": {
-          "cause": "The standing does not designate a team",
           "clause": "the standing does not designate a team"
         },
         "Autre": {
-          "cause": "The selection cannot be calculated",
           "clause": "the selection cannot be calculated"
         },
         "EgaliteClassement": {
-          "cause": "Several teams are tied in the standing",
           "clause": "several teams are tied in the standing",
           "action": "Open the standing"
         },
         "ConditionNonRemplie": {
-          "cause": "The team no longer meets the qualification condition",
           "clause": "it no longer meets the qualification condition"
         },
         "ConfigurationInvalide": {
-          "cause": "The source phase setup is incomplete",
           "clause": "the source phase setup is incomplete",
           "action": "Open the rules"
         }
       },
+      "cascadeNotReplaceable": "This place cannot be replaced automatically.",
+      "cascadeNotReplaceableHint": "Manual placement remains available.",
+      "multiplePlacements": "Placed in several spots: act from the schematic.",
       "ariaWithCause": "{{label}} — {{cause}}",
       "ariaAction": "{{label}} — {{cause}}. {{action}}",
       "ariaActionNoCause": "{{label}}. {{action}}"
@@ -907,11 +905,22 @@
       "cancel": "Cancel",
       "pending": "Releasing…",
       "nonePlayed": "No match will change.",
-      "detachedIntro": "The team's side becomes to be determined:",
-      "detachedMatch": "Leg {{leg}} — {{side}}",
-      "detachedMatchNamed": "Leg {{leg}} — {{side}} — {{match}}",
-      "populationDropped": "{{team}} also leaves the composition.",
-      "affectedIntro": "Other places change state:",
+      "detachedIntro": "In these unplayed matches:",
+      "cause": {
+        "MatchNonJoue": "The match has not been played yet: this place is undetermined.",
+        "MatchNonJoueNamed": "The match {{match}} has not been played yet: this place is undetermined.",
+        "Egalite": "The match did not break the tie: this place is no longer determined.",
+        "SourceAbsente": "The phase or rule that feeds this place cannot be found.",
+        "SelectionVide": "The upstream standing no longer designates a team for this place.",
+        "Autre": "The selection for this place cannot be calculated.",
+        "EgaliteClassement": "Several teams are tied in the standing: this place is no longer determined.",
+        "ConditionNonRemplie": "The team no longer meets the qualification condition: this place is no longer determined.",
+        "ConfigurationInvalide": "The source phase setup is incomplete: this place cannot be determined."
+      },
+      "detachedMatch": "Leg {{leg}}: the {{side}} side becomes to be determined.",
+      "detachedMatchNamed": "Leg {{leg}} ({{match}}): the {{side}} side becomes to be determined.",
+      "populationDropped": "{{team}} will also leave this phase's composition.",
+      "affectedIntro": "Other places will change state:",
       "affectedOccupant": "{{team}} — {{place}}: {{before}} → {{after}}",
       "affectedOccupantOtherPhase": "{{team}} — {{place}} ({{phase}}): {{before}} → {{after}}",
       "target": {
@@ -925,8 +934,8 @@
       }
     },
     "definitiveRelease": {
-      "banner_one": "{{count}} place can no longer be confirmed.",
-      "banner_other": "{{count}} places can no longer be confirmed.",
+      "banner_one": "{{count}} place can no longer be determined.",
+      "banner_other": "{{count}} places can no longer be determined.",
       "release": "Release…",
       "excludedIntro": "These places stay: they cannot be released.",
       "excluded": "{{team}} — {{place}}: {{reason}}",
@@ -982,7 +991,8 @@
     "entryPlacedAria": "{{name}} — placed on the form",
     "entryNotPlacedAria": "{{name}} — not placed yet",
     "entryPlacedStatus": "Placed",
-    "entryPlacedTooltip": "Placed — {{place}}",
+    "placedHintShort": "Placed: {{place}}",
+    "teamAlreadyPlacedIntro": "This team is already placed:",
     "meterAria": "Expected teams / places",
     "meter": {
       "population": "Teams",

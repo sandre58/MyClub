@@ -494,7 +494,7 @@ public static class ResolutionFreshnessDetector
                         occupant.ToAssessment(),
                         stage,
                         matches);
-                    return occupant.ToDto(verdict.Releasable, verdict.Definitive);
+                    return occupant.ToDto(verdict.Releasable, verdict.Definitive, stage);
                 }).ToArray());
     }
 
@@ -872,14 +872,15 @@ public static class ResolutionFreshnessDetector
             ActionMatchLabel = null;
         }
 
-        public StructureResolutionOccupantDto ToDto(bool releasable, bool definitive)
+        public StructureResolutionOccupantDto ToDto(bool releasable, bool definitive, Stage? stage)
         {
             var cascadeReplaceable = State == StructureResolutionFreshness.Perime
                 && (Kind == ResolutionProvenanceKind.Qualification
                     || Kind == ResolutionProvenanceKind.Progression)
                 && Cause != StructureResolutionStalenessCause.AmontPerime
                 && ReplayEntryId is not null
-                && ReplayFingerprint is not null;
+                && ReplayFingerprint is not null
+                && !BlocksCascadeReplace(stage);
             return new(
                 Target,
                 EntryId,
@@ -896,6 +897,23 @@ public static class ResolutionFreshnessDetector
                 cascadeReplaceable,
                 releasable,
                 definitive);
+        }
+
+        /// <summary>
+        /// True when the clicked slot carries a direct assignment (same rule as cascade origin guard).
+        /// Does not walk downstream closure members; preview may still refuse and the client shows a toast.
+        /// </summary>
+        private bool BlocksCascadeReplace(Stage? stage)
+        {
+            if (stage is null
+                || Target != StructureResolutionOccupantTarget.Slot
+                || SlotKey is null)
+            {
+                return false;
+            }
+
+            return stage.DirectAssignments.Any(assignment =>
+                string.Equals(assignment.SlotKey, SlotKey, StringComparison.Ordinal));
         }
 
         public ResolutionOccupantAssessment ToAssessment() =>

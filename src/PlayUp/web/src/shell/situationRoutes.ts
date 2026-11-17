@@ -119,9 +119,25 @@ export function runtimeQualificationProgressionHref(
   });
 }
 
+export type SituationHrefOptions = {
+  /** When false, ConfrontationUndecidable opens the fiche without `section=confrontation`. */
+  stageEditable?: boolean;
+};
+
+export function isStructurePhaseRegulationEditable(
+  stageStatus: string | null | undefined,
+): boolean {
+  return (
+    stageStatus === 'Draft' ||
+    stageStatus === 'Ready' ||
+    stageStatus === 'Running'
+  );
+}
+
 export function situationHref(
   situation: OverviewSituation,
   competitionId: string,
+  options?: SituationHrefOptions,
 ): string | null {
   if (situation.source === 'InsufficientParticipants') {
     return `/competitions/${competitionId}/teams`;
@@ -145,9 +161,44 @@ export function situationHref(
     situation.source === 'MissingPotRules';
 
   if (isStructureCatalogueSource) {
+    if (situation.source === 'ConfrontationUndecidable' && stageId) {
+      const stageStatus = situation.params?.stageStatus;
+      const openEditor =
+        options?.stageEditable !== false &&
+        (stageStatus == null ||
+          isStructurePhaseRegulationEditable(stageStatus));
+      return structureDeepLink({
+        competitionId,
+        stageId,
+        section: openEditor ? 'confrontation' : undefined,
+      });
+    }
+
     return `/competitions/${competitionId}/structure${
       stageId ? `?stage=${encodeURIComponent(stageId)}` : ''
     }`;
+  }
+
+  if (
+    (situation.source === 'ResolutionPerime' ||
+      situation.source === 'ResolutionIndetermine') &&
+    situation.targetType === 'Slot' &&
+    situation.targetId
+  ) {
+    const colon = situation.targetId.indexOf(':');
+    const stageFromSlot =
+      colon >= 0 ? situation.targetId.slice(0, colon) : situation.targetId;
+    const slotKey =
+      situation.params?.slotKey?.trim() ||
+      (colon >= 0 ? situation.targetId.slice(colon + 1).trim() : null);
+    if (stageFromSlot && slotKey) {
+      return structureDeepLink({
+        competitionId,
+        stageId: stageFromSlot,
+        focus: 'tile-places',
+        slotKey,
+      });
+    }
   }
 
   const runtimeStructure = runtimeQualificationProgressionHref(

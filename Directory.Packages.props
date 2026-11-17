@@ -4,12 +4,12 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- Domain / Application / DevRunner (explicit PackageReferences) -->
-    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="11.0.0-rc.3.26522.148" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="11.0.0-rc.3.26522.148" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="11.0.0-rc.3.26522.148" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="11.0.0-rc.3.26522.148" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.UserSecrets" Version="11.0.0-rc.3.26522.148" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0-rc.3.26522.148" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="11.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="11.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="11.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="11.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.UserSecrets" Version="11.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0" />
     <!-- Infrastructure (EF Core 11 + Npgsql EF 11 — same train; do not mix with 10.x) -->
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="11.0.0-rc.3.26522.148" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="11.0.0-rc.3.26522.148" />
@@ -26,7 +26,7 @@
     <PackageVersion Include="Roslynator.Analyzers" Version="5.0.1" />
     <!-- Tests -->
     <PackageVersion Include="GitHubActionsTestLogger" Version="3.0.5" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.12.0" />
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.1" />
     <PackageVersion Include="FluentAssertions" Version="8.11.0" />
@@ -34,9 +34,9 @@
     <PackageVersion Include="AutoFixture" Version="5.0.0-rc.1" />
     <PackageVersion Include="AutoFixture.AutoMoq" Version="5.0.0-rc.1" />
     <PackageVersion Include="AutoFixture.Xunit2" Version="5.0.0-preview0012" />
-    <PackageVersion Include="coverlet.collector" Version="10.1.0" />
-    <PackageVersion Include="coverlet.msbuild" Version="10.1.0" />
+    <PackageVersion Include="coverlet.collector" Version="10.1.1" />
+    <PackageVersion Include="coverlet.msbuild" Version="10.1.1" />
     <!-- SourceLink -->
-    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="11.0.100-rc.3.26522.148" />
+    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="11.0.100" />
   </ItemGroup>
 </Project>

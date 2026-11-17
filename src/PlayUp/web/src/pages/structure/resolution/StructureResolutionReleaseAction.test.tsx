@@ -1,8 +1,18 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const navigate = vi.fn();
+
+vi.mock('react-router-dom', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react-router-dom')>();
+  return {
+    ...actual,
+    useNavigate: () => navigate,
+  };
+});
 
 import { ApiError } from '../../../api/http';
 import {
@@ -104,6 +114,10 @@ const emptyPlan = {
 };
 
 describe('StructureResolutionReleaseAction', () => {
+  beforeEach(() => {
+    navigate.mockReset();
+  });
+
   it('confirms a release that changes no match', async () => {
     vi.mocked(previewResolutionRelease).mockResolvedValue(emptyPlan);
     vi.mocked(confirmResolutionRelease).mockResolvedValue(emptyPlan);
@@ -116,7 +130,9 @@ describe('StructureResolutionReleaseAction', () => {
       await screen.findByRole('dialog', { name: 'Libérer cette place ?' }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText('Le classement ne désigne aucune équipe'),
+      screen.getByText(
+        'Le classement amont ne désigne plus aucune équipe pour cette place.',
+      ),
     ).toBeInTheDocument();
     expect(
       screen.getByText('Aucun match ne sera modifié.'),
@@ -161,17 +177,53 @@ describe('StructureResolutionReleaseAction', () => {
     await user.click(screen.getByRole('button', { name: 'open' }));
 
     expect(
-      await screen.findByText('Manche 1 — domicile — Nord – Est'),
+      await screen.findByText(
+        'Manche 1 (Nord – Est) : le côté domicile redevient à déterminer.',
+      ),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText("Le côté de l'équipe redevient à déterminer :"),
-    ).toBeInTheDocument();
+    expect(screen.getByText('Dans ces matchs non joués :')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Libérer' })).toHaveClass(
-      'ds-btn--destructive',
+      'ds-btn--primary',
     );
     expect(
-      screen.getByRole('link', { name: 'Jouer le match' }),
-    ).toHaveAttribute('href', `/matches/${matchId}`);
+      screen.getByRole('button', { name: 'Jouer le match' }),
+    ).toBeInTheDocument();
+  });
+
+  it('closes without releasing when the secondary action is used', async () => {
+    vi.mocked(previewResolutionRelease).mockResolvedValue({
+      ...emptyPlan,
+      detachedMatches: [
+        {
+          matchId,
+          stageId,
+          legIndex: 1,
+          side: 'Home',
+          homeEntryId: entryId,
+          awayEntryId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+          homeName: 'Nord',
+          awayName: 'Est',
+        },
+      ],
+    });
+    const user = userEvent.setup();
+    renderAction({
+      ...occupant,
+      indeterminacyCause: 'MatchNonJoue',
+      actionMatchId: matchId,
+      actionMatchLabel: 'Nord – Est',
+    });
+
+    await user.click(screen.getByRole('button', { name: 'open' }));
+    await user.click(screen.getByRole('button', { name: /^Jouer le match$/ }));
+
+    expect(confirmResolutionRelease).not.toHaveBeenCalled();
+    expect(navigate).toHaveBeenCalledWith(`/matches/${matchId}`);
+    await waitFor(() => {
+      expect(
+        screen.queryByRole('dialog', { name: 'Libérer cette place ?' }),
+      ).not.toBeInTheDocument();
+    });
   });
 
   it('keeps a refusal in the dialog footer and disables confirm', async () => {
@@ -274,7 +326,9 @@ describe('StructureResolutionReleaseAction', () => {
     await user.click(screen.getByRole('button', { name: 'open' }));
 
     expect(
-      await screen.findByText('Centre quitte aussi la composition.'),
+      await screen.findByText(
+        'Centre quittera aussi la composition de cette phase.',
+      ),
     ).toBeInTheDocument();
     expect(
       screen.getByText('Centre — Suite (Aval) : Périmé → À jour'),

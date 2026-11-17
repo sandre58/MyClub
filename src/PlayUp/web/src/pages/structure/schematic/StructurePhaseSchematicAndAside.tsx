@@ -32,6 +32,8 @@ import { StructureSchematicViewport } from './StructureSchematicViewport';
 import type { MaterializePresentation } from '../fiche/structureMaterializeCopy';
 import type { StructurePlacementOperationalSectionProps } from '../fiche/structurePlacementOperationalProps';
 import { buildStructureResolutionOccupantIndex } from '../resolution/structureResolutionOccupants';
+import { useStructureSlotFocus } from '../useStructureSlotFocus';
+
 export function StructurePhaseSchematicAndAside({
   showHeroStats,
   heroFacts,
@@ -66,6 +68,8 @@ export function StructurePhaseSchematicAndAside({
   attributionBanners,
   hasAttribution,
   placementAwards,
+  initialHighlightSlotKey,
+  onInitialHighlightConsumed,
 }: {
   showHeroStats: boolean;
   heroFacts: StructurePhaseHeroFact[];
@@ -103,12 +107,19 @@ export function StructurePhaseSchematicAndAside({
   attributionBanners: ReactNode;
   hasAttribution: boolean;
   placementAwards: readonly StructurePlacementAward[];
+  initialHighlightSlotKey?: string | null;
+  onInitialHighlightConsumed?: () => void;
 }) {
   const { t } = useTranslation('structure');
   const showHeroChrome = showHeroStats || canRebuild;
   const resolutionIndex = useMemo(
     () => buildStructureResolutionOccupantIndex(stage.resolutionOccupants),
     [stage.resolutionOccupants],
+  );
+  useStructureSlotFocus(
+    initialHighlightSlotKey,
+    schematicQuery.isSuccess,
+    onInitialHighlightConsumed,
   );
 
   return (

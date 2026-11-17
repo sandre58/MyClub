@@ -463,6 +463,28 @@ export async function findFirstFinishedMatchOnStage(
   return finished.matchId;
 }
 
+export async function readFinishedMatchScore(
+  request: APIRequestContext,
+  matchId: string,
+): Promise<{ homeGoals: number; awayGoals: number }> {
+  const response = await request.get(`${playUpApiBase()}/matches/${matchId}`);
+  if (!response.ok()) {
+    const body = await response.text();
+    throw new Error(
+      `GET /matches/${matchId} failed (${response.status()}): ${body}`,
+    );
+  }
+  const match = (await response.json()) as {
+    result?: { homeGoals: number; awayGoals: number };
+  };
+  const homeGoals = match.result?.homeGoals;
+  const awayGoals = match.result?.awayGoals;
+  if (homeGoals == null || awayGoals == null) {
+    throw new Error(`Match ${matchId} has no result`);
+  }
+  return { homeGoals, awayGoals };
+}
+
 export async function correctFinishedMatchResult(
   request: APIRequestContext,
   matchId: string,

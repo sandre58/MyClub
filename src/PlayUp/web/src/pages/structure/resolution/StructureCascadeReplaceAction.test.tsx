@@ -14,9 +14,14 @@ import type {
   StructureResolutionOccupant,
   StructureStageHubSummary,
 } from '../../../types';
+import { notify } from '../../../design-system/toastStore';
 import { StructureCascadeReplaceAction } from './StructureCascadeReplaceAction';
 import { useStructureCascadeReplace } from './structureCascadeReplaceContext';
 import { StructureResolutionFreshnessBadge } from './StructureResolutionFreshnessBadge';
+
+vi.mock('../../../design-system/toastStore', () => ({
+  notify: { error: vi.fn(), success: vi.fn(), info: vi.fn() },
+}));
 
 vi.mock('../../../api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../../api')>();
@@ -238,6 +243,33 @@ describe('StructureCascadeReplaceAction', () => {
       }
     },
   );
+
+  it('shows a preview refusal as toast instead of a page banner', async () => {
+    vi.mocked(previewCascadeReplace).mockRejectedValue(
+      new ApiError(
+        409,
+        'Direct assignment',
+        undefined,
+        'Application.CascadeReplaceDirectAssignment',
+      ),
+    );
+    const user = userEvent.setup();
+    renderAction();
+
+    await user.click(
+      screen.getByRole('button', {
+        name: "Périmé — Résultat amont modifié. Cliquer pour remplacer l'équipe par l'occupant attendu",
+      }),
+    );
+
+    expect(vi.mocked(notify.error)).toHaveBeenCalledWith(
+      'Une affectation directe n’est jamais remplacée.',
+    );
+    expect(
+      screen.queryByText('Une affectation directe n’est jamais remplacée.'),
+    ).toBeNull();
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
 
   it('shows the server refusal and disables confirm', async () => {
     vi.mocked(previewCascadeReplace).mockResolvedValue({
