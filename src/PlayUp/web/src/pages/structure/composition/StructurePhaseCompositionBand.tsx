@@ -15,6 +15,7 @@ import {
 } from '../../../design-system/icons/contentIcons';
 import type {
   CompetitionStatus,
+  StageSchematic,
   StructureEntry,
   StructureFormatKind,
   StructureInboundComposition,
@@ -48,6 +49,7 @@ export type StructurePhaseCompositionBandProps = {
   entries: readonly StructureEntry[];
   formatKind: StructureFormatKind | null | undefined;
   schematicReady: boolean;
+  schematic: StageSchematic | null | undefined;
   entryPlaceProjections: ReadonlyMap<string, EntryPlaceProjection>;
   onViewPhase?: (peerId: string) => void;
   renderAvalSourceAction: (group: CompositionQualifierFeedGroup) => ReactNode;
@@ -100,6 +102,7 @@ export function StructurePhaseCompositionBand({
   entries,
   formatKind,
   schematicReady,
+  schematic,
   entryPlaceProjections,
   onViewPhase,
   renderAvalSourceAction,
@@ -177,9 +180,11 @@ export function StructurePhaseCompositionBand({
             entries={entries}
             formatKind={formatKind}
             entryPlaceProjections={entryPlaceProjections}
+            schematic={schematic}
             resolutionOccupants={stage.resolutionOccupants}
             onViewPhase={onViewPhase}
             renderGroupAction={renderAvalSourceAction}
+            destinationPhaseName={stage.name}
           />
           {compositionPopulationGaugeFooter &&
           !sharedCompositionPopulationGauge &&
@@ -233,7 +238,6 @@ export function StructurePhaseCompositionBand({
               ) : undefined
             }
           />
-          {capacityIssueBanner}
           {teamsRuntimePresentation.kind === 'empty' ? (
             <EmptyState
               variant="idle"
@@ -258,6 +262,8 @@ export function StructurePhaseCompositionBand({
               placedEntryIds={placedEntryIds}
               entryPlaceProjections={entryPlaceProjections}
               schematicReady={schematicReady}
+              schematic={schematic}
+              inboundComposition={inboundComposition}
               sourcesConfiguredVolume={populationFeedVolume}
               compositionTileMode={compositionTileMode}
               entryProvenanceByEntryId={entryProvenanceByEntryId}
@@ -265,6 +271,7 @@ export function StructurePhaseCompositionBand({
               suppressRuntimeEmptyPresentation
             />
           )}
+          {capacityIssueBanner}
           {compositionPopulationGaugeFooter &&
           showTeamsSection &&
           !sharedCompositionPopulationGauge

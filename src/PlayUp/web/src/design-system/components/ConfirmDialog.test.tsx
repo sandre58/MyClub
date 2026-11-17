@@ -141,6 +141,74 @@ describe('ConfirmDialog', () => {
     expect(onCancel).toHaveBeenCalled();
   });
 
+  it('renders an optional secondary action between cancel and confirm', async () => {
+    const onSecondary = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <div className="ds-root" data-font="plex" data-palette="slate">
+        <ConfirmDialog
+          open
+          title="Titre"
+          message="Corps"
+          confirmLabel="OK"
+          cancelLabel="Annuler"
+          secondaryLabel="Aller"
+          onSecondary={onSecondary}
+          onCancel={() => undefined}
+          onConfirm={() => undefined}
+        />
+      </div>,
+    );
+
+    const dialog = screen.getByRole('dialog', { name: 'Titre' });
+    const secondary = within(dialog).getByRole('button', { name: 'Aller' });
+    expect(secondary).toHaveClass('ds-btn--secondary');
+    await user.click(secondary);
+    expect(onSecondary).toHaveBeenCalledTimes(1);
+  });
+
+  it('hides the secondary action unless both label and handler are provided', () => {
+    render(
+      <div className="ds-root" data-font="plex" data-palette="slate">
+        <ConfirmDialog
+          open
+          title="Titre"
+          message="Corps"
+          confirmLabel="OK"
+          cancelLabel="Annuler"
+          secondaryLabel="Aller"
+          onCancel={() => undefined}
+          onConfirm={() => undefined}
+        />
+      </div>,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Aller' })).toBeNull();
+  });
+
+  it('disables the secondary action while confirm is pending', () => {
+    render(
+      <div className="ds-root" data-font="plex" data-palette="slate">
+        <ConfirmDialog
+          open
+          title="Titre"
+          message="Corps"
+          confirmLabel="OK"
+          cancelLabel="Annuler"
+          confirmPending
+          secondaryLabel="Aller"
+          onSecondary={() => undefined}
+          onCancel={() => undefined}
+          onConfirm={() => undefined}
+        />
+      </div>,
+    );
+
+    expect(
+      within(screen.getByRole('dialog')).getByRole('button', { name: 'Aller' }),
+    ).toBeDisabled();
+  });
+
   it('shows a spinner on the confirm action while pending', () => {
     render(
       <div className="ds-root" data-font="plex" data-palette="slate">

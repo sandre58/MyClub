@@ -1,6 +1,8 @@
 import type { StructureResolutionOccupant } from '../../../types';
 import { structureDeepLink } from '../structureNavigation';
 
+export type FreshnessNavigateIcon = 'upstream' | 'open';
+
 export type FreshnessAction =
   | { kind: 'replace' }
   | { kind: 'release' }
@@ -8,13 +10,13 @@ export type FreshnessAction =
       kind: 'navigate';
       href: string;
       labelKey: string;
+      icon: FreshnessNavigateIcon;
       labelParams?: Record<string, string>;
     };
 
 function stageHref(
   competitionId: string | null | undefined,
   stageId: string | null | undefined,
-  section?: 'classement',
 ): string | null {
   const stage = stageId?.trim();
   const competition = competitionId?.trim();
@@ -24,8 +26,19 @@ function stageHref(
   return structureDeepLink({
     competitionId: competition,
     stageId: stage,
-    section,
   });
+}
+
+function standingsHref(
+  competitionId: string | null | undefined,
+  stageId: string | null | undefined,
+): string | null {
+  const stage = stageId?.trim();
+  const competition = competitionId?.trim();
+  if (!stage || !competition) {
+    return null;
+  }
+  return `/competitions/${competition}/classements?stage=${encodeURIComponent(stage)}`;
 }
 
 function matchHref(matchId: string | null | undefined): string | null {
@@ -79,11 +92,12 @@ export function indeterminacyExplanation(
 function navigate(
   href: string,
   labelKey: string,
+  icon: FreshnessNavigateIcon,
   labelParams?: Record<string, string>,
 ): FreshnessAction {
   return labelParams
-    ? { kind: 'navigate', href, labelKey, labelParams }
-    : { kind: 'navigate', href, labelKey };
+    ? { kind: 'navigate', href, labelKey, icon, labelParams }
+    : { kind: 'navigate', href, labelKey, icon };
 }
 
 /**
@@ -100,7 +114,9 @@ export function freshnessAction(
   if (occupant.state === 'Perime') {
     if (occupant.stalenessCause === 'AmontPerime') {
       const href = stageHref(competitionId, occupant.upstreamStageId);
-      return href ? navigate(href, 'resolution.freshness.upstreamLink') : null;
+      return href
+        ? navigate(href, 'resolution.freshness.upstreamLink', 'upstream')
+        : null;
     }
     if (
       options.canReplace &&
@@ -132,48 +148,65 @@ export function freshnessAction(
       return null;
     }
     const matchLabel = occupant.actionMatchLabel?.trim();
-    if (matchLabel) {
+    if (match) {
+      if (matchLabel) {
+        return navigate(
+          href,
+          'resolution.freshness.indeterminacy.MatchNonJoue.actionNamed',
+          'open',
+          { match: matchLabel },
+        );
+      }
       return navigate(
         href,
-        'resolution.freshness.indeterminacy.MatchNonJoue.actionNamed',
-        { match: matchLabel },
+        'resolution.freshness.indeterminacy.MatchNonJoue.action',
+        'open',
       );
     }
-    return navigate(
-      href,
-      'resolution.freshness.indeterminacy.MatchNonJoue.action',
-    );
+    return navigate(href, 'resolution.freshness.upstreamPhaseLink', 'upstream');
   }
 
   if (cause === 'Egalite') {
     const href = match ?? upstream;
-    return href
-      ? navigate(href, 'resolution.freshness.indeterminacy.Egalite.action')
-      : null;
+    if (!href) {
+      return null;
+    }
+    if (match) {
+      return navigate(
+        href,
+        'resolution.freshness.indeterminacy.Egalite.action',
+        'open',
+      );
+    }
+    return navigate(href, 'resolution.freshness.upstreamPhaseLink', 'upstream');
   }
 
   if (cause === 'EgaliteClassement') {
-    const href = stageHref(
-      competitionId,
-      occupant.upstreamStageId,
-      'classement',
-    );
+    const href = standingsHref(competitionId, occupant.upstreamStageId);
     return href
       ? navigate(
           href,
           'resolution.freshness.indeterminacy.EgaliteClassement.action',
+          'open',
         )
       : null;
   }
 
   if (cause === 'ConfigurationInvalide') {
-    const href =
-      stageHref(competitionId, occupant.upstreamStageId) ??
-      regulationHref(competitionId);
+    const upstreamHref = stageHref(competitionId, occupant.upstreamStageId);
+    if (upstreamHref) {
+      return navigate(
+        upstreamHref,
+        'resolution.freshness.upstreamPhaseLink',
+        'upstream',
+      );
+    }
+    const href = regulationHref(competitionId);
     return href
       ? navigate(
           href,
           'resolution.freshness.indeterminacy.ConfigurationInvalide.action',
+          'open',
         )
       : null;
   }

@@ -36,6 +36,7 @@ describe('structureNavigation', () => {
       focus: null,
       manual: false,
       openDrawWorkflow: false,
+      slotKey: null,
     });
   });
 
@@ -48,6 +49,7 @@ describe('structureNavigation', () => {
       focus: null,
       manual: false,
       openDrawWorkflow: false,
+      slotKey: null,
     });
     expect(
       structureDeepLink({
@@ -60,14 +62,15 @@ describe('structureNavigation', () => {
 
   it('parses focus deep-link', () => {
     expect(
-      parseStructureDeepLink('stage=stage-1&focus=operational-placement'),
+      parseStructureDeepLink('stage=stage-1&focus=tile-places&slot=Champ'),
     ).toEqual({
       stageId: 'stage-1',
       section: null,
       roundId: null,
       compose: false,
-      focus: 'operational-placement',
+      focus: 'tile-places',
       manual: false,
+      slotKey: 'Champ',
       openDrawWorkflow: false,
     });
     expect(
@@ -90,6 +93,7 @@ describe('structureNavigation', () => {
       focus: null,
       manual: true,
       openDrawWorkflow: false,
+      slotKey: null,
     });
     expect(
       structureDeepLink({

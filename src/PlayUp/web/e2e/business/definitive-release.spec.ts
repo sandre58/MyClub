@@ -20,10 +20,14 @@ test('Structure — libération groupée d’une sélection vide puis placement 
   );
   await expect(page.getByRole('heading', { name: 'Structure' })).toBeVisible();
   await expect(
-    page.getByText('1 place ne pourra plus être confirmée.'),
+    page.getByText('1 place ne pourra plus être déterminée.'),
   ).toBeVisible();
   await expect(
-    page.getByText('Ne pourra plus être confirmée', { exact: true }),
+    page
+      .getByRole('button', {
+        name: /Non déterminé.*Ne pourra plus être déterminée/,
+      })
+      .first(),
   ).toBeVisible();
 
   await page.getByRole('button', { name: 'Libérer…' }).click();
@@ -49,7 +53,7 @@ test('Structure — libération groupée d’une sélection vide puis placement 
   await summary.getByRole('button', { name: 'Fermer' }).click();
   await expect(summary).toHaveCount(0);
   await expect(
-    page.getByText('1 place ne pourra plus être confirmée.'),
+    page.getByText('1 place ne pourra plus être déterminée.'),
   ).toHaveCount(0);
   await expect(page.getByText('Ouest')).toHaveCount(0);
   await expect(page.getByText('Non résolue')).toBeVisible();

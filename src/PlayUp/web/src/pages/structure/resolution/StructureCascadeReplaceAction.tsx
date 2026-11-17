@@ -13,8 +13,10 @@ import type {
   StructureResolutionOccupant,
   StructureStageHubSummary,
 } from '../../../types';
+import { notify } from '../../../design-system/toastStore';
 import { MutationError } from '../../../ui';
 import { scheduleStructureRefresh } from '../structureInvalidation';
+import { resolveLifecycleMutationMessage } from '../problems';
 import { CascadeReplaceContext } from './structureCascadeReplaceContext';
 import { isReplayableStale } from './structureResolutionOccupants';
 
@@ -57,6 +59,10 @@ export function StructureCascadeReplaceAction({
       setPlayed(result.playedMatches);
       setVersionToken(result.versionToken);
     },
+    onError: (error) => {
+      notify.error(resolveLifecycleMutationMessage(t, error));
+      preview.reset();
+    },
   });
 
   const confirm = useMutation({
@@ -98,7 +104,6 @@ export function StructureCascadeReplaceAction({
 
   return (
     <CascadeReplaceContext.Provider value={{ requestReplace }}>
-      {preview.isError ? <MutationError error={preview.error} /> : null}
       {children}
       <ConfirmDialog
         open={occupant !== null && versionToken !== null}

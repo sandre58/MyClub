@@ -1,6 +1,9 @@
 import type { NeedsAttentionItem, OverviewSituation } from '../types';
 
-function mapAttentionAction(source: string): string | null {
+function mapAttentionAction(
+  source: string,
+  item: NeedsAttentionItem,
+): string | null {
   switch (source) {
     case 'ProgressionPending':
     case 'ProgressionConflict':
@@ -8,6 +11,9 @@ function mapAttentionAction(source: string): string | null {
     case 'QualificationPending':
     case 'QualificationConflict':
       return 'ApplyQualification';
+    case 'ResolutionPerime':
+    case 'ResolutionIndetermine':
+      return item.targetType === 'Slot' ? 'ViewResolutionPlace' : null;
     case 'InsufficientParticipants':
       return 'AddEntry';
     default:
@@ -69,7 +75,7 @@ export function needsAttentionItemToSituation(
     item.source === 'DrawNoSolution'
       ? null
       : item.problem?.suggestedActionCode?.trim() ||
-        mapAttentionAction(item.source);
+        mapAttentionAction(item.source, item);
 
   const severity =
     item.severity?.trim() ||

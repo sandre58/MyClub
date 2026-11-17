@@ -6,6 +6,10 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './e2e/business',
+  testIgnore:
+    process.env.PLAYUP_E2E_CAPTURES || process.env.PLAYUP_E2E_ARTIFACTS
+      ? []
+      : ['**/*-captures.spec.ts'],
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,

@@ -84,6 +84,7 @@ import {
   STRUCTURE_MANUAL_PARAM,
   STRUCTURE_ROUND_PARAM,
   STRUCTURE_SECTION_PARAM,
+  STRUCTURE_SLOT_PARAM,
   STRUCTURE_STAGE_PARAM,
   type StructureFocusId,
 } from './structureNavigation';
@@ -144,6 +145,9 @@ function StructureHub({ data }: { data: StructureView }) {
   const [pendingDrawWorkflow, setPendingDrawWorkflow] = useState(
     () => deepLink.openDrawWorkflow,
   );
+  const [pendingSlotKey, setPendingSlotKey] = useState<string | null>(
+    () => deepLink.slotKey,
+  );
 
   const structureLinkKey = `${searchParams.toString()}:${stages.map((s) => s.stageId).join(',')}`;
   useSyncWhen(true, structureLinkKey, () => {
@@ -155,6 +159,7 @@ function StructureHub({ data }: { data: StructureView }) {
       setPendingFocus(null);
       setPendingManual(false);
       setPendingDrawWorkflow(false);
+      setPendingSlotKey(null);
       return;
     }
     if (
@@ -167,6 +172,7 @@ function StructureHub({ data }: { data: StructureView }) {
       setPendingFocus(parsed.focus);
       setPendingManual(parsed.manual);
       setPendingDrawWorkflow(parsed.openDrawWorkflow);
+      setPendingSlotKey(parsed.slotKey);
       return;
     }
     setSelectedStageId((current) => {
@@ -187,6 +193,7 @@ function StructureHub({ data }: { data: StructureView }) {
     setPendingFocus(null);
     setPendingManual(false);
     setPendingDrawWorkflow(false);
+    setPendingSlotKey(null);
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);
@@ -197,6 +204,7 @@ function StructureHub({ data }: { data: StructureView }) {
         next.delete(STRUCTURE_FOCUS_PARAM);
         next.delete(STRUCTURE_MANUAL_PARAM);
         next.delete(STRUCTURE_DRAW_PARAM);
+        next.delete(STRUCTURE_SLOT_PARAM);
         return next;
       },
       { replace: true },
@@ -310,12 +318,14 @@ function StructureHub({ data }: { data: StructureView }) {
               initialFocus={pendingFocus}
               initialManual={pendingManual}
               initialDrawWorkflow={pendingDrawWorkflow}
+              initialHighlightSlotKey={pendingSlotKey}
               onInitialEditConsumed={() => {
                 setPendingEdit(null);
                 setPendingCompose(false);
                 setPendingFocus(null);
                 setPendingManual(false);
                 setPendingDrawWorkflow(false);
+                setPendingSlotKey(null);
                 setSearchParams(
                   (prev) => {
                     const next = new URLSearchParams(prev);
@@ -325,6 +335,7 @@ function StructureHub({ data }: { data: StructureView }) {
                     next.delete(STRUCTURE_FOCUS_PARAM);
                     next.delete(STRUCTURE_MANUAL_PARAM);
                     next.delete(STRUCTURE_DRAW_PARAM);
+                    next.delete(STRUCTURE_SLOT_PARAM);
                     return next;
                   },
                   { replace: true },
