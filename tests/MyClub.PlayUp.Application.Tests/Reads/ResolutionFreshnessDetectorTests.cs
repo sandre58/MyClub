@@ -86,6 +86,33 @@ public sealed class ResolutionFreshnessDetectorTests
     }
 
     [Fact]
+    public void Stale_qualification_on_direct_assignment_slot_is_not_cascade_replaceable()
+    {
+        var (competition, league, terminal, entries, matches) = LeagueFeed(2);
+        ApplyOverall(league, terminal, entries, matches, position: 1, "Champ");
+        var stored = terminal.FindSlot("Champ")!.EntryId!.Value;
+        terminal.AssignEntryToSlot("Champ", entries[0]);
+        var path = league.Regulation.QualificationRules!.Paths.Single();
+        terminal.WriteSlotResolutionProvenance(
+            "Champ",
+            new ResolutionProvenance(
+                ResolutionProvenanceKind.Qualification,
+                ResolutionPathIdentifier.ForQualification(league.Id, path),
+                "seed"));
+        var decisive = matches.Single();
+        decisive.CorrectMatchResult(new MatchResult(ResultType.Played, new Score(0, 3)), _clock);
+
+        var slot = Evaluate(competition, [league, terminal], (league, matches))
+            .Should().ContainSingle(occupant =>
+                occupant.SlotKey == "Champ"
+                && occupant.State == StructureResolutionFreshness.Perime)
+            .Subject;
+        slot.ProvenanceKind.Should().Be(ResolutionProvenanceKind.Qualification);
+        slot.CascadeReplaceable.Should().BeFalse();
+        terminal.FindSlot("Champ")!.EntryId.Should().Be(stored);
+    }
+
+    [Fact]
     public void Score_correction_marks_qualifier_stale_for_upstream_result()
     {
         var (competition, league, terminal, entries, matches) = LeagueFeed(2);

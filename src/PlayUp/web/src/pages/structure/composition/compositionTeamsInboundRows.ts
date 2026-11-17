@@ -3,7 +3,10 @@ import type {
   StructureEntry,
   StructureInboundComposition,
 } from '../../../types';
-import { inboundSeatsForFeedRule } from './structureCompositionInboundHub';
+import {
+  inboundSeatsForFeedRule,
+  type InboundFeedSlotView,
+} from './structureCompositionInboundHub';
 import type {
   CompositionQualifierFeedGroup,
   CompositionQualifierRule,
@@ -31,14 +34,16 @@ export type CompositionTeamProvenance = {
 export type CompositionTeamRow =
   | {
       key: string;
-      kind: 'resolved';
-      entry: StructureEntry;
-      provenance: CompositionTeamProvenance | null;
+      kind: 'inbound';
+      rule: CompositionQualifierRule;
+      seat: InboundFeedSlotView;
+      entry?: StructureEntry;
     }
   | {
       key: string;
-      kind: 'unresolved';
-      provenance: CompositionTeamProvenance;
+      kind: 'direct';
+      entry: StructureEntry;
+      provenance: CompositionTeamProvenance | null;
     };
 
 export function provenanceLabelsForQualifierRule(
@@ -96,7 +101,6 @@ export function listCompositionTeamRows(
 
   for (const group of groups) {
     for (const rule of group.rules) {
-      const provenance = provenanceLabelsForQualifierRule(group, rule);
       const seats =
         rule.hubSeats ??
         inboundSeatsForFeedRule(
@@ -112,22 +116,20 @@ export function listCompositionTeamRows(
         );
       seats.forEach((seat, seatIndex) => {
         const key = `${rule.key}-${seatIndex}`;
-        if (seat.resolved && seat.entryId) {
-          const entry = entries.find((e) => e.entryId === seat.entryId);
-          if (entry) {
-            seenEntryIds.add(entry.entryId);
-            rows.push({
-              key,
-              kind: 'resolved',
-              entry,
-              provenance,
-            });
-          } else {
-            rows.push({ key, kind: 'unresolved', provenance });
-          }
-        } else {
-          rows.push({ key, kind: 'unresolved', provenance });
+        const entry =
+          seat.resolved && seat.entryId
+            ? entries.find((e) => e.entryId === seat.entryId)
+            : undefined;
+        if (entry) {
+          seenEntryIds.add(entry.entryId);
         }
+        rows.push({
+          key,
+          kind: 'inbound',
+          rule,
+          seat,
+          entry,
+        });
       });
     }
   }
@@ -143,7 +145,7 @@ export function listCompositionTeamRows(
       );
       rows.push({
         key: entry.entryId,
-        kind: 'resolved',
+        kind: 'direct',
         entry,
         provenance: fromMap ?? null,
       });
@@ -163,7 +165,9 @@ export function compositionTeamRowsResolutionStats(
   let total = 0;
   for (const row of rows) {
     total += 1;
-    if (row.kind === 'resolved') {
+    if (row.kind === 'direct') {
+      resolved += 1;
+    } else if (row.seat.resolved) {
       resolved += 1;
     }
   }

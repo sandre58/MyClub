@@ -53,7 +53,8 @@
       "qualificationPending": "Le résultat amont est prêt mais la qualification n’a pas encore été appliquée sur la phase.",
       "progressionConflict": "La place cible contient une autre équipe que celle attendue après la progression.",
       "progressionConflictForm": "La résolution de parcours sur la phase ne correspond pas à l’équipe attendue par la progression.",
-      "progressionPending": "Le match source est terminé mais la progression n’a pas encore été appliquée."
+      "progressionPending": "Le match source est terminé mais la progression n’a pas encore été appliquée.",
+      "resolutionPerimeQualificationCoalesced": "La place {{slotKey}} contient une autre équipe que celle attendue ({{actualEntryName}} au lieu de {{expectedEntryName}})."
     }
   },
   "preferences": {

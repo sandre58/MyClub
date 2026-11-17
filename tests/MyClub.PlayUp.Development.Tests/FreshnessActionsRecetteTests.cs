@@ -107,7 +107,7 @@ public sealed class FreshnessActionsRecetteTests(DevelopmentPostgresFixture fixt
             occupant.SlotKey == "Rejouable"
             && occupant.State == StructureResolutionFreshness.Perime
             && occupant.StalenessCause == StructureResolutionStalenessCause.ResultatAmont
-            && occupant.CascadeReplaceable
+            && !occupant.CascadeReplaceable
             && occupant.ProvenanceKind == ResolutionProvenanceKind.Qualification);
         byOccupantStage[seuleId].Should().NotBeEmpty()
             .And.OnlyContain(occupant => occupant.State == StructureResolutionFreshness.NonVerifiee);
@@ -118,7 +118,18 @@ public sealed class FreshnessActionsRecetteTests(DevelopmentPostgresFixture fixt
         var attention = NeedsAttentionAssembler.Assemble(competition, stages, byStage);
         attention.Items.Should().Contain(item =>
             item.Source == NeedsAttentionAssembler.SourceResolutionPerime
-            && item.TargetId == StageId(stages, "Tableau").ToString());
+            && item.TargetType == "Slot"
+            && item.TargetId!.StartsWith(
+                $"{StageId(stages, "Tableau")}:",
+                StringComparison.Ordinal)
+            && item.Params != null
+            && item.Params[NeedsAttentionAssembler.QualificationCoalescedParam] == bool.TrueString);
+        attention.Items.Should().NotContain(item =>
+            item.Source == NeedsAttentionAssembler.SourceQualificationConflict
+            && item.TargetId != null
+            && item.TargetId.StartsWith(
+                $"{StageId(stages, "Tableau")}:",
+                StringComparison.Ordinal));
         attention.Items.Should().Contain(item =>
             item.Source == NeedsAttentionAssembler.SourceResolutionPerime
             && item.TargetId == StageId(stages, "Aval").ToString());

@@ -53,7 +53,8 @@
       "qualificationPending": "Upstream results are ready but qualification has not been applied on the stage yet.",
       "progressionConflict": "The target slot holds a different team than the one expected after progression.",
       "progressionConflictForm": "The path resolution on the stage does not match the team expected by progression.",
-      "progressionPending": "The source match is finished but progression has not been applied yet."
+      "progressionPending": "The source match is finished but progression has not been applied yet.",
+      "resolutionPerimeQualificationCoalesced": "Place {{slotKey}} holds a different team than expected ({{actualEntryName}} instead of {{expectedEntryName}})."
     }
   },
   "preferences": {
