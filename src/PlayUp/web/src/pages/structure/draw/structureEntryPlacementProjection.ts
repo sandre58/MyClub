@@ -9,11 +9,16 @@ import type {
   StructureFormatKind,
 } from '../../../types';
 
+export type EntryPlaceKind = 'group' | 'cup';
+
+/** Parallel arrays — `labels`, `details`, and `kinds` share the same length. */
 export type EntryPlaceProjection = {
   /** Short chrome labels (one per resolved schematic place). */
   labels: readonly string[];
   /** Optional long topology per label when distinct from chrome. */
   details: readonly (string | null)[];
+  /** Per-label place family for tooltip composition. */
+  kinds: readonly EntryPlaceKind[];
 };
 
 function resolvedEntryId(place: SchematicCase): string | null {
@@ -101,12 +106,27 @@ function groupPlaceShortLabel(
   if (!name) {
     return null;
   }
-  const base = t('place.group', { name });
-  const index = formPosition.index;
-  if (index != null && index >= 1) {
-    return `${base} · ${index}`;
+  return t('place.group', { name });
+}
+
+/** Short where-phrase for placement tooltips (not the full « already placed » sentence). */
+function groupPlaceWhereLabel(
+  formPosition: SchematicFormPosition,
+  t: PlaceTranslate,
+): string | null {
+  if (formPosition.kind !== 'GroupPlace') {
+    return null;
   }
-  return base;
+  const name =
+    formPosition.groupName?.trim() || formPosition.groupId?.trim() || '';
+  if (!name) {
+    return null;
+  }
+  const index = formPosition.index;
+  if (index == null || index < 1) {
+    return t('place.groupWhere', { name });
+  }
+  return t('place.groupWhereIndexed', { name, index });
 }
 
 function cupPlaceLabels(
@@ -127,10 +147,15 @@ function addPlaceForEntry(
   entryId: string,
   short: string,
   detail: string | null,
+  kind: EntryPlaceKind,
 ) {
   const existing = map.get(entryId);
   if (!existing) {
-    map.set(entryId, { labels: [short], details: [detail] });
+    map.set(entryId, {
+      labels: [short],
+      details: [detail],
+      kinds: [kind],
+    });
     return;
   }
   if (existing.labels.includes(short)) {
@@ -139,6 +164,7 @@ function addPlaceForEntry(
   map.set(entryId, {
     labels: [...existing.labels, short],
     details: [...existing.details, detail],
+    kinds: [...existing.kinds, kind],
   });
 }
 
@@ -173,7 +199,7 @@ export function entryPlaceProjectionFromSchematic(
       if (!labels) {
         continue;
       }
-      addPlaceForEntry(map, entryId, labels.short, labels.detail);
+      addPlaceForEntry(map, entryId, labels.short, labels.detail, 'cup');
     }
     return map;
   }
@@ -191,7 +217,8 @@ export function entryPlaceProjectionFromSchematic(
       if (!short) {
         continue;
       }
-      addPlaceForEntry(map, entryId, short, null);
+      const detail = groupPlaceWhereLabel(place.formPosition, t);
+      addPlaceForEntry(map, entryId, short, detail, 'group');
     }
   }
 
@@ -207,17 +234,80 @@ export function primaryPlaceLabel(
   return projection.labels.join(' · ');
 }
 
-export function placeTooltipDetail(
+function cupPlacementWhereLine(
+  destinationPhaseName: string,
+  slotChrome: string,
+  topologyDetail: string | null,
+): string {
+  const phase = destinationPhaseName.trim();
+  const slot = slotChrome.trim();
+  const detail = topologyDetail?.trim();
+  if (!phase) {
+    if (!slot) {
+      return detail ?? '';
+    }
+    if (detail && detail !== slot) {
+      return `${slot} ; ${detail}`;
+    }
+    return slot;
+  }
+  if (!slot) {
+    return detail ?? phase;
+  }
+  if (detail && detail !== slot) {
+    return `${phase} — ${slot} ; ${detail}`;
+  }
+  return `${phase} — ${slot}`;
+}
+
+export type PlacedTooltipModel = {
+  /** Localized intro, e.g. « Cette équipe est déjà placée : » */
+  intro: string;
+  /** One fragment per resolved place (shown under the intro in the Tooltip). */
+  whereLines: readonly string[];
+  /** Fragment for `entries.placedHintShort` (group includes index when known). */
+  shortPlace: string;
+};
+
+function primaryShortPlace(projection: EntryPlaceProjection): string {
+  const short = projection.labels[0]?.trim() ?? '';
+  const detail = projection.details[0]?.trim() ?? '';
+  const kind = projection.kinds[0];
+  if (kind === 'group') {
+    return detail || short;
+  }
+  return short;
+}
+
+export function buildPlacedTooltipModel(
   projection: EntryPlaceProjection | undefined,
-): string | null {
+  destinationPhaseName: string | null | undefined,
+  t: PlaceTranslate,
+): PlacedTooltipModel | null {
   if (!projection || projection.labels.length === 0) {
     return null;
   }
-  const parts: string[] = [];
+  const phaseName = destinationPhaseName?.trim() ?? '';
+  const whereLines: string[] = [];
   for (let i = 0; i < projection.labels.length; i += 1) {
     const short = projection.labels[i];
     const detail = projection.details[i];
-    parts.push(detail ? `${short} — ${detail}` : short);
+    const kind = projection.kinds[i];
+    if (kind === 'group') {
+      const where = (detail ?? short)?.trim();
+      if (where) {
+        whereLines.push(where);
+      }
+      continue;
+    }
+    const where = cupPlacementWhereLine(phaseName, short, detail);
+    if (where) {
+      whereLines.push(where);
+    }
   }
-  return parts.join(' · ');
+  if (whereLines.length === 0) {
+    return null;
+  }
+  const intro = t('entries.teamAlreadyPlacedIntro');
+  return { intro, whereLines, shortPlace: primaryShortPlace(projection) };
 }

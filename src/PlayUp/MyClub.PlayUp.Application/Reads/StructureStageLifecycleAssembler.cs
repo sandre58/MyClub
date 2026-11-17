@@ -365,8 +365,10 @@ public static class StructureStageLifecycleAssembler
                 or DisabledGroupsNotReady
                 or DisabledNoExploitableInitialConfrontations:
                 return (null, "rail-entries", false, false);
-            case ChecklistExits or StructureViewAssembler.IssueConfrontationUndecidable:
+            case ChecklistExits:
                 return ("qualification", null, false, false);
+            case StructureViewAssembler.IssueConfrontationUndecidable:
+                return ("confrontation", null, false, false);
             case ChecklistAttribution:
                 return (null, "rail-attribution", false, false);
             case ChecklistEntries:

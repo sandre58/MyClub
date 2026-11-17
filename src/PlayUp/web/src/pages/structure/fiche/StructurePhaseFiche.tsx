@@ -4,7 +4,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useSyncWhen } from '../../../design-system/useRenderSync';
 import { useTranslation } from 'react-i18next';
 import {
@@ -172,6 +172,7 @@ export function StructurePhaseFiche({
   initialFocus,
   initialManual,
   initialDrawWorkflow,
+  initialHighlightSlotKey,
   onInitialEditConsumed,
 }: {
   data: StructureView;
@@ -182,6 +183,7 @@ export function StructurePhaseFiche({
   initialFocus?: StructureFocusId | null;
   initialManual?: boolean;
   initialDrawWorkflow?: boolean;
+  initialHighlightSlotKey?: string | null;
   onInitialEditConsumed?: () => void;
 }) {
   const { t, i18n } = useTranslation('structure');
@@ -352,8 +354,13 @@ export function StructurePhaseFiche({
     onInitialEditConsumed?.();
   });
 
+  const onInitialEditConsumedRef = useRef(onInitialEditConsumed);
   useEffect(() => {
-    if (!stage || !initialFocus) {
+    onInitialEditConsumedRef.current = onInitialEditConsumed;
+  });
+
+  useEffect(() => {
+    if (!stage || !initialFocus || initialHighlightSlotKey) {
       return;
     }
     const id = initialFocus;
@@ -366,9 +373,10 @@ export function StructurePhaseFiche({
         !initialEdit &&
         !initialCompose &&
         !initialManual &&
-        !initialDrawWorkflow
+        !initialDrawWorkflow &&
+        !initialHighlightSlotKey
       ) {
-        onInitialEditConsumed?.();
+        onInitialEditConsumedRef.current?.();
       }
     });
     return () => cancelAnimationFrame(frame);
@@ -379,7 +387,7 @@ export function StructurePhaseFiche({
     initialCompose,
     initialManual,
     initialDrawWorkflow,
-    onInitialEditConsumed,
+    initialHighlightSlotKey,
   ]);
 
   const schematicQuery = useQuery({
@@ -1304,6 +1312,9 @@ export function StructurePhaseFiche({
                 entries={data.participants.entries}
                 formatKind={stage.formatKind}
                 schematicReady={schematicQuery.isSuccess}
+                schematic={
+                  schematicQuery.isSuccess ? schematicQuery.data : undefined
+                }
                 entryPlaceProjections={entryPlaceProjections}
                 onViewPhase={onSelectStage}
                 renderAvalSourceAction={renderAvalSourceAction}
@@ -1349,6 +1360,8 @@ export function StructurePhaseFiche({
               onOpenSkeleton={() => setSkeletonOpen(true)}
               schematicQuery={schematicQuery}
               stage={stage}
+              initialHighlightSlotKey={initialHighlightSlotKey}
+              onInitialHighlightConsumed={onInitialEditConsumed}
               hasExits={hasExits}
               cupPairProductionStates={cupPairProductionStates}
               canManualPlace={canManualPlace}

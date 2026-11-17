@@ -15,13 +15,19 @@ namespace MyClub.PlayUp.Application.Reads;
 public static class StructurePresentedAttentionCollector
 {
     /// <summary>Collects presented structure anomalies for the attention catalogue.</summary>
-    public static void Collect(StructureViewDto structureView, IList<NeedsAttentionItemDto> items)
+    public static void Collect(
+        StructureViewDto structureView,
+        IList<NeedsAttentionItemDto> items,
+        IReadOnlyList<NeedsAttentionItemDto>? coalescedQualificationSlots = null)
     {
         ArgumentNullException.ThrowIfNull(structureView);
         ArgumentNullException.ThrowIfNull(items);
 
+        var coalescedSlots = BuildCoalescedSlotKeys(coalescedQualificationSlots);
+
         if (structureView.Stages.Count == 0)
         {
+            AppendCoalesced(items, coalescedQualificationSlots, structureView);
             return;
         }
 
@@ -43,13 +49,55 @@ public static class StructurePresentedAttentionCollector
                 items.Add(CreateStageItem(code, stage, structureView));
             }
 
-            CollectResolutionFreshness(stage, items);
+            CollectResolutionFreshness(stage, items, coalescedSlots);
+        }
+
+        AppendCoalesced(items, coalescedQualificationSlots, structureView);
+    }
+
+    private static HashSet<string> BuildCoalescedSlotKeys(
+        IReadOnlyList<NeedsAttentionItemDto>? coalescedQualificationSlots)
+    {
+        if (coalescedQualificationSlots is null || coalescedQualificationSlots.Count == 0)
+        {
+            return new HashSet<string>(StringComparer.Ordinal);
+        }
+
+        return coalescedQualificationSlots
+            .Where(item => item.TargetType == "Slot" && item.TargetId is not null)
+            .Select(item => item.TargetId!)
+            .ToHashSet(StringComparer.Ordinal);
+    }
+
+    private static void AppendCoalesced(
+        IList<NeedsAttentionItemDto> items,
+        IReadOnlyList<NeedsAttentionItemDto>? coalescedQualificationSlots,
+        StructureViewDto structureView)
+    {
+        if (coalescedQualificationSlots is null)
+        {
+            return;
+        }
+
+        foreach (var item in coalescedQualificationSlots)
+        {
+            var stageIdRaw = item.Params?.GetValueOrDefault("stageId");
+            if (stageIdRaw is not null
+                && Guid.TryParse(stageIdRaw, out var stageId)
+                && structureView.Stages.FirstOrDefault(stage => stage.StageId == stageId)
+                    is { Status: StageStatus.Completed })
+            {
+                continue;
+            }
+
+            items.Add(item);
         }
     }
 
     private static void CollectResolutionFreshness(
         StructureStageHubSummaryDto stage,
-        IList<NeedsAttentionItemDto> items)
+        IList<NeedsAttentionItemDto> items,
+        HashSet<string> coalescedSlots)
     {
         var occupants = stage.ResolutionOccupants;
         if (occupants is null || occupants.Count == 0)
@@ -57,14 +105,23 @@ public static class StructurePresentedAttentionCollector
             return;
         }
 
-        var perime = 0;
+        var slotPerimeCount = 0;
         var indetermine = 0;
         foreach (var occupant in occupants)
         {
             switch (occupant.State)
             {
                 case StructureResolutionFreshness.Perime:
-                    perime++;
+                    if (occupant.Target == StructureResolutionOccupantTarget.Slot
+                        && !string.IsNullOrEmpty(occupant.SlotKey))
+                    {
+                        var targetId = $"{stage.StageId}:{occupant.SlotKey}";
+                        if (!coalescedSlots.Contains(targetId))
+                        {
+                            slotPerimeCount++;
+                        }
+                    }
+
                     break;
                 case StructureResolutionFreshness.Indetermine:
                     indetermine++;
@@ -72,9 +129,16 @@ public static class StructurePresentedAttentionCollector
             }
         }
 
-        if (perime > 0)
+        var nonSlotPerime = occupants.Count(occupant =>
+            occupant.State == StructureResolutionFreshness.Perime
+            && occupant.Target != StructureResolutionOccupantTarget.Slot);
+        var totalPerime = slotPerimeCount + nonSlotPerime;
+        if (totalPerime > 0)
         {
-            items.Add(FreshnessItem(NeedsAttentionAssembler.SourceResolutionPerime, stage, perime));
+            items.Add(FreshnessItem(
+                NeedsAttentionAssembler.SourceResolutionPerime,
+                stage,
+                totalPerime));
         }
 
         if (indetermine > 0)
