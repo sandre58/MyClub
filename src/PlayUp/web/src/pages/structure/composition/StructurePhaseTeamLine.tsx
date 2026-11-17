@@ -170,6 +170,17 @@ function directTeamCaptionUnits(
   return units;
 }
 
+function TeamLeadSlot({ pending }: { pending: boolean }) {
+  if (!pending) {
+    return null;
+  }
+  return (
+    <span className="structure-entries__team-lead-slot" aria-hidden="true">
+      <HourglassIcon size="sm" />
+    </span>
+  );
+}
+
 function qualifierHintTrailingUnits(
   props: StructurePhaseTeamLineProps,
   t: TFunction,
@@ -243,12 +254,7 @@ export function StructurePhaseTeamLine(props: StructurePhaseTeamLineProps) {
               'structure-composition-qualifiers__hint--pending',
             ].join(' ')}
           >
-            <span
-              className="structure-entries__team-pending-icon"
-              aria-hidden="true"
-            >
-              <HourglassIcon size="sm" />
-            </span>
+            <TeamLeadSlot pending />
             <div className="structure-entries__identity">
               <div className="structure-entries__identity-head">
                 <span className="structure-entries__team-name structure-entries__team-name--pending">
@@ -339,12 +345,7 @@ export function StructurePhaseTeamLine(props: StructurePhaseTeamLineProps) {
   if (pending) {
     return (
       <>
-        <span
-          className="structure-entries__team-pending-icon"
-          aria-hidden="true"
-        >
-          <HourglassIcon size="xs" />
-        </span>
+        <TeamLeadSlot pending />
         <div className="structure-entries__identity">
           <div className="structure-entries__identity-head">
             <span className="structure-entries__team-name structure-entries__team-name--pending">

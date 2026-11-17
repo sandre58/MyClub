@@ -435,7 +435,7 @@
 
 .structure-entries__teams--band .structure-entries__team {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--space-8);
   min-width: 0;
 }
@@ -447,23 +447,49 @@
   white-space: nowrap;
 }
 
-.structure-entries__teams--band .structure-entries__team-pending-icon {
+.structure-composition-qualifiers .structure-entries__identity,
+.structure-entries__teams--band .structure-entries__identity {
+  gap: calc(var(--space-4) / 2);
+}
+
+.structure-entries__team-lead-slot {
+  flex: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  align-self: center;
+  width: 1.5rem;
+  height: 1.7rem;
   color: var(--color-text-secondary);
   line-height: 0;
 }
 
-.structure-entries__teams--band .structure-entries__team-pending-icon .ds-icon {
-  width: 0.75rem;
-  height: 0.75rem;
+.structure-composition-qualifiers
+  .structure-composition-qualifiers__hint--as-team-line
+  .structure-entries__team-name:not(.structure-entries__team-name--pending),
+.structure-entries__teams--band
+  .structure-entries__team--inbound
+  .structure-entries__team-name:not(.structure-entries__team-name--pending) {
+  font-size: var(--text-caption);
+  line-height: var(--leading-caption);
+  color: var(--color-text-primary);
 }
 
-.structure-entries__teams--band .structure-entries__team-name--pending {
-  color: var(--color-text-secondary);
+.structure-entries__teams--band
+  .structure-entries__team--line:not(.structure-entries__team--inbound)
+  .structure-entries__team-name:not(.structure-entries__team-name--pending) {
   font-size: var(--text-meta);
-  font-weight: inherit;
+  line-height: var(--leading-tight);
+  color: var(--color-text-primary);
+}
+
+.structure-composition-qualifiers .structure-entries__team-name--pending,
+.structure-entries__teams--band .structure-entries__team-name--pending {
+  font-size: var(--text-caption);
+  line-height: var(--leading-caption);
+  font-style: italic;
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-secondary);
 }
 
 .structure-phase-composition__section .structure-operational-strip__section-icon {
@@ -728,19 +754,13 @@
 
 .structure-composition-qualifiers__hint--as-team-line {
   flex-wrap: nowrap;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--space-8);
-  font-size: var(--text-meta);
-  line-height: var(--leading-tight);
 }
 
 .structure-composition-qualifiers__hint--as-team-line .structure-entries__meta--caption {
   font-size: var(--text-caption);
   line-height: var(--leading-caption);
-}
-
-.structure-composition-qualifiers__hint--pending {
-  color: var(--color-text-secondary);
 }
 
 .structure-entries__teams--band .structure-entries__team--inbound {
@@ -760,7 +780,7 @@
 
 .structure-composition-qualifiers__hint-crest {
   flex: none;
-  align-self: flex-start;
+  align-self: center;
 }
 
 .structure-composition-qualifiers__status-chip {

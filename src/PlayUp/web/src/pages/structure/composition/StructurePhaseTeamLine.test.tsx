@@ -84,9 +84,9 @@ describe('StructurePhaseTeamLine', () => {
   });
 
   it('renders pending band row with hourglass and unresolved label', () => {
-    renderWithI18n(
+    const { container } = renderWithI18n(
       <MemoryRouter>
-        <ul>
+        <ul className="structure-entries__teams--band">
           <li className="structure-entries__team structure-entries__team--line">
             <StructurePhaseTeamLine
               displayName=""
@@ -99,6 +99,11 @@ describe('StructurePhaseTeamLine', () => {
     );
     expect(screen.getByText('Non résolue')).toBeInTheDocument();
     expect(screen.queryByRole('button')).toBeNull();
+    const leadSlot = container.querySelector(
+      '.structure-entries__team-lead-slot',
+    );
+    expect(leadSlot).not.toBeNull();
+    expect(leadSlot!.querySelector('.ds-icon')).not.toBeNull();
   });
 
   it('shows placed hint on the qualifier hint row', () => {
@@ -255,6 +260,9 @@ describe('StructurePhaseTeamLine', () => {
     );
     expect(screen.getByText('Non résolue')).toBeInTheDocument();
     expect(screen.getByText('Tete')).toBeInTheDocument();
+    expect(
+      container.querySelector('.structure-entries__team-lead-slot .ds-icon'),
+    ).not.toBeNull();
     expect(
       container.querySelectorAll('.structure-composition-qualifiers__hint-sep'),
     ).toHaveLength(0);
