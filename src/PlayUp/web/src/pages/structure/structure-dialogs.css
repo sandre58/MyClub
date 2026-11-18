@@ -415,6 +415,12 @@
   overflow: auto;
 }
 
+.structure-qualification__list.ds-scroll-safe {
+  margin: calc(-1 * var(--focus-ring-extent));
+  padding: var(--focus-ring-extent);
+  scroll-padding-block: var(--focus-ring-extent);
+}
+
 .structure-qualification .ds-empty--idle {
   flex: 1 1 auto;
   min-height: 8rem;
@@ -885,6 +891,12 @@
   gap: var(--space-8);
   max-height: 16rem;
   overflow: auto;
+}
+
+.structure-qualification__place-map.ds-scroll-safe {
+  margin: calc(-1 * var(--focus-ring-extent));
+  padding: var(--focus-ring-extent);
+  scroll-padding-block: var(--focus-ring-extent);
 }
 
 .structure-qualification__place-map-block {

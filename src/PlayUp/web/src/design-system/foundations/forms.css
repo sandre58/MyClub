@@ -139,12 +139,6 @@
   border-color: var(--color-brand);
 }
 
-.ds-input:focus-within,
-.ds-input:focus-visible {
-  border-color: var(--color-brand);
-  outline: none;
-}
-
 .ds-input[data-disabled='true'],
 .ds-input:disabled {
   opacity: 0.55;

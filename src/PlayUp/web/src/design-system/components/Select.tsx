@@ -359,6 +359,7 @@ export function Select({
                     data-selected={isSelected ? 'true' : 'false'}
                     data-active={isActive ? 'true' : 'false'}
                     onClick={() => selectOption(option.value)}
+                    onMouseEnter={() => setListNav('pointer')}
                   >
                     {option.leading ? (
                       <span

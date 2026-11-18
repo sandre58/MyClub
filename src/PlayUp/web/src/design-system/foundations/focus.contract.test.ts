@@ -89,6 +89,40 @@ describe('focus foundation contract', () => {
   it('includes a forced-colors focus fallback', () => {
     expect(focusCss).toMatch(/@media\s*\(forced-colors:\s*active\)/);
     expect(focusCss).toMatch(/outline:\s*2px solid CanvasText/);
+    expect(focusCss).toMatch(
+      /\[data-nav='keyboard'\]\s*>\s*li\s*>\s*\[data-active='true'\][\s\S]*outline:\s*2px solid CanvasText/,
+    );
+  });
+
+  it('keeps page-local scroll-safe hosts from resetting ds-scroll-safe margin and padding', () => {
+    const structureDialogs = readFileSync(
+      join(webSrc, 'pages/structure/structure-dialogs.css'),
+      'utf8',
+    );
+    const structureComposition = readFileSync(
+      join(webSrc, 'pages/structure/structure-composition.css'),
+      'utf8',
+    );
+
+    for (const selector of [
+      'structure-qualification__list',
+      'structure-qualification__place-map',
+    ]) {
+      expect(structureDialogs).toMatch(
+        new RegExp(
+          `\\.${selector}\\.ds-scroll-safe\\s*\\{[^}]*margin:\\s*calc\\(-1 \\* var\\(--focus-ring-extent\\)\\)`,
+        ),
+      );
+      expect(structureDialogs).toMatch(
+        new RegExp(
+          `\\.${selector}\\.ds-scroll-safe\\s*\\{[^}]*padding:\\s*var\\(--focus-ring-extent\\)`,
+        ),
+      );
+    }
+
+    expect(structureComposition).toMatch(
+      /\.structure-composition__list\.ds-scroll-safe\s*\{[\s\S]*--focus-ring-extent/,
+    );
   });
 
   it('does not reference undefined focus-related custom properties in web CSS', () => {

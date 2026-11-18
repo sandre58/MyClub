@@ -507,7 +507,7 @@ export function TeamRosterDrawer({
         </div>
       )}
 
-      <div className="teams-drawer__body ds-scroll-safe">
+      <div className="teams-drawer__body">
         <RosterGroup
           headingId="teams-roster-players"
           heading={

@@ -72,7 +72,7 @@
   outline: none;
 }
 
-.schematic-slot__hit:focus-visible {
+.ds-root .schematic-slot .schematic-slot__hit:focus-visible {
   outline: none;
   box-shadow: none;
 }
