@@ -147,10 +147,7 @@ describe('focus foundation contract', () => {
     expect(portalField).toBeGreaterThan(-1);
     expect(portalField).toBeGreaterThan(portalHalo);
     expect(
-      focusCss.slice(
-        portalField,
-        focusCss.indexOf('}', portalField) + 1,
-      ),
+      focusCss.slice(portalField, focusCss.indexOf('}', portalField) + 1),
     ).toMatch(/box-shadow:\s*var\(--focus-field\)/);
   });
 
