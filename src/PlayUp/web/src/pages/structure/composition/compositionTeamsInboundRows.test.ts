@@ -55,6 +55,7 @@ describe('compositionTeamsInboundRows', () => {
     expect(rows?.[0].kind).toBe('inbound');
     if (rows?.[0].kind === 'inbound') {
       expect(rows[0].seat.resolved).toBe(true);
+      expect(rows[0].sourcePhaseName).toBe('Phase poules');
     }
     expect(rows?.[1].kind).toBe('inbound');
     if (rows?.[1].kind === 'inbound') {

@@ -29,23 +29,51 @@ const progressionRule = {
   progressionOutcome: 'Loser' as const,
 };
 
+function ruleLabelAccessibleText(container: HTMLElement): string {
+  const label = container.querySelector('.structure-feed-group__rule-label');
+  return (
+    label?.textContent
+      ?.replace(/\s*·\s*/g, ' · ')
+      .replace(/\s+/g, ' ')
+      .trim() ?? ''
+  );
+}
+
 describe('CompositionQualifierRuleLabel', () => {
-  it('prefixes équipes-band rules with source phase and accessible label', () => {
-    renderWithI18n(
+  it('prefixes équipes-band qualification rules with source phase first in reading order', () => {
+    const { container } = renderWithI18n(
       <CompositionQualifierRuleLabel
-        rule={placeRule}
-        sourcePhaseName="Poules"
+        rule={{
+          ...placeRule,
+          badge: '1er',
+          context: 'Groupe A',
+        }}
+        sourcePhaseName="Phase de groupes"
       />,
     );
-    expect(screen.getByText('Poules')).toHaveClass(
+    expect(screen.getByText('Phase de groupes')).toHaveClass(
       'structure-feed-group__rule-source',
     );
-    expect(screen.getByText('9e')).toBeInTheDocument();
-    expect(screen.getByText('Classement')).toBeInTheDocument();
-    const label = screen
-      .getByText('9e')
-      .closest('.structure-feed-group__rule-label');
-    expect(label).toHaveAttribute('aria-label', 'Poules · 9e · Classement');
+    const label = container.querySelector('.structure-feed-group__rule-label');
+    expect(label).not.toHaveAttribute('aria-label');
+    expect(ruleLabelAccessibleText(container)).toBe(
+      'Phase de groupes · 1er · Groupe A',
+    );
+  });
+
+  it('prefixes équipes-band progression rules with phase before outcome and pair key', () => {
+    const { container } = renderWithI18n(
+      <CompositionQualifierRuleLabel
+        rule={progressionRule}
+        sourcePhaseName="Barrage"
+      />,
+    );
+    const label = container.querySelector('.structure-feed-group__rule-label');
+    expect(label).not.toHaveAttribute('aria-label');
+    expect(ruleLabelAccessibleText(container)).toBe('Barrage · Perdant · P1');
+    expect(screen.getByText('Perdant')).toHaveClass(
+      'structure-feed-group__rule-lead--loss',
+    );
   });
 
   it('does not prefix when source phase is omitted (Qualifiés)', () => {
@@ -55,8 +83,6 @@ describe('CompositionQualifierRuleLabel', () => {
     expect(
       container.querySelector('.structure-feed-group__rule-source'),
     ).toBeNull();
-    expect(screen.getByText('Perdant')).toHaveClass(
-      'structure-feed-group__rule-lead--loss',
-    );
+    expect(ruleLabelAccessibleText(container)).toBe('Perdant · P1');
   });
 });

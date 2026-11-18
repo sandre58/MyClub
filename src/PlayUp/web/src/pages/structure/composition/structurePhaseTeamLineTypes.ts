@@ -12,7 +12,6 @@ export type StructurePhaseTeamLineProps = {
   placedPlaceLabel?: string | null;
   /** Overrides accessible hint short place when placement projection differs from visible label. */
   placedHintShortPlace?: string | null;
-  placedTooltip?: string | null;
   provenanceMeta?: string | null;
   provenanceTitle?: string | null;
   resolutionOccupant?: StructureResolutionOccupant | null;

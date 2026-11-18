@@ -109,7 +109,7 @@ function groupPlaceShortLabel(
   return t('place.group', { name });
 }
 
-/** Short where-phrase for placement tooltips (not the full « already placed » sentence). */
+/** Group placement phrase for projection detail (includes place index when known). */
 function groupPlaceWhereLabel(
   formPosition: SchematicFormPosition,
   t: PlaceTranslate,

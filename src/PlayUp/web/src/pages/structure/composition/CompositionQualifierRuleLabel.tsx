@@ -1,4 +1,3 @@
-import { fullInterPhaseProvenanceLabel } from './compositionTeamProvenanceLabel';
 import type { FeedGroup } from './structurePhaseFeeds';
 
 type QualifierRule = FeedGroup['rules'][number];
@@ -22,15 +21,9 @@ export function CompositionQualifierRuleLabel({
 
   const tailParts = [rule.context, rule.extra].filter(Boolean);
   const phase = sourcePhaseName?.trim() ?? '';
-  const accessibleLabel = phase
-    ? fullInterPhaseProvenanceLabel(phase, rule)
-    : undefined;
 
   return (
-    <span
-      className="structure-feed-group__rule-label"
-      aria-label={accessibleLabel}
-    >
+    <span className="structure-feed-group__rule-label">
       {phase ? (
         <>
           <span className="structure-feed-group__rule-source">{phase}</span>

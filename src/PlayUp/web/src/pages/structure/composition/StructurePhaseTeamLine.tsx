@@ -67,7 +67,7 @@ function freshnessStateMetaNode(
 function placedHintNode(
   props: Pick<
     StructurePhaseTeamLineProps,
-    'placed' | 'placedPlaceLabel' | 'placedHintShortPlace' | 'placedTooltip'
+    'placed' | 'placedPlaceLabel' | 'placedHintShortPlace'
   >,
   t: TFunction,
 ) {
