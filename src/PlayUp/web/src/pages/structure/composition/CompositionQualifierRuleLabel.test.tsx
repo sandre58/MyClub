@@ -53,7 +53,10 @@ function ruleLabelVisibleText(container: HTMLElement): string {
   }
   const chunks: string[] = [];
   label.childNodes.forEach((node) => {
-    if (node instanceof HTMLElement && node.getAttribute('aria-hidden') === 'true') {
+    if (
+      node instanceof HTMLElement &&
+      node.getAttribute('aria-hidden') === 'true'
+    ) {
       return;
     }
     const text = node.textContent?.trim();
@@ -86,7 +89,9 @@ describe('CompositionQualifierRuleLabel', () => {
     expect(trigger).toHaveClass('structure-feed-group__rule-source-trigger');
     expect(trigger).toHaveAttribute('role', 'img');
     expect(container.querySelector('.ds-icon--xs')).not.toBeNull();
-    const source = container.querySelector('.structure-feed-group__rule-source');
+    const source = container.querySelector(
+      '.structure-feed-group__rule-source',
+    );
     expect(
       source?.nextElementSibling?.classList.contains(
         'structure-feed-group__rule-sep',

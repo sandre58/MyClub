@@ -110,7 +110,7 @@ import {
 import { resolvePlacesN } from '../composition/structurePlaces';
 import { resolveStructurePhaseHeroFacts } from './structurePhaseHeroFacts';
 import type { StructureFocusId } from '../structureNavigation';
-import { listGroupManualTargets } from '../draw/manualGroupPlacementUi';
+import { canOfferGroupManualPlacement } from '../draw/manualGroupPlacementUi';
 import { listCupManualPlaces } from '../draw/manualPlacementUi';
 import '../../regulation/regulation-shared.css';
 
@@ -671,11 +671,6 @@ export function StructurePhaseFiche({
     schematicQuery.data?.cases ?? [],
     data.stages,
   ).filter((place) => place.mode === 'editable').length;
-  const groupManualTargets = listGroupManualTargets(
-    schematicQuery.data?.cases ?? [],
-    actions,
-    (name) => t('place.group', { name }),
-  );
   const canManualPlaceCup =
     canAssignEntryToSlot &&
     schematicQuery.isSuccess &&
@@ -683,7 +678,7 @@ export function StructurePhaseFiche({
   const canManualPlaceGroups =
     canAssignEntryToGroup &&
     schematicQuery.isSuccess &&
-    groupManualTargets.length > 0;
+    canOfferGroupManualPlacement(schematicQuery.data?.cases ?? [], actions);
   const canManualPlace = canManualPlaceCup || canManualPlaceGroups;
   const cupLikePlaces =
     stage.formatKind === 'Cup' ||

@@ -232,8 +232,7 @@ function SlotBox({
   const groupManualTip =
     groupInteraction?.kind === 'place' || groupInteraction?.kind === 'remove';
   const tipCanManualPlace = canManualPlace || groupManualTip;
-  const tipAction =
-    groupInteraction?.kind === 'locked' ? groupReason : null;
+  const tipAction = groupInteraction?.kind === 'locked' ? groupReason : null;
   const groupAccessibleName =
     groupInteractive && groupReason
       ? seatAddress

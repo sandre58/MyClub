@@ -4,7 +4,10 @@ import { useTranslation } from 'react-i18next';
 
 import { TextInput } from '../../../design-system/components/TextInput';
 import { Tooltip } from '../../../design-system/components/Tooltip';
-import { CheckIcon, PencilIcon } from '../../../design-system/icons/contentIcons';
+import {
+  CheckIcon,
+  PencilIcon,
+} from '../../../design-system/icons/contentIcons';
 import { StageFormatGlyph } from '../structureFormatGlyph';
 import { CloseIcon } from '../../../design-system/icons/shellIcons';
 import { structureFormatKindLabel } from '../../../i18n/enumLabels';

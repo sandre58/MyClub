@@ -173,7 +173,29 @@ export type GroupManualTarget = {
   place: SchematicCase;
 };
 
-/** Groups that expose at least one empty `place` interaction for manual assignment. */
+/** Whether the phase exposes at least one group with an empty `place` seat. */
+export function canOfferGroupManualPlacement(
+  cases: readonly SchematicCase[],
+  actions: readonly string[],
+): boolean {
+  return listGroupManualTargets(cases, actions, () => '').length > 0;
+}
+
+/** Display label for a group from any schematic seat (not only placeable targets). */
+export function resolveGroupDisplayLabel(
+  cases: readonly SchematicCase[],
+  groupId: string,
+  labelForGroup: (name: string) => string,
+): string {
+  for (const place of cases) {
+    if (place.formPosition.kind !== 'GroupPlace') continue;
+    if (place.formPosition.groupId !== groupId) continue;
+    const name = place.formPosition.groupName?.trim() || groupId;
+    return labelForGroup(name);
+  }
+  return labelForGroup(groupId);
+}
+
 export function listGroupManualTargets(
   cases: readonly SchematicCase[],
   actions: readonly string[],

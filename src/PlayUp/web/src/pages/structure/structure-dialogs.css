@@ -1076,7 +1076,8 @@
 @media (max-width: 36rem) {
   .structure-qualification__fields,
   .structure-qualification__scope-tiles,
-  .structure-qualification__place-map > li {
+  .structure-qualification__place-map > li,
+  .structure-manual-placement__teams {
     grid-template-columns: 1fr;
   }
 }

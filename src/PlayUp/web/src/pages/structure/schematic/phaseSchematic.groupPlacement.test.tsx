@@ -214,12 +214,12 @@ describe('Groups schematic placement', () => {
     );
     const head = container.querySelector('.regulation-schematic__card-head');
     expect(head).not.toBeNull();
-    expect(head?.querySelector('.regulation-schematic__card-label')).toHaveTextContent(
-      'Groupe A',
-    );
-    expect(head?.querySelector('.regulation-schematic__card-feed')).toHaveTextContent(
-      '1/4',
-    );
+    expect(
+      head?.querySelector('.regulation-schematic__card-label'),
+    ).toHaveTextContent('Groupe A');
+    expect(
+      head?.querySelector('.regulation-schematic__card-feed'),
+    ).toHaveTextContent('1/4');
   });
 
   it('offers no group action when the server actions are absent', () => {

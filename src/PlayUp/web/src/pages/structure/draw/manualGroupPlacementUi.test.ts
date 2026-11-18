@@ -4,6 +4,7 @@ import {
   groupSeatCounter,
   listAvailableGroupEntries,
   listGroupManualTargets,
+  resolveGroupDisplayLabel,
   resolveGroupSeatInteraction,
 } from './manualGroupPlacementUi';
 
@@ -179,6 +180,25 @@ describe('listAvailableGroupEntries', () => {
   });
 });
 
+describe('resolveGroupDisplayLabel', () => {
+  it('uses groupName from any seat, not only placeable targets', () => {
+    const cases = [
+      place({
+        entry: { entryId: 'e1', displayName: 'Alpha' },
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId: 'g-a',
+          groupName: 'A',
+          index: 1,
+        },
+      }),
+    ];
+    expect(
+      resolveGroupDisplayLabel(cases, 'g-a', (name) => `Groupe ${name}`),
+    ).toBe('Groupe A');
+  });
+});
+
 describe('listGroupManualTargets', () => {
   it('lists groups that expose at least one place interaction', () => {
     const cases = [
@@ -209,7 +229,11 @@ describe('listGroupManualTargets', () => {
         entry: { entryId: 'e2', displayName: 'Bravo' },
       }),
     ];
-    const targets = listGroupManualTargets(cases, actions, (name) => `Groupe ${name}`);
+    const targets = listGroupManualTargets(
+      cases,
+      actions,
+      (name) => `Groupe ${name}`,
+    );
     expect(targets.map((row) => row.groupId)).toEqual(['g-a']);
   });
 });

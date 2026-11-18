@@ -1,7 +1,7 @@
 // Manual group placement dialog. Cup placement stays in StructureManualPlacementDialog.
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { assignEntryToGroup, clearEntryFromGroup } from '../../../api';
 import { ChoiceTile } from '../../../design-system/components/ChoiceTile';
@@ -9,7 +9,10 @@ import { ConfirmDialog } from '../../../design-system/components/ConfirmDialog';
 import { Dialog } from '../../../design-system/components/Dialog';
 import { Select } from '../../../design-system/components/Select';
 import { Tooltip } from '../../../design-system/components/Tooltip';
-import { CheckIcon, EmptySelectionIcon } from '../../../design-system/icons/contentIcons';
+import {
+  CheckIcon,
+  EmptySelectionIcon,
+} from '../../../design-system/icons/contentIcons';
 import { CloseIcon } from '../../../design-system/icons/shellIcons';
 import { TeamCrest } from '../../../design-system/TeamCrest';
 import { useClearMutationsOnOpen } from '../../../design-system/useClearMutationsOnOpen';
@@ -25,6 +28,7 @@ import {
   groupManualPlaceStillAllowed,
   listAvailableGroupEntries,
   listGroupManualTargets,
+  resolveGroupDisplayLabel,
   resolveGroupManualPlace,
 } from './manualGroupPlacementUi';
 
@@ -47,6 +51,17 @@ function occupantId(place: SchematicCase | null): string | null {
   return place.entry?.entryId ?? place.assignment?.entryId ?? null;
 }
 
+function casesHubEpoch(cases: readonly SchematicCase[]): string {
+  return cases
+    .map((place) => {
+      if (place.formPosition.kind !== 'GroupPlace') return '';
+      const id = place.formPosition.groupId ?? '';
+      const occ = place.entry?.entryId ?? place.assignment?.entryId ?? '';
+      return `${id}:${occ}:${place.seatMode ?? ''}:${place.formPosition.index ?? ''}`;
+    })
+    .join('|');
+}
+
 export function StructureGroupPlacementDialog({
   open,
   onClose,
@@ -63,6 +78,7 @@ export function StructureGroupPlacementDialog({
   const { t: tReg } = useTranslation('regulation');
   const queryClient = useQueryClient();
   const actions = useMemo(() => stage.actions ?? [], [stage.actions]);
+  const hubEpochAtRemove = useRef<string | null>(null);
 
   const groupTargets = useMemo(
     () =>
@@ -87,14 +103,18 @@ export function StructureGroupPlacementDialog({
   const activeTarget =
     groupTargets.find((target) => target.groupId === groupId) ?? null;
   const activePlace =
-    (placeLockedFromSchematic &&
-    place?.formPosition.groupId === groupId
+    (placeLockedFromSchematic && place?.formPosition.groupId === groupId
       ? place
       : null) ??
     activeTarget?.place ??
-  resolveGroupManualPlace(cases, groupId ?? '', actions);
+    resolveGroupManualPlace(cases, groupId ?? '', actions);
 
-  const groupLabel = activeTarget?.label ?? (groupId ? t('place.group', { name: groupId }) : '');
+  const groupLabel =
+    groupId != null
+      ? resolveGroupDisplayLabel(cases, groupId, (name) =>
+          t('place.group', { name }),
+        )
+      : '';
   const occupiedId = modifyMode ? occupantId(activePlace) : null;
   const available = useMemo(
     () => listAvailableGroupEntries(stage, cases, entries),
@@ -162,6 +182,7 @@ export function StructureGroupPlacementDialog({
     onSuccess: () => {
       setRemoveConfirmOpen(false);
       refresh();
+      hubEpochAtRemove.current = casesHubEpoch(cases);
       setModifyMode(false);
       setSelectedId(null);
       setAfterRemove(true);
@@ -178,13 +199,18 @@ export function StructureGroupPlacementDialog({
 
   useEffect(() => {
     if (!open || !afterRemove || !groupId) return;
-    if (groupManualPlaceStillAllowed(cases, groupId, actions)) {
-      setAfterRemove(false);
+    const epoch = casesHubEpoch(cases);
+    if (hubEpochAtRemove.current === epoch) {
       setSeatBlockedAfterRemove(false);
       return;
     }
+    hubEpochAtRemove.current = null;
     setAfterRemove(false);
-    setSeatBlockedAfterRemove(true);
+    if (groupManualPlaceStillAllowed(cases, groupId, actions)) {
+      setSeatBlockedAfterRemove(false);
+    } else {
+      setSeatBlockedAfterRemove(true);
+    }
   }, [open, afterRemove, groupId, cases, actions]);
 
   useEffect(() => {
@@ -199,6 +225,8 @@ export function StructureGroupPlacementDialog({
     setModifyMode(editing);
     setSelectedId(editing ? occupied : null);
     setSeatBlockedAfterRemove(false);
+    setAfterRemove(false);
+    hubEpochAtRemove.current = null;
     setRemoveConfirmOpen(false);
     placeMutation.reset();
     removeMutation.reset();
@@ -209,7 +237,10 @@ export function StructureGroupPlacementDialog({
   const mutationError = placeMutation.error ?? removeMutation.error;
 
   const dirty =
-    !modifyMode && !seatBlockedAfterRemove && selectedId != null && !compositionEmpty;
+    !modifyMode &&
+    !seatBlockedAfterRemove &&
+    selectedId != null &&
+    !compositionEmpty;
 
   const {
     requestClose: requestDiscardClose,
@@ -237,22 +268,25 @@ export function StructureGroupPlacementDialog({
     setSelectedId(null);
     setModifyMode(false);
     setSeatBlockedAfterRemove(false);
+    setAfterRemove(false);
+    hubEpochAtRemove.current = null;
     placeMutation.reset();
   };
 
   const occupiedName =
     teamChoices.find((row) => row.entryId === occupiedId)?.displayName ?? '';
+  const awaitingHubRefresh = afterRemove && !seatBlockedAfterRemove;
+  const showTeamSection =
+    !seatBlockedAfterRemove &&
+    !compositionEmpty &&
+    groupId != null &&
+    (teamChoices.length > 0 || awaitingHubRefresh);
   const canSave =
     !modifyMode &&
     !seatBlockedAfterRemove &&
     selectedId != null &&
     selectedId !== occupiedId &&
     !compositionEmpty;
-  const showTeamSection =
-    !seatBlockedAfterRemove &&
-    !compositionEmpty &&
-    teamChoices.length > 0 &&
-    groupId != null;
   const canClearOccupant =
     modifyMode && occupiedId != null && !pending && !removeConfirmOpen;
 
@@ -354,7 +388,10 @@ export function StructureGroupPlacementDialog({
                 {t('groupPlacement.emptyComposition')}
               </EmptyState>
             ) : null}
-            {!compositionEmpty && teamChoices.length === 0 && !modifyMode ? (
+            {!compositionEmpty &&
+            teamChoices.length === 0 &&
+            !modifyMode &&
+            !awaitingHubRefresh ? (
               <EmptyState
                 variant="idle"
                 title={t('groupPlacement.allPlacedTitle')}

@@ -46,7 +46,9 @@ async function fillRemainingSeats(page: Page, expectPot: boolean) {
   let remaining = await placeButtons(page).count();
   while (remaining > 0) {
     await placeButtons(page).first().click();
-    const dialog = page.getByRole('dialog', { name: /Placer une équipe/ });
+    const dialog = page.getByRole('dialog', {
+      name: /Placement manuel —/,
+    });
     await expect(dialog).toBeVisible();
     const pot = dialog.getByText(/^Pot /);
     if (expectPot) {

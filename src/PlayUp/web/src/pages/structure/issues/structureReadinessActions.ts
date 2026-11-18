@@ -1,4 +1,9 @@
-import type { StructureStageHubSummary, StructureView } from '../../../types';
+import type {
+  SchematicCase,
+  StructureStageHubSummary,
+  StructureView,
+} from '../../../types';
+import { canOfferGroupManualPlacement } from '../draw/manualGroupPlacementUi';
 import type { StructureSectionId } from '../structureHubSections';
 import {
   structureDiagnosticMeta,
@@ -27,6 +32,24 @@ export type StructureReadinessActionItem = {
   actionLabelKey?: string;
   href: string;
 };
+
+/** Same gate as the phase sheet “Place manually” CTA for Groups. */
+export function groupsManualPlacementActionEligible(
+  stage: StructureStageHubSummary,
+  schematicCases?: readonly SchematicCase[] | null,
+): boolean {
+  if (stage.formatKind !== 'Groups' || stage.hasDrawRules) {
+    return true;
+  }
+  if (schematicCases == null) {
+    return true;
+  }
+  const actions = stage.actions ?? [];
+  if (!actions.includes('AssignEntryToGroup')) {
+    return false;
+  }
+  return canOfferGroupManualPlacement(schematicCases, actions);
+}
 
 function resolvePlacesActionLabelKey(stage: StructureStageHubSummary): string {
   if (stage.hasDrawRules) {
@@ -80,6 +103,7 @@ export function resolveStructureDiagnosticNavigation(args: {
   stage?: StructureStageHubSummary;
   code: string;
   cta: StructureDiagnosticCta;
+  schematicCases?: readonly SchematicCase[] | null;
 }): string {
   if (args.code === 'MissingPotRules') {
     return structureDeepLink({
@@ -102,6 +126,16 @@ export function resolveStructureDiagnosticNavigation(args: {
         competitionId: args.competitionId,
         stageId: args.stageId,
         openDrawWorkflow: true,
+      });
+    }
+    if (
+      args.stage &&
+      !groupsManualPlacementActionEligible(args.stage, args.schematicCases)
+    ) {
+      return structureDeepLink({
+        competitionId: args.competitionId,
+        stageId: args.stageId,
+        focus: 'operational-placement',
       });
     }
     return structureDeepLink({
@@ -139,10 +173,17 @@ function pushIssueItem(
     competitionId: string;
     stage: StructureStageHubSummary;
     code: string;
+    schematicCases?: readonly SchematicCase[] | null;
   },
 ): void {
   const meta = structureDiagnosticMeta(args.code);
   if (!meta) {
+    return;
+  }
+  if (
+    meta.cta === 'places' &&
+    !groupsManualPlacementActionEligible(args.stage, args.schematicCases)
+  ) {
     return;
   }
   const tone = structureDiagnosticTone(
@@ -167,6 +208,7 @@ function pushIssueItem(
       stage: args.stage,
       code: args.code,
       cta: meta.cta,
+      schematicCases: args.schematicCases,
     }),
   });
 }
@@ -208,6 +250,11 @@ function pushSyntheticItem(
 export function collectAllStructureReadinessActionItems(
   data: StructureView,
   stages: StructureStageHubSummary[],
+  options?: {
+    schematicCasesByStageId?: Readonly<
+      Record<string, readonly SchematicCase[] | undefined>
+    >;
+  },
 ): StructureReadinessActionItem[] {
   if (stages.length === 0) {
     return [];
@@ -219,7 +266,13 @@ export function collectAllStructureReadinessActionItems(
   for (const stage of stages) {
     const presented = stagePresentedIssueCodes(data, stage);
     for (const code of presented) {
-      pushIssueItem(items, { data, competitionId, stage, code });
+      pushIssueItem(items, {
+        data,
+        competitionId,
+        stage,
+        code,
+        schematicCases: options?.schematicCasesByStageId?.[stage.stageId],
+      });
     }
   }
 
