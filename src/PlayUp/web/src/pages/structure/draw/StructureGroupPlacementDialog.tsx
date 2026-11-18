@@ -112,6 +112,8 @@ export function StructureGroupPlacementDialog({
   const [seatBlocked, setSeatBlocked] = useState(false);
   const [placementBlocked, setPlacementBlocked] = useState(false);
   const [refusedEntryId, setRefusedEntryId] = useState<string | null>(null);
+  /** Bumps on open / mode / group change so Dialog body focus is not reset on each toggle. */
+  const [focusEpoch, setFocusEpoch] = useState(0);
   const initialSelectionRef = useRef<string[] | string | null>(null);
 
   const editAnchor = useMemo(() => {
@@ -275,6 +277,7 @@ export function StructureGroupPlacementDialog({
       initialSelectionRef.current = null;
     }
     saveMutation.reset();
+    setFocusEpoch((value) => value + 1);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- open edge
   }, [open, placeProp, mode]);
 
@@ -374,6 +377,7 @@ export function StructureGroupPlacementDialog({
     }
     setRefusedEntryId(null);
     saveMutation.reset();
+    setFocusEpoch((value) => value + 1);
   };
 
   const pending = saveMutation.isPending;
@@ -470,7 +474,7 @@ export function StructureGroupPlacementDialog({
         closeLabel={tCommon('close')}
         closeDisabled={pending || discardOpen}
         trapFocus={!discardOpen}
-        focusKey={`${mode}:${groupId}:${selectedId}:${selectedIds.join(',')}`}
+        focusKey={`${mode}:${groupId ?? ''}:${focusEpoch}`}
         footerStatus={
           mutationError ? (
             batchErrorMessage ? (

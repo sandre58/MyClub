@@ -31,6 +31,26 @@ async function findCompetition(request: APIRequestContext, name: string) {
   return hit;
 }
 
+async function placeOneTeamFromDialog(page: Page, expectPot: boolean) {
+  const dialog = page.getByRole('dialog', {
+    name: /Placement manuel —|Modifier la place —/,
+  });
+  await expect(dialog).toBeVisible();
+  const pot = dialog.getByText(/^Pot /);
+  if (expectPot) {
+    await expect(pot.first()).toBeVisible();
+  } else {
+    await expect(pot).toHaveCount(0);
+  }
+  const teamPicker = dialog.getByRole('radio');
+  await expect(teamPicker.first()).toBeVisible();
+  await teamPicker.first().click();
+  await dialog
+    .getByRole('button', { name: 'Enregistrer', exact: true })
+    .click();
+  await expect(dialog).toBeHidden();
+}
+
 /** Continues from whatever seats are still empty, so a CI retry can finish a partial grid. */
 async function fillRemainingSeats(page: Page, expectPot: boolean) {
   const pools = page.getByRole('group', { name: '2 groupes' });
@@ -46,29 +66,80 @@ async function fillRemainingSeats(page: Page, expectPot: boolean) {
   let remaining = await placeButtons(page).count();
   while (remaining > 0) {
     await placeButtons(page).first().click();
-    const dialog = page.getByRole('dialog', {
-      name: /Placement manuel —/,
-    });
-    await expect(dialog).toBeVisible();
-    const pot = dialog.getByText(/^Pot /);
-    if (expectPot) {
-      await expect(pot.first()).toBeVisible();
-    } else {
-      await expect(pot).toHaveCount(0);
-    }
-    const teamPicker = dialog.getByRole('radio');
-    await expect(teamPicker.first()).toBeVisible();
-    await teamPicker.first().click();
-    await dialog
-      .getByRole('button', { name: 'Enregistrer', exact: true })
-      .click();
-    await expect(dialog).toBeHidden();
+    await placeOneTeamFromDialog(page, expectPot);
     await expect(placeButtons(page)).toHaveCount(remaining - 1);
     remaining -= 1;
   }
 }
 
+async function fillGroupSeats(
+  page: Page,
+  groupLabel: string,
+  expectPot: boolean,
+  count = 4,
+) {
+  const group = page
+    .locator('.regulation-schematic__card')
+    .filter({ hasText: groupLabel });
+  await expect(group).toBeVisible();
+  const localPlace = group.getByRole('button', {
+    name: /Cliquer pour placer une équipe/,
+  });
+  for (let placed = 0; placed < count; placed += 1) {
+    const open = await localPlace.count();
+    if (open === 0) break;
+    await localPlace.first().click();
+    await placeOneTeamFromDialog(page, expectPot);
+  }
+  await expect(group.getByText(`${count}/${count}`)).toBeVisible();
+}
+
+async function produceMatchesIfNeeded(page: Page) {
+  const prepare = page.getByRole('button', { name: 'Marquer comme prête' });
+  if (await prepare.isVisible()) {
+    await prepare.click();
+  }
+  const matches = page.getByRole('region', { name: 'Matchs' });
+  const created = matches.getByText('Tous les matchs prévus sont créés.');
+  if (!(await created.isVisible())) {
+    await expect(
+      matches.getByText(/Il reste \d+ matchs à créer\./),
+    ).toBeVisible();
+    await matches
+      .getByRole('button', { name: 'Créer les matchs', exact: true })
+      .click();
+  }
+  await expect(created).toBeVisible();
+}
+
 test.describe('manual group placement', () => {
+  test('places three teams from the CTA in one batch then produces matches', async ({
+    page,
+    request,
+  }) => {
+    test.setTimeout(180_000);
+    const competition = await findCompetition(request, MANUAL_DRAW);
+    await page.goto(`/competitions/${competition.id}/structure`);
+
+    await page.getByRole('button', { name: 'Placer manuellement' }).click();
+    const dialog = page.getByRole('dialog', {
+      name: /Placement manuel —/,
+    });
+    await expect(dialog).toBeVisible();
+
+    const teams = dialog.getByRole('checkbox');
+    await teams.nth(0).click();
+    await teams.nth(1).click();
+    await teams.nth(2).click();
+    await dialog.getByRole('button', { name: /Placer 3 équipes/ }).click();
+    await expect(dialog).toBeHidden();
+
+    await fillRemainingSeats(page, true);
+    const pools = page.getByRole('group', { name: '2 groupes' });
+    await expect(pools.getByText('4/4')).toHaveCount(2);
+    await produceMatchesIfNeeded(page);
+  });
+
   test('fills the manual pools without showing a pot', async ({
     page,
     request,
@@ -95,72 +166,19 @@ test.describe('manual group placement', () => {
     const pools = page.getByRole('group', { name: '2 groupes' });
     await expect(pools.getByText('4/4')).toHaveCount(2);
     await expect(page.getByText('Non requis — grille complète')).toBeVisible();
-
-    // Match production is offered once the phase is Ready. Draft hides it.
-    const prepare = page.getByRole('button', { name: 'Marquer comme prête' });
-    if (await prepare.isVisible()) {
-      await prepare.click();
-    }
-
-    const matches = page.getByRole('region', { name: 'Matchs' });
-    const created = matches.getByText('Tous les matchs prévus sont créés.');
-    if (!(await created.isVisible())) {
-      await expect(
-        matches.getByText('Il reste 12 matchs à créer.'),
-      ).toBeVisible();
-      await matches
-        .getByRole('button', { name: 'Créer les matchs', exact: true })
-        .click();
-    }
-    await expect(created).toBeVisible();
-  });
-
-  test('places three teams from the CTA in one batch then produces matches', async ({
-    page,
-    request,
-  }) => {
-    test.setTimeout(120_000);
-    const competition = await findCompetition(request, MANUAL);
-    await page.goto(`/competitions/${competition.id}/structure`);
-
-    await page.getByRole('button', { name: 'Placer manuellement' }).click();
-    const dialog = page.getByRole('dialog', {
-      name: /Placement manuel —/,
-    });
-    await expect(dialog).toBeVisible();
-
-    const teams = dialog.getByRole('checkbox');
-    await teams.nth(0).click();
-    await teams.nth(1).click();
-    await teams.nth(2).click();
-    await dialog.getByRole('button', { name: /Placer 3 équipes/ }).click();
-    await expect(dialog).toBeHidden();
-
-    const pools = page.getByRole('group', { name: '2 groupes' });
-    await expect(pools.getByText('3/4')).toHaveCount(1);
-
-    const prepare = page.getByRole('button', { name: 'Marquer comme prête' });
-    if (await prepare.isVisible()) {
-      await prepare.click();
-    }
-
-    const matches = page.getByRole('region', { name: 'Matchs' });
-    const created = matches.getByText('Tous les matchs prévus sont créés.');
-    if (!(await created.isVisible())) {
-      await matches
-        .getByRole('button', { name: 'Créer les matchs', exact: true })
-        .click();
-    }
-    await expect(created).toBeVisible();
+    await produceMatchesIfNeeded(page);
   });
 
   test('replaces a team on a full group seat', async ({ page, request }) => {
     test.setTimeout(120_000);
     const competition = await findCompetition(request, MANUAL);
     await page.goto(`/competitions/${competition.id}/structure`);
-    await fillRemainingSeats(page, false);
+    await fillGroupSeats(page, 'Groupe A', false);
 
-    const editSeat = page
+    const groupA = page
+      .locator('.regulation-schematic__card')
+      .filter({ hasText: 'Groupe A' });
+    const editSeat = groupA
       .getByRole('button', {
         name: /Groupe A · 1 — Cliquer pour modifier ou retirer/,
       })
@@ -169,21 +187,31 @@ test.describe('manual group placement', () => {
     const dialog = page.getByRole('dialog', {
       name: /Modifier la place — Groupe A/,
     });
-    await dialog.getByRole('radio').nth(1).click();
+    const radios = dialog.getByRole('radio');
+    await expect(radios.nth(1)).toBeVisible();
+    await radios.nth(1).click();
     await dialog
       .getByRole('button', { name: 'Enregistrer', exact: true })
       .click();
     await expect(dialog).toBeHidden();
-    await expect(editSeat).toBeVisible();
+    await expect(groupA.getByText('4/4')).toBeVisible();
+    await expect(
+      groupA.getByRole('button', {
+        name: /Groupe A · 1 — Cliquer pour modifier ou retirer/,
+      }),
+    ).toBeVisible();
   });
 
   test('removes a team with clear then save', async ({ page, request }) => {
     test.setTimeout(120_000);
     const competition = await findCompetition(request, MANUAL);
     await page.goto(`/competitions/${competition.id}/structure`);
-    await fillRemainingSeats(page, false);
+    const groupB = page
+      .locator('.regulation-schematic__card')
+      .filter({ hasText: 'Groupe B' });
+    await fillGroupSeats(page, 'Groupe B', false);
 
-    const editSeat = page
+    const editSeat = groupB
       .getByRole('button', {
         name: /Groupe B · 1 — Cliquer pour modifier ou retirer/,
       })
@@ -199,11 +227,18 @@ test.describe('manual group placement', () => {
       .getByRole('button', { name: 'Enregistrer', exact: true })
       .click();
     await expect(dialog).toBeHidden();
+
+    await expect(groupB.getByText('3/4')).toBeVisible();
     await expect(
-      page.getByRole('button', {
-        name: /Groupe B · 1 — Cliquer pour placer une équipe/,
+      groupB.getByRole('button', {
+        name: /Groupe B · 4 — Cliquer pour placer une équipe/,
       }),
     ).toBeVisible();
+    await expect(
+      groupB.getByRole('button', {
+        name: /Groupe B · 1 — Cliquer pour placer une équipe/,
+      }),
+    ).toHaveCount(0);
   });
 
   test('shows a match lock and a withdrawal refusal before any click', async ({

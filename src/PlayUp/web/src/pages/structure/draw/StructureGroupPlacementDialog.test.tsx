@@ -620,6 +620,20 @@ describe('StructureGroupPlacementDialog', () => {
     );
   });
 
+  it('does not reset focus to the first tile when toggling batch selection', async () => {
+    const user = userEvent.setup();
+    renderDialog({ place: null });
+
+    const alpha = screen.getByRole('checkbox', { name: 'Alpha' });
+    const bravo = screen.getByRole('checkbox', { name: 'Bravo' });
+    const charlie = screen.getByRole('checkbox', { name: 'Charlie' });
+    await user.click(charlie);
+    expect(charlie).toHaveFocus();
+    await user.click(bravo);
+    expect(bravo).toHaveFocus();
+    expect(alpha).not.toHaveFocus();
+  });
+
   it('focuses the selected occupant tile in edit mode', async () => {
     const occupied = groupPlace({
       entry: { entryId: 'e1', displayName: 'Alpha' },
