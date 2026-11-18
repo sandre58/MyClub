@@ -348,9 +348,6 @@
   width: 100%;
   min-height: 0;
   overflow: hidden;
-  /* Absorbs focus halo inset without shrinking the 16px gap (Q4, roster scroll). */
-  padding: var(--focus-ring-extent);
-  box-sizing: border-box;
 }
 
 .teams-drawer__back {
@@ -447,8 +444,13 @@
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
+}
+
+/* Q4 : marge négative absorbée par le padding 16px de `.ds-panel.teams-drawer`. */
+.teams-drawer__body.ds-scroll-safe {
+  margin: calc(-1 * var(--focus-ring-extent));
+  padding: var(--focus-ring-extent);
   scroll-padding-block: var(--focus-ring-extent);
-  scroll-padding-inline: var(--focus-ring-extent);
 }
 
 .teams-drawer__section {

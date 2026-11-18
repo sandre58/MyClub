@@ -21,6 +21,17 @@
   box-shadow: var(--focus-halo);
 }
 
+.ds-popover :is(a, button, input, select, textarea, summary, [tabindex]):focus,
+.ds-select__dropdown :is(a, button, input, select, textarea, summary, [tabindex]):focus {
+  outline: none;
+}
+
+.ds-popover :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible,
+.ds-select__dropdown :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: none;
+  box-shadow: var(--focus-halo);
+}
+
 .ds-root .ds-input:is(:focus-within, :focus-visible),
 .ds-root :is(input, select, textarea):not([type='checkbox']):not([type='radio']):not([type='range']):focus-visible,
 .ds-popover .ds-input:is(:focus-within, :focus-visible),
@@ -38,17 +49,6 @@
   outline: none;
   border-color: var(--color-focus);
   box-shadow: var(--focus-field);
-}
-
-.ds-popover :is(a, button, input, select, textarea, summary, [tabindex]):focus,
-.ds-select__dropdown :is(a, button, input, select, textarea, summary, [tabindex]):focus {
-  outline: none;
-}
-
-.ds-popover :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible,
-.ds-select__dropdown :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
-  outline: none;
-  box-shadow: var(--focus-halo);
 }
 
 [data-nav='keyboard'] > li > [data-active='true'] {

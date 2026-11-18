@@ -123,6 +123,35 @@ describe('focus foundation contract', () => {
     expect(structureComposition).toMatch(
       /\.structure-composition__list\.ds-scroll-safe\s*\{[\s\S]*--focus-ring-extent/,
     );
+
+    const teamsCss = readFileSync(
+      join(webSrc, 'pages/teams/teams.css'),
+      'utf8',
+    );
+    expect(teamsCss).not.toMatch(
+      /\.teams-drawer\s*\{[^}]*padding:\s*var\(--focus-ring-extent\)/,
+    );
+    expect(teamsCss).toMatch(
+      /\.teams-drawer__body\.ds-scroll-safe\s*\{[^}]*margin:\s*calc\(-1 \* var\(--focus-ring-extent\)\)/,
+    );
+  });
+
+  it('applies portal field focus after portal halo so Popover comboboxes keep Q1', () => {
+    const portalHalo = focusCss.indexOf(
+      '.ds-popover :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible',
+    );
+    const portalField = focusCss.indexOf(
+      '.ds-popover .ds-input:is(:focus-within, :focus-visible)',
+    );
+    expect(portalHalo).toBeGreaterThan(-1);
+    expect(portalField).toBeGreaterThan(-1);
+    expect(portalField).toBeGreaterThan(portalHalo);
+    expect(
+      focusCss.slice(
+        portalField,
+        focusCss.indexOf('}', portalField) + 1,
+      ),
+    ).toMatch(/box-shadow:\s*var\(--focus-field\)/);
   });
 
   it('does not reference undefined focus-related custom properties in web CSS', () => {
