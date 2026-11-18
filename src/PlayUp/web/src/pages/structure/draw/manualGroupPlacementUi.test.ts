@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { SchematicCase, StructureEntry } from '../../../types';
 import {
+  canBatchAssignToGroup,
+  canReplaceInGroup,
   groupBatchCap,
   groupSeatCounter,
   listAvailableGroupEntries,
@@ -242,7 +244,39 @@ describe('listGroupManualTargets', () => {
   });
 });
 
+describe('canBatchAssignToGroup', () => {
+  it('requires AssignEntriesToGroup and placesPerGroup', () => {
+    expect(
+      canBatchAssignToGroup(['AssignEntryToGroup', 'AssignEntriesToGroup'], 4),
+    ).toBe(true);
+    expect(canBatchAssignToGroup(['AssignEntryToGroup'], 4)).toBe(false);
+    expect(canBatchAssignToGroup(['AssignEntriesToGroup'], null)).toBe(false);
+  });
+});
+
+describe('canReplaceInGroup', () => {
+  it('detects ReplaceEntryInGroup in actions', () => {
+    expect(canReplaceInGroup(['ReplaceEntryInGroup'])).toBe(true);
+    expect(canReplaceInGroup([])).toBe(false);
+  });
+});
+
 describe('groupBatchCap', () => {
+  it('returns 0 when every seat is full', () => {
+    const cases = [1, 2, 3, 4].map((index) =>
+      place({
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId: 'g-a',
+          groupName: 'A',
+          index,
+        },
+        entry: { entryId: `e${index}`, displayName: `T${index}` },
+      }),
+    );
+    expect(groupBatchCap(cases, 'g-a', actions)).toBe(0);
+  });
+
   it('counts only editable empty seats', () => {
     const cases = [
       place({

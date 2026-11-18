@@ -115,6 +115,102 @@ test.describe('manual group placement', () => {
     await expect(created).toBeVisible();
   });
 
+  test('places three teams from the CTA in one batch then produces matches', async ({
+    page,
+    request,
+  }) => {
+    test.setTimeout(120_000);
+    const competition = await findCompetition(request, MANUAL);
+    await page.goto(`/competitions/${competition.id}/structure`);
+
+    await page.getByRole('button', { name: 'Placer manuellement' }).click();
+    const dialog = page.getByRole('dialog', {
+      name: /Placement manuel —/,
+    });
+    await expect(dialog).toBeVisible();
+
+    const teams = dialog.getByRole('checkbox');
+    await teams.nth(0).click();
+    await teams.nth(1).click();
+    await teams.nth(2).click();
+    await dialog.getByRole('button', { name: /Placer 3 équipes/ }).click();
+    await expect(dialog).toBeHidden();
+
+    const pools = page.getByRole('group', { name: '2 groupes' });
+    await expect(pools.getByText('3/4')).toHaveCount(1);
+
+    const prepare = page.getByRole('button', { name: 'Marquer comme prête' });
+    if (await prepare.isVisible()) {
+      await prepare.click();
+    }
+
+    const matches = page.getByRole('region', { name: 'Matchs' });
+    const created = matches.getByText('Tous les matchs prévus sont créés.');
+    if (!(await created.isVisible())) {
+      await matches
+        .getByRole('button', { name: 'Créer les matchs', exact: true })
+        .click();
+    }
+    await expect(created).toBeVisible();
+  });
+
+  test('replaces a team on a full group seat', async ({ page, request }) => {
+    test.setTimeout(120_000);
+    const competition = await findCompetition(request, MANUAL);
+    await page.goto(`/competitions/${competition.id}/structure`);
+    await fillRemainingSeats(page, false);
+
+    const editSeat = page
+      .getByRole('button', {
+        name: /Groupe A · 1 — Cliquer pour modifier ou retirer/,
+      })
+      .first();
+    await editSeat.click();
+    const dialog = page.getByRole('dialog', {
+      name: /Modifier la place — Groupe A/,
+    });
+    const radios = dialog.getByRole('radio');
+    const current = await radios
+      .filter({ hasText: /Équipe générée 1|Alpha/ })
+      .count();
+    const pick = current > 0 ? radios.nth(1) : radios.last();
+    await pick.click();
+    await dialog
+      .getByRole('button', { name: 'Enregistrer', exact: true })
+      .click();
+    await expect(dialog).toBeHidden();
+    await expect(editSeat).toBeVisible();
+  });
+
+  test('removes a team with clear then save', async ({ page, request }) => {
+    test.setTimeout(120_000);
+    const competition = await findCompetition(request, MANUAL);
+    await page.goto(`/competitions/${competition.id}/structure`);
+    await fillRemainingSeats(page, false);
+
+    const editSeat = page
+      .getByRole('button', {
+        name: /Groupe B · 1 — Cliquer pour modifier ou retirer/,
+      })
+      .first();
+    await editSeat.click();
+    const dialog = page.getByRole('dialog', {
+      name: /Modifier la place — Groupe B/,
+    });
+    await dialog
+      .getByRole('button', { name: /Retirer l'équipe de la place/ })
+      .click();
+    await dialog
+      .getByRole('button', { name: 'Enregistrer', exact: true })
+      .click();
+    await expect(dialog).toBeHidden();
+    await expect(
+      page.getByRole('button', {
+        name: /Groupe B · 1 — Cliquer pour placer une équipe/,
+      }),
+    ).toBeVisible();
+  });
+
   test('shows a match lock and a withdrawal refusal before any click', async ({
     page,
     request,

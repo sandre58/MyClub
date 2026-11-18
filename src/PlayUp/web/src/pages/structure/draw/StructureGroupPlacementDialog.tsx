@@ -86,6 +86,7 @@ export function StructureGroupPlacementDialog({
   const queryClient = useQueryClient();
   const capHintId = useId();
   const liveAnnouncerId = useId();
+  const batchErrorId = useId();
   const actions = useMemo(() => stage.actions ?? [], [stage.actions]);
   const mode = resolveDialogMode(placeProp);
   const batchAllowed = canBatchAssignToGroup(actions, stage.placesPerGroup);
@@ -109,6 +110,7 @@ export function StructureGroupPlacementDialog({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [liveNote, setLiveNote] = useState<string | null>(null);
   const [seatBlocked, setSeatBlocked] = useState(false);
+  const [placementBlocked, setPlacementBlocked] = useState(false);
   const [refusedEntryId, setRefusedEntryId] = useState<string | null>(null);
   const initialSelectionRef = useRef<string[] | string | null>(null);
 
@@ -227,8 +229,16 @@ export function StructureGroupPlacementDialog({
       if (error instanceof ApiError && error.entryId) {
         setRefusedEntryId(error.entryId);
       }
-      if (mode === 'edit' && error instanceof ApiError) {
-        if (error.code === 'Stage.EntryNotFound') {
+      if (error instanceof ApiError) {
+        const blockCodes = [
+          'Stage.StructureLocked',
+          'Application.ManualGroupPlacementBlockedByActiveDraw',
+          'Stage.GroupNotFound',
+        ];
+        if (error.code && blockCodes.includes(error.code)) {
+          setPlacementBlocked(true);
+        }
+        if (mode === 'edit' && error.code === 'Stage.EntryNotFound') {
           setLiveNote(t('groupPlacement.seatChanged'));
         }
       }
@@ -245,6 +255,7 @@ export function StructureGroupPlacementDialog({
         : (groupTargets[0]?.groupId ?? null);
     setGroupId(initialGroup);
     setSeatBlocked(false);
+    setPlacementBlocked(false);
     setRefusedEntryId(null);
     setLiveNote(null);
 
@@ -266,6 +277,14 @@ export function StructureGroupPlacementDialog({
     saveMutation.reset();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- open edge
   }, [open, placeProp, mode]);
+
+  useEffect(() => {
+    if (!open || placeProp != null || groupId != null) return;
+    const next = groupTargets[0]?.groupId?.trim() ?? null;
+    if (next) {
+      setGroupId(next);
+    }
+  }, [open, placeProp, groupId, groupTargets]);
 
   const syncedOccupantRef = useRef<string | null>(null);
 
@@ -294,6 +313,13 @@ export function StructureGroupPlacementDialog({
     }
   }, [open, mode, available, selectedIds, t]);
 
+  useEffect(() => {
+    if (!open || placeProp != null || !saveMutation.error) return;
+    if (groupTargets.length === 0) {
+      setPlacementBlocked(true);
+    }
+  }, [open, placeProp, saveMutation.error, groupTargets.length]);
+
   const groupLabel =
     groupId != null
       ? resolveGroupDisplayLabel(cases, groupId, (name) =>
@@ -317,7 +343,8 @@ export function StructureGroupPlacementDialog({
   );
 
   const overCap = effectiveBatch && selection.length > cap;
-  const atCap = effectiveBatch && selection.length >= cap && cap > 0;
+  const atCap = effectiveBatch && cap > 0 && selection.length >= cap;
+  const showPlacementBlocked = seatBlocked || placementBlocked;
 
   const dirty =
     mode === 'edit'
@@ -425,7 +452,9 @@ export function StructureGroupPlacementDialog({
   };
 
   const dialogOpen =
-    open && (placeProp != null || groupTargets.length > 0) && groupId != null;
+    open &&
+    groupId != null &&
+    (placeProp != null || groupTargets.length > 0 || placementBlocked);
 
   const tileRole = multiSelect ? 'checkbox' : 'radio';
   const teamGroupRole = tileRole === 'radio' ? 'radiogroup' : 'group';
@@ -441,10 +470,15 @@ export function StructureGroupPlacementDialog({
         closeLabel={tCommon('close')}
         closeDisabled={pending || discardOpen}
         trapFocus={!discardOpen}
+        focusKey={`${mode}:${groupId}:${selectedId}:${selectedIds.join(',')}`}
         footerStatus={
           mutationError ? (
             batchErrorMessage ? (
-              <div role="alert" className="ds-alert ds-alert--danger">
+              <div
+                id={batchErrorId}
+                role="alert"
+                className="ds-alert ds-alert--danger"
+              >
                 <span>{batchErrorMessage}</span>
               </div>
             ) : (
@@ -466,9 +500,9 @@ export function StructureGroupPlacementDialog({
               <CloseIcon size="sm" />
               {tCommon('cancel')}
             </button>
-            {!seatBlocked &&
+            {!showPlacementBlocked &&
             !compositionEmpty &&
-            (mode !== 'batch' || teamChoices.length > 0) ? (
+            (mode === 'edit' || teamChoices.length > 0) ? (
               <button
                 type="button"
                 className="ds-btn ds-btn--primary"
@@ -538,7 +572,10 @@ export function StructureGroupPlacementDialog({
               className="structure-qualification__facts structure-composition__facts"
               aria-live="polite"
             >
-              <span className="structure-qualification__fact structure-qualification__fact--secondary">
+              <span
+                className="structure-qualification__fact structure-qualification__fact--secondary"
+                data-fact="free"
+              >
                 <span className="structure-qualification__fact-value">
                   {cap}
                 </span>
@@ -550,7 +587,10 @@ export function StructureGroupPlacementDialog({
                 className="structure-qualification__fact-rule"
                 aria-hidden="true"
               />
-              <span className="structure-qualification__fact structure-qualification__fact--primary">
+              <span
+                className="structure-qualification__fact structure-qualification__fact--primary"
+                data-fact="selected"
+              >
                 <span className="structure-qualification__fact-value">
                   {selectedIds.length}
                 </span>
@@ -562,7 +602,10 @@ export function StructureGroupPlacementDialog({
                 className="structure-qualification__fact-rule"
                 aria-hidden="true"
               />
-              <span className="structure-qualification__fact structure-qualification__fact--secondary">
+              <span
+                className="structure-qualification__fact structure-qualification__fact--secondary"
+                data-fact="remaining"
+              >
                 <span className="structure-qualification__fact-value">
                   {Math.max(0, cap - selectedIds.length)}
                 </span>
@@ -587,20 +630,6 @@ export function StructureGroupPlacementDialog({
             </p>
           ) : null}
 
-          {effectiveBatch ? (
-            <div className="structure-composition__toolbar">
-              <button
-                type="button"
-                className="ds-btn ds-btn--ghost structure-composition__select-all"
-                disabled={!canFillGroup || pending}
-                onClick={fillGroup}
-              >
-                <ListChecksIcon size="sm" />
-                {t('groupPlacement.fillGroup')}
-              </button>
-            </div>
-          ) : null}
-
           <div className="structure-manual-placement__body">
             {compositionEmpty ? (
               <EmptyState
@@ -620,7 +649,7 @@ export function StructureGroupPlacementDialog({
                 {t('groupPlacement.allPlaced')}
               </EmptyState>
             ) : null}
-            {seatBlocked ? (
+            {showPlacementBlocked ? (
               <EmptyState
                 variant="idle"
                 icon={<EmptySelectionIcon size="lg" />}
@@ -629,35 +658,25 @@ export function StructureGroupPlacementDialog({
                 {t('groupPlacement.blockedAfterRemove')}
               </EmptyState>
             ) : null}
-            {!compositionEmpty && !seatBlocked && teamChoices.length > 0 ? (
+            {!compositionEmpty &&
+            !showPlacementBlocked &&
+            teamChoices.length > 0 ? (
               <div className="structure-manual-placement__field structure-manual-placement__field--fill">
                 <div className="structure-manual-placement__section-head">
                   <span className="structure-manual-placement__label">
-                    {t('manualPlacement.teamLabel')}
+                    {multiSelect
+                      ? t('groupPlacement.teamLabel')
+                      : t('manualPlacement.teamLabel')}
                   </span>
-                  {mode === 'edit' && selectedId != null && !pending ? (
-                    <div className="ds-icon-toolbar">
-                      <Tooltip content={t('groupPlacement.clearSeat')}>
-                        <button
-                          type="button"
-                          className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact ds-icon-button--dismiss"
-                          disabled={pending}
-                          aria-label={t('groupPlacement.clearSeat')}
-                          onClick={() => {
-                            setSelectedId(null);
-                            saveMutation.reset();
-                          }}
-                        >
-                          <CloseIcon size="sm" />
-                        </button>
-                      </Tooltip>
-                    </div>
-                  ) : null}
                 </div>
                 <div
                   className="structure-manual-placement__teams ds-scroll-safe"
                   role={teamGroupRole}
-                  aria-label={t('manualPlacement.teamLabel')}
+                  aria-label={
+                    multiSelect
+                      ? t('groupPlacement.teamLabel')
+                      : t('manualPlacement.teamLabel')
+                  }
                 >
                   {teamChoices.map((team) => {
                     const selected = multiSelect
@@ -691,13 +710,11 @@ export function StructureGroupPlacementDialog({
                         disabled={tileDisabled}
                         unavailable={lockedAtCap}
                         aria-describedby={
-                          refusedEntryId === team.entryId && mutationError
-                            ? undefined
+                          refusedEntryId === team.entryId && batchErrorMessage
+                            ? batchErrorId
                             : lockedAtCap
                               ? capHintId
-                              : refusedEntryId === team.entryId
-                                ? liveAnnouncerId
-                                : undefined
+                              : undefined
                         }
                         onChange={(next) => {
                           if (pending) return;
@@ -714,6 +731,37 @@ export function StructureGroupPlacementDialog({
                     );
                   })}
                 </div>
+                {effectiveBatch ? (
+                  <div className="structure-composition__toolbar">
+                    <button
+                      type="button"
+                      className="ds-btn ds-btn--ghost structure-composition__select-all"
+                      disabled={!canFillGroup || pending}
+                      onClick={fillGroup}
+                    >
+                      <ListChecksIcon size="sm" />
+                      {t('groupPlacement.fillGroup')}
+                    </button>
+                  </div>
+                ) : null}
+                {mode === 'edit' && selectedId != null && !pending ? (
+                  <div className="ds-icon-toolbar structure-manual-placement__clear-row">
+                    <Tooltip content={t('groupPlacement.clearSeat')}>
+                      <button
+                        type="button"
+                        className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact ds-icon-button--dismiss"
+                        disabled={pending}
+                        aria-label={t('groupPlacement.clearSeat')}
+                        onClick={() => {
+                          setSelectedId(null);
+                          saveMutation.reset();
+                        }}
+                      >
+                        <CloseIcon size="sm" />
+                      </button>
+                    </Tooltip>
+                  </div>
+                ) : null}
               </div>
             ) : null}
           </div>

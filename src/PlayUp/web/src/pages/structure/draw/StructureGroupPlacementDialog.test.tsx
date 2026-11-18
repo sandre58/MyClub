@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ComponentProps } from 'react';
 import { MemoryRouter } from 'react-router-dom';
@@ -145,7 +145,15 @@ describe('StructureGroupPlacementDialog', () => {
   it('places one team from an empty seat with PUT', async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
-    renderDialog({ onClose });
+    const { queryClient } = renderDialog({ onClose });
+    const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
+
+    expect(screen.getByText('Groupe A')).toBeInTheDocument();
+    const dialog = screen.getByRole('dialog', {
+      name: 'Placement manuel — Phase de groupes',
+    });
+    expect(within(dialog).getAllByText('Pot 1').length).toBeGreaterThan(0);
+    expect(within(dialog).getByText('Pot 2')).toBeInTheDocument();
 
     await user.click(screen.getByRole('radio', { name: 'Bravo' }));
     await user.click(screen.getByRole('button', { name: 'Enregistrer' }));
@@ -155,6 +163,75 @@ describe('StructureGroupPlacementDialog', () => {
     });
     expect(assignEntriesToGroup).not.toHaveBeenCalled();
     expect(onClose).toHaveBeenCalled();
+    await waitFor(() => expect(invalidate).toHaveBeenCalled());
+  });
+
+  it('hides pots when the server sends none', () => {
+    renderDialog({
+      stage: stage({ compositionEntryPots: null, hasDrawRules: false }),
+    });
+    expect(screen.queryByText(/^Pot /)).not.toBeInTheDocument();
+    expect(screen.getByText('Alpha')).toBeInTheDocument();
+  });
+
+  it('says when every composition team is already placed and when the composition is empty', () => {
+    const placed = groupPlace({
+      entry: { entryId: 'e1', displayName: 'Alpha' },
+    });
+    const { unmount } = renderDialog({
+      stage: stage({
+        compositionEntryIds: ['e1', 'e2'],
+        compositionEntryPots: null,
+      }),
+      entries: [entry('e1', 'Alpha'), entry('e2', 'Bravo')],
+      cases: [
+        placed,
+        groupPlace({
+          formPosition: {
+            kind: 'GroupPlace',
+            groupId: 'group-b',
+            groupName: 'B',
+            index: 1,
+          },
+          entry: { entryId: 'e2', displayName: 'Bravo' },
+        }),
+        groupPlace({
+          formPosition: {
+            kind: 'GroupPlace',
+            groupId,
+            groupName: 'A',
+            index: 2,
+          },
+        }),
+      ],
+      place: groupPlace({
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId,
+          groupName: 'A',
+          index: 2,
+        },
+      }),
+    });
+    expect(
+      screen.getByText(
+        'Toutes les équipes de la composition sont déjà placées.',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Placer \d+ équipe|Enregistrer/ }),
+    ).not.toBeInTheDocument();
+    unmount();
+
+    renderDialog({
+      stage: stage({ compositionEntryIds: [], compositionEntryPots: null }),
+    });
+    expect(
+      screen.getByText('Ajoutez des équipes à la composition de la phase.'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Enregistrer' }),
+    ).not.toBeInTheDocument();
   });
 
   it('batch-places teams in display order from the CTA', async () => {
@@ -339,18 +416,257 @@ describe('StructureGroupPlacementDialog', () => {
       'Application.GroupSeatReservedByInboundFeed',
       frErrors.Application.GroupSeatReservedByInboundFeed,
     ],
+    [
+      'Application.ManualGroupPlacementBlockedByActiveDraw',
+      frErrors.Application.ManualGroupPlacementBlockedByActiveDraw,
+    ],
     ['Stage.StructureLocked', frErrors.Stage.StructureLocked],
+    ['Stage.GroupFull', frErrors.Stage.GroupFull],
   ] as const)('keeps the dialog open and shows %s', async (code, expected) => {
     const user = userEvent.setup();
     vi.mocked(assignEntryToGroup).mockRejectedValueOnce(
       new ApiError(409, 'conflict', 'detail', code),
     );
-    renderDialog();
+    const { queryClient } = renderDialog();
+    const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
 
     await user.click(screen.getByRole('radio', { name: 'Alpha' }));
     await user.click(screen.getByRole('button', { name: 'Enregistrer' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(expected);
+    expect(screen.getByRole('alert')).not.toHaveTextContent(code);
     expect(screen.getByRole('dialog')).toBeInTheDocument();
+    await waitFor(() => expect(invalidate).toHaveBeenCalled());
+  });
+
+  it('stays open in blocked state when the CTA batch fails and targets disappear', async () => {
+    const user = userEvent.setup();
+    vi.mocked(assignEntriesToGroup).mockRejectedValueOnce(
+      new ApiError(409, 'locked', 'detail', 'Stage.StructureLocked'),
+    );
+    const { rerender, queryClient } = renderDialog({ place: null });
+
+    await user.click(screen.getByRole('checkbox', { name: 'Bravo' }));
+    await user.click(screen.getByRole('button', { name: 'Placer 1 équipe' }));
+
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+
+    rerender(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <StructureGroupPlacementDialog
+            open
+            onClose={vi.fn()}
+            competitionId="comp-1"
+            stage={stage({ actions: [] })}
+            structureStages={[stage({ actions: [] })]}
+            entries={[
+              entry('e1', 'Alpha'),
+              entry('e2', 'Bravo'),
+              entry('e3', 'Charlie'),
+            ]}
+            cases={[]}
+            place={null}
+          />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByText('Placement indisponible')).toBeInTheDocument();
+  });
+
+  it('shows batch facts and locks tiles at capacity', async () => {
+    const user = userEvent.setup();
+    renderDialog({ place: null });
+
+    const freeCount = document.querySelector(
+      '[data-fact="free"] .structure-qualification__fact-value',
+    );
+    expect(freeCount).toHaveTextContent('2');
+
+    await user.click(screen.getByRole('checkbox', { name: 'Bravo' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Charlie' }));
+    const locked = screen.getByRole('checkbox', { name: 'Alpha' });
+    await waitFor(() =>
+      expect(locked).toHaveAttribute('aria-disabled', 'true'),
+    );
+  });
+
+  it('clears batch selection when the group changes', async () => {
+    const user = userEvent.setup();
+    const emptyB = groupPlace({
+      formPosition: {
+        kind: 'GroupPlace',
+        groupId: 'group-b',
+        groupName: 'B',
+        index: 1,
+      },
+    });
+    renderDialog({ place: null, cases: [groupPlace(), emptyB] });
+
+    await user.click(screen.getByRole('checkbox', { name: 'Alpha' }));
+    await user.click(screen.getByRole('combobox', { name: 'Place' }));
+    await user.click(screen.getByRole('option', { name: /Groupe B/ }));
+    expect(screen.queryByRole('checkbox', { name: 'Alpha' })).not.toBeChecked();
+  });
+
+  it('falls back to PUT when placesPerGroup is absent', async () => {
+    const user = userEvent.setup();
+    renderDialog({
+      place: null,
+      stage: stage({ placesPerGroup: null }),
+    });
+
+    await user.click(screen.getByRole('radio', { name: 'Alpha' }));
+    await user.click(screen.getByRole('button', { name: 'Enregistrer' }));
+
+    await waitFor(() => {
+      expect(assignEntryToGroup).toHaveBeenCalledWith(stageId, groupId, 'e1');
+    });
+  });
+
+  it('disables save when edit selection matches the occupant', () => {
+    const occupied = groupPlace({
+      entry: { entryId: 'e1', displayName: 'Alpha' },
+      canClear: true,
+    });
+    renderDialog({
+      place: occupied,
+      cases: [
+        occupied,
+        groupPlace({
+          formPosition: {
+            kind: 'GroupPlace',
+            groupId,
+            groupName: 'A',
+            index: 2,
+          },
+        }),
+      ],
+    });
+    expect(screen.getByRole('button', { name: 'Enregistrer' })).toBeDisabled();
+  });
+
+  it('announces seatChanged and reads the new occupant on EntryNotFound', async () => {
+    const user = userEvent.setup();
+    const occupied = groupPlace({
+      entry: { entryId: 'e1', displayName: 'Alpha' },
+      canClear: true,
+    });
+    vi.mocked(replaceEntryInGroup).mockRejectedValueOnce(
+      new ApiError(409, 'gone', 'detail', 'Stage.EntryNotFound'),
+    );
+
+    const { rerender, queryClient } = renderDialog({
+      place: occupied,
+      cases: [
+        occupied,
+        groupPlace({
+          formPosition: {
+            kind: 'GroupPlace',
+            groupId,
+            groupName: 'A',
+            index: 2,
+          },
+        }),
+      ],
+    });
+
+    await user.click(screen.getByRole('radio', { name: 'Bravo' }));
+    await user.click(screen.getByRole('button', { name: 'Enregistrer' }));
+
+    const replaced = groupPlace({
+      entry: { entryId: 'e2', displayName: 'Bravo' },
+      canClear: true,
+    });
+    rerender(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <StructureGroupPlacementDialog
+            open
+            onClose={vi.fn()}
+            competitionId="comp-1"
+            stage={stage()}
+            structureStages={[stage()]}
+            entries={[
+              entry('e1', 'Alpha'),
+              entry('e2', 'Bravo'),
+              entry('e3', 'Charlie'),
+            ]}
+            cases={[
+              replaced,
+              groupPlace({
+                formPosition: {
+                  kind: 'GroupPlace',
+                  groupId,
+                  groupName: 'A',
+                  index: 2,
+                },
+              }),
+            ]}
+            place={occupied}
+          />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(
+      screen.getByText('La place a changé. Vérifiez la sélection.'),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Bravo' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+  });
+
+  it('focuses the selected occupant tile in edit mode', async () => {
+    const occupied = groupPlace({
+      entry: { entryId: 'e1', displayName: 'Alpha' },
+      canClear: true,
+    });
+    renderDialog({
+      place: occupied,
+      cases: [
+        occupied,
+        groupPlace({
+          formPosition: {
+            kind: 'GroupPlace',
+            groupId,
+            groupName: 'A',
+            index: 2,
+          },
+        }),
+      ],
+    });
+
+    await waitFor(() =>
+      expect(screen.getByRole('radio', { name: 'Alpha' })).toHaveFocus(),
+    );
+  });
+
+  it('links the refused batch tile to the alert message', async () => {
+    const user = userEvent.setup();
+    vi.mocked(assignEntriesToGroup).mockRejectedValueOnce(
+      new ApiError(
+        409,
+        'conflict',
+        'detail',
+        'Stage.GroupFull',
+        undefined,
+        'e2',
+      ),
+    );
+    renderDialog({ place: null });
+
+    await user.click(screen.getByRole('checkbox', { name: 'Bravo' }));
+    await user.click(screen.getByRole('button', { name: 'Placer 1 équipe' }));
+
+    const alert = await screen.findByRole('alert');
+    const bravo = screen.getByRole('checkbox', { name: 'Bravo' });
+    const describedBy = bravo.getAttribute('aria-describedby');
+    expect(describedBy).toBeTruthy();
+    expect(alert).toHaveAttribute('id', describedBy);
+    expect(alert).toHaveTextContent(frErrors.Stage.GroupFull);
   });
 });
