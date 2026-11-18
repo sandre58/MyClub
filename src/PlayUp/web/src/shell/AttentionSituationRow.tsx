@@ -3,6 +3,7 @@ import { ChevronRightIcon } from '../design-system/icons/shellIcons';
 import { situationPresentation } from './functionalProblemPresentation';
 import {
   attentionSituationMeta,
+  attentionSituationSubtitle,
   attentionSituationTitle,
 } from './attentionRowCopy';
 import { organizerProblemPresentationCode } from './organizerProblemRead';
@@ -36,6 +37,7 @@ export function AttentionSituationRow({
     item.source,
   );
   const meta = attentionSituationMeta(item, stages);
+  const subtitle = attentionSituationSubtitle(item);
   const toneClass = isBlocking
     ? 'shell-attention-drawer__row--blocking'
     : 'shell-attention-drawer__row--attention';
@@ -46,6 +48,11 @@ export function AttentionSituationRow({
         <span className="shell-attention-drawer__row-title">
           {attentionSituationTitle(presentation, titleSource, item.params)}
         </span>
+        {subtitle ? (
+          <span className="shell-attention-drawer__row-sub ds-meta">
+            {subtitle}
+          </span>
+        ) : null}
         {meta ? (
           <span className="shell-attention-drawer__row-meta ds-meta">
             {meta}

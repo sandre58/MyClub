@@ -4,14 +4,44 @@ import { placeChromeLabel } from './structurePlaceLabel';
 /** How a Cup place responds to manual placement. */
 export type ManualPlaceMode = 'editable' | 'qualProg' | 'draw' | 'unavailable';
 
-export function resolveManualPlaceMode(place: SchematicCase): ManualPlaceMode {
+/** Enough of a phase to decide whether its path may be overwritten. */
+export type ManualPlacementStage = {
+  stageId: string;
+  status?: string | null;
+};
+
+/**
+ * A qualification or progression path may be overwritten only when its source
+ * is definitive: completed, or absent from the loaded phase list (deleted).
+ * Omitting the list keeps the path reserved, including for a partial read.
+ */
+export function sourceAllowsManualOverwrite(
+  sourceStageId: string | null | undefined,
+  stages: readonly ManualPlacementStage[] | undefined,
+): boolean {
+  if (!sourceStageId || !stages) {
+    return false;
+  }
+  const source = stages.find((stage) => stage.stageId === sourceStageId);
+  if (!source) {
+    return true;
+  }
+  return source.status === 'Completed';
+}
+
+export function resolveManualPlaceMode(
+  place: SchematicCase,
+  stages?: readonly ManualPlacementStage[],
+): ManualPlaceMode {
   if (place.formPosition.kind !== 'CupSlot' || !place.formPosition.slotKey) {
     return 'unavailable';
   }
 
   const feed = place.feedOrigin?.kind as SchematicFeedKind | undefined;
   if (feed === 'Qualification' || feed === 'Progression') {
-    return 'qualProg';
+    return sourceAllowsManualOverwrite(place.feedOrigin?.sourceStageId, stages)
+      ? 'editable'
+      : 'qualProg';
   }
   if (feed === 'Draw') {
     return 'draw';
@@ -36,6 +66,7 @@ export type ManualPlaceOption = {
 
 export function listCupManualPlaces(
   cases: readonly SchematicCase[],
+  stages?: readonly ManualPlacementStage[],
 ): ManualPlaceOption[] {
   const options: ManualPlaceOption[] = [];
   for (const place of cases) {
@@ -46,7 +77,7 @@ export function listCupManualPlaces(
     options.push({
       slotKey,
       label: placeChromeLabel(place.formPosition) || slotKey,
-      mode: resolveManualPlaceMode(place),
+      mode: resolveManualPlaceMode(place, stages),
       entryId: place.entry?.entryId ?? place.assignment?.entryId ?? null,
     });
   }

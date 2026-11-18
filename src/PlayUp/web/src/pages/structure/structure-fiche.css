@@ -346,6 +346,157 @@
   min-width: 0;
 }
 
+.structure-entries__team--line {
+  align-items: flex-start;
+}
+
+.structure-entries__identity {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.structure-entries__identity-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.structure-entries__identity-head--solo {
+  min-height: 1.7rem;
+}
+
+.structure-entries__identity-head .structure-entries__team-name {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.structure-entries__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4) var(--space-8);
+  font-size: var(--text-meta);
+  color: var(--color-text-secondary);
+  line-height: var(--leading-tight);
+}
+
+.structure-entries__meta--caption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8);
+  font-size: var(--text-caption);
+  line-height: var(--leading-caption);
+  font-weight: var(--font-weight-regular);
+}
+
+.structure-entries__meta-unit {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Placed hint Tooltip wrapper: avoid ds-tooltip-trigger vertical-align: middle drift vs freshness row */
+.structure-entries__meta--caption .ds-tooltip-trigger:has(.structure-entries__placed-hint) {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: baseline;
+  line-height: var(--leading-caption);
+}
+
+.structure-entries__meta--caption .structure-entries__freshness-state {
+  font-weight: var(--font-weight-regular);
+}
+
+.structure-entries__provenance {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.structure-entries__eligibility-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex: none;
+  color: var(--color-text-secondary);
+}
+
+.structure-entries__placed-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  color: var(--color-text-secondary);
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  text-align: inherit;
+  cursor: default;
+}
+
+.structure-entries__placed-hint:focus {
+  outline: none;
+}
+
+.structure-entries__placed-hint:focus-visible {
+  border-radius: var(--radius-sm);
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.structure-entries__placed-hint .ds-icon {
+  flex: none;
+}
+
+.structure-entries__placed-tooltip-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  text-align: start;
+}
+
+.structure-entries__placed-tooltip-line {
+  display: block;
+}
+
+.structure-entries__freshness-state {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex: none;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-attention);
+}
+
+.structure-entries__action {
+  flex: none;
+  align-self: center;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 28px;
+  min-width: 28px;
+}
+
+.structure-entries__team-name--ineligible {
+  color: var(--color-text-secondary);
+}
+
 .structure-entries__team-name {
   flex: 1 1 auto;
   min-width: 0;
@@ -797,49 +948,81 @@
   font-size: var(--text-label);
 }
 
-.structure-entries__cell-trailing {
-  display: flex;
-  gap: var(--space-4);
+.structure-freshness-badge__action.ds-btn.ds-icon-button--xs {
+  flex: none;
+  box-sizing: content-box;
+  width: 1.25rem;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  min-height: 1.25rem;
+  padding: 0.25rem;
+  margin: -0.25rem;
+  color: var(--color-attention);
+  background: color-mix(in srgb, var(--color-attention) 10%, var(--color-canvas));
+  background-clip: content-box;
+  border: 0;
+  border-radius: var(--radius-control);
+  text-decoration: none;
+  cursor: pointer;
 }
 
-.structure-freshness-replace {
+.structure-freshness-badge__action.ds-btn.ds-icon-button--xs:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-attention) 16%, var(--color-canvas));
+  background-clip: content-box;
+}
+
+.structure-freshness-badge__glyph {
   display: inline-flex;
   align-items: center;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-  border-radius: 999px;
+  justify-content: center;
+  box-sizing: content-box;
+  width: 1.25rem;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  min-height: 1.25rem;
+  padding: 0.25rem;
+  margin: -0.25rem;
+  flex: none;
+  color: color-mix(in srgb, var(--color-attention) 70%, var(--color-text-secondary));
+  cursor: default;
 }
 
-.structure-freshness-replace .ds-status,
-.structure-freshness-badge--icon.ds-status {
-  gap: 0.15rem;
-}
-
-.structure-freshness-badge--icon.ds-status {
-  padding-inline: 0.28rem;
-}
-
-.structure-freshness-badge__icon,
-.structure-freshness-badge__chevron {
+.structure-freshness-badge__icon {
   display: inline-flex;
   flex: none;
 }
 
-.structure-freshness-badge__icon.ds-icon,
-.structure-freshness-badge__chevron.ds-icon {
-  width: 0.75rem;
-  height: 0.75rem;
+.structure-definitive-release {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  margin-block-end: var(--space-12);
+}
+
+.structure-definitive-release__source {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-8);
+}
+
+.structure-definitive-release__exclusions {
+  margin: 0;
+  padding-inline-start: var(--space-16);
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+}
+
+.structure-freshness-definitive__label {
+  color: var(--color-text-secondary);
+  font-size: var(--text-meta);
+  line-height: 1.2;
 }
 
 .structure-freshness-replace__tip {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 0.1rem;
 }
 
@@ -847,6 +1030,10 @@
 .structure-freshness-replace__cause {
   color: var(--color-text-primary);
   font-style: normal;
+}
+
+.structure-freshness-replace__state {
+  font-weight: var(--font-weight-semibold);
 }
 
 .structure-freshness-replace__action {

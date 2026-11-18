@@ -196,8 +196,11 @@ public static class StandingCalculator
             groups = nextGroups;
         }
 
-        return [.. groups.SelectMany(g =>
-            g.Count <= 1 ? g : OrderFinalTieBreak(g, criteria))];
+        return
+        [
+            .. groups.SelectMany(g =>
+                g.Count <= 1 ? g : OrderFinalTieBreak(g, criteria))
+        ];
     }
 
     private static List<RankableRow> OrderFinalTieBreak(

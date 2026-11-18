@@ -22,6 +22,40 @@ describe('functionalProblemPresentation', () => {
     expect(presentation.titleNs).toBe('enums');
   });
 
+  it('links stale resolution on a slot to operational placement with CTA', () => {
+    const presentation = functionalProblemPresentation({
+      source: 'ResolutionPerime',
+      competitionId: 'comp-1',
+      targetType: 'Slot',
+      targetId: 'phase-1:Champ',
+      params: { stageId: 'phase-1', slotKey: 'Champ', count: '1' },
+      canal: 'attention-drawer',
+    });
+
+    expect(presentation.tone).toBe('attention');
+    expect(presentation.titleKey).toBe('attentionSource.ResolutionPerime');
+    expect(presentation.sotHref).toBe(
+      '/competitions/comp-1/structure?stage=phase-1&focus=tile-places&slot=Champ',
+    );
+    expect(presentation.cta?.actionCode).toBe('ViewResolutionPlace');
+  });
+
+  it('links stage-level stale resolution rows to the phase without CTA', () => {
+    const presentation = functionalProblemPresentation({
+      source: 'ResolutionPerime',
+      competitionId: 'comp-1',
+      targetType: 'Stage',
+      targetId: 'phase-1',
+      params: { stageId: 'phase-1', count: '2' },
+      canal: 'attention-drawer',
+    });
+
+    expect(presentation.sotHref).toBe(
+      '/competitions/comp-1/structure?stage=phase-1',
+    );
+    expect(presentation.cta).toBeNull();
+  });
+
   it('maps InsufficientParticipants to Teams SoT (not Structure)', () => {
     const presentation = functionalProblemPresentation({
       source: 'InsufficientParticipants',
@@ -288,5 +322,28 @@ describe('functionalProblemPresentation', () => {
 
     expect(presentation.cta?.actionCode).toBe('ConfigureStructure');
     expect(presentation.sotHref).toBe('/competitions/comp-1/structure');
+  });
+
+  it('situationPresentation deep-links QualificationConflict to Structure qualification rail', () => {
+    const presentation = situationPresentation(
+      {
+        source: 'QualificationConflict',
+        nature: 'Blocking',
+        targetType: 'Slot',
+        targetId: 'phase-d:slot-1',
+        matchId: null,
+        actionable: true,
+        actionCode: 'ApplyQualification',
+        impactCode: 'BlocksProgression',
+        params: {
+          slotKey: 'slot-1',
+          destinationStageId: 'phase-d',
+        },
+      },
+      'comp-1',
+    );
+    expect(presentation.sotHref).toBe(
+      '/competitions/comp-1/structure?stage=phase-d&section=qualification&focus=rail-attribution',
+    );
   });
 });

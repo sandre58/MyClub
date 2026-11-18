@@ -8,12 +8,18 @@ export const STRUCTURE_COMPOSE_PARAM = 'compose';
 export const STRUCTURE_FOCUS_PARAM = 'focus';
 export const STRUCTURE_MANUAL_PARAM = 'manual';
 export const STRUCTURE_DRAW_PARAM = 'draw';
+export const STRUCTURE_SLOT_PARAM = 'slot';
 
 /** Scroll target on the phase fiche after navigation (element id). */
 export type StructureFocusId =
-  'operational-placement' | 'rail-exits' | 'rail-attribution' | 'rail-entries';
+  | 'tile-places'
+  | 'operational-placement'
+  | 'rail-exits'
+  | 'rail-attribution'
+  | 'rail-entries';
 
 const STRUCTURE_FOCUS_IDS: StructureFocusId[] = [
+  'tile-places',
   'operational-placement',
   'rail-exits',
   'rail-attribution',
@@ -52,6 +58,7 @@ export function structureDeepLink(options: {
   compose?: boolean;
   focus?: StructureFocusId | null;
   manual?: boolean;
+  slotKey?: string | null;
   /** Opens the draw execution workflow dialog when the phase supports it. */
   openDrawWorkflow?: boolean;
 }): string {
@@ -69,6 +76,9 @@ export function structureDeepLink(options: {
   if (options.focus) {
     params.set(STRUCTURE_FOCUS_PARAM, options.focus);
   }
+  if (options.slotKey) {
+    params.set(STRUCTURE_SLOT_PARAM, options.slotKey);
+  }
   if (options.manual) {
     params.set(STRUCTURE_MANUAL_PARAM, '1');
   }
@@ -85,6 +95,7 @@ export function parseStructureDeepLink(search: string): {
   compose: boolean;
   focus: StructureFocusId | null;
   manual: boolean;
+  slotKey: string | null;
   openDrawWorkflow: boolean;
 } {
   const params = new URLSearchParams(search);
@@ -104,6 +115,7 @@ export function parseStructureDeepLink(search: string): {
     compose: composeRaw === '1' || composeRaw === 'true',
     focus,
     manual: manualRaw === '1' || manualRaw === 'true',
+    slotKey: params.get(STRUCTURE_SLOT_PARAM)?.trim() || null,
     openDrawWorkflow: drawRaw === '1' || drawRaw === 'true',
   };
 }

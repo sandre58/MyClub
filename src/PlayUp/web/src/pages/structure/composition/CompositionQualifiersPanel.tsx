@@ -1,30 +1,23 @@
 import type { ReactNode } from 'react';
 import { useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
-import {
-  EntryCell,
-  EntryCellPlacedMarker,
-} from '../../../design-system/components/EntryCell';
 import type {
+  StageSchematic,
   StructureEntry,
   StructureFormatKind,
   StructureInboundComposition,
   StructureResolutionOccupant,
 } from '../../../types';
 import type { CompositionQualifierFeedGroup } from './structureCompositionQualifierFeeds';
-import { CompositionQualifierRuleLabel } from './CompositionQualifierRuleLabel';
+import { CompositionQualifierRuleRow } from './CompositionQualifierRuleRow';
 import { FeedGroupPhaseHead } from './FeedGroupPhaseHead';
 import { inboundSeatsForFeedRule } from './structureCompositionInboundHub';
-import {
-  primaryPlaceLabel,
-  showPerEntryPlacement,
-} from '../draw/structureEntryPlacementProjection';
+import { qualifierSeatShowUnplacedOpacity } from './qualifierSeatPresentation';
 import type { EntryPlaceProjection } from '../draw/structureEntryPlacementProjection';
 import { useStructureCascadeReplace } from '../resolution/structureCascadeReplaceContext';
-import { StructureResolutionFreshnessBadge } from '../resolution/StructureResolutionFreshnessBadge';
+import { useStructureResolutionRelease } from '../resolution/structureResolutionReleaseContext';
 import {
   buildStructureResolutionOccupantIndex,
-  lookupPopulationResolutionOccupant,
+  lookupListedResolutionOccupant,
 } from '../resolution/structureResolutionOccupants';
 
 export function CompositionQualifiersPanel({
@@ -33,28 +26,30 @@ export function CompositionQualifiersPanel({
   entries,
   formatKind,
   entryPlaceProjections,
+  schematic,
   resolutionOccupants,
   onViewPhase,
   renderGroupAction,
+  destinationPhaseName,
 }: {
   groups: CompositionQualifierFeedGroup[];
   inboundComposition: StructureInboundComposition | null | undefined;
   entries: readonly StructureEntry[];
   formatKind: StructureFormatKind | null | undefined;
   entryPlaceProjections: ReadonlyMap<string, EntryPlaceProjection>;
+  schematic: StageSchematic | null | undefined;
   resolutionOccupants?: StructureResolutionOccupant[] | null;
   onViewPhase?: (peerId: string) => void;
   renderGroupAction?: (group: CompositionQualifierFeedGroup) => ReactNode;
+  destinationPhaseName?: string | null;
 }) {
-  const { t } = useTranslation('structure');
   const cascade = useStructureCascadeReplace();
+  const release = useStructureResolutionRelease();
   const resolutionIndex = useMemo(
     () => buildStructureResolutionOccupantIndex(resolutionOccupants),
     [resolutionOccupants],
   );
   const entryById = new Map(entries.map((entry) => [entry.entryId, entry]));
-  const perEntryPlacement = showPerEntryPlacement(formatKind);
-
   return (
     <div className="structure-composition-qualifiers">
       <ul className="structure-flux-groups">
@@ -67,6 +62,9 @@ export function CompositionQualifiersPanel({
             />
             <ul className="structure-feed-group__rules">
               {group.rules.flatMap((rule) => {
+                const inboundRule = inboundComposition?.rules.find(
+                  (row) => row.feedKey === rule.key,
+                );
                 const seats =
                   rule.hubSeats ??
                   inboundSeatsForFeedRule(
@@ -85,31 +83,25 @@ export function CompositionQualifiersPanel({
                     seat.entryId != null
                       ? entryById.get(seat.entryId)
                       : undefined;
-                  const placedInPhase = seat.placed;
-                  const showUnplacedOpacity =
-                    perEntryPlacement &&
-                    seat.resolved &&
-                    seat.entryId != null &&
-                    !placedInPhase &&
-                    entry?.status === 'Active';
-                  const placeLabel =
+                  const showUnplacedOpacity = qualifierSeatShowUnplacedOpacity(
+                    formatKind,
+                    seat,
+                    entry,
+                  );
+                  const listedResolution =
                     seat.entryId != null
-                      ? primaryPlaceLabel(
-                          entryPlaceProjections.get(seat.entryId),
+                      ? lookupListedResolutionOccupant(
+                          resolutionIndex,
+                          seat.entryId,
                         )
                       : null;
-                  const placedTooltip =
-                    placedInPhase && placeLabel
-                      ? t('entries.entryPlacedTooltip', { place: placeLabel })
-                      : placedInPhase
-                        ? t('entries.entryPlacedStatus')
-                        : null;
 
                   return (
                     <li
                       key={`${rule.key}-${seatIndex}`}
                       className={[
                         'structure-feed-group__rule-line',
+                        'structure-composition-qualifiers__rule-line--after',
                         showUnplacedOpacity
                           ? 'structure-composition-qualifiers__rule-line--unplaced'
                           : null,
@@ -117,53 +109,18 @@ export function CompositionQualifiersPanel({
                         .filter(Boolean)
                         .join(' ')}
                     >
-                      <div className="structure-composition-qualifiers__rule-feed">
-                        <CompositionQualifierRuleLabel rule={rule} />
-                      </div>
-                      <div className="structure-composition-qualifiers__rule-outcome">
-                        {seat.resolved ? (
-                          <EntryCell
-                            variant="chip"
-                            displayName={
-                              seat.teamName ??
-                              entry?.displayName ??
-                              t('manualPlacement.unknownTeam')
-                            }
-                            logoMediaId={entry?.logoMediaId}
-                            primaryColor={entry?.primaryColor}
-                          />
-                        ) : (
-                          <EntryCell
-                            variant="chip"
-                            displayName=""
-                            pending
-                            pendingLabel={t(
-                              'composition.qualifiers.unresolved',
-                            )}
-                          />
-                        )}
-                        {placedInPhase ? (
-                          <EntryCellPlacedMarker
-                            tooltip={
-                              placedTooltip ?? t('entries.entryPlacedStatus')
-                            }
-                          />
-                        ) : (
-                          <span
-                            className="structure-composition-qualifiers__slot-placed-slot"
-                            aria-hidden="true"
-                          />
-                        )}
-                        {seat.entryId ? (
-                          <StructureResolutionFreshnessBadge
-                            occupant={lookupPopulationResolutionOccupant(
-                              resolutionIndex,
-                              seat.entryId,
-                            )}
-                            onReplace={cascade?.requestReplace}
-                          />
-                        ) : null}
-                      </div>
+                      <CompositionQualifierRuleRow
+                        rule={rule}
+                        seat={seat}
+                        entry={entry}
+                        inboundRule={inboundRule}
+                        schematic={schematic}
+                        entryPlaceProjections={entryPlaceProjections}
+                        listedResolution={listedResolution}
+                        onReplace={cascade?.requestReplace}
+                        onRelease={release?.requestRelease}
+                        destinationPhaseName={destinationPhaseName}
+                      />
                     </li>
                   );
                 });

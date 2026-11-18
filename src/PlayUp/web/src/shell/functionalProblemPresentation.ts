@@ -11,7 +11,10 @@
  * AttentionDrawer = T5 + Structure catalogue; birth denylist in attentionPartition.
  */
 
-import { situationHref } from './situationRoutes';
+import {
+  isStructurePhaseRegulationEditable,
+  situationHref,
+} from './situationRoutes';
 import { organizerProblemPresentationCode } from './organizerProblemRead';
 import type {
   CompetitionStageSummary,
@@ -228,12 +231,38 @@ export function functionalProblemPresentation(
       canal,
       structureDiagnosticContext,
     );
+    const sotHref =
+      situationHref(
+        {
+          source,
+          nature: 'Blocking',
+          targetType: targetType ?? null,
+          targetId: targetId ?? null,
+          matchId: matchId ?? null,
+          actionable: actionCode != null,
+          actionCode: actionCode ?? null,
+          impactCode: null,
+          params: {
+            ...(params ?? {}),
+            ...(stageFromTarget ? { stageId: stageFromTarget } : {}),
+            ...(structureDiagnosticContext?.stageStatus
+              ? { stageStatus: structureDiagnosticContext.stageStatus }
+              : {}),
+          },
+        } satisfies OverviewSituation,
+        competitionId,
+        {
+          stageEditable: isStructurePhaseRegulationEditable(
+            structureDiagnosticContext?.stageStatus,
+          ),
+        },
+      ) ?? structureHref(competitionId, stageFromTarget);
     return {
       tone: fields.tone,
       titleKey: fields.titleKey,
       titleNs: fields.titleNs,
       descriptionParams,
-      sotHref: structureHref(competitionId, stageFromTarget),
+      sotHref,
       cta: { actionCode: actionCode ?? 'ConfigureStructure' },
       canal: 'attention-drawer',
     };
@@ -248,6 +277,33 @@ export function functionalProblemPresentation(
       sotHref: structureHref(competitionId),
       cta: { actionCode: actionCode ?? 'ConfigureStructure' },
       canal: 'overview-echo',
+    };
+  }
+
+  if (source === 'ResolutionPerime' || source === 'ResolutionIndetermine') {
+    const slotAction = targetType === 'Slot';
+    const overviewSituation = {
+      source,
+      nature: 'Warning',
+      targetType: targetType ?? null,
+      targetId: targetId ?? null,
+      matchId: matchId ?? null,
+      actionable: slotAction,
+      actionCode: slotAction ? 'ViewResolutionPlace' : null,
+      impactCode: null,
+      params: params ?? {},
+    } satisfies OverviewSituation;
+    const sotHref =
+      situationHref(overviewSituation, competitionId) ??
+      structureHref(competitionId, stageFromTarget);
+    return {
+      tone: 'attention',
+      titleKey: `attentionSource.${source}`,
+      titleNs: 'enums',
+      descriptionParams,
+      sotHref,
+      cta: slotAction ? { actionCode: 'ViewResolutionPlace' } : null,
+      canal: 'attention-drawer',
     };
   }
 

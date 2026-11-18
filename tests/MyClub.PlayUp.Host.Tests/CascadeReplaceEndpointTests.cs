@@ -185,6 +185,69 @@ public sealed class CascadeReplaceEndpointTests(HostPostgresFixture fixture)
             occupant.SlotKey == "Champ" && occupant.EntryId == seeded.QualifierId);
     }
 
+    [IntegrationFact]
+    public async Task Preview_json_carries_played_match_labels_captured_before_confirmAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var seeded = await SeedAsync(factory, DownstreamMatch.Finished);
+        var finalMatchId = seeded.FinalMatchId!.Value;
+
+        using var client = factory.CreateClient();
+        using var correct = await client.PutAsJsonAsync(
+            $"/matches/{seeded.MatchId}/result",
+            new FinishMatchRequest(ResultType.Played, 0, 2),
+            HostJson.Options);
+        correct.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        using var preview = await client.PostAsJsonAsync(
+            $"/stages/{seeded.TerminalId}/resolution/cascade-preview",
+            new CascadeReplacePreviewRequest(
+                StructureResolutionOccupantTarget.Slot,
+                seeded.QualifierId,
+                "Champ",
+                null),
+            HostJson.Options);
+        preview.StatusCode.Should().Be(HttpStatusCode.OK);
+        var previewJson = await preview.Content.ReadAsStringAsync();
+        previewJson.Should().Contain("\"homeName\"");
+        previewJson.Should().Contain("\"awayName\"");
+        previewJson.Should().Contain("\"stageName\"");
+        previewJson.Should().Contain("\"legIndex\"");
+        var previewBody = JsonSerializer.Deserialize<CascadeReplaceResponse>(previewJson, HostJson.Options);
+        previewBody.Should().NotBeNull();
+        var played = previewBody.PlayedMatches.Should().ContainSingle().Subject;
+        played.MatchId.Should().Be(finalMatchId);
+        played.HomeEntryId.Should().Be(seeded.QualifierId);
+        played.HomeName.Should().Be("Alpha");
+        played.AwayName.Should().Be("Gamma");
+        played.StageName.Should().Be("Terminal");
+        played.LegIndex.Should().BeNull();
+
+        using var confirm = await client.PostAsJsonAsync(
+            $"/stages/{seeded.TerminalId}/resolution/cascade-replace",
+            new CascadeReplaceConfirmRequest(
+                StructureResolutionOccupantTarget.Slot,
+                seeded.QualifierId,
+                "Champ",
+                null,
+                previewBody.VersionToken),
+            HostJson.Options);
+        confirm.StatusCode.Should().Be(HttpStatusCode.OK);
+        var confirmed = await confirm.Content.ReadFromJsonAsync<CascadeReplaceResponse>(HostJson.Options);
+        confirmed.Should().NotBeNull();
+        var confirmedRow = confirmed.PlayedMatches.Should().ContainSingle().Subject;
+        confirmedRow.HomeName.Should().Be("Alpha");
+        confirmedRow.AwayName.Should().Be("Gamma");
+        confirmedRow.LegIndex.Should().BeNull();
+
+        using var detail = await client.GetAsync($"/matches/{finalMatchId}");
+        detail.StatusCode.Should().Be(HttpStatusCode.OK);
+        var match = await detail.Content.ReadFromJsonAsync<MatchDetailDto>(HostJson.Options);
+        match.Should().NotBeNull();
+        match.Home.EntryId.Should().Be(seeded.ChallengerId);
+        match.Home.DisplayName.Should().Be("Beta");
+    }
+
     private async Task<Seed> SeedAsync(
         PlayUpWebApplicationFactory factory,
         DownstreamMatch downstream = DownstreamMatch.None)

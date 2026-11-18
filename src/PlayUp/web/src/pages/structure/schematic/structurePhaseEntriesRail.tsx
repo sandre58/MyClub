@@ -1,31 +1,32 @@
 // Population (Équipes) rail — affectation list + cardinality meter.
 import { useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Chip, type ChipTone } from '../../../design-system/components/Chip';
 import { Tooltip } from '../../../design-system/components/Tooltip';
 import {
   EmptySelectionIcon,
   PencilIcon,
   PlusIcon,
-  LossIcon,
-  WinIcon,
-  WithdrawIcon,
 } from '../../../design-system/icons/contentIcons';
 import { StructureDiagnosticIssueIcon } from '../issues/StructureDiagnosticIssueIcon';
-import { EntryCell } from '../../../design-system/components/EntryCell';
+import { StructurePhaseTeamLine } from '../composition/StructurePhaseTeamLine';
 import { entryCellListItemClassName } from '../../../design-system/components/entryCellListItemClassName';
 import { EmptyState } from '../../../ui';
 import type {
+  StageSchematic,
   StructureEntry,
   StructureFormatKind,
+  StructureInboundComposition,
   StructureStageHubSummary,
 } from '../../../types';
 import {
   type EntryPlaceProjection,
+  buildPlacedTooltipModel,
   isEntryPlacedInPhase,
   primaryPlaceLabel,
   showPerEntryPlacement,
 } from '../draw/structureEntryPlacementProjection';
+import { qualifierSeatShowUnplacedOpacity } from '../composition/qualifierSeatPresentation';
+import { CompositionQualifierRuleRow } from '../composition/CompositionQualifierRuleRow';
 import { resolvePlacesN } from '../composition/structurePlaces';
 import { structureDiagnosticPresentation } from '../issues/structureDiagnosticPresentationPolicy';
 import { OccupancyMeter } from '../composition/OccupancyMeter';
@@ -45,54 +46,16 @@ import type {
   CompositionTeamRow,
 } from '../composition/compositionTeamsInboundRows';
 import { useStructureCascadeReplace } from '../resolution/structureCascadeReplaceContext';
-import { StructureResolutionFreshnessBadge } from '../resolution/StructureResolutionFreshnessBadge';
+import { useStructureResolutionRelease } from '../resolution/structureResolutionReleaseContext';
 import {
   buildStructureResolutionOccupantIndex,
-  lookupPopulationResolutionOccupant,
+  lookupListedResolutionOccupant,
 } from '../resolution/structureResolutionOccupants';
+
+const emptyPlaceProjections = new Map<string, EntryPlaceProjection>();
 
 const compactIcon =
   'ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact';
-
-function compositionTeamProvenanceBadge(
-  provenance: CompositionTeamProvenance,
-): ReactNode {
-  const tone: ChipTone = provenance.chipTone ?? 'soft';
-  const outcome = provenance.progressionOutcome;
-  return (
-    <Tooltip content={provenance.full}>
-      <Chip
-        tone={tone}
-        className="structure-entries__team-provenance-badge"
-        aria-label={provenance.full}
-      >
-        {outcome ? (
-          <span
-            className="structure-entries__team-provenance-badge-inner"
-            aria-hidden={false}
-          >
-            {outcome === 'Loser' ? (
-              <LossIcon
-                size="sm"
-                className="structure-entries__team-provenance-outcome-icon"
-                aria-hidden
-              />
-            ) : (
-              <WinIcon
-                size="sm"
-                className="structure-entries__team-provenance-outcome-icon"
-                aria-hidden
-              />
-            )}
-            <span>{provenance.badge}</span>
-          </span>
-        ) : (
-          provenance.badge
-        )}
-      </Chip>
-    </Tooltip>
-  );
-}
 
 /** Cardinality gauge — expected Population vs Places N (phase-aware chrome). */
 export function CompositionMeter({
@@ -226,8 +189,10 @@ export function RootEntriesRail({
   entryPlaceProjections,
   schematicReady = false,
   compositionTileMode = 'prep',
-  entryProvenanceByEntryId,
   compositionTeamRows = null,
+  inboundComposition = null,
+  schematic = null,
+  entryProvenanceByEntryId,
   suppressRuntimeEmptyPresentation = false,
 }: {
   stage: StructureStageHubSummary;
@@ -244,17 +209,27 @@ export function RootEntriesRail({
   entryPlaceProjections?: ReadonlyMap<string, EntryPlaceProjection>;
   schematicReady?: boolean;
   compositionTileMode?: CompositionTileMode;
-  entryProvenanceByEntryId?: ReadonlyMap<string, CompositionTeamProvenance>;
   compositionTeamRows?: CompositionTeamRow[] | null;
+  inboundComposition?: StructureInboundComposition | null;
+  schematic?: StageSchematic | null;
+  entryProvenanceByEntryId?: ReadonlyMap<string, CompositionTeamProvenance>;
   /** Runtime empty / undetermined rendered by Composition band header zone. */
   suppressRuntimeEmptyPresentation?: boolean;
 }) {
   const { t } = useTranslation(['structure', 'teams']);
   const cascade = useStructureCascadeReplace();
+  const release = useStructureResolutionRelease();
   const resolutionIndex = useMemo(
     () => buildStructureResolutionOccupantIndex(stage.resolutionOccupants),
     [stage.resolutionOccupants],
   );
+  const inboundRulesByFeedKey = useMemo(() => {
+    const map = new Map(
+      (inboundComposition?.rules ?? []).map((rule) => [rule.feedKey, rule]),
+    );
+    return map;
+  }, [inboundComposition]);
+  const placeProjections = entryPlaceProjections ?? emptyPlaceProjections;
   const fromAffectation = stage.affectationEntryCount ?? 0;
   const fromFeeds = sourcesConfiguredVolume;
   const n = resolvePlacesN(stage);
@@ -334,7 +309,10 @@ export function RootEntriesRail({
     entry: StructureEntry,
     provenance?: CompositionTeamProvenance | null,
   ) => {
-    const placed = showPlacementChrome
+    const trackPlacement =
+      (showPlacementChrome || variant === 'composition-band') &&
+      showPerEntryPlacement(formatKind ?? stage.formatKind);
+    const placed = trackPlacement
       ? isEntryPlacedInPhase(
           entry.entryId,
           placedIds,
@@ -343,39 +321,31 @@ export function RootEntriesRail({
         )
       : false;
     const showUnplacedOpacity =
-      showPlacementChrome &&
-      schematicReady &&
-      entry.status === 'Active' &&
-      !placed;
+      trackPlacement && schematicReady && entry.status === 'Active' && !placed;
+    const projection = placeProjections.get(entry.entryId);
+    const placeLabel = primaryPlaceLabel(projection);
+    const placedTooltipModel =
+      placed && projection
+        ? buildPlacedTooltipModel(projection, stage.name, t)
+        : null;
     const provenanceLabel =
       provenance ?? entryProvenanceByEntryId?.get(entry.entryId) ?? null;
-    const projection = entryPlaceProjections?.get(entry.entryId);
-    const placeLabel = primaryPlaceLabel(projection);
-    const placedTooltip =
-      placed && placeLabel
-        ? t('entries.entryPlacedTooltip', { place: placeLabel })
-        : placed
-          ? t('entries.entryPlacedStatus')
-          : null;
-    const populationOccupant = lookupPopulationResolutionOccupant(
+    const listedResolution = lookupListedResolutionOccupant(
       resolutionIndex,
       entry.entryId,
     );
-    const trailingParts = [
-      provenanceLabel ? compositionTeamProvenanceBadge(provenanceLabel) : null,
-      <StructureResolutionFreshnessBadge
-        key="freshness"
-        occupant={populationOccupant}
-        onReplace={cascade?.requestReplace}
-      />,
-    ].filter(Boolean);
     return (
       <li
         key={entry.entryId}
-        className={entryCellListItemClassName({
-          ineligible: entry.status !== 'Active',
-          unplaced: showUnplacedOpacity,
-        })}
+        className={[
+          entryCellListItemClassName({
+            ineligible: entry.status !== 'Active',
+            unplaced: showUnplacedOpacity,
+          }),
+          'structure-entries__team--line',
+        ]
+          .filter(Boolean)
+          .join(' ')}
         aria-label={
           showPlacementChrome && schematicReady && entry.status === 'Active'
             ? placed
@@ -384,42 +354,22 @@ export function RootEntriesRail({
             : undefined
         }
       >
-        <EntryCell
+        <StructurePhaseTeamLine
           displayName={entry.displayName}
           logoMediaId={entry.logoMediaId}
           primaryColor={entry.primaryColor}
+          withdrawn={entry.status === 'Withdrawn'}
           ineligible={entry.status !== 'Active'}
-          ineligibleLabel={
-            entry.status !== 'Active' && entry.status !== 'Withdrawn'
-              ? t('composition.noLongerEligible')
-              : undefined
-          }
-          nameSuffix={
-            entry.status === 'Withdrawn' ? (
-              <Tooltip content={t('teams:withdrawnBadge')}>
-                <span
-                  className="structure-entries__team-withdrawn-inline"
-                  role="img"
-                  aria-label={t('teams:withdrawnBadge')}
-                >
-                  <WithdrawIcon size="sm" aria-hidden="true" />
-                </span>
-              </Tooltip>
-            ) : undefined
-          }
           placed={placed}
-          placedTooltip={
-            placedTooltip ?? (placed ? t('entries.entryPlacedStatus') : null)
-          }
-          trailing={
-            trailingParts.length > 0 ? (
-              <span className="structure-entries__cell-trailing">
-                {trailingParts.map((part, index) => (
-                  <span key={index}>{part}</span>
-                ))}
-              </span>
-            ) : undefined
-          }
+          placedPlaceLabel={placeLabel}
+          placedTooltipModel={placedTooltipModel}
+          provenanceMeta={provenanceLabel?.badge ?? null}
+          provenanceTitle={provenanceLabel?.full ?? null}
+          resolutionOccupant={listedResolution.occupant}
+          multiplePlacements={listedResolution.multiplePlacements}
+          entryName={entry.displayName}
+          onReplace={cascade?.requestReplace}
+          onRelease={release?.requestRelease}
         />
       </li>
     );
@@ -448,20 +398,52 @@ export function RootEntriesRail({
       >
         {compositionTeamRows && compositionTeamRows.length > 0 ? (
           <ul className={teamListClass}>
-            {compositionTeamRows.map((row) =>
-              row.kind === 'unresolved' ? (
-                <li key={row.key} className="structure-entries__team">
-                  <EntryCell
-                    displayName=""
-                    pending
-                    pendingLabel={t('composition.qualifiers.unresolved')}
-                    trailing={compositionTeamProvenanceBadge(row.provenance)}
-                  />
-                </li>
-              ) : (
-                renderTeamCell(row.entry, row.provenance)
-              ),
-            )}
+            {compositionTeamRows.map((row) => {
+              if (row.kind === 'inbound') {
+                const showUnplacedOpacity = qualifierSeatShowUnplacedOpacity(
+                  formatKind ?? stage.formatKind,
+                  row.seat,
+                  row.entry,
+                );
+                return (
+                  <li
+                    key={row.key}
+                    className={[
+                      'structure-entries__team',
+                      'structure-entries__team--line',
+                      'structure-entries__team--inbound',
+                      'structure-composition-qualifiers__rule-line--after',
+                      showUnplacedOpacity
+                        ? 'structure-composition-qualifiers__rule-line--unplaced'
+                        : null,
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                  >
+                    <CompositionQualifierRuleRow
+                      rule={row.rule}
+                      seat={row.seat}
+                      entry={row.entry}
+                      inboundRule={inboundRulesByFeedKey.get(row.rule.key)}
+                      schematic={schematic}
+                      entryPlaceProjections={placeProjections}
+                      listedResolution={
+                        row.entry
+                          ? lookupListedResolutionOccupant(
+                              resolutionIndex,
+                              row.entry.entryId,
+                            )
+                          : null
+                      }
+                      onReplace={cascade?.requestReplace}
+                      onRelease={release?.requestRelease}
+                      destinationPhaseName={stage.name}
+                    />
+                  </li>
+                );
+              }
+              return renderTeamCell(row.entry, row.provenance);
+            })}
           </ul>
         ) : engagedPoolUndetermined ? (
           suppressRuntimeEmptyPresentation ? null : (

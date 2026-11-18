@@ -52,8 +52,14 @@ describe('compositionTeamsInboundRows', () => {
       null,
     );
     expect(rows).toHaveLength(2);
-    expect(rows?.[0].kind).toBe('resolved');
-    expect(rows?.[1].kind).toBe('unresolved');
+    expect(rows?.[0].kind).toBe('inbound');
+    if (rows?.[0].kind === 'inbound') {
+      expect(rows[0].seat.resolved).toBe(true);
+    }
+    expect(rows?.[1].kind).toBe('inbound');
+    if (rows?.[1].kind === 'inbound') {
+      expect(rows[1].seat.resolved).toBe(false);
+    }
   });
 
   it('compositionTeamRowsResolutionStats counts withdrawn seats as resolved', () => {
@@ -188,5 +194,17 @@ describe('compositionTeamsInboundRows', () => {
         capacity: 8,
       }),
     ).toEqual({ resolved: 8, total: 8 });
+    expect(
+      resolveCompositionResolvedGaugeStats('exploitation', null, {
+        resolved: 12,
+        capacity: 8,
+      }),
+    ).toEqual({ resolved: 8, total: 8 });
+    expect(
+      resolveCompositionResolvedGaugeStats('exploitation', null, {
+        resolved: 3,
+        capacity: 0,
+      }),
+    ).toBeNull();
   });
 });

@@ -43,6 +43,10 @@ import {
   RegulationIcon,
   StructureIcon,
   TrashIcon,
+  HourglassIcon,
+  RefreshIcon,
+  UpstreamIcon,
+  UnconfirmableIcon,
 } from '../design-system/icons/contentIcons';
 import './foundations-playground.css';
 
@@ -723,6 +727,38 @@ export function FoundationsPlayground() {
               </Tooltip>
             </div>
             <p className="ds-label">
+              Toolbar icônes xs (20px — badges de fraîcheur, lignes denses)
+            </p>
+            <div className="ds-icon-toolbar">
+              <Tooltip content="Ghost">
+                <button
+                  type="button"
+                  className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--xs"
+                  aria-label="Ghost"
+                >
+                  <PencilIcon size="xs" />
+                </button>
+              </Tooltip>
+              <Tooltip content="Attention">
+                <button
+                  type="button"
+                  className="ds-btn ds-btn--attention ds-icon-button ds-icon-button--xs"
+                  aria-label="Attention"
+                >
+                  <PencilIcon size="xs" />
+                </button>
+              </Tooltip>
+              <Tooltip content="Destructive">
+                <button
+                  type="button"
+                  className="ds-btn ds-btn--destructive ds-icon-button ds-icon-button--xs"
+                  aria-label="Destructive"
+                >
+                  <TrashIcon size="xs" />
+                </button>
+              </Tooltip>
+            </div>
+            <p className="ds-label">
               Commit inline (✓ brand ink · ✕ secondaire — pas de primary fill)
             </p>
             <div className="ds-icon-toolbar">
@@ -908,6 +944,13 @@ export function FoundationsPlayground() {
             <CheckIcon />
             <PendingCircleIcon />
             <ArrowRightIcon />
+          </div>
+          <p className="ds-label">Resolution freshness</p>
+          <div className="ds-icon-grid">
+            <RefreshIcon />
+            <UpstreamIcon />
+            <HourglassIcon />
+            <UnconfirmableIcon />
           </div>
           <p className="ds-label">Sur chrome</p>
           <div className="ds-icon-grid ds-icon-grid--chrome">

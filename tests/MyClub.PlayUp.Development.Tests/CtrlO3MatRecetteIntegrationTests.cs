@@ -117,15 +117,18 @@ public sealed class CtrlO3MatRecetteIntegrationTests(DevelopmentPostgresFixture 
         StageId stageId)
     {
         var stageMatches = await matches.ListByStageForUpdateAsync(stageId);
-        return [.. stageMatches
-            .Select(match => new MatchSummaryRow(
-                match.Id,
-                match.StageId,
-                match.Status,
-                match.HomeEntryId,
-                match.AwayEntryId,
-                match.Result,
-                match.HasObservedLive))];
+        return
+        [
+            .. stageMatches
+                .Select(match => new MatchSummaryRow(
+                    match.Id,
+                    match.StageId,
+                    match.Status,
+                    match.HomeEntryId,
+                    match.AwayEntryId,
+                    match.Result,
+                    match.HasObservedLive))
+        ];
     }
 
     private async Task<StructureStageHubSummaryDto> LoadPrimaryStageHubAsync(string namePrefix)

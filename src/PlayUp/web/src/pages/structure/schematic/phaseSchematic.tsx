@@ -8,6 +8,7 @@ import type {
   SelectionMode,
   StageSchematic,
 } from '../../../types';
+import type { ManualPlacementStage } from '../draw/manualPlacementUi';
 import { TeamCrest } from '../../../design-system/TeamCrest';
 import { Tooltip } from '../../../design-system/components/Tooltip';
 import {
@@ -28,6 +29,7 @@ import '../phase-schematic.css';
 import { GroupsSchematicView } from './GroupsSchematicView';
 import { groupsSchematicFromStageSchematic } from './groupsSchematic';
 import { useStructureCascadeReplace } from '../resolution/structureCascadeReplaceContext';
+import { useStructureResolutionRelease } from '../resolution/structureResolutionReleaseContext';
 import { StructureResolutionFreshnessBadge } from '../resolution/StructureResolutionFreshnessBadge';
 import {
   lookupSchematicCaseResolutionOccupant,
@@ -79,6 +81,7 @@ export function PhaseSchematic({
   /** Server stage actions. Groups clicks require AssignEntryToGroup / ClearEntryFromGroup. */
   groupActions,
   placesPerGroup,
+  manualPlacementStages,
 }: {
   schematic: StageSchematic;
   terminal?: boolean;
@@ -89,6 +92,7 @@ export function PhaseSchematic({
   onGroupPlaceActivate?: (place: SchematicCase) => void;
   groupActions?: readonly string[];
   placesPerGroup?: number | null;
+  manualPlacementStages?: readonly ManualPlacementStage[];
 }): ReactElement {
   const { t } = useTranslation(['regulation', 'structure']);
   const format = schematic.formatKind;
@@ -116,6 +120,7 @@ export function PhaseSchematic({
         cupPairProductionStates={cupPairProductionStates}
         resolutionIndex={resolutionIndex}
         onPlaceActivate={onPlaceActivate}
+        manualPlacementStages={manualPlacementStages}
       />
     );
   }
@@ -172,6 +177,7 @@ function SlotBox({
   onActivate,
   resolutionIndex,
   groupActions = [],
+  manualPlacementStages,
 }: {
   c?: SchematicCase | null;
   t: Translate;
@@ -181,6 +187,7 @@ function SlotBox({
   onActivate?: (place: SchematicCase) => void;
   resolutionIndex?: StructureResolutionOccupantIndex | null;
   groupActions?: readonly string[];
+  manualPlacementStages?: readonly ManualPlacementStage[];
 }) {
   const address = c ? placeChromeLabel(c.formPosition) : null;
   const { primary, secondary } = c
@@ -204,7 +211,7 @@ function SlotBox({
     !!onActivate &&
     !!c &&
     !ghost &&
-    resolveManualPlaceMode(c) === 'editable';
+    resolveManualPlaceMode(c, manualPlacementStages) === 'editable';
   const groupInteractive =
     groupInteraction?.kind === 'place' || groupInteraction?.kind === 'remove';
   const interactive = canManualPlace || (!!onActivate && groupInteractive);
@@ -287,20 +294,22 @@ function SlotBox({
     c?.assignment?.entryId ?? c?.entry?.entryId ?? null,
   );
   const cascade = useStructureCascadeReplace();
+  const release = useStructureResolutionRelease();
   const withdrawnBadgeLabel = t('teams:withdrawnBadge');
   const showFullBody = density === 'full' && (primary || showSlotCrest);
   const freshnessBadge = slotResolutionOccupant ? (
     <span className="schematic-slot__freshness">
       <StructureResolutionFreshnessBadge
         occupant={slotResolutionOccupant}
-        variant="icon"
+        entryName={resolvedName}
+        manualPlacementHint={canManualPlace}
         onReplace={cascade?.requestReplace}
+        onRelease={release?.requestRelease}
       />
     </span>
   ) : null;
-  // A stale Qual/Prog badge is a button. Keep it outside the manual-place
-  // slot button so the control is not nested.
-  const badgeBesideSlot = interactive && freshnessBadge != null;
+  const freshnessInNameRow =
+    density === 'full' && !!primary && !!freshnessBadge;
   const slotInner = (
     <>
       {density === 'crest' && showTeamCrest ? (
@@ -314,9 +323,9 @@ function SlotBox({
       {density === 'full' && address ? (
         <span className="schematic-slot__address">{address}</span>
       ) : null}
-      {showFullBody ? (
+      {showFullBody || freshnessBadge ? (
         <span className="schematic-slot__body">
-          {showSlotCrest ? (
+          {showFullBody && showSlotCrest ? (
             <TeamCrest
               name={resolvedName!}
               logoMediaId={c?.assignment?.logoMediaId}
@@ -325,49 +334,66 @@ function SlotBox({
               className="schematic-slot__crest"
             />
           ) : null}
-          <span className="schematic-slot__copy">
-            {primary ? (
-              <span className="schematic-slot__name-row">
-                <span className={primaryClassName}>{primary}</span>
-                {withdrawn && resolvedName ? (
-                  <SchematicSlotWithdrawnMarker label={withdrawnBadgeLabel} />
-                ) : null}
-              </span>
-            ) : null}
-            {secondary && secondary !== primary ? (
-              <span className="schematic-slot__secondary">{secondary}</span>
-            ) : null}
-            {c?.excess ? (
-              <span className="schematic-slot__secondary">
-                {t('structure:groupPlacement.excess')}
-              </span>
-            ) : null}
-            {c?.outsideComposition ? (
-              <span className="schematic-slot__secondary">
-                {t('structure:groupPlacement.outsideComposition')}
-              </span>
-            ) : null}
-          </span>
-          {badgeBesideSlot ? null : freshnessBadge}
+          {showFullBody ? (
+            <span className="schematic-slot__copy">
+              {primary ? (
+                <span className="schematic-slot__name-row">
+                  <span className={primaryClassName}>{primary}</span>
+                  {withdrawn && resolvedName ? (
+                    <SchematicSlotWithdrawnMarker label={withdrawnBadgeLabel} />
+                  ) : null}
+                  {freshnessInNameRow ? freshnessBadge : null}
+                </span>
+              ) : null}
+              {secondary && secondary !== primary ? (
+                <span className="schematic-slot__secondary">{secondary}</span>
+              ) : null}
+              {c?.excess ? (
+                <span className="schematic-slot__secondary">
+                  {t('structure:groupPlacement.excess')}
+                </span>
+              ) : null}
+              {c?.outsideComposition ? (
+                <span className="schematic-slot__secondary">
+                  {t('structure:groupPlacement.outsideComposition')}
+                </span>
+              ) : null}
+            </span>
+          ) : null}
+          {freshnessBadge && !freshnessInNameRow ? freshnessBadge : null}
         </span>
       ) : null}
-      {!showFullBody && !badgeBesideSlot ? freshnessBadge : null}
     </>
   );
 
-  const shellStyle = tip ? fillStyle : style;
-  const slot = interactive ? (
-    <button
-      type="button"
-      className={className}
-      style={badgeBesideSlot ? undefined : shellStyle}
-      onClick={() => onActivate?.(c!)}
-      aria-label={
-        groupAccessibleName ?? address ?? c!.formPosition.slotKey ?? undefined
+  const shellStyle: CSSProperties | undefined = interactive
+    ? {
+        ...((tip ? fillStyle : style) ?? {}),
+        position:
+          (tip ? fillStyle : style)?.position === 'absolute'
+            ? 'absolute'
+            : 'relative',
       }
+    : tip
+      ? fillStyle
+      : style;
+  const slotDataKey = c?.formPosition.slotKey?.trim();
+  const slot = interactive ? (
+    <div
+      className={className}
+      style={shellStyle}
+      {...(slotDataKey ? { 'data-slot-key': slotDataKey } : {})}
     >
+      <button
+        type="button"
+        className="schematic-slot__hit"
+        aria-label={
+          groupAccessibleName ?? address ?? c!.formPosition.slotKey ?? undefined
+        }
+        onClick={() => onActivate?.(c!)}
+      />
       {slotInner}
-    </button>
+    </div>
   ) : (
     <span
       className={className}
@@ -375,19 +401,11 @@ function SlotBox({
       aria-hidden={ghost || undefined}
       tabIndex={showLockReason ? 0 : undefined}
       aria-describedby={showLockReason ? lockDescriptionId : undefined}
+      {...(slotDataKey ? { 'data-slot-key': slotDataKey } : {})}
     >
       {slotInner}
     </span>
   );
-  const presented = badgeBesideSlot ? (
-    <span className="schematic-slot-with-action" style={shellStyle}>
-      {slot}
-      {freshnessBadge}
-    </span>
-  ) : (
-    slot
-  );
-
   const lockDescription = showLockReason ? (
     <span id={lockDescriptionId} className="ds-visually-hidden">
       {groupReason}
@@ -397,7 +415,7 @@ function SlotBox({
   if (!tip) {
     return (
       <>
-        {presented}
+        {slot}
         {lockDescription}
       </>
     );
@@ -407,8 +425,12 @@ function SlotBox({
   // top/height land on an inner node and slots collapse / drift vs wires.
   return (
     <span className="schematic-slot-tip" style={style}>
-      <Tooltip content={tip} side="top">
-        {presented}
+      <Tooltip
+        content={tip}
+        side="top"
+        activation={interactive ? 'long-press' : 'auto'}
+      >
+        {slot}
       </Tooltip>
       {lockDescription}
     </span>
@@ -709,7 +731,7 @@ function cupMetrics(density: SchematicDensity): CupMetrics {
   if (density === 'crest') {
     return { slotH: 34, pairGap: 5, groupGap: 12, colGap: 64, slotColW: 112 };
   }
-  return { slotH: 40, pairGap: 6, groupGap: 16, colGap: 76, slotColW: 148 };
+  return { slotH: 48, pairGap: 6, groupGap: 16, colGap: 76, slotColW: 148 };
 }
 
 const CUP_MIN_FIT_SCALE = 0.72;
@@ -722,6 +744,7 @@ function CupSchematic({
   cupPairProductionStates,
   resolutionIndex,
   onPlaceActivate,
+  manualPlacementStages,
 }: {
   schematic: StageSchematic;
   t: Translate;
@@ -730,6 +753,7 @@ function CupSchematic({
   cupPairProductionStates?: Readonly<Record<string, CupPairProductionState>>;
   resolutionIndex?: StructureResolutionOccupantIndex | null;
   onPlaceActivate?: (place: SchematicCase) => void;
+  manualPlacementStages?: readonly ManualPlacementStage[];
 }) {
   const roundCount = resolveCupRoundCount(
     schematic.cupRoundCount,
@@ -845,6 +869,7 @@ function CupSchematic({
       cupPairProductionStates={cupPairProductionStates}
       resolutionIndex={resolutionIndex}
       onPlaceActivate={onPlaceActivate}
+      manualPlacementStages={manualPlacementStages}
     />
   ) : (
     <CupSingleRoundSchematic
@@ -857,6 +882,7 @@ function CupSchematic({
       cupPairProductionStates={cupPairProductionStates}
       resolutionIndex={resolutionIndex}
       onPlaceActivate={onPlaceActivate}
+      manualPlacementStages={manualPlacementStages}
     />
   );
 
@@ -1109,6 +1135,7 @@ function CupMultiRoundSchematic({
   cupPairProductionStates,
   resolutionIndex,
   onPlaceActivate,
+  manualPlacementStages,
 }: {
   columns: (SchematicCase | null)[][];
   connections: SchematicConnection[];
@@ -1119,6 +1146,7 @@ function CupMultiRoundSchematic({
   cupPairProductionStates?: Readonly<Record<string, CupPairProductionState>>;
   resolutionIndex?: StructureResolutionOccupantIndex | null;
   onPlaceActivate?: (place: SchematicCase) => void;
+  manualPlacementStages?: readonly ManualPlacementStage[];
 }) {
   const leafCount = columns[0]?.length ?? 0;
   if (leafCount < 2 || leafCount % 2 !== 0) {
@@ -1190,6 +1218,7 @@ function CupMultiRoundSchematic({
                     density={density}
                     onActivate={onPlaceActivate}
                     resolutionIndex={resolutionIndex}
+                    manualPlacementStages={manualPlacementStages}
                     style={{
                       position: 'absolute',
                       top: y - m.slotH / 2,
@@ -1287,6 +1316,7 @@ function CupSingleRoundSchematic({
   cupPairProductionStates,
   resolutionIndex,
   onPlaceActivate,
+  manualPlacementStages,
 }: {
   schematic: StageSchematic;
   t: Translate;
@@ -1297,6 +1327,7 @@ function CupSingleRoundSchematic({
   cupPairProductionStates?: Readonly<Record<string, CupPairProductionState>>;
   resolutionIndex?: StructureResolutionOccupantIndex | null;
   onPlaceActivate?: (place: SchematicCase) => void;
+  manualPlacementStages?: readonly ManualPlacementStage[];
 }) {
   const roundOrders = [
     ...new Set(schematic.connections.map((c) => c.roundOrder)),
@@ -1376,6 +1407,7 @@ function CupSingleRoundSchematic({
                 density={density}
                 onActivate={onPlaceActivate}
                 resolutionIndex={resolutionIndex}
+                manualPlacementStages={manualPlacementStages}
                 style={{
                   height: m.slotH,
                   minHeight: 0,

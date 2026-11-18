@@ -319,7 +319,7 @@
       "SlotFeedMissing": "Place non alimentée",
       "SlotFeedInvalid": "Alimentation invalide",
       "SlotFeedMultiple": "Alimentations conflictuelles",
-      "ConfrontationUndecidable": "Tirage pas toujours possible",
+      "ConfrontationUndecidable": "Match nul sans départage",
       "CycleDetected": "Cycle entre phases",
       "NonRootUnfed": "Pas d’équipes entrantes",
       "AwaitingInboundQualification": "En attente des qualifiés",
@@ -839,13 +839,16 @@
     "cup": "{{round}} · {{side}}",
     "cupWithOrdinal": "{{round}} {{ordinal}} · {{side}}",
     "group": "Groupe {{name}}",
+    "groupWhere": "Groupe {{name}}",
+    "groupWhereIndexed": "Groupe {{name}}, place {{index}}",
     "form": "Organisation"
   },
   "resolution": {
     "freshness": {
       "state": {
+        "AJour": "À jour",
         "Perime": "Périmé",
-        "Indetermine": "Indéterminé",
+        "Indetermine": "Non déterminé",
         "NonVerifiee": "Non vérifiée"
       },
       "cause": {
@@ -853,20 +856,116 @@
         "RegleQualification": "Règle de qualification modifiée",
         "AmontPerime": "Phase amont périmée"
       },
-      "ariaWithCause": "{{label}} — {{cause}}"
+      "upstreamLink": "Aller à la phase amont",
+      "upstreamPhaseLink": "Voir la phase amont",
+      "unconfirmedSentence": "{{team}} n'est plus déterminée — {{detail}}",
+      "definitive": "Ne pourra plus être déterminée",
+      "indeterminacy": {
+        "MatchNonJoue": {
+          "clause": "le match n'est pas joué",
+          "clauseNamed": "le match {{match}} n'est pas joué",
+          "action": "Jouer le match",
+          "actionNamed": "Jouer le match {{match}}"
+        },
+        "Egalite": {
+          "clause": "le score ne départage pas",
+          "action": "Départager l'égalité"
+        },
+        "SourceAbsente": {
+          "clause": "la phase ou la règle source est introuvable"
+        },
+        "SelectionVide": {
+          "clause": "le classement ne désigne aucune équipe"
+        },
+        "Autre": {
+          "clause": "la sélection ne peut pas être calculée"
+        },
+        "EgaliteClassement": {
+          "clause": "plusieurs équipes sont à égalité au classement",
+          "action": "Voir le classement"
+        },
+        "ConditionNonRemplie": {
+          "clause": "elle ne remplit plus la condition de qualification"
+        },
+        "ConfigurationInvalide": {
+          "clause": "le réglage de la phase source est incomplet",
+          "action": "Voir le règlement"
+        }
+      },
+      "cascadeNotReplaceable": "Cette place ne peut pas être remplacée automatiquement.",
+      "cascadeNotReplaceableHint": "Le placement manuel reste possible.",
+      "multiplePlacements": "Placée à plusieurs endroits : agir depuis la schématique.",
+      "ariaWithCause": "{{label}} — {{cause}}",
+      "ariaAction": "{{label}} — {{cause}}. {{action}}",
+      "ariaActionNoCause": "{{label}}. {{action}}"
+    },
+    "release": {
+      "action": "Libérer la place",
+      "confirmTitle": "Libérer cette place ?",
+      "confirm": "Libérer",
+      "cancel": "Annuler",
+      "pending": "Libération…",
+      "nonePlayed": "Aucun match ne sera modifié.",
+      "detachedIntro": "Dans ces matchs non joués :",
+      "cause": {
+        "MatchNonJoue": "Le match n'a pas encore été joué : cette place n'est pas déterminée.",
+        "MatchNonJoueNamed": "Le match {{match}} n'a pas encore été joué : cette place n'est pas déterminée.",
+        "Egalite": "Le match n'a pas permis de départager les équipes : cette place n'est plus déterminée.",
+        "SourceAbsente": "La phase ou la règle qui alimente cette place est introuvable.",
+        "SelectionVide": "Le classement amont ne désigne plus aucune équipe pour cette place.",
+        "Autre": "La sélection de cette place ne peut pas être calculée.",
+        "EgaliteClassement": "Plusieurs équipes sont à égalité au classement : cette place n'est plus déterminée.",
+        "ConditionNonRemplie": "L'équipe ne remplit plus la condition de qualification : cette place n'est plus déterminée.",
+        "ConfigurationInvalide": "Le réglage de la phase source est incomplet : cette place ne peut pas être déterminée."
+      },
+      "detachedMatch": "Manche {{leg}} : le côté {{side}} redevient à déterminer.",
+      "detachedMatchNamed": "Manche {{leg}} ({{match}}) : le côté {{side}} redevient à déterminer.",
+      "populationDropped": "{{team}} quittera aussi la composition de cette phase.",
+      "affectedIntro": "D'autres places changeront d'état :",
+      "affectedOccupant": "{{team}} — {{place}} : {{before}} → {{after}}",
+      "affectedOccupantOtherPhase": "{{team}} — {{place}} ({{phase}}) : {{before}} → {{after}}",
+      "target": {
+        "Slot": "Place",
+        "Group": "Groupe",
+        "Population": "Composition"
+      },
+      "side": {
+        "Home": "domicile",
+        "Away": "extérieur"
+      }
+    },
+    "definitiveRelease": {
+      "banner_one": "{{count}} place ne pourra plus être déterminée.",
+      "banner_other": "{{count}} places ne pourront plus être déterminées.",
+      "release": "Libérer…",
+      "excludedIntro": "Ces places restent : elles ne peuvent pas être libérées.",
+      "excluded": "{{team}} — {{place}} : {{reason}}",
+      "confirmTitle": "Libérer ces places ?",
+      "warning": "Cette libération est irréversible. Les places vidées ne seront pas reprises automatiquement.",
+      "confirm": "Libérer",
+      "cancel": "Annuler",
+      "pending": "Libération…",
+      "close": "Fermer",
+      "summaryTitle": "Places libérées",
+      "place": "{{team}} — {{place}} ({{phase}})",
+      "population": "Population retirée : {{team}}",
+      "detachedIntro": "Matchs détachés :",
+      "exclusionsIntro": "Places non libérées :",
+      "affectedIntro": "Places en aval :"
     },
     "cascade": {
       "action": "Remplacer l'occupant périmé",
       "actionNamed": "Remplacer {{place}}",
       "replaceHint": "Cliquer pour remplacer l'équipe par l'occupant attendu",
-      "replaceHintWithCause": "{{cause}}. {{action}}",
       "confirmTitle": "Confirmer le remplacement en cascade ?",
       "confirm": "Remplacer",
       "cancel": "Annuler",
       "pending": "Remplacement…",
       "nonePlayed": "Aucun match aval déjà joué ne sera modifié.",
       "playedIntro": "Ces matchs joués perdront leur score et les stats de leurs joueurs :",
-      "playedMatch": "Match {{matchId}}"
+      "tbd": "à déterminer",
+      "playedMatchUnknown": "Match à déterminer",
+      "leg": "Manche {{leg}}"
     },
     "staleDraw": {
       "message": "Le tirage appliqué ne correspond plus à la phase.",
@@ -893,7 +992,8 @@
     "entryPlacedAria": "{{name}} — placée sur la forme",
     "entryNotPlacedAria": "{{name}} — pas encore placée",
     "entryPlacedStatus": "Placée",
-    "entryPlacedTooltip": "Placée — {{place}}",
+    "placedHintShort": "Placée : {{place}}",
+    "teamAlreadyPlacedIntro": "Cette équipe est déjà placée :",
     "meterAria": "Équipes attendues / places",
     "meter": {
       "population": "Équipes",

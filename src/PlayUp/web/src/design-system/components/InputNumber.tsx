@@ -124,17 +124,31 @@ export function InputNumber({
   const intervalRef = useRef<number | null>(null);
   const stepByRef = useRef<(direction: 1 | -1) => void>(() => undefined);
   const currentRef = useRef(current);
-  currentRef.current = current;
 
-  const formattedValue =
-    current == null ? '' : formatNumber(current, precision);
-  const displayValue = focused ? draft : formattedValue;
+  function stopRepeat() {
+    if (delayRef.current != null) {
+      window.clearTimeout(delayRef.current);
+      delayRef.current = null;
+    }
+    if (intervalRef.current != null) {
+      window.clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }
+
+  useEffect(() => {
+    currentRef.current = current;
+  }, [current]);
 
   useEffect(() => {
     return () => {
       stopRepeat();
     };
   }, []);
+
+  const formattedValue =
+    current == null ? '' : formatNumber(current, precision);
+  const displayValue = focused ? draft : formattedValue;
 
   const showClear = allowClear && current != null && !disabled;
   const split = controls && controlsLayout === 'split';
@@ -176,18 +190,9 @@ export function InputNumber({
     emit(base + direction * step);
   }
 
-  stepByRef.current = stepBy;
-
-  function stopRepeat() {
-    if (delayRef.current != null) {
-      window.clearTimeout(delayRef.current);
-      delayRef.current = null;
-    }
-    if (intervalRef.current != null) {
-      window.clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-  }
+  useEffect(() => {
+    stepByRef.current = stepBy;
+  });
 
   function startRepeat(direction: 1 | -1) {
     stopRepeat();

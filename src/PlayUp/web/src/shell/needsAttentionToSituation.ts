@@ -1,6 +1,9 @@
 import type { NeedsAttentionItem, OverviewSituation } from '../types';
 
-function mapAttentionAction(source: string): string | null {
+function mapAttentionAction(
+  source: string,
+  item: NeedsAttentionItem,
+): string | null {
   switch (source) {
     case 'ProgressionPending':
     case 'ProgressionConflict':
@@ -8,6 +11,9 @@ function mapAttentionAction(source: string): string | null {
     case 'QualificationPending':
     case 'QualificationConflict':
       return 'ApplyQualification';
+    case 'ResolutionPerime':
+    case 'ResolutionIndetermine':
+      return item.targetType === 'Slot' ? 'ViewResolutionPlace' : null;
     case 'InsufficientParticipants':
       return 'AddEntry';
     default:
@@ -38,7 +44,10 @@ function buildSituationParams(
     return { ...item.params };
   }
 
-  if (item.targetType !== 'Slot' || !item.targetId) {
+  if (
+    (item.targetType !== 'Slot' && item.targetType !== 'Group') ||
+    !item.targetId
+  ) {
     return {};
   }
 
@@ -47,10 +56,15 @@ function buildSituationParams(
     return {};
   }
 
-  return {
-    slotKey: parts[1]!,
-    destinationStageId: parts[0]!,
-  };
+  return item.targetType === 'Slot'
+    ? {
+        slotKey: parts[1]!,
+        destinationStageId: parts[0]!,
+      }
+    : {
+        groupKey: parts[1]!,
+        destinationStageId: parts[0]!,
+      };
 }
 
 /** Maps GET /attention items to OverviewSituation rows for shared shell UI. */
@@ -61,7 +75,7 @@ export function needsAttentionItemToSituation(
     item.source === 'DrawNoSolution'
       ? null
       : item.problem?.suggestedActionCode?.trim() ||
-        mapAttentionAction(item.source);
+        mapAttentionAction(item.source, item);
 
   const severity =
     item.severity?.trim() ||

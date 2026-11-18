@@ -36,8 +36,8 @@ public static class PathOccupantSelector
 
         return selected.Count switch
         {
-            0 => PathOccupantSelectionResult.Indeterminate(),
-            > 1 => PathOccupantSelectionResult.Indeterminate(),
+            0 => PathOccupantSelectionResult.Indeterminate(PathOccupantIndeterminacyReason.Empty),
+            > 1 => PathOccupantSelectionResult.Indeterminate(PathOccupantIndeterminacyReason.Ambiguous),
             _ => ResolveQualificationCondition(path, standing, selected[0])
         };
     }

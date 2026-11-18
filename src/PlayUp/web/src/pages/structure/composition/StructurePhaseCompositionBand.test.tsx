@@ -86,6 +86,7 @@ function renderBand(
     entries: [],
     formatKind: 'Cup',
     schematicReady: false,
+    schematic: undefined,
     entryPlaceProjections: new Map(),
     renderAvalSourceAction: () => null,
     compositionPopulationGaugeFooter: null,
@@ -171,6 +172,46 @@ describe('StructurePhaseCompositionBand', () => {
     });
 
     expect(screen.getByRole('heading', { name: 'Tirage' })).toBeInTheDocument();
+  });
+
+  it('renders the source shortfall banner after the team list and before the gauge', () => {
+    renderBand({
+      showTeamsSection: true,
+      compositionTileMode: 'exploitation',
+      teamsRuntimePresentation: { kind: 'list' },
+      teamsHasListContent: true,
+      stage: {
+        ...baseStage,
+        compositionEntryIds: ['e1'],
+        compositionEntryCount: 1,
+        compositionPreviewNames: ['Nord'],
+      },
+      entries: [
+        {
+          entryId: 'e1',
+          displayName: 'Nord',
+          status: 'Active',
+        },
+      ],
+      capacityIssueBanner: (
+        <p data-testid="shortfall-banner">Pas encore assez</p>
+      ),
+      compositionPopulationGaugeFooter: (
+        <p data-testid="population-gauge">gauge</p>
+      ),
+    });
+
+    const shortfall = screen.getByTestId('shortfall-banner');
+    const gauge = screen.getByTestId('population-gauge');
+    expect(
+      shortfall.compareDocumentPosition(gauge) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(screen.getByText('Nord')).toBeInTheDocument();
+    expect(
+      shortfall.compareDocumentPosition(screen.getByText('Nord')) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeFalsy();
   });
 
   it('renders the place-assignment section and operational strip when affectation is shown', () => {

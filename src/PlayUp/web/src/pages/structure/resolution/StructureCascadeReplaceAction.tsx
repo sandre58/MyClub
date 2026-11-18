@@ -13,8 +13,10 @@ import type {
   StructureResolutionOccupant,
   StructureStageHubSummary,
 } from '../../../types';
+import { notify } from '../../../design-system/toastStore';
 import { MutationError } from '../../../ui';
 import { scheduleStructureRefresh } from '../structureInvalidation';
+import { resolveLifecycleMutationMessage } from '../problems';
 import { CascadeReplaceContext } from './structureCascadeReplaceContext';
 import { isReplayableStale } from './structureResolutionOccupants';
 
@@ -57,6 +59,10 @@ export function StructureCascadeReplaceAction({
       setPlayed(result.playedMatches);
       setVersionToken(result.versionToken);
     },
+    onError: (error) => {
+      notify.error(resolveLifecycleMutationMessage(t, error));
+      preview.reset();
+    },
   });
 
   const confirm = useMutation({
@@ -98,7 +104,6 @@ export function StructureCascadeReplaceAction({
 
   return (
     <CascadeReplaceContext.Provider value={{ requestReplace }}>
-      {preview.isError ? <MutationError error={preview.error} /> : null}
       {children}
       <ConfirmDialog
         open={occupant !== null && versionToken !== null}
@@ -112,9 +117,7 @@ export function StructureCascadeReplaceAction({
               <ul>
                 {played.map((match) => (
                   <li key={match.matchId}>
-                    {t('resolution.cascade.playedMatch', {
-                      matchId: match.matchId,
-                    })}
+                    {playedMatchLabel(t, match, stage?.stageId ?? null)}
                   </li>
                 ))}
               </ul>
@@ -138,4 +141,34 @@ export function StructureCascadeReplaceAction({
       />
     </CascadeReplaceContext.Provider>
   );
+}
+
+function playedMatchLabel(
+  t: (key: string, params?: Record<string, string>) => string,
+  match: CascadePlayedMatch,
+  dialogStageId: string | null,
+): string {
+  const home = match.homeName?.trim() || undefined;
+  const away = match.awayName?.trim() || undefined;
+  const undecided = t('resolution.cascade.tbd');
+  let teams: string;
+  if (home && away) {
+    teams = `${home} – ${away}`;
+  } else if (home) {
+    teams = `${home} – ${undecided}`;
+  } else if (away) {
+    teams = `${undecided} – ${away}`;
+  } else {
+    teams = t('resolution.cascade.playedMatchUnknown');
+  }
+  const phase = match.stageName?.trim();
+  const parts: string[] = [];
+  if (dialogStageId && match.stageId !== dialogStageId && phase) {
+    parts.push(phase);
+  }
+  if (match.legIndex != null) {
+    parts.push(t('resolution.cascade.leg', { leg: String(match.legIndex) }));
+  }
+  parts.push(teams);
+  return parts.join(' — ');
 }

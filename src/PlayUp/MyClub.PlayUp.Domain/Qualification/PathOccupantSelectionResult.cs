@@ -10,6 +10,22 @@ using MyClub.PlayUp.Domain.Common;
 namespace MyClub.PlayUp.Domain.Qualification;
 
 /// <summary>
+/// Why a pure selection did not resolve to one entry.
+/// </summary>
+[SuppressMessage("Design", "CA1008:Enums should have zero value", Justification = "Explicit indeterminacy reasons without an unknown sentinel.")]
+public enum PathOccupantIndeterminacyReason
+{
+    /// <summary>The standing designated no entry.</summary>
+    Empty = 1,
+
+    /// <summary>The standing designated more than one entry.</summary>
+    Ambiguous = 2,
+
+    /// <summary>The selection could not be computed.</summary>
+    Uncomputable = 3,
+}
+
+/// <summary>
 /// Outcome status for a pure path occupant selection.
 /// </summary>
 [SuppressMessage("Design", "CA1008:Enums should have zero value", Justification = "Explicit selection outcomes without unknown sentinel.")]
@@ -34,7 +50,10 @@ public enum PathOccupantSelectionStatus
 /// <summary>
 /// Pure selection outcome for a qualification or progression path (no exceptions for unresolved cases).
 /// </summary>
-public sealed record PathOccupantSelectionResult(PathOccupantSelectionStatus Status, EntryId? EntryId = null)
+public sealed record PathOccupantSelectionResult(
+    PathOccupantSelectionStatus Status,
+    EntryId? EntryId = null,
+    PathOccupantIndeterminacyReason? Indeterminacy = null)
 {
     /// <summary>
     /// Creates a resolved selection.
@@ -45,8 +64,9 @@ public sealed record PathOccupantSelectionResult(PathOccupantSelectionStatus Sta
     /// <summary>
     /// Creates an indeterminate selection.
     /// </summary>
-    public static PathOccupantSelectionResult Indeterminate() =>
-        new(PathOccupantSelectionStatus.Indeterminate);
+    public static PathOccupantSelectionResult Indeterminate(
+        PathOccupantIndeterminacyReason reason = PathOccupantIndeterminacyReason.Uncomputable) =>
+        new(PathOccupantSelectionStatus.Indeterminate, Indeterminacy: reason);
 
     /// <summary>
     /// Creates a skipped selection.

@@ -22,14 +22,17 @@ public static class CompetitionListAssembler
     {
         ArgumentNullException.ThrowIfNull(competitions);
 
-        return [.. competitions.Select(competition =>
-            new CompetitionListItemDto(
-                competition.Id.Value,
-                competition.Name.Value,
-                competition.Status,
-                competition.ShortName?.Value,
-                competition.LogoMediaId?.Value,
-                competition.ScheduledStart,
-                competition.ScheduledEnd))];
+        return
+        [
+            .. competitions.Select(competition =>
+                new CompetitionListItemDto(
+                    competition.Id.Value,
+                    competition.Name.Value,
+                    competition.Status,
+                    competition.ShortName?.Value,
+                    competition.LogoMediaId?.Value,
+                    competition.ScheduledStart,
+                    competition.ScheduledEnd))
+        ];
     }
 }

@@ -7,7 +7,7 @@ export type TeamCrestProps = {
   logoMediaId?: string | null;
   primaryColor?: string | null;
   className?: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
 };
 
 /**
@@ -25,11 +25,13 @@ export function TeamCrest({
   const initial = crestInitials(name);
   const tone = crestTone(name);
   const sizeClass =
-    size === 'sm'
-      ? 'team-crest--sm'
-      : size === 'lg'
-        ? 'team-crest--lg'
-        : 'team-crest--md';
+    size === 'xs'
+      ? 'team-crest--xs'
+      : size === 'sm'
+        ? 'team-crest--sm'
+        : size === 'lg'
+          ? 'team-crest--lg'
+          : 'team-crest--md';
 
   if (logoMediaId) {
     return (

@@ -1865,6 +1865,18 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
+    /// Drops one ForForm or population path witness. Absent fingerprints are ignored.
+    /// Allowed under <see cref="EnsureResolutionMutable"/>, including while the phase is Running.
+    /// </summary>
+    /// <param name="pathFingerprint">Stable path key (<see cref="FormPathResolutionKey"/>).</param>
+    public void RemoveFormPathResolution(string pathFingerprint)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(pathFingerprint);
+        EnsureResolutionMutable();
+        _formPathResolutions.RemoveAll(resolution => resolution.PathFingerprint == pathFingerprint);
+    }
+
+    /// <summary>
     /// Replaces the Affectation authoring set and syncs runtime membership by diff.
     /// Never replaces <see cref="CompositionEntries"/> wholesale — Apply-resolved entries remain.
     /// Allowed in Draft only (structure locked from Ready). Duplicates rejected; order preserved.

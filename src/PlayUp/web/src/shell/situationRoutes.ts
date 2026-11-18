@@ -1,6 +1,10 @@
 import type { OverviewSituation } from '../types';
 import { structureDiagnosticMeta } from '../pages/structure/issues/structureDiagnosticPresentation';
-import { structureDeepLink } from '../pages/structure/structureNavigation';
+import {
+  structureDeepLink,
+  type StructureFocusId,
+} from '../pages/structure/structureNavigation';
+import type { StructureSectionId } from '../pages/structure/structureHubSections';
 
 /**
  * Resolve an Overview navigationHint / situation target to an existing SPA route.
@@ -59,9 +63,81 @@ export function overviewTargetHref(target: {
   }
 }
 
+const QUAL_PROG_RUNTIME_SOURCES = new Set([
+  'QualificationPending',
+  'QualificationConflict',
+  'ProgressionPending',
+  'ProgressionConflict',
+]);
+
+/**
+ * Deep-link to the qualification / progression rails on Structure when the Host
+ * signal targets a destination phase (not a materialised match row).
+ */
+export function runtimeQualificationProgressionHref(
+  situation: OverviewSituation,
+  competitionId: string,
+): string | null {
+  const { source, targetType, targetId, params } = situation;
+  if (!QUAL_PROG_RUNTIME_SOURCES.has(source)) {
+    return null;
+  }
+  if (targetType === 'Fixture' || targetType === 'Draw') {
+    return null;
+  }
+
+  const fromParams =
+    params?.destinationStageId?.trim() || params?.stageId?.trim() || null;
+  const colonPrefix =
+    targetType === 'Slot' || targetType === 'Group'
+      ? (() => {
+          if (!targetId) {
+            return null;
+          }
+          const idx = targetId.indexOf(':');
+          return idx >= 0 ? targetId.slice(0, idx).trim() : null;
+        })()
+      : null;
+  const formStageId =
+    targetType === 'Form' && targetId?.trim() ? targetId.trim() : null;
+
+  const stageId = fromParams ?? colonPrefix ?? formStageId;
+  if (!stageId) {
+    return null;
+  }
+
+  const section: StructureSectionId = source.startsWith('Qualification')
+    ? 'qualification'
+    : 'progression';
+  const focus: StructureFocusId = 'rail-attribution';
+
+  return structureDeepLink({
+    competitionId,
+    stageId,
+    section,
+    focus,
+  });
+}
+
+export type SituationHrefOptions = {
+  /** When false, ConfrontationUndecidable opens the fiche without `section=confrontation`. */
+  stageEditable?: boolean;
+};
+
+export function isStructurePhaseRegulationEditable(
+  stageStatus: string | null | undefined,
+): boolean {
+  return (
+    stageStatus === 'Draft' ||
+    stageStatus === 'Ready' ||
+    stageStatus === 'Running'
+  );
+}
+
 export function situationHref(
   situation: OverviewSituation,
   competitionId: string,
+  options?: SituationHrefOptions,
 ): string | null {
   if (situation.source === 'InsufficientParticipants') {
     return `/competitions/${competitionId}/teams`;
@@ -85,9 +161,52 @@ export function situationHref(
     situation.source === 'MissingPotRules';
 
   if (isStructureCatalogueSource) {
+    if (situation.source === 'ConfrontationUndecidable' && stageId) {
+      const stageStatus = situation.params?.stageStatus;
+      const openEditor =
+        options?.stageEditable !== false &&
+        (stageStatus == null ||
+          isStructurePhaseRegulationEditable(stageStatus));
+      return structureDeepLink({
+        competitionId,
+        stageId,
+        section: openEditor ? 'confrontation' : undefined,
+      });
+    }
+
     return `/competitions/${competitionId}/structure${
       stageId ? `?stage=${encodeURIComponent(stageId)}` : ''
     }`;
+  }
+
+  if (
+    (situation.source === 'ResolutionPerime' ||
+      situation.source === 'ResolutionIndetermine') &&
+    situation.targetType === 'Slot' &&
+    situation.targetId
+  ) {
+    const colon = situation.targetId.indexOf(':');
+    const stageFromSlot =
+      colon >= 0 ? situation.targetId.slice(0, colon) : situation.targetId;
+    const slotKey =
+      situation.params?.slotKey?.trim() ||
+      (colon >= 0 ? situation.targetId.slice(colon + 1).trim() : null);
+    if (stageFromSlot && slotKey) {
+      return structureDeepLink({
+        competitionId,
+        stageId: stageFromSlot,
+        focus: 'tile-places',
+        slotKey,
+      });
+    }
+  }
+
+  const runtimeStructure = runtimeQualificationProgressionHref(
+    situation,
+    competitionId,
+  );
+  if (runtimeStructure) {
+    return runtimeStructure;
   }
 
   return (

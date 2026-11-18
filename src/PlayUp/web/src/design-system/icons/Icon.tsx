@@ -1,15 +1,17 @@
 import type { LucideIcon as LucideGlyph } from 'lucide-react';
 import type { ReactNode, SVGProps } from 'react';
 
-export type IconSize = 'sm' | 'md' | 'lg';
+export type IconSize = 'xs' | 'sm' | 'md' | 'lg';
 
 const sizeClass: Record<IconSize, string> = {
+  xs: 'ds-icon ds-icon--xs',
   sm: 'ds-icon ds-icon--sm',
   md: 'ds-icon ds-icon--md',
   lg: 'ds-icon ds-icon--lg',
 };
 
 const sizePixels: Record<IconSize, number> = {
+  xs: 13,
   sm: 16,
   md: 20,
   lg: 24,
