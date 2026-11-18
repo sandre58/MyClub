@@ -169,12 +169,7 @@ test.describe('manual group placement', () => {
     const dialog = page.getByRole('dialog', {
       name: /Modifier la place — Groupe A/,
     });
-    const radios = dialog.getByRole('radio');
-    const current = await radios
-      .filter({ hasText: /Équipe générée 1|Alpha/ })
-      .count();
-    const pick = current > 0 ? radios.nth(1) : radios.last();
-    await pick.click();
+    await dialog.getByRole('radio').nth(1).click();
     await dialog
       .getByRole('button', { name: 'Enregistrer', exact: true })
       .click();
@@ -198,7 +193,7 @@ test.describe('manual group placement', () => {
       name: /Modifier la place — Groupe B/,
     });
     await dialog
-      .getByRole('button', { name: /Retirer l'équipe de la place/ })
+      .getByRole('button', { name: /Retirer l.équipe de la place/ })
       .click();
     await dialog
       .getByRole('button', { name: 'Enregistrer', exact: true })
