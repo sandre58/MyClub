@@ -38,6 +38,7 @@ export type CompositionTeamRow =
       rule: CompositionQualifierRule;
       seat: InboundFeedSlotView;
       entry?: StructureEntry;
+      sourcePhaseName: string;
     }
   | {
       key: string;
@@ -129,6 +130,7 @@ export function listCompositionTeamRows(
           rule,
           seat,
           entry,
+          sourcePhaseName: group.peerName,
         });
       });
     }
