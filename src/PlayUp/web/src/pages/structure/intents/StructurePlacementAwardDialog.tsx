@@ -334,7 +334,7 @@ export function StructurePlacementAwardDialog({
           {!sessionReady ? (
             <LoadingState size="region" />
           ) : canRemediate ? (
-            <div className="structure-attribution__body">
+            <div className="structure-attribution__body ds-scroll-safe">
               <ul className="structure-attribution__tiles">
                 {cards.map((card) => (
                   <li key={card.id}>

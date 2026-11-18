@@ -3,10 +3,13 @@
  * Built from `--focus-ring-*` (geometry) and `--color-focus` (tokens/colors.css).
  * Prefer box-shadow so chrome works on bordered and borderless controls.
  */
+
+:root,
 .ds-root {
-  --focus-halo:
-    0 0 0 var(--focus-ring-offset) var(--color-surface),
-    0 0 0 calc(var(--focus-ring-offset) + var(--focus-ring-width)) var(--color-focus);
+  --focus-halo: 0 0 0 var(--focus-ring-offset) var(--color-surface), 0 0 0 var(--focus-ring-extent) var(--color-focus);
+  --focus-inset: inset 0 0 0 var(--focus-ring-width) var(--color-focus);
+  --focus-field: inset 0 0 0 calc(var(--focus-ring-width) - var(--border-width))
+    var(--ds-focus-color, var(--color-focus));
 }
 
 .ds-root :is(a, button, input, select, textarea, summary, [tabindex]):focus {
@@ -18,13 +21,35 @@
   box-shadow: var(--focus-halo);
 }
 
-/* Text / color shells own their focus chrome. */
-.ds-root .ds-input:focus-within {
-  box-shadow: var(--focus-halo);
+.ds-root .ds-input:is(:focus-within, :focus-visible),
+.ds-root :is(input, select, textarea):not([type='checkbox']):not([type='radio']):not([type='range']):focus-visible {
+  outline: none;
+  border-color: var(--ds-focus-color, var(--color-brand));
+  box-shadow: var(--focus-field);
 }
 
+.ds-root [tabindex].ds-upload:focus-visible {
+  outline: none;
+  border-color: var(--color-brand);
+  box-shadow: var(--focus-field);
+}
+
+[data-nav='keyboard'] > li > [data-active='true'] {
+  box-shadow: var(--focus-inset);
+}
+
+/* Text / color shells own their focus chrome. */
 .ds-root .ds-input :is(input, button):focus,
 .ds-root .ds-input :is(input, button):focus-visible {
   outline: none;
   box-shadow: none;
+}
+
+@media (forced-colors: active) {
+  .ds-root :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible,
+  .ds-root .ds-input:focus-within {
+    outline: 2px solid CanvasText;
+    outline-offset: 2px;
+    box-shadow: none;
+  }
 }

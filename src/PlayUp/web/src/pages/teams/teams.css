@@ -608,10 +608,11 @@
   line-height: 1;
 }
 
-.teams-member__edit-field input:focus {
+.teams-member__edit-field input:focus,
+.teams-member__edit-field input:focus-visible {
   outline: none;
   border-color: var(--color-brand);
-  box-shadow: var(--focus-halo);
+  box-shadow: var(--focus-field);
 }
 
 .teams-drawer__add {
@@ -669,8 +670,9 @@
 }
 
 .teams-add-group:focus-within {
-  outline: 2px solid var(--color-brand);
-  outline-offset: 2px;
+  border-color: var(--color-brand);
+  box-shadow: var(--focus-field);
+  outline: none;
 }
 
 .teams-add-group input:focus,

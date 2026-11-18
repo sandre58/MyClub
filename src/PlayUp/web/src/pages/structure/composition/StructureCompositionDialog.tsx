@@ -468,7 +468,7 @@ export function StructureCompositionDialog({
             </div>
           ) : (
             <ul
-              className="structure-composition__list"
+              className="structure-composition__list ds-scroll-safe"
               aria-label={t('composition.listAria')}
             >
               {filtered.map((row) => {

@@ -736,11 +736,6 @@
   border-radius: var(--radius-control);
 }
 
-.structure-feed-group__rule-source-trigger:focus-visible {
-  outline: var(--focus-ring-width) solid var(--color-focus);
-  outline-offset: var(--focus-ring-offset);
-}
-
 .structure-feed-group__rule-sep {
   color: var(--color-text-secondary);
 }

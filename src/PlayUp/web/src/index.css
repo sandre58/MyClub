@@ -65,7 +65,7 @@ a:hover {
   color: var(--color-brand-hover);
 }
 
-:is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+:is(a, button, input, select, textarea, summary, [tabindex]):not(.ds-root *):focus-visible {
   outline: 2px solid var(--color-brand);
   outline-offset: 2px;
   border-radius: var(--radius-control);
@@ -126,9 +126,9 @@ select:hover:not(:disabled) {
   border-color: var(--color-text-secondary);
 }
 
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible {
+input:not(.ds-root *):focus-visible,
+select:not(.ds-root *):focus-visible,
+textarea:not(.ds-root *):focus-visible {
   outline: none;
   border-color: var(--color-brand);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand) 32%, transparent);

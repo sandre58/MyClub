@@ -20,7 +20,7 @@ Primitives (`palettes/slate.css`) feed semantic tokens (`tokens/*.css`).
 - Semantic: `success`, `attention`, `error`, `info`, **`live`** (activity ≠ success).
 - Chrome: `--color-chrome` + `on-chrome` + `chrome-accent` (uses brand-bright).
 - Brand angle: `--brand-skew: -12deg` (`tokens/brand.css`).
-- Focus: `--color-focus` (semantic ring color); geometry `--focus-ring-width`, `--focus-ring-offset` in `tokens/geometry.css`. Consumed as `--focus-halo` in `foundations/focus.css` — do not hard-code focus box-shadows on `.ds-*`.
+- Focus: `--color-focus`; geometry `--focus-ring-width`, `--focus-ring-offset`, `--focus-ring-extent` in `tokens/geometry.css`. Foundation aliases on `:root, .ds-root` in `foundations/focus.css`: `--focus-halo`, `--focus-field`, `--focus-inset` — do not hard-code focus box-shadows on `.ds-*`.
 
 ## Typography (numeric roles)
 

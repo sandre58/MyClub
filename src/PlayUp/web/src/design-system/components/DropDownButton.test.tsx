@@ -28,4 +28,31 @@ describe('DropDownButton', () => {
       expect(screen.queryByRole('menu')).not.toBeInTheDocument();
     });
   });
+
+  it('sets data-nav to keyboard after arrow navigation and pointer on mouse enter', async () => {
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+    render(
+      <DropDownButton
+        label="Add"
+        aria-label="Add item"
+        items={[
+          { value: 'a', label: 'Alpha' },
+          { value: 'b', label: 'Beta' },
+        ]}
+        onSelect={onSelect}
+      />,
+    );
+
+    const trigger = screen.getByRole('button', { name: 'Add item' });
+    trigger.focus();
+    await user.keyboard('{ArrowDown}');
+    const list = screen
+      .getByRole('menu')
+      .querySelector('.ds-dropdown-button__list');
+    expect(list).toHaveAttribute('data-nav', 'keyboard');
+
+    await user.hover(screen.getByRole('menuitem', { name: 'Beta' }));
+    expect(list).toHaveAttribute('data-nav', 'pointer');
+  });
 });
