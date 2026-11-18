@@ -215,6 +215,8 @@ public sealed class ManualGroupPlacementTests
         var draft = StructureViewAssembler.Assemble(competition, [groups]).Stages.Single();
         draft.Actions.Should().Contain(StructureViewAssembler.ActionAssignEntryToGroup);
         draft.Actions.Should().Contain(StructureViewAssembler.ActionClearEntryFromGroup);
+        draft.Actions.Should().Contain(StructureViewAssembler.ActionReplaceEntryInGroup);
+        draft.Actions.Should().Contain(StructureViewAssembler.ActionAssignEntriesToGroup);
 
         var ids = Enumerable.Range(0, 4)
             .Select(_ => AddEntry.Execute(competition, $"T{_}", _clock).Id)
@@ -224,6 +226,38 @@ public sealed class ManualGroupPlacementTests
         var ready = StructureViewAssembler.Assemble(competition, [groups]).Stages.Single();
         ready.Actions.Should().Contain(StructureViewAssembler.ActionAssignEntryToGroup);
         ready.Actions.Should().Contain(StructureViewAssembler.ActionClearEntryFromGroup);
+        ready.Actions.Should().Contain(StructureViewAssembler.ActionReplaceEntryInGroup);
+        ready.Actions.Should().Contain(StructureViewAssembler.ActionAssignEntriesToGroup);
+
+        var producingCompetition = CreateCompetition.Execute("Actions-matches", _clock);
+        var producingIds = Enumerable.Range(0, 4)
+            .Select(index => AddEntry.Execute(producingCompetition, $"M{index}", _clock).Id)
+            .ToArray();
+        var producing = ConfigureStructure.Execute(
+            producingCompetition,
+            null,
+            StructureIntent.Groups(2, 2),
+            _clock).Stage;
+        producing.ReplaceAffectationAuthoring(producingIds, _clock);
+        var producingDay = producing.Matchdays.Count == 0
+            ? producing.AddMatchday(1, _clock)
+            : producing.Matchdays[0];
+        var producingFixture = producing.AddFixture(producingDay.Id, _clock);
+        var produced = Match.Create(producingCompetition.Id, producing.Id, producingIds[0], producingIds[1], _clock);
+        producing.AttachMatch(producingFixture.Id, produced.Id, legIndex: 1, _clock);
+        producing.Prepare(_clock);
+        var readyWithMatches = StructureViewAssembler.Assemble(producingCompetition, [producing]).Stages.Single();
+        readyWithMatches.Actions.Should().Contain(StructureViewAssembler.ActionAssignEntryToGroup);
+        readyWithMatches.Actions.Should().Contain(StructureViewAssembler.ActionClearEntryFromGroup);
+        readyWithMatches.Actions.Should().Contain(StructureViewAssembler.ActionReplaceEntryInGroup);
+        readyWithMatches.Actions.Should().Contain(StructureViewAssembler.ActionAssignEntriesToGroup);
+
+        producing.Start(_clock);
+        var running = StructureViewAssembler.Assemble(producingCompetition, [producing]).Stages.Single();
+        running.Actions.Should().NotContain(StructureViewAssembler.ActionAssignEntryToGroup);
+        running.Actions.Should().NotContain(StructureViewAssembler.ActionClearEntryFromGroup);
+        running.Actions.Should().NotContain(StructureViewAssembler.ActionReplaceEntryInGroup);
+        running.Actions.Should().NotContain(StructureViewAssembler.ActionAssignEntriesToGroup);
 
         var championship = CreateCompetition.Execute("Champ", _clock);
         var champStage = ConfigureStructure.Execute(
@@ -234,6 +268,8 @@ public sealed class ManualGroupPlacementTests
         var champ = StructureViewAssembler.Assemble(championship, [champStage]).Stages.Single();
         champ.Actions.Should().NotContain(StructureViewAssembler.ActionAssignEntryToGroup);
         champ.Actions.Should().NotContain(StructureViewAssembler.ActionClearEntryFromGroup);
+        champ.Actions.Should().NotContain(StructureViewAssembler.ActionReplaceEntryInGroup);
+        champ.Actions.Should().NotContain(StructureViewAssembler.ActionAssignEntriesToGroup);
 
         var cupCompetition = CreateCompetition.Execute("Cup", _clock);
         var cupStage = ConfigureStructure.Execute(
@@ -244,6 +280,8 @@ public sealed class ManualGroupPlacementTests
         var cup = StructureViewAssembler.Assemble(cupCompetition, [cupStage]).Stages.Single();
         cup.Actions.Should().NotContain(StructureViewAssembler.ActionAssignEntryToGroup);
         cup.Actions.Should().NotContain(StructureViewAssembler.ActionClearEntryFromGroup);
+        cup.Actions.Should().NotContain(StructureViewAssembler.ActionReplaceEntryInGroup);
+        cup.Actions.Should().NotContain(StructureViewAssembler.ActionAssignEntriesToGroup);
     }
 
     private (Competition Competition, Stage Stage, EntryId EntryId) SeedReadyGroups()

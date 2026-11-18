@@ -48,6 +48,7 @@
     "EntryMaxBelowOccupying": "Cannot lower the maximum below the number of entered teams.",
     "EntryNotWithdrawable": "This team cannot be withdrawn.",
     "FixtureInvalid": "The fixture is inconsistent.",
+    "GroupMembershipConflict": "Another placement took this seat at the same time. Refresh and try again.",
     "GroupSeatReservedByInboundFeed": "This place is reserved for a team expected from qualification or progression.",
     "InboundDestinationNotSatisfied": "The inbound destination is not satisfied for materialization.",
     "InboundResolutionAmbiguous": "Unable to resolve the inbound feed for materialization.",

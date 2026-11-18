@@ -7,6 +7,7 @@
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Pipeline;
@@ -27,26 +28,34 @@ public sealed partial class UseCaseExecutor
     {
         ArgumentNullException.ThrowIfNull(intent);
 
-        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
-        Stage? primary = null;
-        if (competition.StageIds.Count > 0)
-        {
-            primary = await stages.GetByIdForUpdateAsync(competition.StageIds[0], cancellationToken)
-                          .ConfigureAwait(false)
-                      ?? throw new ApplicationFailureException(
-                          $"Stage '{competition.StageIds[0]}' was not found.",
-                          ApplicationErrorCodes.StageNotFound);
-        }
+        Competition? loaded = null;
+        ConfigureStructureResult? result = null;
+        await ExecuteOnCompetitionAsync(
+            competitionId,
+            async innerToken =>
+            {
+                loaded = await RequireCompetitionAsync(competitionId, innerToken).ConfigureAwait(false);
+                Stage? primary = null;
+                if (loaded.StageIds.Count > 0)
+                {
+                    primary = await stages.GetByIdForUpdateAsync(loaded.StageIds[0], innerToken)
+                                  .ConfigureAwait(false)
+                              ?? throw new ApplicationFailureException(
+                                  $"Stage '{loaded.StageIds[0]}' was not found.",
+                                  ApplicationErrorCodes.StageNotFound);
+                }
 
-        var result = ConfigureStructure.Execute(competition, primary, intent, clock);
-        if (result.StageCreated)
-        {
-            stages.Add(result.Stage);
-        }
+                result = ConfigureStructure.Execute(loaded, primary, intent, clock);
+                if (result.StageCreated)
+                {
+                    stages.Add(result.Stage);
+                }
 
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        var view = await AssembleStructureViewAsync(competition, cancellationToken).ConfigureAwait(false);
-        return (result, view);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
+        var view = await AssembleStructureViewAsync(loaded!, cancellationToken).ConfigureAwait(false);
+        return (result!, view);
     }
 
     /// <summary>
@@ -121,14 +130,21 @@ public sealed partial class UseCaseExecutor
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(buildIntent);
-        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
-            .ConfigureAwait(false);
-        var intent = buildIntent(stage.Name.Value);
-        var impact = RebuildStageStructure.Execute(competition, stage, intent, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        var view = await AssembleStructureViewAsync(competition, cancellationToken).ConfigureAwait(false);
-        return (impact, view);
+        Competition? loaded = null;
+        StructureRebuildImpact? impact = null;
+        await ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await RequireStageAsync(stageId, innerToken).ConfigureAwait(false);
+                loaded = await RequireCompetitionAsync(stage.CompetitionId, innerToken).ConfigureAwait(false);
+                var intent = buildIntent(stage.Name.Value);
+                impact = RebuildStageStructure.Execute(loaded, stage, intent, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
+        var view = await AssembleStructureViewAsync(loaded!, cancellationToken).ConfigureAwait(false);
+        return (impact!, view);
     }
 
     /// <summary>
@@ -139,18 +155,26 @@ public sealed partial class UseCaseExecutor
         StageId stageId,
         CancellationToken cancellationToken = default)
     {
-        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
-        var peerStages = await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken)
-            .ConfigureAwait(false);
-        var target = peerStages.FirstOrDefault(stage => stage.Id.Equals(stageId))
-            ?? throw new ApplicationFailureException(
-                $"Stage '{stageId}' was not found.",
-                ApplicationErrorCodes.StageNotFound);
+        Competition? loaded = null;
+        RemoveCompetitionStageResult? impact = null;
+        await ExecuteOnCompetitionAsync(
+            competitionId,
+            async innerToken =>
+            {
+                loaded = await RequireCompetitionAsync(competitionId, innerToken).ConfigureAwait(false);
+                var peerStages = await LoadCompetitionStagesForUpdateAsync(loaded, innerToken)
+                    .ConfigureAwait(false);
+                var target = peerStages.FirstOrDefault(stage => stage.Id.Equals(stageId))
+                    ?? throw new ApplicationFailureException(
+                        $"Stage '{stageId}' was not found.",
+                        ApplicationErrorCodes.StageNotFound);
 
-        var impact = RemoveCompetitionStage.Execute(competition, target, peerStages, clock);
-        stages.Remove(target);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        var view = await AssembleStructureViewAsync(competition, cancellationToken).ConfigureAwait(false);
-        return (impact, view);
+                impact = RemoveCompetitionStage.Execute(loaded, target, peerStages, clock);
+                stages.Remove(target);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
+        var view = await AssembleStructureViewAsync(loaded!, cancellationToken).ConfigureAwait(false);
+        return (impact!, view);
     }
 }

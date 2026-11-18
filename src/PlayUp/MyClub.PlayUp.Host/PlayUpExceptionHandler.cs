@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Infrastructure.Persistence;
 
 namespace MyClub.PlayUp.Host;
 
@@ -50,6 +51,11 @@ internal sealed partial class PlayUpExceptionHandler(ILogger<PlayUpExceptionHand
             {
                 problem.Extensions["consumerStageIds"] = application.Reasons;
             }
+        }
+
+        if (exception is GroupPlacementRejectedException rejected)
+        {
+            problem.Extensions["entryId"] = rejected.EntryId.Value;
         }
 
         if (statusCode >= StatusCodes.Status500InternalServerError)
@@ -116,6 +122,9 @@ internal sealed partial class PlayUpExceptionHandler(ILogger<PlayUpExceptionHand
                 (StatusCodes.Status409Conflict, "Group seat reserved by inbound feed", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.ManualGroupPlacementBlockedByActiveDraw } application =>
                 (StatusCodes.Status409Conflict, "Manual group placement blocked by active draw", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.GroupMembershipConflict } application =>
+                (StatusCodes.Status409Conflict, "Group membership conflict", application.Code),
+            GroupPlacementRejectedException rejected => MapPlacementRejection(rejected),
             ApplicationFailureException { Code: ApplicationErrorCodes.DrawObsoleteForConsumption } application =>
                 (StatusCodes.Status409Conflict, "Draw obsolete for consumption", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.MaterializationOccupantConflict } application =>
@@ -186,6 +195,25 @@ internal sealed partial class PlayUpExceptionHandler(ILogger<PlayUpExceptionHand
                 (StatusCodes.Status400BadRequest, "Application failure", application.Code),
             DomainException domain =>
                 (StatusCodes.Status409Conflict, "Domain rule violation", domain.Code),
+            Exception raw when GroupEntriesUniqueViolation.IsMatch(raw) =>
+                (StatusCodes.Status409Conflict, "Group membership conflict", ApplicationErrorCodes.GroupMembershipConflict),
             _ => (null, null, null)
+        };
+
+    private static (int? StatusCode, string? Title, string? Code) MapPlacementRejection(
+        GroupPlacementRejectedException rejected) =>
+        rejected.Code switch
+        {
+            ApplicationErrorCodes.StageNotFound =>
+                (StatusCodes.Status404NotFound, "Stage not found", rejected.Code),
+            ApplicationErrorCodes.InvalidStructureIntent =>
+                (StatusCodes.Status400BadRequest, "Invalid structure intent", rejected.Code),
+            ApplicationErrorCodes.ManualGroupPlacementBlockedByActiveDraw =>
+                (StatusCodes.Status409Conflict, "Manual group placement blocked by active draw", rejected.Code),
+            ApplicationErrorCodes.AppliedDrawGroupPlacementProtected =>
+                (StatusCodes.Status409Conflict, "Applied draw group placement protected", rejected.Code),
+            ApplicationErrorCodes.GroupSeatReservedByInboundFeed =>
+                (StatusCodes.Status409Conflict, "Group seat reserved by inbound feed", rejected.Code),
+            _ => (StatusCodes.Status409Conflict, "Group placement rejected", rejected.Code),
         };
 }

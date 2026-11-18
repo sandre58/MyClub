@@ -432,6 +432,8 @@ public sealed class UseCaseExecutorTests
         unitOfWork
             .Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
+        SetupExclusive(unitOfWork);
+        SetupCompetitionId(stages, scenario.Source.Id, scenario.Competition.Id);
 
         var executor = CreateExecutor(stages, matchRepo, competitions, unitOfWork);
         await executor.ApplyProgressionOutcomeAsync(scenario.Source.Id, scenario.FixtureId);
@@ -480,6 +482,8 @@ public sealed class UseCaseExecutorTests
                 It.IsAny<IReadOnlyList<MatchId>>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
+        SetupExclusive(unitOfWork);
+        SetupCompetitionId(stages, scenario.Source.Id, scenario.Competition.Id);
 
         var executor = CreateExecutor(stages, matchRepo, competitions, unitOfWork);
         var act = async () => await executor.ApplyProgressionOutcomeAsync(scenario.Source.Id, scenario.FixtureId);
@@ -530,6 +534,8 @@ public sealed class UseCaseExecutorTests
         unitOfWork
             .Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
+        SetupExclusive(unitOfWork);
+        SetupCompetitionId(stages, stage.Id, competition.Id);
 
         var executor = CreateExecutor(stages, matches, competitions, unitOfWork);
         await executor.PublishAndApplyDrawAsync(stage.Id, drawId);
@@ -568,6 +574,8 @@ public sealed class UseCaseExecutorTests
                         ApplicationErrorCodes.DrawApplyFailure)
                     : Task.CompletedTask;
             });
+        SetupExclusive(unitOfWork);
+        SetupCompetitionId(stages, stage.Id, competition.Id);
 
         var executor = CreateExecutor(stages, matchRepo, competitions, unitOfWork);
         var act = async () => await executor.PublishAndApplyDrawAsync(stage.Id, drawId);
@@ -892,6 +900,8 @@ public sealed class UseCaseExecutorTests
         unitOfWork
             .Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
+        SetupExclusive(unitOfWork);
+        SetupCompetitionId(stages, scenario.Stage.Id, scenario.Competition.Id);
 
         var executor = CreateExecutor(stages, matchRepo, competitions, unitOfWork);
         await executor.ApplyDrawAsync(scenario.Stage.Id, scenario.DrawId);
@@ -913,6 +923,7 @@ public sealed class UseCaseExecutorTests
         stages
             .Setup(repository => repository.GetByIdForUpdateAsync(stageId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Stage?)null);
+        SetupCompetitionId(stages, stageId, null);
 
         var executor = CreateExecutor(stages, matchRepo, competitions, unitOfWork);
         var act = async () => await executor.ApplyDrawAsync(stageId, DrawId.New());
@@ -944,6 +955,8 @@ public sealed class UseCaseExecutorTests
             .ReturnsAsync(stage);
         SetupCompetitionLookup(competitions, competition);
         SetupEmptyStageMatches(matchRepo, stage.Id);
+        SetupExclusive(unitOfWork);
+        SetupCompetitionId(stages, stage.Id, competition.Id);
 
         var executor = CreateExecutor(stages, matchRepo, competitions, unitOfWork);
         var act = async () => await executor.ApplyDrawAsync(stage.Id, draw.Id);
@@ -954,6 +967,19 @@ public sealed class UseCaseExecutorTests
         matchRepo.Verify(repository => repository.Add(It.IsAny<DomainMatch>()), Times.Never);
         fixture.MatchIds.Should().BeEmpty();
     }
+
+    private static void SetupExclusive(Mock<IUnitOfWork> unitOfWork) =>
+        unitOfWork
+            .Setup(uow => uow.ExecuteExclusiveAsync(
+                It.IsAny<CompetitionId>(),
+                It.IsAny<Func<CancellationToken, Task>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns((CompetitionId _, Func<CancellationToken, Task> write, CancellationToken token) => write(token));
+
+    private static void SetupCompetitionId(Mock<IStageRepository> stages, StageId stageId, CompetitionId? competitionId) =>
+        stages
+            .Setup(repository => repository.GetCompetitionIdReadOnlyAsync(stageId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(competitionId);
 
     private static void SetupCompetitionLookup(Mock<ICompetitionRepository> competitions, Competition competition) =>
         competitions

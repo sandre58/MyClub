@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using Microsoft.EntityFrameworkCore;
+using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Domain.Common;
 
@@ -42,8 +43,17 @@ public sealed class PlayUpDbContext(DbContextOptions<PlayUpDbContext> options) :
             await Database.ExecuteSqlAsync(
                 $"SELECT pg_advisory_xact_lock({key})",
                 cancellationToken).ConfigureAwait(false);
-            await write(cancellationToken).ConfigureAwait(false);
-            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                await write(cancellationToken).ConfigureAwait(false);
+                await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception exception) when (GroupEntriesUniqueViolation.IsMatch(exception))
+            {
+                throw new ApplicationFailureException(
+                    "A group membership write conflicted with another writer on the same seat.",
+                    ApplicationErrorCodes.GroupMembershipConflict);
+            }
         }
         finally
         {

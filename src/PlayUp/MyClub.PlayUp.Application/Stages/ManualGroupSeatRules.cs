@@ -51,7 +51,8 @@ internal static class ManualGroupSeatRules
         Group group,
         EntryId? entryId,
         IReadOnlyList<MatchParticipantSnapshot>? snapshots,
-        int? unresolvedPendingFeeds = null)
+        int? unresolvedPendingFeeds = null,
+        int? projectedMemberCount = null)
     {
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(competitionStages);
@@ -73,7 +74,7 @@ internal static class ManualGroupSeatRules
                 return ApplicationErrorCodes.AppliedDrawGroupPlacementProtected;
             }
 
-            if (stage.FindManualAssignRefusal(group.Id, known, snapshots) is { } domain)
+            if (stage.FindManualAssignRefusal(group.Id, known, snapshots, projectedMemberCount) is { } domain)
             {
                 return domain;
             }
@@ -90,9 +91,77 @@ internal static class ManualGroupSeatRules
 
         var pending = unresolvedPendingFeeds
             ?? GroupPendingFeeds.CountUnresolved(stage, competitionStages, group.Id);
-        return IsReserved(stage, group, pending)
+        return IsReserved(stage, group, pending, projectedMemberCount)
             ? ApplicationErrorCodes.GroupSeatReservedByInboundFeed
             : null;
+    }
+
+    /// <summary>
+    /// First refusal of a seat replacement, or <see langword="null"/> when it would succeed.
+    /// Capacity and the inbound-feed reserve do not apply. A replay whose occupant is already
+    /// gone and whose replacement is already in the group succeeds before the other guards.
+    /// </summary>
+    internal static string? EvaluateReplace(
+        Stage stage,
+        GroupId groupId,
+        EntryId currentEntryId,
+        EntryId replacementEntryId,
+        IReadOnlyList<MatchParticipantSnapshot>? snapshots = null)
+    {
+        ArgumentNullException.ThrowIfNull(stage);
+        var group = stage.FindGroup(groupId);
+        if (group is not null
+            && !group.EntryIds.Contains(currentEntryId)
+            && group.EntryIds.Contains(replacementEntryId))
+        {
+            return null;
+        }
+
+        if (stage.FindManualPlacementLifecycleRefusal() is { } lifecycle)
+        {
+            return lifecycle;
+        }
+
+        if (HasActiveUnappliedGroupDraw(stage))
+        {
+            return ApplicationErrorCodes.ManualGroupPlacementBlockedByActiveDraw;
+        }
+
+        if (StructureAppliedDrawGroupPlacementGate.ClearWouldBreakAppliedDraw(stage, groupId, currentEntryId))
+        {
+            return ApplicationErrorCodes.AppliedDrawGroupPlacementProtected;
+        }
+
+        if (StructureAppliedDrawGroupPlacementGate.AssignWouldBreakAppliedDraw(
+                stage,
+                groupId,
+                replacementEntryId))
+        {
+            return ApplicationErrorCodes.AppliedDrawGroupPlacementProtected;
+        }
+
+        if (stage.FindManualClearRefusal(groupId, currentEntryId) is { } clear)
+        {
+            return clear;
+        }
+
+        if (stage.FindManualAssignRefusal(
+                groupId,
+                replacementEntryId,
+                snapshots,
+                ignoreCapacity: true) is { } incoming)
+        {
+            return incoming;
+        }
+
+        if (group is not null
+            && group.EntryIds.Contains(replacementEntryId)
+            && !replacementEntryId.Equals(currentEntryId))
+        {
+            return StageErrorCodes.DuplicateEntry;
+        }
+
+        return null;
     }
 
     internal static string? EvaluateClear(Stage stage, GroupId groupId, EntryId entryId)
@@ -162,6 +231,33 @@ internal static class ManualGroupSeatRules
         throw new DomainException(stage.DescribeManualClearRefusal(code, groupId, entryId), code);
     }
 
+    internal static void ThrowReplace(
+        Stage stage,
+        GroupId groupId,
+        EntryId currentEntryId,
+        EntryId replacementEntryId,
+        string code)
+    {
+        if (IsApplicationRefusal(code))
+        {
+            throw new ApplicationFailureException(ApplicationMessage(code), code);
+        }
+
+        var clear = stage.FindManualClearRefusal(groupId, currentEntryId);
+        var message = clear == code
+            ? stage.DescribeManualClearRefusal(code, groupId, currentEntryId)
+            : stage.DescribeManualAssignRefusal(code, groupId, replacementEntryId);
+        throw new DomainException(message, code);
+    }
+
+    internal static void ThrowBatch(Stage stage, GroupId groupId, EntryId entryId, string code)
+    {
+        var message = IsApplicationRefusal(code)
+            ? ApplicationMessage(code)
+            : stage.DescribeManualAssignRefusal(code, groupId, entryId);
+        throw new GroupPlacementRejectedException(message, code, entryId);
+    }
+
     private static bool IsApplicationRefusal(string code) =>
         code is ApplicationErrorCodes.ManualGroupPlacementBlockedByActiveDraw
             or ApplicationErrorCodes.GroupSeatReservedByInboundFeed
@@ -173,14 +269,15 @@ internal static class ManualGroupSeatRules
             && draw.Status != DrawStatus.Cancelled
             && !DrawAppliedState.IsApplied(draw, stage));
 
-    private static bool IsReserved(Stage stage, Group group, int pending)
+    private static bool IsReserved(Stage stage, Group group, int pending, int? projectedMemberCount = null)
     {
         if (stage.PlacesPerGroup is not int capacity || capacity < 1 || pending <= 0)
         {
             return false;
         }
 
-        var free = capacity - group.EntryIds.Count;
+        var count = projectedMemberCount ?? group.EntryIds.Count;
+        var free = capacity - count;
         return free > 0 && free <= pending;
     }
 
