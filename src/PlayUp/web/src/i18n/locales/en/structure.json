@@ -1074,6 +1074,9 @@
     "counter": "{{occupied}}/{{capacity}}",
     "counterExcess": "{{occupied}}/{{capacity}} · Extra",
     "groupPlaceholder": "Choose a group",
+    "targetLabel": "Group",
+    "targetLockedAria": "Locked group: {{group}}",
+    "selectionCleared": "Selection cleared",
     "blockedAfterRemoveTitle": "Placement unavailable",
     "blockedAfterRemove": "This group no longer has an editable seat for manual placement (reserved seat or lock)."
   },

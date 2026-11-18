@@ -277,7 +277,7 @@ describe('groupBatchCap', () => {
     expect(groupBatchCap(cases, 'g-a', actions)).toBe(0);
   });
 
-  it('counts only editable empty seats', () => {
+  it('counts only editable empty seats without inbound feed', () => {
     const cases = [
       place({
         formPosition: {
@@ -295,6 +295,7 @@ describe('groupBatchCap', () => {
           groupName: 'A',
           index: 2,
         },
+        entry: { entryId: 'e2', displayName: 'B' },
       }),
       place({
         formPosition: {
@@ -303,10 +304,44 @@ describe('groupBatchCap', () => {
           groupName: 'A',
           index: 3,
         },
-        seatMode: 'Reserved',
+        feedOrigin: { kind: 'Qualification', sourceStageId: 'src' },
+      }),
+      place({
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId: 'g-a',
+          groupName: 'A',
+          index: 4,
+        },
       }),
     ];
     expect(groupBatchCap(cases, 'g-a', actions)).toBe(1);
+  });
+
+  it('returns 0 when the only empty seat is reserved or has a feed', () => {
+    const cases = [
+      ...[1, 2, 3].map((index) =>
+        place({
+          formPosition: {
+            kind: 'GroupPlace',
+            groupId: 'g-a',
+            groupName: 'A',
+            index,
+          },
+          entry: { entryId: `e${index}`, displayName: `T${index}` },
+        }),
+      ),
+      place({
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId: 'g-a',
+          groupName: 'A',
+          index: 4,
+        },
+        seatMode: 'Reserved',
+      }),
+    ];
+    expect(groupBatchCap(cases, 'g-a', actions)).toBe(0);
   });
 });
 

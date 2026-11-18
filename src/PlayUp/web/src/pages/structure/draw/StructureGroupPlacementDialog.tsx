@@ -35,6 +35,7 @@ import { scheduleStructureRefresh } from '../structureInvalidation';
 import {
   canBatchAssignToGroup,
   canReplaceInGroup,
+  findGroupSeatByEntryId,
   groupBatchCap,
   listAvailableGroupEntries,
   listGroupManualTargets,
@@ -42,7 +43,6 @@ import {
   purgeUnavailableSelection,
   resolveGroupDisplayLabel,
   resolveGroupManualPlace,
-  resolveSeatLive,
 } from './manualGroupPlacementUi';
 
 type StructureGroupPlacementDialogProps = {
@@ -115,26 +115,38 @@ export function StructureGroupPlacementDialog({
   /** Bumps on open / mode / group change so Dialog body focus is not reset on each toggle. */
   const [focusEpoch, setFocusEpoch] = useState(0);
   const initialSelectionRef = useRef<string[] | string | null>(null);
+  const [editSubjectEntryId, setEditSubjectEntryId] = useState<string | null>(
+    null,
+  );
+  const teamsListRef = useRef<HTMLDivElement>(null);
+  const blockedFocusRef = useRef<HTMLDivElement>(null);
 
-  const editAnchor = useMemo(() => {
-    if (mode !== 'edit' || placeProp?.formPosition.kind !== 'GroupPlace') {
-      return null;
-    }
-    const groupIdFromProp = placeProp.formPosition.groupId?.trim();
-    const index = placeProp.formPosition.index;
-    if (groupIdFromProp == null || index == null) return null;
-    return resolveSeatLive(cases, groupIdFromProp, index) ?? placeProp;
-  }, [mode, placeProp, cases]);
+  const editGroupId =
+    mode === 'edit' && placeProp?.formPosition.kind === 'GroupPlace'
+      ? (placeProp.formPosition.groupId?.trim() ?? null)
+      : null;
+
+  const subjectSeat = useMemo(() => {
+    if (mode !== 'edit' || !editGroupId || !editSubjectEntryId) return null;
+    return findGroupSeatByEntryId(cases, editGroupId, editSubjectEntryId);
+  }, [mode, editGroupId, editSubjectEntryId, cases]);
+
+  const subjectGone =
+    mode === 'edit' &&
+    editSubjectEntryId != null &&
+    subjectSeat == null &&
+    cases.length > 0;
 
   const activePlace =
     mode === 'edit'
-      ? editAnchor
+      ? (subjectSeat ?? placeProp)
       : placeLockedFromSchematic && placeProp?.formPosition.groupId === groupId
         ? placeProp
         : (groupTargets.find((target) => target.groupId === groupId)?.place ??
           (groupId ? resolveGroupManualPlace(cases, groupId, actions) : null));
 
-  const occupiedId = mode === 'edit' ? occupantId(activePlace) : null;
+  const occupiedId =
+    mode === 'edit' ? (editSubjectEntryId ?? occupantId(activePlace)) : null;
 
   const available = useMemo(
     () => listAvailableGroupEntries(stage, cases, entries),
@@ -194,19 +206,18 @@ export function StructureGroupPlacementDialog({
       if (!targetGroup) throw new Error('missing group');
 
       if (mode === 'edit') {
-        const current = occupantId(activePlace);
+        const subjectId = editSubjectEntryId;
+        if (!subjectId) throw new Error('missing subject');
         if (selectedId == null) {
-          if (!current) throw new Error('missing occupant');
-          await clearEntryFromGroup(stage.stageId, targetGroup, current);
+          await clearEntryFromGroup(stage.stageId, targetGroup, subjectId);
           return;
         }
-        if (selectedId === current) throw new Error('unchanged');
+        if (selectedId === subjectId) throw new Error('unchanged');
         if (!replaceAllowed) throw new Error('replace not allowed');
-        if (!current) throw new Error('missing occupant');
         await replaceEntryInGroup(
           stage.stageId,
           targetGroup,
-          current,
+          subjectId,
           selectedId,
         );
         return;
@@ -262,10 +273,10 @@ export function StructureGroupPlacementDialog({
     setLiveNote(null);
 
     if (mode === 'edit') {
-      const occ = occupantId(editAnchor ?? placeProp);
-      syncedOccupantRef.current = occ;
-      setSelectedId(occ);
-      initialSelectionRef.current = occ;
+      const subjectId = occupantId(placeProp);
+      setEditSubjectEntryId(subjectId);
+      setSelectedId(subjectId);
+      initialSelectionRef.current = subjectId;
     } else if (mode === 'singleEmpty') {
       setSelectedId(null);
       initialSelectionRef.current = null;
@@ -289,20 +300,21 @@ export function StructureGroupPlacementDialog({
     }
   }, [open, placeProp, groupId, groupTargets]);
 
-  const syncedOccupantRef = useRef<string | null>(null);
-
   useEffect(() => {
     if (!open || mode !== 'edit') return;
-    const editable =
-      editAnchor?.seatMode === 'Editable' && editAnchor.canClear === true;
-    setSeatBlocked(!editable);
-    const occ = occupantId(editAnchor);
-    if (occ && occ !== syncedOccupantRef.current) {
-      syncedOccupantRef.current = occ;
-      setSelectedId(occ);
-      initialSelectionRef.current = occ;
+    if (subjectGone) {
+      setLiveNote(t('groupPlacement.seatChanged'));
+      setSeatBlocked(true);
+      return;
     }
-  }, [open, mode, editAnchor]);
+    setSeatBlocked(
+      subjectSeat != null &&
+        (subjectSeat.seatMode !== 'Editable' || subjectSeat.canClear !== true),
+    );
+    setLiveNote((current) =>
+      current === t('groupPlacement.seatChanged') ? null : current,
+    );
+  }, [open, mode, subjectGone, subjectSeat, t]);
 
   useEffect(() => {
     if (!open || mode !== 'batch') return;
@@ -367,6 +379,27 @@ export function StructureGroupPlacementDialog({
     requestDiscardClose(saveMutation.isPending);
   }
 
+  function onClearSeatSelection() {
+    setSelectedId(null);
+    setLiveNote(t('groupPlacement.selectionCleared'));
+    saveMutation.reset();
+    window.requestAnimationFrame(() => {
+      if (showPlacementBlocked) {
+        blockedFocusRef.current?.focus();
+        return;
+      }
+      const root = teamsListRef.current;
+      const tile = root?.querySelector<HTMLElement>(
+        'button[role="radio"], input[type="radio"]',
+      );
+      if (tile) {
+        tile.focus();
+        return;
+      }
+      root?.focus();
+    });
+  }
+
   const onGroupChange = (next: string | null) => {
     if (placeLockedFromSchematic) return;
     setGroupId(next);
@@ -401,9 +434,12 @@ export function StructureGroupPlacementDialog({
   const canSaveEdit =
     mode === 'edit' &&
     !seatBlocked &&
+    !subjectGone &&
     !compositionEmpty &&
-    ((selectedId == null && occupiedId != null) ||
-      (selectedId != null && selectedId !== occupiedId && replaceAllowed));
+    ((selectedId == null && editSubjectEntryId != null) ||
+      (selectedId != null &&
+        selectedId !== editSubjectEntryId &&
+        replaceAllowed));
 
   const canSaveSingle =
     (mode === 'singleEmpty' || (mode === 'batch' && !multiSelect)) &&
@@ -469,7 +505,7 @@ export function StructureGroupPlacementDialog({
         open={dialogOpen}
         onClose={requestClose}
         title={dialogTitle}
-        description={t('manualPlacement.lead')}
+        description={t('groupPlacement.placeLead')}
         size="md"
         closeLabel={tCommon('close')}
         closeDisabled={pending || discardOpen}
@@ -537,13 +573,13 @@ export function StructureGroupPlacementDialog({
 
           <div className="structure-manual-placement__field">
             <span className="structure-manual-placement__label">
-              {t('manualPlacement.placeLabel')}
+              {t('groupPlacement.targetLabel')}
             </span>
             {placeLockedFromSchematic || groupTargets.length <= 1 ? (
               <p
                 className="structure-manual-placement__place-locked"
-                aria-label={t('manualPlacement.placeLockedAria', {
-                  place:
+                aria-label={t('groupPlacement.targetLockedAria', {
+                  group:
                     mode === 'batch' && groupId
                       ? t('groupPlacement.groupOption', {
                           group: groupLabel,
@@ -565,7 +601,7 @@ export function StructureGroupPlacementDialog({
                 value={groupId}
                 onChange={onGroupChange}
                 placeholder={t('groupPlacement.groupPlaceholder')}
-                aria-label={t('manualPlacement.placeLabel')}
+                aria-label={t('groupPlacement.targetLabel')}
                 disabled={pending || groupOptions.length === 0}
               />
             )}
@@ -654,13 +690,15 @@ export function StructureGroupPlacementDialog({
               </EmptyState>
             ) : null}
             {showPlacementBlocked ? (
-              <EmptyState
-                variant="idle"
-                icon={<EmptySelectionIcon size="lg" />}
-                title={t('groupPlacement.blockedAfterRemoveTitle')}
-              >
-                {t('groupPlacement.blockedAfterRemove')}
-              </EmptyState>
+              <div ref={blockedFocusRef} tabIndex={-1}>
+                <EmptyState
+                  variant="idle"
+                  icon={<EmptySelectionIcon size="lg" />}
+                  title={t('groupPlacement.blockedAfterRemoveTitle')}
+                >
+                  {t('groupPlacement.blockedAfterRemove')}
+                </EmptyState>
+              </div>
             ) : null}
             {!compositionEmpty &&
             !showPlacementBlocked &&
@@ -672,8 +710,35 @@ export function StructureGroupPlacementDialog({
                       ? t('groupPlacement.teamLabel')
                       : t('manualPlacement.teamLabel')}
                   </span>
+                  <div className="ds-icon-toolbar">
+                    {effectiveBatch ? (
+                      <button
+                        type="button"
+                        className="ds-btn ds-btn--ghost structure-composition__select-all"
+                        disabled={!canFillGroup || pending}
+                        onClick={fillGroup}
+                      >
+                        <ListChecksIcon size="sm" />
+                        {t('groupPlacement.fillGroup')}
+                      </button>
+                    ) : null}
+                    {mode === 'edit' && selectedId != null && !pending ? (
+                      <Tooltip content={t('groupPlacement.clearSeat')}>
+                        <button
+                          type="button"
+                          className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact ds-icon-button--dismiss"
+                          disabled={pending}
+                          aria-label={t('groupPlacement.clearSeat')}
+                          onClick={onClearSeatSelection}
+                        >
+                          <CloseIcon size="sm" />
+                        </button>
+                      </Tooltip>
+                    ) : null}
+                  </div>
                 </div>
                 <div
+                  ref={teamsListRef}
                   className="structure-manual-placement__teams ds-scroll-safe"
                   role={teamGroupRole}
                   aria-label={
@@ -735,37 +800,6 @@ export function StructureGroupPlacementDialog({
                     );
                   })}
                 </div>
-                {effectiveBatch ? (
-                  <div className="structure-composition__toolbar">
-                    <button
-                      type="button"
-                      className="ds-btn ds-btn--ghost structure-composition__select-all"
-                      disabled={!canFillGroup || pending}
-                      onClick={fillGroup}
-                    >
-                      <ListChecksIcon size="sm" />
-                      {t('groupPlacement.fillGroup')}
-                    </button>
-                  </div>
-                ) : null}
-                {mode === 'edit' && selectedId != null && !pending ? (
-                  <div className="ds-icon-toolbar structure-manual-placement__clear-row">
-                    <Tooltip content={t('groupPlacement.clearSeat')}>
-                      <button
-                        type="button"
-                        className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact ds-icon-button--dismiss"
-                        disabled={pending}
-                        aria-label={t('groupPlacement.clearSeat')}
-                        onClick={() => {
-                          setSelectedId(null);
-                          saveMutation.reset();
-                        }}
-                      >
-                        <CloseIcon size="sm" />
-                      </button>
-                    </Tooltip>
-                  </div>
-                ) : null}
               </div>
             ) : null}
           </div>

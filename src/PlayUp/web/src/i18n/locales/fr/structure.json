@@ -1074,6 +1074,9 @@
     "counter": "{{occupied}}/{{capacity}}",
     "counterExcess": "{{occupied}}/{{capacity}} · En trop",
     "groupPlaceholder": "Choisir un groupe",
+    "targetLabel": "Groupe",
+    "targetLockedAria": "Groupe verrouillé : {{group}}",
+    "selectionCleared": "Sélection effacée",
     "blockedAfterRemoveTitle": "Placement indisponible",
     "blockedAfterRemove": "Le groupe n’a plus de place éditable pour une affectation manuelle (place réservée ou verrouillage)."
   },

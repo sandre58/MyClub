@@ -262,7 +262,7 @@ export function groupManualPlaceStillAllowed(
   return resolveGroupManualPlace(cases, groupId, actions) != null;
 }
 
-/** Editable empty seats that accept a manual place (Reserved excluded). */
+/** Editable empty seats that accept a manual place (Reserved and inbound feeds excluded). */
 export function groupBatchCap(
   cases: readonly SchematicCase[],
   groupId: string,
@@ -273,8 +273,23 @@ export function groupBatchCap(
     if (place.formPosition.groupId !== groupId) return false;
     if (place.seatMode !== 'Editable') return false;
     if (occupantId(place) != null) return false;
+    if (place.feedOrigin?.kind) return false;
     return resolveGroupSeatInteraction(place, { actions }).kind === 'place';
   }).length;
+}
+
+/** Group seat currently holding {@link entryId}, if any. */
+export function findGroupSeatByEntryId(
+  cases: readonly SchematicCase[],
+  groupId: string,
+  entryId: string,
+): SchematicCase | null {
+  for (const place of cases) {
+    if (place.formPosition.kind !== 'GroupPlace') continue;
+    if (place.formPosition.groupId !== groupId) continue;
+    if (occupantId(place) === entryId) return place;
+  }
+  return null;
 }
 
 /** Selected ids in display order (pot, then composition). */

@@ -394,7 +394,9 @@ describe('StructureGroupPlacementDialog', () => {
       place: null,
       cases: [groupPlace(), emptyB],
     });
-    expect(screen.getByRole('combobox', { name: 'Place' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('combobox', { name: 'Groupe' }),
+    ).toBeInTheDocument();
   });
 
   it('asks before discarding a choice', async () => {
@@ -506,7 +508,7 @@ describe('StructureGroupPlacementDialog', () => {
     renderDialog({ place: null, cases: [groupPlace(), emptyB] });
 
     await user.click(screen.getByRole('checkbox', { name: 'Alpha' }));
-    await user.click(screen.getByRole('combobox', { name: 'Place' }));
+    await user.click(screen.getByRole('combobox', { name: 'Groupe' }));
     await user.click(screen.getByRole('option', { name: /Groupe B/ }));
     expect(screen.queryByRole('checkbox', { name: 'Alpha' })).not.toBeChecked();
   });
@@ -614,10 +616,9 @@ describe('StructureGroupPlacementDialog', () => {
     expect(
       screen.getByText('La place a changé. Vérifiez la sélection.'),
     ).toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: 'Bravo' })).toHaveAttribute(
-      'aria-checked',
-      'true',
-    );
+    expect(
+      screen.queryByRole('button', { name: 'Enregistrer' }),
+    ).not.toBeInTheDocument();
   });
 
   it('does not reset focus to the first tile when toggling batch selection', async () => {
@@ -655,8 +656,169 @@ describe('StructureGroupPlacementDialog', () => {
     });
 
     await waitFor(() =>
-      expect(screen.getByRole('radio', { name: 'Alpha' })).toHaveFocus(),
+      expect(
+        screen.getByRole('button', {
+          name: /Retirer l.équipe de la place/,
+        }),
+      ).toHaveFocus(),
     );
+  });
+
+  it('locks batch selection at one when an inbound feed blocks the other free seat', async () => {
+    const user = userEvent.setup();
+    const cases = [
+      groupPlace({
+        formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index: 1 },
+        entry: { entryId: 'e1', displayName: 'Alpha' },
+      }),
+      groupPlace({
+        formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index: 2 },
+        entry: { entryId: 'e2', displayName: 'Bravo' },
+      }),
+      groupPlace({
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId,
+          groupName: 'A',
+          index: 3,
+        },
+        feedOrigin: { kind: 'Qualification', sourceStageId: 'src' },
+      }),
+      groupPlace({
+        formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index: 4 },
+      }),
+    ];
+    renderDialog({
+      place: null,
+      cases,
+      stage: stage({ compositionEntryIds: ['e1', 'e2', 'e3', 'e4'] }),
+      entries: [
+        entry('e1', 'Alpha'),
+        entry('e2', 'Bravo'),
+        entry('e3', 'Charlie'),
+        entry('e4', 'Delta'),
+      ],
+    });
+
+    await user.click(screen.getByRole('checkbox', { name: 'Charlie' }));
+    expect(screen.getByRole('checkbox', { name: 'Delta' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
+    expect(
+      screen.queryByRole('button', { name: 'Placer 2 équipes' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('replaces using the anchored subject after seat compaction', async () => {
+    const user = userEvent.setup();
+    const occupied = groupPlace({
+      formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index: 1 },
+      entry: { entryId: 'e1', displayName: 'Alpha' },
+      canClear: true,
+    });
+    const { rerender, queryClient } = renderDialog({
+      place: occupied,
+      cases: [
+        occupied,
+        groupPlace({
+          formPosition: {
+            kind: 'GroupPlace',
+            groupId,
+            groupName: 'A',
+            index: 2,
+          },
+        }),
+      ],
+    });
+
+    await user.click(screen.getByRole('radio', { name: 'Bravo' }));
+    const compacted = groupPlace({
+      formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index: 1 },
+      entry: { entryId: 'e1', displayName: 'Alpha' },
+      canClear: true,
+    });
+    rerender(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <StructureGroupPlacementDialog
+            open
+            onClose={vi.fn()}
+            competitionId="comp-1"
+            stage={stage()}
+            structureStages={[stage()]}
+            entries={[
+              entry('e1', 'Alpha'),
+              entry('e2', 'Bravo'),
+              entry('e3', 'Charlie'),
+            ]}
+            cases={[
+              compacted,
+              groupPlace({
+                formPosition: {
+                  kind: 'GroupPlace',
+                  groupId,
+                  groupName: 'A',
+                  index: 2,
+                },
+              }),
+            ]}
+            place={occupied}
+          />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Enregistrer' }));
+    await waitFor(() => {
+      expect(replaceEntryInGroup).toHaveBeenCalledWith(
+        stageId,
+        groupId,
+        'e1',
+        'e2',
+      );
+    });
+  });
+
+  it('announces a cleared selection and keeps focus inside the dialog', async () => {
+    const user = userEvent.setup();
+    const occupied = groupPlace({
+      entry: { entryId: 'e1', displayName: 'Alpha' },
+      canClear: true,
+    });
+    renderDialog({
+      place: occupied,
+      cases: [
+        occupied,
+        groupPlace({
+          formPosition: {
+            kind: 'GroupPlace',
+            groupId,
+            groupName: 'A',
+            index: 2,
+          },
+        }),
+      ],
+    });
+
+    await user.click(
+      screen.getByRole('button', { name: /Retirer l.équipe de la place/ }),
+    );
+    expect(screen.getByText('Sélection effacée')).toBeInTheDocument();
+    const dialog = screen.getByRole('dialog');
+    await waitFor(() =>
+      expect(dialog.contains(document.activeElement)).toBe(true),
+    );
+  });
+
+  it('uses the group placement lead instead of the cup wording', () => {
+    renderDialog({ place: null });
+    expect(
+      screen.getByText(
+        'Choisissez une équipe de la composition de cette phase.',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/coupe/i)).not.toBeInTheDocument();
   });
 
   it('links the refused batch tile to the alert message', async () => {

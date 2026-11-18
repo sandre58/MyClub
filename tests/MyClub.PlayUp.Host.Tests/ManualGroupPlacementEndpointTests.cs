@@ -20,6 +20,7 @@ using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Domain.Standings;
+using MyClub.PlayUp.Host.Contracts;
 using Xunit;
 
 namespace MyClub.PlayUp.Host.Tests;
@@ -165,6 +166,32 @@ public sealed class ManualGroupPlacementEndpointTests(HostPostgresFixture fixtur
 
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
         (await ReadCodeAsync(response)).Should().Be(ApplicationErrorCodes.GroupSeatReservedByInboundFeed);
+    }
+
+    [IntegrationFact]
+    public async Task Post_batch_assign_honours_inbound_feed_cap_without_partial_writeAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var seed = await SeedInboundFeedBatchCapAsync(factory);
+        using var client = factory.CreateClient();
+        var batchUri = new Uri(
+            $"/stages/{seed.StageId.Value}/groups/{seed.GroupId.Value}/entries",
+            UriKind.Relative);
+
+        using var two = await client.PostAsJsonAsync(
+            batchUri,
+            new AssignEntriesToGroupRequest(
+            [
+                seed.ThirdEntryId.Value,
+                seed.FourthEntryId.Value,
+            ]));
+        using var one = await client.PostAsJsonAsync(
+            batchUri,
+            new AssignEntriesToGroupRequest([seed.ThirdEntryId.Value]));
+
+        two.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        (await ReadCodeAsync(two)).Should().Be(ApplicationErrorCodes.GroupSeatReservedByInboundFeed);
+        one.StatusCode.Should().Be(HttpStatusCode.NoContent);
     }
 
     [IntegrationFact]
@@ -372,6 +399,45 @@ public sealed class ManualGroupPlacementEndpointTests(HostPostgresFixture fixtur
             ids[0]);
     }
 
+    private async Task<InboundFeedBatchSeed> SeedInboundFeedBatchCapAsync(
+        PlayUpWebApplicationFactory factory)
+    {
+        var competition = CreateCompetition.Execute("G-http-batch-feed", _clock);
+        var ids = Enumerable.Range(0, 4)
+            .Select(index => AddEntry.Execute(competition, $"T{index}", _clock).Id)
+            .ToArray();
+        var source = AddCompetitionStage.Execute(competition, StructureIntent.Groups(2, 2), _clock);
+        var destination = AddCompetitionStage.Execute(competition, StructureIntent.Groups(2, 4), _clock);
+        destination.ReplaceAffectationAuthoring(ids, _clock);
+        destination.AssignEntryToGroup(destination.Groups[0].Id, ids[0]);
+        destination.AssignEntryToGroup(destination.Groups[0].Id, ids[1]);
+        source.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.FromGroup(source.Groups[0].Id),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    QualificationDestination.ForGroup(destination.Id, destination.Groups[0].Id))
+            ]),
+            _clock);
+
+        using var scope = factory.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+        competitions.Add(competition);
+        stages.Add(source);
+        stages.Add(destination);
+        await unitOfWork.SaveChangesAsync();
+
+        return new InboundFeedBatchSeed(
+            destination.Id,
+            destination.Groups[0].Id,
+            ids[2],
+            ids[3]);
+    }
+
     private async Task<GroupSeed> SeedReservedGroupAsync(PlayUpWebApplicationFactory factory)
     {
         var competition = CreateCompetition.Execute("G-http-reserved", _clock);
@@ -554,4 +620,10 @@ public sealed class ManualGroupPlacementEndpointTests(HostPostgresFixture fixtur
         EntryId ThirdEntryId,
         EntryId OutsiderId,
         EntryId ProtectedEntryId);
+
+    private sealed record InboundFeedBatchSeed(
+        StageId StageId,
+        GroupId GroupId,
+        EntryId ThirdEntryId,
+        EntryId FourthEntryId);
 }

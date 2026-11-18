@@ -4,6 +4,11 @@ import {
   type APIRequestContext,
   type Page,
 } from '@playwright/test';
+import {
+  getPrimaryStageId,
+  getStructureMaterializationState,
+  playUpApiBase,
+} from './hostSeed';
 
 const MANUAL = 'Placement groupes — manuel';
 const MANUAL_DRAW = 'Placement groupes — tirage';
@@ -13,6 +18,62 @@ const placeButtons = (page: Page) =>
   page.getByRole('button', {
     name: /Groupe [A-Z] · \d+ — Cliquer pour placer une équipe/,
   });
+
+type SchematicCaseWire = {
+  formPosition?: { kind?: string; groupId?: string };
+  entry?: { entryId?: string };
+  assignment?: { entryId?: string };
+  canClear?: boolean;
+};
+
+async function clearGroupPlacements(
+  request: APIRequestContext,
+  competitionId: string,
+) {
+  const stageId = await getPrimaryStageId(request, competitionId);
+  const schematic = await request.get(
+    `${playUpApiBase()}/stages/${stageId}/schematic`,
+  );
+  if (!schematic.ok()) {
+    throw new Error(`GET schematic failed (${schematic.status()})`);
+  }
+  const body = (await schematic.json()) as { cases?: SchematicCaseWire[] };
+  for (const place of body.cases ?? []) {
+    if (place.formPosition?.kind !== 'GroupPlace') continue;
+    const entryId = place.entry?.entryId ?? place.assignment?.entryId;
+    const groupId = place.formPosition.groupId;
+    if (!entryId || !groupId || !place.canClear) continue;
+    const response = await request.delete(
+      `${playUpApiBase()}/stages/${stageId}/groups/${groupId}/entries/${entryId}`,
+    );
+    if (!response.ok() && response.status() !== 404) {
+      throw new Error(
+        `DELETE group entry failed (${response.status()}): ${await response.text()}`,
+      );
+    }
+  }
+}
+
+async function prepareCompetition(
+  request: APIRequestContext,
+  name: string,
+): Promise<{ id: string; name: string }> {
+  const competition = await findCompetition(request, name);
+  const { attachedMatchCount, stageId } =
+    await getStructureMaterializationState(request, competition.id);
+  if (attachedMatchCount > 0) {
+    const response = await request.post(
+      `${playUpApiBase()}/stages/${stageId}/matches/dematerialize`,
+    );
+    if (!response.ok()) {
+      throw new Error(
+        `Dematerialize failed (${response.status()}): ${await response.text()}`,
+      );
+    }
+  }
+  await clearGroupPlacements(request, competition.id);
+  return competition;
+}
 
 async function findCompetition(request: APIRequestContext, name: string) {
   const response = await request.get('http://127.0.0.1:5287/competitions');
@@ -118,7 +179,7 @@ test.describe('manual group placement', () => {
     request,
   }) => {
     test.setTimeout(180_000);
-    const competition = await findCompetition(request, MANUAL_DRAW);
+    const competition = await prepareCompetition(request, MANUAL_DRAW);
     await page.goto(`/competitions/${competition.id}/structure`);
 
     await page.getByRole('button', { name: 'Placer manuellement' }).click();
@@ -142,7 +203,7 @@ test.describe('manual group placement', () => {
 
   test('replaces a team on a full group seat', async ({ page, request }) => {
     test.setTimeout(120_000);
-    const competition = await findCompetition(request, MANUAL);
+    const competition = await prepareCompetition(request, MANUAL);
     await page.goto(`/competitions/${competition.id}/structure`);
     await fillGroupSeats(page, 'Groupe A', false);
 
@@ -158,24 +219,26 @@ test.describe('manual group placement', () => {
     const dialog = page.getByRole('dialog', {
       name: /Modifier la place — Groupe A/,
     });
+    const occupant = dialog.getByRole('radio', { checked: true });
+    const originalName = (await occupant.innerText()).trim().split('\n')[0];
     const radios = dialog.getByRole('radio');
     await expect(radios).not.toHaveCount(1);
-    await radios.nth(1).click();
+    const replacee = radios.nth(1);
+    const replacedName = (await replacee.innerText()).trim().split('\n')[0];
+    await replacee.click();
     await dialog
       .getByRole('button', { name: 'Enregistrer', exact: true })
       .click();
     await expect(dialog).toBeHidden();
     await expect(groupA.getByText('4/4')).toBeVisible();
-    await expect(
-      groupA.getByRole('button', {
-        name: /Groupe A · 1 — Cliquer pour modifier ou retirer/,
-      }),
-    ).toBeVisible();
+    const seatOne = groupA.locator('.schematic-slot').first();
+    await expect(seatOne).toContainText(replacedName);
+    await expect(seatOne).not.toContainText(originalName);
   });
 
   test('removes a team with clear then save', async ({ page, request }) => {
     test.setTimeout(120_000);
-    const competition = await findCompetition(request, MANUAL);
+    const competition = await prepareCompetition(request, MANUAL);
     await page.goto(`/competitions/${competition.id}/structure`);
     const groupB = page
       .locator('.regulation-schematic__card')
@@ -217,7 +280,7 @@ test.describe('manual group placement', () => {
     request,
   }) => {
     test.setTimeout(120_000);
-    const competition = await findCompetition(request, MANUAL);
+    const competition = await prepareCompetition(request, MANUAL);
     await page.goto(`/competitions/${competition.id}/structure`);
     await fillRemainingSeats(page, false);
 
@@ -231,7 +294,7 @@ test.describe('manual group placement', () => {
     request,
   }) => {
     test.setTimeout(120_000);
-    const competition = await findCompetition(request, MANUAL_DRAW);
+    const competition = await prepareCompetition(request, MANUAL_DRAW);
     await page.goto(`/competitions/${competition.id}/structure`);
     await fillRemainingSeats(page, true);
 
