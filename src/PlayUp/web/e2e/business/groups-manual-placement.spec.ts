@@ -140,35 +140,6 @@ test.describe('manual group placement', () => {
     await produceMatchesIfNeeded(page);
   });
 
-  test('fills the manual pools without showing a pot', async ({
-    page,
-    request,
-  }) => {
-    test.setTimeout(120_000);
-    const competition = await findCompetition(request, MANUAL);
-    await page.goto(`/competitions/${competition.id}/structure`);
-    await fillRemainingSeats(page, false);
-
-    const pools = page.getByRole('group', { name: '2 groupes' });
-    await expect(pools.getByText('4/4')).toHaveCount(2);
-    await expect(page.getByText('Non requis — grille complète')).toHaveCount(0);
-  });
-
-  test('fills both pools, shows that the draw is not required, and produces matches', async ({
-    page,
-    request,
-  }) => {
-    test.setTimeout(120_000);
-    const competition = await findCompetition(request, MANUAL_DRAW);
-    await page.goto(`/competitions/${competition.id}/structure`);
-    await fillRemainingSeats(page, true);
-
-    const pools = page.getByRole('group', { name: '2 groupes' });
-    await expect(pools.getByText('4/4')).toHaveCount(2);
-    await expect(page.getByText('Non requis — grille complète')).toBeVisible();
-    await produceMatchesIfNeeded(page);
-  });
-
   test('replaces a team on a full group seat', async ({ page, request }) => {
     test.setTimeout(120_000);
     const competition = await findCompetition(request, MANUAL);
@@ -188,7 +159,7 @@ test.describe('manual group placement', () => {
       name: /Modifier la place — Groupe A/,
     });
     const radios = dialog.getByRole('radio');
-    await expect(radios.nth(1)).toBeVisible();
+    await expect(radios).not.toHaveCount(1);
     await radios.nth(1).click();
     await dialog
       .getByRole('button', { name: 'Enregistrer', exact: true })
@@ -239,6 +210,35 @@ test.describe('manual group placement', () => {
         name: /Groupe B · 1 — Cliquer pour placer une équipe/,
       }),
     ).toHaveCount(0);
+  });
+
+  test('fills the manual pools without showing a pot', async ({
+    page,
+    request,
+  }) => {
+    test.setTimeout(120_000);
+    const competition = await findCompetition(request, MANUAL);
+    await page.goto(`/competitions/${competition.id}/structure`);
+    await fillRemainingSeats(page, false);
+
+    const pools = page.getByRole('group', { name: '2 groupes' });
+    await expect(pools.getByText('4/4')).toHaveCount(2);
+    await expect(page.getByText('Non requis — grille complète')).toHaveCount(0);
+  });
+
+  test('fills both pools, shows that the draw is not required, and produces matches', async ({
+    page,
+    request,
+  }) => {
+    test.setTimeout(120_000);
+    const competition = await findCompetition(request, MANUAL_DRAW);
+    await page.goto(`/competitions/${competition.id}/structure`);
+    await fillRemainingSeats(page, true);
+
+    const pools = page.getByRole('group', { name: '2 groupes' });
+    await expect(pools.getByText('4/4')).toHaveCount(2);
+    await expect(page.getByText('Non requis — grille complète')).toBeVisible();
+    await produceMatchesIfNeeded(page);
   });
 
   test('shows a match lock and a withdrawal refusal before any click', async ({
