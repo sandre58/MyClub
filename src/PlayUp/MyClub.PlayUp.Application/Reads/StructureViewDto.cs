@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using System.Text.Json.Serialization;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Rules;
@@ -271,6 +272,11 @@ public sealed record StructureReadinessDto(
 /// <param name="ResolutionOccupants">
 /// Stored resolution occupants and server-computed freshness. Null when the phase has no provenance.
 /// </param>
+/// <param name="CompositionEntryPots">
+/// Current composition pot of each entry, in composition order, when the phase is Groups and pots can be
+/// computed. Null otherwise, and omitted on the wire. This is the current composition, not a pot recorded
+/// on a past draw. Same calculation as a Group draw's pot membership.
+/// </param>
 public sealed record StructureStageHubSummaryDto(
     Guid StageId,
     string Name,
@@ -348,7 +354,16 @@ public sealed record StructureStageHubSummaryDto(
     int CompositionBandResolvedCount = 0,
     int? SchematicOccupiedPlaceCount = null,
     StructureMatchProductionPresentationDto? MatchProductionPresentation = null,
-    IReadOnlyList<StructureResolutionOccupantDto>? ResolutionOccupants = null);
+    IReadOnlyList<StructureResolutionOccupantDto>? ResolutionOccupants = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    IReadOnlyList<StructureCompositionEntryPotDto>? CompositionEntryPots = null);
+
+/// <summary>
+/// Pot of one entry in the current phase composition.
+/// </summary>
+/// <param name="EntryId">Composition entry identity.</param>
+/// <param name="Pot">Pot number, starting at 1.</param>
+public sealed record StructureCompositionEntryPotDto(Guid EntryId, int Pot);
 
 /// <summary>
 /// Read-side decision for starting a new draw execution on a phase hub row.

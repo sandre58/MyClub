@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 
 import type {
   StructureEntry,
+  StructureFormatKind,
   StructureInboundFeedRule,
   StageSchematic,
 } from '../../../types';
@@ -28,6 +29,7 @@ export function CompositionQualifierRuleRow({
   onReplace,
   onRelease,
   sourcePhaseName,
+  sourcePhaseFormatKind,
 }: {
   rule: CompositionQualifierRule;
   seat: InboundFeedSlotView;
@@ -42,6 +44,7 @@ export function CompositionQualifierRuleRow({
   onReplace?: (occupant: StructureResolutionOccupant) => void;
   onRelease?: (occupant: StructureResolutionOccupant) => void;
   sourcePhaseName?: string | null;
+  sourcePhaseFormatKind?: StructureFormatKind | null;
 }) {
   const { t } = useTranslation('structure');
   const placedInPhase = seat.placed;
@@ -100,6 +103,7 @@ export function CompositionQualifierRuleRow({
         <CompositionQualifierRuleLabel
           rule={rule}
           sourcePhaseName={sourcePhaseName}
+          sourcePhaseFormatKind={sourcePhaseFormatKind}
         />
       </div>
       <StructurePhaseTeamLine {...teamLineProps} />

@@ -19,16 +19,13 @@ import { SelectableTile } from '../../design-system/components/SelectableTile';
 import { PageHead } from '../../design-system/components/PageHead';
 import { Tooltip } from '../../design-system/components/Tooltip';
 import {
-  ChampionshipFormatIcon,
   CheckIcon,
-  CupFormatIcon,
-  GroupsFormatIcon,
   PlusIcon,
   StructureIcon,
-  SwissFormatIcon,
   EmptySelectionIcon,
   InfoIcon,
 } from '../../design-system/icons/contentIcons';
+import { StageFormatGlyph } from './structureFormatGlyph';
 import { structurePageHeadHubStepLabelKey } from './structurePageHeadHubStepCopy';
 import { structureFormatKindLabel } from '../../i18n/enumLabels';
 import { queryKeys } from '../../queryKeys';
@@ -40,7 +37,6 @@ import {
   StageStatusBadge,
 } from '../../ui';
 import {
-  type StructureFormatKind,
   type StructureHubNextStep,
   type StageInsertPosition,
   type StructureStageHubSummary,
@@ -702,27 +698,6 @@ function TopologyOutboundLinks({
       ))}
     </div>
   );
-}
-
-function StageFormatGlyph({
-  kind,
-  size = 'sm',
-}: {
-  kind?: StructureFormatKind | null;
-  size?: 'sm' | 'md' | 'lg';
-}) {
-  switch (kind) {
-    case 'Cup':
-      return <CupFormatIcon size={size} aria-hidden="true" />;
-    case 'Championship':
-      return <ChampionshipFormatIcon size={size} aria-hidden="true" />;
-    case 'Groups':
-      return <GroupsFormatIcon size={size} aria-hidden="true" />;
-    case 'Swiss':
-      return <SwissFormatIcon size={size} aria-hidden="true" />;
-    default:
-      return <StructureIcon size={size} aria-hidden="true" />;
-  }
 }
 
 function outboundDestinations(stage: StructureStageHubSummary): string[] {

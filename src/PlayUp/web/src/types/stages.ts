@@ -238,11 +238,22 @@ export interface SchematicParticipantRef {
   secondaryColor?: string | null;
 }
 
+export type SchematicSeatMode =
+  'Editable' | 'QualProg' | 'Draw' | 'MatchLocked' | 'Reserved' | 'DrawPending';
+
 export interface SchematicCase {
   formPosition: SchematicFormPosition;
   feedOrigin?: SchematicFeedOrigin | null;
   entry?: SchematicEntryRef | null;
   assignment?: SchematicParticipantRef | null;
+  /** Groups seat mode. Omitted for Cup and roster places. */
+  seatMode?: SchematicSeatMode | null;
+  /** Whether a manual clear of this Groups seat would succeed. */
+  canClear?: boolean | null;
+  /** Member past PlacesPerGroup. Not a seat mode. */
+  excess?: boolean | null;
+  /** Member absent from the phase composition. Not a seat mode. */
+  outsideComposition?: boolean | null;
 }
 
 export interface SchematicConnection {

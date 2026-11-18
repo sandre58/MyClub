@@ -57,7 +57,7 @@ Applies to **templates** and most **structured scenarios** (`championship`, `gro
 
 Syntax: `id` or `id:progress` (e.g. `ligue-1:prepared`, `groups:finished`, `swiss-8x3:running`).
 
-Fixed UX / Structure / Règlement scenarios (`empty-workspace`, `draft-empty`, `registration-open`, `registration-withdrawn`, `championship-ready`, `championship-archived`, `championship-structure-draft`, `structure-graph-invalid`, `ctrl-o3-mat-recette`, `groups-suspended`, `groups-draw-pending`, `groups-to-ko-mid`, `qual-auto-place-mid`, `qual-hybrid-auto-draw-mid`, `prog-auto-place-mid`, `qual-form-to-champ-mid`, `qual-form-champ-ready-partial`, `qual-form-champ-ready-full`, `qual-form-champ-running`, `flux-qualif-draft`, `flux-qual-form-draft`, `flux-prog-placement-draft`, `flux-prog-group-draft`, `flux-empty-relations-draft`, `flux-full-graph-draft`, `regulation-demo`, `regulation-tie-homogeneous`, `confrontation-multi-round`, `cup-draw-pending`, `cup-composition-partial`, `cup-composition-complete`, `cup-qf-sf`, `cup-sf-running`, `swiss-ready`) do **not** accept `:progress`.
+Fixed UX / Structure / Règlement scenarios (`empty-workspace`, `draft-empty`, `registration-open`, `registration-withdrawn`, `championship-ready`, `championship-archived`, `championship-structure-draft`, `structure-graph-invalid`, `ctrl-o3-mat-recette`, `groups-suspended`, `groups-draw-pending`, `groups-manual-placement`, `groups-to-ko-mid`, `qual-auto-place-mid`, `qual-hybrid-auto-draw-mid`, `prog-auto-place-mid`, `qual-form-to-champ-mid`, `qual-form-champ-ready-partial`, `qual-form-champ-ready-full`, `qual-form-champ-running`, `flux-qualif-draft`, `flux-qual-form-draft`, `flux-prog-placement-draft`, `flux-prog-group-draft`, `flux-empty-relations-draft`, `flux-full-graph-draft`, `regulation-demo`, `regulation-tie-homogeneous`, `confrontation-multi-round`, `cup-draw-pending`, `cup-composition-partial`, `cup-composition-complete`, `cup-qf-sf`, `cup-sf-running`, `swiss-ready`) do **not** accept `:progress`.
 
 ### Aliases (compat — do not change silently)
 
@@ -112,6 +112,7 @@ Team lists live in embedded JSON under `MyClub.PlayUp.Development/Datasets/` (di
 | `championship` / `groups` / `cup` / `random` | yes | Mono progressive. Cup = pairing draw applied + single principal round. Progressive seeds assign full root composition. `random` = meta-picker over championship\|groups\|cup (prefer explicit ids for QA) |
 | `groups-suspended` | no | Groups mid-results then Suspended |
 | `groups-draw-pending` | no | Groups + pot DrawRules + full composition, empty groups — Draft awaiting draw (E4) |
+| `groups-manual-placement` | no | Two pools of four: empty manual grid, pot rules with an empty grid, and a Ready pool that already has a match |
 | `groups-to-ko-mid` | no | Groups 2×4 finished → Top2 in QF slots — KO Draft (healthy multi-phase mid) |
 | `qual-auto-place-mid` | no | Qual Auto Place into QF mid — WhoFeeds = Qual |
 | `qual-hybrid-auto-draw-mid` | no | Qual Top1 Auto + Top2 population + Draw mid |

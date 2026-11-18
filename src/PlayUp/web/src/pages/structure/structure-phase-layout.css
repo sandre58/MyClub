@@ -706,6 +706,10 @@
   color: var(--color-text-secondary);
 }
 
+.structure-feed-group__rule-label--with-source {
+  align-items: center;
+}
+
 .structure-feed-group__rule-lead--win {
   color: var(--color-success);
 }
@@ -719,8 +723,22 @@
 }
 
 .structure-feed-group__rule-source {
+  display: inline-flex;
+  align-items: center;
   min-width: 0;
   color: var(--color-text-secondary);
+}
+
+.structure-feed-group__rule-source-trigger {
+  display: inline-flex;
+  align-items: center;
+  line-height: 0;
+  border-radius: var(--radius-control);
+}
+
+.structure-feed-group__rule-source-trigger:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: var(--focus-ring-offset);
 }
 
 .structure-feed-group__rule-sep {

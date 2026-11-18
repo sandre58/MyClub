@@ -52,6 +52,8 @@ export {
   replaceStageAffectationAuthoring,
   assignEntryToSlot,
   clearSlotAssignment,
+  assignEntryToGroup,
+  clearEntryFromGroup,
   replaceStageDefaultTieFormat,
   replaceRoundTieFormat,
   fetchStageOverview,

@@ -51,6 +51,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
             "groups",
             "groups-suspended",
             "groups-draw-pending",
+            "groups-manual-placement",
             "groups-to-ko-mid",
             "qual-auto-place-mid",
             "qual-hybrid-auto-draw-mid",
@@ -87,7 +88,7 @@ public sealed class ScenarioAndTemplateIntegrationTests(DevelopmentPostgresFixtu
 
         catalog.All.Select(s => s.Id).OrderBy(id => id, StringComparer.Ordinal)
             .Should().Equal(expectedIds.OrderBy(id => id, StringComparer.Ordinal));
-        catalog.All.Should().HaveCount(52);
+        catalog.All.Should().HaveCount(53);
 
         foreach (var id in progressiveIds)
         {

@@ -35,7 +35,11 @@ import {
   patchDrawRulesDeactivatedOptimistic,
   patchStageNameOptimistic,
 } from '../structureQueryCache';
-import type { StructureStageHubSummary, StructureView } from '../../../types';
+import type {
+  SchematicCase,
+  StructureStageHubSummary,
+  StructureView,
+} from '../../../types';
 import {
   EditSkeletonDialog,
   QualificationRulesDialog,
@@ -43,6 +47,8 @@ import {
 } from '../schematic/StructureGraphDialogs';
 import { StructurePlacementAwardDialog } from '../intents/StructurePlacementAwardDialog';
 import { StructureManualPlacementDialog } from '../draw/StructureManualPlacementDialog';
+import { StructureGroupPlacementDialog } from '../draw/StructureGroupPlacementDialog';
+import { resolveGroupSeatInteraction } from '../draw/manualGroupPlacementUi';
 import {
   DrawRulesDialog,
   MatchRulesDialog,
@@ -104,6 +110,7 @@ import {
 import { resolvePlacesN } from '../composition/structurePlaces';
 import { resolveStructurePhaseHeroFacts } from './structurePhaseHeroFacts';
 import type { StructureFocusId } from '../structureNavigation';
+import { canOfferGroupManualPlacement } from '../draw/manualGroupPlacementUi';
 import { listCupManualPlaces } from '../draw/manualPlacementUi';
 import '../../regulation/regulation-shared.css';
 
@@ -209,6 +216,10 @@ export function StructurePhaseFiche({
   const [composeFocusSearch, setComposeFocusSearch] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
   const [manualSlotKey, setManualSlotKey] = useState<string | null>(null);
+  const [groupOpen, setGroupOpen] = useState(false);
+  const [groupPlace, setGroupPlace] = useState<SchematicCase | null>(null);
+  const [groupIntent, setGroupIntent] = useState<'place' | 'remove'>('place');
+  const [groupSession, setGroupSession] = useState(0);
 
   useSyncWhen(true, stage?.stageId ?? '', () => {
     setEdit(null);
@@ -223,6 +234,9 @@ export function StructurePhaseFiche({
     setComposeFocusSearch(false);
     setManualOpen(false);
     setManualSlotKey(null);
+    setGroupOpen(false);
+    setGroupPlace(null);
+    setGroupIntent('place');
   });
 
   const deactivateDrawMutation = useMutation({
@@ -304,7 +318,14 @@ export function StructurePhaseFiche({
       return;
     }
     if (initialManual) {
-      setManualOpen(true);
+      if (stage.formatKind === 'Groups') {
+        setGroupPlace(null);
+        setGroupIntent('place');
+        setGroupSession((value) => value + 1);
+        setGroupOpen(true);
+      } else {
+        setManualOpen(true);
+      }
       onInitialEditConsumed?.();
       return;
     }
@@ -643,15 +664,22 @@ export function StructurePhaseFiche({
   const canEditQualif = actions.includes('ReplaceQualificationRules');
   const canAssignEntryToSlot =
     stage.formatKind === 'Cup' && actions.includes('AssignEntryToSlot');
+  const canAssignEntryToGroup =
+    stage.formatKind === 'Groups' && actions.includes('AssignEntryToGroup');
   /** Same capacity predicate as schematic click: at least one editable Cup place. */
   const editableManualPlaceCount = listCupManualPlaces(
     schematicQuery.data?.cases ?? [],
     data.stages,
   ).filter((place) => place.mode === 'editable').length;
-  const canManualPlace =
+  const canManualPlaceCup =
     canAssignEntryToSlot &&
     schematicQuery.isSuccess &&
     editableManualPlaceCount > 0;
+  const canManualPlaceGroups =
+    canAssignEntryToGroup &&
+    schematicQuery.isSuccess &&
+    canOfferGroupManualPlacement(schematicQuery.data?.cases ?? [], actions);
+  const canManualPlace = canManualPlaceCup || canManualPlaceGroups;
   const cupLikePlaces =
     stage.formatKind === 'Cup' ||
     (stage.formatKind == null && (stage.slotCount ?? 0) > 0);
@@ -1103,8 +1131,15 @@ export function StructurePhaseFiche({
           }
         },
         onManualPlace: () => {
-          setManualSlotKey(null);
-          setManualOpen(true);
+          if (stage.formatKind === 'Groups') {
+            setGroupPlace(null);
+            setGroupIntent('place');
+            setGroupSession((value) => value + 1);
+            setGroupOpen(true);
+          } else {
+            setManualSlotKey(null);
+            setManualOpen(true);
+          }
         },
         onReleasePlacements: () => setReleaseConfirmOpen(true),
         onDeactivateDraw: () => setDeactivateDrawOpen(true),
@@ -1371,6 +1406,23 @@ export function StructurePhaseFiche({
                 setManualSlotKey(key);
                 setManualOpen(true);
               }}
+              onGroupPlaceActivate={(place) => {
+                const interaction = resolveGroupSeatInteraction(place, {
+                  actions: stage.actions ?? [],
+                });
+                if (
+                  interaction.kind !== 'place' &&
+                  interaction.kind !== 'remove'
+                ) {
+                  return;
+                }
+                setGroupPlace(place);
+                setGroupIntent(interaction.kind);
+                setGroupSession((value) => value + 1);
+                setGroupOpen(true);
+              }}
+              groupActions={stage.actions}
+              placesPerGroup={stage.placesPerGroup}
               schematicIssuesBanner={(() => {
                 const placesBanner = !showPlacementBlock
                   ? railIssueBanner(placesBanners)
@@ -1583,6 +1635,21 @@ export function StructurePhaseFiche({
               entries={data.participants.entries}
               cases={schematicQuery.data?.cases ?? []}
               initialSlotKey={manualSlotKey}
+            />
+            <StructureGroupPlacementDialog
+              key={groupSession}
+              open={groupOpen}
+              onClose={() => {
+                setGroupOpen(false);
+                setGroupPlace(null);
+              }}
+              competitionId={data.competitionId}
+              stage={stage}
+              structureStages={data.stages}
+              entries={data.participants.entries}
+              cases={schematicQuery.data?.cases ?? []}
+              place={groupPlace}
+              intent={groupIntent}
             />
             <TieFormatDialog
               competitionId={data.competitionId}

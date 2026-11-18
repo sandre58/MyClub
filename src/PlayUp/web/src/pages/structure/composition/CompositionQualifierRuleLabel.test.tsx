@@ -1,5 +1,22 @@
-import { screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { fireEvent, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it } from 'vitest';
+
+function mockFinePointer() {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: (query: string) => ({
+      matches:
+        query.includes('hover: hover') && query.includes('pointer: fine'),
+      media: query,
+      onchange: null,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      dispatchEvent: () => false,
+    }),
+  });
+}
 
 import { renderWithI18n } from '../../../test/renderWithI18n';
 import { CompositionQualifierRuleLabel } from './CompositionQualifierRuleLabel';
@@ -29,18 +46,33 @@ const progressionRule = {
   progressionOutcome: 'Loser' as const,
 };
 
-function ruleLabelAccessibleText(container: HTMLElement): string {
+function ruleLabelVisibleText(container: HTMLElement): string {
   const label = container.querySelector('.structure-feed-group__rule-label');
-  return (
-    label?.textContent
-      ?.replace(/\s*·\s*/g, ' · ')
-      .replace(/\s+/g, ' ')
-      .trim() ?? ''
-  );
+  if (!label) {
+    return '';
+  }
+  const chunks: string[] = [];
+  label.childNodes.forEach((node) => {
+    if (
+      node instanceof HTMLElement &&
+      node.getAttribute('aria-hidden') === 'true'
+    ) {
+      return;
+    }
+    const text = node.textContent?.trim();
+    if (text) {
+      chunks.push(text);
+    }
+  });
+  return chunks.join(' · ');
 }
 
 describe('CompositionQualifierRuleLabel', () => {
-  it('prefixes équipes-band qualification rules with source phase first in reading order', () => {
+  beforeEach(() => {
+    mockFinePointer();
+  });
+
+  it('prefixes équipes-band qualification rules with source phase glyph before the badge', () => {
     const { container } = renderWithI18n(
       <CompositionQualifierRuleLabel
         rule={{
@@ -49,28 +81,42 @@ describe('CompositionQualifierRuleLabel', () => {
           context: 'Groupe A',
         }}
         sourcePhaseName="Phase de groupes"
+        sourcePhaseFormatKind="Groups"
       />,
     );
-    expect(screen.getByText('Phase de groupes')).toHaveClass(
-      'structure-feed-group__rule-source',
+    expect(screen.queryByText('Phase de groupes')).toBeNull();
+    const trigger = screen.getByLabelText('Phase de groupes');
+    expect(trigger).toHaveClass('structure-feed-group__rule-source-trigger');
+    expect(trigger).toHaveAttribute('role', 'img');
+    expect(container.querySelector('.ds-icon--xs')).not.toBeNull();
+    const source = container.querySelector(
+      '.structure-feed-group__rule-source',
     );
-    const label = container.querySelector('.structure-feed-group__rule-label');
-    expect(label).not.toHaveAttribute('aria-label');
-    expect(ruleLabelAccessibleText(container)).toBe(
-      'Phase de groupes · 1er · Groupe A',
-    );
+    expect(
+      source?.nextElementSibling?.classList.contains(
+        'structure-feed-group__rule-sep',
+      ),
+    ).toBe(false);
+    expect(
+      container.querySelector('.structure-feed-group__rule-source'),
+    ).not.toBeNull();
+    expect(ruleLabelVisibleText(container)).toBe('1er · Groupe A');
   });
 
-  it('prefixes équipes-band progression rules with phase before outcome and pair key', () => {
+  it('exposes the source phase name for assistive tech and in the tooltip', async () => {
     const { container } = renderWithI18n(
       <CompositionQualifierRuleLabel
         rule={progressionRule}
         sourcePhaseName="Barrage"
+        sourcePhaseFormatKind="Cup"
       />,
     );
-    const label = container.querySelector('.structure-feed-group__rule-label');
-    expect(label).not.toHaveAttribute('aria-label');
-    expect(ruleLabelAccessibleText(container)).toBe('Barrage · Perdant · P1');
+    const trigger = screen.getByLabelText('Barrage');
+    expect(trigger).toHaveAttribute('tabIndex', '0');
+    expect(ruleLabelVisibleText(container)).toBe('Perdant · P1');
+    expect(screen.queryByText('Barrage')).toBeNull();
+    fireEvent.focus(trigger);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Barrage');
     expect(screen.getByText('Perdant')).toHaveClass(
       'structure-feed-group__rule-lead--loss',
     );
@@ -83,6 +129,6 @@ describe('CompositionQualifierRuleLabel', () => {
     expect(
       container.querySelector('.structure-feed-group__rule-source'),
     ).toBeNull();
-    expect(ruleLabelAccessibleText(container)).toBe('Perdant · P1');
+    expect(ruleLabelVisibleText(container)).toBe('Perdant · P1');
   });
 });

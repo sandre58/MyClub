@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import type { StructureStageHubSummary, StructureView } from '../../../types';
+import type {
+  SchematicCase,
+  StructureStageHubSummary,
+  StructureView,
+} from '../../../types';
 import {
   collectAllStructureReadinessActionItems,
   resolveStructureDiagnosticNavigation,
@@ -142,12 +146,44 @@ describe('structureReadinessActions', () => {
     );
   });
 
+  it('omits groups manual placement when no group has a place seat', () => {
+    const groupsStage = stage({
+      stageId: 'g-full',
+      name: 'Poules',
+      formatKind: 'Groups',
+      actions: ['AssignEntryToGroup', 'ClearEntryFromGroup'],
+      structureIssues: ['SlotFeedMissing'],
+    });
+    const fullCases: SchematicCase[] = [1, 2, 3, 4].map((index) => ({
+      formPosition: {
+        kind: 'GroupPlace',
+        groupId: 'g-a',
+        groupName: 'A',
+        index,
+      },
+      entry: { entryId: `e${index}`, displayName: `T${index}` },
+      assignment: null,
+      seatMode: 'Editable',
+      canClear: true,
+    }));
+    const data = baseView({ stages: [groupsStage] });
+    const items = collectAllStructureReadinessActionItems(data, [groupsStage], {
+      schematicCasesByStageId: { 'g-full': fullCases },
+    });
+    expect(items.some((item) => item.cta === 'places')).toBe(false);
+  });
+
   it('maps placement CTA to manual dialog when draw is not engaged', () => {
     expect(
       resolveStructureDiagnosticNavigation({
         competitionId,
         stageId: 's1',
-        stage: stage({ stageId: 's1', name: 'Cup', hasDrawRules: false }),
+        stage: stage({
+          stageId: 's1',
+          name: 'Cup',
+          formatKind: 'Cup',
+          hasDrawRules: false,
+        }),
         code: 'SlotFeedMissing',
         cta: 'places',
       }),

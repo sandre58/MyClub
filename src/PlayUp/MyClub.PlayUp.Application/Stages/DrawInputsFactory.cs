@@ -175,21 +175,6 @@ public static class DrawInputsFactory
                 "Group draw requires PotRules on the stage regulation.",
                 ApplicationErrorCodes.DrawGenerationFailure);
 
-        if (entries.Count % numberOfPots != 0)
-        {
-            throw new ApplicationFailureException(
-                $"Entry pool count ({entries.Count}) must be divisible by NumberOfPots ({numberOfPots}).",
-                ApplicationErrorCodes.DrawGenerationFailure);
-        }
-
-        // Sequential fill: pot capacity = entries / pots; each pot gets that many consecutive entries.
-        var capacity = entries.Count / numberOfPots;
-        var map = new Dictionary<EntryId, int>();
-        for (var index = 0; index < entries.Count; index++)
-        {
-            map[entries[index]] = (index / capacity) + 1;
-        }
-
-        return new PotMembership(map);
+        return new PotMembership(GroupDrawPots.Compute(entries, numberOfPots));
     }
 }

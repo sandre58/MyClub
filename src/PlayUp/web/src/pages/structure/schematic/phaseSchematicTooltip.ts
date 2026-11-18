@@ -61,6 +61,7 @@ export function buildSchematicCaseTooltipModel({
   crest,
   canManualPlace = false,
   entryWithdrawn = false,
+  action = null,
   t,
 }: {
   address: string | null;
@@ -76,6 +77,8 @@ export function buildSchematicCaseTooltipModel({
   /** True when this place is clickable for manual placement. */
   canManualPlace?: boolean;
   entryWithdrawn?: boolean;
+  /** Seat reason or invite. Groups pass this without the Cup manual-place origin. */
+  action?: string | null;
   t: Translate;
 }): SchematicCaseTooltipModel | null {
   const teamName = resolvedName?.trim() || null;
@@ -157,7 +160,8 @@ export function buildSchematicCaseTooltipModel({
         }
       : null;
 
-  if (!subject && !resolvedTeam && !origin && !withdrawnNotice) {
+  const actionText = action?.trim() || null;
+  if (!subject && !resolvedTeam && !origin && !withdrawnNotice && !actionText) {
     // Address-only empty chrome — no construction story to tip.
     return null;
   }
@@ -167,7 +171,7 @@ export function buildSchematicCaseTooltipModel({
     subject,
     resolvedTeam,
     origin,
-    action: null,
+    action: actionText,
     withdrawnTeamRow,
     withdrawnNotice,
   };

@@ -127,6 +127,30 @@ export function clearSlotAssignment(
   );
 }
 
+/** PUT /stages/{id}/groups/{groupId}/entries/{entryId} → 204 */
+export function assignEntryToGroup(
+  stageId: string,
+  groupId: string,
+  entryId: string,
+): Promise<void> {
+  return sendNoContent(
+    'PUT',
+    `/stages/${stageId}/groups/${encodeURIComponent(groupId)}/entries/${encodeURIComponent(entryId)}`,
+  );
+}
+
+/** DELETE /stages/{id}/groups/{groupId}/entries/{entryId} → 204 */
+export function clearEntryFromGroup(
+  stageId: string,
+  groupId: string,
+  entryId: string,
+): Promise<void> {
+  return sendNoContent(
+    'DELETE',
+    `/stages/${stageId}/groups/${encodeURIComponent(groupId)}/entries/${encodeURIComponent(entryId)}`,
+  );
+}
+
 /** PUT /stages/{id}/tie-format → 204 */
 export function replaceStageDefaultTieFormat(
   stageId: string,

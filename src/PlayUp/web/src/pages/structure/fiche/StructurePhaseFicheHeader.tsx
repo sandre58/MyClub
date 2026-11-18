@@ -5,45 +5,20 @@ import { useTranslation } from 'react-i18next';
 import { TextInput } from '../../../design-system/components/TextInput';
 import { Tooltip } from '../../../design-system/components/Tooltip';
 import {
-  ChampionshipFormatIcon,
   CheckIcon,
-  CupFormatIcon,
-  GroupsFormatIcon,
   PencilIcon,
-  StructureIcon,
-  SwissFormatIcon,
 } from '../../../design-system/icons/contentIcons';
+import { StageFormatGlyph } from '../structureFormatGlyph';
 import { CloseIcon } from '../../../design-system/icons/shellIcons';
 import { structureFormatKindLabel } from '../../../i18n/enumLabels';
 import type {
   CompetitionStatus,
-  StructureFormatKind,
   StructureStageHubSummary,
 } from '../../../types';
 import { MutationError, StageStatusBadge } from '../../../ui';
+import { StructurePhaseDrawHint } from '../draw/StructurePhaseDrawHint';
 import { shouldShowMatchsLifecycle } from '../problems';
 import { StructurePhaseHeaderLifecycle } from './StructurePhaseHeaderLifecycle';
-
-function FormatGlyph({
-  kind,
-  size = 'md',
-}: {
-  kind?: StructureFormatKind | null;
-  size?: 'sm' | 'md' | 'lg';
-}) {
-  switch (kind) {
-    case 'Cup':
-      return <CupFormatIcon size={size} aria-hidden="true" />;
-    case 'Championship':
-      return <ChampionshipFormatIcon size={size} aria-hidden="true" />;
-    case 'Groups':
-      return <GroupsFormatIcon size={size} aria-hidden="true" />;
-    case 'Swiss':
-      return <SwissFormatIcon size={size} aria-hidden="true" />;
-    default:
-      return <StructureIcon size={size} aria-hidden="true" />;
-  }
-}
 
 export function StructurePhaseFicheHeader({
   stage,
@@ -92,12 +67,12 @@ export function StructurePhaseFicheHeader({
           {resolvedFormatLabel ? (
             <Tooltip content={resolvedFormatLabel}>
               <span className="structure-fiche__format-icon">
-                <FormatGlyph kind={stage.formatKind} size="lg" />
+                <StageFormatGlyph kind={stage.formatKind} size="lg" />
               </span>
             </Tooltip>
           ) : (
             <span className="structure-fiche__format-icon" aria-hidden="true">
-              <FormatGlyph kind={stage.formatKind} size="lg" />
+              <StageFormatGlyph kind={stage.formatKind} size="lg" />
             </span>
           )}
           {editingName ? (
@@ -193,6 +168,13 @@ export function StructurePhaseFicheHeader({
         </div>
         {!editingName ? (
           <div className="structure-fiche__header-row-end">
+            {/* A complete Groups grid has no draw badge. The fiche shows that
+                the draw is not required; other badges stay on the topology tile. */}
+            {stage.hasDrawRules &&
+            stage.formatKind === 'Groups' &&
+            stage.drawExecutionBadge == null ? (
+              <StructurePhaseDrawHint stage={stage} variant="fiche" />
+            ) : null}
             <StageStatusBadge status={stage.status} />
           </div>
         ) : null}
