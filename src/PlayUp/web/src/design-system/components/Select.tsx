@@ -137,6 +137,7 @@ export function Select({
   );
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [listNav, setListNav] = useState<'keyboard' | 'pointer'>('pointer');
   const [placement, setPlacement] = useState<Placement | undefined>();
   const { present, state } = usePresence(open, EXIT_MS);
   const current = controlled ? (value ?? null) : uncontrolled;
@@ -266,7 +267,13 @@ export function Select({
     if (disabled) {
       return;
     }
-    setOpen((currentOpen) => !currentOpen);
+    setOpen((currentOpen) => {
+      const next = !currentOpen;
+      if (next) {
+        setListNav('pointer');
+      }
+      return next;
+    });
   }
 
   function onShellKeyDown(event: KeyboardEvent<HTMLDivElement>) {
@@ -282,6 +289,7 @@ export function Select({
         event.key === ' '
       ) {
         event.preventDefault();
+        setListNav('keyboard');
         openList();
       }
       return;
@@ -289,6 +297,7 @@ export function Select({
 
     if (event.key === 'ArrowDown') {
       event.preventDefault();
+      setListNav('keyboard');
       setActiveIndex((index) => {
         if (index < 0) {
           return firstEnabledIndex(options);
@@ -300,6 +309,7 @@ export function Select({
 
     if (event.key === 'ArrowUp') {
       event.preventDefault();
+      setListNav('keyboard');
       setActiveIndex((index) => {
         if (index < 0) {
           return lastEnabledIndex(options);
@@ -329,7 +339,9 @@ export function Select({
             aria-hidden={open ? undefined : true}
             data-state={state}
             data-side={placement.side}
+            data-nav={listNav}
             style={placement.style}
+            onMouseEnter={() => setListNav('pointer')}
           >
             {options.map((option, index) => {
               const isSelected = option.value === current;
@@ -347,6 +359,7 @@ export function Select({
                     data-selected={isSelected ? 'true' : 'false'}
                     data-active={isActive ? 'true' : 'false'}
                     onClick={() => selectOption(option.value)}
+                    onMouseEnter={() => setListNav('pointer')}
                   >
                     {option.leading ? (
                       <span

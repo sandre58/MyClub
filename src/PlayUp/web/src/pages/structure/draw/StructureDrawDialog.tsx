@@ -863,7 +863,10 @@ export function StructureDrawDialog({
         }
         footerStatus={footerStatus}
       >
-        <div className="structure-draw-dialog" ref={dialogBodyRef}>
+        <div
+          className="structure-draw-dialog ds-scroll-safe"
+          ref={dialogBodyRef}
+        >
           <DrawHeroFacts model={heroModel} />
 
           {/*

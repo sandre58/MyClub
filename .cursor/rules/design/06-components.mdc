@@ -59,6 +59,13 @@ Search these before building anything new. Reference implementations live in
 - **B — `SelectableTile`**: `.ds-selectable-tile` + `data-selected`; no check glyph. Selection colors live in `foundations/selectable-tile.css` only.
 - **C — `.ds-panel`**: content container, not selection. See `docs/design-system.md` § Surfaces / tiles / panels.
 
+## Focus chrome (DS)
+
+- **Edit fields** (`.ds-input`, text-like natives, portaled comboboxes): brand border on `:focus` / `:focus-within` / `:focus-visible` only — no extra ring or shadow.
+- **List options** (Select, DropDownButton): `data-nav="keyboard"` on the list + `data-active` on the row — inner ring via `--focus-inset`; pointer navigation uses background only.
+- **Everything else** in the product surface: outer `--focus-halo` on `:focus-visible` only.
+- Do not add page-local `outline` or invented tokens (e.g. `--color-focus-ring`); use foundation recipes and `ds-scroll-safe` inside dialogs when lists scroll.
+
 ## Rules
 
 - A new component must have a **visual or behavioral reason to exist** —

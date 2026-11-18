@@ -634,7 +634,7 @@ export function StructureQualificationDialog({
               {t('qualification.emptyBody')}
             </EmptyState>
           ) : (
-            <ul className="structure-qualification__list">
+            <ul className="structure-qualification__list ds-scroll-safe">
               {intents.map((intent) => {
                 const isExpanded = expandedId === intent.id;
                 const who =

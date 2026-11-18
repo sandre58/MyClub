@@ -562,7 +562,7 @@ export function StructureProgressionIntentEditor({
                     </span>
                   </div>
                   <ul
-                    className="structure-qualification__place-map"
+                    className="structure-qualification__place-map ds-scroll-safe"
                     aria-label={t('progression.placeMapAria')}
                   >
                     {expandRows.map((row, index) => {

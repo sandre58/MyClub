@@ -69,6 +69,7 @@ export function DropDownButton({
 }: DropDownButtonProps) {
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [listNav, setListNav] = useState<'keyboard' | 'pointer'>('pointer');
   const rootRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
 
@@ -89,8 +90,12 @@ export function DropDownButton({
     if (!enabled) return;
     setOpen((current) => {
       const next = !current;
-      if (next) setActiveIndex(firstEnabledIndex(items));
-      else setActiveIndex(-1);
+      if (next) {
+        setListNav('pointer');
+        setActiveIndex(firstEnabledIndex(items));
+      } else {
+        setActiveIndex(-1);
+      }
       return next;
     });
   }
@@ -111,6 +116,7 @@ export function DropDownButton({
         event.key === ' '
       ) {
         event.preventDefault();
+        setListNav('keyboard');
         setOpen(true);
         setActiveIndex(firstEnabledIndex(items));
       }
@@ -119,6 +125,7 @@ export function DropDownButton({
 
     if (event.key === 'ArrowDown') {
       event.preventDefault();
+      setListNav('keyboard');
       setActiveIndex((index) =>
         index < 0
           ? firstEnabledIndex(items)
@@ -129,6 +136,7 @@ export function DropDownButton({
 
     if (event.key === 'ArrowUp') {
       event.preventDefault();
+      setListNav('keyboard');
       setActiveIndex((index) =>
         index < 0
           ? firstEnabledIndex(items)
@@ -188,7 +196,12 @@ export function DropDownButton({
         {items.length === 0 ? (
           <p className="ds-dropdown-button__empty">{emptyLabel}</p>
         ) : (
-          <ul className="ds-dropdown-button__list" role="none">
+          <ul
+            className="ds-dropdown-button__list"
+            role="none"
+            data-nav={listNav}
+            onMouseEnter={() => setListNav('pointer')}
+          >
             {items.map((item, index) => (
               <li key={item.value} role="none">
                 <button
@@ -202,7 +215,10 @@ export function DropDownButton({
                     if (!item.disabled) pick(item.value);
                   }}
                   onMouseEnter={() => {
-                    if (!item.disabled) setActiveIndex(index);
+                    if (!item.disabled) {
+                      setListNav('pointer');
+                      setActiveIndex(index);
+                    }
                   }}
                 >
                   {item.leading ? (

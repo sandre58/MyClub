@@ -446,6 +446,13 @@
   overflow-y: auto;
 }
 
+/* Q4 : marge négative absorbée par le padding 16px de `.ds-panel.teams-drawer`. */
+.teams-drawer__body.ds-scroll-safe {
+  margin: calc(-1 * var(--focus-ring-extent));
+  padding: var(--focus-ring-extent);
+  scroll-padding-block: var(--focus-ring-extent);
+}
+
 .teams-drawer__section {
   display: flex;
   flex-direction: column;
@@ -608,10 +615,11 @@
   line-height: 1;
 }
 
-.teams-member__edit-field input:focus {
+.teams-member__edit-field input:focus,
+.teams-member__edit-field input:focus-visible {
   outline: none;
   border-color: var(--color-brand);
-  box-shadow: var(--focus-halo);
+  box-shadow: none;
 }
 
 .teams-drawer__add {
@@ -669,8 +677,9 @@
 }
 
 .teams-add-group:focus-within {
-  outline: 2px solid var(--color-brand);
-  outline-offset: 2px;
+  border-color: var(--color-brand);
+  box-shadow: none;
+  outline: none;
 }
 
 .teams-add-group input:focus,

@@ -138,10 +138,15 @@ Do not collapse them: pulse activity ≠ tone chip.
 
 ## Focus (keyboard)
 
-- Tokens: `--focus-ring-width` (2px) and `--focus-ring-offset` (2px) in `tokens/geometry.css`; semantic color `--color-focus` (`#1c67c4`, slate palette) in `tokens/colors.css`.
-- Recipe: `foundations/focus.css` defines `--focus-halo` (surface gap + outer ring) and applies it on `:focus-visible` for interactive controls inside `.ds-root`, and on `:focus-within` for input shells (`.ds-input`, etc.).
-- **Measured contrast (WCAG relative luminance, outer ring `#1c67c4` vs adjacent fill):** surface `#ffffff` **5.55:1**; canvas `#f6f7f9` **5.17:1**; surface-secondary `#eff1f4` **4.90:1**; chrome `#0f1728` **3.23:1** (worst product background). All meet WCAG 2.2 focus-appearance **≥ 3:1** against adjacent colors on slate.
-- Selectable tiles (family **B**) move the halo to the tile container via `:has(.ds-selectable-tile__trigger:focus-visible)` so rings are not clipped — see `foundations/selectable-tile.css`.
+- Geometry: `--focus-ring-width` (2px), `--focus-ring-offset` (2px), and `--focus-ring-extent` (offset + width = 4px) in `tokens/geometry.css`. Semantic color `--color-focus` in `tokens/colors.css`.
+- Aliases on **`:root` and `.ds-root`** in `foundations/focus.css` (so portaled lists resolve tokens): `--focus-halo` (surface gap + outer ring, keyboard only), `--focus-inset` (2px inset ring for active list options when `data-nav="keyboard"`).
+- **Edit fields** (`.ds-input`, native `input` / `select` / `textarea` except checkbox, radio, range — including portaled Popover / Select surfaces): **border only** on focus (pointer and keyboard) — `border-color: var(--color-brand)`, same border width, **no** extra `box-shadow` or `outline` (overrides the global halo on shells and text controls). Upload picture-card follows the same border-only rule on `:focus-visible`.
+- **List options (Select, DropDownButton):** background on hover/active; **inner ring only** when the list has `data-nav="keyboard"` and the option has `data-active="true"`. Set `data-nav` to `pointer` on pointer open or list hover, `keyboard` on arrow / Enter / Space navigation.
+- **Other interactives** (buttons, links, tabs, choice tiles, checkboxes…): unchanged outer `--focus-halo` on `:focus-visible` only.
+- **Clipping:** `.ds-dialog__body` and `.ds-scroll-safe` use negative margin + padding from `--focus-ring-extent` so halos are not clipped in dialogs and internal scroll lists.
+- **`forced-colors`:** `outline: 2px solid CanvasText` on `:focus-visible` and `.ds-input:focus-within` (Windows High Contrast ignores box-shadow).
+- **Measured contrast (WCAG, outer ring vs adjacent fill):** surface **5.55:1**; canvas **5.17:1**; chrome **3.23:1** — all ≥ 3:1.
+- Selectable tiles (family **B**) move the halo to the tile container via `:has(.ds-selectable-tile__trigger:focus-visible)` — `foundations/selectable-tile.css`.
 - Do not page-local override focus chrome on `.ds-*` controls; adjust tokens or the foundation recipe instead.
 
 ## Meter
