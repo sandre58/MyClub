@@ -95,7 +95,7 @@ function renderDialog(
           stage={stage()}
           structureStages={[stage()]}
           entries={[entry('e1', 'Alpha'), entry('e2', 'Bravo')]}
-          cases={[]}
+          cases={[groupPlace()]}
           place={groupPlace()}
           intent="place"
           {...props}
@@ -121,8 +121,9 @@ describe('StructureGroupPlacementDialog', () => {
     const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
 
     expect(
-      screen.getByRole('dialog', { name: 'Placer une équipe — Groupe A' }),
+      screen.getByRole('dialog', { name: 'Placement manuel — Phase de groupes' }),
     ).toBeInTheDocument();
+    expect(screen.getByText('Groupe A')).toBeInTheDocument();
     expect(screen.getByText('Pot 1')).toBeInTheDocument();
     expect(screen.getByText('Pot 2')).toBeInTheDocument();
 
@@ -138,33 +139,31 @@ describe('StructureGroupPlacementDialog', () => {
     });
   });
 
-  it('hides pots when the server sends none', () => {
-    renderDialog({
-      stage: stage({ compositionEntryPots: null, hasDrawRules: false }),
-    });
-    expect(screen.queryByText(/^Pot /)).not.toBeInTheDocument();
-    expect(screen.getByText('Alpha')).toBeInTheDocument();
-  });
-
-  it('removes the occupant after confirmation', async () => {
+  it('removes then places in the same dialog without auto-chaining writes', async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
-    renderDialog({
+    const occupied = groupPlace({
+      entry: { entryId: 'e1', displayName: 'Alpha' },
+      canClear: true,
+    });
+    const emptySeat = groupPlace({
+      formPosition: {
+        kind: 'GroupPlace',
+        groupId,
+        groupName: 'A',
+        index: 2,
+      },
+    });
+    const { rerender } = renderDialog({
       onClose,
       intent: 'remove',
-      place: groupPlace({
-        entry: { entryId: 'e1', displayName: 'Alpha' },
-        canClear: true,
-      }),
-      cases: [
-        groupPlace({
-          entry: { entryId: 'e1', displayName: 'Alpha' },
-          canClear: true,
-        }),
-      ],
+      place: occupied,
+      cases: [occupied, emptySeat],
     });
 
-    await user.click(screen.getByRole('button', { name: 'Retirer du groupe' }));
+    await user.click(
+      screen.getByRole('button', { name: 'Retirer du groupe' }),
+    );
     const confirm = screen.getByRole('dialog', { name: 'Retirer du groupe' });
     expect(confirm).toHaveTextContent('Retirer Alpha du Groupe A ?');
     await user.click(
@@ -174,7 +173,73 @@ describe('StructureGroupPlacementDialog', () => {
     await waitFor(() => {
       expect(clearEntryFromGroup).toHaveBeenCalledWith(stageId, groupId, 'e1');
     });
+    expect(assignEntryToGroup).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole('dialog', { name: 'Placement manuel — Phase de groupes' }),
+    ).toBeInTheDocument();
+
+    rerender(
+      <QueryClientProvider
+        client={
+          new QueryClient({
+            defaultOptions: {
+              queries: { retry: false },
+              mutations: { retry: false },
+            },
+          })
+        }
+      >
+        <MemoryRouter>
+          <StructureGroupPlacementDialog
+            open
+            onClose={onClose}
+            competitionId="comp-1"
+            stage={stage()}
+            structureStages={[stage()]}
+            entries={[entry('e1', 'Alpha'), entry('e2', 'Bravo')]}
+            cases={[emptySeat]}
+            place={occupied}
+            intent="remove"
+          />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    await user.click(screen.getByRole('checkbox', { name: 'Bravo' }));
+    await user.click(screen.getByRole('button', { name: 'Enregistrer' }));
+
+    await waitFor(() => {
+      expect(assignEntryToGroup).toHaveBeenCalledWith(stageId, groupId, 'e2');
+    });
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it('shows group select when opened from the phase sheet without a seat', async () => {
+    const emptyB = groupPlace({
+      formPosition: {
+        kind: 'GroupPlace',
+        groupId: 'group-b',
+        groupName: 'B',
+        index: 1,
+      },
+    });
+    renderDialog({
+      place: null,
+      cases: [groupPlace(), emptyB],
+    });
+    expect(
+      screen.getByRole('dialog', { name: 'Placement manuel — Phase de groupes' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Place' })).toBeInTheDocument();
+  });
+
+  it('hides pots when the server sends none', () => {
+    renderDialog({
+      stage: stage({ compositionEntryPots: null, hasDrawRules: false }),
+    });
+    expect(screen.queryByText(/^Pot /)).not.toBeInTheDocument();
+    expect(screen.getByText('Alpha')).toBeInTheDocument();
   });
 
   it('says when every composition team is already placed and when the composition is empty', () => {
@@ -255,7 +320,7 @@ describe('StructureGroupPlacementDialog', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(expected);
     expect(screen.getByRole('alert')).not.toHaveTextContent(code);
     expect(
-      screen.getByRole('dialog', { name: 'Placer une équipe — Groupe A' }),
+      screen.getByRole('dialog', { name: 'Placement manuel — Phase de groupes' }),
     ).toBeInTheDocument();
     await waitFor(() => {
       expect(invalidate).toHaveBeenCalled();

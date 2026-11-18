@@ -1059,7 +1059,11 @@
     "excess": "Extra",
     "outsideComposition": "Outside composition",
     "counter": "{{occupied}}/{{capacity}}",
-    "counterExcess": "{{occupied}}/{{capacity}} · Extra"
+    "counterExcess": "{{occupied}}/{{capacity}} · Extra",
+    "groupPlaceholder": "Choose a group",
+    "clearOccupant": "Remove from group",
+    "blockedAfterRemoveTitle": "Placement unavailable",
+    "blockedAfterRemove": "This group no longer has an editable seat for manual placement (reserved seat or lock)."
   },
   "composition": {
     "gauge": {

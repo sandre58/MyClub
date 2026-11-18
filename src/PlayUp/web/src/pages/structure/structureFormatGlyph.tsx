@@ -5,6 +5,7 @@ import {
   StructureIcon,
   SwissFormatIcon,
 } from '../../design-system/icons/contentIcons';
+import type { IconSize } from '../../design-system/icons/Icon';
 import type { StructureFormatKind } from '../../types';
 
 export function StageFormatGlyph({
@@ -12,7 +13,7 @@ export function StageFormatGlyph({
   size = 'sm',
 }: {
   kind?: StructureFormatKind | null;
-  size?: 'sm' | 'md' | 'lg';
+  size?: IconSize;
 }) {
   switch (kind) {
     case 'Cup':

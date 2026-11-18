@@ -42,14 +42,16 @@ export function GroupsSchematicView({
               key={group.id || `group-${index}`}
               className={`regulation-schematic__card regulation-schematic__card--${index % 4}`}
             >
-              <span className="regulation-schematic__card-label">
-                {group.name}
-              </span>
-              {summary ? (
-                <span className="regulation-schematic__card-feed">
-                  {summary}
+              <div className="regulation-schematic__card-head">
+                <span className="regulation-schematic__card-label">
+                  {group.name}
                 </span>
-              ) : null}
+                {summary ? (
+                  <span className="regulation-schematic__card-feed">
+                    {summary}
+                  </span>
+                ) : null}
+              </div>
               <div className="regulation-schematic__card-slots">
                 {Array.from({ length: seatCount }, (_, seat) => {
                   const custom = renderSeat?.(group, seat);

@@ -219,7 +219,21 @@ function SlotBox({
     groupInteraction && groupInteraction.kind !== 'none'
       ? t(`structure:groupPlacement.${groupInteraction.reasonKey}`)
       : null;
+  const groupTipAddress =
+    c?.formPosition.kind === 'GroupPlace'
+      ? (() => {
+          const name = c.formPosition.groupName?.trim();
+          return name != null && name.length > 0
+            ? t('structure:place.group', { name })
+            : null;
+        })()
+      : null;
   const seatAddress = address ?? (c ? groupSeatAddress(c, t) : null);
+  const groupManualTip =
+    groupInteraction?.kind === 'place' || groupInteraction?.kind === 'remove';
+  const tipCanManualPlace = canManualPlace || groupManualTip;
+  const tipAction =
+    groupInteraction?.kind === 'locked' ? groupReason : null;
   const groupAccessibleName =
     groupInteractive && groupReason
       ? seatAddress
@@ -252,7 +266,7 @@ function SlotBox({
   const tip =
     !ghost && c
       ? buildSchematicCaseTooltip({
-          address,
+          address: groupTipAddress ?? address,
           primary,
           resolvedName,
           constructionPathLabel,
@@ -263,8 +277,8 @@ function SlotBox({
                 primaryColor: c.assignment.primaryColor,
               }
             : null,
-          canManualPlace,
-          action: groupReason,
+          canManualPlace: tipCanManualPlace,
+          action: tipAction,
           entryWithdrawn: withdrawn,
           t,
         })

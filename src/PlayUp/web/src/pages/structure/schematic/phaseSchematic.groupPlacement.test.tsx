@@ -158,6 +158,70 @@ describe('Groups schematic placement', () => {
     expect(tip).not.toHaveTextContent('manuellement');
   });
 
+  it('shows manual placement in the tooltip at group address without the seat index', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      configurable: true,
+      value: (query: string) => ({
+        matches:
+          query.includes('hover: hover') && query.includes('pointer: fine'),
+        media: query,
+        onchange: null,
+        addListener: () => undefined,
+        removeListener: () => undefined,
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined,
+        dispatchEvent: () => false,
+      }),
+    });
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    render(
+      <PhaseSchematic
+        schematic={schematic([seat('g-b', 'B', 1)])}
+        placesPerGroup={4}
+        groupActions={actions}
+        onGroupPlaceActivate={vi.fn()}
+      />,
+    );
+    await user.hover(
+      screen.getByRole('button', {
+        name: 'Groupe B · 1 — Cliquer pour placer une équipe',
+      }),
+    );
+    await act(async () => {
+      vi.advanceTimersByTime(TOOLTIP_DELAY_OPEN_MS);
+    });
+    const tip = await screen.findByRole('tooltip');
+    expect(tip).toHaveTextContent('Groupe B');
+    expect(tip).not.toHaveTextContent('Groupe B · 1');
+    expect(tip).toHaveTextContent('Placer une équipe manuellement');
+    expect(tip).not.toHaveTextContent('Cliquer pour placer une équipe');
+  });
+
+  it('keeps counter and label on the same card head row', () => {
+    const { container } = render(
+      <PhaseSchematic
+        schematic={schematic([
+          seat('g-a', 'A', 1, {
+            entry: { entryId: 'e1', displayName: 'Alpha' },
+          }),
+        ])}
+        placesPerGroup={4}
+        groupActions={actions}
+        onGroupPlaceActivate={vi.fn()}
+      />,
+    );
+    const head = container.querySelector('.regulation-schematic__card-head');
+    expect(head).not.toBeNull();
+    expect(head?.querySelector('.regulation-schematic__card-label')).toHaveTextContent(
+      'Groupe A',
+    );
+    expect(head?.querySelector('.regulation-schematic__card-feed')).toHaveTextContent(
+      '1/4',
+    );
+  });
+
   it('offers no group action when the server actions are absent', () => {
     render(
       <PhaseSchematic

@@ -110,6 +110,7 @@ import {
 import { resolvePlacesN } from '../composition/structurePlaces';
 import { resolveStructurePhaseHeroFacts } from './structurePhaseHeroFacts';
 import type { StructureFocusId } from '../structureNavigation';
+import { listGroupManualTargets } from '../draw/manualGroupPlacementUi';
 import { listCupManualPlaces } from '../draw/manualPlacementUi';
 import '../../regulation/regulation-shared.css';
 
@@ -317,7 +318,14 @@ export function StructurePhaseFiche({
       return;
     }
     if (initialManual) {
-      setManualOpen(true);
+      if (stage.formatKind === 'Groups') {
+        setGroupPlace(null);
+        setGroupIntent('place');
+        setGroupSession((value) => value + 1);
+        setGroupOpen(true);
+      } else {
+        setManualOpen(true);
+      }
       onInitialEditConsumed?.();
       return;
     }
@@ -656,15 +664,27 @@ export function StructurePhaseFiche({
   const canEditQualif = actions.includes('ReplaceQualificationRules');
   const canAssignEntryToSlot =
     stage.formatKind === 'Cup' && actions.includes('AssignEntryToSlot');
+  const canAssignEntryToGroup =
+    stage.formatKind === 'Groups' && actions.includes('AssignEntryToGroup');
   /** Same capacity predicate as schematic click: at least one editable Cup place. */
   const editableManualPlaceCount = listCupManualPlaces(
     schematicQuery.data?.cases ?? [],
     data.stages,
   ).filter((place) => place.mode === 'editable').length;
-  const canManualPlace =
+  const groupManualTargets = listGroupManualTargets(
+    schematicQuery.data?.cases ?? [],
+    actions,
+    (name) => t('place.group', { name }),
+  );
+  const canManualPlaceCup =
     canAssignEntryToSlot &&
     schematicQuery.isSuccess &&
     editableManualPlaceCount > 0;
+  const canManualPlaceGroups =
+    canAssignEntryToGroup &&
+    schematicQuery.isSuccess &&
+    groupManualTargets.length > 0;
+  const canManualPlace = canManualPlaceCup || canManualPlaceGroups;
   const cupLikePlaces =
     stage.formatKind === 'Cup' ||
     (stage.formatKind == null && (stage.slotCount ?? 0) > 0);
@@ -1116,8 +1136,15 @@ export function StructurePhaseFiche({
           }
         },
         onManualPlace: () => {
-          setManualSlotKey(null);
-          setManualOpen(true);
+          if (stage.formatKind === 'Groups') {
+            setGroupPlace(null);
+            setGroupIntent('place');
+            setGroupSession((value) => value + 1);
+            setGroupOpen(true);
+          } else {
+            setManualSlotKey(null);
+            setManualOpen(true);
+          }
         },
         onReleasePlacements: () => setReleaseConfirmOpen(true),
         onDeactivateDraw: () => setDeactivateDrawOpen(true),

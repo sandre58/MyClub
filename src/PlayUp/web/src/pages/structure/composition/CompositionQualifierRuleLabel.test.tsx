@@ -82,9 +82,16 @@ describe('CompositionQualifierRuleLabel', () => {
       />,
     );
     expect(screen.queryByText('Phase de groupes')).toBeNull();
+    const trigger = screen.getByLabelText('Phase de groupes');
+    expect(trigger).toHaveClass('structure-feed-group__rule-source-trigger');
+    expect(trigger).toHaveAttribute('role', 'img');
+    expect(container.querySelector('.ds-icon--xs')).not.toBeNull();
+    const source = container.querySelector('.structure-feed-group__rule-source');
     expect(
-      screen.getByLabelText('Phase de groupes'),
-    ).toHaveClass('structure-feed-group__rule-source-trigger');
+      source?.nextElementSibling?.classList.contains(
+        'structure-feed-group__rule-sep',
+      ),
+    ).toBe(false);
     expect(
       container.querySelector('.structure-feed-group__rule-source'),
     ).not.toBeNull();

@@ -706,6 +706,10 @@
   color: var(--color-text-secondary);
 }
 
+.structure-feed-group__rule-label--with-source {
+  align-items: center;
+}
+
 .structure-feed-group__rule-lead--win {
   color: var(--color-success);
 }
@@ -728,6 +732,7 @@
 .structure-feed-group__rule-source-trigger {
   display: inline-flex;
   align-items: center;
+  line-height: 0;
   border-radius: var(--radius-control);
 }
 

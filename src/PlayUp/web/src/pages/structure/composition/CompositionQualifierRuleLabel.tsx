@@ -28,24 +28,27 @@ export function CompositionQualifierRuleLabel({
   const phase = sourcePhaseName?.trim() ?? '';
 
   return (
-    <span className="structure-feed-group__rule-label">
+    <span
+      className={[
+        'structure-feed-group__rule-label',
+        phase ? 'structure-feed-group__rule-label--with-source' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       {phase ? (
-        <>
-          <span className="structure-feed-group__rule-source">
-            <Tooltip content={phase}>
-              <span
-                className="structure-feed-group__rule-source-trigger"
-                aria-label={phase}
-                tabIndex={0}
-              >
-                <StageFormatGlyph kind={sourcePhaseFormatKind} size="sm" />
-              </span>
-            </Tooltip>
-          </span>
-          <span className="structure-feed-group__rule-sep" aria-hidden="true">
-            ·
-          </span>
-        </>
+        <span className="structure-feed-group__rule-source">
+          <Tooltip content={phase}>
+            <span
+              className="structure-feed-group__rule-source-trigger"
+              role="img"
+              aria-label={phase}
+              tabIndex={0}
+            >
+              <StageFormatGlyph kind={sourcePhaseFormatKind} size="xs" />
+            </span>
+          </Tooltip>
+        </span>
       ) : null}
       <span className={leadClass}>{rule.badge}</span>
       {tailParts.length > 0 ? (

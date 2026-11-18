@@ -164,6 +164,78 @@ export function listAvailableGroupEntries(
  * Occupied counts every projected member, including excess and outside composition.
  * Capacity is PlacesPerGroup, so a full group is not shown short of its places.
  */
+export type GroupManualTarget = {
+  groupId: string;
+  groupName: string;
+  /** i18n group label, e.g. "Groupe A". */
+  label: string;
+  /** Representative empty editable seat in the group. */
+  place: SchematicCase;
+};
+
+/** Groups that expose at least one empty `place` interaction for manual assignment. */
+export function listGroupManualTargets(
+  cases: readonly SchematicCase[],
+  actions: readonly string[],
+  labelForGroup: (name: string) => string,
+): GroupManualTarget[] {
+  const buckets = new Map<string, { name: string; places: SchematicCase[] }>();
+  for (const place of cases) {
+    if (place.formPosition.kind !== 'GroupPlace') continue;
+    const id = place.formPosition.groupId?.trim();
+    if (!id) continue;
+    const name = place.formPosition.groupName?.trim() || id;
+    const bucket = buckets.get(id) ?? { name, places: [] };
+    bucket.places.push(place);
+    buckets.set(id, bucket);
+  }
+
+  const targets: GroupManualTarget[] = [];
+  for (const [groupId, { name, places }] of buckets) {
+    const editable = places.find(
+      (seat) => resolveGroupSeatInteraction(seat, { actions }).kind === 'place',
+    );
+    if (!editable) continue;
+    targets.push({
+      groupId,
+      groupName: name,
+      label: labelForGroup(name),
+      place: editable,
+    });
+  }
+  targets.sort((left, right) =>
+    left.label.localeCompare(right.label, undefined, {
+      numeric: true,
+      sensitivity: 'base',
+    }),
+  );
+  return targets;
+}
+
+export function resolveGroupManualPlace(
+  cases: readonly SchematicCase[],
+  groupId: string,
+  actions: readonly string[],
+): SchematicCase | null {
+  for (const place of cases) {
+    if (place.formPosition.kind !== 'GroupPlace') continue;
+    if (place.formPosition.groupId !== groupId) continue;
+    if (resolveGroupSeatInteraction(place, { actions }).kind === 'place') {
+      return place;
+    }
+  }
+  return null;
+}
+
+/** Whether the group still accepts a manual place after hub refresh. */
+export function groupManualPlaceStillAllowed(
+  cases: readonly SchematicCase[],
+  groupId: string,
+  actions: readonly string[],
+): boolean {
+  return resolveGroupManualPlace(cases, groupId, actions) != null;
+}
+
 export function groupSeatCounter(
   group: { id: string },
   cases: readonly SchematicCase[],

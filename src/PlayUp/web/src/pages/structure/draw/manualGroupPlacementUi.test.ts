@@ -3,6 +3,7 @@ import type { SchematicCase, StructureEntry } from '../../../types';
 import {
   groupSeatCounter,
   listAvailableGroupEntries,
+  listGroupManualTargets,
   resolveGroupSeatInteraction,
 } from './manualGroupPlacementUi';
 
@@ -175,6 +176,41 @@ describe('listAvailableGroupEntries', () => {
     );
     expect(listed.map((row) => row.entryId)).toEqual(['e2', 'e3', 'e1']);
     expect(listed.map((row) => row.pot)).toEqual([1, 1, 2]);
+  });
+});
+
+describe('listGroupManualTargets', () => {
+  it('lists groups that expose at least one place interaction', () => {
+    const cases = [
+      place({
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId: 'g-a',
+          groupName: 'A',
+          index: 1,
+        },
+        entry: { entryId: 'e1', displayName: 'Alpha' },
+      }),
+      place({
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId: 'g-a',
+          groupName: 'A',
+          index: 2,
+        },
+      }),
+      place({
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId: 'g-b',
+          groupName: 'B',
+          index: 1,
+        },
+        entry: { entryId: 'e2', displayName: 'Bravo' },
+      }),
+    ];
+    const targets = listGroupManualTargets(cases, actions, (name) => `Groupe ${name}`);
+    expect(targets.map((row) => row.groupId)).toEqual(['g-a']);
   });
 });
 
