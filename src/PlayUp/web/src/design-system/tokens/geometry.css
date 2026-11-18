@@ -9,6 +9,7 @@
   --border-width: 1px;
   --focus-ring-width: 2px;
   --focus-ring-offset: 2px;
+  --focus-ring-extent: calc(var(--focus-ring-offset) + var(--focus-ring-width));
   --shadow-page: none;
   --shadow-overlay: 0 4px 12px color-mix(in srgb, var(--color-ink) 14%, transparent);
 }

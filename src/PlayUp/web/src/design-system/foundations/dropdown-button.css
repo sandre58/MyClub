@@ -88,10 +88,6 @@
   cursor: not-allowed;
 }
 
-.ds-dropdown-button__item:focus-visible {
-  box-shadow: var(--focus-halo);
-}
-
 .ds-dropdown-button__empty {
   margin: 0;
   padding: var(--space-8);

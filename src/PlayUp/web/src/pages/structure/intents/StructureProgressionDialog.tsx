@@ -607,7 +607,7 @@ export function StructureProgressionDialog({
               {t('progression.emptyBody')}
             </EmptyState>
           ) : (
-            <ul className="structure-qualification__list">
+            <ul className="structure-qualification__list ds-scroll-safe">
               {intents.map((intent) => {
                 const isExpanded = expandedId === intent.id;
                 const who =

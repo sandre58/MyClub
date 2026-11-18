@@ -359,7 +359,7 @@ export function StructureManualPlacementDialog({
                   </EmptyState>
                 ) : (
                   <div
-                    className="structure-manual-placement__teams"
+                    className="structure-manual-placement__teams ds-scroll-safe"
                     role="group"
                     aria-label={t('manualPlacement.teamLabel')}
                   >

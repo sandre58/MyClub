@@ -59,7 +59,7 @@ function DrawDialogChunkFallback({
       size="lg"
       closeLabel={tCommon('close')}
     >
-      <div className="structure-draw-dialog structure-draw-dialog--chunk-loading">
+      <div className="structure-draw-dialog structure-draw-dialog--chunk-loading ds-scroll-safe">
         <WaitMark size="region">{t('fiche.drawWorkflow.loading')}</WaitMark>
       </div>
     </Dialog>
