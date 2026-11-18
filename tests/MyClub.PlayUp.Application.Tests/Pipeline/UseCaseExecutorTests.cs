@@ -536,6 +536,7 @@ public sealed class UseCaseExecutorTests
             .Returns(Task.CompletedTask);
         SetupExclusive(unitOfWork);
         SetupCompetitionId(stages, stage.Id, competition.Id);
+        unitOfWork.Setup(uow => uow.ClearTrackedChanges());
 
         var executor = CreateExecutor(stages, matches, competitions, unitOfWork);
         await executor.PublishAndApplyDrawAsync(stage.Id, drawId);
@@ -544,6 +545,13 @@ public sealed class UseCaseExecutorTests
         stage.Slots.Should().ContainSingle(slot =>
             slot.SlotKey == "A" && slot.EntryId != null);
         unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Exactly(2));
+        unitOfWork.Verify(
+            uow => uow.ExecuteExclusiveAsync(
+                competition.Id,
+                It.IsAny<Func<CancellationToken, Task>>(),
+                It.IsAny<CancellationToken>()),
+            Times.Exactly(2));
+        unitOfWork.Verify(uow => uow.ClearTrackedChanges(), Times.Once);
     }
 
     [Fact]
@@ -576,6 +584,7 @@ public sealed class UseCaseExecutorTests
             });
         SetupExclusive(unitOfWork);
         SetupCompetitionId(stages, stage.Id, competition.Id);
+        unitOfWork.Setup(uow => uow.ClearTrackedChanges());
 
         var executor = CreateExecutor(stages, matchRepo, competitions, unitOfWork);
         var act = async () => await executor.PublishAndApplyDrawAsync(stage.Id, drawId);
@@ -583,6 +592,7 @@ public sealed class UseCaseExecutorTests
         await act.Should().ThrowAsync<ApplicationFailureException>();
         stage.GetDraw(drawId).Status.Should().Be(DrawStatus.Published);
         unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Exactly(2));
+        unitOfWork.Verify(uow => uow.ClearTrackedChanges(), Times.Once);
     }
 
     [Fact]

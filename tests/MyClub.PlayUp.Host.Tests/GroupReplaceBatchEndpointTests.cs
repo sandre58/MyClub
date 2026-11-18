@@ -19,6 +19,7 @@ using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
+using Npgsql;
 using Xunit;
 
 namespace MyClub.PlayUp.Host.Tests;
@@ -173,14 +174,14 @@ public sealed class GroupReplaceBatchEndpointTests(HostPostgresFixture fixture)
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
         var seed = await SeedAsync(factory, places: 2, entryCount: 4, members: []);
         using var client = factory.CreateClient();
-        var first = client.PostAsJsonAsync(
-            BatchUri(seed),
-            new { entryIds = new[] { seed.Entries[0].Value, seed.Entries[1].Value } });
-        var second = client.PostAsJsonAsync(
-            BatchUri(seed),
-            new { entryIds = new[] { seed.Entries[2].Value, seed.Entries[3].Value } });
-
-        var responses = await Task.WhenAll(first, second);
+        var responses = await OverlapOnCompetitionLockAsync(
+            seed.CompetitionId,
+            () => client.PostAsJsonAsync(
+                BatchUri(seed),
+                new { entryIds = new[] { seed.Entries[0].Value, seed.Entries[1].Value } }),
+            () => client.PostAsJsonAsync(
+                BatchUri(seed),
+                new { entryIds = new[] { seed.Entries[2].Value, seed.Entries[3].Value } }));
 
         responses.Select(response => response.StatusCode).Should().BeEquivalentTo(
             [HttpStatusCode.NoContent, HttpStatusCode.Conflict]);
@@ -197,28 +198,52 @@ public sealed class GroupReplaceBatchEndpointTests(HostPostgresFixture fixture)
     }
 
     [IntegrationFact]
-    public async Task Batch_parallel_with_withdraw_then_two_puts_on_the_last_seatAsync()
+    public async Task Batch_parallel_with_delete_conflicts_on_group_membershipAsync()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
-        var seed = await SeedAsync(factory, places: 2, entryCount: 2, members: [], running: true);
+        var seed = await SeedAsync(factory, places: 2, entryCount: 3, members: [0]);
         using var client = factory.CreateClient();
-        var batch = client.PostAsJsonAsync(
-            BatchUri(seed),
-            new { entryIds = new[] { seed.Entries[0].Value, seed.Entries[1].Value } });
-        var withdraw = client.PostAsync(WithdrawUri(seed.CompetitionId, seed.Entries[0]), null);
+        var deleted = seed.Entries[0];
 
-        var raced = await Task.WhenAll(batch, withdraw);
+        var raced = await OverlapOnCompetitionLockAsync(
+            seed.CompetitionId,
+            () => client.PostAsJsonAsync(
+                BatchUri(seed),
+                new { entryIds = new[] { seed.Entries[1].Value, seed.Entries[2].Value } }),
+            () => client.PostAsync(DeleteUri(seed.CompetitionId, deleted), null));
+
         raced.Should().OnlyContain(response => (int)response.StatusCode < 500);
         raced[1].StatusCode.Should().Be(HttpStatusCode.OK);
-        raced[0].StatusCode.Should().Be(HttpStatusCode.NoContent);
+        raced[0].StatusCode.Should().BeOneOf(HttpStatusCode.NoContent, HttpStatusCode.Conflict);
         var afterRace = await ReloadAsync(factory, seed.StageId);
         AssertOneGroupEach(afterRace);
-        afterRace.GetGroup(seed.GroupId).EntryIds.Should().Equal(seed.Entries[0], seed.Entries[1]);
+        afterRace.Groups.SelectMany(group => group.EntryIds).Should().NotContain(deleted);
+        if (raced[0].StatusCode == HttpStatusCode.NoContent)
+        {
+            afterRace.GetGroup(seed.GroupId).EntryIds.Should().Equal(seed.Entries[1], seed.Entries[2]);
+        }
+        else
+        {
+            (await ReadCodeAsync(raced[0])).Should().Be(StageErrorCodes.GroupFull);
+            afterRace.GetGroup(seed.GroupId).EntryIds.Should().BeEmpty();
+        }
 
+        foreach (var response in raced)
+        {
+            response.Dispose();
+        }
+    }
+
+    [IntegrationFact]
+    public async Task Two_concurrent_puts_on_the_last_seat_fill_the_group_onceAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
         var lastSeat = await SeedAsync(factory, places: 2, entryCount: 3, members: [0]);
-        var putA = client.PutAsync(EntryUri(lastSeat, lastSeat.Entries[1]), null);
-        var putB = client.PutAsync(EntryUri(lastSeat, lastSeat.Entries[2]), null);
-        var puts = await Task.WhenAll(putA, putB);
+        using var client = factory.CreateClient();
+        var puts = await OverlapOnCompetitionLockAsync(
+            lastSeat.CompetitionId,
+            () => client.PutAsync(EntryUri(lastSeat, lastSeat.Entries[1]), null),
+            () => client.PutAsync(EntryUri(lastSeat, lastSeat.Entries[2]), null));
 
         puts.Select(response => response.StatusCode).Should().BeEquivalentTo(
             [HttpStatusCode.NoContent, HttpStatusCode.Conflict]);
@@ -228,7 +253,7 @@ public sealed class GroupReplaceBatchEndpointTests(HostPostgresFixture fixture)
         var reloaded = await ReloadAsync(factory, lastSeat.StageId);
         reloaded.GetGroup(lastSeat.GroupId).EntryIds.Should().HaveCount(2);
         AssertOneGroupEach(reloaded);
-        foreach (var response in raced.Concat(puts))
+        foreach (var response in puts)
         {
             response.Dispose();
         }
@@ -240,14 +265,14 @@ public sealed class GroupReplaceBatchEndpointTests(HostPostgresFixture fixture)
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
         var seed = await SeedAsync(factory, places: 2, entryCount: 1, members: []);
         using var client = factory.CreateClient();
-        var left = client.PutAsync(EntryUri(seed, seed.Entries[0]), null);
-        var right = client.PutAsync(
-            new Uri(
-                $"/stages/{seed.StageId.Value}/groups/{seed.OtherGroupId.Value}/entries/{seed.Entries[0].Value}",
-                UriKind.Relative),
-            null);
-
-        var responses = await Task.WhenAll(left, right);
+        var responses = await OverlapOnCompetitionLockAsync(
+            seed.CompetitionId,
+            () => client.PutAsync(EntryUri(seed, seed.Entries[0]), null),
+            () => client.PutAsync(
+                new Uri(
+                    $"/stages/{seed.StageId.Value}/groups/{seed.OtherGroupId.Value}/entries/{seed.Entries[0].Value}",
+                    UriKind.Relative),
+                null));
 
         responses.Select(response => response.StatusCode).Should().BeEquivalentTo(
             [HttpStatusCode.NoContent, HttpStatusCode.Conflict]);
@@ -260,6 +285,23 @@ public sealed class GroupReplaceBatchEndpointTests(HostPostgresFixture fixture)
         {
             response.Dispose();
         }
+    }
+
+    [IntegrationFact]
+    public async Task Batch_unknown_group_returns_409_without_entryIdAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var seed = await SeedAsync(factory, places: 2, entryCount: 1, members: []);
+        using var client = factory.CreateClient();
+
+        using var response = await client.PostAsJsonAsync(
+            $"/stages/{seed.StageId.Value}/groups/{Guid.NewGuid()}/entries",
+            new { entryIds = new[] { seed.Entries[0].Value } });
+
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        var problem = await ReadProblemAsync(response);
+        problem.Code.Should().Be(StageErrorCodes.GroupNotFound);
+        problem.EntryId.Should().BeNull();
     }
 
     private static void AssertOneGroupEach(Stage stage)
@@ -284,8 +326,63 @@ public sealed class GroupReplaceBatchEndpointTests(HostPostgresFixture fixture)
             $"/stages/{seed.StageId.Value}/groups/{seed.GroupId.Value}/entries/{entryId.Value}",
             UriKind.Relative);
 
-    private static Uri WithdrawUri(CompetitionId competitionId, EntryId entryId) =>
-        new($"/competitions/{competitionId.Value}/entries/{entryId.Value}/withdraw", UriKind.Relative);
+    private static Uri DeleteUri(CompetitionId competitionId, EntryId entryId) =>
+        new($"/competitions/{competitionId.Value}/entries/{entryId.Value}/delete", UriKind.Relative);
+
+    /// <summary>
+    /// Holds the competition advisory lock, starts both writes, and releases the lock only once both are waiting on it.
+    /// </summary>
+    private async Task<HttpResponseMessage[]> OverlapOnCompetitionLockAsync(
+        CompetitionId competitionId,
+        Func<Task<HttpResponseMessage>> left,
+        Func<Task<HttpResponseMessage>> right)
+    {
+        var key = CompetitionAdvisoryKey(competitionId);
+        await using var connection = new NpgsqlConnection(fixture.ConnectionString);
+        await connection.OpenAsync();
+        await using (var hold = new NpgsqlCommand("SELECT pg_advisory_lock(@key)", connection))
+        {
+            hold.Parameters.AddWithValue("key", key);
+            _ = await hold.ExecuteScalarAsync();
+        }
+
+        var leftTask = left();
+        var rightTask = right();
+        var overlapped = false;
+        try
+        {
+            for (var attempt = 0; attempt < 100; attempt++)
+            {
+                await using var count = new NpgsqlCommand(
+                    "SELECT COUNT(*)::int FROM pg_locks WHERE locktype = 'advisory' AND NOT granted",
+                    connection);
+                var waiting = (int)(await count.ExecuteScalarAsync() ?? 0);
+                if (waiting >= 2)
+                {
+                    overlapped = true;
+                    break;
+                }
+
+                await Task.Delay(50);
+            }
+        }
+        finally
+        {
+            await using var release = new NpgsqlCommand("SELECT pg_advisory_unlock(@key)", connection);
+            release.Parameters.AddWithValue("key", key);
+            _ = await release.ExecuteScalarAsync();
+        }
+
+        var responses = await Task.WhenAll(leftTask, rightTask);
+        overlapped.Should().BeTrue("both writers must be waiting on the competition advisory lock");
+        return responses;
+    }
+
+    private static long CompetitionAdvisoryKey(CompetitionId competitionId)
+    {
+        var bytes = competitionId.Value.ToByteArray();
+        return BitConverter.ToInt64(bytes, 0) ^ BitConverter.ToInt64(bytes, 8);
+    }
 
     private static async Task<string?> ReadCodeAsync(HttpResponseMessage response) =>
         (await ReadProblemAsync(response)).Code;

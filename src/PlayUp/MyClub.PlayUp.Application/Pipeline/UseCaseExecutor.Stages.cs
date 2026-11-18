@@ -387,8 +387,9 @@ public sealed partial class UseCaseExecutor
 
     /// <summary>
     /// Orchestrates Publish then Apply as two durable steps (not one Domain transaction).
-    /// Publish is committed before Apply runs so an Apply failure leaves Published + not applied
-    /// (recoverable state), not a rolled-back draft.
+    /// Publish runs under the competition lock and is committed before Apply.
+    /// Tracked entities are cleared between the commits so Apply loads the stage again under its own lock.
+    /// An Apply failure leaves the draw published.
     /// </summary>
     /// <param name="stageId">Stage that owns the draw.</param>
     /// <param name="drawId">Draw identity.</param>
@@ -400,7 +401,25 @@ public sealed partial class UseCaseExecutor
         DrawId drawId,
         CancellationToken cancellationToken = default)
     {
-        await PublishDrawAsync(stageId, drawId, cancellationToken).ConfigureAwait(false);
+        await ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await stages.GetByIdForUpdateAsync(stageId, innerToken).ConfigureAwait(false)
+                            ?? throw new ApplicationFailureException(
+                                $"Stage '{stageId}' was not found.",
+                                ApplicationErrorCodes.StageNotFound);
+
+                await EnsureCompetitionAllowsLifecycleMutationAsync(stage.CompetitionId, innerToken)
+                    .ConfigureAwait(false);
+
+                PublishDraw.Execute(stage, drawId, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+                LogDrawPublished(logger, stageId.Value, drawId.Value, stage.CompetitionId.Value);
+            },
+            cancellationToken).ConfigureAwait(false);
+
+        unitOfWork.ClearTrackedChanges();
         await ApplyDrawAsync(stageId, drawId, cancellationToken).ConfigureAwait(false);
     }
 

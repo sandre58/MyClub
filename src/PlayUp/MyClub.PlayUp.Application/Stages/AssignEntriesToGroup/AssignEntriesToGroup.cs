@@ -24,8 +24,9 @@ public static class AssignEntriesToGroup
     /// <summary>
     /// Places <paramref name="entryIds"/> after the current members, in list order.
     /// An entry already in the group is skipped and does not consume a place.
-    /// The lot is refused, with no membership change, when <c>PlacesPerGroup</c> is absent or below 1,
-    /// or when any new entry would pass the free places left after unresolved inbound feeds.
+    /// Lifecycle is checked first. The lot is then refused, with no membership change, when
+    /// <c>PlacesPerGroup</c> is absent or below 1, or when any new entry would pass the free
+    /// places left after unresolved inbound feeds. An unknown group carries no entry identity.
     /// </summary>
     /// <param name="stage">Phase that owns the group.</param>
     /// <param name="competition">Competition that owns the entries.</param>
@@ -54,6 +55,13 @@ public static class AssignEntriesToGroup
                 ApplicationErrorCodes.InvalidStructureIntent);
         }
 
+        if (stage.FindManualPlacementLifecycleRefusal() is { } lifecycle)
+        {
+            throw new DomainException(
+                stage.DescribeManualAssignRefusal(lifecycle, groupId, entryIds[0]),
+                lifecycle);
+        }
+
         if (stage.PlacesPerGroup is not int capacity || capacity < 1)
         {
             throw new ApplicationFailureException(
@@ -65,8 +73,9 @@ public static class AssignEntriesToGroup
         var stages = competitionStages ?? [stage];
         if (stage.FindGroup(groupId) is not { } group)
         {
-            ManualGroupSeatRules.ThrowBatch(stage, groupId, entryIds[0], StageErrorCodes.GroupNotFound);
-            return;
+            throw new DomainException(
+                $"Group '{groupId}' was not found.",
+                StageErrorCodes.GroupNotFound);
         }
 
         var projected = group.EntryIds.Count;

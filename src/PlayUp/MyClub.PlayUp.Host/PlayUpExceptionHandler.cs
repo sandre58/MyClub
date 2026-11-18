@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Infrastructure.Persistence;
 
 namespace MyClub.PlayUp.Host;
 
@@ -195,8 +194,6 @@ internal sealed partial class PlayUpExceptionHandler(ILogger<PlayUpExceptionHand
                 (StatusCodes.Status400BadRequest, "Application failure", application.Code),
             DomainException domain =>
                 (StatusCodes.Status409Conflict, "Domain rule violation", domain.Code),
-            Exception raw when GroupEntriesUniqueViolation.IsMatch(raw) =>
-                (StatusCodes.Status409Conflict, "Group membership conflict", ApplicationErrorCodes.GroupMembershipConflict),
             _ => (null, null, null)
         };
 

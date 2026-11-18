@@ -8,6 +8,8 @@ using Microsoft.EntityFrameworkCore;
 using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Matches;
+using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Infrastructure.Persistence;
 
@@ -24,12 +26,16 @@ public sealed class PlayUpDbContext(DbContextOptions<PlayUpDbContext> options) :
     Task IUnitOfWork.SaveChangesAsync(CancellationToken cancellationToken) => SaveChangesAsync(cancellationToken);
 
     /// <inheritdoc />
+    void IUnitOfWork.ClearTrackedChanges() => ChangeTracker.Clear();
+
+    /// <inheritdoc />
     async Task IUnitOfWork.ExecuteExclusiveAsync(
         CompetitionId competitionId,
         Func<CancellationToken, Task> write,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(write);
+        EnsureExclusiveWriteStartsUntracked();
         if (!Database.IsRelational())
         {
             await write(cancellationToken).ConfigureAwait(false);
@@ -65,6 +71,22 @@ public sealed class PlayUpDbContext(DbContextOptions<PlayUpDbContext> options) :
     {
         var bytes = competitionId.Value.ToByteArray();
         return BitConverter.ToInt64(bytes, 0) ^ BitConverter.ToInt64(bytes, 8);
+    }
+
+    /// <summary>
+    /// A stage or match loaded before the lock is the instance the repositories return.
+    /// The write must load those aggregates after the lock is held.
+    /// </summary>
+    private void EnsureExclusiveWriteStartsUntracked()
+    {
+        foreach (var entry in ChangeTracker.Entries())
+        {
+            if (entry.Entity is Stage or Match)
+            {
+                throw new InvalidOperationException(
+                    "An exclusive competition write must load its stage and matches inside the lock. A tracked stage or match is already present.");
+            }
+        }
     }
 
     /// <inheritdoc />

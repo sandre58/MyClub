@@ -99,7 +99,8 @@ internal static class ManualGroupSeatRules
     /// <summary>
     /// First refusal of a seat replacement, or <see langword="null"/> when it would succeed.
     /// Capacity and the inbound-feed reserve do not apply. A replay whose occupant is already
-    /// gone and whose replacement is already in the group succeeds before the other guards.
+    /// gone and whose replacement is already in the group succeeds only after the lifecycle
+    /// and active-draw checks. The same team still runs every guard.
     /// </summary>
     internal static string? EvaluateReplace(
         Stage stage,
@@ -109,14 +110,6 @@ internal static class ManualGroupSeatRules
         IReadOnlyList<MatchParticipantSnapshot>? snapshots = null)
     {
         ArgumentNullException.ThrowIfNull(stage);
-        var group = stage.FindGroup(groupId);
-        if (group is not null
-            && !group.EntryIds.Contains(currentEntryId)
-            && group.EntryIds.Contains(replacementEntryId))
-        {
-            return null;
-        }
-
         if (stage.FindManualPlacementLifecycleRefusal() is { } lifecycle)
         {
             return lifecycle;
@@ -125,6 +118,14 @@ internal static class ManualGroupSeatRules
         if (HasActiveUnappliedGroupDraw(stage))
         {
             return ApplicationErrorCodes.ManualGroupPlacementBlockedByActiveDraw;
+        }
+
+        var group = stage.FindGroup(groupId);
+        if (group is not null
+            && !group.EntryIds.Contains(currentEntryId)
+            && group.EntryIds.Contains(replacementEntryId))
+        {
+            return null;
         }
 
         if (StructureAppliedDrawGroupPlacementGate.ClearWouldBreakAppliedDraw(stage, groupId, currentEntryId))

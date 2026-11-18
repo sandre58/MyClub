@@ -22,7 +22,6 @@
 
     <ItemGroup>
         <InternalsVisibleTo Include="MyClub.PlayUp.Infrastructure.Tests" />
-        <InternalsVisibleTo Include="MyClub.PlayUp.Host" />
     </ItemGroup>
 
 </Project>

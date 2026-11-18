@@ -21,11 +21,22 @@ public interface IUnitOfWork
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Runs <paramref name="write"/> inside one transaction that excludes another writer
-    /// for the same competition. The delegate calls <see cref="SaveChangesAsync"/> once.
+    /// Drops every tracked entity so the next load reads the database.
     /// </summary>
-    /// <param name="competitionId">Competition whose cascade confirmation is serialized.</param>
-    /// <param name="write">Load, mutate, and save.</param>
+    /// <remarks>
+    /// A stage loaded before <see cref="ExecuteExclusiveAsync"/> stays the instance
+    /// <c>LoadByIdAsync</c> returns. Call this between two exclusive writes that must each
+    /// read committed state.
+    /// </remarks>
+    void ClearTrackedChanges();
+
+    /// <summary>
+    /// Runs <paramref name="write"/> inside one transaction that excludes another writer
+    /// for the same competition. The delegate loads the aggregates it mutates and calls
+    /// <see cref="SaveChangesAsync"/> once.
+    /// </summary>
+    /// <param name="competitionId">Competition whose writers are serialized.</param>
+    /// <param name="write">Load, mutate, and save. The stage and its matches are loaded here, after the lock is held.</param>
     /// <param name="cancellationToken">A token to cancel the operation.</param>
     /// <returns>A task that completes when the transaction is committed.</returns>
     Task ExecuteExclusiveAsync(

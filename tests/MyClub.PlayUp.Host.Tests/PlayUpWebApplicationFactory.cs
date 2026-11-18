@@ -16,7 +16,8 @@ namespace MyClub.PlayUp.Host.Tests;
 internal sealed class PlayUpWebApplicationFactory(
     string connectionString,
     bool failMediaDelete = false,
-    string environment = "Development")
+    string environment = "Development",
+    Action<IServiceCollection>? configureServices = null)
     : WebApplicationFactory<Program>
 {
     private readonly string _mediaStorageRoot = Path.Combine(
@@ -32,7 +33,7 @@ internal sealed class PlayUpWebApplicationFactory(
         builder.UseSetting("Media:StorageRoot", _mediaStorageRoot);
         builder.UseEnvironment(environment);
 
-        if (!failMediaDelete)
+        if (!failMediaDelete && configureServices is null)
         {
             return;
         }
@@ -40,14 +41,19 @@ internal sealed class PlayUpWebApplicationFactory(
         var storageRoot = _mediaStorageRoot;
         builder.ConfigureTestServices(services =>
         {
-            var existing = services.SingleOrDefault(descriptor => descriptor.ServiceType == typeof(IMediaStorage));
-            if (existing is not null)
+            if (failMediaDelete)
             {
-                _ = services.Remove(existing);
+                var existing = services.SingleOrDefault(descriptor => descriptor.ServiceType == typeof(IMediaStorage));
+                if (existing is not null)
+                {
+                    _ = services.Remove(existing);
+                }
+
+                var inner = new LocalFileMediaStorage(storageRoot);
+                services.AddSingleton<IMediaStorage>(new DeleteFailingMediaStorage(inner));
             }
 
-            var inner = new LocalFileMediaStorage(storageRoot);
-            services.AddSingleton<IMediaStorage>(new DeleteFailingMediaStorage(inner));
+            configureServices?.Invoke(services);
         });
     }
 

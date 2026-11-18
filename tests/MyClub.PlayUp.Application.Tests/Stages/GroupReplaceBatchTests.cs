@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using System.Reflection;
 using FluentAssertions;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
@@ -281,6 +282,43 @@ public sealed class GroupReplaceBatchTests
     }
 
     [Fact]
+    public void Replace_replay_is_refused_on_a_running_stage()
+    {
+        var (competition, stage, ids) = Groups(places: 2, entryCount: 3);
+        stage.AssignEntryToGroup(stage.Groups[0].Id, ids[0]);
+        ReplaceEntryInGroup.Execute(stage, competition, stage.Groups[0].Id, ids[0], ids[1]);
+        stage.Prepare(_clock);
+        stage.Start(_clock);
+
+        var replay = () => ReplaceEntryInGroup.Execute(stage, competition, stage.Groups[0].Id, ids[0], ids[1]);
+
+        replay.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
+        stage.Groups[0].EntryIds.Should().Equal(ids[1]);
+    }
+
+    [Fact]
+    public void Replace_replay_is_refused_while_a_group_draw_is_not_applied()
+    {
+        var (competition, stage, ids) = Groups(places: 2, entryCount: 4);
+        stage.AssignEntryToGroup(stage.Groups[0].Id, ids[0]);
+        ReplaceEntryInGroup.Execute(stage, competition, stage.Groups[0].Id, ids[0], ids[1]);
+        ReplaceStageDrawRules.Execute(stage, new DrawRules(DrawMode.Random, potRules: new PotRules(2)), _clock);
+        var draft = CreateDraw.Execute(stage, DrawResolutionKind.Group, _clock);
+        ConfigureDrawInputs.Execute(stage, draft.Id, DrawInputsFactory.CreateDefault(stage, DrawResolutionKind.Group));
+        GenerateDrawResolution.Execute(
+            stage,
+            draft.Id,
+            _clock,
+            groupTargets: [.. stage.Groups.Select(group => group.Id)]).IsResolved.Should().BeTrue();
+
+        var replay = () => ReplaceEntryInGroup.Execute(stage, competition, stage.Groups[0].Id, ids[0], ids[1]);
+
+        replay.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.ManualGroupPlacementBlockedByActiveDraw);
+        stage.Groups[0].EntryIds.Should().Equal(ids[1]);
+    }
+
+    [Fact]
     public void Batch_appends_in_body_order_and_ignores_an_entry_already_in_the_group()
     {
         var (competition, stage, ids) = Groups(places: 4, entryCount: 3);
@@ -351,6 +389,40 @@ public sealed class GroupReplaceBatchTests
     }
 
     [Fact]
+    public void Batch_refuses_zero_places_and_a_running_stage_before_that_check()
+    {
+        var (competition, stage, ids) = Groups(places: 2, entryCount: 1);
+        var setter = () => stage.SetPlacesPerGroup(0);
+        setter.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.InvalidConfiguration);
+
+        SetPlacesPerGroup(stage, 0);
+        var zero = () => AssignEntriesToGroup.Execute(stage, competition, stage.Groups[0].Id, ids);
+        zero.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.InvalidStructureIntent);
+        stage.Groups[0].EntryIds.Should().BeEmpty();
+
+        SetPlacesPerGroup(stage, null);
+        stage.Prepare(_clock);
+        stage.Start(_clock);
+        var running = () => AssignEntriesToGroup.Execute(stage, competition, stage.Groups[0].Id, ids);
+        running.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.StructureLocked);
+        stage.Groups[0].EntryIds.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Batch_unknown_group_names_no_entry()
+    {
+        var (competition, stage, ids) = Groups(places: 2, entryCount: 2);
+
+        var act = () => AssignEntriesToGroup.Execute(stage, competition, GroupId.New(), ids);
+
+        var error = act.Should().Throw<DomainException>().Which;
+        error.Should().BeOfType<DomainException>();
+        error.Code.Should().Be(StageErrorCodes.GroupNotFound);
+        stage.Groups[0].EntryIds.Should().BeEmpty();
+    }
+
+    [Fact]
     public void Can_clear_matches_a_replace_of_a_valid_replacement()
     {
         var (competition, stage, ids) = Groups(places: 2, entryCount: 3);
@@ -374,6 +446,11 @@ public sealed class GroupReplaceBatchTests
             [match]);
         refused.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.GroupClearLockedByStageMatches);
     }
+
+    private static void SetPlacesPerGroup(Stage stage, int? places) =>
+        typeof(Stage).GetProperty(nameof(Stage.PlacesPerGroup))!
+            .GetSetMethod(nonPublic: true)!
+            .Invoke(stage, [places]);
 
     private static SchematicCaseDto Seat(
         Stage stage,
