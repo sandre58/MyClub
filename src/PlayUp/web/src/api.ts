@@ -54,6 +54,8 @@ export {
   clearSlotAssignment,
   assignEntryToGroup,
   clearEntryFromGroup,
+  replaceEntryInGroup,
+  assignEntriesToGroup,
   replaceStageDefaultTieFormat,
   replaceRoundTieFormat,
   fetchStageOverview,

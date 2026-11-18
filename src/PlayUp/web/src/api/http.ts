@@ -10,6 +10,8 @@ export class ApiError extends Error {
   readonly code?: string;
   /** Ready downstream consumers when code is Application.ReadyConsumerWouldBreak. */
   readonly consumerStageIds?: readonly string[];
+  /** Entry rejected by a batch assign when present on ProblemDetails. */
+  readonly entryId?: string;
 
   constructor(
     status: number,
@@ -17,6 +19,7 @@ export class ApiError extends Error {
     detail?: string,
     code?: string,
     consumerStageIds?: readonly string[],
+    entryId?: string,
   ) {
     super(message);
     this.name = 'ApiError';
@@ -24,6 +27,7 @@ export class ApiError extends Error {
     this.detail = detail;
     this.code = code;
     this.consumerStageIds = consumerStageIds;
+    this.entryId = entryId;
   }
 }
 
@@ -49,13 +53,19 @@ export async function throwIfNotOk(response: Response): Promise<void> {
   let detail: string | undefined;
   let code: string | undefined;
   let consumerStageIds: string[] | undefined;
+  let entryId: string | undefined;
   try {
     const problem = (await response.json()) as {
       title?: string;
       detail?: string;
       code?: string;
+      entryId?: string;
       consumerStageIds?: unknown;
-      extensions?: { code?: string; consumerStageIds?: unknown };
+      extensions?: {
+        code?: string;
+        entryId?: string;
+        consumerStageIds?: unknown;
+      };
     };
     detail = problem.detail ?? problem.title;
     code =
@@ -63,6 +73,12 @@ export async function throwIfNotOk(response: Response): Promise<void> {
         ? problem.code
         : typeof problem.extensions?.code === 'string'
           ? problem.extensions.code
+          : undefined;
+    entryId =
+      typeof problem.entryId === 'string'
+        ? problem.entryId
+        : typeof problem.extensions?.entryId === 'string'
+          ? problem.extensions.entryId
           : undefined;
     consumerStageIds =
       readStringArray(problem.consumerStageIds) ??
@@ -77,6 +93,7 @@ export async function throwIfNotOk(response: Response): Promise<void> {
     detail,
     code,
     consumerStageIds,
+    entryId,
   );
 }
 

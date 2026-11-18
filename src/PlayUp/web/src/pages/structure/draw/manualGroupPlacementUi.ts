@@ -4,7 +4,11 @@
 import type { SchematicCase, StructureEntry } from '../../../types';
 
 const assignEntryToGroupAction = 'AssignEntryToGroup';
+const assignEntriesToGroupAction = 'AssignEntriesToGroup';
 const clearEntryFromGroupAction = 'ClearEntryFromGroup';
+const replaceEntryInGroupAction = 'ReplaceEntryInGroup';
+
+export { assignEntriesToGroupAction, replaceEntryInGroupAction };
 
 export type GroupSeatReasonKey =
   | 'placeInvite'
@@ -18,7 +22,7 @@ export type GroupSeatReasonKey =
 
 export type GroupSeatInteraction =
   | { kind: 'place'; reasonKey: 'placeInvite' }
-  | { kind: 'remove'; reasonKey: 'removeInvite' }
+  | { kind: 'edit'; reasonKey: 'removeInvite' }
   | {
       kind: 'locked';
       reasonKey: Exclude<GroupSeatReasonKey, 'placeInvite' | 'removeInvite'>;
@@ -91,7 +95,7 @@ export function resolveGroupSeatInteraction(
 
   if (place.seatMode === 'Editable' && place.canClear === true) {
     return canClearAction
-      ? { kind: 'remove', reasonKey: 'removeInvite' }
+      ? { kind: 'edit', reasonKey: 'removeInvite' }
       : { kind: 'none' };
   }
   if (place.seatMode === 'Editable') {
@@ -256,6 +260,70 @@ export function groupManualPlaceStillAllowed(
   actions: readonly string[],
 ): boolean {
   return resolveGroupManualPlace(cases, groupId, actions) != null;
+}
+
+/** Editable empty seats that accept a manual place (Reserved excluded). */
+export function groupBatchCap(
+  cases: readonly SchematicCase[],
+  groupId: string,
+  actions: readonly string[],
+): number {
+  return cases.filter((place) => {
+    if (place.formPosition.kind !== 'GroupPlace') return false;
+    if (place.formPosition.groupId !== groupId) return false;
+    if (place.seatMode !== 'Editable') return false;
+    if (occupantId(place) != null) return false;
+    return resolveGroupSeatInteraction(place, { actions }).kind === 'place';
+  }).length;
+}
+
+/** Selected ids in display order (pot, then composition). */
+export function orderBatchSelection(
+  available: readonly GroupPlacementChoice[],
+  selectedIds: readonly string[],
+): string[] {
+  const selected = new Set(selectedIds);
+  return available
+    .filter((row) => selected.has(row.entryId))
+    .map((row) => row.entryId);
+}
+
+export function purgeUnavailableSelection(
+  selectedIds: readonly string[],
+  available: readonly GroupPlacementChoice[],
+): { ids: string[]; removedCount: number } {
+  const allowed = new Set(available.map((row) => row.entryId));
+  const ids = selectedIds.filter((id) => allowed.has(id));
+  return { ids, removedCount: selectedIds.length - ids.length };
+}
+
+export function resolveSeatLive(
+  cases: readonly SchematicCase[],
+  groupId: string,
+  index: number,
+): SchematicCase | null {
+  for (const place of cases) {
+    if (place.formPosition.kind !== 'GroupPlace') continue;
+    if (place.formPosition.groupId !== groupId) continue;
+    if (place.formPosition.index !== index) continue;
+    return place;
+  }
+  return null;
+}
+
+export function canBatchAssignToGroup(
+  actions: readonly string[],
+  placesPerGroup: number | null | undefined,
+): boolean {
+  return (
+    actions.includes(assignEntriesToGroupAction) &&
+    placesPerGroup != null &&
+    placesPerGroup > 0
+  );
+}
+
+export function canReplaceInGroup(actions: readonly string[]): boolean {
+  return actions.includes(replaceEntryInGroupAction);
 }
 
 export function groupSeatCounter(

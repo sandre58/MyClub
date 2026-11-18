@@ -151,6 +151,33 @@ export function clearEntryFromGroup(
   );
 }
 
+/** POST /stages/{id}/groups/{groupId}/entries/{entryId}/replace → 204 */
+export function replaceEntryInGroup(
+  stageId: string,
+  groupId: string,
+  currentEntryId: string,
+  replacementEntryId: string,
+): Promise<void> {
+  return sendNoContent(
+    'POST',
+    `/stages/${stageId}/groups/${encodeURIComponent(groupId)}/entries/${encodeURIComponent(currentEntryId)}/replace`,
+    { replacementEntryId },
+  );
+}
+
+/** POST /stages/{id}/groups/{groupId}/entries → 204 */
+export function assignEntriesToGroup(
+  stageId: string,
+  groupId: string,
+  entryIds: readonly string[],
+): Promise<void> {
+  return sendNoContent(
+    'POST',
+    `/stages/${stageId}/groups/${encodeURIComponent(groupId)}/entries`,
+    { entryIds: [...entryIds] },
+  );
+}
+
 /** PUT /stages/{id}/tie-format → 204 */
 export function replaceStageDefaultTieFormat(
   stageId: string,

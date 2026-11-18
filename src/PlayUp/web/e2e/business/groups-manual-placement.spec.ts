@@ -56,7 +56,9 @@ async function fillRemainingSeats(page: Page, expectPot: boolean) {
     } else {
       await expect(pot).toHaveCount(0);
     }
-    await dialog.getByRole('checkbox').first().click();
+    const teamPicker = dialog.getByRole('radio');
+    await expect(teamPicker.first()).toBeVisible();
+    await teamPicker.first().click();
     await dialog
       .getByRole('button', { name: 'Enregistrer', exact: true })
       .click();

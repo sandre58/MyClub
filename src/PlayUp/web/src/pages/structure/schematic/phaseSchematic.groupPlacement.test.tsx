@@ -90,7 +90,7 @@ describe('Groups schematic placement', () => {
     ).toHaveLength(1);
     expect(
       screen.getAllByRole('button', {
-        name: /Groupe A · \d+ — Cliquer pour retirer l’équipe/,
+        name: /Groupe A · \d+ — Cliquer pour modifier ou retirer l’équipe/,
       }),
     ).toHaveLength(4);
 
