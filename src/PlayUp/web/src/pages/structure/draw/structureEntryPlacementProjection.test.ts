@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import type { SchematicCase } from '../../../types';
 import {
-  buildPlacedTooltipModel,
   entryPlaceProjectionFromSchematic,
   isEntryPlacedInPhase,
   placedEntryIdsFromSchematic,
+  placedHintShortPlace,
   primaryPlaceLabel,
   showPerEntryPlacement,
 } from './structureEntryPlacementProjection';
@@ -23,9 +23,6 @@ const t = (key: string, opts?: Record<string, unknown>) => {
     opts?.index != null
   ) {
     return `Groupe ${opts.name}, place ${opts.index}`;
-  }
-  if (key === 'entries.teamAlreadyPlacedIntro') {
-    return 'Cette équipe est déjà placée :';
   }
   if (key === 'place.side' && opts?.side) {
     return `side ${opts.side}`;
@@ -90,7 +87,7 @@ describe('structureEntryPlacementProjection', () => {
     expect(primaryPlaceLabel(map.get('e1'))).toBe('SF-1-A');
   });
 
-  it('uses group shortPlace without index and where line without index', () => {
+  it('uses group shortPlace without index', () => {
     const cases: SchematicCase[] = [
       {
         formPosition: {
@@ -102,9 +99,7 @@ describe('structureEntryPlacementProjection', () => {
       },
     ];
     const map = entryPlaceProjectionFromSchematic(cases, 'Groups', t);
-    const model = buildPlacedTooltipModel(map.get('e1'), 'Poules', t);
-    expect(model?.shortPlace).toBe('Groupe A');
-    expect(model?.whereLines).toEqual(['Groupe A']);
+    expect(placedHintShortPlace(map.get('e1'))).toBe('Groupe A');
   });
 
   it('uses group shortPlace with index for accessible hint', () => {
@@ -120,112 +115,36 @@ describe('structureEntryPlacementProjection', () => {
       },
     ];
     const map = entryPlaceProjectionFromSchematic(cases, 'Groups', t);
-    expect(
-      buildPlacedTooltipModel(map.get('e1'), 'Poules', t)?.shortPlace,
-    ).toBe('Groupe A, place 3');
+    expect(placedHintShortPlace(map.get('e1'))).toBe('Groupe A, place 3');
   });
 
   it('keeps cup shortPlace as slot chrome only', () => {
     expect(
-      buildPlacedTooltipModel(
-        {
-          labels: ['Tête'],
-          details: ['Demi-finale 1 · côté A'],
-          kinds: ['cup'],
-        },
-        'Généré',
-        t,
-      ),
-    ).toMatchObject({
-      shortPlace: 'Tête',
-      whereLines: ['Généré — Tête ; Demi-finale 1 · côté A'],
-    });
+      placedHintShortPlace({
+        labels: ['Tête'],
+        details: ['Demi-finale 1 · côté A'],
+        kinds: ['cup'],
+      }),
+    ).toBe('Tête');
   });
 
-  it('uses cup where lines with phase name, slot chrome and topology detail', () => {
-    const phase = 'Généré';
+  it('emits short place for cup slot chrome', () => {
     expect(
-      buildPlacedTooltipModel(
-        { labels: ['SF-1-A'], details: [null], kinds: ['cup'] },
-        phase,
-        t,
-      )?.whereLines,
-    ).toEqual(['Généré — SF-1-A']);
-  });
-
-  it('keeps slot chrome in cup tooltip when destination phase name is missing', () => {
-    expect(
-      buildPlacedTooltipModel(
-        {
-          labels: ['Tête'],
-          details: ['Tour 1 · côté A'],
-          kinds: ['cup'],
-        },
-        null,
-        t,
-      ),
-    ).toMatchObject({
-      whereLines: ['Tête ; Tour 1 · côté A'],
-      shortPlace: 'Tête',
-    });
-  });
-
-  it('emits one where line per cup placement without repeating the intro', () => {
-    const model = buildPlacedTooltipModel(
-      {
-        labels: ['Tête', 'Demi-finale 1'],
-        details: [null, 'côté A'],
-        kinds: ['cup', 'cup'],
-      },
-      'Généré',
-      t,
-    );
-    expect(model?.whereLines).toEqual([
-      'Généré — Tête',
-      'Généré — Demi-finale 1 ; côté A',
-    ]);
-    expect(model?.shortPlace).toBe('Tête');
+      placedHintShortPlace({
+        labels: ['SF-1-A'],
+        details: [null],
+        kinds: ['cup'],
+      }),
+    ).toBe('SF-1-A');
   });
 
   it('shortPlace uses the first group when several places match', () => {
     expect(
-      buildPlacedTooltipModel(
-        {
-          labels: ['Group A', 'Group B'],
-          details: ['Groupe A, place 1', 'Groupe B, place 2'],
-          kinds: ['group', 'group'],
-        },
-        'Poules',
-        t,
-      )?.shortPlace,
+      placedHintShortPlace({
+        labels: ['Group A', 'Group B'],
+        details: ['Groupe A, place 1', 'Groupe B, place 2'],
+        kinds: ['group', 'group'],
+      }),
     ).toBe('Groupe A, place 1');
-  });
-
-  it('keeps multiple place labels for the same entry', () => {
-    const cases: SchematicCase[] = [
-      {
-        formPosition: {
-          kind: 'GroupPlace',
-          groupId: 'g1',
-          groupName: 'A',
-          index: 1,
-        },
-        entry: { entryId: 'e1', displayName: 'Alpha' },
-      },
-      {
-        formPosition: {
-          kind: 'GroupPlace',
-          groupId: 'g2',
-          groupName: 'B',
-          index: 2,
-        },
-        entry: { entryId: 'e1', displayName: 'Alpha' },
-      },
-    ];
-    const map = entryPlaceProjectionFromSchematic(cases, 'Groups', t);
-    expect(map.get('e1')?.labels).toEqual(['Group A', 'Group B']);
-    expect(
-      buildPlacedTooltipModel(map.get('e1'), 'Poules', t)?.whereLines,
-    ).toHaveLength(2);
   });
 });

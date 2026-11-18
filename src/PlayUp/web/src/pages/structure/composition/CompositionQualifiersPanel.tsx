@@ -30,7 +30,6 @@ export function CompositionQualifiersPanel({
   resolutionOccupants,
   onViewPhase,
   renderGroupAction,
-  destinationPhaseName,
 }: {
   groups: CompositionQualifierFeedGroup[];
   inboundComposition: StructureInboundComposition | null | undefined;
@@ -41,7 +40,6 @@ export function CompositionQualifiersPanel({
   resolutionOccupants?: StructureResolutionOccupant[] | null;
   onViewPhase?: (peerId: string) => void;
   renderGroupAction?: (group: CompositionQualifierFeedGroup) => ReactNode;
-  destinationPhaseName?: string | null;
 }) {
   const cascade = useStructureCascadeReplace();
   const release = useStructureResolutionRelease();
@@ -119,7 +117,6 @@ export function CompositionQualifiersPanel({
                         listedResolution={listedResolution}
                         onReplace={cascade?.requestReplace}
                         onRelease={release?.requestRelease}
-                        destinationPhaseName={destinationPhaseName}
                       />
                     </li>
                   );

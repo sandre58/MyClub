@@ -106,6 +106,30 @@ describe('StructurePhaseTeamLine', () => {
     expect(leadSlot!.querySelector('.ds-icon')).not.toBeNull();
   });
 
+  it('shows the same single-sentence placed tooltip for cup qualifier hints', async () => {
+    mockFinePointer();
+    const user = userEvent.setup();
+    renderWithI18n(
+      <MemoryRouter>
+        <div className="structure-composition-qualifiers__outcome">
+          <StructurePhaseTeamLine
+            layout="qualifierHint"
+            displayName="Nord"
+            placed
+            placedPlaceLabel="Tête"
+            placedHintShortPlace="Tête"
+          />
+        </div>
+      </MemoryRouter>,
+    );
+    await user.hover(screen.getByRole('button', { name: 'Placée : Tête' }));
+    await waitFor(() => {
+      expect(screen.getByRole('tooltip')).toHaveTextContent(
+        'Cette équipe est placée',
+      );
+    });
+  });
+
   it('shows placed hint on the qualifier hint row', () => {
     renderWithI18n(
       <MemoryRouter>
@@ -115,11 +139,7 @@ describe('StructurePhaseTeamLine', () => {
             displayName="Nord"
             placed
             placedPlaceLabel="Tête"
-            placedTooltipModel={{
-              intro: 'Cette équipe est déjà placée :',
-              whereLines: ['Tableau — Tête'],
-              shortPlace: 'Tête',
-            }}
+            placedHintShortPlace="Tête"
           />
         </div>
       </MemoryRouter>,
@@ -275,11 +295,7 @@ describe('StructurePhaseTeamLine', () => {
           displayName="Nord"
           placed
           placedPlaceLabel="Groupe A"
-          placedTooltipModel={{
-            intro: 'Cette équipe est déjà placée :',
-            whereLines: ['Groupe A, place 3'],
-            shortPlace: 'Groupe A, place 3',
-          }}
+          placedHintShortPlace="Groupe A, place 3"
           ineligible
           provenanceMeta="1er"
           provenanceTitle="1er de Poule A"
@@ -301,7 +317,7 @@ describe('StructurePhaseTeamLine', () => {
     expect(screen.getByText('Groupe A')).toHaveAttribute('aria-hidden', 'true');
   });
 
-  it('keeps a short stable aria-label on focus and exposes full placement in the tooltip', async () => {
+  it('keeps a short stable aria-label on focus and a single-sentence placed tooltip', async () => {
     mockFinePointer();
     const user = userEvent.setup();
     const { container } = renderWithI18n(
@@ -310,11 +326,7 @@ describe('StructurePhaseTeamLine', () => {
           displayName="Nord"
           placed
           placedPlaceLabel="Tête"
-          placedTooltipModel={{
-            intro: 'Cette équipe est déjà placée :',
-            whereLines: ['Généré — Tête ; Tour 1 · côté A'],
-            shortPlace: 'Tête',
-          }}
+          placedHintShortPlace="Tête"
         />
       </MemoryRouter>,
     );
@@ -328,8 +340,8 @@ describe('StructurePhaseTeamLine', () => {
     expect(hint.getAttribute('aria-describedby')).toBeTruthy();
     await waitFor(() => {
       const tip = screen.getByRole('tooltip');
-      expect(tip).toHaveTextContent('Cette équipe est déjà placée :');
-      expect(tip).toHaveTextContent('Généré — Tête');
+      expect(tip).toHaveTextContent('Cette équipe est placée');
+      expect(tip).not.toHaveTextContent('Tête');
     });
   });
 
@@ -340,11 +352,7 @@ describe('StructurePhaseTeamLine', () => {
           displayName="Nord"
           placed
           placedPlaceLabel="Groupe B"
-          placedTooltipModel={{
-            intro: 'Cette équipe est déjà placée :',
-            whereLines: ['Groupe B, place 2'],
-            shortPlace: 'Groupe B, place 2',
-          }}
+          placedHintShortPlace="Groupe B, place 2"
         />
       </MemoryRouter>,
     );

@@ -234,80 +234,18 @@ export function primaryPlaceLabel(
   return projection.labels.join(' · ');
 }
 
-function cupPlacementWhereLine(
-  destinationPhaseName: string,
-  slotChrome: string,
-  topologyDetail: string | null,
-): string {
-  const phase = destinationPhaseName.trim();
-  const slot = slotChrome.trim();
-  const detail = topologyDetail?.trim();
-  if (!phase) {
-    if (!slot) {
-      return detail ?? '';
-    }
-    if (detail && detail !== slot) {
-      return `${slot} ; ${detail}`;
-    }
-    return slot;
+/** Fragment for `entries.placedHintShort` (group includes index when known). */
+export function placedHintShortPlace(
+  projection: EntryPlaceProjection | undefined,
+): string | null {
+  if (!projection || projection.labels.length === 0) {
+    return null;
   }
-  if (!slot) {
-    return detail ?? phase;
-  }
-  if (detail && detail !== slot) {
-    return `${phase} — ${slot} ; ${detail}`;
-  }
-  return `${phase} — ${slot}`;
-}
-
-export type PlacedTooltipModel = {
-  /** Localized intro, e.g. « Cette équipe est déjà placée : » */
-  intro: string;
-  /** One fragment per resolved place (shown under the intro in the Tooltip). */
-  whereLines: readonly string[];
-  /** Fragment for `entries.placedHintShort` (group includes index when known). */
-  shortPlace: string;
-};
-
-function primaryShortPlace(projection: EntryPlaceProjection): string {
   const short = projection.labels[0]?.trim() ?? '';
   const detail = projection.details[0]?.trim() ?? '';
   const kind = projection.kinds[0];
   if (kind === 'group') {
-    return detail || short;
+    return detail || short || null;
   }
-  return short;
-}
-
-export function buildPlacedTooltipModel(
-  projection: EntryPlaceProjection | undefined,
-  destinationPhaseName: string | null | undefined,
-  t: PlaceTranslate,
-): PlacedTooltipModel | null {
-  if (!projection || projection.labels.length === 0) {
-    return null;
-  }
-  const phaseName = destinationPhaseName?.trim() ?? '';
-  const whereLines: string[] = [];
-  for (let i = 0; i < projection.labels.length; i += 1) {
-    const short = projection.labels[i];
-    const detail = projection.details[i];
-    const kind = projection.kinds[i];
-    if (kind === 'group') {
-      const where = (detail ?? short)?.trim();
-      if (where) {
-        whereLines.push(where);
-      }
-      continue;
-    }
-    const where = cupPlacementWhereLine(phaseName, short, detail);
-    if (where) {
-      whereLines.push(where);
-    }
-  }
-  if (whereLines.length === 0) {
-    return null;
-  }
-  const intro = t('entries.teamAlreadyPlacedIntro');
-  return { intro, whereLines, shortPlace: primaryShortPlace(projection) };
+  return short || null;
 }

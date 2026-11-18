@@ -718,6 +718,11 @@
   color: var(--color-text-primary);
 }
 
+.structure-feed-group__rule-source {
+  min-width: 0;
+  color: var(--color-text-secondary);
+}
+
 .structure-feed-group__rule-sep {
   color: var(--color-text-secondary);
 }
