@@ -5,6 +5,7 @@
 
 import type {
   SelectionMode,
+  StructureFormatKind,
   StructurePlacementAward,
   StructureProgressionIntent,
   StructureProgressionPath,
@@ -41,6 +42,7 @@ export type FeedRow = {
   key: string;
   peerId: string;
   peerName: string;
+  peerFormatKind?: StructureFormatKind | null;
   peerOrder: number;
   badge: string;
   badgeTone: 'win' | 'loss' | 'neutral' | 'accent';
@@ -62,6 +64,7 @@ export type FeedRow = {
 export type FeedGroup = {
   peerId: string;
   peerName: string;
+  peerFormatKind?: StructureFormatKind | null;
   peerOrder: number;
   volume: number;
   rules: {
@@ -476,6 +479,7 @@ export function inboundFeeds(
         key: `q-i-${source.stageId}-${edge.intent.intentId}`,
         peerId: source.stageId,
         peerName: source.name,
+        peerFormatKind: source.formatKind ?? null,
         peerOrder: stagePeerOrder(data, source.stageId),
         ...parts,
         volume: qualificationEdgeVolume(edge),
@@ -490,6 +494,7 @@ export function inboundFeeds(
         key: `p-i-${source.stageId}-${edge.intent.intentId}`,
         peerId: source.stageId,
         peerName: source.name,
+        peerFormatKind: source.formatKind ?? null,
         peerOrder: stagePeerOrder(data, source.stageId),
         ...parts,
         volume: progressionEdgeVolume(edge),
@@ -508,8 +513,9 @@ export function outboundFeeds(
   t: (key: string, opts?: Record<string, unknown>) => string,
 ) {
   const feeds: FeedRow[] = [];
-  const nameOf = (id: string) =>
-    data.stages.find((s) => s.stageId === id)?.name ?? id;
+  const stageOf = (id: string) => data.stages.find((s) => s.stageId === id);
+  const nameOf = (id: string) => stageOf(id)?.name ?? id;
+  const formatOf = (id: string) => stageOf(id)?.formatKind ?? null;
 
   for (const edge of qualificationEdges(stage)) {
     const destId = qualificationEdgeDestination(edge);
@@ -519,6 +525,7 @@ export function outboundFeeds(
       key: `q-out-i-${edge.intent.intentId}`,
       peerId: destId,
       peerName: nameOf(destId),
+      peerFormatKind: formatOf(destId),
       peerOrder: stagePeerOrder(data, destId),
       ...parts,
       volume: qualificationEdgeVolume(edge),
@@ -533,6 +540,7 @@ export function outboundFeeds(
       key: `p-out-i-${edge.intent.intentId}`,
       peerId: destId,
       peerName: nameOf(destId),
+      peerFormatKind: formatOf(destId),
       peerOrder: stagePeerOrder(data, destId),
       ...parts,
       volume: progressionEdgeVolume(edge),
@@ -568,6 +576,7 @@ export function groupFeeds(feeds: FeedRow[]): FeedGroup[] {
       map.set(feed.peerId, {
         peerId: feed.peerId,
         peerName: feed.peerName,
+        peerFormatKind: feed.peerFormatKind ?? null,
         peerOrder: feed.peerOrder,
         volume: feed.volume,
         rules: [

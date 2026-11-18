@@ -1,6 +1,7 @@
 // Composition Équipes — merge inbound qual/prog seats with runtime pool (exploitation / historical).
 import type {
   StructureEntry,
+  StructureFormatKind,
   StructureInboundComposition,
 } from '../../../types';
 import {
@@ -39,6 +40,7 @@ export type CompositionTeamRow =
       seat: InboundFeedSlotView;
       entry?: StructureEntry;
       sourcePhaseName: string;
+      sourcePhaseFormatKind?: StructureFormatKind | null;
     }
   | {
       key: string;
@@ -131,6 +133,7 @@ export function listCompositionTeamRows(
           seat,
           entry,
           sourcePhaseName: group.peerName,
+          sourcePhaseFormatKind: group.peerFormatKind ?? null,
         });
       });
     }

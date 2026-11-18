@@ -43,6 +43,7 @@ export function compositionQualifierFeedGroups(input: {
   for (const rule of inbound.rules) {
     const peer = data.stages.find((s) => s.stageId === rule.sourceStageId);
     const peerName = peer?.name ?? rule.sourceStageId;
+    const peerFormatKind = peer?.formatKind ?? null;
     const peerOrder = stagePeerOrder(data, rule.sourceStageId);
     const labelParts = labelPartsForInboundRule(
       rule,
@@ -67,6 +68,7 @@ export function compositionQualifierFeedGroups(input: {
       map.set(rule.sourceStageId, {
         peerId: rule.sourceStageId,
         peerName,
+        peerFormatKind,
         peerOrder,
         volume,
         rules: [feedRule],

@@ -367,8 +367,9 @@ describe('RootEntriesRail équipes band inbound qual format', () => {
         </ResolutionReleaseContext.Provider>
       </MemoryRouter>,
     );
-    expect(screen.getByText('Poules')).toHaveClass(
-      'structure-feed-group__rule-source',
+    expect(screen.queryByText('Poules')).toBeNull();
+    expect(screen.getByLabelText('Poules')).toHaveClass(
+      'structure-feed-group__rule-source-trigger',
     );
     expect(screen.getByText('1er')).toBeInTheDocument();
     expect(screen.getByText('Nord')).toBeInTheDocument();

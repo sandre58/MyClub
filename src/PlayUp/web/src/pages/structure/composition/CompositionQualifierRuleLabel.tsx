@@ -1,3 +1,6 @@
+import { Tooltip } from '../../../design-system/components/Tooltip';
+import { StageFormatGlyph } from '../structureFormatGlyph';
+import type { StructureFormatKind } from '../../../types';
 import type { FeedGroup } from './structurePhaseFeeds';
 
 type QualifierRule = FeedGroup['rules'][number];
@@ -5,10 +8,12 @@ type QualifierRule = FeedGroup['rules'][number];
 export function CompositionQualifierRuleLabel({
   rule,
   sourcePhaseName,
+  sourcePhaseFormatKind,
 }: {
   rule: QualifierRule;
-  /** Équipes band — prefix rule with upstream phase (Qualifiés keeps phase header only). */
+  /** Équipes band — source phase glyph + tooltip (Qualifiés keeps phase header only). */
   sourcePhaseName?: string | null;
+  sourcePhaseFormatKind?: StructureFormatKind | null;
 }) {
   const leadClass = [
     'structure-feed-group__rule-lead',
@@ -26,7 +31,17 @@ export function CompositionQualifierRuleLabel({
     <span className="structure-feed-group__rule-label">
       {phase ? (
         <>
-          <span className="structure-feed-group__rule-source">{phase}</span>
+          <span className="structure-feed-group__rule-source">
+            <Tooltip content={phase}>
+              <span
+                className="structure-feed-group__rule-source-trigger"
+                aria-label={phase}
+                tabIndex={0}
+              >
+                <StageFormatGlyph kind={sourcePhaseFormatKind} size="sm" />
+              </span>
+            </Tooltip>
+          </span>
           <span className="structure-feed-group__rule-sep" aria-hidden="true">
             ·
           </span>

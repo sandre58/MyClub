@@ -1,11 +1,12 @@
-import { screen } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { StructureResolutionOccupant } from '../../../types';
 import { renderWithI18n } from '../../../test/renderWithI18n';
 import { CompositionQualifiersPanel } from './CompositionQualifiersPanel';
+import { CompositionQualifierRuleRow } from './CompositionQualifierRuleRow';
 import type { CompositionQualifierFeedGroup } from './structureCompositionQualifierFeeds';
 import { ResolutionReleaseContext } from '../resolution/structureResolutionReleaseContext';
 import { CascadeReplaceContext } from '../resolution/structureCascadeReplaceContext';
@@ -103,6 +104,70 @@ function renderPanel(
     </MemoryRouter>,
   );
 }
+
+describe('CompositionQualifiersPanel équipes rule source', () => {
+  beforeEach(() => {
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: (query: string) => ({
+        matches:
+          query.includes('hover: hover') && query.includes('pointer: fine'),
+        media: query,
+        onchange: null,
+        addListener: () => undefined,
+        removeListener: () => undefined,
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined,
+        dispatchEvent: () => false,
+      }),
+    });
+  });
+
+  it('renders source phase format icon with accessible name, not visible phase text', async () => {
+    renderWithI18n(
+      <MemoryRouter>
+        <CompositionQualifierRuleRow
+          rule={{
+            key: 'q1',
+            volume: 1,
+            badge: '1er',
+            badgeTone: 'accent',
+            context: 'Poule A',
+            family: 'place',
+            sortPrimary: 1,
+            sortSecondary: '1',
+            hubSeats: [
+              {
+                resolved: false,
+                placed: false,
+                teamName: null,
+                entryId: null,
+              },
+            ],
+          }}
+          seat={{
+            resolved: false,
+            placed: false,
+            teamName: null,
+            entryId: null,
+          }}
+          entry={undefined}
+          inboundRule={undefined}
+          schematic={undefined}
+          entryPlaceProjections={new Map()}
+          listedResolution={null}
+          sourcePhaseName="Poules"
+          sourcePhaseFormatKind="Groups"
+        />
+      </MemoryRouter>,
+    );
+    expect(screen.queryByText('Poules')).toBeNull();
+    const trigger = screen.getByLabelText('Poules');
+    expect(trigger).toBeInTheDocument();
+    fireEvent.focus(trigger);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Poules');
+  });
+});
 
 describe('CompositionQualifiersPanel freshness badge', () => {
   it('uses the place occupant when the team is placed and releasable on Slot', async () => {

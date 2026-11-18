@@ -436,6 +436,7 @@ export function RootEntriesRail({
                       onReplace={cascade?.requestReplace}
                       onRelease={release?.requestRelease}
                       sourcePhaseName={row.sourcePhaseName}
+                      sourcePhaseFormatKind={row.sourcePhaseFormatKind}
                     />
                   </li>
                 );
