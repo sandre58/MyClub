@@ -71,10 +71,20 @@ describe('focus foundation contract', () => {
     expect(geometryCss).toMatch(/--focus-ring-extent:\s*calc\(/);
   });
 
-  it('declares focus halo / field / inset aliases on :root and .ds-root', () => {
+  it('declares focus halo and inset aliases on :root and .ds-root (no --focus-field)', () => {
     expect(focusCss).toMatch(/:root,\s*\n\.ds-root\s*\{[\s\S]*--focus-halo:/);
-    expect(focusCss).toMatch(/--focus-field:/);
     expect(focusCss).toMatch(/--focus-inset:/);
+    expect(focusCss).not.toMatch(/--focus-field:/);
+  });
+
+  it('uses brand border only on edit fields without extra box-shadow', () => {
+    expect(focusCss).toMatch(
+      /\.ds-root \.ds-input:is\(:focus[\s\S]*border-color:\s*var\(--color-brand\)/,
+    );
+    expect(focusCss).toMatch(
+      /\.ds-root \.ds-input:is\(:focus[\s\S]*box-shadow:\s*none/,
+    );
+    expect(formsCss).not.toMatch(/--focus-field/);
   });
 
   it('applies scroll-safe spacing from --focus-ring-extent on dialog body and utility', () => {
@@ -136,19 +146,20 @@ describe('focus foundation contract', () => {
     );
   });
 
-  it('applies portal field focus after portal halo so Popover comboboxes keep Q1', () => {
+  it('applies portal edit-field border after portal halo so Popover comboboxes avoid outer halo', () => {
     const portalHalo = focusCss.indexOf(
       '.ds-popover :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible',
     );
-    const portalField = focusCss.indexOf(
-      '.ds-popover .ds-input:is(:focus-within, :focus-visible)',
-    );
+    const portalField = focusCss.indexOf('.ds-popover .ds-input:is(:focus');
     expect(portalHalo).toBeGreaterThan(-1);
     expect(portalField).toBeGreaterThan(-1);
     expect(portalField).toBeGreaterThan(portalHalo);
-    expect(
-      focusCss.slice(portalField, focusCss.indexOf('}', portalField) + 1),
-    ).toMatch(/box-shadow:\s*var\(--focus-field\)/);
+    const fieldBlock = focusCss.slice(
+      portalField,
+      focusCss.indexOf('}', portalField) + 1,
+    );
+    expect(fieldBlock).toMatch(/border-color:\s*var\(--color-brand\)/);
+    expect(fieldBlock).toMatch(/box-shadow:\s*none/);
   });
 
   it('does not reference undefined focus-related custom properties in web CSS', () => {
@@ -165,12 +176,7 @@ describe('focus foundation contract', () => {
       }
     }
 
-    const optionalOverrides = new Set(['--ds-focus-color']);
-
     for (const token of used) {
-      if (optionalOverrides.has(token)) {
-        continue;
-      }
       expect(DEFINED_FOCUS_TOKENS.has(token)).toBe(true);
     }
   });
