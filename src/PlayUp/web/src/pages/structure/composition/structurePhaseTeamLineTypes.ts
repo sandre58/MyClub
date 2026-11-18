@@ -1,5 +1,4 @@
 import type { StructureResolutionOccupant } from '../../../types';
-import type { PlacedTooltipModel } from '../draw/structureEntryPlacementProjection';
 
 export type StructurePhaseTeamLineProps = {
   displayName: string;
@@ -11,8 +10,8 @@ export type StructurePhaseTeamLineProps = {
   pendingLabel?: string;
   placed?: boolean;
   placedPlaceLabel?: string | null;
-  placedTooltipModel?: PlacedTooltipModel | null;
-  placedTooltip?: string | null;
+  /** Overrides accessible hint short place when placement projection differs from visible label. */
+  placedHintShortPlace?: string | null;
   provenanceMeta?: string | null;
   provenanceTitle?: string | null;
   resolutionOccupant?: StructureResolutionOccupant | null;

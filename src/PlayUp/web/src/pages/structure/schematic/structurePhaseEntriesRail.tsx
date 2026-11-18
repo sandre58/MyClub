@@ -20,7 +20,7 @@ import type {
 } from '../../../types';
 import {
   type EntryPlaceProjection,
-  buildPlacedTooltipModel,
+  placedHintShortPlace,
   isEntryPlacedInPhase,
   primaryPlaceLabel,
   showPerEntryPlacement,
@@ -324,10 +324,8 @@ export function RootEntriesRail({
       trackPlacement && schematicReady && entry.status === 'Active' && !placed;
     const projection = placeProjections.get(entry.entryId);
     const placeLabel = primaryPlaceLabel(projection);
-    const placedTooltipModel =
-      placed && projection
-        ? buildPlacedTooltipModel(projection, stage.name, t)
-        : null;
+    const placedHintShort =
+      placed && projection ? placedHintShortPlace(projection) : null;
     const provenanceLabel =
       provenance ?? entryProvenanceByEntryId?.get(entry.entryId) ?? null;
     const listedResolution = lookupListedResolutionOccupant(
@@ -362,7 +360,7 @@ export function RootEntriesRail({
           ineligible={entry.status !== 'Active'}
           placed={placed}
           placedPlaceLabel={placeLabel}
-          placedTooltipModel={placedTooltipModel}
+          placedHintShortPlace={placedHintShort}
           provenanceMeta={provenanceLabel?.badge ?? null}
           provenanceTitle={provenanceLabel?.full ?? null}
           resolutionOccupant={listedResolution.occupant}
@@ -437,7 +435,7 @@ export function RootEntriesRail({
                       }
                       onReplace={cascade?.requestReplace}
                       onRelease={release?.requestRelease}
-                      destinationPhaseName={stage.name}
+                      sourcePhaseName={row.sourcePhaseName}
                     />
                   </li>
                 );

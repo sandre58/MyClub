@@ -993,7 +993,7 @@
     "entryNotPlacedAria": "{{name}} — not placed yet",
     "entryPlacedStatus": "Placed",
     "placedHintShort": "Placed: {{place}}",
-    "teamAlreadyPlacedIntro": "This team is already placed:",
+    "teamPlaced": "This team is placed",
     "meterAria": "Expected teams / places",
     "meter": {
       "population": "Teams",

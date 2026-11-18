@@ -64,31 +64,10 @@ function freshnessStateMetaNode(
   );
 }
 
-function placedTooltipBody(model: {
-  intro: string;
-  whereLines: readonly string[];
-}): ReactNode {
-  return (
-    <span className="structure-entries__placed-tooltip-body">
-      <span className="structure-entries__placed-tooltip-intro">
-        {model.intro}
-      </span>
-      {model.whereLines.map((line, index) => (
-        <span
-          key={`${index}-${line}`}
-          className="structure-entries__placed-tooltip-line"
-        >
-          {line}
-        </span>
-      ))}
-    </span>
-  );
-}
-
 function placedHintNode(
   props: Pick<
     StructurePhaseTeamLineProps,
-    'placed' | 'placedPlaceLabel' | 'placedTooltipModel' | 'placedTooltip'
+    'placed' | 'placedPlaceLabel' | 'placedHintShortPlace'
   >,
   t: TFunction,
 ) {
@@ -96,12 +75,8 @@ function placedHintNode(
     return null;
   }
   const placeLabel = props.placedPlaceLabel?.trim() ?? '';
-  const model = props.placedTooltipModel;
-  const tooltipContent =
-    model != null
-      ? placedTooltipBody(model)
-      : (props.placedTooltip ?? t('entries.entryPlacedStatus'));
-  const shortPlace = (model?.shortPlace?.trim() || placeLabel).trim();
+  const tooltipContent = t('entries.teamPlaced');
+  const shortPlace = (props.placedHintShortPlace?.trim() || placeLabel).trim();
   const accessibleName = shortPlace
     ? t('entries.placedHintShort', { place: shortPlace })
     : t('entries.entryPlacedStatus');

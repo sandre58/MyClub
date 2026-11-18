@@ -98,7 +98,6 @@ function renderPanel(
           entryPlaceProjections={entryPlaceProjections}
           schematic={undefined}
           resolutionOccupants={resolutionOccupants}
-          destinationPhaseName="Généré"
         />
       </ResolutionReleaseContext.Provider>
     </MemoryRouter>,
@@ -264,7 +263,6 @@ describe('CompositionQualifiersPanel freshness badge', () => {
             ])
           }
           schematic={undefined}
-          destinationPhaseName="Généré"
         />
       </MemoryRouter>,
     );
@@ -311,7 +309,6 @@ describe('CompositionQualifiersPanel freshness badge', () => {
             ])
           }
           schematic={undefined}
-          destinationPhaseName="Poules"
         />
       </MemoryRouter>,
     );

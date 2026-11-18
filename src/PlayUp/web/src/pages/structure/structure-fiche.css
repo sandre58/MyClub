@@ -463,17 +463,6 @@
   flex: none;
 }
 
-.structure-entries__placed-tooltip-body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  text-align: start;
-}
-
-.structure-entries__placed-tooltip-line {
-  display: block;
-}
-
 .structure-entries__freshness-state {
   display: inline-flex;
   align-items: center;
