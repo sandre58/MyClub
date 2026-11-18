@@ -96,24 +96,12 @@
   border-color: var(--color-error);
 }
 
-.ds-field[data-invalid='true'] .ds-input:focus-within {
-  border-color: var(--color-error);
-  --ds-focus-color: var(--color-error);
-  box-shadow: var(--focus-field);
-}
-
 .ds-field[data-tone='warning'] .ds-input {
   border-color: var(--color-attention);
 }
 
 .ds-field[data-tone='warning'] .ds-input:hover:not([data-disabled='true']) {
   border-color: var(--color-attention);
-}
-
-.ds-field[data-tone='warning'] .ds-input:focus-within {
-  border-color: var(--color-attention);
-  --ds-focus-color: var(--color-attention);
-  box-shadow: var(--focus-field);
 }
 
 /* —— TextInput / ColorPicker shell —— */

@@ -619,7 +619,7 @@
 .teams-member__edit-field input:focus-visible {
   outline: none;
   border-color: var(--color-brand);
-  box-shadow: var(--focus-field);
+  box-shadow: none;
 }
 
 .teams-drawer__add {
@@ -678,7 +678,7 @@
 
 .teams-add-group:focus-within {
   border-color: var(--color-brand);
-  box-shadow: var(--focus-field);
+  box-shadow: none;
   outline: none;
 }
 

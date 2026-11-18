@@ -139,8 +139,8 @@ Do not collapse them: pulse activity ≠ tone chip.
 ## Focus (keyboard)
 
 - Geometry: `--focus-ring-width` (2px), `--focus-ring-offset` (2px), and `--focus-ring-extent` (offset + width = 4px) in `tokens/geometry.css`. Semantic color `--color-focus` in `tokens/colors.css`.
-- Aliases on **`:root` and `.ds-root`** in `foundations/focus.css` (so portaled lists resolve tokens): `--focus-halo` (surface gap + outer ring, keyboard only), `--focus-field` (2px **inset** contour for bordered fields, pointer **and** keyboard), `--focus-inset` (2px inset ring for active list options when `data-nav="keyboard"`).
-- **Fields (`.ds-input`, native `input` / `select` / `textarea` except checkbox, radio, range):** inner contour via `--focus-field` on `:focus-within` or `:focus-visible` — no outer halo on mouse click.
+- Aliases on **`:root` and `.ds-root`** in `foundations/focus.css` (so portaled lists resolve tokens): `--focus-halo` (surface gap + outer ring, keyboard only), `--focus-inset` (2px inset ring for active list options when `data-nav="keyboard"`).
+- **Edit fields** (`.ds-input`, native `input` / `select` / `textarea` except checkbox, radio, range — including portaled Popover / Select surfaces): **border only** on focus (pointer and keyboard) — `border-color: var(--color-brand)`, same border width, **no** extra `box-shadow` or `outline` (overrides the global halo on shells and text controls). Upload picture-card follows the same border-only rule on `:focus-visible`.
 - **List options (Select, DropDownButton):** background on hover/active; **inner ring only** when the list has `data-nav="keyboard"` and the option has `data-active="true"`. Set `data-nav` to `pointer` on pointer open or list hover, `keyboard` on arrow / Enter / Space navigation.
 - **Other interactives** (buttons, links, tabs, choice tiles, checkboxes…): unchanged outer `--focus-halo` on `:focus-visible` only.
 - **Clipping:** `.ds-dialog__body` and `.ds-scroll-safe` use negative margin + padding from `--focus-ring-extent` so halos are not clipped in dialogs and internal scroll lists.

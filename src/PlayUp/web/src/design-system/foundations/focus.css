@@ -8,8 +8,6 @@
 .ds-root {
   --focus-halo: 0 0 0 var(--focus-ring-offset) var(--color-surface), 0 0 0 var(--focus-ring-extent) var(--color-focus);
   --focus-inset: inset 0 0 0 var(--focus-ring-width) var(--color-focus);
-  --focus-field: inset 0 0 0 calc(var(--focus-ring-width) - var(--border-width))
-    var(--ds-focus-color, var(--color-focus));
 }
 
 .ds-root :is(a, button, input, select, textarea, summary, [tabindex]):focus {
@@ -32,23 +30,34 @@
   box-shadow: var(--focus-halo);
 }
 
-.ds-root .ds-input:is(:focus-within, :focus-visible),
-.ds-root :is(input, select, textarea):not([type='checkbox']):not([type='radio']):not([type='range']):focus-visible,
-.ds-popover .ds-input:is(:focus-within, :focus-visible),
-.ds-popover :is(input, select, textarea):not([type='checkbox']):not([type='radio']):not([type='range']):focus-visible,
-.ds-select__dropdown .ds-input:is(:focus-within, :focus-visible),
+.ds-root .ds-input:is(:focus, :focus-within, :focus-visible),
+.ds-root
+  :is(input, select, textarea):not([type='checkbox']):not([type='radio']):not([type='range']):is(
+    :focus,
+    :focus-visible
+  ),
+.ds-popover .ds-input:is(:focus, :focus-within, :focus-visible),
+.ds-popover
+  :is(input, select, textarea):not([type='checkbox']):not([type='radio']):not([type='range']):is(
+    :focus,
+    :focus-visible
+  ),
+.ds-select__dropdown .ds-input:is(:focus, :focus-within, :focus-visible),
 .ds-select__dropdown
-  :is(input, select, textarea):not([type='checkbox']):not([type='radio']):not([type='range']):focus-visible {
+  :is(input, select, textarea):not([type='checkbox']):not([type='radio']):not([type='range']):is(
+    :focus,
+    :focus-visible
+  ) {
   outline: none;
-  border-color: var(--ds-focus-color, var(--color-focus));
-  box-shadow: var(--focus-field);
+  border-color: var(--color-brand);
+  box-shadow: none;
 }
 
 .ds-root [tabindex].ds-upload:focus-visible,
 .ds-popover [tabindex].ds-upload:focus-visible {
   outline: none;
-  border-color: var(--color-focus);
-  box-shadow: var(--focus-field);
+  border-color: var(--color-brand);
+  box-shadow: none;
 }
 
 [data-nav='keyboard'] > li > [data-active='true'] {
@@ -68,11 +77,16 @@
 
 @media (forced-colors: active) {
   .ds-root :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible,
-  .ds-root .ds-input:focus-within,
+  .ds-root .ds-input:is(:focus, :focus-within, :focus-visible),
+  .ds-root
+    :is(input, select, textarea):not([type='checkbox']):not([type='radio']):not([type='range']):is(
+      :focus,
+      :focus-visible
+    ),
   .ds-popover :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible,
-  .ds-popover .ds-input:focus-within,
+  .ds-popover .ds-input:is(:focus, :focus-within, :focus-visible),
   .ds-select__dropdown :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible,
-  .ds-select__dropdown .ds-input:focus-within {
+  .ds-select__dropdown .ds-input:is(:focus, :focus-within, :focus-visible) {
     outline: 2px solid CanvasText;
     outline-offset: 2px;
     box-shadow: none;

@@ -61,7 +61,7 @@ Search these before building anything new. Reference implementations live in
 
 ## Focus chrome (DS)
 
-- **Fields** (`.ds-input`, text-like natives): inner contour via `--focus-field` on `:focus-within` / `:focus-visible` (pointer and keyboard).
+- **Edit fields** (`.ds-input`, text-like natives, portaled comboboxes): brand border on `:focus` / `:focus-within` / `:focus-visible` only — no extra ring or shadow.
 - **List options** (Select, DropDownButton): `data-nav="keyboard"` on the list + `data-active` on the row — inner ring via `--focus-inset`; pointer navigation uses background only.
 - **Everything else** in the product surface: outer `--focus-halo` on `:focus-visible` only.
 - Do not add page-local `outline` or invented tokens (e.g. `--color-focus-ring`); use foundation recipes and `ds-scroll-safe` inside dialogs when lists scroll.
