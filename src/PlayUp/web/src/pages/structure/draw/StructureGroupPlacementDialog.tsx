@@ -427,7 +427,14 @@ export function StructureGroupPlacementDialog({
       window.cancelAnimationFrame(outerFrame);
       window.cancelAnimationFrame(innerFrame);
     };
-  }, [open, placementBlocked, seatBlocked, subjectGone, focusEpoch, cases.length]);
+  }, [
+    open,
+    placementBlocked,
+    seatBlocked,
+    subjectGone,
+    focusEpoch,
+    cases.length,
+  ]);
 
   useEffect(() => {
     if (!open || mode !== 'batch') return;
