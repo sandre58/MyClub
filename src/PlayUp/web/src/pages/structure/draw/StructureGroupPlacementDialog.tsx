@@ -315,6 +315,7 @@ export function StructureGroupPlacementDialog({
         ];
         if (error.code && blockCodes.includes(error.code)) {
           setPlacementBlocked(true);
+          setFocusEpoch((value) => value + 1);
         }
         if (mode === 'edit' && error.code === 'Stage.EntryNotFound') {
           setLiveNote(t('groupPlacement.seatChanged'));
@@ -416,10 +417,17 @@ export function StructureGroupPlacementDialog({
     if (!open) return;
     const blocked = placementBlocked || (seatBlocked && !subjectGone);
     if (!blocked) return;
-    window.requestAnimationFrame(() => {
-      blockedFocusRef.current?.focus();
+    let innerFrame = 0;
+    const outerFrame = window.requestAnimationFrame(() => {
+      innerFrame = window.requestAnimationFrame(() => {
+        blockedFocusRef.current?.focus({ preventScroll: true });
+      });
     });
-  }, [open, placementBlocked, seatBlocked, subjectGone, focusEpoch]);
+    return () => {
+      window.cancelAnimationFrame(outerFrame);
+      window.cancelAnimationFrame(innerFrame);
+    };
+  }, [open, placementBlocked, seatBlocked, subjectGone, focusEpoch, cases.length]);
 
   useEffect(() => {
     if (!open || mode !== 'batch') return;

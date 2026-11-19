@@ -521,7 +521,7 @@ describe('StructureGroupPlacementDialog', () => {
     const blockedHost = screen
       .getByText('Placement indisponible')
       .closest('[tabindex="-1"]');
-    await waitFor(() => expect(blockedHost).toHaveFocus());
+    await waitFor(() => expect(blockedHost).toHaveFocus(), { timeout: 3000 });
   });
 
   it('opens the group picklist when several groups exist even if only one accepts placement', async () => {
