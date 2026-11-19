@@ -375,7 +375,7 @@ export function StructureManualPlacementDialog({
 
           {canEdit ? (
             <div
-              className="structure-qualification__facts structure-composition__facts"
+              className="structure-qualification__facts structure-manual-placement__facts"
               data-tone={cupStatsTone}
               aria-live="polite"
             >

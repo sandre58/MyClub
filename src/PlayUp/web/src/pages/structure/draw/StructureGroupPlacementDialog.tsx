@@ -859,7 +859,7 @@ export function StructureGroupPlacementDialog({
           {effectiveBatch ? (
             <>
               <div
-                className="structure-qualification__facts structure-composition__facts"
+                className="structure-qualification__facts structure-manual-placement__facts"
                 data-tone={batchStatsTone}
                 aria-live="polite"
               >

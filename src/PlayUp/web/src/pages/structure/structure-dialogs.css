@@ -1086,6 +1086,10 @@
   min-width: 0;
 }
 
+.structure-manual-placement__facts {
+  width: 100%;
+}
+
 .structure-manual-placement__batch-actions {
   display: flex;
   flex-wrap: wrap;

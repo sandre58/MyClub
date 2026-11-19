@@ -343,12 +343,7 @@ describe('StructureCompositionDialog', () => {
     expect(fact('remaining')).toHaveTextContent('-1');
     expect(screen.queryByText('Complet')).not.toBeInTheDocument();
     expect(document.querySelector('.ds-alert')).toBeNull();
-    expect(compositionCss).not.toMatch(
-      /\[data-fact='selected'\][\s\S]*var\(--color-success\)/,
-    );
-    expect(compositionCss).toMatch(
-      /\[data-fact='occupied'\][\s\S]*var\(--color-success\)/,
-    );
+    expect(compositionCss).not.toMatch(/--color-success/);
     expect(compositionCss).not.toMatch(/data-tone='exact'/);
     expect(compositionCss).not.toMatch(/data-tone='short'/);
     expect(compositionCss).not.toMatch(/data-tone='near'/);
