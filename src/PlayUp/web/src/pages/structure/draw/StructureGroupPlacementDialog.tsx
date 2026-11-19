@@ -725,7 +725,7 @@ export function StructureGroupPlacementDialog({
         : memberEntryClearable(cases, groupId, id),
     );
 
-  const toggleBatch = (entryId: string, displayName: string, next: boolean) => {
+  const toggleBatch = (entryId: string, next: boolean) => {
     setSelectedIds((current) => {
       if (next) {
         if (current.includes(entryId)) {
@@ -889,7 +889,6 @@ export function StructureGroupPlacementDialog({
                 <button
                   type="button"
                   className="ds-btn ds-btn--ghost structure-composition__select-all"
-                  tabIndex={-1}
                   disabled={!canFillGroup || pending}
                   onClick={fillGroup}
                 >
@@ -899,7 +898,6 @@ export function StructureGroupPlacementDialog({
                 <button
                   type="button"
                   className="ds-btn ds-btn--ghost structure-composition__select-all"
-                  tabIndex={-1}
                   disabled={!canRemoveMembers || pending}
                   onClick={clearDecheckableSelection}
                 >
@@ -1075,7 +1073,7 @@ export function StructureGroupPlacementDialog({
                             }
                             onChange={(next) => {
                               if (pending || protectedMember) return;
-                              toggleBatch(team.entryId, team.displayName, next);
+                              toggleBatch(team.entryId, next);
                             }}
                           />
                         );
