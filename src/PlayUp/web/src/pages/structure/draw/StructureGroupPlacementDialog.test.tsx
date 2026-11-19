@@ -1042,9 +1042,9 @@ describe('StructureGroupPlacementDialog', () => {
     const bravo = screen.getByRole('checkbox', { name: 'Bravo' });
     const charlie = screen.getByRole('checkbox', { name: 'Charlie' });
     await user.click(charlie);
-    expect(charlie).toHaveFocus();
+    await waitFor(() => expect(charlie).toHaveFocus());
     await user.click(bravo);
-    expect(bravo).toHaveFocus();
+    await waitFor(() => expect(bravo).toHaveFocus());
     expect(alpha).not.toHaveFocus();
   });
 
