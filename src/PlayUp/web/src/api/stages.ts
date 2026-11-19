@@ -178,6 +178,23 @@ export function assignEntriesToGroup(
   );
 }
 
+/** PUT /stages/{id}/groups/{groupId}/membership → 204 */
+export function setGroupEntries(
+  stageId: string,
+  groupId: string,
+  entryIds: readonly string[],
+  expectedEntryIds: readonly string[],
+): Promise<void> {
+  return sendNoContent(
+    'PUT',
+    `/stages/${stageId}/groups/${encodeURIComponent(groupId)}/membership`,
+    {
+      entryIds: [...entryIds],
+      expectedEntryIds: [...expectedEntryIds],
+    },
+  );
+}
+
 /** PUT /stages/{id}/tie-format → 204 */
 export function replaceStageDefaultTieFormat(
   stageId: string,

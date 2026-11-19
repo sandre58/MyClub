@@ -3,7 +3,7 @@ import type {
   StructureStageHubSummary,
   StructureView,
 } from '../../../types';
-import { canOfferGroupManualPlacement } from '../draw/manualGroupPlacementUi';
+import { canShowManualPlacementTargetMenu } from '../draw/manualGroupPlacementUi';
 import type { StructureSectionId } from '../structureHubSections';
 import {
   structureDiagnosticMeta,
@@ -33,22 +33,15 @@ export type StructureReadinessActionItem = {
   href: string;
 };
 
-/** Same gate as the phase sheet “Place manually” CTA for Groups. */
+/** Same gate as the phase sheet “Place manually” target menu CTA. */
 export function groupsManualPlacementActionEligible(
   stage: StructureStageHubSummary,
   schematicCases?: readonly SchematicCase[] | null,
 ): boolean {
-  if (stage.formatKind !== 'Groups' || stage.hasDrawRules) {
+  if (stage.hasDrawRules) {
     return true;
   }
-  if (schematicCases == null) {
-    return true;
-  }
-  const actions = stage.actions ?? [];
-  if (!actions.includes('AssignEntryToGroup')) {
-    return false;
-  }
-  return canOfferGroupManualPlacement(schematicCases, actions);
+  return canShowManualPlacementTargetMenu(stage, schematicCases);
 }
 
 function resolvePlacesActionLabelKey(stage: StructureStageHubSummary): string {

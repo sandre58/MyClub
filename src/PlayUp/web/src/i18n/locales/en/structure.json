@@ -710,6 +710,7 @@
     "performDraw": "Run the draw",
     "activateDraw": "Activate draw",
     "manualPlacementCta": "Place manually",
+    "manualPlacementMenuEmpty": "No target available",
     "drawParams": "Draw settings",
     "drawParamsAction": "Settings",
     "deactivateDraw": "Deactivate draw",
@@ -1031,7 +1032,11 @@
     "toastCleared": "Manual assignment cleared",
     "selectionCleared": "Selection cleared",
     "placeOccupied": "{{place}} — {{team}}",
-    "placeFree": "{{place}} — free"
+    "placeFree": "{{place}} — free",
+    "placeFreeShort": "Free",
+    "placeOccupiedShort": "{{place}} —",
+    "placeOccupiedAria": "{{place}} — {{team}}",
+    "titleWithPlace": "Manual placement — {{place}}"
   },
   "groupPlacement": {
     "title": "Place a team — {{group}}",
@@ -1099,7 +1104,17 @@
     "targetLockedAria": "Locked group: {{group}}",
     "selectionCleared": "Selection cleared",
     "blockedAfterRemoveTitle": "Placement unavailable",
-    "blockedAfterRemove": "This group no longer has an editable seat for manual placement (reserved seat or lock)."
+    "blockedAfterRemove": "This group no longer has an editable seat for manual placement (reserved seat or lock).",
+    "batchTitle": "{{group}} — {{phase}}",
+    "groupChanged": "The group has changed",
+    "removeAll": "Remove",
+    "excessShort": "over capacity",
+    "menuAriaTeamsOnCapacity": "{{occupied}} teams of {{capacity}}",
+    "saveDeltaRemoves": "Save (−{{removes}})",
+    "saveDeltaAdds": "Save (+{{adds}})",
+    "saveDeltaBoth": "Save (−{{removes}}, +{{adds}})",
+    "willRemoveMembers_one": "{{count}} team will be removed",
+    "willRemoveMembers_other": "{{count}} teams will be removed"
   },
   "composition": {
     "gauge": {

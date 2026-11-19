@@ -56,6 +56,7 @@ export {
   clearEntryFromGroup,
   replaceEntryInGroup,
   assignEntriesToGroup,
+  setGroupEntries,
   replaceStageDefaultTieFormat,
   replaceRoundTieFormat,
   fetchStageOverview,

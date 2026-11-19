@@ -6,6 +6,7 @@ import type {
 } from '../../../types';
 import {
   collectAllStructureReadinessActionItems,
+  groupsManualPlacementActionEligible,
   resolveStructureDiagnosticNavigation,
 } from './structureReadinessActions';
 import { withFixturePresentedIssueCodes } from './structurePresentedIssueCodes.fixture';
@@ -93,6 +94,12 @@ function stage(
     progressionPathCount: 0,
     hasTieFormat: false,
     formatKind: 'Groups',
+    actions: [
+      'AssignEntryToGroup',
+      'ClearEntryFromGroup',
+      'SetGroupEntries',
+      'AssignEntryToSlot',
+    ],
     ...partial,
   };
 }
@@ -146,12 +153,12 @@ describe('structureReadinessActions', () => {
     );
   });
 
-  it('omits groups manual placement when no group has a place seat', () => {
+  it('keeps groups manual placement when every group is full', () => {
     const groupsStage = stage({
       stageId: 'g-full',
       name: 'Poules',
       formatKind: 'Groups',
-      actions: ['AssignEntryToGroup', 'ClearEntryFromGroup'],
+      actions: ['AssignEntryToGroup', 'ClearEntryFromGroup', 'SetGroupEntries'],
       structureIssues: ['SlotFeedMissing'],
     });
     const fullCases: SchematicCase[] = [1, 2, 3, 4].map((index) => ({
@@ -166,11 +173,9 @@ describe('structureReadinessActions', () => {
       seatMode: 'Editable',
       canClear: true,
     }));
-    const data = baseView({ stages: [groupsStage] });
-    const items = collectAllStructureReadinessActionItems(data, [groupsStage], {
-      schematicCasesByStageId: { 'g-full': fullCases },
-    });
-    expect(items.some((item) => item.cta === 'places')).toBe(false);
+    expect(groupsManualPlacementActionEligible(groupsStage, fullCases)).toBe(
+      true,
+    );
   });
 
   it('maps placement CTA to manual dialog when draw is not engaged', () => {
@@ -183,6 +188,7 @@ describe('structureReadinessActions', () => {
           name: 'Cup',
           formatKind: 'Cup',
           hasDrawRules: false,
+          actions: ['AssignEntryToSlot'],
         }),
         code: 'SlotFeedMissing',
         cta: 'places',

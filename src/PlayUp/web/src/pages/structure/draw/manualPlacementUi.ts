@@ -1,4 +1,9 @@
-import type { SchematicCase, SchematicFeedKind } from '../../../types';
+import type { DropDownButtonItem } from '../../../design-system/components/DropDownButton';
+import type {
+  SchematicCase,
+  SchematicFeedKind,
+  StructureEntry,
+} from '../../../types';
 import { placeChromeLabel } from './structurePlaceLabel';
 
 /** How a Cup place responds to manual placement. */
@@ -85,6 +90,50 @@ export function listCupManualPlaces(
 }
 
 /** Entries already pinned on another editable/DA place (exclude current slot). */
+export type CupManualPlacementMenuItem = DropDownButtonItem & {
+  slotKey: string;
+};
+
+export function listCupManualPlacementMenuItems(
+  cases: readonly SchematicCase[],
+  stages: readonly ManualPlacementStage[] | undefined,
+  entries: readonly StructureEntry[],
+  labels: {
+    free: string;
+    occupiedPrimary: (placeLabel: string) => string;
+    occupiedAria: (placeLabel: string, teamName: string) => string;
+  },
+): CupManualPlacementMenuItem[] {
+  const entryById = new Map(entries.map((entry) => [entry.entryId, entry]));
+  const items: CupManualPlacementMenuItem[] = [];
+  for (const place of listCupManualPlaces(cases, stages)) {
+    const occupiedId = place.entryId;
+    if (occupiedId) {
+      const entry = entryById.get(occupiedId);
+      const teamName =
+        entry?.displayName?.trim() || entry?.shortName?.trim() || labels.free;
+      items.push({
+        slotKey: place.slotKey,
+        value: `cup:${place.slotKey}`,
+        label: labels.occupiedPrimary(place.label),
+        secondary: teamName,
+        'aria-label': labels.occupiedAria(place.label, teamName),
+        disabled: place.mode !== 'editable',
+      });
+      continue;
+    }
+    items.push({
+      slotKey: place.slotKey,
+      value: `cup:${place.slotKey}`,
+      label: `${place.label} - ${labels.free}`,
+      secondary: labels.free,
+      'aria-label': `${place.label} — ${labels.free}`,
+      disabled: place.mode !== 'editable',
+    });
+  }
+  return items;
+}
+
 export function occupiedEntryIds(
   places: readonly ManualPlaceOption[],
   exceptSlotKey?: string | null,

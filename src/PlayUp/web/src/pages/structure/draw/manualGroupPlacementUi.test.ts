@@ -3,6 +3,7 @@ import type { SchematicCase, StructureEntry } from '../../../types';
 import {
   canBatchAssignToGroup,
   canOfferGroupManualPlacement,
+  canShowManualPlacementTargetMenu,
   canReplaceInGroup,
   countGroupReservedFeedSeats,
   firstGroupIdWithBatchCap,
@@ -509,6 +510,41 @@ describe('resolveGroupStatusSuffix', () => {
       }),
     ];
     expect(resolveGroupStatusSuffix(drawPending, 'g-a', 4)).toBe('draw');
+  });
+});
+
+describe('canShowManualPlacementTargetMenu', () => {
+  it('stays visible when every group is full in Ready', () => {
+    const cases = [1, 2, 3, 4].map((index) =>
+      place({
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId: 'g-a',
+          groupName: 'A',
+          index,
+        },
+        entry: { entryId: `e${index}`, displayName: `T${index}` },
+      }),
+    );
+    expect(
+      canShowManualPlacementTargetMenu(
+        {
+          formatKind: 'Groups',
+          status: 'Ready',
+          actions: [...actions, 'SetGroupEntries'],
+        },
+        cases,
+      ),
+    ).toBe(true);
+  });
+
+  it('hides in Running', () => {
+    expect(
+      canShowManualPlacementTargetMenu(
+        { formatKind: 'Groups', status: 'Running', actions },
+        [],
+      ),
+    ).toBe(false);
   });
 });
 

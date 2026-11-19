@@ -285,7 +285,11 @@ export function StructureManualPlacementDialog({
       <Dialog
         open={open}
         onClose={requestClose}
-        title={t('manualPlacement.title', { phase: stage.name })}
+        title={
+          placeLocked
+            ? t('manualPlacement.titleWithPlace', { place: placeLabel })
+            : t('manualPlacement.title', { phase: stage.name })
+        }
         description={t('manualPlacement.lead')}
         size="md"
         closeLabel={tCommon('close')}
@@ -338,20 +342,11 @@ export function StructureManualPlacementDialog({
           >
             {liveNote}
           </p>
-          <div className="structure-manual-placement__field">
-            <span className="structure-manual-placement__label">
-              {t('manualPlacement.placeLabel')}
-            </span>
-            {placeLocked ? (
-              <p
-                className="structure-manual-placement__place-locked"
-                aria-label={t('manualPlacement.placeLockedAria', {
-                  place: placeLabel,
-                })}
-              >
-                {placeLabel}
-              </p>
-            ) : (
+          {!placeLocked ? (
+            <div className="structure-manual-placement__field">
+              <span className="structure-manual-placement__label">
+                {t('manualPlacement.placeLabel')}
+              </span>
               <Select
                 options={placeOptions}
                 value={slotKey}
@@ -360,8 +355,8 @@ export function StructureManualPlacementDialog({
                 aria-label={t('manualPlacement.placeLabel')}
                 disabled={pending || places.length === 0}
               />
-            )}
-          </div>
+            </div>
+          ) : null}
 
           <div className="structure-manual-placement__body">
             {isBlocked && blockedEmpty ? (

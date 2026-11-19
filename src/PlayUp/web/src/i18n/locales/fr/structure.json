@@ -710,6 +710,7 @@
     "performDraw": "Lancer le tirage",
     "activateDraw": "Activer le tirage",
     "manualPlacementCta": "Placer manuellement",
+    "manualPlacementMenuEmpty": "Aucune cible disponible",
     "drawParams": "Paramètres du tirage",
     "drawParamsAction": "Paramètres",
     "deactivateDraw": "Désactiver le tirage",
@@ -1031,7 +1032,11 @@
     "toastCleared": "Affectation manuelle effacée",
     "selectionCleared": "Sélection effacée",
     "placeOccupied": "{{place}} — {{team}}",
-    "placeFree": "{{place}} — libre"
+    "placeFree": "{{place}} — libre",
+    "placeFreeShort": "Libre",
+    "placeOccupiedShort": "{{place}} —",
+    "placeOccupiedAria": "{{place}} — {{team}}",
+    "titleWithPlace": "Placement manuel — {{place}}"
   },
   "groupPlacement": {
     "title": "Placer une équipe — {{group}}",
@@ -1099,7 +1104,17 @@
     "targetLockedAria": "Groupe verrouillé : {{group}}",
     "selectionCleared": "Sélection effacée",
     "blockedAfterRemoveTitle": "Placement indisponible",
-    "blockedAfterRemove": "Le groupe n’a plus de place éditable pour une affectation manuelle (place réservée ou verrouillage)."
+    "blockedAfterRemove": "Le groupe n’a plus de place éditable pour une affectation manuelle (place réservée ou verrouillage).",
+    "batchTitle": "{{group}} — {{phase}}",
+    "groupChanged": "Le groupe a changé",
+    "removeAll": "Retirer",
+    "excessShort": "en trop",
+    "menuAriaTeamsOnCapacity": "{{occupied}} équipes sur {{capacity}}",
+    "saveDeltaRemoves": "Enregistrer (−{{removes}})",
+    "saveDeltaAdds": "Enregistrer (+{{adds}})",
+    "saveDeltaBoth": "Enregistrer (−{{removes}}, +{{adds}})",
+    "willRemoveMembers_one": "{{count}} équipe sera retirée",
+    "willRemoveMembers_other": "{{count}} équipes seront retirées"
   },
   "composition": {
     "gauge": {

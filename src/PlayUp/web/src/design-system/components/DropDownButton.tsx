@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useId,
   useRef,
   useState,
@@ -11,8 +12,12 @@ import { Popover } from './Popover';
 export type DropDownButtonItem = {
   value: string;
   label: string;
+  /** Compact secondary line (e.g. occupancy ratio). */
+  secondary?: string;
   disabled?: boolean;
   leading?: ReactNode;
+  /** Overrides the accessible name for the menu item. */
+  'aria-label'?: string;
 };
 
 export type DropDownButtonVariant = 'primary' | 'secondary' | 'ghost';
@@ -30,6 +35,9 @@ export type DropDownButtonProps = {
   emptyLabel?: string;
   'aria-label'?: string;
   className?: string;
+  /** Controlled open state (optional). */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
 function firstEnabledIndex(items: DropDownButtonItem[]) {
@@ -66,12 +74,23 @@ export function DropDownButton({
   emptyLabel,
   'aria-label': ariaLabel,
   className = '',
+  open: controlledOpen,
+  onOpenChange,
 }: DropDownButtonProps) {
-  const [open, setOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [listNav, setListNav] = useState<'keyboard' | 'pointer'>('pointer');
   const rootRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : uncontrolledOpen;
+
+  const setOpenState = (next: boolean) => {
+    if (!isControlled) {
+      setUncontrolledOpen(next);
+    }
+    onOpenChange?.(next);
+  };
 
   const enabled = !disabled;
   const rootClass = ['ds-dropdown-button', className].filter(Boolean).join(' ');
@@ -82,27 +101,31 @@ export function DropDownButton({
   ].join(' ');
 
   function close() {
-    setOpen(false);
+    setOpenState(false);
     setActiveIndex(-1);
   }
 
   function toggle() {
     if (!enabled) return;
-    setOpen((current) => {
-      const next = !current;
-      if (next) {
-        setListNav('pointer');
-        setActiveIndex(firstEnabledIndex(items));
-      } else {
-        setActiveIndex(-1);
-      }
-      return next;
-    });
+    const next = !open;
+    setOpenState(next);
+    if (next) {
+      setListNav('pointer');
+      setActiveIndex(firstEnabledIndex(items));
+    } else {
+      setActiveIndex(-1);
+    }
   }
 
   function pick(value: string) {
     onSelect(value);
     close();
+  }
+
+  function openMenuFromKeyboard() {
+    setListNav('keyboard');
+    setOpenState(true);
+    setActiveIndex(firstEnabledIndex(items));
   }
 
   function onTriggerKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
@@ -116,9 +139,7 @@ export function DropDownButton({
         event.key === ' '
       ) {
         event.preventDefault();
-        setListNav('keyboard');
-        setOpen(true);
-        setActiveIndex(firstEnabledIndex(items));
+        openMenuFromKeyboard();
       }
       return;
     }
@@ -152,6 +173,16 @@ export function DropDownButton({
     }
   }
 
+  useEffect(() => {
+    if (!open || activeIndex < 0 || listNav !== 'keyboard') return;
+    const optionId = `${menuId}-option-${activeIndex}`;
+    const option = document.getElementById(optionId);
+    option?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }, [open, activeIndex, listNav, menuId]);
+
+  const activeDescendantId =
+    open && activeIndex >= 0 ? `${menuId}-option-${activeIndex}` : undefined;
+
   return (
     <div className={rootClass} ref={rootRef}>
       <button
@@ -161,6 +192,7 @@ export function DropDownButton({
         aria-expanded={open}
         aria-haspopup="menu"
         aria-controls={open ? menuId : undefined}
+        aria-activedescendant={activeDescendantId}
         aria-label={ariaLabel}
         onClick={toggle}
         onKeyDown={onTriggerKeyDown}
@@ -181,7 +213,7 @@ export function DropDownButton({
         onOpenChange={(next) => {
           if (!next) close();
           else {
-            setOpen(true);
+            setOpenState(true);
             setActiveIndex(firstEnabledIndex(items));
           }
         }}
@@ -207,10 +239,12 @@ export function DropDownButton({
                 <button
                   type="button"
                   role="menuitem"
+                  id={`${menuId}-option-${index}`}
                   className="ds-dropdown-button__item"
                   tabIndex={-1}
                   disabled={item.disabled || !open}
                   data-active={index === activeIndex ? 'true' : 'false'}
+                  aria-label={item['aria-label']}
                   onClick={() => {
                     if (!item.disabled) pick(item.value);
                   }}
@@ -229,8 +263,18 @@ export function DropDownButton({
                       {item.leading}
                     </span>
                   ) : null}
-                  <span className="ds-dropdown-button__item-label">
-                    {item.label}
+                  <span className="ds-dropdown-button__item-text">
+                    <span className="ds-dropdown-button__item-label">
+                      {item.label}
+                    </span>
+                    {item.secondary ? (
+                      <span
+                        className="ds-dropdown-button__item-secondary"
+                        aria-hidden="true"
+                      >
+                        {item.secondary}
+                      </span>
+                    ) : null}
                   </span>
                 </button>
               </li>
