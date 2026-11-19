@@ -1258,8 +1258,8 @@ describe('StructureGroupPlacementDialog', () => {
       ],
     });
 
-    await user.click(screen.getByRole('checkbox', { name: 'Echo' }));
     await user.click(screen.getByRole('checkbox', { name: 'Delta' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Echo' }));
     await user.click(screen.getByRole('button', { name: 'Enregistrer' }));
 
     await waitFor(() => expect(setGroupEntries).toHaveBeenCalled());
@@ -1269,6 +1269,39 @@ describe('StructureGroupPlacementDialog', () => {
     expect(payload).toEqual(expect.arrayContaining(['e1', 'e2', 'e3', 'e5']));
     expect(payload).toHaveLength(4);
     expect(expected).toEqual(expect.arrayContaining(['e1', 'e2', 'e3', 'e4']));
+  });
+
+  it('disables save when additions exceed the net cap on a full group', async () => {
+    const user = userEvent.setup();
+    const cases = [1, 2, 3, 4].map((index) =>
+      groupPlace({
+        formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index },
+        entry: {
+          entryId: `e${index}`,
+          displayName: ['Alpha', 'Bravo', 'Charlie', 'Delta'][index - 1],
+        },
+        canClear: true,
+      }),
+    );
+    renderDialog({
+      place: null,
+      cases,
+      stage: stage({
+        compositionEntryIds: ['e1', 'e2', 'e3', 'e4', 'e5', 'e6'],
+      }),
+      entries: [
+        entry('e1', 'Alpha'),
+        entry('e2', 'Bravo'),
+        entry('e3', 'Charlie'),
+        entry('e4', 'Delta'),
+        entry('e5', 'Echo'),
+        entry('e6', 'Foxtrot'),
+      ],
+    });
+
+    await user.click(screen.getByRole('checkbox', { name: 'Echo' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Foxtrot' }));
+    expect(screen.getByRole('button', { name: 'Enregistrer' })).toBeDisabled();
   });
 
   it('announces hub membership refresh in batch mode (A1)', async () => {

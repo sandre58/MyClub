@@ -255,7 +255,7 @@ test.describe('manual group placement', () => {
       .first();
     await editSeat.click();
     const dialog = page.getByRole('dialog', {
-      name: /Modifier la place — Groupe B/,
+      name: /Placement — .* — Groupe B/,
     });
     await dialog
       .getByRole('button', { name: /Retirer l.équipe de la place/ })
@@ -361,6 +361,23 @@ test.describe('manual group placement', () => {
     const groupA = page
       .locator('.regulation-schematic__card')
       .filter({ hasText: 'Groupe A' });
+    await groupA
+      .getByRole('button', {
+        name: /Groupe A · 4 — Cliquer pour modifier ou retirer/,
+      })
+      .first()
+      .click();
+    const seatFourDialog = page.getByRole('dialog', {
+      name: /Placement — .* — Groupe A/,
+    });
+    const shiftedTeamName = (
+      await seatFourDialog
+        .getByRole('radio', { checked: true })
+        .locator('.ds-choice-tile__title')
+        .innerText()
+    ).trim();
+    await seatFourDialog.getByRole('button', { name: 'Annuler' }).click();
+
     const editSeat = groupA
       .getByRole('button', {
         name: /Groupe A · 1 — Cliquer pour modifier ou retirer/,
@@ -379,26 +396,21 @@ test.describe('manual group placement', () => {
     await expect(dialog).toBeHidden();
     await expect(groupA.getByText('3/4')).toBeVisible();
 
-    const formerFourth = groupA
+    const seatThree = groupA
       .getByRole('button', {
         name: /Groupe A · 3 — Cliquer pour modifier ou retirer/,
       })
       .first();
-    await formerFourth.click();
+    await seatThree.click();
     const replaceDialog = page.getByRole('dialog', {
       name: /Placement — .* — Groupe A/,
     });
-    const checked = replaceDialog.getByRole('radio', { checked: true });
-    const shiftedName = (await checked.innerText()).trim().split('\n')[0];
+    await expect(
+      replaceDialog.getByRole('radio', {
+        name: shiftedTeamName,
+        checked: true,
+      }),
+    ).toBeVisible();
     await replaceDialog.getByRole('button', { name: 'Annuler' }).click();
-
-    const anchorEdit = groupA
-      .getByRole('button', {
-        name: new RegExp(
-          `Groupe A · 3 — .*${shiftedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`,
-        ),
-      })
-      .first();
-    await expect(anchorEdit).toBeVisible();
   });
 });

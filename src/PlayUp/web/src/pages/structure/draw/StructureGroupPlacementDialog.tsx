@@ -43,7 +43,9 @@ import {
   listGroupMemberEntries,
   listOtherGroupEntries,
   purgeUnavailableSelection,
+  batchSelectionExceedsCapacity,
   memberEntryClearable,
+  memberProtectReasonKey,
   membershipSetsEqual,
   reseedMembershipSelection,
   listGroupSelectTargets,
@@ -212,7 +214,6 @@ export function StructureGroupPlacementDialog({
       emptySeatCap,
       cases,
       groupId,
-      memberEntries,
       expectedEntryIds,
       selectedIds,
       additionsOnly,
@@ -222,7 +223,6 @@ export function StructureGroupPlacementDialog({
     groupId,
     emptySeatCap,
     cases,
-    memberEntries,
     expectedEntryIds,
     selectedIds,
     additionsOnly,
@@ -433,27 +433,35 @@ export function StructureGroupPlacementDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- open edge
   }, [open, placeProp, mode, fixedGroupId]);
 
+  const hubMemberEntryIds = useMemo(() => {
+    if (!groupId) {
+      return [];
+    }
+    return listGroupMemberEntries(stage, cases, groupId, entries).map(
+      (row) => row.entryId,
+    );
+  }, [groupId, stage, cases, entries]);
+  const lastHubMembersRef = useRef<string[] | null>(null);
+
   useEffect(() => {
     if (!open || !effectiveBatch || !groupId || !membershipSeededRef.current) {
+      lastHubMembersRef.current = null;
       return;
     }
-    const currentMembers = listGroupMemberEntries(
-      stage,
-      cases,
-      groupId,
-      entries,
-    ).map((row) => row.entryId);
-    setExpectedEntryIds((previous) => {
-      if (membershipSetsEqual(currentMembers, previous)) {
-        return previous;
-      }
-      setSelectedIds((selection) =>
-        reseedMembershipSelection(currentMembers, selection, available),
-      );
-      setLiveNote(t('groupPlacement.groupChanged'));
-      return currentMembers;
-    });
-  }, [open, effectiveBatch, groupId, cases, entries, stage, available, t]);
+    const previous = lastHubMembersRef.current;
+    if (previous != null && membershipSetsEqual(hubMemberEntryIds, previous)) {
+      return;
+    }
+    lastHubMembersRef.current = hubMemberEntryIds;
+    if (previous == null) {
+      return;
+    }
+    setExpectedEntryIds(hubMemberEntryIds);
+    setSelectedIds((selection) =>
+      reseedMembershipSelection(hubMemberEntryIds, selection, available),
+    );
+    setLiveNote(t('groupPlacement.groupChanged'));
+  }, [open, effectiveBatch, groupId, hubMemberEntryIds, available, t]);
 
   useEffect(() => {
     if (!open || !effectiveBatch) return;
@@ -576,7 +584,15 @@ export function StructureGroupPlacementDialog({
   const additionsCount = effectiveBatch
     ? selectedIds.filter((id) => !expectedEntryIds.includes(id)).length
     : 0;
-  const overCap = effectiveBatch && additionsCount > cap;
+  const selectionOverCapacity =
+    effectiveBatch &&
+    batchSelectionExceedsCapacity(
+      stage.placesPerGroup ?? 0,
+      expectedEntryIds,
+      selectedIds,
+    );
+  const overCap =
+    effectiveBatch && (additionsCount > cap || selectionOverCapacity);
   const atCap = effectiveBatch && cap > 0 && additionsCount >= cap;
   const showPlacementBlocked =
     placementBlocked || (seatBlocked && !subjectGone);
@@ -1051,8 +1067,10 @@ export function StructureGroupPlacementDialog({
                             key={team.entryId}
                             label={team.displayName}
                             description={
-                              protectedMember
-                                ? t('groupPlacement.clearLocked')
+                              protectedMember && groupId != null
+                                ? t(
+                                    `groupPlacement.${memberProtectReasonKey(cases, groupId, team.entryId) ?? 'clearLocked'}`,
+                                  )
                                 : description
                             }
                             layout="inline"
