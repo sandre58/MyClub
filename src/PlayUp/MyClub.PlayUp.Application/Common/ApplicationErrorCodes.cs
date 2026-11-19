@@ -302,6 +302,12 @@ public static class ApplicationErrorCodes
     public const string ManualGroupPlacementBlockedByActiveDraw = "Application.ManualGroupPlacementBlockedByActiveDraw";
 
     /// <summary>
+    /// Gets the code when a PostgreSQL unique violation (23505) on <c>group_entries</c> survives the competition lock.
+    /// Mapped to HTTP 409. Other constraints are not mapped to this code.
+    /// </summary>
+    public const string GroupMembershipConflict = "Application.GroupMembershipConflict";
+
+    /// <summary>
     /// Gets the code when a draw resolution is obsolete for consumption.
     /// </summary>
     public const string DrawObsoleteForConsumption = "Application.DrawObsoleteForConsumption";

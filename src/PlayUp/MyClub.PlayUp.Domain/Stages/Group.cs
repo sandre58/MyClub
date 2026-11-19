@@ -60,6 +60,32 @@ public sealed class Group : Entity<GroupId>
 
     internal bool Remove(EntryId entryId) => _entryIds.Remove(entryId);
 
+    /// <summary>
+    /// Writes <paramref name="next"/> at the index of <paramref name="current"/>.
+    /// The seat and its sort order stay. Same member is a no-op.
+    /// </summary>
+    /// <param name="current">Member that leaves the seat.</param>
+    /// <param name="next">Member that takes the seat.</param>
+    /// <returns><see langword="false"/> when <paramref name="current"/> is absent or equals <paramref name="next"/>.</returns>
+    internal bool Replace(EntryId current, EntryId next)
+    {
+        var index = _entryIds.IndexOf(current);
+        if (index < 0 || current.Equals(next))
+        {
+            return false;
+        }
+
+        if (_entryIds.Contains(next))
+        {
+            throw new DomainException(
+                $"Entry '{next}' is already assigned to this group.",
+                StageErrorCodes.DuplicateEntry);
+        }
+
+        _entryIds[index] = next;
+        return true;
+    }
+
     internal bool Contains(EntryId entryId) => _entryIds.Contains(entryId);
 
     private static string NormalizeName(string name)

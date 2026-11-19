@@ -60,6 +60,12 @@ public sealed class UseCaseExecutorStructureTests
         unitOfWork
             .Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
+        unitOfWork
+            .Setup(uow => uow.ExecuteExclusiveAsync(
+                It.IsAny<CompetitionId>(),
+                It.IsAny<Func<CancellationToken, Task>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns((CompetitionId _, Func<CancellationToken, Task> write, CancellationToken token) => write(token));
 
         var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock, AlwaysExistingMedia.Instance, NullLogger<UseCaseExecutor>.Instance);
         var (result, view) = await executor.ConfigureStructureAsync(

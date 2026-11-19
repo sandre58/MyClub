@@ -98,6 +98,12 @@ public static class StructureViewAssembler
     /// <summary>Per-phase action: clear group membership (manual).</summary>
     public const string ActionClearEntryFromGroup = "ClearEntryFromGroup";
 
+    /// <summary>Per-phase action: replace the team on a group seat.</summary>
+    public const string ActionReplaceEntryInGroup = "ReplaceEntryInGroup";
+
+    /// <summary>Per-phase action: place several teams in one group.</summary>
+    public const string ActionAssignEntriesToGroup = "AssignEntriesToGroup";
+
     /// <summary>Per-phase action: set match generation format (locale).</summary>
     public const string ActionReplaceMatchGenerationFormat = "ReplaceMatchGenerationFormat";
 
@@ -935,6 +941,8 @@ public static class StructureViewAssembler
                 actions.Add(ActionReplaceMatchGenerationFormat);
                 actions.Add(ActionAssignEntryToGroup);
                 actions.Add(ActionClearEntryFromGroup);
+                actions.Add(ActionReplaceEntryInGroup);
+                actions.Add(ActionAssignEntriesToGroup);
                 break;
             case StructureFormatKind.Championship:
                 actions.Add(ActionReplaceMatchGenerationFormat);
@@ -980,6 +988,8 @@ public static class StructureViewAssembler
             {
                 actions.Add(ActionAssignEntryToGroup);
                 actions.Add(ActionClearEntryFromGroup);
+                actions.Add(ActionReplaceEntryInGroup);
+                actions.Add(ActionAssignEntriesToGroup);
             }
 
             return actions;
@@ -1014,6 +1024,8 @@ public static class StructureViewAssembler
             case StructureFormatKind.Groups:
                 actions.Add(ActionAssignEntryToGroup);
                 actions.Add(ActionClearEntryFromGroup);
+                actions.Add(ActionReplaceEntryInGroup);
+                actions.Add(ActionAssignEntriesToGroup);
                 break;
         }
     }

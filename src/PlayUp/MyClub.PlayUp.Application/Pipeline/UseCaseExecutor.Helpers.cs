@@ -490,4 +490,30 @@ public sealed partial class UseCaseExecutor
             await matches.ListByStageIdsForUpdateAsync(destinationStageIds, cancellationToken)
                 .ConfigureAwait(false));
     }
+
+    /// <summary>
+    /// Reads the competition id, then runs <paramref name="write"/> under the competition lock.
+    /// The delegate loads the aggregates it mutates.
+    /// </summary>
+    private async Task ExecuteOnStageCompetitionAsync(
+        StageId stageId,
+        Func<CancellationToken, Task> write,
+        CancellationToken cancellationToken)
+    {
+        var competitionId = await stages.GetCompetitionIdReadOnlyAsync(stageId, cancellationToken)
+                                .ConfigureAwait(false)
+                            ?? throw new ApplicationFailureException(
+                                $"Stage '{stageId}' was not found.",
+                                ApplicationErrorCodes.StageNotFound);
+        await unitOfWork.ExecuteExclusiveAsync(competitionId, write, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Runs <paramref name="write"/> under the competition lock. The delegate loads what it mutates.
+    /// </summary>
+    private Task ExecuteOnCompetitionAsync(
+        CompetitionId competitionId,
+        Func<CancellationToken, Task> write,
+        CancellationToken cancellationToken) =>
+        unitOfWork.ExecuteExclusiveAsync(competitionId, write, cancellationToken);
 }

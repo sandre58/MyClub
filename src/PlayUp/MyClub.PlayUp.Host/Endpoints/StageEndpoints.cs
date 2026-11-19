@@ -177,6 +177,59 @@ internal static class StageEndpoints
                 return Results.NoContent();
             });
 
+        app.MapPost(
+            "/stages/{stageId:guid}/groups/{groupId:guid}/entries/{entryId:guid}/replace",
+            async (
+                Guid stageId,
+                Guid groupId,
+                Guid entryId,
+                ReplaceEntryInGroupRequest? request,
+                UseCaseExecutor executor,
+                CancellationToken cancellationToken) =>
+            {
+                if (request is null || request.ReplacementEntryId == Guid.Empty)
+                {
+                    return Results.BadRequest(new { code = ApplicationErrorCodes.InvalidStructureIntent });
+                }
+
+                await executor
+                    .ReplaceEntryInGroupAsync(
+                        new StageId(stageId),
+                        new GroupId(groupId),
+                        new EntryId(entryId),
+                        new EntryId(request.ReplacementEntryId),
+                        cancellationToken)
+                    .ConfigureAwait(false);
+                return Results.NoContent();
+            });
+
+        app.MapPost(
+            "/stages/{stageId:guid}/groups/{groupId:guid}/entries",
+            async (
+                Guid stageId,
+                Guid groupId,
+                AssignEntriesToGroupRequest? request,
+                UseCaseExecutor executor,
+                CancellationToken cancellationToken) =>
+            {
+                if (request?.EntryIds is not { Count: > 0 } entryIds
+                    || entryIds.Count > AssignEntriesToGroup.MaxBatchSize
+                    || entryIds.Any(id => id == Guid.Empty)
+                    || entryIds.Distinct().Count() != entryIds.Count)
+                {
+                    return Results.BadRequest(new { code = ApplicationErrorCodes.InvalidStructureIntent });
+                }
+
+                await executor
+                    .AssignEntriesToGroupAsync(
+                        new StageId(stageId),
+                        new GroupId(groupId),
+                        entryIds.Select(id => new EntryId(id)).ToArray(),
+                        cancellationToken)
+                    .ConfigureAwait(false);
+                return Results.NoContent();
+            });
+
         app.MapPut(
             "/stages/{stageId:guid}/match-generation-format",
             async (

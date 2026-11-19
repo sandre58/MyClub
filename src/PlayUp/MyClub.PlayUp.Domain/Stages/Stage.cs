@@ -1379,6 +1379,132 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
+    /// Replaces the occupant of a group seat with another entry. The seat index is kept.
+    /// The occupant loses resolution provenance. The replacement receives none.
+    /// Same member, or an absent occupant whose replacement is already in the group, is a no-op.
+    /// </summary>
+    /// <param name="groupId">The group identity.</param>
+    /// <param name="currentEntryId">The occupant.</param>
+    /// <param name="replacementEntryId">The entry that takes the seat.</param>
+    /// <param name="materializedParticipants">
+    /// Participant snapshots of matches attached on this stage (empty when none).
+    /// </param>
+    public void ReplaceManualEntryInGroup(
+        GroupId groupId,
+        EntryId currentEntryId,
+        EntryId replacementEntryId,
+        IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants = null)
+    {
+        var group = FindGroup(groupId);
+        if (group is not null
+            && group.Contains(currentEntryId)
+            && currentEntryId.Equals(replacementEntryId))
+        {
+            return;
+        }
+
+        if (group is not null
+            && !group.Contains(currentEntryId)
+            && group.Contains(replacementEntryId))
+        {
+            return;
+        }
+
+        if (FindManualClearRefusal(groupId, currentEntryId) is { } clear)
+        {
+            throw new DomainException(ManualClearRefusalMessage(clear, groupId, currentEntryId), clear);
+        }
+
+        if (FindManualAssignRefusal(
+                groupId,
+                replacementEntryId,
+                materializedParticipants,
+                ignoreCapacity: true) is { } incoming)
+        {
+            throw new DomainException(
+                ManualAssignRefusalMessage(incoming, groupId, replacementEntryId),
+                incoming);
+        }
+
+        var target = GetGroup(groupId);
+        if (target.Contains(replacementEntryId))
+        {
+            throw new DomainException(
+                $"Entry '{replacementEntryId}' is already assigned to this group.",
+                StageErrorCodes.DuplicateEntry);
+        }
+
+        target.Replace(currentEntryId, replacementEntryId);
+        RemoveGroupResolutionProvenanceIfPresent(groupId, currentEntryId);
+    }
+
+    /// <summary>
+    /// Places every entry in <paramref name="entryIds"/> at the end of the group, in list order.
+    /// An entry already in the group is skipped and does not consume a place.
+    /// Validates the whole list before any membership change.
+    /// </summary>
+    /// <param name="groupId">The group identity.</param>
+    /// <param name="entryIds">Entries in the order they should be appended.</param>
+    /// <param name="materializedParticipants">
+    /// Participant snapshots of matches attached on this stage (empty when none).
+    /// </param>
+    public void AssignManualEntriesToGroup(
+        GroupId groupId,
+        IReadOnlyList<EntryId> entryIds,
+        IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants = null)
+    {
+        ArgumentNullException.ThrowIfNull(entryIds);
+        if (PlacesPerGroup is not int capacity || capacity < 1)
+        {
+            throw new DomainException(
+                "A group lot requires PlacesPerGroup of at least 1.",
+                StageErrorCodes.InvalidConfiguration);
+        }
+
+        var group = FindGroup(groupId)
+                    ?? throw new DomainException(
+                        $"Group '{groupId}' was not found.",
+                        StageErrorCodes.GroupNotFound);
+        var simulated = group.EntryIds.Count;
+        var accepted = new List<EntryId>();
+        foreach (var entryId in entryIds)
+        {
+            if (group.Contains(entryId) || accepted.Contains(entryId))
+            {
+                if (FindManualAssignRefusal(
+                        groupId,
+                        entryId,
+                        materializedParticipants,
+                        ignoreCapacity: true) is { } presentRefusal)
+                {
+                    throw new DomainException(
+                        ManualAssignRefusalMessage(presentRefusal, groupId, entryId),
+                        presentRefusal);
+                }
+
+                continue;
+            }
+
+            if (FindManualAssignRefusal(
+                    groupId,
+                    entryId,
+                    materializedParticipants,
+                    simulated) is { } refusal)
+            {
+                throw new DomainException(ManualAssignRefusalMessage(refusal, groupId, entryId), refusal);
+            }
+
+            accepted.Add(entryId);
+            simulated++;
+        }
+
+        foreach (var entryId in accepted)
+        {
+            AssignManualEntryToGroup(groupId, entryId, materializedParticipants);
+        }
+    }
+
+    /// <summary>
     /// Gets the first refusal code of a manual group assignment, or <see langword="null"/> when it would succeed.
     /// A same-group membership is a success. Does not mutate and does not throw.
     /// </summary>
@@ -1387,11 +1513,20 @@ public sealed class Stage : AggregateRoot<StageId>
     /// <param name="materializedParticipants">
     /// Participant snapshots of matches attached on this stage (empty when none).
     /// </param>
+    /// <param name="projectedMemberCount">
+    /// Member count used for the capacity check instead of the current group size.
+    /// Ignored when the entry is already in the group.
+    /// </param>
+    /// <param name="ignoreCapacity">
+    /// Skips <see cref="StageErrorCodes.GroupFull"/>. Used by a seat replacement, which does not consume a place.
+    /// </param>
     /// <returns>The domain refusal code, or <see langword="null"/>.</returns>
     public string? FindManualAssignRefusal(
         GroupId groupId,
         EntryId entryId,
-        IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants = null)
+        IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants = null,
+        int? projectedMemberCount = null,
+        bool ignoreCapacity = false)
     {
         if (_compositionEntries.All(entry => !entry.EntryId.Equals(entryId)))
         {
@@ -1430,7 +1565,9 @@ public sealed class Stage : AggregateRoot<StageId>
             return StageErrorCodes.GroupNotFound;
         }
 
-        return FindGroupCapacityRefusal(group, entryId);
+        return ignoreCapacity
+            ? null
+            : FindGroupCapacityRefusal(group, entryId, projectedMemberCount);
     }
 
     /// <summary>
@@ -3502,7 +3639,10 @@ public sealed class Stage : AggregateRoot<StageId>
             _ => $"Manual removal from group '{groupId}' was refused.",
         };
 
-    private string? FindGroupCapacityRefusal(Group group, EntryId? entryId)
+    private string? FindGroupCapacityRefusal(
+        Group group,
+        EntryId? entryId,
+        int? projectedMemberCount = null)
     {
         if (PlacesPerGroup is not { } capacity || capacity < 1)
         {
@@ -3514,7 +3654,8 @@ public sealed class Stage : AggregateRoot<StageId>
             return null;
         }
 
-        return group.EntryIds.Count >= capacity ? StageErrorCodes.GroupFull : null;
+        var count = projectedMemberCount ?? group.EntryIds.Count;
+        return count >= capacity ? StageErrorCodes.GroupFull : null;
     }
 
     /// <summary>
