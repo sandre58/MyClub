@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 
+import type { DropDownButtonItem } from '../../../design-system/components/DropDownButton';
+
 import type { StageStatus } from '../../../types';
 import type { StructureDiagnosticPresentationContext } from '../issues/structureDiagnosticPresentationPolicy';
 import type { DrawReadinessChecklistItem } from '../draw/drawUi';
@@ -48,6 +50,10 @@ export type StructurePlacementOperationalSectionProps = {
   onActivateDraw: () => void;
   onEditDrawParams: () => void;
   onManualPlace: () => void;
+  manualPlacementMenuItems?: readonly DropDownButtonItem[];
+  onManualPlacementTargetSelect?: (value: string) => void;
+  manualPlacementMenuOpen?: boolean;
+  onManualPlacementMenuOpenChange?: (open: boolean) => void;
   onReleasePlacements: () => void;
   onDeactivateDraw: () => void;
   structureHubRefreshing?: boolean;

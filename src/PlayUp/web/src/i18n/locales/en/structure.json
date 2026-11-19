@@ -710,6 +710,7 @@
     "performDraw": "Run the draw",
     "activateDraw": "Activate draw",
     "manualPlacementCta": "Place manually",
+    "manualPlacementMenuEmpty": "No target available",
     "drawParams": "Draw settings",
     "drawParamsAction": "Settings",
     "deactivateDraw": "Deactivate draw",
@@ -1010,6 +1011,8 @@
   },
   "manualPlacement": {
     "title": "Manual placement — {{phase}}",
+    "placementTitle": "Placement — {{phase}} — {{target}}",
+    "placedOnCupHint": "On {{place}}",
     "lead": "Assign a team from this phase to a cup place. This is not a draw.",
     "placeLabel": "Place",
     "placePlaceholder": "Choose a place",
@@ -1031,7 +1034,11 @@
     "toastCleared": "Manual assignment cleared",
     "selectionCleared": "Selection cleared",
     "placeOccupied": "{{place}} — {{team}}",
-    "placeFree": "{{place}} — free"
+    "placeFree": "{{place}} — free",
+    "placeFreeShort": "Free",
+    "placeOccupiedShort": "{{place}} —",
+    "placeOccupiedAria": "{{place}} — {{team}}",
+    "titleWithPlace": "Manual placement — {{place}}"
   },
   "groupPlacement": {
     "title": "Place a team — {{group}}",
@@ -1053,6 +1060,8 @@
     "factPlaces_one": "place",
     "factPlaces_other": "places",
     "factInGroup": "in the group",
+    "factOccupied_one": "filled",
+    "factOccupied_other": "filled",
     "factInGroupExcess": "{{count}} extra",
     "factAdditions_one": "to add",
     "factAdditions_other": "to add",
@@ -1099,7 +1108,18 @@
     "targetLockedAria": "Locked group: {{group}}",
     "selectionCleared": "Selection cleared",
     "blockedAfterRemoveTitle": "Placement unavailable",
-    "blockedAfterRemove": "This group no longer has an editable seat for manual placement (reserved seat or lock)."
+    "blockedAfterRemove": "This group no longer has an editable seat for manual placement (reserved seat or lock).",
+    "batchTitle": "{{group}} — {{phase}}",
+    "placementTitle": "Placement — {{phase}} — {{target}}",
+    "groupChanged": "The group has changed",
+    "removeAll": "Remove",
+    "excessShort": "over capacity",
+    "menuAriaTeamsOnCapacity": "{{group}}, {{occupied}} teams of {{capacity}}",
+    "saveDeltaRemoves": "Save (−{{removes}})",
+    "saveDeltaAdds": "Save (+{{adds}})",
+    "saveDeltaBoth": "Save (−{{removes}}, +{{adds}})",
+    "willRemoveMembers_one": "{{count}} team will be removed",
+    "willRemoveMembers_other": "{{count}} teams will be removed"
   },
   "composition": {
     "gauge": {

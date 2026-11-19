@@ -5,15 +5,14 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ApiError,
-  assignEntriesToGroup,
   assignEntryToGroup,
   clearEntryFromGroup,
   replaceEntryInGroup,
+  setGroupEntries,
 } from '../../../api';
 import { ChoiceTile } from '../../../design-system/components/ChoiceTile';
 import { ConfirmDialog } from '../../../design-system/components/ConfirmDialog';
 import { Dialog } from '../../../design-system/components/Dialog';
-import { Select } from '../../../design-system/components/Select';
 import { Tooltip } from '../../../design-system/components/Tooltip';
 import {
   CheckIcon,
@@ -34,23 +33,24 @@ import { formatStructureMutationMessage } from '../problems/formatStructureMutat
 import { scheduleStructureRefresh } from '../structureInvalidation';
 import { StructureManualPlacementSectionHead } from './StructureManualPlacementSectionHead';
 import {
-  canBatchAssignToGroup,
+  buildSetGroupEntriesPayload,
   canReplaceInGroup,
-  countGroupReservedFeedSeats,
+  canSetGroupMembership,
   findGroupSeatByEntryId,
-  firstGroupIdWithBatchCap,
   groupBatchCap,
-  groupSeatCounter,
+  groupDialogAdditionsOnly,
   listAvailableGroupEntries,
-  listGroupManualTargets,
   listGroupMemberEntries,
-  listGroupSelectTargets,
   listOtherGroupEntries,
-  orderBatchSelection,
   purgeUnavailableSelection,
+  memberEntryClearable,
+  membershipSetsEqual,
+  reseedMembershipSelection,
+  listGroupSelectTargets,
+  membershipAdditionLimit,
   resolveGroupDisplayLabel,
-  resolveGroupManualPlace,
   type GroupStatusSuffix,
+  type OtherGroupPlacementChoice,
 } from './manualGroupPlacementUi';
 
 type StructureGroupPlacementDialogProps = {
@@ -63,6 +63,8 @@ type StructureGroupPlacementDialogProps = {
   cases: SchematicCase[];
   /** Schematic seat, or null when opened from the phase sheet CTA. */
   place: SchematicCase | null;
+  /** Target group when opened from the operational menu (batch). */
+  fixedGroupId?: string | null;
 };
 
 type DialogMode = 'batch' | 'singleEmpty' | 'edit';
@@ -107,6 +109,7 @@ export function StructureGroupPlacementDialog({
   entries,
   cases,
   place: placeProp,
+  fixedGroupId = null,
 }: StructureGroupPlacementDialogProps) {
   const { t } = useTranslation('structure');
   const { t: tCommon } = useTranslation('common');
@@ -115,20 +118,17 @@ export function StructureGroupPlacementDialog({
   const capHintId = useId();
   const liveAnnouncerId = useId();
   const batchErrorId = useId();
-  const inGroupReasonId = useId();
   const actions = useMemo(() => stage.actions ?? [], [stage.actions]);
   const mode = resolveDialogMode(placeProp);
-  const batchAllowed = canBatchAssignToGroup(actions, stage.placesPerGroup);
+  const membershipBatchAllowed = canSetGroupMembership(
+    actions,
+    stage.placesPerGroup,
+  );
   const replaceAllowed = canReplaceInGroup(actions);
 
   const labelForGroup = useMemo(
     () => (name: string) => t('place.group', { name }),
     [t],
-  );
-
-  const groupTargets = useMemo(
-    () => listGroupManualTargets(cases, actions, labelForGroup),
-    [cases, actions, labelForGroup],
   );
 
   const groupSelectTargets = useMemo(
@@ -137,12 +137,8 @@ export function StructureGroupPlacementDialog({
     [cases, stage.placesPerGroup, labelForGroup],
   );
 
-  const placeLockedFromSchematic =
-    placeProp != null &&
-    placeProp.formPosition.kind === 'GroupPlace' &&
-    placeProp.formPosition.groupId?.trim() != null;
-
   const [groupId, setGroupId] = useState<string | null>(null);
+  const [expectedEntryIds, setExpectedEntryIds] = useState<string[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [liveNote, setLiveNote] = useState<string | null>(null);
@@ -153,11 +149,13 @@ export function StructureGroupPlacementDialog({
   const [focusEpoch, setFocusEpoch] = useState(0);
   const initialSelectionRef = useRef<string[] | string | null>(null);
   const openSessionRef = useRef(false);
+  const membershipSeededRef = useRef(false);
   const [editSubjectEntryId, setEditSubjectEntryId] = useState<string | null>(
     null,
   );
   const teamsListRef = useRef<HTMLDivElement>(null);
   const blockedFocusRef = useRef<HTMLDivElement>(null);
+  const pendingBatchFocusNameRef = useRef<string | null>(null);
 
   const editGroupId =
     mode === 'edit' && placeProp?.formPosition.kind === 'GroupPlace'
@@ -175,13 +173,7 @@ export function StructureGroupPlacementDialog({
     subjectSeat == null &&
     cases.length > 0;
 
-  const activePlace =
-    mode === 'edit'
-      ? (subjectSeat ?? placeProp)
-      : placeLockedFromSchematic && placeProp?.formPosition.groupId === groupId
-        ? placeProp
-        : (groupTargets.find((target) => target.groupId === groupId)?.place ??
-          (groupId ? resolveGroupManualPlace(cases, groupId, actions) : null));
+  const activePlace = mode === 'edit' ? (subjectSeat ?? placeProp) : null;
 
   const occupiedId =
     mode === 'edit' ? (editSubjectEntryId ?? occupantId(activePlace)) : null;
@@ -191,12 +183,17 @@ export function StructureGroupPlacementDialog({
     [stage, cases, entries],
   );
 
-  const cap = useMemo(
+  const effectiveBatch = mode === 'batch' && membershipBatchAllowed;
+
+  const emptySeatCap = useMemo(
     () => (groupId ? groupBatchCap(cases, groupId, actions) : 0),
     [cases, groupId, actions],
   );
 
-  const effectiveBatch = mode === 'batch' && batchAllowed;
+  const additionsOnly =
+    effectiveBatch && groupId
+      ? groupDialogAdditionsOnly(cases, groupId, stage.placesPerGroup ?? 0)
+      : false;
   const memberEntries = useMemo(() => {
     if (!effectiveBatch || !groupId) return [];
     return listGroupMemberEntries(stage, cases, groupId, entries);
@@ -207,12 +204,32 @@ export function StructureGroupPlacementDialog({
     return listOtherGroupEntries(stage, cases, groupId, entries, labelForGroup);
   }, [effectiveBatch, groupId, stage, cases, entries, labelForGroup]);
 
+  const batchAdditionLimit = useMemo(() => {
+    if (!effectiveBatch || !groupId) {
+      return emptySeatCap;
+    }
+    return membershipAdditionLimit(
+      emptySeatCap,
+      cases,
+      groupId,
+      memberEntries,
+      expectedEntryIds,
+      selectedIds,
+      additionsOnly,
+    );
+  }, [
+    effectiveBatch,
+    groupId,
+    emptySeatCap,
+    cases,
+    memberEntries,
+    expectedEntryIds,
+    selectedIds,
+    additionsOnly,
+  ]);
+  const cap = batchAdditionLimit;
+
   const multiSelect = effectiveBatch;
-  const selection = effectiveBatch
-    ? selectedIds
-    : selectedId
-      ? [selectedId]
-      : [];
 
   const teamChoices = useMemo(() => {
     if (effectiveBatch) {
@@ -258,6 +275,28 @@ export function StructureGroupPlacementDialog({
 
   const compositionEmpty = (stage.compositionEntryIds ?? []).length === 0;
 
+  const batchPlacementRows = useMemo(() => {
+    if (!effectiveBatch) {
+      return [];
+    }
+    type BatchPlacementRow =
+      | { kind: 'member'; team: (typeof memberEntries)[number] }
+      | { kind: 'available'; team: (typeof available)[number] }
+      | { kind: 'other'; team: OtherGroupPlacementChoice };
+    const rows: BatchPlacementRow[] = [
+      ...memberEntries.map((team) => ({ kind: 'member' as const, team })),
+      ...available.map((team) => ({ kind: 'available' as const, team })),
+      ...otherGroupEntries.map((team) => ({ kind: 'other' as const, team })),
+    ];
+    rows.sort((left, right) =>
+      left.team.displayName.localeCompare(right.team.displayName, undefined, {
+        numeric: true,
+        sensitivity: 'base',
+      }),
+    );
+    return rows;
+  }, [effectiveBatch, memberEntries, available, otherGroupEntries]);
+
   const refresh = () => {
     scheduleStructureRefresh(queryClient, competitionId, ['hubStage'], {
       stageId: stage.stageId,
@@ -294,9 +333,21 @@ export function StructureGroupPlacementDialog({
         return;
       }
 
-      const ordered = orderBatchSelection(available, selectedIds);
-      if (ordered.length === 0) throw new Error('missing selection');
-      await assignEntriesToGroup(stage.stageId, targetGroup, ordered);
+      const payload = buildSetGroupEntriesPayload(
+        cases,
+        targetGroup,
+        selectedIds,
+        available,
+      );
+      if (payload.length === 0 && expectedEntryIds.length === 0) {
+        throw new Error('missing selection');
+      }
+      await setGroupEntries(
+        stage.stageId,
+        targetGroup,
+        payload,
+        expectedEntryIds,
+      );
     },
     onSuccess: () => {
       refresh();
@@ -308,6 +359,14 @@ export function StructureGroupPlacementDialog({
         setRefusedEntryId(error.entryId);
       }
       if (error instanceof ApiError) {
+        if (
+          error.code === 'Application.GroupMembershipStale' &&
+          effectiveBatch
+        ) {
+          setLiveNote(t('groupPlacement.groupChanged'));
+          saveMutation.reset();
+          return;
+        }
         const blockCodes = [
           'Stage.StructureLocked',
           'Application.ManualGroupPlacementBlockedByActiveDraw',
@@ -329,6 +388,7 @@ export function StructureGroupPlacementDialog({
   useEffect(() => {
     if (!open) {
       openSessionRef.current = false;
+      membershipSeededRef.current = false;
       return;
     }
     if (openSessionRef.current) {
@@ -338,9 +398,7 @@ export function StructureGroupPlacementDialog({
     const initialGroup =
       placeProp?.formPosition.kind === 'GroupPlace'
         ? (placeProp.formPosition.groupId?.trim() ?? null)
-        : (firstGroupIdWithBatchCap(cases, actions, labelForGroup) ??
-          groupSelectTargets[0]?.groupId ??
-          null);
+        : (fixedGroupId?.trim() ?? null);
     setGroupId(initialGroup);
     setSeatBlocked(false);
     setPlacementBlocked(false);
@@ -355,9 +413,17 @@ export function StructureGroupPlacementDialog({
     } else if (mode === 'singleEmpty') {
       setSelectedId(null);
       initialSelectionRef.current = null;
-    } else if (effectiveBatch) {
-      setSelectedIds([]);
-      initialSelectionRef.current = [];
+    } else if (effectiveBatch && initialGroup) {
+      const members = listGroupMemberEntries(
+        stage,
+        cases,
+        initialGroup,
+        entries,
+      ).map((row) => row.entryId);
+      setExpectedEntryIds(members);
+      setSelectedIds(members);
+      initialSelectionRef.current = members;
+      membershipSeededRef.current = true;
     } else if (mode === 'batch') {
       setSelectedId(null);
       initialSelectionRef.current = null;
@@ -365,26 +431,52 @@ export function StructureGroupPlacementDialog({
     saveMutation.reset();
     setFocusEpoch((value) => value + 1);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- open edge
-  }, [open, placeProp, mode]);
+  }, [open, placeProp, mode, fixedGroupId]);
 
   useEffect(() => {
-    if (!open || placeProp != null || groupId != null) return;
-    const next =
-      firstGroupIdWithBatchCap(cases, actions, labelForGroup) ??
-      groupSelectTargets[0]?.groupId ??
-      null;
-    if (next) {
-      setGroupId(next);
+    if (!open || !effectiveBatch || !groupId || !membershipSeededRef.current) {
+      return;
     }
-  }, [
-    open,
-    placeProp,
-    groupId,
-    cases,
-    actions,
-    labelForGroup,
-    groupSelectTargets,
-  ]);
+    const currentMembers = listGroupMemberEntries(
+      stage,
+      cases,
+      groupId,
+      entries,
+    ).map((row) => row.entryId);
+    setExpectedEntryIds((previous) => {
+      if (membershipSetsEqual(currentMembers, previous)) {
+        return previous;
+      }
+      setSelectedIds((selection) =>
+        reseedMembershipSelection(currentMembers, selection, available),
+      );
+      setLiveNote(t('groupPlacement.groupChanged'));
+      return currentMembers;
+    });
+  }, [open, effectiveBatch, groupId, cases, entries, stage, available, t]);
+
+  useEffect(() => {
+    if (!open || !effectiveBatch) return;
+    const focusName = pendingBatchFocusNameRef.current;
+    if (!focusName) return;
+    pendingBatchFocusNameRef.current = null;
+    window.requestAnimationFrame(() => {
+      const root = teamsListRef.current;
+      if (!root) return;
+      const tiles = root.querySelectorAll<HTMLElement>(
+        'button[role="checkbox"], input[type="checkbox"]',
+      );
+      for (const tile of tiles) {
+        const title = tile
+          .querySelector('.ds-choice-tile__title')
+          ?.textContent?.trim();
+        if (title === focusName) {
+          tile.focus();
+          return;
+        }
+      }
+    });
+  }, [open, effectiveBatch, selectedIds]);
 
   useEffect(() => {
     if (!open || mode !== 'edit') return;
@@ -438,6 +530,25 @@ export function StructureGroupPlacementDialog({
 
   useEffect(() => {
     if (!open || mode !== 'batch') return;
+    if (effectiveBatch) {
+      const conserved = selectedIds.filter((id) =>
+        expectedEntryIds.includes(id),
+      );
+      const additions = selectedIds.filter(
+        (id) => !expectedEntryIds.includes(id),
+      );
+      const { ids: nextAdds, removedCount } = purgeUnavailableSelection(
+        additions,
+        available,
+      );
+      if (removedCount > 0) {
+        setSelectedIds([...conserved, ...nextAdds]);
+        setLiveNote(
+          t('groupPlacement.selectionPurged', { count: removedCount }),
+        );
+      }
+      return;
+    }
     const { ids, removedCount } = purgeUnavailableSelection(
       selectedIds,
       available,
@@ -446,14 +557,7 @@ export function StructureGroupPlacementDialog({
       setSelectedIds(ids);
       setLiveNote(t('groupPlacement.selectionPurged', { count: removedCount }));
     }
-  }, [open, mode, available, selectedIds, t]);
-
-  useEffect(() => {
-    if (!open || placeProp != null || !saveMutation.error) return;
-    if (groupTargets.length === 0) {
-      setPlacementBlocked(true);
-    }
-  }, [open, placeProp, saveMutation.error, groupTargets.length]);
+  }, [open, mode, effectiveBatch, expectedEntryIds, available, selectedIds, t]);
 
   const groupLabel =
     groupId != null
@@ -462,15 +566,6 @@ export function StructureGroupPlacementDialog({
         )
       : '';
 
-  const groupOptions = useMemo(
-    () =>
-      groupSelectTargets.map((target) => ({
-        value: target.groupId,
-        label: formatGroupPickerLabel(t, target.label, target.suffix),
-      })),
-    [groupSelectTargets, t],
-  );
-
   const lockedGroupLabel = useMemo(() => {
     if (groupId == null) return groupLabel;
     const target = groupSelectTargets.find((row) => row.groupId === groupId);
@@ -478,8 +573,11 @@ export function StructureGroupPlacementDialog({
     return formatGroupPickerLabel(t, base, target?.suffix ?? null);
   }, [groupId, groupSelectTargets, groupLabel, t]);
 
-  const overCap = effectiveBatch && selection.length > cap;
-  const atCap = effectiveBatch && cap > 0 && selection.length >= cap;
+  const additionsCount = effectiveBatch
+    ? selectedIds.filter((id) => !expectedEntryIds.includes(id)).length
+    : 0;
+  const overCap = effectiveBatch && additionsCount > cap;
+  const atCap = effectiveBatch && cap > 0 && additionsCount >= cap;
   const showPlacementBlocked =
     placementBlocked || (seatBlocked && !subjectGone);
 
@@ -487,7 +585,7 @@ export function StructureGroupPlacementDialog({
     mode === 'edit'
       ? (selectedId ?? null) !== (initialSelectionRef.current ?? null)
       : multiSelect
-        ? selectedIds.length > 0
+        ? !membershipSetsEqual(expectedEntryIds, selectedIds)
         : selectedId != null;
 
   const {
@@ -522,19 +620,6 @@ export function StructureGroupPlacementDialog({
     });
   }
 
-  const onGroupChange = (next: string | null) => {
-    if (placeLockedFromSchematic) return;
-    setGroupId(next);
-    if (effectiveBatch) {
-      setSelectedIds([]);
-    } else {
-      setSelectedId(null);
-    }
-    setRefusedEntryId(null);
-    saveMutation.reset();
-    setFocusEpoch((value) => value + 1);
-  };
-
   const pending = saveMutation.isPending;
   const mutationError = saveMutation.error;
 
@@ -568,33 +653,41 @@ export function StructureGroupPlacementDialog({
     selectedId != null &&
     !compositionEmpty;
 
+  const membershipDirty =
+    effectiveBatch && !membershipSetsEqual(expectedEntryIds, selectedIds);
+
   const canSaveBatch =
-    effectiveBatch &&
-    selectedIds.length > 0 &&
-    selectedIds.length <= cap &&
-    !overCap &&
-    !compositionEmpty;
+    effectiveBatch && membershipDirty && !compositionEmpty && !overCap;
 
   const canSave = canSaveEdit || canSaveSingle || canSaveBatch;
 
-  const dialogTitle =
-    mode === 'edit'
-      ? t('groupPlacement.editTitle', { group: groupLabel })
-      : t('manualPlacement.title', { phase: stage.name });
+  const placementTarget =
+    groupLabel.trim() !== ''
+      ? groupLabel
+      : (lockedGroupLabel.split(' — ')[0]?.trim() ?? lockedGroupLabel);
+
+  const dialogTitle = t('groupPlacement.placementTitle', {
+    phase: stage.name,
+    target: placementTarget,
+  });
 
   const primaryLabel =
     mode === 'edit' || mode === 'singleEmpty' || !multiSelect
       ? t('manualPlacement.save')
-      : t('groupPlacement.saveBatch', { count: selectedIds.length });
+      : t('groupPlacement.save');
 
-  const fillRemaining = Math.max(0, cap - selectedIds.length);
+  const fillRemaining = Math.max(0, batchAdditionLimit - additionsCount);
   const canFillGroup =
     effectiveBatch && fillRemaining > 0 && available.length > 0 && !atCap;
 
   const fillGroup = () => {
+    if (additionsOnly && cap <= 0) return;
     const next = new Set(selectedIds);
     for (const team of available) {
-      if (next.size >= cap) break;
+      const projectedAdds = [...next].filter(
+        (id) => !expectedEntryIds.includes(id),
+      ).length;
+      if (projectedAdds >= cap) break;
       if (!next.has(team.entryId)) {
         next.add(team.entryId);
       }
@@ -603,10 +696,55 @@ export function StructureGroupPlacementDialog({
     saveMutation.reset();
   };
 
-  const toggleBatch = (entryId: string, next: boolean) => {
+  const clearDecheckableSelection = () => {
+    if (additionsOnly || !groupId) return;
+    const removableMembers = selectedIds.filter(
+      (id) =>
+        expectedEntryIds.includes(id) &&
+        memberEntryClearable(cases, groupId, id),
+    ).length;
+    const hadAdditions = selectedIds.some(
+      (id) => !expectedEntryIds.includes(id),
+    );
+    if (removableMembers === 0 && !hadAdditions) return;
+    setSelectedIds((current) =>
+      current.filter((id) => {
+        if (!expectedEntryIds.includes(id)) {
+          return false;
+        }
+        return !memberEntryClearable(cases, groupId, id);
+      }),
+    );
+    if (removableMembers > 0) {
+      setLiveNote(
+        t('groupPlacement.willRemoveMembers', { count: removableMembers }),
+      );
+    }
+    saveMutation.reset();
+  };
+
+  const canRemoveMembers =
+    effectiveBatch &&
+    !additionsOnly &&
+    groupId != null &&
+    selectedIds.some((id) =>
+      !expectedEntryIds.includes(id)
+        ? true
+        : memberEntryClearable(cases, groupId, id),
+    );
+
+  const toggleBatch = (entryId: string, displayName: string, next: boolean) => {
+    if (effectiveBatch) {
+      pendingBatchFocusNameRef.current = displayName;
+    }
     setSelectedIds((current) => {
       if (next) {
-        if (current.includes(entryId) || current.length >= cap) return current;
+        if (current.includes(entryId)) return current;
+        const isAddition = !expectedEntryIds.includes(entryId);
+        const additions = current.filter(
+          (id) => !expectedEntryIds.includes(id),
+        ).length;
+        if (isAddition && additions >= cap) return current;
         return [...current, entryId];
       }
       return current.filter((id) => id !== entryId);
@@ -621,18 +759,11 @@ export function StructureGroupPlacementDialog({
     (placeProp != null || groupSelectTargets.length > 0 || placementBlocked);
 
   const placesPerGroup = stage.placesPerGroup ?? 0;
-  const batchSeatCount =
-    groupId != null
-      ? groupSeatCounter({ id: groupId }, cases, placesPerGroup)
-      : { occupied: 0, capacity: placesPerGroup };
-  const batchReservedCount =
-    groupId != null ? countGroupReservedFeedSeats(cases, groupId) : 0;
-  const batchMembersValue =
-    batchSeatCount.occupied > placesPerGroup && placesPerGroup > 0
-      ? t('groupPlacement.factInGroupExcess', {
-          count: batchSeatCount.occupied,
-        })
-      : String(batchSeatCount.occupied);
+  const checkedTeamCount = effectiveBatch ? selectedIds.length : 0;
+  const batchStatsTone =
+    checkedTeamCount >= placesPerGroup && placesPerGroup > 0
+      ? 'success'
+      : 'attention';
 
   const tileRole = multiSelect ? 'checkbox' : 'radio';
   const teamGroupRole = tileRole === 'radio' ? 'radiogroup' : 'group';
@@ -709,11 +840,11 @@ export function StructureGroupPlacementDialog({
             {liveNote}
           </p>
 
-          <div className="structure-manual-placement__field">
-            <span className="structure-manual-placement__label">
-              {t('groupPlacement.targetLabel')}
-            </span>
-            {placeLockedFromSchematic || groupSelectTargets.length <= 1 ? (
+          {effectiveBatch ? null : (
+            <div className="structure-manual-placement__field">
+              <span className="structure-manual-placement__label">
+                {t('groupPlacement.targetLabel')}
+              </span>
               <p
                 className="structure-manual-placement__place-locked"
                 aria-label={t('groupPlacement.targetLockedAria', {
@@ -722,105 +853,66 @@ export function StructureGroupPlacementDialog({
               >
                 {lockedGroupLabel}
               </p>
-            ) : (
-              <Select
-                options={groupOptions}
-                value={groupId}
-                onChange={onGroupChange}
-                placeholder={t('groupPlacement.groupPlaceholder')}
-                aria-label={t('groupPlacement.targetLabel')}
-                disabled={pending || groupOptions.length === 0}
-              />
-            )}
-          </div>
+            </div>
+          )}
 
           {effectiveBatch ? (
-            <div
-              className="structure-qualification__facts structure-composition__facts"
-              aria-live="polite"
-            >
-              <span
-                className="structure-qualification__fact structure-qualification__fact--secondary"
-                data-fact="places"
+            <>
+              <div
+                className="structure-qualification__facts structure-manual-placement__facts"
+                data-tone={batchStatsTone}
+                aria-live="polite"
               >
-                <span className="structure-qualification__fact-value">
-                  {placesPerGroup}
-                </span>
-                <span className="structure-qualification__fact-label">
-                  {t('groupPlacement.factPlaces', { count: placesPerGroup })}
-                </span>
-              </span>
-              <span
-                className="structure-qualification__fact-rule"
-                aria-hidden="true"
-              />
-              <span
-                className="structure-qualification__fact structure-qualification__fact--secondary"
-                data-fact="members"
-              >
-                <span className="structure-qualification__fact-value">
-                  {batchMembersValue}
-                </span>
-                <span className="structure-qualification__fact-label">
-                  {t('groupPlacement.factInGroup')}
-                </span>
-              </span>
-              <span
-                className="structure-qualification__fact-rule"
-                aria-hidden="true"
-              />
-              <span
-                className="structure-qualification__fact structure-qualification__fact--primary"
-                data-fact="additions"
-              >
-                <span className="structure-qualification__fact-value">
-                  {selectedIds.length}
-                </span>
-                <span className="structure-qualification__fact-label">
-                  {t('groupPlacement.factAdditions', {
-                    count: selectedIds.length,
-                  })}
-                </span>
-              </span>
-              <span
-                className="structure-qualification__fact-rule"
-                aria-hidden="true"
-              />
-              <span
-                className="structure-qualification__fact structure-qualification__fact--secondary"
-                data-fact="remaining"
-              >
-                <span className="structure-qualification__fact-value">
-                  {Math.max(0, cap - selectedIds.length)}
-                </span>
-                <span className="structure-qualification__fact-label">
-                  {t('groupPlacement.factBatchRemaining', {
-                    count: Math.max(0, cap - selectedIds.length),
-                  })}
-                </span>
-              </span>
-              {batchReservedCount > 0 ? (
-                <>
-                  <span
-                    className="structure-qualification__fact-rule"
-                    aria-hidden="true"
-                  />
-                  <span
-                    className="structure-qualification__fact structure-qualification__fact--secondary"
-                    data-fact="reserved"
-                  >
-                    <span className="structure-qualification__fact-value">
-                      {batchReservedCount}
-                    </span>
-                    <span className="structure-qualification__fact-label">
-                      {t('groupPlacement.factReserved', {
-                        count: batchReservedCount,
-                      })}
-                    </span>
+                <span
+                  className="structure-qualification__fact structure-qualification__fact--secondary"
+                  data-fact="places"
+                >
+                  <span className="structure-qualification__fact-value">
+                    {placesPerGroup}
                   </span>
-                </>
-              ) : null}
-            </div>
+                  <span className="structure-qualification__fact-label">
+                    {t('groupPlacement.factPlaces', { count: placesPerGroup })}
+                  </span>
+                </span>
+                <span
+                  className="structure-qualification__fact-rule"
+                  aria-hidden="true"
+                />
+                <span
+                  className="structure-qualification__fact structure-qualification__fact--primary"
+                  data-fact="occupied"
+                >
+                  <span className="structure-qualification__fact-value">
+                    {checkedTeamCount}
+                  </span>
+                  <span className="structure-qualification__fact-label">
+                    {t('groupPlacement.factOccupied', {
+                      count: checkedTeamCount,
+                    })}
+                  </span>
+                </span>
+              </div>
+              <div className="structure-manual-placement__batch-actions">
+                <button
+                  type="button"
+                  className="ds-btn ds-btn--ghost structure-composition__select-all"
+                  disabled={!canFillGroup || pending}
+                  onClick={fillGroup}
+                >
+                  <ListChecksIcon size="sm" />
+                  {t('groupPlacement.fillGroup')}
+                </button>
+                <button
+                  type="button"
+                  className="ds-btn ds-btn--ghost structure-composition__select-all"
+                  disabled={!canRemoveMembers || pending}
+                  onClick={clearDecheckableSelection}
+                >
+                  <CloseIcon size="sm" />
+                  {t('groupPlacement.removeAll')}
+                </button>
+              </div>
+            </>
           ) : null}
 
           {atCap ? (
@@ -832,7 +924,7 @@ export function StructureGroupPlacementDialog({
           {overCap ? (
             <p className="structure-manual-placement__hint" role="status">
               {t('groupPlacement.overCap', {
-                count: selection.length - cap,
+                count: additionsCount - cap,
               })}
             </p>
           ) : null}
@@ -882,17 +974,6 @@ export function StructureGroupPlacementDialog({
                   }
                   toolbar={
                     <>
-                      {effectiveBatch ? (
-                        <button
-                          type="button"
-                          className="ds-btn ds-btn--ghost structure-composition__select-all"
-                          disabled={!canFillGroup || pending}
-                          onClick={fillGroup}
-                        >
-                          <ListChecksIcon size="sm" />
-                          {t('groupPlacement.fillGroup')}
-                        </button>
-                      ) : null}
                       {mode === 'edit' && selectedId != null && !pending ? (
                         <Tooltip content={t('groupPlacement.clearSeat')}>
                           <button
@@ -909,9 +990,6 @@ export function StructureGroupPlacementDialog({
                     </>
                   }
                 />
-                <p id={inGroupReasonId} className="ds-visually-hidden">
-                  {t('groupPlacement.inThisGroup', { group: groupLabel })}
-                </p>
                 <div
                   ref={teamsListRef}
                   tabIndex={-1}
@@ -924,111 +1002,16 @@ export function StructureGroupPlacementDialog({
                   }
                 >
                   {effectiveBatch
-                    ? memberEntries.map((team) => (
-                        <ChoiceTile
-                          key={`member-${team.entryId}`}
-                          label={team.displayName}
-                          description={
-                            team.pot == null
-                              ? undefined
-                              : t('groupPlacement.pot', { pot: team.pot })
-                          }
-                          layout="inline"
-                          leading={
-                            <TeamCrest
-                              name={team.displayName}
-                              logoMediaId={team.logoMediaId}
-                              primaryColor={team.primaryColor}
-                              size="sm"
-                            />
-                          }
-                          role="checkbox"
-                          selected
-                          disabled={pending}
-                          unavailable
-                          aria-describedby={inGroupReasonId}
-                          onChange={() => undefined}
-                        />
-                      ))
-                    : null}
-                  {teamChoices.map((team) => {
-                    const selected = multiSelect
-                      ? selectedIds.includes(team.entryId)
-                      : selectedId === team.entryId;
-                    const lockedAtCap =
-                      effectiveBatch &&
-                      !selected &&
-                      (atCap || selectedIds.length >= cap);
-                    const tileDisabled = pending;
-                    return (
-                      <ChoiceTile
-                        key={team.entryId}
-                        label={team.displayName}
-                        description={
-                          team.pot == null
-                            ? undefined
-                            : t('groupPlacement.pot', { pot: team.pot })
-                        }
-                        layout="inline"
-                        leading={
-                          <TeamCrest
-                            name={team.displayName}
-                            logoMediaId={team.logoMediaId}
-                            primaryColor={team.primaryColor}
-                            size="sm"
-                          />
-                        }
-                        role={tileRole}
-                        selected={selected}
-                        disabled={tileDisabled}
-                        unavailable={lockedAtCap}
-                        aria-describedby={
-                          refusedEntryId === team.entryId && batchErrorMessage
-                            ? batchErrorId
-                            : lockedAtCap
-                              ? capHintId
-                              : undefined
-                        }
-                        onChange={(next) => {
-                          if (pending) return;
-                          if (multiSelect) {
-                            toggleBatch(team.entryId, next);
-                            return;
-                          }
-                          if (next) {
-                            setSelectedId(team.entryId);
-                            saveMutation.reset();
-                          }
-                        }}
-                      />
-                    );
-                  })}
-                  {effectiveBatch && otherGroupEntries.length > 0 ? (
-                    <p className="structure-manual-placement__label structure-manual-placement__team-section">
-                      {t('groupPlacement.otherGroupSection')}
-                    </p>
-                  ) : null}
-                  {effectiveBatch
-                    ? otherGroupEntries.map((team) => {
-                        const otherReasonId = `${team.entryId}-other`;
-                        return (
-                          <div key={`other-wrap-${team.entryId}`}>
-                            <p
-                              id={otherReasonId}
-                              className="ds-visually-hidden"
-                            >
-                              {t('groupPlacement.inOtherGroup', {
-                                group: team.groupLabel,
-                              })}
-                            </p>
+                    ? batchPlacementRows.map((row) => {
+                        const team = row.team;
+                        if (row.kind === 'other') {
+                          return (
                             <ChoiceTile
                               key={`other-${team.entryId}`}
                               label={team.displayName}
-                              description={
-                                team.pot == null
-                                  ? undefined
-                                  : t('groupPlacement.pot', { pot: team.pot })
-                              }
+                              description={t('groupPlacement.inOtherGroup', {
+                                group: row.team.groupLabel,
+                              })}
                               layout="inline"
                               leading={
                                 <TeamCrest
@@ -1042,13 +1025,103 @@ export function StructureGroupPlacementDialog({
                               selected={false}
                               disabled={pending}
                               unavailable
-                              aria-describedby={otherReasonId}
                               onChange={() => undefined}
                             />
-                          </div>
+                          );
+                        }
+                        const isMember = row.kind === 'member';
+                        const clearable =
+                          groupId != null &&
+                          (!isMember ||
+                            (memberEntryClearable(
+                              cases,
+                              groupId,
+                              team.entryId,
+                            ) &&
+                              !additionsOnly));
+                        const protectedMember = isMember && !clearable;
+                        const selected = selectedIds.includes(team.entryId);
+                        const lockedAtCap = !isMember && !selected && atCap;
+                        const description =
+                          team.pot == null
+                            ? undefined
+                            : t('groupPlacement.pot', { pot: team.pot });
+                        return (
+                          <ChoiceTile
+                            key={team.entryId}
+                            label={team.displayName}
+                            description={
+                              protectedMember
+                                ? t('groupPlacement.clearLocked')
+                                : description
+                            }
+                            layout="inline"
+                            leading={
+                              <TeamCrest
+                                name={team.displayName}
+                                logoMediaId={team.logoMediaId}
+                                primaryColor={team.primaryColor}
+                                size="sm"
+                              />
+                            }
+                            role="checkbox"
+                            selected={selected}
+                            disabled={pending}
+                            unavailable={protectedMember || lockedAtCap}
+                            aria-describedby={
+                              refusedEntryId === team.entryId &&
+                              batchErrorMessage
+                                ? batchErrorId
+                                : lockedAtCap
+                                  ? capHintId
+                                  : undefined
+                            }
+                            onChange={(next) => {
+                              if (pending || protectedMember) return;
+                              toggleBatch(team.entryId, team.displayName, next);
+                            }}
+                          />
                         );
                       })
-                    : null}
+                    : teamChoices.map((team) => {
+                        const selected = selectedId === team.entryId;
+                        return (
+                          <ChoiceTile
+                            key={team.entryId}
+                            label={team.displayName}
+                            description={
+                              team.pot == null
+                                ? undefined
+                                : t('groupPlacement.pot', { pot: team.pot })
+                            }
+                            layout="inline"
+                            leading={
+                              <TeamCrest
+                                name={team.displayName}
+                                logoMediaId={team.logoMediaId}
+                                primaryColor={team.primaryColor}
+                                size="sm"
+                              />
+                            }
+                            role={tileRole}
+                            selected={selected}
+                            disabled={pending}
+                            aria-describedby={
+                              refusedEntryId === team.entryId &&
+                              batchErrorMessage
+                                ? batchErrorId
+                                : undefined
+                            }
+                            onChange={(next) => {
+                              if (pending) return;
+                              if (next) {
+                                setSelectedId(team.entryId);
+                                saveMutation.reset();
+                              }
+                            }}
+                          />
+                        );
+                      })}
                 </div>
               </div>
             ) : null}

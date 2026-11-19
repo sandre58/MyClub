@@ -1,14 +1,24 @@
 // Group manual placement — seat interaction, available teams, and the pool counter.
 // Cup places stay in manualPlacementUi.ts.
 
-import type { SchematicCase, StructureEntry } from '../../../types';
+import type { DropDownButtonItem } from '../../../design-system/components/DropDownButton';
+import type {
+  SchematicCase,
+  StructureEntry,
+  StructureStageHubSummary,
+} from '../../../types';
 
 const assignEntryToGroupAction = 'AssignEntryToGroup';
 const assignEntriesToGroupAction = 'AssignEntriesToGroup';
+const setGroupEntriesAction = 'SetGroupEntries';
 const clearEntryFromGroupAction = 'ClearEntryFromGroup';
 const replaceEntryInGroupAction = 'ReplaceEntryInGroup';
 
-export { assignEntriesToGroupAction, replaceEntryInGroupAction };
+export {
+  assignEntriesToGroupAction,
+  replaceEntryInGroupAction,
+  setGroupEntriesAction,
+};
 
 export type GroupSeatReasonKey =
   | 'placeInvite'
@@ -561,4 +571,231 @@ export function groupSeatCounter(
     return occupantId(place) != null;
   }).length;
   return { occupied, capacity: placesPerGroup };
+}
+
+/** CTA menu: Draft/Ready Groups or Cup, including when every group is full. */
+export function canShowManualPlacementTargetMenu(
+  stage: Pick<StructureStageHubSummary, 'formatKind' | 'status' | 'actions'>,
+  cases?: readonly SchematicCase[] | null,
+): boolean {
+  const status = stage.status;
+  if (status === 'Running' || status === 'Suspended') {
+    return false;
+  }
+  if (status !== 'Draft' && status !== 'Ready') {
+    return false;
+  }
+  const actions = stage.actions ?? [];
+  if (stage.formatKind === 'Groups') {
+    if (
+      !actions.includes(assignEntryToGroupAction) &&
+      !actions.includes(setGroupEntriesAction)
+    ) {
+      return false;
+    }
+    if (cases == null) {
+      return true;
+    }
+    return groupSeatBuckets(cases).size > 0;
+  }
+  if (stage.formatKind === 'Cup') {
+    if (!actions.includes('AssignEntryToSlot')) {
+      return false;
+    }
+    if (cases == null) {
+      return true;
+    }
+    return cases.some((place) => place.formPosition.kind === 'CupSlot');
+  }
+  return false;
+}
+
+export function canSetGroupMembership(
+  actions: readonly string[],
+  placesPerGroup: number | null | undefined,
+): boolean {
+  return (
+    actions.includes(setGroupEntriesAction) &&
+    placesPerGroup != null &&
+    placesPerGroup > 0
+  );
+}
+
+export function groupAssignLockedByMatches(
+  cases: readonly SchematicCase[],
+  groupId: string,
+  placesPerGroup: number,
+): boolean {
+  return resolveGroupStatusSuffix(cases, groupId, placesPerGroup) === 'match';
+}
+
+export function groupDialogAdditionsOnly(
+  cases: readonly SchematicCase[],
+  groupId: string,
+  placesPerGroup: number,
+): boolean {
+  return groupAssignLockedByMatches(cases, groupId, placesPerGroup);
+}
+
+export function memberEntryClearable(
+  cases: readonly SchematicCase[],
+  groupId: string,
+  entryId: string,
+): boolean {
+  const seat = findGroupSeatByEntryId(cases, groupId, entryId);
+  if (!seat) {
+    return false;
+  }
+  return seat.seatMode === 'Editable' && seat.canClear === true;
+}
+
+export function membershipSelectionDiff(
+  baseline: readonly string[],
+  selection: readonly string[],
+): { removes: number; adds: number } {
+  const base = new Set(baseline);
+  const selected = new Set(selection);
+  let removes = 0;
+  let adds = 0;
+  for (const id of base) {
+    if (!selected.has(id)) {
+      removes += 1;
+    }
+  }
+  for (const id of selected) {
+    if (!base.has(id)) {
+      adds += 1;
+    }
+  }
+  return { removes, adds };
+}
+
+/** Full membership list: conserved members in seat order, then batch additions. */
+export function buildSetGroupEntriesPayload(
+  cases: readonly SchematicCase[],
+  groupId: string,
+  selectedIds: readonly string[],
+  available: readonly GroupPlacementChoice[],
+): string[] {
+  const selected = new Set(selectedIds);
+  const membersInSeatOrder: string[] = [];
+  const seats = cases
+    .filter(
+      (place) =>
+        place.formPosition.kind === 'GroupPlace' &&
+        place.formPosition.groupId === groupId,
+    )
+    .sort(
+      (left, right) =>
+        (left.formPosition.index ?? 0) - (right.formPosition.index ?? 0),
+    );
+  for (const place of seats) {
+    const id = occupantId(place);
+    if (id && selected.has(id)) {
+      membersInSeatOrder.push(id);
+    }
+  }
+  const conserved = new Set(membersInSeatOrder);
+  const additions = orderBatchSelection(
+    available,
+    selectedIds.filter((id) => !conserved.has(id)),
+  );
+  return [...membersInSeatOrder, ...additions];
+}
+
+export function membershipSetsEqual(
+  left: readonly string[],
+  right: readonly string[],
+): boolean {
+  if (left.length !== right.length) {
+    return false;
+  }
+  const set = new Set(left);
+  if (set.size !== right.length) {
+    return false;
+  }
+  return right.every((id) => set.has(id));
+}
+
+export function reseedMembershipSelection(
+  currentMembers: readonly string[],
+  priorSelection: readonly string[],
+  available: readonly GroupPlacementChoice[],
+): string[] {
+  const allowed = new Set([
+    ...currentMembers,
+    ...available.map((row) => row.entryId),
+  ]);
+  const kept = priorSelection.filter((id) => allowed.has(id));
+  const keptSet = new Set(kept);
+  for (const id of currentMembers) {
+    if (!keptSet.has(id)) {
+      kept.push(id);
+      keptSet.add(id);
+    }
+  }
+  return kept;
+}
+
+export function listGroupManualPlacementMenuItems(
+  cases: readonly SchematicCase[],
+  placesPerGroup: number,
+  labelForGroup: (name: string) => string,
+  labels: {
+    excessSuffix: string;
+    ariaTeamsOnCapacity: (
+      groupLabel: string,
+      occupied: number,
+      capacity: number,
+    ) => string;
+  },
+): DropDownButtonItem[] {
+  const buckets = groupSeatBuckets(cases);
+  const items: DropDownButtonItem[] = [];
+  for (const groupId of sortedGroupIds(buckets, labelForGroup)) {
+    const { name } = buckets.get(groupId)!;
+    const groupLabel = labelForGroup(name);
+    const { occupied, capacity } = groupSeatCounter(
+      { id: groupId },
+      cases,
+      placesPerGroup,
+    );
+    const ratio =
+      occupied > capacity && capacity > 0
+        ? `${occupied}/${capacity} · ${labels.excessSuffix}`
+        : `${occupied}/${capacity}`;
+    items.push({
+      value: `group:${groupId}`,
+      label: groupLabel,
+      secondary: ratio,
+      'aria-label': labels.ariaTeamsOnCapacity(groupLabel, occupied, capacity),
+      disabled: groupAssignLockedByMatches(cases, groupId, placesPerGroup),
+    });
+  }
+  return items;
+}
+
+/** Net addition cap: empty editable seats plus members the user may uncheck. */
+export function membershipAdditionLimit(
+  emptySeatCap: number,
+  cases: readonly SchematicCase[],
+  groupId: string,
+  memberEntries: readonly GroupPlacementChoice[],
+  expectedEntryIds: readonly string[],
+  selectedIds: readonly string[],
+  additionsOnly: boolean,
+): number {
+  if (additionsOnly) {
+    return emptySeatCap;
+  }
+  const clearableSelected = memberEntries.filter(
+    (team) =>
+      selectedIds.includes(team.entryId) &&
+      memberEntryClearable(cases, groupId, team.entryId),
+  ).length;
+  const clearableRemoved = expectedEntryIds.filter(
+    (id) =>
+      !selectedIds.includes(id) && memberEntryClearable(cases, groupId, id),
+  ).length;
+  return emptySeatCap + clearableSelected + clearableRemoved;
 }
