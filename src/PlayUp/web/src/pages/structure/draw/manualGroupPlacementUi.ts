@@ -177,12 +177,230 @@ export type GroupManualTarget = {
   place: SchematicCase;
 };
 
-/** Whether the phase exposes at least one group with an empty `place` seat. */
+function groupSeatBuckets(
+  cases: readonly SchematicCase[],
+): Map<string, { name: string; places: SchematicCase[] }> {
+  const buckets = new Map<string, { name: string; places: SchematicCase[] }>();
+  for (const place of cases) {
+    if (place.formPosition.kind !== 'GroupPlace') continue;
+    const id = place.formPosition.groupId?.trim();
+    if (!id) continue;
+    const name = place.formPosition.groupName?.trim() || id;
+    const bucket = buckets.get(id) ?? { name, places: [] };
+    bucket.places.push(place);
+    buckets.set(id, bucket);
+  }
+  return buckets;
+}
+
+function sortedGroupIds(
+  buckets: Map<string, { name: string; places: SchematicCase[] }>,
+  labelForGroup: (name: string) => string,
+): string[] {
+  return [...buckets.entries()]
+    .sort((left, right) =>
+      labelForGroup(left[1].name).localeCompare(
+        labelForGroup(right[1].name),
+        undefined,
+        { numeric: true, sensitivity: 'base' },
+      ),
+    )
+    .map(([id]) => id);
+}
+
+export type GroupStatusSuffix =
+  'complete' | 'reserved' | 'match' | 'draw' | null;
+
+/** Suffix for group pickers (batch): complete only when every seat is occupied. */
+export function resolveGroupStatusSuffix(
+  cases: readonly SchematicCase[],
+  groupId: string,
+  _placesPerGroup: number,
+): GroupStatusSuffix {
+  const seats = cases.filter(
+    (place) =>
+      place.formPosition.kind === 'GroupPlace' &&
+      place.formPosition.groupId === groupId,
+  );
+  const empty = seats.filter((place) => occupantId(place) == null);
+  if (empty.length === 0) {
+    return 'complete';
+  }
+  if (empty.some((place) => place.seatMode === 'MatchLocked')) {
+    return 'match';
+  }
+  if (empty.some((place) => place.seatMode === 'Reserved')) {
+    return 'reserved';
+  }
+  if (empty.some((place) => place.seatMode === 'DrawPending')) {
+    return 'draw';
+  }
+  return null;
+}
+
+export type GroupSelectTarget = {
+  groupId: string;
+  groupName: string;
+  label: string;
+  suffix: GroupStatusSuffix;
+};
+
+/** Every group in display order, including full or read-only groups (batch Select). */
+export function listGroupSelectTargets(
+  cases: readonly SchematicCase[],
+  placesPerGroup: number,
+  labelForGroup: (name: string) => string,
+): GroupSelectTarget[] {
+  const buckets = groupSeatBuckets(cases);
+  return sortedGroupIds(buckets, labelForGroup).map((groupId) => {
+    const { name } = buckets.get(groupId)!;
+    return {
+      groupId,
+      groupName: name,
+      label: labelForGroup(name),
+      suffix: resolveGroupStatusSuffix(cases, groupId, placesPerGroup),
+    };
+  });
+}
+
+export function firstGroupIdWithBatchCap(
+  cases: readonly SchematicCase[],
+  actions: readonly string[],
+  labelForGroup: (name: string) => string,
+): string | null {
+  for (const groupId of sortedGroupIds(
+    groupSeatBuckets(cases),
+    labelForGroup,
+  )) {
+    if (groupBatchCap(cases, groupId, actions) > 0) {
+      return groupId;
+    }
+  }
+  return null;
+}
+
+/** Whether the phase exposes at least one group with manual batch capacity. */
 export function canOfferGroupManualPlacement(
   cases: readonly SchematicCase[],
   actions: readonly string[],
 ): boolean {
-  return listGroupManualTargets(cases, actions, () => '').length > 0;
+  for (const [groupId] of groupSeatBuckets(cases)) {
+    if (groupBatchCap(cases, groupId, actions) > 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/** Occupants of the selected group (display only in batch; not part of selection). */
+export function listGroupMemberEntries(
+  stage: GroupSeatStage,
+  cases: readonly SchematicCase[],
+  groupId: string,
+  entries: readonly StructureEntry[],
+): GroupPlacementChoice[] {
+  const entryById = new Map(entries.map((entry) => [entry.entryId, entry]));
+  const pots = stage.compositionEntryPots;
+  const potById = new Map((pots ?? []).map((row) => [row.entryId, row.pot]));
+  const members: GroupPlacementChoice[] = [];
+  for (const place of cases) {
+    if (place.formPosition.kind !== 'GroupPlace') continue;
+    if (place.formPosition.groupId !== groupId) continue;
+    const id = occupantId(place);
+    if (!id) continue;
+    const entry = entryById.get(id);
+    members.push({
+      entryId: id,
+      displayName:
+        place.assignment?.displayName?.trim() ||
+        place.entry?.displayName?.trim() ||
+        entry?.displayName?.trim() ||
+        entry?.shortName?.trim() ||
+        id,
+      logoMediaId: place.assignment?.logoMediaId ?? entry?.logoMediaId ?? null,
+      primaryColor:
+        place.assignment?.primaryColor ?? entry?.primaryColor ?? null,
+      pot: pots == null ? null : (potById.get(id) ?? null),
+    });
+  }
+  members.sort((left, right) =>
+    left.displayName.localeCompare(right.displayName, undefined, {
+      numeric: true,
+      sensitivity: 'base',
+    }),
+  );
+  const seen = new Set<string>();
+  return members.filter((row) => {
+    if (seen.has(row.entryId)) return false;
+    seen.add(row.entryId);
+    return true;
+  });
+}
+
+export type OtherGroupPlacementChoice = GroupPlacementChoice & {
+  groupLabel: string;
+};
+
+/** Teams placed in a group other than the one being edited (batch Q7). */
+export function listOtherGroupEntries(
+  stage: GroupSeatStage,
+  cases: readonly SchematicCase[],
+  excludeGroupId: string,
+  entries: readonly StructureEntry[],
+  labelForGroup: (name: string) => string,
+): OtherGroupPlacementChoice[] {
+  const entryById = new Map(entries.map((entry) => [entry.entryId, entry]));
+  const pots = stage.compositionEntryPots;
+  const potById = new Map((pots ?? []).map((row) => [row.entryId, row.pot]));
+  const other: OtherGroupPlacementChoice[] = [];
+  for (const place of cases) {
+    if (place.formPosition.kind !== 'GroupPlace') continue;
+    const groupId = place.formPosition.groupId?.trim();
+    if (!groupId || groupId === excludeGroupId) continue;
+    const id = occupantId(place);
+    if (!id) continue;
+    const entry = entryById.get(id);
+    const groupName = place.formPosition.groupName?.trim() || groupId;
+    other.push({
+      entryId: id,
+      displayName:
+        place.assignment?.displayName?.trim() ||
+        place.entry?.displayName?.trim() ||
+        entry?.displayName?.trim() ||
+        entry?.shortName?.trim() ||
+        id,
+      logoMediaId: place.assignment?.logoMediaId ?? entry?.logoMediaId ?? null,
+      primaryColor:
+        place.assignment?.primaryColor ?? entry?.primaryColor ?? null,
+      pot: pots == null ? null : (potById.get(id) ?? null),
+      groupLabel: labelForGroup(groupName),
+    });
+  }
+  other.sort((left, right) =>
+    left.displayName.localeCompare(right.displayName, undefined, {
+      numeric: true,
+      sensitivity: 'base',
+    }),
+  );
+  const seen = new Set<string>();
+  return other.filter((row) => {
+    if (seen.has(row.entryId)) return false;
+    seen.add(row.entryId);
+    return true;
+  });
+}
+
+/** Empty seats in the group that carry an inbound feed (batch fact « réservées »). */
+export function countGroupReservedFeedSeats(
+  cases: readonly SchematicCase[],
+  groupId: string,
+): number {
+  return cases.filter((place) => {
+    if (place.formPosition.kind !== 'GroupPlace') return false;
+    if (place.formPosition.groupId !== groupId) return false;
+    if (occupantId(place) != null) return false;
+    return place.feedOrigin?.kind != null;
+  }).length;
 }
 
 /** Display label for a group from any schematic seat (not only placeable targets). */
@@ -205,16 +423,7 @@ export function listGroupManualTargets(
   actions: readonly string[],
   labelForGroup: (name: string) => string,
 ): GroupManualTarget[] {
-  const buckets = new Map<string, { name: string; places: SchematicCase[] }>();
-  for (const place of cases) {
-    if (place.formPosition.kind !== 'GroupPlace') continue;
-    const id = place.formPosition.groupId?.trim();
-    if (!id) continue;
-    const name = place.formPosition.groupName?.trim() || id;
-    const bucket = buckets.get(id) ?? { name, places: [] };
-    bucket.places.push(place);
-    buckets.set(id, bucket);
-  }
+  const buckets = groupSeatBuckets(cases);
 
   const targets: GroupManualTarget[] = [];
   for (const [groupId, { name, places }] of buckets) {

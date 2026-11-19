@@ -482,10 +482,10 @@ describe('StructureGroupPlacementDialog', () => {
     const user = userEvent.setup();
     renderDialog({ place: null });
 
-    const freeCount = document.querySelector(
-      '[data-fact="free"] .structure-qualification__fact-value',
+    const remainingCount = document.querySelector(
+      '[data-fact="remaining"] .structure-qualification__fact-value',
     );
-    expect(freeCount).toHaveTextContent('2');
+    expect(remainingCount).toHaveTextContent('2');
 
     await user.click(screen.getByRole('checkbox', { name: 'Bravo' }));
     await user.click(screen.getByRole('checkbox', { name: 'Charlie' }));
@@ -616,9 +616,8 @@ describe('StructureGroupPlacementDialog', () => {
     expect(
       screen.getByText('La place a changé. Vérifiez la sélection.'),
     ).toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: 'Enregistrer' }),
-    ).not.toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Bravo' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Enregistrer' })).toBeDisabled();
   });
 
   it('does not reset focus to the first tile when toggling batch selection', async () => {
@@ -656,11 +655,7 @@ describe('StructureGroupPlacementDialog', () => {
     });
 
     await waitFor(() =>
-      expect(
-        screen.getByRole('button', {
-          name: /Retirer l.équipe de la place/,
-        }),
-      ).toHaveFocus(),
+      expect(screen.getByRole('radio', { name: 'Alpha' })).toHaveFocus(),
     );
   });
 
@@ -712,28 +707,23 @@ describe('StructureGroupPlacementDialog', () => {
 
   it('replaces using the anchored subject after seat compaction', async () => {
     const user = userEvent.setup();
-    const occupied = groupPlace({
+    const ySeat = groupPlace({
       formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index: 1 },
+      entry: { entryId: 'e2', displayName: 'Bravo' },
+      canClear: true,
+    });
+    const xSeat = groupPlace({
+      formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index: 2 },
       entry: { entryId: 'e1', displayName: 'Alpha' },
       canClear: true,
     });
     const { rerender, queryClient } = renderDialog({
-      place: occupied,
-      cases: [
-        occupied,
-        groupPlace({
-          formPosition: {
-            kind: 'GroupPlace',
-            groupId,
-            groupName: 'A',
-            index: 2,
-          },
-        }),
-      ],
+      place: xSeat,
+      cases: [ySeat, xSeat],
     });
 
-    await user.click(screen.getByRole('radio', { name: 'Bravo' }));
-    const compacted = groupPlace({
+    await user.click(screen.getByRole('radio', { name: 'Charlie' }));
+    const compactedX = groupPlace({
       formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index: 1 },
       entry: { entryId: 'e1', displayName: 'Alpha' },
       canClear: true,
@@ -753,7 +743,7 @@ describe('StructureGroupPlacementDialog', () => {
               entry('e3', 'Charlie'),
             ]}
             cases={[
-              compacted,
+              compactedX,
               groupPlace({
                 formPosition: {
                   kind: 'GroupPlace',
@@ -763,7 +753,7 @@ describe('StructureGroupPlacementDialog', () => {
                 },
               }),
             ]}
-            place={occupied}
+            place={xSeat}
           />
         </MemoryRouter>
       </QueryClientProvider>,
@@ -775,9 +765,15 @@ describe('StructureGroupPlacementDialog', () => {
         stageId,
         groupId,
         'e1',
-        'e2',
+        'e3',
       );
     });
+    expect(replaceEntryInGroup).not.toHaveBeenCalledWith(
+      stageId,
+      groupId,
+      'e2',
+      expect.anything(),
+    );
   });
 
   it('announces a cleared selection and keeps focus inside the dialog', async () => {

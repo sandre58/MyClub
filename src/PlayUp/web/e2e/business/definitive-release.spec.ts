@@ -76,7 +76,7 @@ test('Structure — libération groupée d’une sélection vide puis placement 
   });
   await manual.getByRole('combobox', { name: 'Place' }).click();
   await page.getByRole('option', { name: 'S4' }).click();
-  await manual.getByRole('checkbox', { name: 'Ouest' }).click();
+  await manual.getByRole('radio', { name: 'Ouest' }).click();
   await manual.getByRole('button', { name: 'Enregistrer' }).click();
   await expect(manual).toHaveCount(0);
   await expect(page.getByText('Ouest').first()).toBeVisible();

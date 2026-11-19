@@ -249,6 +249,28 @@ public sealed class MaterializeMatchesTests
         MaterializeMatches.BuildRoundRobinPairs(entries).Should().HaveCount(10);
     }
 
+    [Theory]
+    [InlineData(MatchGenerationFormat.SingleRoundRobin, 4)]
+    [InlineData(MatchGenerationFormat.DoubleRoundRobin, 5)]
+    public void BuildRoundRobinRounds_is_invariant_to_entry_order(
+        MatchGenerationFormat format,
+        int teamCount)
+    {
+        var entries = Enumerable.Range(0, teamCount)
+            .Select(i => EntryId.New())
+            .ToArray();
+        var canonical = MaterializeMatches.BuildRoundRobinRounds(
+            [.. entries.OrderBy(id => id.Value)],
+            format);
+        var canonicalSignature = Signature(canonical);
+
+        foreach (var permutation in Permutations(entries))
+        {
+            var rounds = MaterializeMatches.BuildRoundRobinRounds([.. permutation], format);
+            Signature(rounds).Should().BeEquivalentTo(canonicalSignature);
+        }
+    }
+
     [Fact]
     public void BuildRoundRobinRounds_double_mirrors_home_away()
     {
@@ -261,6 +283,38 @@ public sealed class MaterializeMatchesTests
         foreach (var (home, away) in directed.Take(6))
         {
             directed.Should().Contain((away, home));
+        }
+    }
+
+    private static List<string> Signature(
+        IReadOnlyList<IReadOnlyList<(EntryId Home, EntryId Away)>> rounds) =>
+        rounds
+            .SelectMany(
+                (round, roundIndex) => round.Select(
+                    pair => $"{roundIndex}:{pair.Home.Value:N}>{pair.Away.Value:N}"))
+            .OrderBy(line => line, StringComparer.Ordinal)
+            .ToList();
+
+    private static IEnumerable<EntryId[]> Permutations(EntryId[] items) =>
+        Permute(items, 0);
+
+    private static IEnumerable<EntryId[]> Permute(EntryId[] items, int start)
+    {
+        if (start >= items.Length - 1)
+        {
+            yield return (EntryId[])items.Clone();
+            yield break;
+        }
+
+        for (var index = start; index < items.Length; index++)
+        {
+            (items[start], items[index]) = (items[index], items[start]);
+            foreach (var permutation in Permute(items, start + 1))
+            {
+                yield return permutation;
+            }
+
+            (items[start], items[index]) = (items[index], items[start]);
         }
     }
 

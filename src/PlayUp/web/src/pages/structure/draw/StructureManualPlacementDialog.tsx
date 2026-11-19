@@ -3,7 +3,7 @@
 // -----------------------------------------------------------------------
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { assignEntryToSlot, clearSlotAssignment } from '../../../api';
 import { ChoiceTile } from '../../../design-system/components/ChoiceTile';
@@ -33,6 +33,7 @@ import {
   type ManualPlaceMode,
 } from './manualPlacementUi';
 import { scheduleStructureRefresh } from '../structureInvalidation';
+import { StructureManualPlacementSectionHead } from './StructureManualPlacementSectionHead';
 
 type StructureManualPlacementDialogProps = {
   open: boolean;
@@ -71,6 +72,8 @@ export function StructureManualPlacementDialog({
   const { t: tCommon } = useTranslation('common');
   const { t: tReg } = useTranslation('regulation');
   const queryClient = useQueryClient();
+  const liveAnnouncerId = useId();
+  const teamsListRef = useRef<HTMLDivElement>(null);
 
   const places = useMemo(
     () => listCupManualPlaces(cases, structureStages),
@@ -83,6 +86,7 @@ export function StructureManualPlacementDialog({
 
   const [slotKey, setSlotKey] = useState<string | null>(null);
   const [entryId, setEntryId] = useState<string | null>(null);
+  const [liveNote, setLiveNote] = useState<string | null>(null);
   /** Schematic click locks the place for the whole session. */
   const [placeLocked, setPlaceLocked] = useState(false);
 
@@ -105,6 +109,12 @@ export function StructureManualPlacementDialog({
     confirmDiscard,
     cancelDiscard,
   } = useDiscardConfirm(dirty, onClose);
+
+  const refresh = () => {
+    scheduleStructureRefresh(queryClient, competitionId, ['hubStage'], {
+      stageId: stage.stageId,
+    });
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -169,12 +179,25 @@ export function StructureManualPlacementDialog({
 
   const placeOptions = useMemo(
     () =>
-      places.map((p) => ({
-        value: p.slotKey,
-        label: p.label,
-        disabled: p.mode !== 'editable' && p.slotKey !== slotKey,
-      })),
-    [places, slotKey],
+      places.map((p) => {
+        const teamName =
+          p.entryId != null
+            ? (entryById.get(p.entryId)?.displayName?.trim() ??
+              t('manualPlacement.unknownTeam'))
+            : null;
+        return {
+          value: p.slotKey,
+          label:
+            teamName != null
+              ? t('manualPlacement.placeOccupied', {
+                  place: p.label,
+                  team: teamName,
+                })
+              : t('manualPlacement.placeFree', { place: p.label }),
+          disabled: p.mode !== 'editable' && p.slotKey !== slotKey,
+        };
+      }),
+    [places, slotKey, entryById, t],
   );
 
   const saveMutation = useMutation({
@@ -190,9 +213,10 @@ export function StructureManualPlacementDialog({
     },
     onSuccess: () => {
       onClose();
-      scheduleStructureRefresh(queryClient, competitionId, ['hubStage'], {
-        stageId: stage.stageId,
-      });
+      refresh();
+    },
+    onError: () => {
+      refresh();
     },
   });
 
@@ -203,6 +227,20 @@ export function StructureManualPlacementDialog({
 
   function requestClose() {
     requestDiscardClose(pending);
+  }
+
+  function focusTeamList() {
+    window.requestAnimationFrame(() => {
+      const root = teamsListRef.current;
+      const tile = root?.querySelector<HTMLElement>(
+        'button[role="radio"]:not([aria-disabled="true"]), input[type="radio"]:not(:disabled)',
+      );
+      if (tile) {
+        tile.focus();
+        return;
+      }
+      root?.focus();
+    });
   }
 
   const blockedEmpty =
@@ -237,7 +275,10 @@ export function StructureManualPlacementDialog({
   const canSave = canEdit && dirty;
   const canClearSelection = canEdit && entryId != null && !pending;
   const placeLabel =
-    selectedPlace?.label ?? slotKey ?? t('manualPlacement.placePlaceholder');
+    placeOptions.find((row) => row.value === slotKey)?.label ??
+    selectedPlace?.label ??
+    slotKey ??
+    t('manualPlacement.placePlaceholder');
 
   return (
     <>
@@ -290,6 +331,13 @@ export function StructureManualPlacementDialog({
         }
       >
         <div className="structure-manual-placement">
+          <p
+            id={liveAnnouncerId}
+            className="ds-visually-hidden"
+            aria-live="polite"
+          >
+            {liveNote}
+          </p>
           <div className="structure-manual-placement__field">
             <span className="structure-manual-placement__label">
               {t('manualPlacement.placeLabel')}
@@ -326,12 +374,10 @@ export function StructureManualPlacementDialog({
               </EmptyState>
             ) : canEdit ? (
               <div className="structure-manual-placement__field structure-manual-placement__field--fill">
-                <div className="structure-manual-placement__section-head">
-                  <span className="structure-manual-placement__label">
-                    {t('manualPlacement.teamLabel')}
-                  </span>
-                  {canClearSelection ? (
-                    <div className="ds-icon-toolbar">
+                <StructureManualPlacementSectionHead
+                  label={t('manualPlacement.teamLabel')}
+                  toolbar={
+                    canClearSelection ? (
                       <Tooltip content={t('manualPlacement.clearSelection')}>
                         <button
                           type="button"
@@ -340,15 +386,17 @@ export function StructureManualPlacementDialog({
                           aria-label={t('manualPlacement.clearSelection')}
                           onClick={() => {
                             setEntryId(null);
+                            setLiveNote(t('manualPlacement.selectionCleared'));
                             saveMutation.reset();
+                            focusTeamList();
                           }}
                         >
                           <CloseIcon size="sm" />
                         </button>
                       </Tooltip>
-                    </div>
-                  ) : null}
-                </div>
+                    ) : null
+                  }
+                />
                 {teamChoices.length === 0 && !baselineEntryId ? (
                   <EmptyState
                     variant="idle"
@@ -359,8 +407,10 @@ export function StructureManualPlacementDialog({
                   </EmptyState>
                 ) : (
                   <div
+                    ref={teamsListRef}
+                    tabIndex={-1}
                     className="structure-manual-placement__teams ds-scroll-safe"
-                    role="group"
+                    role="radiogroup"
                     aria-label={t('manualPlacement.teamLabel')}
                   >
                     {teamChoices.map((team) => {
@@ -378,6 +428,7 @@ export function StructureManualPlacementDialog({
                               size="sm"
                             />
                           }
+                          role="radio"
                           selected={selected}
                           disabled={pending}
                           onChange={(next) => {

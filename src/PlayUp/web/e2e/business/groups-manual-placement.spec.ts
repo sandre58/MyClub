@@ -179,7 +179,7 @@ test.describe('manual group placement', () => {
     request,
   }) => {
     test.setTimeout(180_000);
-    const competition = await prepareCompetition(request, MANUAL_DRAW);
+    const competition = await prepareCompetition(request, MANUAL);
     await page.goto(`/competitions/${competition.id}/structure`);
 
     await page.getByRole('button', { name: 'Placer manuellement' }).click();
@@ -195,7 +195,7 @@ test.describe('manual group placement', () => {
     await dialog.getByRole('button', { name: /Placer 3 équipes/ }).click();
     await expect(dialog).toBeHidden();
 
-    await fillRemainingSeats(page, true);
+    await fillRemainingSeats(page, false);
     const pools = page.getByRole('group', { name: '2 groupes' });
     await expect(pools.getByText('4/4')).toHaveCount(2);
     await produceMatchesIfNeeded(page);
