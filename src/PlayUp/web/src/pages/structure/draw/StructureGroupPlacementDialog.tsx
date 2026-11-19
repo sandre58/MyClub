@@ -157,7 +157,6 @@ export function StructureGroupPlacementDialog({
   );
   const teamsListRef = useRef<HTMLDivElement>(null);
   const blockedFocusRef = useRef<HTMLDivElement>(null);
-  const pendingBatchFocusNameRef = useRef<string | null>(null);
 
   const editGroupId =
     mode === 'edit' && placeProp?.formPosition.kind === 'GroupPlace'
@@ -464,29 +463,6 @@ export function StructureGroupPlacementDialog({
   }, [open, effectiveBatch, groupId, hubMemberEntryIds, available, t]);
 
   useEffect(() => {
-    if (!open || !effectiveBatch) return;
-    const focusName = pendingBatchFocusNameRef.current;
-    if (!focusName) return;
-    pendingBatchFocusNameRef.current = null;
-    window.requestAnimationFrame(() => {
-      const root = teamsListRef.current;
-      if (!root) return;
-      const tiles = root.querySelectorAll<HTMLElement>(
-        'button[role="checkbox"], input[type="checkbox"]',
-      );
-      for (const tile of tiles) {
-        const title = tile
-          .querySelector('.ds-choice-tile__title')
-          ?.textContent?.trim();
-        if (title === focusName) {
-          tile.focus();
-          return;
-        }
-      }
-    });
-  }, [open, effectiveBatch, selectedIds]);
-
-  useEffect(() => {
     if (!open || mode !== 'edit') return;
     if (subjectGone) {
       setLiveNote(t('groupPlacement.seatChanged'));
@@ -750,17 +726,18 @@ export function StructureGroupPlacementDialog({
     );
 
   const toggleBatch = (entryId: string, displayName: string, next: boolean) => {
-    if (effectiveBatch) {
-      pendingBatchFocusNameRef.current = displayName;
-    }
     setSelectedIds((current) => {
       if (next) {
-        if (current.includes(entryId)) return current;
+        if (current.includes(entryId)) {
+          return current;
+        }
         const isAddition = !expectedEntryIds.includes(entryId);
         const additions = current.filter(
           (id) => !expectedEntryIds.includes(id),
         ).length;
-        if (isAddition && additions >= cap) return current;
+        if (isAddition && additions >= cap) {
+          return current;
+        }
         return [...current, entryId];
       }
       return current.filter((id) => id !== entryId);
@@ -912,6 +889,7 @@ export function StructureGroupPlacementDialog({
                 <button
                   type="button"
                   className="ds-btn ds-btn--ghost structure-composition__select-all"
+                  tabIndex={-1}
                   disabled={!canFillGroup || pending}
                   onClick={fillGroup}
                 >
@@ -921,6 +899,7 @@ export function StructureGroupPlacementDialog({
                 <button
                   type="button"
                   className="ds-btn ds-btn--ghost structure-composition__select-all"
+                  tabIndex={-1}
                   disabled={!canRemoveMembers || pending}
                   onClick={clearDecheckableSelection}
                 >

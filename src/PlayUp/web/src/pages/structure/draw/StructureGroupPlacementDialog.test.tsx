@@ -1038,14 +1038,15 @@ describe('StructureGroupPlacementDialog', () => {
     const user = userEvent.setup();
     renderDialog({ place: null });
 
-    const alpha = screen.getByRole('checkbox', { name: 'Alpha' });
-    const bravo = screen.getByRole('checkbox', { name: 'Bravo' });
-    const charlie = screen.getByRole('checkbox', { name: 'Charlie' });
-    await user.click(charlie);
-    await waitFor(() => expect(charlie).toHaveFocus());
-    await user.click(bravo);
-    await waitFor(() => expect(bravo).toHaveFocus());
-    expect(alpha).not.toHaveFocus();
+    await user.click(screen.getByRole('checkbox', { name: 'Charlie' }));
+    await waitFor(() =>
+      expect(screen.getByRole('checkbox', { name: 'Charlie' })).toHaveFocus(),
+    );
+    await user.click(screen.getByRole('checkbox', { name: 'Bravo' }));
+    await waitFor(() =>
+      expect(screen.getByRole('checkbox', { name: 'Bravo' })).toHaveFocus(),
+    );
+    expect(screen.getByRole('checkbox', { name: 'Alpha' })).not.toHaveFocus();
   });
 
   it('focuses the selected occupant tile in edit mode', async () => {
