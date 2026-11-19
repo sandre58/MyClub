@@ -218,7 +218,6 @@ export function StructurePhaseFiche({
   const [manualSlotKey, setManualSlotKey] = useState<string | null>(null);
   const [groupOpen, setGroupOpen] = useState(false);
   const [groupPlace, setGroupPlace] = useState<SchematicCase | null>(null);
-  const [groupIntent, setGroupIntent] = useState<'place' | 'remove'>('place');
   const [groupSession, setGroupSession] = useState(0);
 
   useSyncWhen(true, stage?.stageId ?? '', () => {
@@ -236,7 +235,6 @@ export function StructurePhaseFiche({
     setManualSlotKey(null);
     setGroupOpen(false);
     setGroupPlace(null);
-    setGroupIntent('place');
   });
 
   const deactivateDrawMutation = useMutation({
@@ -320,7 +318,6 @@ export function StructurePhaseFiche({
     if (initialManual) {
       if (stage.formatKind === 'Groups') {
         setGroupPlace(null);
-        setGroupIntent('place');
         setGroupSession((value) => value + 1);
         setGroupOpen(true);
       } else {
@@ -1133,7 +1130,6 @@ export function StructurePhaseFiche({
         onManualPlace: () => {
           if (stage.formatKind === 'Groups') {
             setGroupPlace(null);
-            setGroupIntent('place');
             setGroupSession((value) => value + 1);
             setGroupOpen(true);
           } else {
@@ -1412,12 +1408,11 @@ export function StructurePhaseFiche({
                 });
                 if (
                   interaction.kind !== 'place' &&
-                  interaction.kind !== 'remove'
+                  interaction.kind !== 'edit'
                 ) {
                   return;
                 }
                 setGroupPlace(place);
-                setGroupIntent(interaction.kind);
                 setGroupSession((value) => value + 1);
                 setGroupOpen(true);
               }}
@@ -1649,7 +1644,6 @@ export function StructurePhaseFiche({
               entries={data.participants.entries}
               cases={schematicQuery.data?.cases ?? []}
               place={groupPlace}
-              intent={groupIntent}
             />
             <TieFormatDialog
               competitionId={data.competitionId}

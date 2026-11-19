@@ -213,7 +213,7 @@ function SlotBox({
     !ghost &&
     resolveManualPlaceMode(c, manualPlacementStages) === 'editable';
   const groupInteractive =
-    groupInteraction?.kind === 'place' || groupInteraction?.kind === 'remove';
+    groupInteraction?.kind === 'place' || groupInteraction?.kind === 'edit';
   const interactive = canManualPlace || (!!onActivate && groupInteractive);
   const groupReason =
     groupInteraction && groupInteraction.kind !== 'none'
@@ -230,7 +230,7 @@ function SlotBox({
       : null;
   const seatAddress = address ?? (c ? groupSeatAddress(c, t) : null);
   const groupManualTip =
-    groupInteraction?.kind === 'place' || groupInteraction?.kind === 'remove';
+    groupInteraction?.kind === 'place' || groupInteraction?.kind === 'edit';
   const tipCanManualPlace = canManualPlace || groupManualTip;
   const tipAction = groupInteraction?.kind === 'locked' ? groupReason : null;
   const groupAccessibleName =

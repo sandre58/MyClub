@@ -15,6 +15,10 @@ export type ChoiceTileProps = {
    */
   leadingPlacement?: 'start' | 'above';
   disabled?: boolean;
+  /** `radio` for single-select groups; default `checkbox`. */
+  role?: 'checkbox' | 'radio';
+  /** Locked at capacity but still keyboard-reachable (`aria-disabled`). */
+  unavailable?: boolean;
   /** Accessible name; defaults to label. */
   'aria-label'?: string;
   /** Why the option is unavailable, or other supplementary text. */
@@ -39,10 +43,13 @@ export function ChoiceTile({
   leading,
   leadingPlacement = 'start',
   disabled = false,
+  role = 'checkbox',
+  unavailable = false,
   'aria-label': ariaLabel,
   'aria-describedby': ariaDescribedBy,
   layout = 'stacked',
 }: ChoiceTileProps) {
+  const inactive = disabled || unavailable;
   const classes = [
     'ds-choice-tile',
     layout === 'inline' ? 'ds-choice-tile--inline' : null,
@@ -53,18 +60,19 @@ export function ChoiceTile({
   return (
     <button
       type="button"
-      role="checkbox"
+      role={role}
       aria-checked={selected}
       aria-label={ariaLabel ?? label}
       aria-describedby={ariaDescribedBy}
       disabled={disabled}
+      aria-disabled={unavailable ? true : undefined}
       className={classes}
       data-selected={selected ? 'true' : 'false'}
-      data-disabled={disabled ? 'true' : 'false'}
+      data-disabled={inactive ? 'true' : 'false'}
       data-leading={leading ? leadingPlacement : undefined}
       onClick={() => {
-        if (!disabled) {
-          onChange(!selected);
+        if (!inactive) {
+          onChange(role === 'radio' ? true : !selected);
         }
       }}
     >

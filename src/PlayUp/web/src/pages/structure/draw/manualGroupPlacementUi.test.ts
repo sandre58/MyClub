@@ -1,11 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import type { SchematicCase, StructureEntry } from '../../../types';
 import {
+  canBatchAssignToGroup,
+  canReplaceInGroup,
+  groupBatchCap,
   groupSeatCounter,
   listAvailableGroupEntries,
   listGroupManualTargets,
+  orderBatchSelection,
+  purgeUnavailableSelection,
   resolveGroupDisplayLabel,
   resolveGroupSeatInteraction,
+  resolveSeatLive,
 } from './manualGroupPlacementUi';
 
 const actions = ['AssignEntryToGroup', 'ClearEntryFromGroup'];
@@ -50,13 +56,13 @@ describe('resolveGroupSeatInteraction', () => {
     ).toEqual({ kind: 'locked', reasonKey: 'drawPending' });
   });
 
-  it('removes an occupied editable seat that can be cleared, including excess and outside composition', () => {
+  it('edits an occupied editable seat that can be cleared, including excess and outside composition', () => {
     const occupied = place({
       entry: { entryId: 'e1', displayName: 'Alpha' },
       canClear: true,
     });
     expect(resolveGroupSeatInteraction(occupied, { actions })).toEqual({
-      kind: 'remove',
+      kind: 'edit',
       reasonKey: 'removeInvite',
     });
     expect(
@@ -64,7 +70,7 @@ describe('resolveGroupSeatInteraction', () => {
         place({ ...occupied, excess: true, outsideComposition: true }),
         { actions },
       ),
-    ).toEqual({ kind: 'remove', reasonKey: 'removeInvite' });
+    ).toEqual({ kind: 'edit', reasonKey: 'removeInvite' });
   });
 
   it('locks occupied seats that cannot be cleared', () => {
@@ -235,6 +241,149 @@ describe('listGroupManualTargets', () => {
       (name) => `Groupe ${name}`,
     );
     expect(targets.map((row) => row.groupId)).toEqual(['g-a']);
+  });
+});
+
+describe('canBatchAssignToGroup', () => {
+  it('requires AssignEntriesToGroup and placesPerGroup', () => {
+    expect(
+      canBatchAssignToGroup(['AssignEntryToGroup', 'AssignEntriesToGroup'], 4),
+    ).toBe(true);
+    expect(canBatchAssignToGroup(['AssignEntryToGroup'], 4)).toBe(false);
+    expect(canBatchAssignToGroup(['AssignEntriesToGroup'], null)).toBe(false);
+  });
+});
+
+describe('canReplaceInGroup', () => {
+  it('detects ReplaceEntryInGroup in actions', () => {
+    expect(canReplaceInGroup(['ReplaceEntryInGroup'])).toBe(true);
+    expect(canReplaceInGroup([])).toBe(false);
+  });
+});
+
+describe('groupBatchCap', () => {
+  it('returns 0 when every seat is full', () => {
+    const cases = [1, 2, 3, 4].map((index) =>
+      place({
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId: 'g-a',
+          groupName: 'A',
+          index,
+        },
+        entry: { entryId: `e${index}`, displayName: `T${index}` },
+      }),
+    );
+    expect(groupBatchCap(cases, 'g-a', actions)).toBe(0);
+  });
+
+  it('counts only editable empty seats without inbound feed', () => {
+    const cases = [
+      place({
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId: 'g-a',
+          groupName: 'A',
+          index: 1,
+        },
+        entry: { entryId: 'e1', displayName: 'A' },
+      }),
+      place({
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId: 'g-a',
+          groupName: 'A',
+          index: 2,
+        },
+        entry: { entryId: 'e2', displayName: 'B' },
+      }),
+      place({
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId: 'g-a',
+          groupName: 'A',
+          index: 3,
+        },
+        feedOrigin: { kind: 'Qualification', sourceStageId: 'src' },
+      }),
+      place({
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId: 'g-a',
+          groupName: 'A',
+          index: 4,
+        },
+      }),
+    ];
+    expect(groupBatchCap(cases, 'g-a', actions)).toBe(1);
+  });
+
+  it('returns 0 when the only empty seat is reserved or has a feed', () => {
+    const cases = [
+      ...[1, 2, 3].map((index) =>
+        place({
+          formPosition: {
+            kind: 'GroupPlace',
+            groupId: 'g-a',
+            groupName: 'A',
+            index,
+          },
+          entry: { entryId: `e${index}`, displayName: `T${index}` },
+        }),
+      ),
+      place({
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId: 'g-a',
+          groupName: 'A',
+          index: 4,
+        },
+        seatMode: 'Reserved',
+      }),
+    ];
+    expect(groupBatchCap(cases, 'g-a', actions)).toBe(0);
+  });
+});
+
+describe('orderBatchSelection', () => {
+  it('preserves display order regardless of click order', () => {
+    const available = listAvailableGroupEntries(
+      { compositionEntryIds: ['e1', 'e2', 'e3'] },
+      [],
+      [
+        { entryId: 'e1', displayName: 'A', status: 'Active' },
+        { entryId: 'e2', displayName: 'B', status: 'Active' },
+        { entryId: 'e3', displayName: 'C', status: 'Active' },
+      ],
+    );
+    expect(orderBatchSelection(available, ['e3', 'e1'])).toEqual(['e1', 'e3']);
+  });
+});
+
+describe('purgeUnavailableSelection', () => {
+  it('filters stale ids and reports how many were removed', () => {
+    const available = [{ entryId: 'e1', displayName: 'A', pot: null }];
+    expect(purgeUnavailableSelection(['e1', 'e2'], available)).toEqual({
+      ids: ['e1'],
+      removedCount: 1,
+    });
+  });
+});
+
+describe('resolveSeatLive', () => {
+  it('finds the current schematic seat by group and index', () => {
+    const seat2 = place({
+      formPosition: {
+        kind: 'GroupPlace',
+        groupId: 'g-a',
+        groupName: 'A',
+        index: 2,
+      },
+      entry: { entryId: 'e2', displayName: 'B' },
+    });
+    expect(resolveSeatLive([place(), seat2], 'g-a', 2)?.entry?.entryId).toBe(
+      'e2',
+    );
   });
 });
 
