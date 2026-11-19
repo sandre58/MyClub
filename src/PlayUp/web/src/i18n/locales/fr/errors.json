@@ -49,6 +49,7 @@
     "EntryNotWithdrawable": "Cette équipe ne peut pas faire forfait.",
     "FixtureInvalid": "La confrontation est incohérente.",
     "GroupMembershipConflict": "Un autre placement a pris cette place en même temps. Actualisez et réessayez.",
+    "GroupMembershipStale": "Le groupe a changé entre-temps. Rechargez puis réessayez.",
     "GroupSeatReservedByInboundFeed": "Cette place est réservée à une équipe attendue par une qualification ou une progression.",
     "InboundDestinationNotSatisfied": "La destination entrante n’est pas satisfaite pour la matérialisation.",
     "InboundResolutionAmbiguous": "Impossible de résoudre l’alimentation entrante pour la matérialisation.",

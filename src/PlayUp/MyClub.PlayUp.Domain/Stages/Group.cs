@@ -88,6 +88,17 @@ public sealed class Group : Entity<GroupId>
 
     internal bool Contains(EntryId entryId) => _entryIds.Contains(entryId);
 
+    /// <summary>
+    /// Replaces the membership list while keeping the given order. Caller validates distinct ids.
+    /// </summary>
+    /// <param name="ordered">The next membership.</param>
+    internal void ReplaceMembership(IReadOnlyList<EntryId> ordered)
+    {
+        ArgumentNullException.ThrowIfNull(ordered);
+        _entryIds.Clear();
+        _entryIds.AddRange(ordered);
+    }
+
     private static string NormalizeName(string name)
     {
         ArgumentNullException.ThrowIfNull(name);

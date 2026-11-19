@@ -70,9 +70,10 @@ export function ChoiceTile({
       data-selected={selected ? 'true' : 'false'}
       data-disabled={inactive ? 'true' : 'false'}
       data-leading={leading ? leadingPlacement : undefined}
-      onClick={() => {
+      onClick={(event) => {
         if (!inactive) {
           onChange(role === 'radio' ? true : !selected);
+          event.currentTarget.focus({ preventScroll: true });
         }
       }}
     >

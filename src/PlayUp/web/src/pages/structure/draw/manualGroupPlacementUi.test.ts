@@ -3,6 +3,7 @@ import type { SchematicCase, StructureEntry } from '../../../types';
 import {
   canBatchAssignToGroup,
   canOfferGroupManualPlacement,
+  canShowManualPlacementTargetMenu,
   canReplaceInGroup,
   countGroupReservedFeedSeats,
   firstGroupIdWithBatchCap,
@@ -14,6 +15,9 @@ import {
   listGroupSelectTargets,
   resolveGroupStatusSuffix,
   orderBatchSelection,
+  batchSelectionExceedsCapacity,
+  memberEntryClearable,
+  membershipAdditionLimit,
   purgeUnavailableSelection,
   resolveGroupDisplayLabel,
   resolveGroupSeatInteraction,
@@ -512,6 +516,41 @@ describe('resolveGroupStatusSuffix', () => {
   });
 });
 
+describe('canShowManualPlacementTargetMenu', () => {
+  it('stays visible when every group is full in Ready', () => {
+    const cases = [1, 2, 3, 4].map((index) =>
+      place({
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId: 'g-a',
+          groupName: 'A',
+          index,
+        },
+        entry: { entryId: `e${index}`, displayName: `T${index}` },
+      }),
+    );
+    expect(
+      canShowManualPlacementTargetMenu(
+        {
+          formatKind: 'Groups',
+          status: 'Ready',
+          actions: [...actions, 'SetGroupEntries'],
+        },
+        cases,
+      ),
+    ).toBe(true);
+  });
+
+  it('hides in Running', () => {
+    expect(
+      canShowManualPlacementTargetMenu(
+        { formatKind: 'Groups', status: 'Running', actions },
+        [],
+      ),
+    ).toBe(false);
+  });
+});
+
 describe('canOfferGroupManualPlacement', () => {
   it('stays false when every group is full for manual assign', () => {
     const cases = [1, 2, 3, 4].map((index) =>
@@ -654,5 +693,129 @@ describe('groupSeatCounter', () => {
       occupied: 5,
       capacity: 4,
     });
+  });
+});
+
+describe('membershipAdditionLimit', () => {
+  const groupId = 'g-a';
+
+  it('credits empty seats plus clearable removals only', () => {
+    const cases = [
+      place({ entry: { entryId: 'e1', displayName: 'A' }, canClear: true }),
+      place({
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId,
+          groupName: 'A',
+          index: 2,
+        },
+        entry: { entryId: 'e2', displayName: 'B' },
+        canClear: true,
+      }),
+      place({
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId,
+          groupName: 'A',
+          index: 3,
+        },
+        entry: { entryId: 'e3', displayName: 'C' },
+        canClear: true,
+      }),
+      place({
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId,
+          groupName: 'A',
+          index: 4,
+        },
+        entry: { entryId: 'e4', displayName: 'D' },
+        canClear: true,
+      }),
+    ];
+    const expected = ['e1', 'e2', 'e3', 'e4'];
+    const selected = ['e1', 'e2', 'e3'];
+    expect(
+      membershipAdditionLimit(0, cases, groupId, expected, selected, false),
+    ).toBe(1);
+    expect(
+      membershipAdditionLimit(0, cases, groupId, expected, expected, false),
+    ).toBe(0);
+  });
+
+  it('does not grant credit for clearable members still selected', () => {
+    const cases = [1, 2, 3, 4].map((index) =>
+      place({
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId,
+          groupName: 'A',
+          index,
+        },
+        entry: { entryId: `e${index}`, displayName: `T${index}` },
+        canClear: true,
+      }),
+    );
+    const expected = ['e1', 'e2', 'e3', 'e4'];
+    const selected = ['e1', 'e2', 'e3', 'e4', 'e5'];
+    expect(
+      membershipAdditionLimit(0, cases, groupId, expected, selected, false),
+    ).toBe(0);
+  });
+});
+
+describe('batchSelectionExceedsCapacity', () => {
+  it('blocks selections beyond capacity when the group was not in excess', () => {
+    expect(
+      batchSelectionExceedsCapacity(
+        4,
+        ['e1', 'e2', 'e3', 'e4'],
+        ['e1', 'e2', 'e3', 'e4', 'e5'],
+      ),
+    ).toBe(true);
+  });
+
+  it('allows a full excess group that does not grow', () => {
+    expect(
+      batchSelectionExceedsCapacity(
+        4,
+        ['e1', 'e2', 'e3', 'e4', 'e5'],
+        ['e1', 'e2', 'e3', 'e4', 'e5'],
+      ),
+    ).toBe(false);
+  });
+
+  it('blocks growing an excess group', () => {
+    expect(
+      batchSelectionExceedsCapacity(
+        4,
+        ['e1', 'e2', 'e3', 'e4', 'e5'],
+        ['e1', 'e2', 'e3', 'e4', 'e5', 'e6'],
+      ),
+    ).toBe(true);
+  });
+});
+
+describe('memberEntryClearable', () => {
+  it('requires an editable seat with server clear permission', () => {
+    expect(
+      memberEntryClearable(
+        [place({ entry: { entryId: 'e1', displayName: 'A' }, canClear: true })],
+        'g-a',
+        'e1',
+      ),
+    ).toBe(true);
+    expect(
+      memberEntryClearable(
+        [
+          place({
+            entry: { entryId: 'e1', displayName: 'A' },
+            seatMode: 'Draw',
+          }),
+        ],
+        'g-a',
+        'e1',
+      ),
+    ).toBe(false);
   });
 });

@@ -1081,6 +1081,22 @@
   min-height: 0;
 }
 
+.structure-manual-placement__teams .ds-choice-tile {
+  width: 100%;
+  min-width: 0;
+}
+
+.structure-manual-placement__facts {
+  width: 100%;
+}
+
+.structure-manual-placement__batch-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+  width: 100%;
+}
+
 .structure-manual-placement .ds-empty--idle {
   width: 100%;
 }

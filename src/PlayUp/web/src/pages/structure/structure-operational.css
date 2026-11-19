@@ -201,6 +201,9 @@
 .structure-operational-strip[data-layout-variant='composition'] .structure-operational-strip__section-actions > .ds-btn,
 .structure-operational-strip[data-layout-variant='composition']
   .structure-operational-strip__section-actions
+  > .ds-dropdown-button,
+.structure-operational-strip[data-layout-variant='composition']
+  .structure-operational-strip__section-actions
   .structure-operational-tile__action-wrap
   > .ds-btn,
 .structure-operational-strip[data-layout-variant='composition']
@@ -208,6 +211,17 @@
   .ds-empty__actions
   .ds-btn,
 .structure-operational-strip[data-layout-variant='composition'] .structure-operational-strip__applied-content .ds-btn {
+  width: 100%;
+  max-width: none;
+}
+
+.structure-operational-strip[data-layout-variant='composition']
+  .structure-operational-strip__section-actions
+  > .ds-dropdown-button,
+.structure-operational-strip[data-layout-variant='composition']
+  .structure-operational-strip__section-actions
+  > .ds-dropdown-button
+  .ds-dropdown-button__trigger {
   width: 100%;
   max-width: none;
 }

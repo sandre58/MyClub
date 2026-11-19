@@ -94,7 +94,7 @@ async function findCompetition(request: APIRequestContext, name: string) {
 
 async function placeOneTeamFromDialog(page: Page, expectPot: boolean) {
   const dialog = page.getByRole('dialog', {
-    name: /Placement manuel —|Modifier la place —/,
+    name: /Placement — .* —/,
   });
   await expect(dialog).toBeVisible();
   const pot = dialog.getByText(/^Pot /);
@@ -183,8 +183,11 @@ test.describe('manual group placement', () => {
     await page.goto(`/competitions/${competition.id}/structure`);
 
     await page.getByRole('button', { name: 'Placer manuellement' }).click();
+    await page
+      .getByRole('menuitem', { name: /Groupe A, 0 équipes sur 4/ })
+      .click();
     const dialog = page.getByRole('dialog', {
-      name: /Placement manuel —/,
+      name: /Placement — .* — Groupe A/,
     });
     await expect(dialog).toBeVisible();
 
@@ -192,7 +195,7 @@ test.describe('manual group placement', () => {
     await teams.nth(0).click();
     await teams.nth(1).click();
     await teams.nth(2).click();
-    await dialog.getByRole('button', { name: /Placer 3 équipes/ }).click();
+    await dialog.getByRole('button', { name: 'Enregistrer' }).click();
     await expect(dialog).toBeHidden();
 
     await fillRemainingSeats(page, false);
@@ -217,7 +220,7 @@ test.describe('manual group placement', () => {
       .first();
     await editSeat.click();
     const dialog = page.getByRole('dialog', {
-      name: /Modifier la place — Groupe A/,
+      name: /Placement — .* — Groupe A/,
     });
     const occupant = dialog.getByRole('radio', { checked: true });
     const originalName = (await occupant.innerText()).trim().split('\n')[0];
@@ -252,7 +255,7 @@ test.describe('manual group placement', () => {
       .first();
     await editSeat.click();
     const dialog = page.getByRole('dialog', {
-      name: /Modifier la place — Groupe B/,
+      name: /Placement — .* — Groupe B/,
     });
     await dialog
       .getByRole('button', { name: /Retirer l.équipe de la place/ })
@@ -344,5 +347,70 @@ test.describe('manual group placement', () => {
     await expect(page.getByRole('tooltip')).toContainText(
       'ne peut pas être retirée',
     );
+  });
+
+  test('compacts group seats after withdrawal and replace targets the shifted occupant', async ({
+    page,
+    request,
+  }) => {
+    test.setTimeout(120_000);
+    const competition = await prepareCompetition(request, MANUAL);
+    await page.goto(`/competitions/${competition.id}/structure`);
+    await fillGroupSeats(page, 'Groupe A', false);
+
+    const groupA = page
+      .locator('.regulation-schematic__card')
+      .filter({ hasText: 'Groupe A' });
+    await groupA
+      .getByRole('button', {
+        name: /Groupe A · 4 — Cliquer pour modifier ou retirer/,
+      })
+      .first()
+      .click();
+    const seatFourDialog = page.getByRole('dialog', {
+      name: /Placement — .* — Groupe A/,
+    });
+    const shiftedTeamName = (
+      await seatFourDialog
+        .getByRole('radio', { checked: true })
+        .locator('.ds-choice-tile__title')
+        .innerText()
+    ).trim();
+    await seatFourDialog.getByRole('button', { name: 'Annuler' }).click();
+
+    const editSeat = groupA
+      .getByRole('button', {
+        name: /Groupe A · 1 — Cliquer pour modifier ou retirer/,
+      })
+      .first();
+    await editSeat.click();
+    const dialog = page.getByRole('dialog', {
+      name: /Placement — .* — Groupe A/,
+    });
+    await dialog
+      .getByRole('button', { name: /Retirer l.équipe de la place/ })
+      .click();
+    await dialog
+      .getByRole('button', { name: 'Enregistrer', exact: true })
+      .click();
+    await expect(dialog).toBeHidden();
+    await expect(groupA.getByText('3/4')).toBeVisible();
+
+    const seatThree = groupA
+      .getByRole('button', {
+        name: /Groupe A · 3 — Cliquer pour modifier ou retirer/,
+      })
+      .first();
+    await seatThree.click();
+    const replaceDialog = page.getByRole('dialog', {
+      name: /Placement — .* — Groupe A/,
+    });
+    await expect(
+      replaceDialog.getByRole('radio', {
+        name: shiftedTeamName,
+        checked: true,
+      }),
+    ).toBeVisible();
+    await replaceDialog.getByRole('button', { name: 'Annuler' }).click();
   });
 });

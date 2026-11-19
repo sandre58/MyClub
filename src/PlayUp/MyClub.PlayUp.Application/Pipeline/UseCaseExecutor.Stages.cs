@@ -778,6 +778,48 @@ public sealed partial class UseCaseExecutor
             cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Atomically sets the membership of a group. Skips <c>SaveChanges</c> on a set noop.
+    /// </summary>
+    public async Task SetGroupEntriesAsync(
+        StageId stageId,
+        GroupId groupId,
+        IReadOnlyList<EntryId> entryIds,
+        IReadOnlyList<EntryId>? expectedEntryIds,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(entryIds);
+        await ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await RequireStageAsync(stageId, innerToken).ConfigureAwait(false);
+                var competition = await RequireCompetitionAsync(stage.CompetitionId, innerToken)
+                    .ConfigureAwait(false);
+                EnsureCompetitionAllowsLifecycleMutation(competition);
+                var competitionStages = await LoadSiblingStagesForManualAssignAsync(
+                        competition,
+                        stage,
+                        innerToken)
+                    .ConfigureAwait(false);
+                var stageMatches = await matches.ListByStageForUpdateAsync(stageId, innerToken)
+                    .ConfigureAwait(false);
+                var mutated = SetGroupEntries.Execute(
+                    stage,
+                    competition,
+                    groupId,
+                    entryIds,
+                    expectedEntryIds,
+                    stageMatches,
+                    competitionStages);
+                if (mutated)
+                {
+                    await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+                }
+            },
+            cancellationToken).ConfigureAwait(false);
+    }
+
     private async Task<List<Stage>> LoadSiblingStagesForManualAssignAsync(
         Competition competition,
         Stage stage,

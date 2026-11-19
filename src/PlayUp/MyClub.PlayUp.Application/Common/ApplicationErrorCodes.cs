@@ -308,6 +308,11 @@ public static class ApplicationErrorCodes
     public const string GroupMembershipConflict = "Application.GroupMembershipConflict";
 
     /// <summary>
+    /// Gets the code when <c>expectedEntryIds</c> does not match the current group membership set.
+    /// </summary>
+    public const string GroupMembershipStale = "Application.GroupMembershipStale";
+
+    /// <summary>
     /// Gets the code when a draw resolution is obsolete for consumption.
     /// </summary>
     public const string DrawObsoleteForConsumption = "Application.DrawObsoleteForConsumption";

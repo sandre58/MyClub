@@ -110,8 +110,16 @@ import {
 import { resolvePlacesN } from '../composition/structurePlaces';
 import { resolveStructurePhaseHeroFacts } from './structurePhaseHeroFacts';
 import type { StructureFocusId } from '../structureNavigation';
-import { canOfferGroupManualPlacement } from '../draw/manualGroupPlacementUi';
-import { listCupManualPlaces } from '../draw/manualPlacementUi';
+import {
+  canOfferGroupManualPlacement,
+  canShowManualPlacementTargetMenu,
+  listGroupManualPlacementMenuItems,
+} from '../draw/manualGroupPlacementUi';
+import {
+  listCupManualPlaces,
+  listCupManualPlacementMenuItems,
+} from '../draw/manualPlacementUi';
+import { TeamCrest } from '../../../design-system/TeamCrest';
 import '../../regulation/regulation-shared.css';
 
 import {
@@ -218,6 +226,8 @@ export function StructurePhaseFiche({
   const [manualSlotKey, setManualSlotKey] = useState<string | null>(null);
   const [groupOpen, setGroupOpen] = useState(false);
   const [groupPlace, setGroupPlace] = useState<SchematicCase | null>(null);
+  const [fixedGroupId, setFixedGroupId] = useState<string | null>(null);
+  const [manualPlacementMenuOpen, setManualPlacementMenuOpen] = useState(false);
   const [groupSession, setGroupSession] = useState(0);
 
   useSyncWhen(true, stage?.stageId ?? '', () => {
@@ -316,13 +326,7 @@ export function StructurePhaseFiche({
       return;
     }
     if (initialManual) {
-      if (stage.formatKind === 'Groups') {
-        setGroupPlace(null);
-        setGroupSession((value) => value + 1);
-        setGroupOpen(true);
-      } else {
-        setManualOpen(true);
-      }
+      setManualPlacementMenuOpen(true);
       onInitialEditConsumed?.();
       return;
     }
@@ -492,6 +496,102 @@ export function StructurePhaseFiche({
     }
     return listComposedAffectationEntries(stage, data.participants.entries);
   }, [stage, data.participants.entries]);
+
+  const canShowManualPlacementMenu = stage
+    ? canShowManualPlacementTargetMenu(stage, schematicQuery.data?.cases)
+    : false;
+  const manualPlacementMenuItems = useMemo(() => {
+    if (!stage || !schematicQuery.isSuccess || !canShowManualPlacementMenu) {
+      return [];
+    }
+    const cases = schematicQuery.data?.cases ?? [];
+    if (stage.formatKind === 'Groups') {
+      return listGroupManualPlacementMenuItems(
+        cases,
+        stage.placesPerGroup ?? 0,
+        (name) => t('place.group', { name }),
+        {
+          excessSuffix: t('groupPlacement.excessShort'),
+          ariaTeamsOnCapacity: (group, occupied, capacity) =>
+            t('groupPlacement.menuAriaTeamsOnCapacity', {
+              group,
+              occupied,
+              capacity,
+            }),
+        },
+      );
+    }
+    if (stage.formatKind === 'Cup') {
+      const cupItems = listCupManualPlacementMenuItems(
+        cases,
+        data.stages,
+        data.participants.entries,
+        {
+          free: t('manualPlacement.placeFreeShort'),
+          occupiedPrimary: (placeLabel) =>
+            t('manualPlacement.placeOccupiedShort', { place: placeLabel }),
+          occupiedAria: (placeLabel, teamName) =>
+            t('manualPlacement.placeOccupiedAria', {
+              place: placeLabel,
+              team: teamName,
+            }),
+        },
+      );
+      const entryById = new Map(
+        data.participants.entries.map((row) => [row.entryId, row]),
+      );
+      return cupItems.map((item) => {
+        const cupPlace = listCupManualPlaces(cases, data.stages).find(
+          (row) => row.slotKey === item.slotKey,
+        );
+        const entryId = cupPlace?.entryId;
+        const entry = entryId ? entryById.get(entryId) : undefined;
+        if (!entry) {
+          return item;
+        }
+        const teamName =
+          entry.displayName?.trim() || entry.shortName?.trim() || item.label;
+        return {
+          ...item,
+          secondary: (
+            <span className="ds-dropdown-button__item-secondary-team">
+              <TeamCrest
+                name={teamName}
+                logoMediaId={entry.logoMediaId}
+                primaryColor={entry.primaryColor}
+                size="sm"
+              />
+              <span>{teamName}</span>
+            </span>
+          ),
+        };
+      });
+    }
+    return [];
+  }, [
+    canShowManualPlacementMenu,
+    data.participants.entries,
+    data.stages,
+    schematicQuery.data?.cases,
+    schematicQuery.isSuccess,
+    stage,
+    t,
+  ]);
+
+  const onManualPlacementTargetSelect = (value: string) => {
+    if (value.startsWith('group:')) {
+      const nextGroupId = value.slice('group:'.length);
+      setGroupPlace(null);
+      setFixedGroupId(nextGroupId);
+      setGroupSession((current) => current + 1);
+      setGroupOpen(true);
+      return;
+    }
+    if (value.startsWith('cup:')) {
+      setManualSlotKey(value.slice('cup:'.length));
+      setManualOpen(true);
+    }
+  };
 
   if (!stage) {
     return (
@@ -1098,7 +1198,11 @@ export function StructurePhaseFiche({
             stage.formatKind === 'Swiss'
           : false,
         compositionTileMode,
-        canManualPlace: isCompletedStage ? false : canManualPlace,
+        canManualPlace: isCompletedStage ? false : canShowManualPlacementMenu,
+        manualPlacementMenuItems,
+        onManualPlacementTargetSelect,
+        manualPlacementMenuOpen,
+        onManualPlacementMenuOpenChange: setManualPlacementMenuOpen,
         canEditDraw: canAuthorDrawRulesP1,
         showReleaseCta: isCompletedStage ? false : showReleaseCta,
         hasNonCancelledDraw,
@@ -1128,14 +1232,7 @@ export function StructurePhaseFiche({
           }
         },
         onManualPlace: () => {
-          if (stage.formatKind === 'Groups') {
-            setGroupPlace(null);
-            setGroupSession((value) => value + 1);
-            setGroupOpen(true);
-          } else {
-            setManualSlotKey(null);
-            setManualOpen(true);
-          }
+          setManualPlacementMenuOpen(true);
         },
         onReleasePlacements: () => setReleaseConfirmOpen(true),
         onDeactivateDraw: () => setDeactivateDrawOpen(true),
@@ -1412,6 +1509,7 @@ export function StructurePhaseFiche({
                 ) {
                   return;
                 }
+                setFixedGroupId(null);
                 setGroupPlace(place);
                 setGroupSession((value) => value + 1);
                 setGroupOpen(true);
@@ -1637,6 +1735,7 @@ export function StructurePhaseFiche({
               onClose={() => {
                 setGroupOpen(false);
                 setGroupPlace(null);
+                setFixedGroupId(null);
               }}
               competitionId={data.competitionId}
               stage={stage}
@@ -1644,6 +1743,7 @@ export function StructurePhaseFiche({
               entries={data.participants.entries}
               cases={schematicQuery.data?.cases ?? []}
               place={groupPlace}
+              fixedGroupId={fixedGroupId}
             />
             <TieFormatDialog
               competitionId={data.competitionId}

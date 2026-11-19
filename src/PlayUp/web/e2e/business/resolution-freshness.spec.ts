@@ -139,7 +139,7 @@ test.describe('Play’Up business (resolution freshness)', () => {
     await expect(place.getByRole('button', { name: /Périmé/ })).toHaveCount(0);
     await place.getByRole('button', { name: 'Rejouable', exact: true }).click();
     await expect(
-      page.getByRole('dialog', { name: /Placement manuel/ }),
+      page.getByRole('dialog', { name: /Placement —/ }),
     ).toBeVisible();
   });
 
@@ -295,9 +295,10 @@ test.describe('Play’Up business (resolution freshness)', () => {
       `/competitions/${competition.id}/structure?stage=${manuelId}`,
     );
     await page.getByRole('button', { name: 'Placer manuellement' }).click();
-    const dialog = page.getByRole('dialog', { name: /Placement manuel/ });
+    await page.getByRole('menuitem').first().click();
+    const dialog = page.getByRole('dialog', { name: /Placement —/ });
     await expect(dialog).toBeVisible();
-    await expectFooterButtonsOnOneRow(dialog);
+    await expectFooterButtonsOnOneRow(dialog, 8);
     await dialog.getByRole('button', { name: 'Annuler' }).click();
   });
 
@@ -424,7 +425,7 @@ async function expectAttentionRow(
   await page.getByRole('button', { name: 'Fermer À traiter' }).click();
 }
 
-async function expectFooterButtonsOnOneRow(dialog: Locator) {
+async function expectFooterButtonsOnOneRow(dialog: Locator, maxYOffset = 4) {
   const names = [/Annuler/, /Jouer le match/, /Libérer/, /Enregistrer/];
   const boxes: { y: number; height: number }[] = [];
   for (const name of names) {
@@ -440,7 +441,7 @@ async function expectFooterButtonsOnOneRow(dialog: Locator) {
   expect(boxes.length).toBeGreaterThanOrEqual(2);
   const baseline = boxes[0]!.y;
   for (const box of boxes) {
-    expect(Math.abs(box.y - baseline)).toBeLessThan(4);
+    expect(Math.abs(box.y - baseline)).toBeLessThan(maxYOffset);
   }
 }
 

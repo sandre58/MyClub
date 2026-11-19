@@ -13,6 +13,7 @@ import {
   materializeMatches,
 } from '../../../api';
 import { ConfirmDialog } from '../../../design-system/components/ConfirmDialog';
+import { DropDownButton } from '../../../design-system/components/DropDownButton';
 import { RatioMessageGauge } from '../../../design-system/components/RatioMessageGauge';
 import { TextLink } from '../../../design-system/components/TextLink';
 import { Tooltip } from '../../../design-system/components/Tooltip';
@@ -648,14 +649,30 @@ function PlacesColumn(
           />
           {props.canManualPlace ? (
             <div className="structure-operational-strip__section-actions">
-              <button
-                type="button"
-                className={secondaryBtn}
-                onClick={props.onManualPlace}
-              >
-                <PersonIcon size="sm" />
-                {t('fiche.manualPlacementCta')}
-              </button>
+              {props.manualPlacementMenuItems &&
+              props.onManualPlacementTargetSelect ? (
+                <DropDownButton
+                  className="ds-btn--sm"
+                  variant="secondary"
+                  label={t('fiche.manualPlacementCta')}
+                  aria-label={t('fiche.manualPlacementCta')}
+                  leadingIcon={<PersonIcon size="sm" />}
+                  items={[...props.manualPlacementMenuItems]}
+                  onSelect={props.onManualPlacementTargetSelect}
+                  open={props.manualPlacementMenuOpen}
+                  onOpenChange={props.onManualPlacementMenuOpenChange}
+                  emptyLabel={t('fiche.manualPlacementMenuEmpty')}
+                />
+              ) : (
+                <button
+                  type="button"
+                  className={secondaryBtn}
+                  onClick={props.onManualPlace}
+                >
+                  <PersonIcon size="sm" />
+                  {t('fiche.manualPlacementCta')}
+                </button>
+              )}
             </div>
           ) : null}
         </>

@@ -52,7 +52,8 @@ internal static class ManualGroupSeatRules
         EntryId? entryId,
         IReadOnlyList<MatchParticipantSnapshot>? snapshots,
         int? unresolvedPendingFeeds = null,
-        int? projectedMemberCount = null)
+        int? projectedMemberCount = null,
+        bool deferCapacityChecks = false)
     {
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(competitionStages);
@@ -74,7 +75,12 @@ internal static class ManualGroupSeatRules
                 return ApplicationErrorCodes.AppliedDrawGroupPlacementProtected;
             }
 
-            if (stage.FindManualAssignRefusal(group.Id, known, snapshots, projectedMemberCount) is { } domain)
+            if (stage.FindManualAssignRefusal(
+                    group.Id,
+                    known,
+                    snapshots,
+                    deferCapacityChecks ? null : projectedMemberCount,
+                    ignoreCapacity: deferCapacityChecks) is { } domain)
             {
                 return domain;
             }
@@ -87,6 +93,11 @@ internal static class ManualGroupSeatRules
         else if (stage.FindManualAssignSeatRefusal(group.Id, snapshots) is { } seat)
         {
             return seat;
+        }
+
+        if (deferCapacityChecks)
+        {
+            return null;
         }
 
         var pending = unresolvedPendingFeeds

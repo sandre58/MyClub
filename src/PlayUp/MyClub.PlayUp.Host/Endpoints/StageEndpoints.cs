@@ -231,6 +231,42 @@ internal static class StageEndpoints
             });
 
         app.MapPut(
+            "/stages/{stageId:guid}/groups/{groupId:guid}/membership",
+            async (
+                Guid stageId,
+                Guid groupId,
+                SetGroupEntriesRequest? request,
+                UseCaseExecutor executor,
+                CancellationToken cancellationToken) =>
+            {
+                if (request?.EntryIds is not { } entryIds
+                    || entryIds.Count > SetGroupEntries.MaxBatchSize
+                    || entryIds.Any(id => id == Guid.Empty)
+                    || entryIds.Distinct().Count() != entryIds.Count)
+                {
+                    return Results.BadRequest(new { code = ApplicationErrorCodes.InvalidStructureIntent });
+                }
+
+                if (request.ExpectedEntryIds is { } expected
+                    && (expected.Count > SetGroupEntries.MaxBatchSize
+                        || expected.Any(id => id == Guid.Empty)
+                        || expected.Distinct().Count() != expected.Count))
+                {
+                    return Results.BadRequest(new { code = ApplicationErrorCodes.InvalidStructureIntent });
+                }
+
+                await executor
+                    .SetGroupEntriesAsync(
+                        new StageId(stageId),
+                        new GroupId(groupId),
+                        entryIds.Select(id => new EntryId(id)).ToArray(),
+                        request.ExpectedEntryIds?.Select(id => new EntryId(id)).ToArray(),
+                        cancellationToken)
+                    .ConfigureAwait(false);
+                return Results.NoContent();
+            });
+
+        app.MapPut(
             "/stages/{stageId:guid}/match-generation-format",
             async (
                 Guid stageId,
