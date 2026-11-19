@@ -478,6 +478,36 @@ describe('StructureGroupPlacementDialog', () => {
     expect(screen.getByText('Placement indisponible')).toBeInTheDocument();
   });
 
+  it('shows group members as checked unavailable at the top of batch mode', () => {
+    const cases = [
+      ...[1, 2, 3].map((index) =>
+        groupPlace({
+          formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index },
+          entry: {
+            entryId: `e${index}`,
+            displayName: ['Alpha', 'Bravo', 'Charlie'][index - 1],
+          },
+        }),
+      ),
+      groupPlace({
+        formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index: 4 },
+      }),
+    ];
+    renderDialog({ place: null, cases });
+
+    const memberTiles = screen.getAllByRole('checkbox', {
+      name: /Alpha|Bravo|Charlie/,
+    });
+    expect(memberTiles).toHaveLength(3);
+    for (const tile of memberTiles) {
+      expect(tile).toHaveAttribute('aria-disabled', 'true');
+      expect(tile).toHaveAttribute('aria-checked', 'true');
+    }
+    expect(
+      screen.getByText('Dans le groupe A', { exact: false }),
+    ).toBeInTheDocument();
+  });
+
   it('shows batch facts and locks tiles at capacity', async () => {
     const user = userEvent.setup();
     renderDialog({ place: null });
