@@ -94,7 +94,7 @@ async function findCompetition(request: APIRequestContext, name: string) {
 
 async function placeOneTeamFromDialog(page: Page, expectPot: boolean) {
   const dialog = page.getByRole('dialog', {
-    name: /Placement manuel —|Modifier la place —/,
+    name: /Placement — .* —/,
   });
   await expect(dialog).toBeVisible();
   const pot = dialog.getByText(/^Pot /);
@@ -183,9 +183,11 @@ test.describe('manual group placement', () => {
     await page.goto(`/competitions/${competition.id}/structure`);
 
     await page.getByRole('button', { name: 'Placer manuellement' }).click();
-    await page.getByRole('menuitem', { name: /Groupe A - 0\/4/ }).click();
+    await page
+      .getByRole('menuitem', { name: /Groupe A, 0 équipes sur 4/ })
+      .click();
     const dialog = page.getByRole('dialog', {
-      name: /Groupe A —/,
+      name: /Placement — .* — Groupe A/,
     });
     await expect(dialog).toBeVisible();
 
@@ -193,7 +195,7 @@ test.describe('manual group placement', () => {
     await teams.nth(0).click();
     await teams.nth(1).click();
     await teams.nth(2).click();
-    await dialog.getByRole('button', { name: 'Enregistrer (+3)' }).click();
+    await dialog.getByRole('button', { name: 'Enregistrer' }).click();
     await expect(dialog).toBeHidden();
 
     await fillRemainingSeats(page, false);
@@ -218,7 +220,7 @@ test.describe('manual group placement', () => {
       .first();
     await editSeat.click();
     const dialog = page.getByRole('dialog', {
-      name: /Modifier la place — Groupe A/,
+      name: /Placement — .* — Groupe A/,
     });
     const occupant = dialog.getByRole('radio', { checked: true });
     const originalName = (await occupant.innerText()).trim().split('\n')[0];
@@ -366,7 +368,7 @@ test.describe('manual group placement', () => {
       .first();
     await editSeat.click();
     const dialog = page.getByRole('dialog', {
-      name: /Modifier la place — Groupe A/,
+      name: /Placement — .* — Groupe A/,
     });
     await dialog
       .getByRole('button', { name: /Retirer l.équipe de la place/ })
@@ -384,7 +386,7 @@ test.describe('manual group placement', () => {
       .first();
     await formerFourth.click();
     const replaceDialog = page.getByRole('dialog', {
-      name: /Modifier la place — Groupe A/,
+      name: /Placement — .* — Groupe A/,
     });
     const checked = replaceDialog.getByRole('radio', { checked: true });
     const shiftedName = (await checked.innerText()).trim().split('\n')[0];

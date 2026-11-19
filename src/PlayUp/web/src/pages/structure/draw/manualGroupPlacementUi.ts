@@ -743,7 +743,11 @@ export function listGroupManualPlacementMenuItems(
   labelForGroup: (name: string) => string,
   labels: {
     excessSuffix: string;
-    ariaTeamsOnCapacity: (occupied: number, capacity: number) => string;
+    ariaTeamsOnCapacity: (
+      groupLabel: string,
+      occupied: number,
+      capacity: number,
+    ) => string;
   },
 ): DropDownButtonItem[] {
   const buckets = groupSeatBuckets(cases);
@@ -762,11 +766,36 @@ export function listGroupManualPlacementMenuItems(
         : `${occupied}/${capacity}`;
     items.push({
       value: `group:${groupId}`,
-      label: `${groupLabel} - ${ratio}`,
+      label: groupLabel,
       secondary: ratio,
-      'aria-label': labels.ariaTeamsOnCapacity(occupied, capacity),
+      'aria-label': labels.ariaTeamsOnCapacity(groupLabel, occupied, capacity),
       disabled: groupAssignLockedByMatches(cases, groupId, placesPerGroup),
     });
   }
   return items;
+}
+
+/** Net addition cap: empty editable seats plus members the user may uncheck. */
+export function membershipAdditionLimit(
+  emptySeatCap: number,
+  cases: readonly SchematicCase[],
+  groupId: string,
+  memberEntries: readonly GroupPlacementChoice[],
+  expectedEntryIds: readonly string[],
+  selectedIds: readonly string[],
+  additionsOnly: boolean,
+): number {
+  if (additionsOnly) {
+    return emptySeatCap;
+  }
+  const clearableSelected = memberEntries.filter(
+    (team) =>
+      selectedIds.includes(team.entryId) &&
+      memberEntryClearable(cases, groupId, team.entryId),
+  ).length;
+  const clearableRemoved = expectedEntryIds.filter(
+    (id) =>
+      !selectedIds.includes(id) && memberEntryClearable(cases, groupId, id),
+  ).length;
+  return emptySeatCap + clearableSelected + clearableRemoved;
 }

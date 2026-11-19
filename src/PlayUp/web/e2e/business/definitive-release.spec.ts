@@ -73,7 +73,7 @@ test('Structure — libération groupée d’une sélection vide puis placement 
   await page.getByRole('button', { name: 'Placer manuellement' }).click();
   await page.getByRole('menuitem', { name: /S4/ }).click();
   const manual = page.getByRole('dialog', {
-    name: /Placement manuel — S4/,
+    name: /Placement — .* — S4/,
   });
   await manual.getByRole('radio', { name: 'Ouest' }).click();
   await manual.getByRole('button', { name: 'Enregistrer' }).click();

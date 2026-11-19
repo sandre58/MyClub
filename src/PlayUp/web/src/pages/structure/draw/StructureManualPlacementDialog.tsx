@@ -29,6 +29,7 @@ import type {
 import { EmptyState, MutationError, PendingLabel } from '../../../ui';
 import {
   listCupManualPlaces,
+  occupiedCupPlaceLabel,
   occupiedEntryIds,
   type ManualPlaceMode,
 } from './manualPlacementUi';
@@ -52,6 +53,7 @@ type TeamChoice = {
   displayName: string;
   logoMediaId?: string | null;
   primaryColor?: string | null;
+  placedElsewhere?: string | null;
 };
 
 function compositionPoolIds(stage: StructureStageHubSummary): string[] {
@@ -146,6 +148,21 @@ export function StructureManualPlacementDialog({
     const pool = new Set(compositionPoolIds(stage));
     const choices: TeamChoice[] = [];
     for (const id of pool) {
+      const elsewhere = occupiedCupPlaceLabel(places, id, slotKey);
+      if (elsewhere) {
+        const entry = entryById.get(id);
+        choices.push({
+          entryId: id,
+          displayName:
+            entry?.displayName?.trim() ||
+            entry?.shortName?.trim() ||
+            t('manualPlacement.unknownTeam'),
+          logoMediaId: entry?.logoMediaId,
+          primaryColor: entry?.primaryColor,
+          placedElsewhere: elsewhere,
+        });
+        continue;
+      }
       if (occupied.has(id) && id !== entryId) continue;
       const entry = entryById.get(id);
       choices.push({
@@ -175,7 +192,7 @@ export function StructureManualPlacementDialog({
       }),
     );
     return choices;
-  }, [stage, occupied, entryId, entryById, t]);
+  }, [stage, occupied, entryId, entryById, places, slotKey, t]);
 
   const placeOptions = useMemo(
     () =>
@@ -274,22 +291,20 @@ export function StructureManualPlacementDialog({
 
   const canSave = canEdit && dirty;
   const canClearSelection = canEdit && entryId != null && !pending;
-  const placeLabel =
-    placeOptions.find((row) => row.value === slotKey)?.label ??
-    selectedPlace?.label ??
-    slotKey ??
-    t('manualPlacement.placePlaceholder');
+  const cupTargetLabel = selectedPlace?.label ?? slotKey ?? '';
+
+  const cupCheckedCount = canEdit && entryId != null ? 1 : 0;
+  const cupStatsTone = cupCheckedCount === 1 ? 'success' : 'attention';
 
   return (
     <>
       <Dialog
         open={open}
         onClose={requestClose}
-        title={
-          placeLocked
-            ? t('manualPlacement.titleWithPlace', { place: placeLabel })
-            : t('manualPlacement.title', { phase: stage.name })
-        }
+        title={t('manualPlacement.placementTitle', {
+          phase: stage.name,
+          target: cupTargetLabel,
+        })}
         description={t('manualPlacement.lead')}
         size="md"
         closeLabel={tCommon('close')}
@@ -358,6 +373,39 @@ export function StructureManualPlacementDialog({
             </div>
           ) : null}
 
+          {canEdit ? (
+            <div
+              className="structure-qualification__facts structure-composition__facts"
+              data-tone={cupStatsTone}
+              aria-live="polite"
+            >
+              <span
+                className="structure-qualification__fact structure-qualification__fact--secondary"
+                data-fact="places"
+              >
+                <span className="structure-qualification__fact-value">1</span>
+                <span className="structure-qualification__fact-label">
+                  {t('groupPlacement.factPlaces', { count: 1 })}
+                </span>
+              </span>
+              <span
+                className="structure-qualification__fact-rule"
+                aria-hidden="true"
+              />
+              <span
+                className="structure-qualification__fact structure-qualification__fact--primary"
+                data-fact="occupied"
+              >
+                <span className="structure-qualification__fact-value">
+                  {cupCheckedCount}
+                </span>
+                <span className="structure-qualification__fact-label">
+                  {t('groupPlacement.factOccupied', { count: cupCheckedCount })}
+                </span>
+              </span>
+            </div>
+          ) : null}
+
           <div className="structure-manual-placement__body">
             {isBlocked && blockedEmpty ? (
               <EmptyState
@@ -410,10 +458,18 @@ export function StructureManualPlacementDialog({
                   >
                     {teamChoices.map((team) => {
                       const selected = entryId === team.entryId;
+                      const elsewhere = team.placedElsewhere;
                       return (
                         <ChoiceTile
                           key={team.entryId}
                           label={team.displayName}
+                          description={
+                            elsewhere
+                              ? t('manualPlacement.placedOnCupHint', {
+                                  place: elsewhere,
+                                })
+                              : undefined
+                          }
                           layout="inline"
                           leading={
                             <TeamCrest
@@ -426,8 +482,9 @@ export function StructureManualPlacementDialog({
                           role="radio"
                           selected={selected}
                           disabled={pending}
+                          unavailable={elsewhere != null}
                           onChange={(next) => {
-                            if (pending || !canEdit) return;
+                            if (pending || !canEdit || elsewhere) return;
                             setEntryId(next ? team.entryId : null);
                             saveMutation.reset();
                           }}

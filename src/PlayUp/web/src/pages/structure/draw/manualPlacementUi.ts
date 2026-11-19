@@ -86,6 +86,12 @@ export function listCupManualPlaces(
       entryId: place.entry?.entryId ?? place.assignment?.entryId ?? null,
     });
   }
+  options.sort((left, right) =>
+    left.label.localeCompare(right.label, undefined, {
+      numeric: true,
+      sensitivity: 'base',
+    }),
+  );
   return options;
 }
 
@@ -115,7 +121,7 @@ export function listCupManualPlacementMenuItems(
       items.push({
         slotKey: place.slotKey,
         value: `cup:${place.slotKey}`,
-        label: labels.occupiedPrimary(place.label),
+        label: place.label,
         secondary: teamName,
         'aria-label': labels.occupiedAria(place.label, teamName),
         disabled: place.mode !== 'editable',
@@ -125,7 +131,7 @@ export function listCupManualPlacementMenuItems(
     items.push({
       slotKey: place.slotKey,
       value: `cup:${place.slotKey}`,
-      label: `${place.label} - ${labels.free}`,
+      label: place.label,
       secondary: labels.free,
       'aria-label': `${place.label} — ${labels.free}`,
       disabled: place.mode !== 'editable',
@@ -145,4 +151,18 @@ export function occupiedEntryIds(
     occupied.add(place.entryId);
   }
   return occupied;
+}
+
+export function occupiedCupPlaceLabel(
+  places: readonly ManualPlaceOption[],
+  entryId: string,
+  exceptSlotKey?: string | null,
+): string | null {
+  for (const place of places) {
+    if (exceptSlotKey && place.slotKey === exceptSlotKey) continue;
+    if (place.entryId === entryId) {
+      return place.label;
+    }
+  }
+  return null;
 }

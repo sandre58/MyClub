@@ -86,7 +86,7 @@ function groupPlace(partial: Partial<SchematicCase> = {}): SchematicCase {
     entry: null,
     assignment: null,
     seatMode: 'Editable',
-    canClear: false,
+    canClear: true,
     ...partial,
   };
 }
@@ -104,7 +104,7 @@ function groupBPlace(partial: Partial<SchematicCase> = {}): SchematicCase {
     entry: null,
     assignment: null,
     seatMode: 'Editable',
-    canClear: false,
+    canClear: true,
     ...partial,
   };
 }
@@ -122,16 +122,12 @@ function batchFactValue(key: string): string {
 function batchFacts() {
   return {
     places: batchFactValue('places'),
-    members: batchFactValue('members'),
-    additions: batchFactValue('additions'),
-    remaining: batchFactValue('remaining'),
-    reserved: batchFactValue('reserved'),
+    occupied: batchFactValue('occupied'),
   };
 }
 
-function reservedPresent(): boolean {
-  return document.querySelector('[data-fact="reserved"]') != null;
-}
+const placementDialogTitle = (target: string) =>
+  `Placement — Phase de groupes — ${target}`;
 
 function renderDialog(
   props: Partial<ComponentProps<typeof StructureGroupPlacementDialog>> = {},
@@ -201,7 +197,7 @@ describe('StructureGroupPlacementDialog', () => {
 
     expect(screen.getByText('Groupe A')).toBeInTheDocument();
     const dialog = screen.getByRole('dialog', {
-      name: 'Placement manuel — Phase de groupes',
+      name: placementDialogTitle('Groupe A'),
     });
     expect(within(dialog).getAllByText('Pot 1').length).toBeGreaterThan(0);
     expect(within(dialog).getByText('Pot 2')).toBeInTheDocument();
@@ -291,7 +287,7 @@ describe('StructureGroupPlacementDialog', () => {
 
     await user.click(screen.getByRole('checkbox', { name: 'Charlie' }));
     await user.click(screen.getByRole('checkbox', { name: 'Bravo' }));
-    await user.click(screen.getByRole('button', { name: 'Enregistrer (+2)' }));
+    await user.click(screen.getByRole('button', { name: 'Enregistrer' }));
 
     await waitFor(() => {
       expect(setGroupEntries).toHaveBeenCalledWith(
@@ -310,7 +306,7 @@ describe('StructureGroupPlacementDialog', () => {
     await user.click(
       screen.getByRole('button', { name: 'Compléter le groupe' }),
     );
-    await user.click(screen.getByRole('button', { name: 'Enregistrer (+2)' }));
+    await user.click(screen.getByRole('button', { name: 'Enregistrer' }));
 
     await waitFor(() => {
       expect(setGroupEntries).toHaveBeenCalledWith(
@@ -363,7 +359,7 @@ describe('StructureGroupPlacementDialog', () => {
 
     expect(
       screen.getByRole('dialog', {
-        name: 'Modifier la place — Groupe A',
+        name: placementDialogTitle('Groupe A'),
       }),
     ).toBeInTheDocument();
 
@@ -430,7 +426,7 @@ describe('StructureGroupPlacementDialog', () => {
     renderDialog({ place: null });
 
     await user.click(screen.getByRole('checkbox', { name: 'Bravo' }));
-    await user.click(screen.getByRole('button', { name: 'Enregistrer (+1)' }));
+    await user.click(screen.getByRole('button', { name: 'Enregistrer' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Bravo');
     expect(screen.getByRole('dialog')).toBeInTheDocument();
@@ -455,7 +451,7 @@ describe('StructureGroupPlacementDialog', () => {
     ).not.toBeInTheDocument();
     expect(
       screen.getByRole('dialog', {
-        name: /Groupe A — Phase de groupes/,
+        name: placementDialogTitle('Groupe A'),
       }),
     ).toBeInTheDocument();
   });
@@ -510,7 +506,7 @@ describe('StructureGroupPlacementDialog', () => {
     const { rerender, queryClient } = renderDialog({ place: null });
 
     await user.click(screen.getByRole('checkbox', { name: 'Bravo' }));
-    await user.click(screen.getByRole('button', { name: 'Enregistrer (+1)' }));
+    await user.click(screen.getByRole('button', { name: 'Enregistrer' }));
 
     expect(await screen.findByRole('alert')).toBeInTheDocument();
 
@@ -579,7 +575,7 @@ describe('StructureGroupPlacementDialog', () => {
 
     expect(
       screen.getByRole('dialog', {
-        name: /Groupe B — Phase de groupes/,
+        name: placementDialogTitle('Groupe B'),
       }),
     ).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: 'Echo' })).toBeInTheDocument();
@@ -627,11 +623,7 @@ describe('StructureGroupPlacementDialog', () => {
       ],
       expected: {
         places: '4',
-        members: '2',
-        additions: '0',
-        remaining: '1',
-        reserved: '1',
-        reservedVisible: true,
+        occupied: '2',
       },
     },
     {
@@ -663,11 +655,7 @@ describe('StructureGroupPlacementDialog', () => {
       ],
       expected: {
         places: '4',
-        members: '3',
-        additions: '0',
-        remaining: '0',
-        reserved: '1',
-        reservedVisible: true,
+        occupied: '3',
       },
     },
     {
@@ -697,11 +685,7 @@ describe('StructureGroupPlacementDialog', () => {
       ],
       expected: {
         places: '4',
-        members: '5 en trop',
-        additions: '0',
-        remaining: '0',
-        reserved: '',
-        reservedVisible: false,
+        occupied: '5',
       },
     },
   ])('shows batch facts for case $label', ({ cases: schematic, expected }) => {
@@ -721,15 +705,11 @@ describe('StructureGroupPlacementDialog', () => {
     });
     expect(batchFacts()).toEqual({
       places: expected.places,
-      members: expected.members,
-      additions: expected.additions,
-      remaining: expected.remaining,
-      reserved: expected.reserved,
+      occupied: expected.occupied,
     });
-    expect(reservedPresent()).toBe(expected.reservedVisible);
   });
 
-  it('shows group members as checked unavailable at the top of batch mode', () => {
+  it('shows group members checked and clearable in batch mode', () => {
     const cases = [
       ...[1, 2, 3].map((index) =>
         groupPlace({
@@ -746,16 +726,11 @@ describe('StructureGroupPlacementDialog', () => {
     ];
     renderDialog({ place: null, cases });
 
-    const memberTiles = screen.getAllByRole('checkbox', {
-      name: /Alpha|Bravo|Charlie/,
-    });
-    expect(memberTiles).toHaveLength(3);
-    for (const tile of memberTiles) {
-      expect(tile).toHaveAttribute('aria-disabled', 'true');
+    for (const name of ['Alpha', 'Bravo', 'Charlie']) {
+      const tile = screen.getByRole('checkbox', { name });
+      expect(tile).toHaveAttribute('aria-checked', 'true');
+      expect(tile).not.toHaveAttribute('aria-disabled', 'true');
     }
-    expect(
-      screen.getByText('Dans le groupe A', { exact: false }),
-    ).toBeInTheDocument();
   });
 
   it('treats locked members as display-only in batch placement', async () => {
@@ -768,6 +743,7 @@ describe('StructureGroupPlacementDialog', () => {
             entryId: `e${index}`,
             displayName: ['Alpha', 'Bravo', 'Charlie'][index - 1],
           },
+          canClear: false,
         }),
       ),
       groupPlace({
@@ -791,10 +767,7 @@ describe('StructureGroupPlacementDialog', () => {
     expect(member).toHaveFocus();
 
     await user.click(screen.getByRole('checkbox', { name: 'Delta' }));
-    const save = await screen.findByRole('button', {
-      name: /Enregistrer \(\+1\)/,
-    });
-    await user.click(save);
+    await user.click(screen.getByRole('button', { name: 'Enregistrer' }));
     await waitFor(() => {
       expect(setGroupEntries).toHaveBeenCalledWith(
         stageId,
@@ -879,13 +852,9 @@ describe('StructureGroupPlacementDialog', () => {
       ],
     });
 
-    expect(screen.getByText('Dans un autre groupe')).toBeInTheDocument();
     const other = screen.getByRole('checkbox', { name: 'Bravo' });
     expect(other).toHaveAttribute('aria-disabled', 'true');
-    expect(other.getAttribute('aria-describedby')).toBeTruthy();
-    expect(
-      document.getElementById(other.getAttribute('aria-describedby')!),
-    ).toHaveTextContent('Dans le Groupe B');
+    expect(screen.getByText('Dans le Groupe B')).toBeInTheDocument();
 
     await user.click(
       screen.getByRole('button', { name: 'Compléter le groupe' }),
@@ -903,7 +872,7 @@ describe('StructureGroupPlacementDialog', () => {
       'aria-checked',
       'false',
     );
-    await user.click(screen.getByRole('button', { name: 'Enregistrer (+2)' }));
+    await user.click(screen.getByRole('button', { name: 'Enregistrer' }));
     await waitFor(() => {
       expect(setGroupEntries).toHaveBeenCalledWith(
         stageId,
@@ -924,10 +893,7 @@ describe('StructureGroupPlacementDialog', () => {
     const user = userEvent.setup();
     renderDialog({ place: null });
 
-    const remainingCount = document.querySelector(
-      '[data-fact="remaining"] .structure-qualification__fact-value',
-    );
-    expect(remainingCount).toHaveTextContent('2');
+    expect(batchFacts()).toEqual({ places: '4', occupied: '0' });
 
     await user.click(screen.getByRole('checkbox', { name: 'Bravo' }));
     await user.click(screen.getByRole('checkbox', { name: 'Charlie' }));
@@ -953,7 +919,7 @@ describe('StructureGroupPlacementDialog', () => {
     });
     expect(
       screen.getByRole('dialog', {
-        name: /Groupe A — Phase de groupes/,
+        name: placementDialogTitle('Groupe A'),
       }),
     ).toBeInTheDocument();
     expect(
@@ -1113,10 +1079,12 @@ describe('StructureGroupPlacementDialog', () => {
       groupPlace({
         formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index: 1 },
         entry: { entryId: 'e1', displayName: 'Alpha' },
+        canClear: false,
       }),
       groupPlace({
         formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index: 2 },
         entry: { entryId: 'e2', displayName: 'Bravo' },
+        canClear: false,
       }),
       groupPlace({
         formPosition: {
@@ -1265,6 +1233,304 @@ describe('StructureGroupPlacementDialog', () => {
     expect(screen.queryByText(/coupe/i)).not.toBeInTheDocument();
   });
 
+  it('allows swap on a full group when a clearable member is unchecked', async () => {
+    const user = userEvent.setup();
+    const cases = [1, 2, 3, 4].map((index) =>
+      groupPlace({
+        formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index },
+        entry: {
+          entryId: `e${index}`,
+          displayName: ['Alpha', 'Bravo', 'Charlie', 'Delta'][index - 1],
+        },
+        canClear: index === 4,
+      }),
+    );
+    renderDialog({
+      place: null,
+      cases,
+      stage: stage({ compositionEntryIds: ['e1', 'e2', 'e3', 'e4', 'e5'] }),
+      entries: [
+        entry('e1', 'Alpha'),
+        entry('e2', 'Bravo'),
+        entry('e3', 'Charlie'),
+        entry('e4', 'Delta'),
+        entry('e5', 'Echo'),
+      ],
+    });
+
+    await user.click(screen.getByRole('checkbox', { name: 'Echo' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Delta' }));
+    await user.click(screen.getByRole('button', { name: 'Enregistrer' }));
+
+    await waitFor(() => expect(setGroupEntries).toHaveBeenCalled());
+    const [, , payload, expected] = vi
+      .mocked(setGroupEntries)
+      .mock.calls.at(-1)!;
+    expect(payload).toEqual(expect.arrayContaining(['e1', 'e2', 'e3', 'e5']));
+    expect(payload).toHaveLength(4);
+    expect(expected).toEqual(expect.arrayContaining(['e1', 'e2', 'e3', 'e4']));
+  });
+
+  it('announces hub membership refresh in batch mode (A1)', async () => {
+    const { rerender } = renderDialog({
+      place: null,
+      cases: [
+        groupPlace({
+          entry: { entryId: 'e4', displayName: 'Delta' },
+        }),
+        groupPlace({
+          formPosition: {
+            kind: 'GroupPlace',
+            groupId,
+            groupName: 'A',
+            index: 2,
+          },
+        }),
+        groupPlace({
+          formPosition: {
+            kind: 'GroupPlace',
+            groupId,
+            groupName: 'A',
+            index: 3,
+          },
+        }),
+        groupPlace({
+          formPosition: {
+            kind: 'GroupPlace',
+            groupId,
+            groupName: 'A',
+            index: 4,
+          },
+        }),
+      ],
+      stage: stage({ compositionEntryIds: ['e1', 'e2', 'e3', 'e4'] }),
+      entries: [
+        entry('e1', 'Alpha'),
+        entry('e2', 'Bravo'),
+        entry('e3', 'Charlie'),
+        entry('e4', 'Delta'),
+      ],
+    });
+
+    rerender(
+      <QueryClientProvider
+        client={
+          new QueryClient({
+            defaultOptions: {
+              queries: { retry: false },
+              mutations: { retry: false },
+            },
+          })
+        }
+      >
+        <MemoryRouter>
+          <StructureGroupPlacementDialog
+            open
+            onClose={vi.fn()}
+            competitionId="comp-1"
+            stage={stage()}
+            structureStages={[stage()]}
+            entries={[
+              entry('e1', 'Alpha'),
+              entry('e2', 'Bravo'),
+              entry('e3', 'Charlie'),
+              entry('e4', 'Delta'),
+            ]}
+            cases={[
+              groupPlace({
+                entry: { entryId: 'e4', displayName: 'Delta' },
+              }),
+              groupPlace({
+                entry: { entryId: 'e1', displayName: 'Alpha' },
+                formPosition: {
+                  kind: 'GroupPlace',
+                  groupId,
+                  groupName: 'A',
+                  index: 2,
+                },
+              }),
+              groupPlace({
+                formPosition: {
+                  kind: 'GroupPlace',
+                  groupId,
+                  groupName: 'A',
+                  index: 3,
+                },
+              }),
+              groupPlace({
+                formPosition: {
+                  kind: 'GroupPlace',
+                  groupId,
+                  groupName: 'A',
+                  index: 4,
+                },
+              }),
+            ]}
+            place={null}
+            fixedGroupId={groupId}
+          />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(screen.getByRole('checkbox', { name: 'Alpha' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    expect(screen.getByText('Le groupe a changé')).toBeInTheDocument();
+  });
+
+  it('surfaces membership stale without reseeding before hub refresh (M2)', async () => {
+    const user = userEvent.setup();
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+    vi.mocked(setGroupEntries).mockRejectedValueOnce(
+      new ApiError(
+        409,
+        'conflict',
+        'detail',
+        'Application.GroupMembershipStale',
+      ),
+    );
+    renderDialog(
+      {
+        place: null,
+        cases: [
+          groupPlace({
+            entry: { entryId: 'e1', displayName: 'Alpha' },
+          }),
+          groupPlace({
+            formPosition: {
+              kind: 'GroupPlace',
+              groupId,
+              groupName: 'A',
+              index: 2,
+            },
+          }),
+          groupPlace({
+            formPosition: {
+              kind: 'GroupPlace',
+              groupId,
+              groupName: 'A',
+              index: 3,
+            },
+          }),
+          groupPlace({
+            formPosition: {
+              kind: 'GroupPlace',
+              groupId,
+              groupName: 'A',
+              index: 4,
+            },
+          }),
+        ],
+      },
+      queryClient,
+    );
+    await user.click(screen.getByRole('checkbox', { name: 'Alpha' }));
+    await user.click(screen.getByRole('button', { name: 'Enregistrer' }));
+    expect(await screen.findByText('Le groupe a changé')).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Alpha' })).toHaveAttribute(
+      'aria-checked',
+      'false',
+    );
+  });
+
+  it('Retirer clears decheckable selection and announces removals', async () => {
+    const user = userEvent.setup();
+    const cases = [
+      groupPlace({
+        formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index: 1 },
+        entry: { entryId: 'e1', displayName: 'Alpha' },
+      }),
+      groupPlace({
+        formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index: 2 },
+        entry: { entryId: 'e2', displayName: 'Bravo' },
+        canClear: false,
+      }),
+      groupPlace({
+        formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index: 3 },
+      }),
+      groupPlace({
+        formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index: 4 },
+      }),
+    ];
+    renderDialog({
+      place: null,
+      cases,
+      stage: stage({ compositionEntryIds: ['e1', 'e2', 'e3'] }),
+      entries: [
+        entry('e1', 'Alpha'),
+        entry('e2', 'Bravo'),
+        entry('e3', 'Charlie'),
+      ],
+    });
+    await user.click(screen.getByRole('checkbox', { name: 'Charlie' }));
+    await user.click(screen.getByRole('button', { name: 'Retirer' }));
+    await waitFor(() => {
+      expect(
+        screen.getByText('1 équipe sera retirée', { exact: false }),
+      ).toBeInTheDocument();
+    });
+    expect(screen.getByRole('checkbox', { name: 'Alpha' })).toHaveAttribute(
+      'aria-checked',
+      'false',
+    );
+    expect(screen.getByRole('checkbox', { name: 'Bravo' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    expect(screen.getByRole('checkbox', { name: 'Charlie' })).toHaveAttribute(
+      'aria-checked',
+      'false',
+    );
+  });
+
+  it('disables Retirer and keeps members checked in additions-only mode (Q11)', () => {
+    const cases = [
+      ...[1, 2, 3, 4].map((index) =>
+        groupPlace({
+          formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index },
+          entry: {
+            entryId: `e${index}`,
+            displayName: ['Alpha', 'Bravo', 'Charlie', 'Delta'][index - 1],
+          },
+          canClear: false,
+        }),
+      ),
+      groupPlace({
+        formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index: 5 },
+        seatMode: 'MatchLocked',
+      }),
+    ];
+    renderDialog({
+      place: null,
+      cases,
+      stage: stage({
+        status: 'Ready',
+        compositionEntryIds: ['e1', 'e2', 'e3', 'e4', 'e5'],
+      }),
+      entries: [
+        entry('e1', 'Alpha'),
+        entry('e2', 'Bravo'),
+        entry('e3', 'Charlie'),
+        entry('e4', 'Delta'),
+        entry('e5', 'Echo'),
+      ],
+    });
+    expect(screen.getByRole('button', { name: 'Retirer' })).toBeDisabled();
+    for (const name of ['Alpha', 'Bravo', 'Charlie', 'Delta']) {
+      expect(screen.getByRole('checkbox', { name })).toHaveAttribute(
+        'aria-checked',
+        'true',
+      );
+    }
+  });
+
   it('links the refused batch tile to the alert message', async () => {
     const user = userEvent.setup();
     vi.mocked(setGroupEntries).mockRejectedValueOnce(
@@ -1280,7 +1546,7 @@ describe('StructureGroupPlacementDialog', () => {
     renderDialog({ place: null });
 
     await user.click(screen.getByRole('checkbox', { name: 'Bravo' }));
-    await user.click(screen.getByRole('button', { name: 'Enregistrer (+1)' }));
+    await user.click(screen.getByRole('button', { name: 'Enregistrer' }));
 
     const alert = await screen.findByRole('alert');
     const bravo = screen.getByRole('checkbox', { name: 'Bravo' });

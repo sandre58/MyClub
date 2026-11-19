@@ -48,6 +48,18 @@
   color: var(--color-attention);
 }
 
+.structure-composition__facts[data-tone='attention']
+  [data-fact='occupied']
+  .structure-qualification__fact-value {
+  color: var(--color-attention);
+}
+
+.structure-composition__facts[data-tone='success']
+  [data-fact='occupied']
+  .structure-qualification__fact-value {
+  color: var(--color-success);
+}
+
 .structure-composition__toolbar {
   display: flex;
   flex-wrap: wrap;

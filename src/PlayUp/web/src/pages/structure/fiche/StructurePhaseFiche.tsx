@@ -512,8 +512,9 @@ export function StructurePhaseFiche({
         (name) => t('place.group', { name }),
         {
           excessSuffix: t('groupPlacement.excessShort'),
-          ariaTeamsOnCapacity: (occupied, capacity) =>
+          ariaTeamsOnCapacity: (group, occupied, capacity) =>
             t('groupPlacement.menuAriaTeamsOnCapacity', {
+              group,
               occupied,
               capacity,
             }),
