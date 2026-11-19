@@ -1505,6 +1505,28 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
+    /// Replaces the whole group membership with <paramref name="ordered"/>.
+    /// Resolution provenance is cleared for removed entries. Caller has already evaluated every guard.
+    /// </summary>
+    /// <param name="groupId">The group identity.</param>
+    /// <param name="ordered">Members in their final order.</param>
+    public void ApplyManualGroupMembership(GroupId groupId, IReadOnlyList<EntryId> ordered)
+    {
+        ArgumentNullException.ThrowIfNull(ordered);
+        var group = GetGroup(groupId);
+        var next = ordered.ToHashSet();
+        foreach (var entryId in group.EntryIds)
+        {
+            if (!next.Contains(entryId))
+            {
+                RemoveGroupResolutionProvenanceIfPresent(groupId, entryId);
+            }
+        }
+
+        group.ReplaceMembership(ordered);
+    }
+
+    /// <summary>
     /// Gets the first refusal code of a manual group assignment, or <see langword="null"/> when it would succeed.
     /// A same-group membership is a success. Does not mutate and does not throw.
     /// </summary>
