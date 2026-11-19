@@ -481,6 +481,34 @@ describe('resolveGroupStatusSuffix', () => {
       }),
     ];
     expect(resolveGroupStatusSuffix(reserved, 'g-a', 4)).toBe('reserved');
+
+    const matchLocked = [
+      ...full.slice(0, 3),
+      place({
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId: 'g-a',
+          groupName: 'A',
+          index: 4,
+        },
+        seatMode: 'MatchLocked',
+      }),
+    ];
+    expect(resolveGroupStatusSuffix(matchLocked, 'g-a', 4)).toBe('match');
+
+    const drawPending = [
+      ...full.slice(0, 3),
+      place({
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId: 'g-a',
+          groupName: 'A',
+          index: 4,
+        },
+        seatMode: 'DrawPending',
+      }),
+    ];
+    expect(resolveGroupStatusSuffix(drawPending, 'g-a', 4)).toBe('draw');
   });
 });
 

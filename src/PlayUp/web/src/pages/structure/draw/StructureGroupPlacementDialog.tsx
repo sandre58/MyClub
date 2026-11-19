@@ -413,6 +413,15 @@ export function StructureGroupPlacementDialog({
   }, [open, mode, focusEpoch, occupiedId]);
 
   useEffect(() => {
+    if (!open) return;
+    const blocked = placementBlocked || (seatBlocked && !subjectGone);
+    if (!blocked) return;
+    window.requestAnimationFrame(() => {
+      blockedFocusRef.current?.focus();
+    });
+  }, [open, placementBlocked, seatBlocked, subjectGone, focusEpoch]);
+
+  useEffect(() => {
     if (!open || mode !== 'batch') return;
     const { ids, removedCount } = purgeUnavailableSelection(
       selectedIds,
@@ -689,7 +698,7 @@ export function StructureGroupPlacementDialog({
             <span className="structure-manual-placement__label">
               {t('groupPlacement.targetLabel')}
             </span>
-            {placeLockedFromSchematic || groupTargets.length <= 1 ? (
+            {placeLockedFromSchematic || groupSelectTargets.length <= 1 ? (
               <p
                 className="structure-manual-placement__place-locked"
                 aria-label={t('groupPlacement.targetLockedAria', {
