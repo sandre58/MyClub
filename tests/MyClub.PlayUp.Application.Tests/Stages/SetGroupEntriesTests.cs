@@ -162,13 +162,14 @@ public sealed class SetGroupEntriesTests
         }
 
         var current = group.EntryIds.ToArray();
-        _ = SetGroupEntries.Execute(
+        SetGroupEntries.Execute(
             destination,
             competition,
             group.Id,
-            [current[1], current[0], current[2], current[3]],
+            [current[1], current[2], current[3], ids[4]],
             current,
-            competitionStages: [source, destination]);
+            competitionStages: [source, destination]).Should().BeTrue();
+        group.EntryIds.Should().Equal(current[1], current[2], current[3], ids[4]);
     }
 
     [Fact]
