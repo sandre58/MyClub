@@ -546,16 +546,24 @@ export function StructurePhaseFiche({
         );
         const entryId = cupPlace?.entryId;
         const entry = entryId ? entryById.get(entryId) : undefined;
+        if (!entry) {
+          return item;
+        }
+        const teamName =
+          entry.displayName?.trim() || entry.shortName?.trim() || item.label;
         return {
           ...item,
-          leading: entry ? (
-            <TeamCrest
-              name={entry.displayName ?? item.label}
-              logoMediaId={entry.logoMediaId}
-              primaryColor={entry.primaryColor}
-              size="sm"
-            />
-          ) : undefined,
+          secondary: (
+            <span className="ds-dropdown-button__item-secondary-team">
+              <TeamCrest
+                name={teamName}
+                logoMediaId={entry.logoMediaId}
+                primaryColor={entry.primaryColor}
+                size="sm"
+              />
+              <span>{teamName}</span>
+            </span>
+          ),
         };
       });
     }

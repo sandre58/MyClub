@@ -118,6 +118,40 @@ describe('StructureManualPlacementDialog', () => {
     expect(screen.getByText('Sélection effacée')).toBeInTheDocument();
   });
 
+  it('uses the unified placement title with a locked cup target', () => {
+    renderDialog({ initialSlotKey: 'A' });
+    expect(
+      screen.getByRole('dialog', {
+        name: 'Placement — Finale — A',
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it('shows cup occupancy stats that follow the current selection', async () => {
+    const user = userEvent.setup();
+    renderDialog({ initialSlotKey: 'A' });
+    const facts = document.querySelector('.structure-manual-placement__facts');
+    expect(facts).toHaveAttribute('data-tone', 'attention');
+    await user.click(screen.getByRole('radio', { name: 'Alpha' }));
+    expect(facts).toHaveAttribute('data-tone', 'success');
+  });
+
+  it('grays out teams already placed on another cup slot (A9)', () => {
+    renderDialog({
+      initialSlotKey: 'A',
+      cases: [
+        cupSlot('A'),
+        cupSlot('B', {
+          entry: { entryId: 'e2', displayName: 'Bravo' },
+          assignment: { entryId: 'e2', displayName: 'Bravo' },
+        }),
+      ],
+    });
+    const elsewhere = screen.getByRole('radio', { name: 'Bravo' });
+    expect(elsewhere).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByText(/Sur B/)).toBeInTheDocument();
+  });
+
   it('refreshes the structure hub on assignment error', async () => {
     const user = userEvent.setup();
     vi.mocked(assignEntryToSlot).mockRejectedValueOnce(

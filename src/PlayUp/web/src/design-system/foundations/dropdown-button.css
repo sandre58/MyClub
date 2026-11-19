@@ -99,6 +99,21 @@
   line-height: var(--leading-normal);
 }
 
+.ds-dropdown-button__item-secondary-team {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-6);
+  max-width: min(14rem, 45vw);
+  min-width: 0;
+}
+
+.ds-dropdown-button__item-secondary-team > :last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .ds-dropdown-button__item:hover:not(:disabled),
 .ds-dropdown-button__item[data-active='true']:not(:disabled) {
   background: color-mix(in srgb, var(--color-brand) 8%, transparent);

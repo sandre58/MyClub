@@ -649,6 +649,44 @@ export function memberEntryClearable(
   return seat.seatMode === 'Editable' && seat.canClear === true;
 }
 
+export function memberProtectReasonKey(
+  cases: readonly SchematicCase[],
+  groupId: string,
+  entryId: string,
+): Extract<
+  GroupSeatReasonKey,
+  | 'clearLocked'
+  | 'draw'
+  | 'qualProg'
+  | 'matchLocked'
+  | 'drawPending'
+  | 'reserved'
+> | null {
+  const seat = findGroupSeatByEntryId(cases, groupId, entryId);
+  if (!seat || occupantId(seat) == null) {
+    return null;
+  }
+  if (memberEntryClearable(cases, groupId, entryId)) {
+    return null;
+  }
+  if (seat.seatMode === 'Draw') {
+    return 'draw';
+  }
+  if (seat.seatMode === 'QualProg') {
+    return 'qualProg';
+  }
+  if (seat.seatMode === 'MatchLocked') {
+    return 'matchLocked';
+  }
+  if (seat.seatMode === 'DrawPending') {
+    return 'drawPending';
+  }
+  if (seat.seatMode === 'Reserved') {
+    return 'reserved';
+  }
+  return 'clearLocked';
+}
+
 export function membershipSelectionDiff(
   baseline: readonly string[],
   selection: readonly string[],
@@ -780,7 +818,6 @@ export function membershipAdditionLimit(
   emptySeatCap: number,
   cases: readonly SchematicCase[],
   groupId: string,
-  memberEntries: readonly GroupPlacementChoice[],
   expectedEntryIds: readonly string[],
   selectedIds: readonly string[],
   additionsOnly: boolean,
@@ -788,14 +825,27 @@ export function membershipAdditionLimit(
   if (additionsOnly) {
     return emptySeatCap;
   }
-  const clearableSelected = memberEntries.filter(
-    (team) =>
-      selectedIds.includes(team.entryId) &&
-      memberEntryClearable(cases, groupId, team.entryId),
-  ).length;
   const clearableRemoved = expectedEntryIds.filter(
     (id) =>
       !selectedIds.includes(id) && memberEntryClearable(cases, groupId, id),
   ).length;
-  return emptySeatCap + clearableSelected + clearableRemoved;
+  return emptySeatCap + clearableRemoved;
+}
+
+/** Batch save is blocked when the selection exceeds capacity (excess may shrink only). */
+export function batchSelectionExceedsCapacity(
+  placesPerGroup: number,
+  expectedEntryIds: readonly string[],
+  selectedIds: readonly string[],
+): boolean {
+  if (placesPerGroup <= 0) {
+    return false;
+  }
+  if (selectedIds.length <= placesPerGroup) {
+    return false;
+  }
+  return !(
+    expectedEntryIds.length > placesPerGroup &&
+    selectedIds.length <= expectedEntryIds.length
+  );
 }

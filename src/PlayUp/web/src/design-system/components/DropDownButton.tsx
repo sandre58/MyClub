@@ -12,8 +12,8 @@ import { Popover } from './Popover';
 export type DropDownButtonItem = {
   value: string;
   label: string;
-  /** Compact secondary line (e.g. occupancy ratio). */
-  secondary?: string;
+  /** Compact secondary content (e.g. occupancy ratio or team). */
+  secondary?: ReactNode;
   disabled?: boolean;
   leading?: ReactNode;
   /** Overrides the accessible name for the menu item. */

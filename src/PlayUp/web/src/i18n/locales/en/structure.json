@@ -1115,9 +1115,6 @@
     "removeAll": "Remove",
     "excessShort": "over capacity",
     "menuAriaTeamsOnCapacity": "{{group}}, {{occupied}} teams of {{capacity}}",
-    "saveDeltaRemoves": "Save (−{{removes}})",
-    "saveDeltaAdds": "Save (+{{adds}})",
-    "saveDeltaBoth": "Save (−{{removes}}, +{{adds}})",
     "willRemoveMembers_one": "{{count}} team will be removed",
     "willRemoveMembers_other": "{{count}} teams will be removed"
   },
