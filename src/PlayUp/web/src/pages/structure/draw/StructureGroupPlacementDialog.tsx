@@ -184,12 +184,33 @@ export function StructureGroupPlacementDialog({
     [stage, cases, entries],
   );
 
-  const cap = useMemo(
+  const effectiveBatch = mode === 'batch' && membershipBatchAllowed;
+
+  const emptySeatCap = useMemo(
     () => (groupId ? groupBatchCap(cases, groupId, actions) : 0),
     [cases, groupId, actions],
   );
+  const additionCap = useMemo(() => {
+    if (!groupId || !membershipBatchAllowed) {
+      return emptySeatCap;
+    }
+    const netAdds = Math.max(
+      0,
+      (stage.placesPerGroup ?? 0) - expectedEntryIds.length,
+    );
+    return Math.max(emptySeatCap, netAdds);
+  }, [
+    groupId,
+    membershipBatchAllowed,
+    emptySeatCap,
+    stage.placesPerGroup,
+    expectedEntryIds.length,
+  ]);
+  const batchAdditionLimit = effectiveBatch
+    ? Math.min(emptySeatCap, additionCap)
+    : emptySeatCap;
+  const cap = batchAdditionLimit;
 
-  const effectiveBatch = mode === 'batch' && membershipBatchAllowed;
   const additionsOnly =
     effectiveBatch && groupId
       ? groupDialogAdditionsOnly(cases, groupId, stage.placesPerGroup ?? 0)
@@ -478,6 +499,25 @@ export function StructureGroupPlacementDialog({
 
   useEffect(() => {
     if (!open || mode !== 'batch') return;
+    if (effectiveBatch) {
+      const conserved = selectedIds.filter((id) =>
+        expectedEntryIds.includes(id),
+      );
+      const additions = selectedIds.filter(
+        (id) => !expectedEntryIds.includes(id),
+      );
+      const { ids: nextAdds, removedCount } = purgeUnavailableSelection(
+        additions,
+        available,
+      );
+      if (removedCount > 0) {
+        setSelectedIds([...conserved, ...nextAdds]);
+        setLiveNote(
+          t('groupPlacement.selectionPurged', { count: removedCount }),
+        );
+      }
+      return;
+    }
     const { ids, removedCount } = purgeUnavailableSelection(
       selectedIds,
       available,
@@ -486,7 +526,7 @@ export function StructureGroupPlacementDialog({
       setSelectedIds(ids);
       setLiveNote(t('groupPlacement.selectionPurged', { count: removedCount }));
     }
-  }, [open, mode, available, selectedIds, t]);
+  }, [open, mode, effectiveBatch, expectedEntryIds, available, selectedIds, t]);
 
   const groupLabel =
     groupId != null
@@ -619,7 +659,7 @@ export function StructureGroupPlacementDialog({
     return t('groupPlacement.save');
   })();
 
-  const fillRemaining = Math.max(0, cap - additionsCount);
+  const fillRemaining = Math.max(0, batchAdditionLimit - additionsCount);
   const canFillGroup =
     effectiveBatch && fillRemaining > 0 && available.length > 0 && !atCap;
 
@@ -848,11 +888,11 @@ export function StructureGroupPlacementDialog({
                 data-fact="remaining"
               >
                 <span className="structure-qualification__fact-value">
-                  {Math.max(0, cap - selectedIds.length)}
+                  {Math.max(0, emptySeatCap - additionsCount)}
                 </span>
                 <span className="structure-qualification__fact-label">
                   {t('groupPlacement.factBatchRemaining', {
-                    count: Math.max(0, cap - selectedIds.length),
+                    count: Math.max(0, emptySeatCap - additionsCount),
                   })}
                 </span>
               </span>
@@ -1047,10 +1087,7 @@ export function StructureGroupPlacementDialog({
                     const selected = multiSelect
                       ? selectedIds.includes(team.entryId)
                       : selectedId === team.entryId;
-                    const lockedAtCap =
-                      effectiveBatch &&
-                      !selected &&
-                      (atCap || selectedIds.length >= cap);
+                    const lockedAtCap = effectiveBatch && !selected && atCap;
                     const tileDisabled = pending;
                     return (
                       <ChoiceTile
