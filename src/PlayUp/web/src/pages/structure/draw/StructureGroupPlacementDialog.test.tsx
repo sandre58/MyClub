@@ -90,6 +90,48 @@ function groupPlace(partial: Partial<SchematicCase> = {}): SchematicCase {
   };
 }
 
+const groupBId = 'group-b';
+
+function groupBPlace(partial: Partial<SchematicCase> = {}): SchematicCase {
+  return {
+    formPosition: {
+      kind: 'GroupPlace',
+      groupId: groupBId,
+      groupName: 'B',
+      index: 1,
+    },
+    entry: null,
+    assignment: null,
+    seatMode: 'Editable',
+    canClear: false,
+    ...partial,
+  };
+}
+
+function batchFactValue(key: string): string {
+  return (
+    document
+      .querySelector(
+        `[data-fact="${key}"] .structure-qualification__fact-value`,
+      )
+      ?.textContent?.trim() ?? ''
+  );
+}
+
+function batchFacts() {
+  return {
+    places: batchFactValue('places'),
+    members: batchFactValue('members'),
+    additions: batchFactValue('additions'),
+    remaining: batchFactValue('remaining'),
+    reserved: batchFactValue('reserved'),
+  };
+}
+
+function reservedPresent(): boolean {
+  return document.querySelector('[data-fact="reserved"]') != null;
+}
+
 function renderDialog(
   props: Partial<ComponentProps<typeof StructureGroupPlacementDialog>> = {},
   queryClient = new QueryClient({
@@ -476,16 +518,493 @@ describe('StructureGroupPlacementDialog', () => {
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByText('Placement indisponible')).toBeInTheDocument();
+    const blockedHost = screen
+      .getByText('Placement indisponible')
+      .closest('[tabindex="-1"]');
+    await waitFor(() => expect(blockedHost).toHaveFocus(), { timeout: 3000 });
+  });
+
+  it('opens the group picklist when several groups exist even if only one accepts placement', async () => {
+    const user = userEvent.setup();
+    const fullA = [1, 2, 3, 4].map((index) =>
+      groupPlace({
+        formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index },
+        entry: { entryId: `e${index}`, displayName: `T${index}` },
+      }),
+    );
+    const partialB = groupBPlace({
+      formPosition: {
+        kind: 'GroupPlace',
+        groupId: groupBId,
+        groupName: 'B',
+        index: 1,
+      },
+    });
+    renderDialog({
+      place: null,
+      cases: [...fullA, partialB],
+      stage: stage({
+        compositionEntryIds: ['e1', 'e2', 'e3', 'e4', 'e5', 'e6', 'e7'],
+      }),
+      entries: [
+        entry('e1', 'T1'),
+        entry('e2', 'T2'),
+        entry('e3', 'T3'),
+        entry('e4', 'T4'),
+        entry('e5', 'Echo'),
+        entry('e6', 'Foxtrot'),
+        entry('e7', 'Golf'),
+      ],
+    });
+
+    expect(
+      screen.getByRole('combobox', { name: 'Groupe' }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole('combobox', { name: 'Groupe' }));
+    expect(
+      screen.getByRole('option', { name: 'Groupe A — complet' }),
+    ).toBeInTheDocument();
+  });
+
+  it.each([
+    {
+      label: '4/2/1',
+      cases: [
+        groupPlace({
+          formPosition: {
+            kind: 'GroupPlace',
+            groupId,
+            groupName: 'A',
+            index: 1,
+          },
+          entry: { entryId: 'e1', displayName: 'Alpha' },
+        }),
+        groupPlace({
+          formPosition: {
+            kind: 'GroupPlace',
+            groupId,
+            groupName: 'A',
+            index: 2,
+          },
+          entry: { entryId: 'e2', displayName: 'Bravo' },
+        }),
+        groupPlace({
+          formPosition: {
+            kind: 'GroupPlace',
+            groupId,
+            groupName: 'A',
+            index: 3,
+          },
+          feedOrigin: { kind: 'Qualification', sourceStageId: 'src' },
+        }),
+        groupPlace({
+          formPosition: {
+            kind: 'GroupPlace',
+            groupId,
+            groupName: 'A',
+            index: 4,
+          },
+        }),
+      ],
+      expected: {
+        places: '4',
+        members: '2',
+        additions: '0',
+        remaining: '1',
+        reserved: '1',
+        reservedVisible: true,
+      },
+    },
+    {
+      label: '4/3/2',
+      cases: [
+        ...[1, 2, 3].map((index) =>
+          groupPlace({
+            formPosition: {
+              kind: 'GroupPlace',
+              groupId,
+              groupName: 'A',
+              index,
+            },
+            entry: {
+              entryId: `e${index}`,
+              displayName: ['Alpha', 'Bravo', 'Charlie'][index - 1],
+            },
+          }),
+        ),
+        groupPlace({
+          formPosition: {
+            kind: 'GroupPlace',
+            groupId,
+            groupName: 'A',
+            index: 4,
+          },
+          feedOrigin: { kind: 'Qualification', sourceStageId: 'src' },
+        }),
+      ],
+      expected: {
+        places: '4',
+        members: '3',
+        additions: '0',
+        remaining: '0',
+        reserved: '1',
+        reservedVisible: true,
+      },
+    },
+    {
+      label: '4/5/0',
+      cases: [
+        ...[1, 2, 3, 4].map((index) =>
+          groupPlace({
+            formPosition: {
+              kind: 'GroupPlace',
+              groupId,
+              groupName: 'A',
+              index,
+            },
+            entry: { entryId: `e${index}`, displayName: `T${index}` },
+          }),
+        ),
+        groupPlace({
+          formPosition: {
+            kind: 'GroupPlace',
+            groupId,
+            groupName: 'A',
+            index: 5,
+          },
+          entry: { entryId: 'e5', displayName: 'Echo' },
+          excess: true,
+        }),
+      ],
+      expected: {
+        places: '4',
+        members: '5 en trop',
+        additions: '0',
+        remaining: '0',
+        reserved: '',
+        reservedVisible: false,
+      },
+    },
+  ])('shows batch facts for case $label', ({ cases: schematic, expected }) => {
+    renderDialog({
+      place: null,
+      cases: schematic,
+      stage: stage({
+        compositionEntryIds: ['e1', 'e2', 'e3', 'e4', 'e5'],
+      }),
+      entries: [
+        entry('e1', 'T1'),
+        entry('e2', 'T2'),
+        entry('e3', 'T3'),
+        entry('e4', 'T4'),
+        entry('e5', 'Echo'),
+      ],
+    });
+    expect(batchFacts()).toEqual({
+      places: expected.places,
+      members: expected.members,
+      additions: expected.additions,
+      remaining: expected.remaining,
+      reserved: expected.reserved,
+    });
+    expect(reservedPresent()).toBe(expected.reservedVisible);
+  });
+
+  it('lists group suffixes for complete, reserved, match, and draw modes', async () => {
+    const user = userEvent.setup();
+    const seat = (
+      id: string,
+      name: string,
+      partial: Partial<SchematicCase> = {},
+    ) =>
+      groupPlace({
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId: id,
+          groupName: name,
+          index: 1,
+        },
+        ...partial,
+      });
+    const cases = [
+      ...[1, 2, 3, 4].map((index) =>
+        groupPlace({
+          formPosition: {
+            kind: 'GroupPlace',
+            groupId: 'ga',
+            groupName: 'A',
+            index,
+          },
+          entry: { entryId: `a${index}`, displayName: `A${index}` },
+        }),
+      ),
+      seat('gb', 'B', { seatMode: 'Reserved' }),
+      seat('gc', 'C', { seatMode: 'MatchLocked' }),
+      seat('gd', 'D', { seatMode: 'DrawPending' }),
+    ];
+    renderDialog({
+      place: null,
+      cases,
+      stage: stage({ compositionEntryIds: ['a1', 'a2', 'a3', 'a4', 'x1'] }),
+      entries: [
+        entry('a1', 'A1'),
+        entry('a2', 'A2'),
+        entry('a3', 'A3'),
+        entry('a4', 'A4'),
+        entry('x1', 'X1'),
+      ],
+    });
+
+    await user.click(screen.getByRole('combobox', { name: 'Groupe' }));
+    expect(
+      screen.getByRole('option', { name: 'Groupe A — complet' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('option', { name: 'Groupe B — réservé' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('option', { name: 'Groupe C — match' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('option', { name: 'Groupe D — tirage' }),
+    ).toBeInTheDocument();
+  });
+
+  it('opens batch mode on the first group with placement capacity', () => {
+    const fullA = [1, 2, 3, 4].map((index) =>
+      groupPlace({
+        formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index },
+        entry: { entryId: `e${index}`, displayName: `T${index}` },
+      }),
+    );
+    const openB = groupBPlace({
+      formPosition: {
+        kind: 'GroupPlace',
+        groupId: groupBId,
+        groupName: 'B',
+        index: 1,
+      },
+    });
+    renderDialog({
+      place: null,
+      cases: [...fullA, openB],
+      stage: stage({
+        compositionEntryIds: ['e1', 'e2', 'e3', 'e4', 'e5', 'e6'],
+      }),
+      entries: [
+        entry('e1', 'T1'),
+        entry('e2', 'T2'),
+        entry('e3', 'T3'),
+        entry('e4', 'T4'),
+        entry('e5', 'Echo'),
+        entry('e6', 'Foxtrot'),
+      ],
+    });
+
+    const pick = screen.getByRole('combobox', { name: 'Groupe' });
+    expect(pick).toHaveTextContent('Groupe B');
+    expect(screen.getByRole('checkbox', { name: 'Echo' })).toBeInTheDocument();
+  });
+
+  it('shows group members as checked unavailable at the top of batch mode', () => {
+    const cases = [
+      ...[1, 2, 3].map((index) =>
+        groupPlace({
+          formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index },
+          entry: {
+            entryId: `e${index}`,
+            displayName: ['Alpha', 'Bravo', 'Charlie'][index - 1],
+          },
+        }),
+      ),
+      groupPlace({
+        formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index: 4 },
+      }),
+    ];
+    renderDialog({ place: null, cases });
+
+    const memberTiles = screen.getAllByRole('checkbox', {
+      name: /Alpha|Bravo|Charlie/,
+    });
+    expect(memberTiles).toHaveLength(3);
+    for (const tile of memberTiles) {
+      expect(tile).toHaveAttribute('aria-disabled', 'true');
+      expect(tile).toHaveAttribute('aria-checked', 'true');
+    }
+    expect(
+      screen.getByText('Dans le groupe A', { exact: false }),
+    ).toBeInTheDocument();
+  });
+
+  it('treats locked members as display-only in batch placement', async () => {
+    const user = userEvent.setup();
+    const cases = [
+      ...[1, 2, 3].map((index) =>
+        groupPlace({
+          formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index },
+          entry: {
+            entryId: `e${index}`,
+            displayName: ['Alpha', 'Bravo', 'Charlie'][index - 1],
+          },
+        }),
+      ),
+      groupPlace({
+        formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index: 4 },
+      }),
+    ];
+    renderDialog({
+      place: null,
+      cases,
+      stage: stage({ compositionEntryIds: ['e1', 'e2', 'e3', 'e4'] }),
+      entries: [
+        entry('e1', 'Alpha'),
+        entry('e2', 'Bravo'),
+        entry('e3', 'Charlie'),
+        entry('e4', 'Delta'),
+      ],
+    });
+
+    const member = screen.getByRole('checkbox', { name: 'Alpha' });
+    member.focus();
+    expect(member).toHaveFocus();
+
+    await user.click(
+      screen.getByRole('button', { name: 'Compléter le groupe' }),
+    );
+    expect(screen.getByRole('checkbox', { name: 'Delta' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    expect(
+      screen.getByRole('button', { name: 'Placer 1 équipe' }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Placer 1 équipe' }));
+    await waitFor(() => {
+      expect(assignEntriesToGroup).toHaveBeenCalledWith(stageId, groupId, [
+        'e4',
+      ]);
+    });
+  });
+
+  it('closes batch placement without discard when only members are shown', async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    const cases = [
+      ...[1, 2, 3].map((index) =>
+        groupPlace({
+          formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index },
+          entry: {
+            entryId: `e${index}`,
+            displayName: ['Alpha', 'Bravo', 'Charlie'][index - 1],
+          },
+        }),
+      ),
+      groupPlace({
+        formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index: 4 },
+      }),
+    ];
+    renderDialog({
+      place: null,
+      cases,
+      onClose,
+      stage: stage({ compositionEntryIds: ['e1', 'e2', 'e3'] }),
+      entries: [
+        entry('e1', 'Alpha'),
+        entry('e2', 'Bravo'),
+        entry('e3', 'Charlie'),
+      ],
+    });
+    await user.click(screen.getByRole('button', { name: 'Annuler' }));
+    expect(onClose).toHaveBeenCalled();
+    expect(
+      screen.queryByRole('dialog', { name: 'Quitter sans enregistrer ?' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('grays out teams from another group without affecting batch selection', async () => {
+    const user = userEvent.setup();
+    const cases = [
+      groupPlace({
+        formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index: 1 },
+      }),
+      groupPlace({
+        formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index: 2 },
+      }),
+      groupPlace({
+        formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index: 3 },
+      }),
+      groupPlace({
+        formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index: 4 },
+      }),
+      groupBPlace({
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId: groupBId,
+          groupName: 'B',
+          index: 1,
+        },
+        entry: { entryId: 'e2', displayName: 'Bravo' },
+      }),
+    ];
+    renderDialog({
+      place: null,
+      cases,
+      stage: stage({ compositionEntryIds: ['e1', 'e2', 'e3'] }),
+      entries: [
+        entry('e1', 'Alpha'),
+        entry('e2', 'Bravo'),
+        entry('e3', 'Charlie'),
+      ],
+    });
+
+    expect(screen.getByText('Dans un autre groupe')).toBeInTheDocument();
+    const other = screen.getByRole('checkbox', { name: 'Bravo' });
+    expect(other).toHaveAttribute('aria-disabled', 'true');
+    expect(other.getAttribute('aria-describedby')).toBeTruthy();
+    expect(
+      document.getElementById(other.getAttribute('aria-describedby')!),
+    ).toHaveTextContent('Dans le Groupe B');
+
+    await user.click(
+      screen.getByRole('button', { name: 'Compléter le groupe' }),
+    );
+    expect(assignEntriesToGroup).not.toHaveBeenCalled();
+    expect(screen.getByRole('checkbox', { name: 'Alpha' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    expect(screen.getByRole('checkbox', { name: 'Charlie' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    expect(screen.getByRole('checkbox', { name: 'Bravo' })).toHaveAttribute(
+      'aria-checked',
+      'false',
+    );
+    await user.click(screen.getByRole('button', { name: 'Placer 2 équipes' }));
+    await waitFor(() => {
+      expect(assignEntriesToGroup).toHaveBeenCalledWith(
+        stageId,
+        groupId,
+        expect.arrayContaining(['e1', 'e3']),
+      );
+    });
+    expect(vi.mocked(assignEntriesToGroup).mock.calls[0]?.[2]).toHaveLength(2);
+    expect(assignEntriesToGroup).not.toHaveBeenCalledWith(
+      stageId,
+      groupId,
+      expect.arrayContaining(['e2']),
+    );
   });
 
   it('shows batch facts and locks tiles at capacity', async () => {
     const user = userEvent.setup();
     renderDialog({ place: null });
 
-    const freeCount = document.querySelector(
-      '[data-fact="free"] .structure-qualification__fact-value',
+    const remainingCount = document.querySelector(
+      '[data-fact="remaining"] .structure-qualification__fact-value',
     );
-    expect(freeCount).toHaveTextContent('2');
+    expect(remainingCount).toHaveTextContent('2');
 
     await user.click(screen.getByRole('checkbox', { name: 'Bravo' }));
     await user.click(screen.getByRole('checkbox', { name: 'Charlie' }));
@@ -616,9 +1135,8 @@ describe('StructureGroupPlacementDialog', () => {
     expect(
       screen.getByText('La place a changé. Vérifiez la sélection.'),
     ).toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: 'Enregistrer' }),
-    ).not.toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Bravo' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Enregistrer' })).toBeDisabled();
   });
 
   it('does not reset focus to the first tile when toggling batch selection', async () => {
@@ -656,11 +1174,7 @@ describe('StructureGroupPlacementDialog', () => {
     });
 
     await waitFor(() =>
-      expect(
-        screen.getByRole('button', {
-          name: /Retirer l.équipe de la place/,
-        }),
-      ).toHaveFocus(),
+      expect(screen.getByRole('radio', { name: 'Alpha' })).toHaveFocus(),
     );
   });
 
@@ -712,28 +1226,23 @@ describe('StructureGroupPlacementDialog', () => {
 
   it('replaces using the anchored subject after seat compaction', async () => {
     const user = userEvent.setup();
-    const occupied = groupPlace({
+    const ySeat = groupPlace({
       formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index: 1 },
+      entry: { entryId: 'e2', displayName: 'Bravo' },
+      canClear: true,
+    });
+    const xSeat = groupPlace({
+      formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index: 2 },
       entry: { entryId: 'e1', displayName: 'Alpha' },
       canClear: true,
     });
     const { rerender, queryClient } = renderDialog({
-      place: occupied,
-      cases: [
-        occupied,
-        groupPlace({
-          formPosition: {
-            kind: 'GroupPlace',
-            groupId,
-            groupName: 'A',
-            index: 2,
-          },
-        }),
-      ],
+      place: xSeat,
+      cases: [ySeat, xSeat],
     });
 
-    await user.click(screen.getByRole('radio', { name: 'Bravo' }));
-    const compacted = groupPlace({
+    await user.click(screen.getByRole('radio', { name: 'Charlie' }));
+    const compactedX = groupPlace({
       formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index: 1 },
       entry: { entryId: 'e1', displayName: 'Alpha' },
       canClear: true,
@@ -753,7 +1262,7 @@ describe('StructureGroupPlacementDialog', () => {
               entry('e3', 'Charlie'),
             ]}
             cases={[
-              compacted,
+              compactedX,
               groupPlace({
                 formPosition: {
                   kind: 'GroupPlace',
@@ -763,7 +1272,7 @@ describe('StructureGroupPlacementDialog', () => {
                 },
               }),
             ]}
-            place={occupied}
+            place={xSeat}
           />
         </MemoryRouter>
       </QueryClientProvider>,
@@ -775,9 +1284,15 @@ describe('StructureGroupPlacementDialog', () => {
         stageId,
         groupId,
         'e1',
-        'e2',
+        'e3',
       );
     });
+    expect(replaceEntryInGroup).not.toHaveBeenCalledWith(
+      stageId,
+      groupId,
+      'e2',
+      expect.anything(),
+    );
   });
 
   it('announces a cleared selection and keeps focus inside the dialog', async () => {

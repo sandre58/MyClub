@@ -2,11 +2,17 @@ import { describe, expect, it } from 'vitest';
 import type { SchematicCase, StructureEntry } from '../../../types';
 import {
   canBatchAssignToGroup,
+  canOfferGroupManualPlacement,
   canReplaceInGroup,
+  countGroupReservedFeedSeats,
+  firstGroupIdWithBatchCap,
   groupBatchCap,
   groupSeatCounter,
   listAvailableGroupEntries,
   listGroupManualTargets,
+  listGroupMemberEntries,
+  listGroupSelectTargets,
+  resolveGroupStatusSuffix,
   orderBatchSelection,
   purgeUnavailableSelection,
   resolveGroupDisplayLabel,
@@ -384,6 +390,204 @@ describe('resolveSeatLive', () => {
     expect(resolveSeatLive([place(), seat2], 'g-a', 2)?.entry?.entryId).toBe(
       'e2',
     );
+  });
+});
+
+describe('listGroupMemberEntries', () => {
+  it('lists occupants of the selected group only', () => {
+    const cases = [
+      place({
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId: 'g-a',
+          groupName: 'A',
+          index: 1,
+        },
+        entry: { entryId: 'e1', displayName: 'Alpha' },
+      }),
+      place({
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId: 'g-b',
+          groupName: 'B',
+          index: 1,
+        },
+        entry: { entryId: 'e2', displayName: 'Bravo' },
+      }),
+    ];
+    const listed = listGroupMemberEntries(
+      { compositionEntryIds: ['e1', 'e2', 'e3'] },
+      cases,
+      'g-a',
+      [
+        { entryId: 'e1', displayName: 'Alpha', status: 'Active' },
+        { entryId: 'e2', displayName: 'Bravo', status: 'Active' },
+      ],
+    );
+    expect(listed.map((row) => row.entryId)).toEqual(['e1']);
+  });
+});
+
+describe('countGroupReservedFeedSeats', () => {
+  it('counts empty seats that carry a feed origin', () => {
+    const cases = [
+      place({
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId: 'g-a',
+          groupName: 'A',
+          index: 1,
+        },
+        feedOrigin: { kind: 'Qualification', sourceStageId: 'src' },
+      }),
+      place({
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId: 'g-a',
+          groupName: 'A',
+          index: 2,
+        },
+      }),
+    ];
+    expect(countGroupReservedFeedSeats(cases, 'g-a')).toBe(1);
+  });
+});
+
+describe('resolveGroupStatusSuffix', () => {
+  it('marks full groups complete and reserves empty locked seats', () => {
+    const full = [1, 2, 3, 4].map((index) =>
+      place({
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId: 'g-a',
+          groupName: 'A',
+          index,
+        },
+        entry: { entryId: `e${index}`, displayName: `T${index}` },
+      }),
+    );
+    expect(resolveGroupStatusSuffix(full, 'g-a', 4)).toBe('complete');
+
+    const reserved = [
+      ...full.slice(0, 3),
+      place({
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId: 'g-a',
+          groupName: 'A',
+          index: 4,
+        },
+        seatMode: 'Reserved',
+      }),
+    ];
+    expect(resolveGroupStatusSuffix(reserved, 'g-a', 4)).toBe('reserved');
+
+    const matchLocked = [
+      ...full.slice(0, 3),
+      place({
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId: 'g-a',
+          groupName: 'A',
+          index: 4,
+        },
+        seatMode: 'MatchLocked',
+      }),
+    ];
+    expect(resolveGroupStatusSuffix(matchLocked, 'g-a', 4)).toBe('match');
+
+    const drawPending = [
+      ...full.slice(0, 3),
+      place({
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId: 'g-a',
+          groupName: 'A',
+          index: 4,
+        },
+        seatMode: 'DrawPending',
+      }),
+    ];
+    expect(resolveGroupStatusSuffix(drawPending, 'g-a', 4)).toBe('draw');
+  });
+});
+
+describe('canOfferGroupManualPlacement', () => {
+  it('stays false when every group is full for manual assign', () => {
+    const cases = [1, 2, 3, 4].map((index) =>
+      place({
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId: 'g-a',
+          groupName: 'A',
+          index,
+        },
+        entry: { entryId: `e${index}`, displayName: `T${index}` },
+      }),
+    );
+    expect(canOfferGroupManualPlacement(cases, actions)).toBe(false);
+  });
+});
+
+describe('firstGroupIdWithBatchCap', () => {
+  it('skips full groups in display order', () => {
+    const cases = [
+      ...[1, 2, 3, 4].map((index) =>
+        place({
+          formPosition: {
+            kind: 'GroupPlace',
+            groupId: 'g-a',
+            groupName: 'A',
+            index,
+          },
+          entry: { entryId: `a${index}`, displayName: `A${index}` },
+        }),
+      ),
+      place({
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId: 'g-b',
+          groupName: 'B',
+          index: 1,
+        },
+      }),
+    ];
+    expect(
+      firstGroupIdWithBatchCap(cases, actions, (name) => `Groupe ${name}`),
+    ).toBe('g-b');
+  });
+});
+
+describe('listGroupSelectTargets', () => {
+  it('includes groups without batch capacity for read-only selection', () => {
+    const cases = [
+      ...[1, 2, 3, 4].map((index) =>
+        place({
+          formPosition: {
+            kind: 'GroupPlace',
+            groupId: 'g-a',
+            groupName: 'A',
+            index,
+          },
+          entry: { entryId: `a${index}`, displayName: `A${index}` },
+        }),
+      ),
+      place({
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId: 'g-b',
+          groupName: 'B',
+          index: 1,
+        },
+      }),
+    ];
+    const options = listGroupSelectTargets(
+      cases,
+      4,
+      (name) => `Groupe ${name}`,
+    );
+    expect(options.map((row) => row.groupId)).toEqual(['g-a', 'g-b']);
+    expect(options[0]?.suffix).toBe('complete');
   });
 });
 
