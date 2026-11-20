@@ -2,6 +2,7 @@ import {
   expect,
   test,
   type APIRequestContext,
+  type Locator,
   type Page,
 } from '@playwright/test';
 import {
@@ -18,6 +19,35 @@ const placeButtons = (page: Page) =>
   page.getByRole('button', {
     name: /Groupe [A-Z] · \d+ — Cliquer pour placer une équipe/,
   });
+
+function placementDialog(page: Page) {
+  return page.getByRole('dialog', {
+    name: /Placement — .* —/,
+  });
+}
+
+function selectableUncheckedTeams(dialog: Locator) {
+  return dialog.locator(
+    'button[role="checkbox"][aria-checked="false"]:not([aria-disabled="true"])',
+  );
+}
+
+async function teamNameOnSchematicSeat(
+  group: Locator,
+  seatIndex1Based: number,
+): Promise<string> {
+  const seat = group.locator('.schematic-slot').nth(seatIndex1Based - 1);
+  await expect(seat).toBeVisible();
+  const nameRow = seat.locator('.schematic-slot__name-row');
+  await expect(nameRow).toBeVisible();
+  return (await nameRow.innerText()).trim();
+}
+
+async function titleFromTeamCheckbox(tile: Locator): Promise<string> {
+  const title = tile.locator('.ds-choice-tile__title');
+  await expect(title).toBeVisible();
+  return (await title.innerText()).trim();
+}
 
 type SchematicCaseWire = {
   formPosition?: { kind?: string; groupId?: string };
@@ -92,19 +122,22 @@ async function findCompetition(request: APIRequestContext, name: string) {
   return hit;
 }
 
+async function savePlacementDialog(dialog: Locator) {
+  const save = dialog.getByRole('button', { name: 'Enregistrer', exact: true });
+  await expect(save).toBeVisible();
+  await expect(save).toBeEnabled();
+  await save.click();
+  await expect(dialog).toBeHidden();
+}
+
 async function placeOneTeamFromDialog(page: Page) {
-  const dialog = page.getByRole('dialog', {
-    name: /Placement — .* —/,
-  });
+  const dialog = placementDialog(page);
   await expect(dialog).toBeVisible();
   await expect(dialog.getByText(/^Pot /)).toHaveCount(0);
-  const teamPicker = dialog.getByRole('checkbox', { checked: false });
+  const teamPicker = selectableUncheckedTeams(dialog);
   await expect(teamPicker.first()).toBeVisible();
   await teamPicker.first().click();
-  await dialog
-    .getByRole('button', { name: 'Enregistrer', exact: true })
-    .click();
-  await expect(dialog).toBeHidden();
+  await savePlacementDialog(dialog);
 }
 
 /** Continues from whatever seats are still empty, so a CI retry can finish a partial grid. */
@@ -121,7 +154,10 @@ async function fillRemainingSeats(page: Page) {
 
   let remaining = await placeButtons(page).count();
   while (remaining > 0) {
-    await placeButtons(page).first().click();
+    const openSeat = placeButtons(page).first();
+    await expect(openSeat).toBeVisible();
+    await expect(openSeat).toBeEnabled();
+    await openSeat.click();
     await placeOneTeamFromDialog(page);
     await expect(placeButtons(page)).toHaveCount(remaining - 1);
     remaining -= 1;
@@ -139,7 +175,10 @@ async function fillGroupSeats(page: Page, groupLabel: string, count = 4) {
   for (let placed = 0; placed < count; placed += 1) {
     const open = await localPlace.count();
     if (open === 0) break;
-    await localPlace.first().click();
+    const seat = localPlace.first();
+    await expect(seat).toBeVisible();
+    await expect(seat).toBeEnabled();
+    await seat.click();
     await placeOneTeamFromDialog(page);
   }
   await expect(group.getByText(`${count}/${count}`)).toBeVisible();
@@ -148,6 +187,7 @@ async function fillGroupSeats(page: Page, groupLabel: string, count = 4) {
 async function produceMatchesIfNeeded(page: Page) {
   const prepare = page.getByRole('button', { name: 'Marquer comme prête' });
   if (await prepare.isVisible()) {
+    await expect(prepare).toBeEnabled();
     await prepare.click();
   }
   const matches = page.getByRole('region', { name: 'Matchs' });
@@ -156,9 +196,12 @@ async function produceMatchesIfNeeded(page: Page) {
     await expect(
       matches.getByText(/Il reste \d+ matchs à créer\./),
     ).toBeVisible();
-    await matches
-      .getByRole('button', { name: 'Créer les matchs', exact: true })
-      .click();
+    const create = matches.getByRole('button', {
+      name: 'Créer les matchs',
+      exact: true,
+    });
+    await expect(create).toBeEnabled();
+    await create.click();
   }
   await expect(created).toBeVisible();
 }
@@ -168,25 +211,34 @@ test.describe('manual group placement', () => {
     page,
     request,
   }) => {
-    test.setTimeout(180_000);
+    // Batch path: CTA + partial fill + remaining seats + match production.
+    test.setTimeout(90_000);
     const competition = await prepareCompetition(request, MANUAL);
     await page.goto(`/competitions/${competition.id}/structure`);
 
-    await page.getByRole('button', { name: 'Placer manuellement' }).click();
-    await page
-      .getByRole('menuitem', { name: /Groupe A, 0 équipes sur 4/ })
-      .click();
-    const dialog = page.getByRole('dialog', {
-      name: /Placement — .* — Groupe A/,
+    const manualCta = page.getByRole('button', { name: 'Placer manuellement' });
+    await expect(manualCta).toBeVisible();
+    await expect(manualCta).toBeEnabled();
+    await manualCta.click();
+    const menuItem = page.getByRole('menuitem', {
+      name: /Groupe A, 0 équipes sur 4/,
     });
+    await expect(menuItem).toBeVisible();
+    await menuItem.click();
+    const dialog = placementDialog(page);
     await expect(dialog).toBeVisible();
 
-    const teams = dialog.getByRole('checkbox');
-    await teams.nth(0).click();
-    await teams.nth(1).click();
-    await teams.nth(2).click();
-    await dialog.getByRole('button', { name: 'Enregistrer' }).click();
-    await expect(dialog).toBeHidden();
+    const teams = selectableUncheckedTeams(dialog);
+    await expect(teams.first()).toBeVisible();
+    const available = await teams.count();
+    expect(available).toBeGreaterThanOrEqual(3);
+    const toPick = 3;
+    for (let i = 0; i < toPick; i += 1) {
+      const tile = teams.nth(i);
+      await expect(tile).toBeVisible();
+      await tile.click();
+    }
+    await savePlacementDialog(dialog);
 
     await fillRemainingSeats(page);
     const pools = page.getByRole('group', { name: '2 groupes' });
@@ -195,7 +247,6 @@ test.describe('manual group placement', () => {
   });
 
   test('replaces a team on a full group seat', async ({ page, request }) => {
-    test.setTimeout(120_000);
     const competition = await prepareCompetition(request, MANUAL);
     await page.goto(`/competitions/${competition.id}/structure`);
     await fillGroupSeats(page, 'Groupe A');
@@ -203,30 +254,28 @@ test.describe('manual group placement', () => {
     const groupA = page
       .locator('.regulation-schematic__card')
       .filter({ hasText: 'Groupe A' });
+    const originalName = await teamNameOnSchematicSeat(groupA, 1);
     const editSeat = groupA
       .getByRole('button', {
         name: /Groupe A · 1 — Cliquer pour modifier ou retirer/,
       })
       .first();
+    await expect(editSeat).toBeEnabled();
     await editSeat.click();
-    const dialog = page.getByRole('dialog', {
-      name: /Placement — .* — Groupe A/,
+    const dialog = placementDialog(page);
+    await expect(dialog).toBeVisible();
+    const occupant = dialog.getByRole('checkbox', {
+      name: originalName,
+      exact: true,
+      checked: true,
     });
-    const occupant = dialog.getByRole('checkbox', { checked: true }).first();
-    const originalName = (await occupant.innerText()).trim().split('\n')[0];
-    await dialog
-      .getByRole('checkbox', { name: originalName, checked: true })
-      .click();
-    const replacee = dialog
-      .getByRole('checkbox', { checked: false })
-      .filter({ hasText: /Bravo|Charlie/ })
-      .first();
-    const replacedName = (await replacee.innerText()).trim().split('\n')[0];
+    await expect(occupant).toBeVisible();
+    await occupant.click();
+    const replacee = selectableUncheckedTeams(dialog).first();
+    await expect(replacee).toBeVisible();
+    const replacedName = await titleFromTeamCheckbox(replacee);
     await replacee.click();
-    await dialog
-      .getByRole('button', { name: 'Enregistrer', exact: true })
-      .click();
-    await expect(dialog).toBeHidden();
+    await savePlacementDialog(dialog);
     await expect(groupA.getByText('4/4')).toBeVisible();
     const seatOne = groupA.locator('.schematic-slot').first();
     await expect(seatOne).toContainText(replacedName);
@@ -234,7 +283,6 @@ test.describe('manual group placement', () => {
   });
 
   test('removes a team with clear then save', async ({ page, request }) => {
-    test.setTimeout(120_000);
     const competition = await prepareCompetition(request, MANUAL);
     await page.goto(`/competitions/${competition.id}/structure`);
     const groupB = page
@@ -242,27 +290,24 @@ test.describe('manual group placement', () => {
       .filter({ hasText: 'Groupe B' });
     await fillGroupSeats(page, 'Groupe B');
 
+    const occupantName = await teamNameOnSchematicSeat(groupB, 1);
     const editSeat = groupB
       .getByRole('button', {
         name: /Groupe B · 1 — Cliquer pour modifier ou retirer/,
       })
       .first();
+    await expect(editSeat).toBeEnabled();
     await editSeat.click();
-    const dialog = page.getByRole('dialog', {
-      name: /Placement — .* — Groupe B/,
+    const dialog = placementDialog(page);
+    await expect(dialog).toBeVisible();
+    const occupant = dialog.getByRole('checkbox', {
+      name: occupantName,
+      exact: true,
+      checked: true,
     });
-    const occupantName = (
-      await dialog.getByRole('checkbox', { checked: true }).first().innerText()
-    )
-      .trim()
-      .split('\n')[0];
-    await dialog
-      .getByRole('checkbox', { name: occupantName, checked: true })
-      .click();
-    await dialog
-      .getByRole('button', { name: 'Enregistrer', exact: true })
-      .click();
-    await expect(dialog).toBeHidden();
+    await expect(occupant).toBeVisible();
+    await occupant.click();
+    await savePlacementDialog(dialog);
 
     await expect(groupB.getByText('3/4')).toBeVisible();
     await expect(
@@ -281,7 +326,6 @@ test.describe('manual group placement', () => {
     page,
     request,
   }) => {
-    test.setTimeout(120_000);
     const competition = await prepareCompetition(request, MANUAL);
     await page.goto(`/competitions/${competition.id}/structure`);
     await fillRemainingSeats(page);
@@ -295,7 +339,6 @@ test.describe('manual group placement', () => {
     page,
     request,
   }) => {
-    test.setTimeout(120_000);
     const competition = await prepareCompetition(request, MANUAL_DRAW);
     await page.goto(`/competitions/${competition.id}/structure`);
     await fillRemainingSeats(page);
@@ -352,7 +395,6 @@ test.describe('manual group placement', () => {
     page,
     request,
   }) => {
-    test.setTimeout(120_000);
     const competition = await prepareCompetition(request, MANUAL);
     await page.goto(`/competitions/${competition.id}/structure`);
     await fillGroupSeats(page, 'Groupe A');
@@ -360,45 +402,25 @@ test.describe('manual group placement', () => {
     const groupA = page
       .locator('.regulation-schematic__card')
       .filter({ hasText: 'Groupe A' });
-    await groupA
-      .getByRole('button', {
-        name: /Groupe A · 4 — Cliquer pour modifier ou retirer/,
-      })
-      .first()
-      .click();
-    const seatFourDialog = page.getByRole('dialog', {
-      name: /Placement — .* — Groupe A/,
-    });
-    const shiftedTeamName = (
-      await seatFourDialog
-        .getByRole('checkbox', { checked: true })
-        .first()
-        .locator('.ds-choice-tile__title')
-        .innerText()
-    ).trim();
-    await seatFourDialog.getByRole('button', { name: 'Annuler' }).click();
-
+    const shiftedTeamName = await teamNameOnSchematicSeat(groupA, 4);
+    const seatOneName = await teamNameOnSchematicSeat(groupA, 1);
     const editSeat = groupA
       .getByRole('button', {
         name: /Groupe A · 1 — Cliquer pour modifier ou retirer/,
       })
       .first();
+    await expect(editSeat).toBeEnabled();
     await editSeat.click();
-    const dialog = page.getByRole('dialog', {
-      name: /Placement — .* — Groupe A/,
+    const dialog = placementDialog(page);
+    await expect(dialog).toBeVisible();
+    const seatOne = dialog.getByRole('checkbox', {
+      name: seatOneName,
+      exact: true,
+      checked: true,
     });
-    const seatOneName = (
-      await dialog.getByRole('checkbox', { checked: true }).first().innerText()
-    )
-      .trim()
-      .split('\n')[0];
-    await dialog
-      .getByRole('checkbox', { name: seatOneName, checked: true })
-      .click();
-    await dialog
-      .getByRole('button', { name: 'Enregistrer', exact: true })
-      .click();
-    await expect(dialog).toBeHidden();
+    await expect(seatOne).toBeVisible();
+    await seatOne.click();
+    await savePlacementDialog(dialog);
     await expect(groupA.getByText('3/4')).toBeVisible();
 
     const seatThree = groupA
@@ -406,13 +428,14 @@ test.describe('manual group placement', () => {
         name: /Groupe A · 3 — Cliquer pour modifier ou retirer/,
       })
       .first();
+    await expect(seatThree).toBeEnabled();
     await seatThree.click();
-    const replaceDialog = page.getByRole('dialog', {
-      name: /Placement — .* — Groupe A/,
-    });
+    const replaceDialog = placementDialog(page);
+    await expect(replaceDialog).toBeVisible();
     await expect(
       replaceDialog.getByRole('checkbox', {
         name: shiftedTeamName,
+        exact: true,
         checked: true,
       }),
     ).toBeVisible();
