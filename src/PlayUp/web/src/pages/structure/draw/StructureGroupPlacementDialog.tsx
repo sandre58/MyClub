@@ -13,7 +13,6 @@ import {
 import { ChoiceTile } from '../../../design-system/components/ChoiceTile';
 import { ConfirmDialog } from '../../../design-system/components/ConfirmDialog';
 import { Dialog } from '../../../design-system/components/Dialog';
-import { Tooltip } from '../../../design-system/components/Tooltip';
 import {
   CheckIcon,
   EmptySelectionIcon,
@@ -45,12 +44,12 @@ import {
   purgeUnavailableSelection,
   batchSelectionExceedsCapacity,
   memberEntryClearable,
-  memberProtectReasonKey,
   membershipSetsEqual,
   reseedMembershipSelection,
   listGroupSelectTargets,
   membershipAdditionLimit,
   resolveGroupDisplayLabel,
+  entryGroupPlacementHint,
   type GroupStatusSuffix,
   type OtherGroupPlacementChoice,
 } from './manualGroupPlacementUi';
@@ -885,26 +884,6 @@ export function StructureGroupPlacementDialog({
                   </span>
                 </span>
               </div>
-              <div className="structure-manual-placement__batch-actions">
-                <button
-                  type="button"
-                  className="ds-btn ds-btn--ghost structure-composition__select-all"
-                  disabled={!canFillGroup || pending}
-                  onClick={fillGroup}
-                >
-                  <ListChecksIcon size="sm" />
-                  {t('groupPlacement.fillGroup')}
-                </button>
-                <button
-                  type="button"
-                  className="ds-btn ds-btn--ghost structure-composition__select-all"
-                  disabled={!canRemoveMembers || pending}
-                  onClick={clearDecheckableSelection}
-                >
-                  <CloseIcon size="sm" />
-                  {t('groupPlacement.removeAll')}
-                </button>
-              </div>
             </>
           ) : null}
 
@@ -967,18 +946,36 @@ export function StructureGroupPlacementDialog({
                   }
                   toolbar={
                     <>
-                      {mode === 'edit' && selectedId != null && !pending ? (
-                        <Tooltip content={t('groupPlacement.clearSeat')}>
-                          <button
-                            type="button"
-                            className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact ds-icon-button--dismiss"
-                            disabled={pending}
-                            aria-label={t('groupPlacement.clearSeat')}
-                            onClick={onClearSeatSelection}
-                          >
-                            <CloseIcon size="sm" />
-                          </button>
-                        </Tooltip>
+                      {effectiveBatch ? (
+                        <button
+                          type="button"
+                          className="ds-btn ds-btn--ghost ds-btn--sm structure-composition__select-all"
+                          disabled={!canFillGroup || pending}
+                          onClick={fillGroup}
+                        >
+                          <ListChecksIcon size="sm" />
+                          {t('groupPlacement.fillGroup')}
+                        </button>
+                      ) : null}
+                      {effectiveBatch || mode === 'edit' ? (
+                        <button
+                          type="button"
+                          className="ds-btn ds-btn--destructive ds-btn--sm structure-composition__select-all"
+                          disabled={
+                            pending ||
+                            (effectiveBatch
+                              ? !canRemoveMembers
+                              : selectedId == null)
+                          }
+                          onClick={
+                            effectiveBatch
+                              ? clearDecheckableSelection
+                              : onClearSeatSelection
+                          }
+                        >
+                          <CloseIcon size="sm" />
+                          {t('groupPlacement.removeAll')}
+                        </button>
                       ) : null}
                     </>
                   }
@@ -1002,10 +999,15 @@ export function StructureGroupPlacementDialog({
                             <ChoiceTile
                               key={`other-${team.entryId}`}
                               label={team.displayName}
-                              description={t('groupPlacement.inOtherGroup', {
-                                group: row.team.groupLabel,
-                              })}
+                              description={
+                                entryGroupPlacementHint(
+                                  cases,
+                                  team.entryId,
+                                  t,
+                                ) ?? undefined
+                              }
                               layout="inline"
+                              reserveSelectionMark
                               leading={
                                 <TeamCrest
                                   name={team.displayName}
@@ -1035,22 +1037,16 @@ export function StructureGroupPlacementDialog({
                         const protectedMember = isMember && !clearable;
                         const selected = selectedIds.includes(team.entryId);
                         const lockedAtCap = !isMember && !selected && atCap;
-                        const description =
-                          team.pot == null
-                            ? undefined
-                            : t('groupPlacement.pot', { pot: team.pot });
+                        const placementHint = isMember
+                          ? entryGroupPlacementHint(cases, team.entryId, t)
+                          : undefined;
                         return (
                           <ChoiceTile
                             key={team.entryId}
                             label={team.displayName}
-                            description={
-                              protectedMember && groupId != null
-                                ? t(
-                                    `groupPlacement.${memberProtectReasonKey(cases, groupId, team.entryId) ?? 'clearLocked'}`,
-                                  )
-                                : description
-                            }
+                            description={placementHint ?? undefined}
                             layout="inline"
+                            reserveSelectionMark
                             leading={
                               <TeamCrest
                                 name={team.displayName}
@@ -1080,16 +1076,18 @@ export function StructureGroupPlacementDialog({
                       })
                     : teamChoices.map((team) => {
                         const selected = selectedId === team.entryId;
+                        const placementHint = entryGroupPlacementHint(
+                          cases,
+                          team.entryId,
+                          t,
+                        );
                         return (
                           <ChoiceTile
                             key={team.entryId}
                             label={team.displayName}
-                            description={
-                              team.pot == null
-                                ? undefined
-                                : t('groupPlacement.pot', { pot: team.pot })
-                            }
+                            description={placementHint ?? undefined}
                             layout="inline"
+                            reserveSelectionMark
                             leading={
                               <TeamCrest
                                 name={team.displayName}

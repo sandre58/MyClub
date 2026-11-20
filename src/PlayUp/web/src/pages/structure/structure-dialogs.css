@@ -1071,6 +1071,16 @@
   gap: var(--space-8);
 }
 
+.structure-manual-placement__section-toolbar {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
 .structure-manual-placement__teams {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
@@ -1086,14 +1096,41 @@
   min-width: 0;
 }
 
-.structure-manual-placement__facts {
-  width: 100%;
+.structure-manual-placement__teams .ds-choice-tile--inline {
+  height: calc(var(--team-crest-height-sm) + 2 * var(--space-8) + 2 * var(--border-width));
+  min-height: calc(var(--team-crest-height-sm) + 2 * var(--space-8) + 2 * var(--border-width));
+  max-height: calc(var(--team-crest-height-sm) + 2 * var(--space-8) + 2 * var(--border-width));
+  align-items: center;
 }
 
-.structure-manual-placement__batch-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-8);
+.structure-manual-placement__teams .ds-choice-tile--inline .ds-choice-tile__label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.structure-manual-placement__teams .ds-choice-tile--inline .ds-choice-tile__text {
+  gap: 0;
+}
+
+/* label+meta at 1.1 × (0.8125 + 0.75) ≈ 1.72rem — descenders clear ellipsis; tile height unchanged. */
+.structure-manual-placement__teams .ds-choice-tile--inline .ds-choice-tile__text .ds-choice-tile__title,
+.structure-manual-placement__teams .ds-choice-tile--inline .ds-choice-tile__text .ds-choice-tile__description {
+  line-height: 1.1;
+}
+
+.structure-manual-placement__teams .ds-choice-tile--inline .ds-choice-tile__description {
+  margin: 0;
+  font-size: var(--text-meta);
+  color: var(--color-text-secondary);
+}
+
+.structure-manual-placement__section-toolbar .ds-btn--destructive:disabled {
+  opacity: 1;
+  color: color-mix(in srgb, var(--color-error) 55%, var(--color-text-secondary));
+  border-color: color-mix(in srgb, var(--color-error) 30%, var(--color-border));
+}
+
+.structure-manual-placement__facts {
   width: 100%;
 }
 

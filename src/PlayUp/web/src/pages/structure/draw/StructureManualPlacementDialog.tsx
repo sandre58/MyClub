@@ -10,7 +10,6 @@ import { ChoiceTile } from '../../../design-system/components/ChoiceTile';
 import { ConfirmDialog } from '../../../design-system/components/ConfirmDialog';
 import { Dialog } from '../../../design-system/components/Dialog';
 import { Select } from '../../../design-system/components/Select';
-import { Tooltip } from '../../../design-system/components/Tooltip';
 import {
   CheckIcon,
   DrawPendingIcon,
@@ -290,7 +289,6 @@ export function StructureManualPlacementDialog({
   };
 
   const canSave = canEdit && dirty;
-  const canClearSelection = canEdit && entryId != null && !pending;
   const cupTargetLabel = selectedPlace?.label ?? slotKey ?? '';
 
   const cupCheckedCount = canEdit && entryId != null ? 1 : 0;
@@ -420,24 +418,21 @@ export function StructureManualPlacementDialog({
                 <StructureManualPlacementSectionHead
                   label={t('manualPlacement.teamLabel')}
                   toolbar={
-                    canClearSelection ? (
-                      <Tooltip content={t('manualPlacement.clearSelection')}>
-                        <button
-                          type="button"
-                          className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact ds-icon-button--dismiss"
-                          disabled={pending}
-                          aria-label={t('manualPlacement.clearSelection')}
-                          onClick={() => {
-                            setEntryId(null);
-                            setLiveNote(t('manualPlacement.selectionCleared'));
-                            saveMutation.reset();
-                            focusTeamList();
-                          }}
-                        >
-                          <CloseIcon size="sm" />
-                        </button>
-                      </Tooltip>
-                    ) : null
+                    <button
+                      type="button"
+                      className="ds-btn ds-btn--destructive ds-btn--sm structure-composition__select-all"
+                      disabled={entryId == null || pending}
+                      aria-label={t('groupPlacement.removeAll')}
+                      onClick={() => {
+                        setEntryId(null);
+                        setLiveNote(t('manualPlacement.selectionCleared'));
+                        saveMutation.reset();
+                        focusTeamList();
+                      }}
+                    >
+                      <CloseIcon size="sm" />
+                      {t('groupPlacement.removeAll')}
+                    </button>
                   }
                 />
                 {teamChoices.length === 0 && !baselineEntryId ? (
@@ -471,6 +466,7 @@ export function StructureManualPlacementDialog({
                               : undefined
                           }
                           layout="inline"
+                          reserveSelectionMark
                           leading={
                             <TeamCrest
                               name={team.displayName}

@@ -4,6 +4,46 @@ import { describe, expect, it, vi } from 'vitest';
 import { DropDownButton } from './DropDownButton';
 
 describe('DropDownButton', () => {
+  it('applies button size and variant on the trigger, never on the root', () => {
+    const { container } = render(
+      <DropDownButton
+        size="sm"
+        variant="secondary"
+        label="Add"
+        aria-label="Add item"
+        items={[{ value: 'a', label: 'Alpha' }]}
+        onSelect={vi.fn()}
+      />,
+    );
+    const root = container.firstElementChild;
+    expect(root).toHaveClass('ds-dropdown-button');
+    expect(root).not.toHaveClass('ds-btn');
+    expect(root).not.toHaveClass('ds-btn--sm');
+    expect(root).not.toHaveClass('ds-btn--secondary');
+    const trigger = screen.getByRole('button', { name: 'Add item' });
+    expect(trigger).toHaveClass('ds-btn--sm');
+    expect(trigger).toHaveClass('ds-btn--secondary');
+    expect(trigger).toHaveClass('ds-dropdown-button__trigger');
+  });
+
+  it('migrates legacy ds-btn classes from root className onto the trigger', () => {
+    const { container } = render(
+      <DropDownButton
+        className="ds-btn--sm dropdown-layout-hook"
+        label="Add"
+        aria-label="Add item"
+        items={[{ value: 'a', label: 'Alpha' }]}
+        onSelect={vi.fn()}
+      />,
+    );
+    const root = container.firstElementChild;
+    expect(root).toHaveClass('dropdown-layout-hook');
+    expect(root).not.toHaveClass('ds-btn--sm');
+    expect(screen.getByRole('button', { name: 'Add item' })).toHaveClass(
+      'ds-btn--sm',
+    );
+  });
+
   it('opens a menu and selects an item', async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
@@ -96,6 +136,49 @@ describe('DropDownButton', () => {
     await user.keyboard('{ArrowDown}');
     expect(trigger).toHaveAttribute('aria-activedescendant');
     expect(trigger.getAttribute('aria-activedescendant')).toMatch(/option-/);
+  });
+
+  it('keeps the menu end-aligned with intrinsic width between 12rem and 22rem', async () => {
+    const user = userEvent.setup();
+    const style = document.createElement('style');
+    style.textContent = '.dropdown-test-full-width { width: 20rem; }';
+    document.head.appendChild(style);
+
+    const { container } = render(
+      <DropDownButton
+        label="Add something with a very long label that should ellipsize"
+        aria-label="Add item"
+        align="end"
+        className="dropdown-test-full-width"
+        items={[
+          { value: 'a', label: 'Alpha', secondary: '1/4' },
+          { value: 'b', label: 'Beta with a long caption' },
+        ]}
+        onSelect={vi.fn()}
+      />,
+    );
+
+    const root = container.firstElementChild as HTMLElement;
+    const trigger = screen.getByRole('button', { name: 'Add item' });
+    expect(trigger.querySelector('.ds-dropdown-button__label')).toHaveClass(
+      'ds-dropdown-button__label',
+    );
+    expect(trigger.offsetWidth).toBe(root.offsetWidth);
+
+    await user.click(trigger);
+    const menu = await screen.findByRole('menu');
+    expect(menu).toHaveAttribute('data-align', 'end');
+    const remPx = Number.parseFloat(
+      getComputedStyle(document.documentElement).fontSize,
+    );
+    await waitFor(() => {
+      const menuWidth = Number.parseFloat(menu.style.width);
+      expect(menuWidth).toBeGreaterThanOrEqual(12 * remPx - 1);
+      expect(menuWidth).toBeLessThanOrEqual(22 * remPx + 1);
+      expect(menuWidth).toBeLessThan(20 * remPx);
+    });
+
+    document.head.removeChild(style);
   });
 
   it('supports controlled open state', async () => {

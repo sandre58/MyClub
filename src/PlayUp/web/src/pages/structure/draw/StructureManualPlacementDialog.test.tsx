@@ -102,16 +102,16 @@ describe('StructureManualPlacementDialog', () => {
     expect(screen.getAllByRole('radio')).toHaveLength(2);
   });
 
-  it('shows the clear control with the manualPlacement.clearSelection label', async () => {
+  it('keeps Retirer on the team section row and clears the selection when enabled', async () => {
     const user = userEvent.setup();
     renderDialog({ initialSlotKey: 'A' });
 
+    const remove = screen.getByRole('button', { name: 'Retirer' });
+    expect(remove.className).toContain('ds-btn--destructive');
+    expect(remove).toBeDisabled();
     await user.click(screen.getByRole('radio', { name: 'Alpha' }));
-    const clear = screen.getByRole('button', {
-      name: 'Effacer la sélection',
-    });
-    expect(clear).toBeInTheDocument();
-    await user.click(clear);
+    expect(remove).toBeEnabled();
+    await user.click(remove);
     expect(
       screen.queryByRole('radio', { checked: true }),
     ).not.toBeInTheDocument();
