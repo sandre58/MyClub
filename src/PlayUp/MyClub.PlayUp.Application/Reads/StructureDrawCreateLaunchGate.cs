@@ -74,7 +74,8 @@ public static class StructureDrawCreateLaunchGate
             return Deny(BlockUnsupportedFormat);
         }
 
-        if (BlocksUpstreamCompositionPool(hub))
+        if (BlocksUpstreamCompositionPool(hub)
+            && !(kind == DrawResolutionKind.Group && hub.CompositionEntryCount > 0))
         {
             return Deny(BlockUpstreamCompositionPoolEmpty);
         }
@@ -122,19 +123,13 @@ public static class StructureDrawCreateLaunchGate
             }
         }
 
-        if (kind != DrawResolutionKind.Group)
+        if (kind == DrawResolutionKind.Group)
         {
-            return StructureDrawConsumptionGate.StageHasObsoleteDrawForConsumption(stage)
-                ? Deny(BlockDrawObsoleteForConsumption)
-                : !TryAllowOperationalDrawEdit(stage)
-                    ? Deny(BlockOperationalExitEdit)
-                    : Allow();
-        }
-
-        var facts = StageDrawBracketLaunchClassifier.ClassifyForDrawKind(stage, competitionStages, kind);
-        if (facts.BlockingPlaceCount > 0)
-        {
-            return Deny(BlockBracketPlacesOccupied);
+            var decision = GroupDrawLaunchRules.Evaluate(stage, competitionStages);
+            if (!decision.IsAllowed)
+            {
+                return Deny(MapGroupRuleCode(decision.Code!), decision.Reasons);
+            }
         }
 
         return StructureDrawConsumptionGate.StageHasObsoleteDrawForConsumption(stage)
@@ -143,6 +138,30 @@ public static class StructureDrawCreateLaunchGate
                 ? Deny(BlockOperationalExitEdit)
                 : Allow();
     }
+
+    /// <summary>
+    /// Gets the Groups gate reason and the server code a command returns for the same cause.
+    /// <see cref="BlockBracketPlacesOccupied"/> is not a Groups reason.
+    /// </summary>
+    internal static IReadOnlyList<(string GateCode, string ServerCode)> GroupReasonParity { get; } =
+    [
+        (BlockMissingPots, ApplicationErrorCodes.DrawPotsMissing),
+        (BlockGroupShapeInvalid, ApplicationErrorCodes.DrawGroupShapeInvalid),
+        (ApplicationErrorCodes.DrawGroupSeatsReservedByInboundFeed, ApplicationErrorCodes.DrawGroupSeatsReservedByInboundFeed),
+        (ApplicationErrorCodes.DrawFixedPotConflict, ApplicationErrorCodes.DrawFixedPotConflict),
+        (ApplicationErrorCodes.DrawFixedOutsideComposition, ApplicationErrorCodes.DrawFixedOutsideComposition),
+        (ApplicationErrorCodes.DrawFixedExceedsCapacity, ApplicationErrorCodes.DrawFixedExceedsCapacity),
+        (BlockActiveDrawPresent, StageErrorCodes.NonCancelledDrawAlreadyExists),
+        (BlockDrawObsoleteForConsumption, ApplicationErrorCodes.DrawObsoleteForConsumption),
+    ];
+
+    private static string MapGroupRuleCode(string code) =>
+        code switch
+        {
+            ApplicationErrorCodes.DrawPotsMissing => BlockMissingPots,
+            ApplicationErrorCodes.DrawGroupShapeInvalid => BlockGroupShapeInvalid,
+            _ => code,
+        };
 
     private static bool BlocksUpstreamCompositionPool(StructureStageHubSummaryDto hub) => !hub.IsRootComposition && (hub.CompositionEntryCount <= 0 || (hub.InboundComposition is { ConfiguredVolume: > 0 } inbound
         && inbound.ResolvedCount < inbound.ConfiguredVolume));
@@ -179,6 +198,6 @@ public static class StructureDrawCreateLaunchGate
     private static StructureDrawCreateLaunchDto Allow() =>
         new(true, null);
 
-    private static StructureDrawCreateLaunchDto Deny(string code) =>
-        new(false, code);
+    private static StructureDrawCreateLaunchDto Deny(string code, IReadOnlyList<string>? detail = null) =>
+        new(false, code, detail is { Count: > 0 } ? detail : null);
 }

@@ -137,8 +137,8 @@ public sealed class GroupsFullGridDrawNotRequiredTests
         stage.ReplaceAffectationAuthoring(placeEveryone ? ids : [.. ids.Take(2)], _clock);
         if (!placeEveryone) return (competition, stage);
         stage.AssignEntryToGroup(stage.Groups[0].Id, ids[0]);
-        stage.AssignEntryToGroup(stage.Groups[0].Id, ids[1]);
-        stage.AssignEntryToGroup(stage.Groups[1].Id, ids[2]);
+        stage.AssignEntryToGroup(stage.Groups[0].Id, ids[2]);
+        stage.AssignEntryToGroup(stage.Groups[1].Id, ids[1]);
         stage.AssignEntryToGroup(stage.Groups[1].Id, ids[3]);
 
         return (competition, stage);

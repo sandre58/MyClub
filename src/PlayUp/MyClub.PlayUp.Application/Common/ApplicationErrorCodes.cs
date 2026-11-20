@@ -323,6 +323,42 @@ public static class ApplicationErrorCodes
     public const string DrawObsoleteForConsumption = "Application.DrawObsoleteForConsumption";
 
     /// <summary>
+    /// Gets the code when a Groups draw is refused because inbound feeds reserve places.
+    /// Mapped to HTTP 409.
+    /// </summary>
+    public const string DrawGroupSeatsReservedByInboundFeed = "Application.DrawGroupSeatsReservedByInboundFeed";
+
+    /// <summary>
+    /// Gets the code when two fixed teams from the same pot share a group.
+    /// Mapped to HTTP 409.
+    /// </summary>
+    public const string DrawFixedPotConflict = "Application.DrawFixedPotConflict";
+
+    /// <summary>
+    /// Gets the code when a group occupant is outside the phase composition.
+    /// Mapped to HTTP 409.
+    /// </summary>
+    public const string DrawFixedOutsideComposition = "Application.DrawFixedOutsideComposition";
+
+    /// <summary>
+    /// Gets the code when group occupants exceed the draw capacity.
+    /// Mapped to HTTP 409.
+    /// </summary>
+    public const string DrawFixedExceedsCapacity = "Application.DrawFixedExceedsCapacity";
+
+    /// <summary>
+    /// Gets the code when the group shape cannot be drawn, including a redo whose pool no longer divides.
+    /// Mapped to HTTP 409.
+    /// </summary>
+    public const string DrawGroupShapeInvalid = "Application.DrawGroupShapeInvalid";
+
+    /// <summary>
+    /// Gets the code when group draw pots are missing or incomplete.
+    /// Mapped to HTTP 409.
+    /// </summary>
+    public const string DrawPotsMissing = "Application.DrawPotsMissing";
+
+    /// <summary>
     /// Gets the code when a stage skeleton rebuild attempts to change <c>StructureFormatKind</c>.
     /// </summary>
     public const string StructureFormatImmutable = "Application.StructureFormatImmutable";

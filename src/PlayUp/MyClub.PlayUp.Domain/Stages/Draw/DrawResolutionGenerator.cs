@@ -162,7 +162,9 @@ public static class DrawResolutionGenerator
         var numberOfPots = request.NumberOfPots.Value;
         if (numberOfPots != capacity)
         {
-            throw Invalid("Group V1 requires NumberOfPots to equal uniform group capacity.");
+            throw Invalid(
+                "Group V1 requires NumberOfPots to equal uniform group capacity.",
+                StageErrorCodes.DrawPotCountNotEqualCapacity);
         }
 
         if (request.PotMembership is null)
@@ -194,7 +196,9 @@ public static class DrawResolutionGenerator
             var potSize = pots.Count(pair => pair.Value == pot);
             if (potSize != request.GroupTargets.Count)
             {
-                throw Invalid("Each pot must contain exactly as many entries as there are group targets.");
+                throw Invalid(
+                    "Each pot must contain exactly as many entries as there are group targets.",
+                    StageErrorCodes.DrawPotSizeMismatch);
             }
         }
 
@@ -221,14 +225,18 @@ public static class DrawResolutionGenerator
             var pot = pots[fixedPlacement.EntryId];
             if (!occupiedPotsByGroup[fixedPlacement.GroupId].Add(pot))
             {
-                throw Invalid("Fixed group placements put two entries from the same pot into one group.");
+                throw Invalid(
+                    "Fixed group placements put two entries from the same pot into one group.",
+                    StageErrorCodes.DrawFixedPotConflict);
             }
 
             groupCount++;
             countByGroup[fixedPlacement.GroupId] = groupCount;
             if (groupCount > capacity)
             {
-                throw Invalid("Fixed group placements exceed group capacity.");
+                throw Invalid(
+                    "Fixed group placements exceed group capacity.",
+                    StageErrorCodes.DrawFixedExceedsCapacity);
             }
         }
     }
@@ -533,6 +541,6 @@ public static class DrawResolutionGenerator
         return items;
     }
 
-    private static DomainException Invalid(string message) =>
-        new(message, StageErrorCodes.DrawGenerationInvalid);
+    private static DomainException Invalid(string message, string? code = null) =>
+        new(message, code ?? StageErrorCodes.DrawGenerationInvalid);
 }

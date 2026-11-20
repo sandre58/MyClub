@@ -133,6 +133,9 @@ public sealed class UseCaseExecutorCompletionTests
                 .Setup(repository => repository.GetByIdForUpdateAsync(stage.Id, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(stage);
             stages
+                .Setup(repository => repository.GetCompetitionIdReadOnlyAsync(stage.Id, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(competition.Id);
+            stages
                 .Setup(repository => repository.GetByIdsForUpdateAsync(
                     It.Is<IReadOnlyList<StageId>>(ids => ids.Contains(stage.Id)),
                     It.IsAny<CancellationToken>()))
@@ -214,6 +217,12 @@ public sealed class UseCaseExecutorCompletionTests
         unitOfWork
             .Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
+        unitOfWork
+            .Setup(uow => uow.ExecuteExclusiveAsync(
+                competition.Id,
+                It.IsAny<Func<CancellationToken, Task>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns((CompetitionId _, Func<CancellationToken, Task> write, CancellationToken token) => write(token));
 
         var executor = new UseCaseExecutor(
             stages.Object,

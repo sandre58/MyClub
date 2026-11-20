@@ -63,6 +63,12 @@ public static class ConfigureDrawInputs
                 break;
         }
 
+        if (draw.Kind == DrawResolutionKind.Group
+            && configureIntent is DrawInputsIntent.Default or DrawInputsIntent.Rerun)
+        {
+            GroupDrawLaunchRules.Evaluate(stage, competitionStages ?? [stage]).EnsureAllowed();
+        }
+
         stage.ConfigureDrawInputs(drawId, inputs, configureIntent);
     }
 

@@ -134,6 +134,18 @@ internal sealed partial class PlayUpExceptionHandler(ILogger<PlayUpExceptionHand
             GroupPlacementRejectedException rejected => MapPlacementRejection(rejected),
             ApplicationFailureException { Code: ApplicationErrorCodes.DrawObsoleteForConsumption } application =>
                 (StatusCodes.Status409Conflict, "Draw obsolete for consumption", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.DrawGroupSeatsReservedByInboundFeed } application =>
+                (StatusCodes.Status409Conflict, "Group places reserved by an inbound feed", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.DrawFixedPotConflict } application =>
+                (StatusCodes.Status409Conflict, "Fixed teams share a pot in one group", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.DrawFixedOutsideComposition } application =>
+                (StatusCodes.Status409Conflict, "Fixed team is outside the composition", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.DrawFixedExceedsCapacity } application =>
+                (StatusCodes.Status409Conflict, "Fixed teams exceed the draw capacity", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.DrawGroupShapeInvalid } application =>
+                (StatusCodes.Status409Conflict, "Group draw shape is invalid", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.DrawPotsMissing } application =>
+                (StatusCodes.Status409Conflict, "Group draw pots are missing", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.MaterializationOccupantConflict } application =>
                 (StatusCodes.Status409Conflict, "Materialization occupant conflict", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.DrawLaunchGridNotVacant } application =>

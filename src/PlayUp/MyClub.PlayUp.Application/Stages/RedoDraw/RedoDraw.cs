@@ -12,8 +12,10 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
-/// Application use case: redo an applied draw in one transaction — cancel, release the aligned
-/// placements, then preview a new resolution (create → configure Rerun inputs → generate).
+/// Application use case: redo an applied draw in one transaction — cancel, release the drawn
+/// placements, then preview a new resolution. Cup configures Rerun inputs. Groups configures
+/// Default on the current composition, after the launch rule has accepted the grid the release
+/// will leave. The rule runs before Cancel, so a refusal leaves the applied draw untouched.
 /// </summary>
 /// <remarks>
 /// Reuses <see cref="CancelDraw"/>, <see cref="ReleaseDrawAlignedPlacements"/>, <see cref="CreateDraw"/>,
@@ -67,17 +69,26 @@ public static class RedoDraw
         }
 
         var kind = draw.Kind;
+        if (kind == DrawResolutionKind.Group)
+        {
+            GroupDrawLaunchRules
+                .Evaluate(stage, competitionStages, GroupDrawLaunchRules.DrawnEntries(draw))
+                .EnsureAllowed();
+        }
 
         CancelDraw.Execute(stage, drawId, clock);
         ReleaseDrawAlignedPlacements.Execute(stage, drawId, clock, stageMatches);
 
-        var created = CreateDraw.Execute(stage, kind, clock, stageMatches);
-        var inputs = DrawInputsFactory.CreateRerun(stage, draw);
+        var created = CreateDraw.Execute(stage, kind, clock, stageMatches, competitionStages);
+        var relaunchGroups = kind == DrawResolutionKind.Group;
+        var inputs = relaunchGroups
+            ? DrawInputsFactory.CreateDefault(stage, kind)
+            : DrawInputsFactory.CreateRerun(stage, draw);
         ConfigureDrawInputs.Execute(
             stage,
             created.Id,
             inputs,
-            DrawInputsIntent.Rerun,
+            relaunchGroups ? DrawInputsIntent.Default : DrawInputsIntent.Rerun,
             competitionStages,
             stageMatches);
 

@@ -1244,12 +1244,23 @@ public sealed partial class UseCaseExecutor
         DrawResolutionKind kind,
         CancellationToken cancellationToken = default)
     {
-        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        await EnsureCompetitionAllowsLifecycleMutationAsync(stage.CompetitionId, cancellationToken)
-            .ConfigureAwait(false);
-        var draw = CreateDraw.Execute(stage, kind, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return ToDrawSummary(stage.Id, draw);
+        DrawSummaryDto? dto = null;
+        await ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await RequireStageAsync(stageId, innerToken).ConfigureAwait(false);
+                var competition = await RequireCompetitionAsync(stage.CompetitionId, innerToken)
+                    .ConfigureAwait(false);
+                EnsureCompetitionAllowsLifecycleMutation(competition);
+                var competitionStages = await LoadCompetitionStagesForUpdateAsync(competition, innerToken)
+                    .ConfigureAwait(false);
+                var draw = CreateDraw.Execute(stage, kind, clock, competitionStages: competitionStages);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+                dto = ToDrawSummary(stage.Id, draw);
+            },
+            cancellationToken).ConfigureAwait(false);
+        return dto ?? throw new InvalidOperationException("Draw create did not run.");
     }
 
     /// <summary>
@@ -1269,32 +1280,27 @@ public sealed partial class UseCaseExecutor
         DrawInputsIntent intent = DrawInputsIntent.Default,
         CancellationToken cancellationToken = default)
     {
-        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken).ConfigureAwait(false);
-        EnsureCompetitionAllowsLifecycleMutation(competition);
-        var draw = stage.GetDraw(drawId);
-        IReadOnlyList<Stage>? competitionStages = null;
-        DrawInputs inputs;
-        if (intent == DrawInputsIntent.Partial)
-        {
-            competitionStages = await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken)
-                .ConfigureAwait(false);
-            inputs = DrawInputsFactory.CreatePartial(stage, competitionStages, draw.Kind);
-        }
-        else
-        {
-            if (intent == DrawInputsIntent.Rerun)
+        DrawSummaryDto? dto = null;
+        await ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
             {
-                competitionStages = await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken)
+                var stage = await RequireStageAsync(stageId, innerToken).ConfigureAwait(false);
+                var competition = await RequireCompetitionAsync(stage.CompetitionId, innerToken)
                     .ConfigureAwait(false);
-            }
-
-            inputs = DrawInputsFactory.CreateDefault(stage, draw.Kind, intent);
-        }
-
-        ConfigureDrawInputs.Execute(stage, drawId, inputs, intent, competitionStages);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return ToDrawSummary(stage.Id, stage.GetDraw(drawId));
+                EnsureCompetitionAllowsLifecycleMutation(competition);
+                var competitionStages = await LoadCompetitionStagesForUpdateAsync(competition, innerToken)
+                    .ConfigureAwait(false);
+                var draw = stage.GetDraw(drawId);
+                var inputs = intent == DrawInputsIntent.Partial
+                    ? DrawInputsFactory.CreatePartial(stage, competitionStages, draw.Kind)
+                    : DrawInputsFactory.CreateDefault(stage, draw.Kind, intent);
+                ConfigureDrawInputs.Execute(stage, drawId, inputs, intent, competitionStages);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+                dto = ToDrawSummary(stage.Id, stage.GetDraw(drawId));
+            },
+            cancellationToken).ConfigureAwait(false);
+        return dto ?? throw new InvalidOperationException("Draw input configuration did not run.");
     }
 
     /// <summary>
@@ -1305,40 +1311,42 @@ public sealed partial class UseCaseExecutor
         DrawId drawId,
         CancellationToken cancellationToken = default)
     {
-        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        await EnsureCompetitionAllowsLifecycleMutationAsync(stage.CompetitionId, cancellationToken)
-            .ConfigureAwait(false);
-        var draw = stage.GetDraw(drawId);
-        IReadOnlyList<string>? slotTargets = draw.Kind == DrawResolutionKind.Slot
-            ? stage.Slots.Select(slot => slot.SlotKey).ToArray()
-            : null;
-        IReadOnlyList<GroupId>? groupTargets = draw.Kind == DrawResolutionKind.Group
-            ? stage.Groups.Select(group => group.Id).ToArray()
-            : null;
-        IReadOnlyList<Stage>? competitionStages = null;
-        if (draw.Kind == DrawResolutionKind.Slot)
-        {
-            var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
-                .ConfigureAwait(false);
-            competitionStages = await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken)
-                .ConfigureAwait(false);
-        }
-
-        var result = GenerateDrawResolution.Execute(
-            stage,
-            drawId,
-            clock,
-            slotTargets,
-            groupTargets,
-            competitionStages: competitionStages);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        var updated = stage.GetDraw(drawId);
-        return new DrawGenerationDto(
-            updated.Id.Value,
-            result.IsResolved,
-            result.IsNoSolution,
-            updated.Status,
-            updated.Resolution.State);
+        DrawGenerationDto? dto = null;
+        await ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await RequireStageAsync(stageId, innerToken).ConfigureAwait(false);
+                var competition = await RequireCompetitionAsync(stage.CompetitionId, innerToken)
+                    .ConfigureAwait(false);
+                EnsureCompetitionAllowsLifecycleMutation(competition);
+                var competitionStages = await LoadCompetitionStagesForUpdateAsync(competition, innerToken)
+                    .ConfigureAwait(false);
+                var draw = stage.GetDraw(drawId);
+                IReadOnlyList<string>? slotTargets = draw.Kind == DrawResolutionKind.Slot
+                    ? stage.Slots.Select(slot => slot.SlotKey).ToArray()
+                    : null;
+                IReadOnlyList<GroupId>? groupTargets = draw.Kind == DrawResolutionKind.Group
+                    ? stage.Groups.Select(group => group.Id).ToArray()
+                    : null;
+                var result = GenerateDrawResolution.Execute(
+                    stage,
+                    drawId,
+                    clock,
+                    slotTargets,
+                    groupTargets,
+                    competitionStages: competitionStages);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+                var updated = stage.GetDraw(drawId);
+                dto = new DrawGenerationDto(
+                    updated.Id.Value,
+                    result.IsResolved,
+                    result.IsNoSolution,
+                    updated.Status,
+                    updated.Resolution.State);
+            },
+            cancellationToken).ConfigureAwait(false);
+        return dto ?? throw new InvalidOperationException("Draw generation did not run.");
     }
 
     /// <summary>

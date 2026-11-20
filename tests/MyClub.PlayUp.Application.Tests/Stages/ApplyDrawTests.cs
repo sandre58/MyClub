@@ -340,7 +340,7 @@ public sealed class ApplyDrawTests
     }
 
     [Fact]
-    public void Execute_group_rematerializes_entry_from_other_group()
+    public void Execute_group_entry_in_another_group_is_obsolete_and_is_not_moved()
     {
         var stage = CreateStage();
         var groupA = stage.AddGroup("A", _clock);
@@ -349,11 +349,12 @@ public sealed class ApplyDrawTests
         var draw = PublishGroupDraw(stage, entry, groupA.Id);
         stage.AssignEntryToGroup(groupB.Id, entry);
 
-        var result = ApplyDraw.Execute(stage, draw.Id, _clock);
+        var act = () => ApplyDraw.Execute(stage, draw.Id, _clock);
 
-        result.SlotInstructions.Should().BeEmpty();
-        groupA.EntryIds.Should().ContainSingle().Which.Should().Be(entry);
-        groupB.EntryIds.Should().BeEmpty();
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.DrawObsoleteForConsumption);
+        groupA.EntryIds.Should().BeEmpty();
+        groupB.EntryIds.Should().ContainSingle().Which.Should().Be(entry);
     }
 
     [Fact]
@@ -376,8 +377,8 @@ public sealed class ApplyDrawTests
 
         var act = () => ApplyDraw.Execute(stage, draw.Id, _clock, [match]);
 
-        act.Should().Throw<DomainException>()
-            .Which.Code.Should().Be(StageErrorCodes.MaterializedOpponentConflict);
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.DrawObsoleteForConsumption);
         groupB.EntryIds.Should().Contain(entryA);
         groupA.EntryIds.Should().BeEmpty();
     }
@@ -420,10 +421,13 @@ public sealed class ApplyDrawTests
         var draw = PublishGroupDraw(stage, drawn, groupA.Id);
         stage.AssignEntryToGroup(groupB.Id, drawn);
 
-        ApplyDraw.Execute(stage, draw.Id, _clock);
+        var act = () => ApplyDraw.Execute(stage, draw.Id, _clock);
 
-        groupA.EntryIds.Should().ContainSingle().Which.Should().Be(drawn);
-        groupB.EntryIds.Should().ContainSingle().Which.Should().Be(outsider);
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.DrawObsoleteForConsumption);
+        groupA.EntryIds.Should().BeEmpty();
+        groupB.EntryIds.Should().Contain(drawn);
+        groupB.EntryIds.Should().Contain(outsider);
     }
 
     [Fact]
@@ -514,10 +518,12 @@ public sealed class ApplyDrawTests
         stage.AddMatchday(1, _clock);
         stage.Prepare(_clock);
 
-        ApplyDraw.Execute(stage, draw.Id, _clock);
+        var act = () => ApplyDraw.Execute(stage, draw.Id, _clock);
 
-        groupA.EntryIds.Should().ContainSingle().Which.Should().Be(entry);
-        groupB.EntryIds.Should().BeEmpty();
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.DrawObsoleteForConsumption);
+        groupA.EntryIds.Should().BeEmpty();
+        groupB.EntryIds.Should().ContainSingle().Which.Should().Be(entry);
         stage.Status.Should().Be(StageStatus.Ready);
     }
 

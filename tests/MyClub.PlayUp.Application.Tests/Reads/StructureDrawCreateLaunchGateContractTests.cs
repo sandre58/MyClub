@@ -183,7 +183,7 @@ public sealed class StructureDrawCreateLaunchGateContractTests
     }
 
     [Fact]
-    public void Groups_with_an_occupied_place_still_forbids_launch()
+    public void Groups_with_two_legal_occupants_allows_launch()
     {
         var situation = TestCompetition.Create("Groups occupied", _clock)
             .WithTeams("A", "B", "C", "D")
@@ -196,11 +196,22 @@ public sealed class StructureDrawCreateLaunchGateContractTests
         var ids = situation.Competition.Entries.Select(entry => entry.Id).ToArray();
         stage.ReplaceAffectationAuthoring(ids, _clock);
         stage.AssignEntryToGroup(stage.Groups[0].Id, ids[0]);
+        stage.AssignEntryToGroup(stage.Groups[0].Id, ids[2]);
 
         var hub = StructureViewAssembler.Assemble(situation.Competition, situation.Stages).Stages.Single();
 
-        hub.DrawCreateLaunch.Allowed.Should().BeFalse();
-        hub.DrawCreateLaunch.BlockReasonCode.Should().Be(StructureDrawCreateLaunchGate.BlockBracketPlacesOccupied);
+        hub.DrawCreateLaunch.Allowed.Should().BeTrue();
+        hub.DrawCreateLaunch.BlockReasonCode.Should().BeNull();
+        hub.DrawCreateLaunch.BlockDetail.Should().BeNull();
+        hub.DrawCreateLaunch.BlockReasonCode.Should().NotBe(StructureDrawCreateLaunchGate.BlockBracketPlacesOccupied);
+    }
+
+    [Fact]
+    public void Groups_gate_reasons_match_the_server_codes()
+    {
+        StructureDrawCreateLaunchGate.GroupReasonParity.Should().OnlyHaveUniqueItems(pair => pair.GateCode);
+        StructureDrawCreateLaunchGate.GroupReasonParity.Should()
+            .NotContain(pair => pair.GateCode == StructureDrawCreateLaunchGate.BlockBracketPlacesOccupied);
     }
 
     [Fact]

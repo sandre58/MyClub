@@ -19,8 +19,9 @@ namespace MyClub.PlayUp.Application.Stages;
 /// Persistence: caller loads tracked ARs in one DI scope, invokes this use case, then calls
 /// <c>IUnitOfWork.SaveChangesAsync</c> once.
 /// Does not recalculate WhoFeeds and never creates DirectAssignment.
-/// Group: Apply rematerializes only entries present in the resolution (move from other group if needed);
-/// same-group is idempotent; entries outside the resolution are left untouched.
+/// Group: Apply assigns resolution entries that are not already in that group.
+/// A team already in another group is obsolete for consumption and is not moved.
+/// Same-group is idempotent; entries outside the resolution are left untouched.
 /// Host supplies Draw entry pools (typically ⊆ qualified/progressed Entries).
 /// Cup match materialization runs via <see cref="MaterializeCupFromOccupiedSlots"/> after Slot apply (fixtures, not BracketPairs).
 /// </remarks>
@@ -223,14 +224,15 @@ public static class ApplyDraw
 
         StructureDrawConsumptionGate.EnsureDrawConsumable(draw, stage);
 
-        // Targeted rematerialization: only entries in this resolution move.
-        // Same-group → no-op; other-group → remove then assign; unassigned → assign.
+        // Same-group is a no-op. A team already in another group must have been refused
+        // by consumption conformance; moving it here would hide that divergence.
         foreach (var placement in placements)
         {
             var owningGroup = stage.Groups.FirstOrDefault(g => g.EntryIds.Contains(placement.EntryId));
-            if (owningGroup?.Id.Equals(placement.GroupId) == false)
+            if (owningGroup is not null && !owningGroup.Id.Equals(placement.GroupId))
             {
-                stage.RemoveDrawEntryFromGroup(owningGroup.Id, placement.EntryId, snapshots);
+                throw new InvalidOperationException(
+                    $"Group draw apply cannot move entry '{placement.EntryId}' from group '{owningGroup.Id}' to '{placement.GroupId}'. The resolution is obsolete for consumption.");
             }
 
             stage.AssignEntryToGroup(placement.GroupId, placement.EntryId, snapshots);

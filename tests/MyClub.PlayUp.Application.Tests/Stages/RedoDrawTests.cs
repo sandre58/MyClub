@@ -260,6 +260,52 @@ public sealed class RedoDrawTests
         target.FindSlot("SF1-B")!.EntryId.Should().BeNull();
     }
 
+    [Fact]
+    public void Redo_groups_keeps_manual_placements_and_relaunches_default()
+    {
+        var (stage, ids) = AppliedGroups();
+        var applied = stage.Draws.Single();
+        var drawn = GroupDrawLaunchRules.DrawnEntries(applied);
+
+        var result = RedoDraw.Execute(stage, applied.Id, _clock, [stage]);
+
+        stage.GetDraw(applied.Id).Status.Should().Be(DrawStatus.Cancelled);
+        stage.Groups.SelectMany(group => group.EntryIds).Should().Contain(ids[0]);
+        stage.Groups.SelectMany(group => group.EntryIds).Should().NotIntersectWith(drawn);
+        var preview = stage.GetDraw(result.DrawId);
+        preview.InputsIntent.Should().Be(DrawInputsIntent.Default);
+        preview.Inputs!.FixedGroups.Select(placement => placement.EntryId).Should().Contain(ids[0]);
+        preview.Resolution.State.Should().Be(DrawResolutionState.Resolved);
+    }
+
+    [Fact]
+    public void Redo_groups_refuses_an_invalid_shape_before_cancel()
+    {
+        var (stage, ids) = AppliedGroups();
+        var extra = EntryId.New();
+        stage.ReplaceAffectationAuthoring([.. ids, extra], _clock);
+        var applied = stage.Draws.Single();
+        var before = stage.Groups.Select(group => group.EntryIds.ToArray()).ToArray();
+
+        var act = () => RedoDraw.Execute(stage, applied.Id, _clock, [stage]);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.DrawGroupShapeInvalid);
+        stage.GetDraw(applied.Id).Status.Should().Be(DrawStatus.Published);
+        stage.Draws.Should().ContainSingle();
+        stage.Groups.SelectMany(group => group.EntryIds).Should().Equal(before.SelectMany(entryIds => entryIds));
+    }
+
+    [Fact]
+    public void Redo_groups_evaluator_is_available_with_fixed_occupants()
+    {
+        var (stage, _) = AppliedGroups();
+        var draw = stage.Draws.Single();
+
+        DrawActionEvaluator.Evaluate(DrawActionEvaluator.ForCommand(stage, null), draw).Redo.State
+            .Should().Be(StageDrawActionState.Available);
+    }
+
     private static void AssertBlocked(Action act, string code)
     {
         var exception = act.Should().Throw<Exception>().Which;
@@ -303,5 +349,31 @@ public sealed class RedoDrawTests
             DrawResolution.ResolvedGroups([new GroupDrawPlacement(entry, groupId)]),
             _clock);
         return draw;
+    }
+
+    private (Stage Stage, EntryId[] Ids) AppliedGroups()
+    {
+        var competition = CreateCompetition.Execute("Redo groups", _clock);
+        var ids = Enumerable.Range(0, 4)
+            .Select(index => AddEntry.Execute(competition, $"T{index}", _clock).Id)
+            .ToArray();
+        var stage = ConfigureStructure.Execute(competition, null, StructureIntent.Groups(2, 2), _clock).Stage;
+        ReplaceStageDrawRules.Execute(stage, new DrawRules(DrawMode.Random, potRules: new PotRules(2)), _clock);
+        stage.ReplaceAffectationAuthoring(ids, _clock);
+        stage.AssignEntryToGroup(stage.Groups[0].Id, ids[0]);
+        var draw = CreateDraw.Execute(stage, DrawResolutionKind.Group, _clock, competitionStages: [stage]);
+        ConfigureDrawInputs.Execute(
+            stage,
+            draw.Id,
+            DrawInputsFactory.CreateDefault(stage, DrawResolutionKind.Group),
+            competitionStages: [stage]);
+        GenerateDrawResolution.Execute(
+            stage,
+            draw.Id,
+            _clock,
+            groupTargets: [.. stage.Groups.Select(group => group.Id)]).IsResolved.Should().BeTrue();
+        PublishDraw.Execute(stage, draw.Id, _clock);
+        ApplyDraw.Execute(stage, draw.Id, _clock);
+        return (stage, ids);
     }
 }

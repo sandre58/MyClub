@@ -18,8 +18,8 @@ namespace MyClub.PlayUp.Application.Stages;
 /// <remarks>
 /// Slot: for each <c>(SlotKey, EntryId)</c> in <see cref="DrawResolution.SlotResults"/>,
 /// release via <see cref="Stage.ClearResolvedEntry"/> when aligned (skips DirectAssignment).
-/// Group: for each group placement in <see cref="DrawResolution.GroupResults"/>,
-/// <see cref="Stage.RemoveDrawEntryFromGroup"/> when the entry is still in that group.
+/// Group: releases resolution entries that are not <see cref="DrawInputs.FixedGroups"/>.
+/// A fixed team that is still in its group is skipped.
 /// The draw must be Cancelled (<see cref="ApplicationErrorCodes.DrawReleaseRequiresCancelled"/>).
 /// Slot and Group release are refused outside Draft or Ready (<see cref="StageErrorCodes.StructureLocked"/>).
 /// A Ready stage with attached matches refuses the whole Group release
@@ -108,9 +108,16 @@ public static class ReleaseDrawAlignedPlacements
     {
         var released = 0;
         var skipped = 0;
+        var drawn = GroupDrawLaunchRules.DrawnEntries(draw);
 
         foreach (var placement in draw.Resolution.GroupResults)
         {
+            if (!drawn.Contains(placement.EntryId))
+            {
+                skipped++;
+                continue;
+            }
+
             var group = stage.FindGroup(placement.GroupId);
             if (group?.EntryIds.Contains(placement.EntryId) != true)
             {

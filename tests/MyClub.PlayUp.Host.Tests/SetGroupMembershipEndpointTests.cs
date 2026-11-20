@@ -391,7 +391,7 @@ public sealed class SetGroupMembershipEndpointTests(HostPostgresFixture fixture)
             stage.AssignEntryToGroup(stage.Groups[0].Id, ids[index]);
         }
 
-        _ = CreateDraw.Execute(stage, DrawResolutionKind.Group, _clock);
+        _ = stage.CreateDraw(DrawResolutionKind.Group, _clock);
 
         await SaveAsync(factory, competition, stage);
         return new Seed(competition.Id, stage.Id, stage.Groups[0].Id, ids);

@@ -139,7 +139,7 @@ public sealed class DrawResolutionGeneratorTests
         var act = () => DrawResolutionGenerator.Generate(
             GroupRequest(entries, groups, pots, numberOfPots: 5, [], seed: 1));
 
-        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.DrawGenerationInvalid);
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.DrawPotCountNotEqualCapacity);
     }
 
     [Fact]
@@ -162,7 +162,7 @@ public sealed class DrawResolutionGeneratorTests
         var act = () => DrawResolutionGenerator.Generate(
             GroupRequest(entries, groups, pots, numberOfPots: 4, [], seed: 1));
 
-        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.DrawGenerationInvalid);
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.DrawPotSizeMismatch);
     }
 
     [Fact]
@@ -213,7 +213,32 @@ public sealed class DrawResolutionGeneratorTests
         var act = () => DrawResolutionGenerator.Generate(
             GroupRequest(entries, groups, pots, 4, fixedGroups, seed: 1));
 
-        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.DrawGenerationInvalid);
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.DrawFixedPotConflict);
+    }
+
+    [Fact]
+    public void Group_RC_valid_fixed_resolves_for_several_seeds()
+    {
+        var entries = NewEntries(8);
+        var groups = NewGroups(2);
+        var pots = BalancedPots(entries, 4);
+        var fixedGroups = new[]
+        {
+            new GroupDrawPlacement(entries[0], groups[0]),
+            new GroupDrawPlacement(entries[2], groups[1])
+        };
+
+        for (var seed = 1; seed <= 8; seed++)
+        {
+            var result = DrawResolutionGenerator.Generate(
+                GroupRequest(entries, groups, pots, 4, fixedGroups, seed));
+            result.IsResolved.Should().BeTrue();
+            result.IsNoSolution.Should().BeFalse();
+            result.Resolution!.GroupResults.Should()
+                .Contain(placement => placement.EntryId.Equals(entries[0]) && placement.GroupId.Equals(groups[0]));
+            result.Resolution.GroupResults.Should()
+                .Contain(placement => placement.EntryId.Equals(entries[2]) && placement.GroupId.Equals(groups[1]));
+        }
     }
 
     [Fact]

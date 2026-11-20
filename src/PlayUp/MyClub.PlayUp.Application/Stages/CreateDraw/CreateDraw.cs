@@ -22,17 +22,28 @@ public static class CreateDraw
     /// <param name="kind">Resolution kind (Slot or Group).</param>
     /// <param name="clock">Clock for domain events.</param>
     /// <param name="stageMatches">Matches of stage.</param>
+    /// <param name="competitionStages">
+    /// Competition phases. Required for a Groups draw so inbound feeds are counted before the draft exists.
+    /// When null, only <paramref name="stage"/> is considered.
+    /// </param>
     /// <returns>The created draw.</returns>
     public static Draw Execute(
         Stage stage,
         DrawResolutionKind kind,
         IClock clock,
-        IReadOnlyList<Match>? stageMatches = null)
+        IReadOnlyList<Match>? stageMatches = null,
+        IReadOnlyList<Stage>? competitionStages = null)
     {
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(clock);
         StructureOperationalExitEditGuard.Ensure(stage, stageMatches, "Draw");
         EnsureDrawRulesEngaged(stage);
+        if (kind == DrawResolutionKind.Group
+            && !stage.Draws.Any(draw => draw.Status != DrawStatus.Cancelled))
+        {
+            GroupDrawLaunchRules.Evaluate(stage, competitionStages ?? [stage]).EnsureAllowed();
+        }
+
         return stage.CreateDraw(kind, clock);
     }
 
