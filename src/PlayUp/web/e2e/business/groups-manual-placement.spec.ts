@@ -49,6 +49,25 @@ async function titleFromTeamCheckbox(tile: Locator): Promise<string> {
   return (await title.innerText()).trim();
 }
 
+/** Unchecked selectable tile whose team name differs from `excludeName` (batch replace). */
+async function replacementTeamCheckbox(
+  dialog: Locator,
+  excludeName: string,
+): Promise<{ locator: Locator; name: string }> {
+  const candidates = selectableUncheckedTeams(dialog);
+  const count = await candidates.count();
+  for (let i = 0; i < count; i += 1) {
+    const tile = candidates.nth(i);
+    const name = await titleFromTeamCheckbox(tile);
+    if (name !== excludeName) {
+      return { locator: tile, name };
+    }
+  }
+  throw new Error(
+    `No unchecked replacement team found besides "${excludeName}"`,
+  );
+}
+
 type SchematicCaseWire = {
   formPosition?: { kind?: string; groupId?: string };
   entry?: { entryId?: string };
@@ -270,10 +289,10 @@ test.describe('manual group placement', () => {
       checked: true,
     });
     await expect(occupant).toBeVisible();
-    await occupant.click();
-    const replacee = selectableUncheckedTeams(dialog).first();
+    const { locator: replacee, name: replacedName } =
+      await replacementTeamCheckbox(dialog, originalName);
     await expect(replacee).toBeVisible();
-    const replacedName = await titleFromTeamCheckbox(replacee);
+    await occupant.click();
     await replacee.click();
     await savePlacementDialog(dialog);
     await expect(groupA.getByText('4/4')).toBeVisible();

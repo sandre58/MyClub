@@ -133,6 +133,10 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium
 
+      - name: Install Playwright system dependencies
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
       - name: E2E smoke (stub API)
         run: npx playwright test
         env:
@@ -230,6 +234,11 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         working-directory: src/PlayUp/web
         run: npx playwright install --with-deps chromium
+
+      - name: Install Playwright system dependencies
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        working-directory: src/PlayUp/web
+        run: npx playwright install-deps chromium
 
       - name: E2E business (Host + PostgreSQL)
         working-directory: src/PlayUp/web

@@ -22,6 +22,10 @@
   padding-inline-end: calc(var(--space-16) + var(--icon-size-sm));
 }
 
+.ds-dropdown-button__trigger.ds-btn--sm {
+  padding-inline-end: calc(var(--space-12) + var(--icon-size-sm));
+}
+
 .ds-dropdown-button__trigger-content {
   display: inline-flex;
   align-items: center;
