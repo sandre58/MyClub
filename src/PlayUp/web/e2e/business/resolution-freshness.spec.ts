@@ -139,7 +139,7 @@ test.describe('Play’Up business (resolution freshness)', () => {
     await expect(place.getByRole('button', { name: /Périmé/ })).toHaveCount(0);
     await place.getByRole('button', { name: 'Rejouable', exact: true }).click();
     await expect(
-      page.getByRole('dialog', { name: /Placement —/ }),
+      page.getByRole('dialog', { name: /^Placement —/ }),
     ).toBeVisible();
   });
 
@@ -296,7 +296,7 @@ test.describe('Play’Up business (resolution freshness)', () => {
     );
     await page.getByRole('button', { name: 'Placer manuellement' }).click();
     await page.getByRole('menuitem').first().click();
-    const dialog = page.getByRole('dialog', { name: /Placement —/ });
+    const dialog = page.getByRole('dialog', { name: /^Placement —/ });
     await expect(dialog).toBeVisible();
     await expectFooterButtonsOnOneRow(dialog);
     await dialog.getByRole('button', { name: 'Annuler' }).click();

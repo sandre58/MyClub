@@ -42,7 +42,7 @@ test.describe('Recette captures (opt-in)', () => {
     await page.getByRole('button', { name: 'Placer manuellement' }).click();
     await page.getByRole('menuitem').first().click();
     const placementDialog = page.getByRole('dialog', {
-      name: /Placement —/,
+      name: /^Placement —/,
     });
     await expect(placementDialog).toBeVisible();
     await placementDialog.screenshot({

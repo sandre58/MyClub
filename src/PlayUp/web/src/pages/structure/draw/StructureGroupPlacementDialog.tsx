@@ -10,6 +10,7 @@ import {
   replaceEntryInGroup,
   setGroupEntries,
 } from '../../../api';
+import { Alert } from '../../../design-system/components/Alert';
 import { ChoiceTile } from '../../../design-system/components/ChoiceTile';
 import { Tooltip } from '../../../design-system/components/Tooltip';
 import { ConfirmDialog } from '../../../design-system/components/ConfirmDialog';
@@ -367,7 +368,6 @@ export function StructureGroupPlacementDialog({
           effectiveBatch
         ) {
           setMembershipStaleFooter(t('groupPlacement.membershipStaleUpdating'));
-          setLiveNote(null);
           saveMutation.reset();
           return;
         }
@@ -465,8 +465,7 @@ export function StructureGroupPlacementDialog({
     setSelectedIds((selection) =>
       reseedMembershipSelection(hubMemberEntryIds, selection, available),
     );
-    setMembershipStaleFooter(null);
-    setLiveNote(t('groupPlacement.groupChanged'));
+    setMembershipStaleFooter(t('groupPlacement.groupChanged'));
   }, [open, effectiveBatch, groupId, hubMemberEntryIds, available, t]);
 
   useEffect(() => {
@@ -594,11 +593,17 @@ export function StructureGroupPlacementDialog({
     cancelDiscard,
   } = useDiscardConfirm(dirty, onClose);
 
+  function dismissMembershipStaleFooter() {
+    setMembershipStaleFooter(null);
+  }
+
   function requestClose() {
+    dismissMembershipStaleFooter();
     requestDiscardClose(saveMutation.isPending);
   }
 
   function onClearSeatSelection() {
+    dismissMembershipStaleFooter();
     setSelectedId(null);
     setLiveNote(t('groupPlacement.selectionCleared'));
     saveMutation.reset();
@@ -692,6 +697,7 @@ export function StructureGroupPlacementDialog({
       }
     }
     setSelectedIds([...next]);
+    dismissMembershipStaleFooter();
     saveMutation.reset();
   };
 
@@ -719,6 +725,7 @@ export function StructureGroupPlacementDialog({
         t('groupPlacement.willRemoveMembers', { count: removableMembers }),
       );
     }
+    dismissMembershipStaleFooter();
     saveMutation.reset();
   };
 
@@ -733,6 +740,7 @@ export function StructureGroupPlacementDialog({
     );
 
   const toggleBatch = (entryId: string, next: boolean) => {
+    dismissMembershipStaleFooter();
     setSelectedIds((current) => {
       if (next) {
         if (current.includes(entryId)) {
@@ -782,9 +790,9 @@ export function StructureGroupPlacementDialog({
         focusKey={`${mode}:${groupId ?? ''}:${focusEpoch}`}
         footerStatus={
           membershipStaleFooter ? (
-            <p className="structure-manual-placement__footer-note">
+            <Alert tone="info" role="status">
               {membershipStaleFooter}
-            </p>
+            </Alert>
           ) : mutationError ? (
             batchErrorMessage ? (
               <div
@@ -820,7 +828,10 @@ export function StructureGroupPlacementDialog({
                 type="button"
                 className="ds-btn ds-btn--primary"
                 disabled={pending || !canSave}
-                onClick={() => saveMutation.mutate()}
+                onClick={() => {
+                  dismissMembershipStaleFooter();
+                  saveMutation.mutate();
+                }}
               >
                 {pending ? (
                   <PendingLabel>{t('manualPlacement.saving')}</PendingLabel>
