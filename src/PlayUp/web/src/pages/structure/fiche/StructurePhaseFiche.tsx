@@ -559,7 +559,7 @@ export function StructurePhaseFiche({
                 name={teamName}
                 logoMediaId={entry.logoMediaId}
                 primaryColor={entry.primaryColor}
-                size="sm"
+                size="xs"
               />
               <span>{teamName}</span>
             </span>

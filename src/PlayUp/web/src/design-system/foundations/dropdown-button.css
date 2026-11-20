@@ -8,16 +8,23 @@
 }
 
 .ds-dropdown-button__trigger {
+  justify-content: flex-start;
   gap: var(--space-8);
+  min-width: 0;
 }
 
 .ds-dropdown-button__label {
+  flex: 1 1 auto;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ds-dropdown-button__chevron {
   display: inline-flex;
   flex: none;
+  margin-inline-start: auto;
   line-height: 0;
   transition: transform var(--motion-duration) var(--motion-easing);
 }
@@ -103,9 +110,11 @@
   display: inline-flex;
   flex: none;
   align-items: center;
-  gap: var(--space-6);
+  gap: var(--space-8);
   max-width: min(14rem, 45vw);
   min-width: 0;
+  color: var(--color-text-primary);
+  font-size: var(--text-label);
 }
 
 .ds-dropdown-button__item-secondary-team > :last-child {

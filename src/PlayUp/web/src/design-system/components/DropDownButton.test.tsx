@@ -98,6 +98,45 @@ describe('DropDownButton', () => {
     expect(trigger.getAttribute('aria-activedescendant')).toMatch(/option-/);
   });
 
+  it('keeps the menu end-aligned with intrinsic width between 12rem and 22rem', async () => {
+    const user = userEvent.setup();
+    const style = document.createElement('style');
+    style.textContent =
+      '.dropdown-test-full-width { width: 20rem; } .dropdown-test-full-width .ds-dropdown-button__trigger { width: 100%; }';
+    document.head.appendChild(style);
+
+    render(
+      <DropDownButton
+        label="Add something with a very long label that should ellipsize"
+        aria-label="Add item"
+        align="end"
+        className="dropdown-test-full-width"
+        items={[
+          { value: 'a', label: 'Alpha', secondary: '1/4' },
+          { value: 'b', label: 'Beta with a long caption' },
+        ]}
+        onSelect={vi.fn()}
+      />,
+    );
+
+    const trigger = screen.getByRole('button', { name: 'Add item' });
+    expect(trigger.querySelector('.ds-dropdown-button__label')).toHaveClass(
+      'ds-dropdown-button__label',
+    );
+
+    await user.click(trigger);
+    const menu = await screen.findByRole('menu');
+    expect(menu).toHaveAttribute('data-align', 'end');
+    await waitFor(() => {
+      const menuWidth = Number.parseFloat(menu.style.width);
+      expect(menuWidth).toBeGreaterThanOrEqual(12 * 16 - 1);
+      expect(menuWidth).toBeLessThanOrEqual(22 * 16 + 1);
+      expect(menuWidth).toBeLessThan(20 * 16);
+    });
+
+    document.head.removeChild(style);
+  });
+
   it('supports controlled open state', async () => {
     const { rerender } = render(
       <DropDownButton

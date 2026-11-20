@@ -222,6 +222,7 @@ export function DropDownButton({
         role="menu"
         aria-label={ariaLabel}
         align={align}
+        contentWidth
         className="ds-dropdown-button__menu"
         flipThreshold={160}
       >

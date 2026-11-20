@@ -885,26 +885,6 @@ export function StructureGroupPlacementDialog({
                   </span>
                 </span>
               </div>
-              <div className="structure-manual-placement__batch-actions">
-                <button
-                  type="button"
-                  className="ds-btn ds-btn--ghost structure-composition__select-all"
-                  disabled={!canFillGroup || pending}
-                  onClick={fillGroup}
-                >
-                  <ListChecksIcon size="sm" />
-                  {t('groupPlacement.fillGroup')}
-                </button>
-                <button
-                  type="button"
-                  className="ds-btn ds-btn--ghost structure-composition__select-all"
-                  disabled={!canRemoveMembers || pending}
-                  onClick={clearDecheckableSelection}
-                >
-                  <CloseIcon size="sm" />
-                  {t('groupPlacement.removeAll')}
-                </button>
-              </div>
             </>
           ) : null}
 
@@ -967,6 +947,28 @@ export function StructureGroupPlacementDialog({
                   }
                   toolbar={
                     <>
+                      {effectiveBatch ? (
+                        <>
+                          <button
+                            type="button"
+                            className="ds-btn ds-btn--ghost ds-btn--sm structure-composition__select-all"
+                            disabled={!canFillGroup || pending}
+                            onClick={fillGroup}
+                          >
+                            <ListChecksIcon size="sm" />
+                            {t('groupPlacement.fillGroup')}
+                          </button>
+                          <button
+                            type="button"
+                            className="ds-btn ds-btn--ghost ds-btn--sm structure-composition__select-all"
+                            disabled={!canRemoveMembers || pending}
+                            onClick={clearDecheckableSelection}
+                          >
+                            <CloseIcon size="sm" />
+                            {t('groupPlacement.removeAll')}
+                          </button>
+                        </>
+                      ) : null}
                       {mode === 'edit' && selectedId != null && !pending ? (
                         <Tooltip content={t('groupPlacement.clearSeat')}>
                           <button
@@ -1006,6 +1008,7 @@ export function StructureGroupPlacementDialog({
                                 group: row.team.groupLabel,
                               })}
                               layout="inline"
+                              reserveSelectionMark
                               leading={
                                 <TeamCrest
                                   name={team.displayName}
@@ -1051,6 +1054,7 @@ export function StructureGroupPlacementDialog({
                                 : description
                             }
                             layout="inline"
+                            reserveSelectionMark
                             leading={
                               <TeamCrest
                                 name={team.displayName}
@@ -1090,6 +1094,7 @@ export function StructureGroupPlacementDialog({
                                 : t('groupPlacement.pot', { pot: team.pot })
                             }
                             layout="inline"
+                            reserveSelectionMark
                             leading={
                               <TeamCrest
                                 name={team.displayName}

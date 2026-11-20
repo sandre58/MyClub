@@ -1071,6 +1071,16 @@
   gap: var(--space-8);
 }
 
+.structure-manual-placement__section-toolbar {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
 .structure-manual-placement__teams {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
@@ -1086,14 +1096,46 @@
   min-width: 0;
 }
 
-.structure-manual-placement__facts {
-  width: 100%;
+.structure-manual-placement__teams .ds-choice-tile--inline {
+  height: var(--control-height);
+  min-height: var(--control-height);
+  max-height: var(--control-height);
+  align-items: center;
 }
 
-.structure-manual-placement__batch-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-8);
+.structure-manual-placement__teams .ds-choice-tile--inline .ds-choice-tile__label {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--space-8);
+  row-gap: 0;
+}
+
+.structure-manual-placement__teams .ds-choice-tile--inline .ds-choice-tile__title-row {
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+}
+
+.structure-manual-placement__teams .ds-choice-tile--inline .ds-choice-tile__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.structure-manual-placement__teams .ds-choice-tile--inline .ds-choice-tile__description {
+  grid-column: 2;
+  grid-row: 1;
+  margin: 0;
+  max-width: min(10rem, 42%);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-caption);
+  color: var(--color-text-secondary);
+}
+
+.structure-manual-placement__facts {
   width: 100%;
 }
 

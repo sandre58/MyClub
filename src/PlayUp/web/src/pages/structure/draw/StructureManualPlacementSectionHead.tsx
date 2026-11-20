@@ -12,7 +12,11 @@ export function StructureManualPlacementSectionHead({
   return (
     <div className="structure-manual-placement__section-head">
       <span className="structure-manual-placement__label">{label}</span>
-      {toolbar ? <div className="ds-icon-toolbar">{toolbar}</div> : null}
+      {toolbar ? (
+        <div className="structure-manual-placement__section-toolbar">
+          {toolbar}
+        </div>
+      ) : null}
     </div>
   );
 }

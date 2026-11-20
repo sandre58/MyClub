@@ -29,6 +29,8 @@ export type ChoiceTileProps = {
    * a single line (crest + name, swatch + label).
    */
   layout?: 'stacked' | 'inline';
+  /** Keeps the check column width when unselected (avoids layout shift). */
+  reserveSelectionMark?: boolean;
 };
 
 /**
@@ -48,6 +50,7 @@ export function ChoiceTile({
   'aria-label': ariaLabel,
   'aria-describedby': ariaDescribedBy,
   layout = 'stacked',
+  reserveSelectionMark = false,
 }: ChoiceTileProps) {
   const inactive = disabled || unavailable;
   const classes = [
@@ -90,9 +93,13 @@ export function ChoiceTile({
           <span className="ds-choice-tile__description">{description}</span>
         ) : null}
       </span>
-      {selected ? (
-        <span className="ds-choice-tile__check" aria-hidden="true">
-          <CheckIcon size="sm" />
+      {selected || reserveSelectionMark ? (
+        <span
+          className="ds-choice-tile__check"
+          data-reserved={selected ? undefined : 'true'}
+          aria-hidden="true"
+        >
+          {selected ? <CheckIcon size="sm" /> : null}
         </span>
       ) : null}
     </button>

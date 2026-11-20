@@ -37,6 +37,11 @@ export type PopoverProps = {
   /** Preferred panel width in CSS pixels. */
   width?: number;
   /**
+   * Size the panel from content width (honours CSS min/max on the panel),
+   * instead of stretching to the anchor or a fixed width.
+   */
+  contentWidth?: boolean;
+  /**
    * Prefer placing below the anchor when at least this many pixels remain
    * below (otherwise flip above). Default 280.
    */
@@ -80,6 +85,7 @@ export function Popover({
   role = 'dialog',
   align = 'start',
   width,
+  contentWidth = false,
   flipThreshold = 280,
   zIndex = 50,
   dismissEnabled = true,
@@ -108,10 +114,23 @@ export function Popover({
       }
 
       const rect = anchor.getBoundingClientRect();
-      const panelWidth = Math.min(
-        window.innerWidth - VIEWPORT_PAD_PX * 2,
-        width ?? Math.max(rect.width, 16 * 16),
-      );
+      const viewportMax = window.innerWidth - VIEWPORT_PAD_PX * 2;
+      const panelEl = panelRef.current;
+      let panelWidth: number;
+      const minContent = 12 * 16;
+      const maxContent = 22 * 16;
+      if (contentWidth) {
+        const measured = panelEl?.scrollWidth ?? minContent;
+        panelWidth = Math.min(
+          viewportMax,
+          Math.max(minContent, Math.min(maxContent, measured)),
+        );
+      } else {
+        panelWidth = Math.min(
+          viewportMax,
+          width ?? Math.max(rect.width, 16 * 16),
+        );
+      }
 
       let left = align === 'end' ? rect.right - panelWidth : rect.left;
       if (left + panelWidth > window.innerWidth - VIEWPORT_PAD_PX) {
@@ -148,14 +167,27 @@ export function Popover({
       });
     }
 
-    placePanel();
-    window.addEventListener('resize', placePanel);
-    window.addEventListener('scroll', placePanel, true);
-    return () => {
-      window.removeEventListener('resize', placePanel);
-      window.removeEventListener('scroll', placePanel, true);
+    const schedule = () => {
+      placePanel();
+      if (contentWidth) {
+        requestAnimationFrame(placePanel);
+      }
     };
-  }, [present, align, width, flipThreshold, zIndex, anchorRef]);
+    schedule();
+    const panel = panelRef.current;
+    let observer: ResizeObserver | undefined;
+    if (contentWidth && panel) {
+      observer = new ResizeObserver(schedule);
+      observer.observe(panel);
+    }
+    window.addEventListener('resize', schedule);
+    window.addEventListener('scroll', schedule, true);
+    return () => {
+      window.removeEventListener('resize', schedule);
+      window.removeEventListener('scroll', schedule, true);
+      observer?.disconnect();
+    };
+  }, [present, align, width, contentWidth, flipThreshold, zIndex, anchorRef]);
 
   useDismissLayer(open, () => {
     if (!isDismissEnabled(dismissEnabled)) {

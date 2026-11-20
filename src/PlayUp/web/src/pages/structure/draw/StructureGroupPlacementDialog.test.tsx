@@ -299,6 +299,16 @@ describe('StructureGroupPlacementDialog', () => {
     });
   });
 
+  it('always shows Compléter and Retirer on the team section row in batch mode', () => {
+    renderDialog({ place: null });
+    expect(
+      screen.getByRole('button', { name: 'Compléter le groupe' }),
+    ).toBeInTheDocument();
+    const remove = screen.getByRole('button', { name: 'Retirer' });
+    expect(remove).toBeInTheDocument();
+    expect(remove).toBeDisabled();
+  });
+
   it('fills the group with the first available teams', async () => {
     const user = userEvent.setup();
     renderDialog({ place: null });
