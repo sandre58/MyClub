@@ -416,11 +416,7 @@ export function entryGroupPlacementHint(
       place.formPosition.groupId?.trim() ||
       '';
     if (!name) continue;
-    const index = place.formPosition.index;
-    if (index != null && index >= 1) {
-      return t('place.groupWhereIndexed', { name, index });
-    }
-    return t('place.groupWhere', { name });
+    return t('place.group', { name });
   }
   return null;
 }

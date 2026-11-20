@@ -420,7 +420,7 @@ export function StructureManualPlacementDialog({
                   toolbar={
                     <button
                       type="button"
-                      className="ds-btn ds-btn--ghost ds-btn--sm structure-composition__select-all"
+                      className="ds-btn ds-btn--destructive ds-btn--sm structure-composition__select-all"
                       disabled={entryId == null || pending}
                       aria-label={t('groupPlacement.removeAll')}
                       onClick={() => {

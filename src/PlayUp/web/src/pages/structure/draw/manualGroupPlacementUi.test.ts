@@ -192,12 +192,12 @@ describe('listAvailableGroupEntries', () => {
       }),
     ];
     const t = (key: string, opts?: Record<string, unknown>) => {
-      if (key === 'place.groupWhereIndexed' && opts) {
-        return `Groupe ${opts.name}, place ${opts.index}`;
+      if (key === 'place.group' && opts) {
+        return `Groupe ${opts.name}`;
       }
       return key;
     };
-    expect(entryGroupPlacementHint(cases, 'e2', t)).toBe('Groupe A, place 2');
+    expect(entryGroupPlacementHint(cases, 'e2', t)).toBe('Groupe A');
   });
 
   it('sorts by pot and then composition order', () => {

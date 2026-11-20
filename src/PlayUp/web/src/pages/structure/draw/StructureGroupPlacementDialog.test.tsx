@@ -262,7 +262,7 @@ describe('StructureGroupPlacementDialog', () => {
         }),
       ],
     });
-    expect(screen.getByText(/Groupe A, place 1/)).toBeInTheDocument();
+    expect(screen.getByText('Groupe A')).toBeInTheDocument();
   });
 
   it('says when every composition team is already placed and when the composition is empty', () => {
@@ -368,6 +368,7 @@ describe('StructureGroupPlacementDialog', () => {
     const remove = screen.getByRole('button', { name: 'Retirer' });
     expect(remove).toBeInTheDocument();
     expect(remove).toBeEnabled();
+    expect(remove.className).toContain('ds-btn--destructive');
     expect(
       screen.queryByRole('button', { name: 'Compléter le groupe' }),
     ).not.toBeInTheDocument();
@@ -381,6 +382,7 @@ describe('StructureGroupPlacementDialog', () => {
     const remove = screen.getByRole('button', { name: 'Retirer' });
     expect(remove).toBeInTheDocument();
     expect(remove).toBeDisabled();
+    expect(remove.className).toContain('ds-btn--destructive');
   });
 
   it('fills the group with the first available teams', async () => {
@@ -944,7 +946,7 @@ describe('StructureGroupPlacementDialog', () => {
 
     const other = screen.getByRole('checkbox', { name: 'Bravo' });
     expect(other).toHaveAttribute('aria-disabled', 'true');
-    expect(screen.getByText('Groupe B, place 1')).toBeInTheDocument();
+    expect(screen.getByText('Groupe B')).toBeInTheDocument();
 
     await user.click(
       screen.getByRole('button', { name: 'Compléter le groupe' }),

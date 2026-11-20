@@ -107,6 +107,7 @@ describe('StructureManualPlacementDialog', () => {
     renderDialog({ initialSlotKey: 'A' });
 
     const remove = screen.getByRole('button', { name: 'Retirer' });
+    expect(remove.className).toContain('ds-btn--destructive');
     expect(remove).toBeDisabled();
     await user.click(screen.getByRole('radio', { name: 'Alpha' }));
     expect(remove).toBeEnabled();

@@ -960,7 +960,7 @@ export function StructureGroupPlacementDialog({
                       {effectiveBatch || mode === 'edit' ? (
                         <button
                           type="button"
-                          className="ds-btn ds-btn--ghost ds-btn--sm structure-composition__select-all"
+                          className="ds-btn ds-btn--destructive ds-btn--sm structure-composition__select-all"
                           disabled={
                             pending ||
                             (effectiveBatch

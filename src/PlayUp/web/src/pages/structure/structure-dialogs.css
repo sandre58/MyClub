@@ -1108,10 +1108,25 @@
   min-width: 0;
 }
 
+.structure-manual-placement__teams .ds-choice-tile--inline .ds-choice-tile__text {
+  gap: 0;
+}
+
+.structure-manual-placement__teams .ds-choice-tile--inline .ds-choice-tile__text .ds-choice-tile__title,
+.structure-manual-placement__teams .ds-choice-tile--inline .ds-choice-tile__text .ds-choice-tile__description {
+  line-height: var(--leading-tight);
+}
+
 .structure-manual-placement__teams .ds-choice-tile--inline .ds-choice-tile__description {
   margin: 0;
   font-size: var(--text-meta);
   color: var(--color-text-secondary);
+}
+
+.structure-manual-placement__section-toolbar .ds-btn--destructive:disabled {
+  opacity: 1;
+  color: color-mix(in srgb, var(--color-error) 55%, var(--color-text-secondary));
+  border-color: color-mix(in srgb, var(--color-error) 30%, var(--color-border));
 }
 
 .structure-manual-placement__facts {
