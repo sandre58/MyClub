@@ -103,7 +103,7 @@ async function placeOneTeamFromDialog(page: Page, expectPot: boolean) {
   } else {
     await expect(pot).toHaveCount(0);
   }
-  const teamPicker = dialog.getByRole('radio');
+  const teamPicker = dialog.getByRole('checkbox', { checked: false });
   await expect(teamPicker.first()).toBeVisible();
   await teamPicker.first().click();
   await dialog
@@ -222,11 +222,15 @@ test.describe('manual group placement', () => {
     const dialog = page.getByRole('dialog', {
       name: /Placement — .* — Groupe A/,
     });
-    const occupant = dialog.getByRole('radio', { checked: true });
+    const occupant = dialog.getByRole('checkbox', { checked: true }).first();
     const originalName = (await occupant.innerText()).trim().split('\n')[0];
-    const radios = dialog.getByRole('radio');
-    await expect(radios).not.toHaveCount(1);
-    const replacee = radios.nth(1);
+    await dialog
+      .getByRole('checkbox', { name: originalName, checked: true })
+      .click();
+    const replacee = dialog
+      .getByRole('checkbox', { checked: false })
+      .filter({ hasText: /Bravo|Charlie/ })
+      .first();
     const replacedName = (await replacee.innerText()).trim().split('\n')[0];
     await replacee.click();
     await dialog
@@ -257,7 +261,14 @@ test.describe('manual group placement', () => {
     const dialog = page.getByRole('dialog', {
       name: /Placement — .* — Groupe B/,
     });
-    await dialog.getByRole('button', { name: 'Retirer', exact: true }).click();
+    const occupantName = (
+      await dialog.getByRole('checkbox', { checked: true }).first().innerText()
+    )
+      .trim()
+      .split('\n')[0];
+    await dialog
+      .getByRole('checkbox', { name: occupantName, checked: true })
+      .click();
     await dialog
       .getByRole('button', { name: 'Enregistrer', exact: true })
       .click();
@@ -370,7 +381,8 @@ test.describe('manual group placement', () => {
     });
     const shiftedTeamName = (
       await seatFourDialog
-        .getByRole('radio', { checked: true })
+        .getByRole('checkbox', { checked: true })
+        .first()
         .locator('.ds-choice-tile__title')
         .innerText()
     ).trim();
@@ -385,7 +397,14 @@ test.describe('manual group placement', () => {
     const dialog = page.getByRole('dialog', {
       name: /Placement — .* — Groupe A/,
     });
-    await dialog.getByRole('button', { name: 'Retirer', exact: true }).click();
+    const seatOneName = (
+      await dialog.getByRole('checkbox', { checked: true }).first().innerText()
+    )
+      .trim()
+      .split('\n')[0];
+    await dialog
+      .getByRole('checkbox', { name: seatOneName, checked: true })
+      .click();
     await dialog
       .getByRole('button', { name: 'Enregistrer', exact: true })
       .click();
@@ -402,7 +421,7 @@ test.describe('manual group placement', () => {
       name: /Placement — .* — Groupe A/,
     });
     await expect(
-      replaceDialog.getByRole('radio', {
+      replaceDialog.getByRole('checkbox', {
         name: shiftedTeamName,
         checked: true,
       }),

@@ -1082,6 +1082,10 @@
 }
 
 .structure-manual-placement__teams {
+  --structure-placement-tile-body: max(
+    var(--team-crest-height-sm),
+    calc(var(--text-label) * var(--leading-tight) + var(--space-4) + 2 * var(--text-meta) * var(--leading-normal))
+  );
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
   gap: var(--space-8);
@@ -1097,23 +1101,19 @@
 }
 
 .structure-manual-placement__teams .ds-choice-tile--inline {
-  height: calc(var(--team-crest-height-sm) + 2 * var(--space-8) + 2 * var(--border-width));
-  min-height: calc(var(--team-crest-height-sm) + 2 * var(--space-8) + 2 * var(--border-width));
-  max-height: calc(var(--team-crest-height-sm) + 2 * var(--space-8) + 2 * var(--border-width));
+  height: calc(var(--structure-placement-tile-body) + 2 * var(--space-8) + 2 * var(--border-width));
+  min-height: calc(var(--structure-placement-tile-body) + 2 * var(--space-8) + 2 * var(--border-width));
+  max-height: calc(var(--structure-placement-tile-body) + 2 * var(--space-8) + 2 * var(--border-width));
   align-items: center;
 }
 
 .structure-manual-placement__teams .ds-choice-tile--inline .ds-choice-tile__label {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  column-gap: var(--space-8);
-  row-gap: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: var(--space-4);
 }
 
 .structure-manual-placement__teams .ds-choice-tile--inline .ds-choice-tile__title-row {
-  grid-column: 1;
-  grid-row: 1;
   min-width: 0;
 }
 
@@ -1124,15 +1124,12 @@
 }
 
 .structure-manual-placement__teams .ds-choice-tile--inline .ds-choice-tile__description {
-  grid-column: 2;
-  grid-row: 1;
   margin: 0;
-  max-width: min(10rem, 42%);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   font-size: var(--text-meta);
   color: var(--color-text-secondary);
+  line-height: var(--leading-normal);
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .structure-manual-placement__facts {

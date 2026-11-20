@@ -5,16 +5,33 @@
 .ds-dropdown-button {
   display: inline-flex;
   position: relative;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-sizing: border-box;
 }
 
 .ds-dropdown-button__trigger {
-  justify-content: flex-start;
+  position: relative;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  padding-inline-end: calc(var(--space-16) + var(--icon-size-sm));
+}
+
+.ds-dropdown-button__trigger-content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   gap: var(--space-8);
   min-width: 0;
+  max-width: 100%;
 }
 
 .ds-dropdown-button__label {
-  flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -22,15 +39,19 @@
 }
 
 .ds-dropdown-button__chevron {
+  position: absolute;
+  inset-inline-end: var(--space-12);
+  top: 50%;
   display: inline-flex;
   flex: none;
-  margin-inline-start: auto;
+  margin: 0;
   line-height: 0;
+  transform: translateY(-50%);
   transition: transform var(--motion-duration) var(--motion-easing);
 }
 
 .ds-dropdown-button__chevron[data-open='true'] {
-  transform: rotate(180deg);
+  transform: translateY(-50%) rotate(180deg);
 }
 
 .ds-dropdown-button__menu.ds-popover {
@@ -86,7 +107,7 @@
   align-items: flex-start;
   min-width: 0;
   flex: 1;
-  gap: var(--space-2);
+  gap: var(--space-4);
 }
 
 .ds-dropdown-button__item-text:has(.ds-dropdown-button__item-secondary) {
@@ -110,7 +131,7 @@
   display: inline-flex;
   flex: none;
   align-items: center;
-  gap: var(--space-8);
+  gap: var(--space-4);
   max-width: min(14rem, 45vw);
   min-width: 0;
   color: var(--color-text-primary);
