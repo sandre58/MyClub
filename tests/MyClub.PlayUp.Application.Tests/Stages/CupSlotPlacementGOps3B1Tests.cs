@@ -29,7 +29,10 @@ public sealed class CupSlotPlacementGOps3B1Tests
     {
         var (stage, _, protectedSlot, _) = SeedCupWithAppliedSlotDraw();
 
-        var act = () => ClearSlotAssignment.Execute(stage, protectedSlot);
+        var act = () => ClearSlotAssignment.Execute(
+            stage,
+            protectedSlot,
+            stage.FindSlot(protectedSlot)!.EntryId);
 
         act.Should().Throw<ApplicationFailureException>()
             .Which.Code.Should().Be(ApplicationErrorCodes.AppliedDrawSlotPlacementProtected);
@@ -42,7 +45,11 @@ public sealed class CupSlotPlacementGOps3B1Tests
         var placement = draw.Resolution.SlotResults.First(r => r.SlotKey == protectedSlot);
         var other = entryIds.First(id => !id.Equals(placement.EntryId));
 
-        var act = () => AssignEntryToSlot.Execute(stage, protectedSlot, other);
+        var act = () => AssignEntryToSlot.Execute(
+            stage,
+            protectedSlot,
+            other,
+            placement.EntryId);
 
         act.Should().Throw<ApplicationFailureException>()
             .Which.Code.Should().Be(ApplicationErrorCodes.AppliedDrawSlotPlacementProtected);
@@ -54,7 +61,8 @@ public sealed class CupSlotPlacementGOps3B1Tests
         var (stage, draw, protectedSlot, _) = SeedCupWithAppliedSlotDraw();
         var placement = draw.Resolution.SlotResults.First(r => r.SlotKey == protectedSlot);
 
-        AssignEntryToSlot.Execute(stage, protectedSlot, placement.EntryId);
+        AssignEntryToSlot.Execute(stage, protectedSlot, placement.EntryId, placement.EntryId)
+            .Should().BeFalse();
 
         stage.FindSlot(protectedSlot)!.EntryId.Should().Be(placement.EntryId);
     }
@@ -65,7 +73,11 @@ public sealed class CupSlotPlacementGOps3B1Tests
         var (stage, draw, protectedSlot, entryIds) = SeedCupWithAppliedSlotDraw(apply: false);
         DrawAppliedState.IsApplied(draw, stage).Should().BeFalse();
 
-        AssignEntryToSlot.Execute(stage, protectedSlot, entryIds[0]);
+        AssignEntryToSlot.Execute(
+            stage,
+            protectedSlot,
+            entryIds[0],
+            stage.FindSlot(protectedSlot)!.EntryId);
 
         stage.FindSlot(protectedSlot)!.EntryId.Should().Be(entryIds[0]);
     }
@@ -77,7 +89,7 @@ public sealed class CupSlotPlacementGOps3B1Tests
         DrawAppliedState.IsApplied(draw, stage).Should().BeFalse();
         draw.Resolution.SlotResults.Should().Contain(r => r.SlotKey == protectedSlot);
 
-        ClearSlotAssignment.Execute(stage, protectedSlot);
+        ClearSlotAssignment.Execute(stage, protectedSlot, stage.FindSlot(protectedSlot)!.EntryId);
 
         stage.FindSlot(protectedSlot)!.EntryId.Should().BeNull();
     }
@@ -93,7 +105,7 @@ public sealed class CupSlotPlacementGOps3B1Tests
 
         var appliedEntries = draw.Resolution.SlotResults.Select(r => r.EntryId).ToHashSet();
         var freeEntry = entryIds.First(id => !appliedEntries.Contains(id));
-        AssignEntryToSlot.Execute(stage, outsideSlot, freeEntry);
+        AssignEntryToSlot.Execute(stage, outsideSlot, freeEntry, expectedEntryId: null);
 
         stage.FindSlot(outsideSlot)!.EntryId.Should().Be(freeEntry);
     }
@@ -107,7 +119,10 @@ public sealed class CupSlotPlacementGOps3B1Tests
         stage.ApplyResolvedEntry(otherPlacement.SlotKey, driftEntry, _clock);
         DrawAppliedState.IsApplied(draw, stage).Should().BeFalse();
 
-        var act = () => ClearSlotAssignment.Execute(stage, protectedSlot);
+        var act = () => ClearSlotAssignment.Execute(
+            stage,
+            protectedSlot,
+            stage.FindSlot(protectedSlot)!.EntryId);
 
         act.Should().NotThrow<ApplicationFailureException>();
     }
@@ -119,7 +134,11 @@ public sealed class CupSlotPlacementGOps3B1Tests
         var placement = draw.Resolution.SlotResults.First(r => r.SlotKey == protectedSlot);
         var paddedKey = $"  {protectedSlot}  ";
 
-        var act = () => AssignEntryToSlot.Execute(stage, paddedKey, placement.EntryId);
+        var act = () => AssignEntryToSlot.Execute(
+            stage,
+            paddedKey,
+            placement.EntryId,
+            placement.EntryId);
 
         act.Should().NotThrow();
         stage.FindSlot(protectedSlot)!.EntryId.Should().Be(placement.EntryId);
@@ -150,7 +169,7 @@ public sealed class CupSlotPlacementGOps3B1Tests
         var match = Match.Create(competition.Id, stage.Id, entryA.Id, entryB.Id, _clock);
         stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
 
-        var act = () => AssignEntryToSlot.Execute(stage, "S1", entryC.Id, [match]);
+        var act = () => AssignEntryToSlot.Execute(stage, "S1", entryC.Id, entryA.Id, [match]);
 
         act.Should().Throw<DomainException>()
             .Which.Code.Should().Be(StageErrorCodes.MaterializedOpponentConflict);

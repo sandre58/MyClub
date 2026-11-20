@@ -1028,6 +1028,8 @@
     "blockedUnavailable": "Cette place n’est pas disponible pour une affectation manuelle.",
     "save": "Enregistrer",
     "saving": "Enregistrement…",
+    "placeChangedUpdating": "La place a été modifiée entre-temps. Mise à jour…",
+    "placeChanged": "La place a changé : sélection mise à jour.",
     "toastSaved": "Affectation manuelle enregistrée",
     "toastCleared": "Affectation manuelle effacée",
     "selectionCleared": "Sélection effacée",

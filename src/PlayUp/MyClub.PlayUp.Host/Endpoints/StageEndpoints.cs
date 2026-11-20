@@ -4,6 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Pipeline;
 using MyClub.PlayUp.Application.Stages;
@@ -63,16 +66,25 @@ internal static class StageEndpoints
             async (
                 Guid stageId,
                 string slotKey,
-                AssignEntryToSlotRequest request,
+                HttpRequest httpRequest,
                 UseCaseExecutor executor,
                 CancellationToken cancellationToken) =>
             {
-                ArgumentNullException.ThrowIfNull(request);
+                var request = await ReadAssignEntryToSlotRequestAsync(httpRequest, cancellationToken)
+                    .ConfigureAwait(false);
+                if (request.EntryId == Guid.Empty || request.ExpectedEntryId == Guid.Empty)
+                {
+                    throw new ApplicationFailureException(
+                        "Slot assignment ids must be non-empty.",
+                        ApplicationErrorCodes.InvalidStructureIntent);
+                }
+
                 await executor
                     .AssignEntryToSlotAsync(
                         new StageId(stageId),
                         slotKey,
                         new EntryId(request.EntryId),
+                        request.ExpectedEntryId is { } expected ? new EntryId(expected) : null,
                         cancellationToken)
                     .ConfigureAwait(false);
                 return Results.NoContent();
@@ -83,11 +95,23 @@ internal static class StageEndpoints
             async (
                 Guid stageId,
                 string slotKey,
+                Guid? expectedEntryId,
                 UseCaseExecutor executor,
                 CancellationToken cancellationToken) =>
             {
+                if (expectedEntryId == Guid.Empty)
+                {
+                    throw new ApplicationFailureException(
+                        "expectedEntryId must be a non-empty guid when present.",
+                        ApplicationErrorCodes.InvalidStructureIntent);
+                }
+
                 await executor
-                    .ClearSlotAssignmentAsync(new StageId(stageId), slotKey, cancellationToken)
+                    .ClearSlotAssignmentAsync(
+                        new StageId(stageId),
+                        slotKey,
+                        expectedEntryId is { } expected ? new EntryId(expected) : null,
+                        cancellationToken)
                     .ConfigureAwait(false);
                 return Results.NoContent();
             });
@@ -1189,4 +1213,29 @@ internal static class StageEndpoints
 
     private static IResult InvalidReleaseBody() =>
         Results.BadRequest(new { code = ApplicationErrorCodes.InvalidStructureIntent });
+
+    private static async Task<AssignEntryToSlotRequest> ReadAssignEntryToSlotRequestAsync(
+        HttpRequest httpRequest,
+        CancellationToken cancellationToken)
+    {
+        var options = httpRequest.HttpContext.RequestServices
+            .GetRequiredService<IOptions<Microsoft.AspNetCore.Http.Json.JsonOptions>>()
+            .Value
+            .SerializerOptions;
+        try
+        {
+            var request = await httpRequest
+                .ReadFromJsonAsync<AssignEntryToSlotRequest>(options, cancellationToken)
+                .ConfigureAwait(false);
+            return request ?? throw new ApplicationFailureException(
+                "Slot assignment requires entryId and expectedEntryId.",
+                ApplicationErrorCodes.InvalidStructureIntent);
+        }
+        catch (JsonException)
+        {
+            throw new ApplicationFailureException(
+                "Slot assignment requires entryId and expectedEntryId.",
+                ApplicationErrorCodes.InvalidStructureIntent);
+        }
+    }
 }
