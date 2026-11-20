@@ -13,6 +13,7 @@ namespace MyClub.PlayUp.Application.Reads;
 /// A stage missing from the list passed to the detector is not, by itself, a deleted phase.
 /// </summary>
 [SuppressMessage("Design", "CA1008:Enums should have zero value", Justification = "Explicit absence details without an unknown sentinel.")]
+[SuppressMessage("ReSharper", "MissingZeroValueItemInEnum", Justification = "Explicit absence details without an unknown sentinel.")]
 public enum ResolutionSourceAbsence
 {
     /// <summary>The source path id does not contain a stage identity.</summary>

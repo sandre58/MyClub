@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using System.Diagnostics.CodeAnalysis;
 using FluentAssertions;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Domain.Common;
@@ -20,6 +21,7 @@ public sealed class ExclusiveWriteTrackingGuardTests
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 11, 18, 12, 0, 0, TimeSpan.Zero));
 
     [Fact]
+    [SuppressMessage("ReSharper", "AccessToDisposedClosure", Justification = "Asserting on a captured disposable scope.")]
     public async Task ExecuteExclusive_throws_when_a_stage_is_already_trackedAsync()
     {
         await using var context = PlayUpInMemory.CreateContext();
@@ -38,6 +40,7 @@ public sealed class ExclusiveWriteTrackingGuardTests
     }
 
     [Fact]
+    [SuppressMessage("ReSharper", "AccessToDisposedClosure", Justification = "Asserting on a captured disposable scope.")]
     public async Task ExecuteExclusive_throws_when_a_match_is_already_trackedAsync()
     {
         await using var context = PlayUpInMemory.CreateContext();

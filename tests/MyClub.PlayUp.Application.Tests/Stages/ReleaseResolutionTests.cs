@@ -720,7 +720,8 @@ public sealed class ReleaseResolutionTests
         var matches = new List<Match> { match, attached };
 
         var occupants = ResolutionFreshnessDetector.Evaluate(competition, stages, Summaries(match, attached))
-            .SelectMany(pair => pair.Value);
+            .SelectMany(pair => pair.Value)
+            .ToList();
         occupants.Should().Contain(occupant =>
             occupant.Target == StructureResolutionOccupantTarget.Group && !occupant.Releasable);
         occupants.Should().Contain(occupant =>

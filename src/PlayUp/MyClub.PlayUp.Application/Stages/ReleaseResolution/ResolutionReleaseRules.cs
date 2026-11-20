@@ -202,14 +202,7 @@ public static class ResolutionReleaseRules
             }
         }
 
-        foreach (var placement in draw.Resolution.GroupResults)
-        {
-            if (stage.FindGroup(placement.GroupId)?.EntryIds.Contains(placement.EntryId) == true)
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return draw.Resolution.GroupResults.Any(placement =>
+            stage.FindGroup(placement.GroupId)?.EntryIds.Contains(placement.EntryId) == true);
     }
 }

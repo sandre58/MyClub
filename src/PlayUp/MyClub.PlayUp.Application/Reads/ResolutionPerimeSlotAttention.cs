@@ -52,25 +52,15 @@ internal static class ResolutionPerimeSlotAttention
         HashSet<ResolutionPerimeSlotAttentionKey> perimeSlots,
         Stage destination,
         QualificationPath path,
-        StageId sourceStageId,
-        out ResolutionPerimeSlotAttentionKey matched)
+        StageId sourceStageId)
     {
         var pathId = ResolutionPathIdentifier.ForQualification(sourceStageId, path);
         if (!path.Destination.TargetsSlot || string.IsNullOrEmpty(path.Destination.SlotKey))
         {
-            matched = default;
             return false;
         }
 
-        foreach (var key in perimeSlots.Where(key => key.DestinationStageId == destination.Id.Value
-                                                     && string.Equals(key.SlotKey, path.Destination.SlotKey, StringComparison.Ordinal) && string.Equals(key.SourcePathId, pathId, StringComparison.Ordinal)))
-        {
-            matched = key;
-            return true;
-        }
-
-        matched = default;
-        return false;
+        return perimeSlots.Any(key => key.DestinationStageId == destination.Id.Value && string.Equals(key.SlotKey, path.Destination.SlotKey, StringComparison.Ordinal) && string.Equals(key.SourcePathId, pathId, StringComparison.Ordinal));
     }
 
     internal static string EntryDisplayName(Competition competition, EntryId entryId)

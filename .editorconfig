@@ -277,7 +277,11 @@ dotnet_diagnostic.IDE0010.severity = none
 dotnet_diagnostic.IDE0072.severity = none
 [src/PlayUp/**/*.cs]
 dotnet_diagnostic.IDE0130.severity = none
+dotnet_diagnostic.CA1008.severity = none
 resharper_check_namespace_highlighting = none
+
+[src/PlayUp/MyClub.PlayUp.Application/Stages/CascadeReplace/CascadeReplace.cs]
+resharper_loop_can_be_converted_to_query_highlighting = none
 
 # Play'Up Domain: require XML docs on public API (CS1591); do not force anemic auto-properties (csharp.mdc)
 [src/PlayUp/**/MyClub.PlayUp.Domain/**/*.cs]
@@ -298,6 +302,8 @@ end_of_line = lf
 # Test projects: no XML doc file - silence SA0001
 [tests/**/*.cs]
 dotnet_diagnostic.SA0001.severity = none
+dotnet_diagnostic.CA1515.severity = none
+resharper_class_can_be_made_internal_highlighting = none
 resharper_missing_xml_doc_highlighting = none
 
 # Do not apply code styles to generated migration files

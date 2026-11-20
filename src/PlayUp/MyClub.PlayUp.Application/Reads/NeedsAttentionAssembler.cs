@@ -271,8 +271,7 @@ public static class NeedsAttentionAssembler
                                 perimeSlotKeys,
                                 destination,
                                 path,
-                                source.Id,
-                                out _))
+                                source.Id))
                         {
                             var slotKey = path.Destination.SlotKey!;
                             var actualEntryId = destination.FindSlot(slotKey)?.EntryId;

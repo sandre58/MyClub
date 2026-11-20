@@ -112,5 +112,6 @@ public sealed class AddResolutionProvenanceMigrationTests : IAsyncLifetime
     }
 
     [SuppressMessage("ReSharper", "ClassNeverInstantiated.Local", Justification = "Instantiated by the runtime.")]
+    [SuppressMessage("ReSharper", "NotAccessedPositionalProperty.Local", Justification = "Migration column shape.")]
     private sealed record ColumnRow(string Name, string DataType, string IsNullable);
 }

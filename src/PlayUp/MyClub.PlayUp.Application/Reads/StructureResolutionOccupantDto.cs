@@ -13,6 +13,7 @@ namespace MyClub.PlayUp.Application.Reads;
 /// Where a resolution occupant is stored on a phase.
 /// </summary>
 [SuppressMessage("Design", "CA1008:Enums should have zero value", Justification = "Explicit occupant targets without an unknown sentinel.")]
+[SuppressMessage("ReSharper", "MissingZeroValueItemInEnum", Justification = "Explicit occupant targets without an unknown sentinel.")]
 public enum StructureResolutionOccupantTarget
 {
     /// <summary>Slot occupant.</summary>
@@ -29,6 +30,7 @@ public enum StructureResolutionOccupantTarget
 /// Server-computed freshness of a stored resolution occupant.
 /// </summary>
 [SuppressMessage("Design", "CA1008:Enums should have zero value", Justification = "Explicit freshness vocabulary without an unknown sentinel.")]
+[SuppressMessage("ReSharper", "MissingZeroValueItemInEnum", Justification = "Explicit freshness vocabulary without an unknown sentinel.")]
 public enum StructureResolutionFreshness
 {
     /// <summary>Stored occupant still matches the current upstream selection.</summary>
@@ -48,6 +50,7 @@ public enum StructureResolutionFreshness
 /// Why a resolution occupant is <see cref="StructureResolutionFreshness.Perime"/>.
 /// </summary>
 [SuppressMessage("Design", "CA1008:Enums should have zero value", Justification = "Explicit staleness causes without an unknown sentinel.")]
+[SuppressMessage("ReSharper", "MissingZeroValueItemInEnum", Justification = "Explicit staleness causes without an unknown sentinel.")]
 public enum StructureResolutionStalenessCause
 {
     /// <summary>Upstream result or draw population no longer selects this occupant.</summary>
@@ -64,6 +67,7 @@ public enum StructureResolutionStalenessCause
 /// Why a resolution occupant is <see cref="StructureResolutionFreshness.Indetermine"/>.
 /// </summary>
 [SuppressMessage("Design", "CA1008:Enums should have zero value", Justification = "Explicit indeterminacy causes without an unknown sentinel.")]
+[SuppressMessage("ReSharper", "MissingZeroValueItemInEnum", Justification = "Explicit indeterminacy causes without an unknown sentinel.")]
 public enum StructureResolutionIndeterminacyCause
 {
     /// <summary>A progression match is not finished.</summary>
