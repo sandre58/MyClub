@@ -21,6 +21,7 @@ export type DropDownButtonItem = {
 };
 
 export type DropDownButtonVariant = 'primary' | 'secondary' | 'ghost';
+export type DropDownButtonSize = 'default' | 'sm';
 
 export type DropDownButtonProps = {
   /** Visible label on the trigger button. */
@@ -28,17 +29,37 @@ export type DropDownButtonProps = {
   items: DropDownButtonItem[];
   onSelect: (value: string) => void;
   variant?: DropDownButtonVariant;
+  size?: DropDownButtonSize;
+  /** Extra classes on the trigger button (not the root). */
+  triggerClassName?: string;
   disabled?: boolean;
   leadingIcon?: ReactNode;
   align?: 'start' | 'end';
   /** Shown in the menu when `items` is empty. */
   emptyLabel?: string;
   'aria-label'?: string;
+  /** Layout classes on the root only — never `ds-btn` (use `size` / `variant`). */
   className?: string;
   /** Controlled open state (optional). */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 };
+
+function splitRootAndButtonClasses(className: string): {
+  root: string;
+  trigger: string;
+} {
+  const root: string[] = [];
+  const trigger: string[] = [];
+  for (const token of className.split(/\s+/).filter(Boolean)) {
+    if (token === 'ds-btn' || token.startsWith('ds-btn--')) {
+      trigger.push(token);
+    } else {
+      root.push(token);
+    }
+  }
+  return { root: root.join(' '), trigger: trigger.join(' ') };
+}
 
 function firstEnabledIndex(items: DropDownButtonItem[]) {
   return items.findIndex((item) => !item.disabled);
@@ -68,6 +89,8 @@ export function DropDownButton({
   items,
   onSelect,
   variant = 'primary',
+  size = 'default',
+  triggerClassName = '',
   disabled = false,
   leadingIcon,
   align = 'end',
@@ -93,12 +116,21 @@ export function DropDownButton({
   };
 
   const enabled = !disabled;
-  const rootClass = ['ds-dropdown-button', className].filter(Boolean).join(' ');
+  const { root: layoutClass, trigger: migratedTriggerClass } =
+    splitRootAndButtonClasses(className);
+  const rootClass = ['ds-dropdown-button', layoutClass]
+    .filter(Boolean)
+    .join(' ');
   const triggerClass = [
     'ds-btn',
     `ds-btn--${variant}`,
+    size === 'sm' ? 'ds-btn--sm' : null,
     'ds-dropdown-button__trigger',
-  ].join(' ');
+    migratedTriggerClass,
+    triggerClassName,
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   function close() {
     setOpenState(false);
@@ -197,8 +229,10 @@ export function DropDownButton({
         onClick={toggle}
         onKeyDown={onTriggerKeyDown}
       >
-        {leadingIcon}
-        <span className="ds-dropdown-button__label">{label}</span>
+        <span className="ds-dropdown-button__trigger-content">
+          {leadingIcon}
+          <span className="ds-dropdown-button__label">{label}</span>
+        </span>
         <span
           className="ds-dropdown-button__chevron"
           data-open={open ? 'true' : 'false'}
@@ -222,6 +256,7 @@ export function DropDownButton({
         role="menu"
         aria-label={ariaLabel}
         align={align}
+        contentWidth
         className="ds-dropdown-button__menu"
         flipThreshold={160}
       >

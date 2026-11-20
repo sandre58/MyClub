@@ -6,6 +6,7 @@ import {
   canShowManualPlacementTargetMenu,
   canReplaceInGroup,
   countGroupReservedFeedSeats,
+  entryGroupPlacementHint,
   firstGroupIdWithBatchCap,
   groupBatchCap,
   groupSeatCounter,
@@ -176,6 +177,27 @@ describe('listAvailableGroupEntries', () => {
         entries,
       ).every((row) => row.pot == null),
     ).toBe(true);
+  });
+
+  it('builds a group placement hint for team tiles', () => {
+    const cases = [
+      place({
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId: 'g-a',
+          groupName: 'A',
+          index: 2,
+        },
+        entry: { entryId: 'e2', displayName: 'Bravo' },
+      }),
+    ];
+    const t = (key: string, opts?: Record<string, unknown>) => {
+      if (key === 'place.group' && opts) {
+        return `Groupe ${opts.name}`;
+      }
+      return key;
+    };
+    expect(entryGroupPlacementHint(cases, 'e2', t)).toBe('Groupe A');
   });
 
   it('sorts by pot and then composition order', () => {

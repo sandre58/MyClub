@@ -7,6 +7,7 @@ import type {
   StructureEntry,
   StructureStageHubSummary,
 } from '../../../types';
+import type { PlaceTranslate } from './structurePlaceLabel';
 
 const assignEntryToGroupAction = 'AssignEntryToGroup';
 const assignEntriesToGroupAction = 'AssignEntriesToGroup';
@@ -398,6 +399,26 @@ export function listOtherGroupEntries(
     seen.add(row.entryId);
     return true;
   });
+}
+
+/** Tile hint: where the entry sits in the group grid (not pot). */
+export function entryGroupPlacementHint(
+  cases: readonly SchematicCase[],
+  entryId: string,
+  t: PlaceTranslate,
+): string | null {
+  for (const place of cases) {
+    const id = occupantId(place);
+    if (id !== entryId) continue;
+    if (place.formPosition.kind !== 'GroupPlace') continue;
+    const name =
+      place.formPosition.groupName?.trim() ||
+      place.formPosition.groupId?.trim() ||
+      '';
+    if (!name) continue;
+    return t('place.group', { name });
+  }
+  return null;
 }
 
 /** Empty seats in the group that carry an inbound feed (batch fact « réservées »). */

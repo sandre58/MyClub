@@ -652,7 +652,7 @@ function PlacesColumn(
               {props.manualPlacementMenuItems &&
               props.onManualPlacementTargetSelect ? (
                 <DropDownButton
-                  className="ds-btn--sm"
+                  size="sm"
                   variant="secondary"
                   label={t('fiche.manualPlacementCta')}
                   aria-label={t('fiche.manualPlacementCta')}

@@ -48,7 +48,10 @@ import {
 import { StructurePlacementAwardDialog } from '../intents/StructurePlacementAwardDialog';
 import { StructureManualPlacementDialog } from '../draw/StructureManualPlacementDialog';
 import { StructureGroupPlacementDialog } from '../draw/StructureGroupPlacementDialog';
-import { resolveGroupSeatInteraction } from '../draw/manualGroupPlacementUi';
+import {
+  canSetGroupMembership,
+  resolveGroupSeatInteraction,
+} from '../draw/manualGroupPlacementUi';
 import {
   DrawRulesDialog,
   MatchRulesDialog,
@@ -559,7 +562,7 @@ export function StructurePhaseFiche({
                 name={teamName}
                 logoMediaId={entry.logoMediaId}
                 primaryColor={entry.primaryColor}
-                size="sm"
+                size="xs"
               />
               <span>{teamName}</span>
             </span>
@@ -1509,8 +1512,25 @@ export function StructurePhaseFiche({
                 ) {
                   return;
                 }
-                setFixedGroupId(null);
-                setGroupPlace(place);
+                const seatGroupId =
+                  place.formPosition.kind === 'GroupPlace'
+                    ? (place.formPosition.groupId?.trim() ?? null)
+                    : null;
+                if (!seatGroupId) {
+                  return;
+                }
+                if (
+                  canSetGroupMembership(
+                    stage.actions ?? [],
+                    stage.placesPerGroup,
+                  )
+                ) {
+                  setGroupPlace(null);
+                  setFixedGroupId(seatGroupId);
+                } else {
+                  setFixedGroupId(null);
+                  setGroupPlace(place);
+                }
                 setGroupSession((value) => value + 1);
                 setGroupOpen(true);
               }}
