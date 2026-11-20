@@ -1097,10 +1097,9 @@
 }
 
 .structure-manual-placement__teams .ds-choice-tile--inline {
-  /* team-crest--sm (1.7rem) + block padding + borders — keep sm crest, no clipping */
-  height: calc(1.7rem + 2 * var(--space-8) + 2 * var(--border-width));
-  min-height: calc(1.7rem + 2 * var(--space-8) + 2 * var(--border-width));
-  max-height: calc(1.7rem + 2 * var(--space-8) + 2 * var(--border-width));
+  height: calc(var(--team-crest-height-sm) + 2 * var(--space-8) + 2 * var(--border-width));
+  min-height: calc(var(--team-crest-height-sm) + 2 * var(--space-8) + 2 * var(--border-width));
+  max-height: calc(var(--team-crest-height-sm) + 2 * var(--space-8) + 2 * var(--border-width));
   align-items: center;
 }
 

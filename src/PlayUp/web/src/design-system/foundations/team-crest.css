@@ -1,3 +1,9 @@
+:root,
+.ds-root {
+  --team-crest-width-sm: 1.5rem;
+  --team-crest-height-sm: 1.7rem;
+}
+
 .team-crest {
   --team-crest-fill: currentColor;
   position: relative;
@@ -23,8 +29,8 @@
 }
 
 .team-crest--sm {
-  width: 1.5rem;
-  height: 1.7rem;
+  width: var(--team-crest-width-sm);
+  height: var(--team-crest-height-sm);
 }
 
 .team-crest--xs .team-crest__initial {

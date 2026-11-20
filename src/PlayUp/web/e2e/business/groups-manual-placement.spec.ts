@@ -257,9 +257,7 @@ test.describe('manual group placement', () => {
     const dialog = page.getByRole('dialog', {
       name: /Placement — .* — Groupe B/,
     });
-    await dialog
-      .getByRole('button', { name: /Retirer l.équipe de la place/ })
-      .click();
+    await dialog.getByRole('button', { name: 'Retirer', exact: true }).click();
     await dialog
       .getByRole('button', { name: 'Enregistrer', exact: true })
       .click();
@@ -387,9 +385,7 @@ test.describe('manual group placement', () => {
     const dialog = page.getByRole('dialog', {
       name: /Placement — .* — Groupe A/,
     });
-    await dialog
-      .getByRole('button', { name: /Retirer l.équipe de la place/ })
-      .click();
+    await dialog.getByRole('button', { name: 'Retirer', exact: true }).click();
     await dialog
       .getByRole('button', { name: 'Enregistrer', exact: true })
       .click();
