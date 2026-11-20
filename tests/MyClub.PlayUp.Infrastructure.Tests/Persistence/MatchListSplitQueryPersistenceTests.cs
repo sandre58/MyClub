@@ -6,7 +6,6 @@
 
 using System.Data.Common;
 using FluentAssertions;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using MyClub.PlayUp.Application.Abstractions;
@@ -42,18 +41,9 @@ public sealed class MatchListSplitQueryPersistenceTests(PostgresFixture fixture)
 
         Func<Task> act = method switch
         {
-            nameof(IMatchRepository.ListByStageForUpdateAsync) => async () =>
-            {
-                _ = await repository.ListByStageForUpdateAsync(stageId);
-            },
-            nameof(IMatchRepository.ListByStageIdsForUpdateAsync) => async () =>
-            {
-                _ = await repository.ListByStageIdsForUpdateAsync([stageId]);
-            },
-            nameof(IMatchRepository.ListByStageIdsReadOnlyAsync) => async () =>
-            {
-                _ = await repository.ListByStageIdsReadOnlyAsync([stageId]);
-            },
+            nameof(IMatchRepository.ListByStageForUpdateAsync) => async () => _ = await repository.ListByStageForUpdateAsync(stageId),
+            nameof(IMatchRepository.ListByStageIdsForUpdateAsync) => async () => _ = await repository.ListByStageIdsForUpdateAsync([stageId]),
+            nameof(IMatchRepository.ListByStageIdsReadOnlyAsync) => async () => _ = await repository.ListByStageIdsReadOnlyAsync([stageId]),
             _ => throw new ArgumentOutOfRangeException(nameof(method), method, null)
         };
 

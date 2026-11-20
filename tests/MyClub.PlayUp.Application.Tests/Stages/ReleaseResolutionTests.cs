@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
+using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
@@ -17,8 +18,6 @@ using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using Xunit;
-using ApplicationErrorCodes = MyClub.PlayUp.Application.ApplicationErrorCodes;
-using ApplicationFailureException = MyClub.PlayUp.Application.ApplicationFailureException;
 
 namespace MyClub.PlayUp.Application.Tests.Stages;
 
@@ -29,14 +28,14 @@ public sealed class ReleaseResolutionTests
     private static ResolutionReleaseTarget SlotTarget(EntryId entry) =>
         new(StructureResolutionOccupantTarget.Slot, entry.Value, "Champ", null);
 
-    private static Dictionary<StageId, IReadOnlyList<MyClub.PlayUp.Application.Abstractions.MatchSummaryRow>> Summaries(
+    private static Dictionary<StageId, IReadOnlyList<MatchSummaryRow>> Summaries(
         Stage stage,
         Match match) =>
-        new Dictionary<StageId, IReadOnlyList<MyClub.PlayUp.Application.Abstractions.MatchSummaryRow>>
+        new()
         {
             [stage.Id] =
             [
-                new(
+                new MatchSummaryRow(
                     match.Id,
                     match.StageId,
                     match.Status,
@@ -47,16 +46,16 @@ public sealed class ReleaseResolutionTests
             ]
         };
 
-    private static Dictionary<StageId, IReadOnlyList<MyClub.PlayUp.Application.Abstractions.MatchSummaryRow>> Summaries(
+    private static Dictionary<StageId, IReadOnlyList<MatchSummaryRow>> Summaries(
         Match first,
         Match second) =>
-        new Dictionary<StageId, IReadOnlyList<MyClub.PlayUp.Application.Abstractions.MatchSummaryRow>>
+        new()
         {
             [first.StageId] = [Row(first)],
-            [second.StageId] = [Row(second)],
+            [second.StageId] = [Row(second)]
         };
 
-    private static MyClub.PlayUp.Application.Abstractions.MatchSummaryRow Row(Match match) =>
+    private static MatchSummaryRow Row(Match match) =>
         new(
             match.Id,
             match.StageId,
@@ -725,7 +724,7 @@ public sealed class ReleaseResolutionTests
         occupants.Should().Contain(occupant =>
             occupant.Target == StructureResolutionOccupantTarget.Group && !occupant.Releasable);
         occupants.Should().Contain(occupant =>
-            occupant.Target == StructureResolutionOccupantTarget.Population && occupant.Releasable == false);
+            occupant.Target == StructureResolutionOccupantTarget.Population && !occupant.Releasable);
 
         var groupRelease = () => ReleaseResolution.Plan(
             competition,
@@ -756,10 +755,10 @@ public sealed class ReleaseResolutionTests
         lone.AttachMatch(loneFixture.Id, loneMatch.Id, 1, _clock);
         Move(lone, status);
 
-        var loneSummaries = new Dictionary<StageId, IReadOnlyList<MyClub.PlayUp.Application.Abstractions.MatchSummaryRow>>
+        var loneSummaries = new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>
         {
             [league.Id] = [Row(match)],
-            [lone.Id] = [Row(loneMatch)],
+            [lone.Id] = [Row(loneMatch)]
         };
         ResolutionFreshnessDetector.Evaluate(competition, [league, lone], loneSummaries)[lone.Id.Value]
             .Should().Contain(occupant =>
@@ -1008,7 +1007,7 @@ public sealed class ReleaseResolutionTests
             group,
             index: 2,
             occupant: null,
-            terminal.CompositionEntries.Select(entry => entry.EntryId).ToArray(),
+            [.. terminal.CompositionEntries.Select(entry => entry.EntryId)],
             [],
             pending);
         seat.SeatMode.Should().Be(GroupSeatModes.Reserved);
@@ -1039,7 +1038,7 @@ public sealed class ReleaseResolutionTests
         var entries = new[]
         {
             AddEntry.Execute(competition, "Nord", _clock).Id,
-            AddEntry.Execute(competition, "Sud", _clock).Id,
+            AddEntry.Execute(competition, "Sud", _clock).Id
         };
         var league = Stage.Create(competition.Id, new StageName("League"), SampleRegulations.Standard(), _clock);
         league.AddMatchday(1, _clock);
@@ -1066,7 +1065,7 @@ public sealed class ReleaseResolutionTests
             QualificationSource.Overall(),
             new QualificationSelection(SelectionMode.Position, position),
             QualificationDestination.ForSlot(terminal.Id, slot),
-            minimumPoints is int points ? QualificationCondition.PointsAtLeast(points) : null);
+            minimumPoints is { } points ? QualificationCondition.PointsAtLeast(points) : null);
         league.ReplaceQualificationRules(new QualificationRules([path]), _clock);
         var provenance = new ResolutionProvenance(
             ResolutionProvenanceKind.Qualification,
@@ -1153,17 +1152,16 @@ public sealed class ReleaseResolutionTests
             stage.Start(_clock);
         }
 
-        if (status == StageStatus.Running)
+        switch (status)
         {
-            return;
+            case StageStatus.Running:
+                return;
+            case StageStatus.Suspended:
+                stage.Suspend(_clock);
+                return;
+            default:
+                stage.Complete(_clock);
+                break;
         }
-
-        if (status == StageStatus.Suspended)
-        {
-            stage.Suspend(_clock);
-            return;
-        }
-
-        stage.Complete(_clock);
     }
 }

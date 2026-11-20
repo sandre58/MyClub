@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
@@ -404,7 +403,7 @@ public sealed class GroupReplaceBatchEndpointTests(HostPostgresFixture fixture)
         {
             string text => text,
             JsonElement { ValueKind: JsonValueKind.String } element => element.GetString(),
-            _ => raw.ToString(),
+            _ => raw.ToString()
         };
     }
 
@@ -448,9 +447,9 @@ public sealed class GroupReplaceBatchEndpointTests(HostPostgresFixture fixture)
         stage.AssignEntryToGroup(stage.Groups[1].Id, ids[2]);
         stage.AssignEntryToGroup(stage.Groups[1].Id, ids[3]);
         var matchday = stage.Matchdays.Count == 0 ? stage.AddMatchday(1, _clock) : stage.Matchdays[0];
-        var fixture = stage.AddFixture(matchday.Id, _clock);
+        var addFixture = stage.AddFixture(matchday.Id, _clock);
         var match = Match.Create(competition.Id, stage.Id, ids[2], ids[3], _clock);
-        stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
+        stage.AttachMatch(addFixture.Id, match.Id, legIndex: 1, _clock);
         stage.Prepare(_clock);
 
         await SaveAsync(factory, competition, stage, match);

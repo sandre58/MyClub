@@ -48,7 +48,7 @@ public sealed class StructureCompositionEntryPotsTests
             .WithStructure(StructureIntent.Cup(4));
         var cupStage = cup.PrimaryStage!;
         cupStage.ReplaceAffectationAuthoring(
-            cup.Competition.Entries.Select(entry => entry.Id).ToArray(),
+            [.. cup.Competition.Entries.Select(entry => entry.Id)],
             _clock);
         ReplaceStageDrawRules.Execute(
             cupStage,
@@ -60,7 +60,7 @@ public sealed class StructureCompositionEntryPotsTests
             .WithStructure(StructureIntent.Groups(2, 2));
         var plainStage = plain.PrimaryStage!;
         plainStage.ReplaceAffectationAuthoring(
-            plain.Competition.Entries.Select(entry => entry.Id).ToArray(),
+            [.. plain.Competition.Entries.Select(entry => entry.Id)],
             _clock);
 
         var indivisible = TestCompetition.Create("Groups indivisible", _clock)
@@ -68,7 +68,7 @@ public sealed class StructureCompositionEntryPotsTests
             .WithStructure(StructureIntent.Groups(2, 4));
         var indivisibleStage = indivisible.PrimaryStage!;
         indivisibleStage.ReplaceAffectationAuthoring(
-            indivisible.Competition.Entries.Select(entry => entry.Id).ToArray(),
+            [.. indivisible.Competition.Entries.Select(entry => entry.Id)],
             _clock);
         ReplaceStageDrawRules.Execute(
             indivisibleStage,

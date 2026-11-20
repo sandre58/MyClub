@@ -167,7 +167,7 @@ public sealed class ReadPerformanceBaselineTests(
             """,
             new Dictionary<string, int>
             {
-                ["GET /overview (GetOverviewViewAsync)"] = overviewSql,
+                ["GET /overview (GetOverviewViewAsync)"] = overviewSql
             },
             $"Warm elapsed (informational, not asserted): {elapsedMs} ms");
 

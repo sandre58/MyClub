@@ -52,7 +52,8 @@ public static class SlotPartialDrawPlanner
             SlotPartialDrawRefusal.TooManyTeams => (
                 ApplicationErrorCodes.DrawTooManyTeams,
                 "Partial draw cannot place more unplaced teams than there are free slots."),
-            _ => throw new InvalidOperationException($"Unexpected partial draw refusal '{scope.Refusal}'."),
+            SlotPartialDrawRefusal.None => throw new InvalidOperationException($"Unexpected partial draw refusal '{scope.Refusal}'."),
+            _ => throw new InvalidOperationException($"Unexpected partial draw refusal '{scope.Refusal}'.")
         };
 
         throw new ApplicationFailureException(message, code);

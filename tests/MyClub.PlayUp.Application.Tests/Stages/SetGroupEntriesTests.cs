@@ -113,7 +113,7 @@ public sealed class SetGroupEntriesTests
         var competition = CreateCompetition.Execute("Outside-set", _clock);
         var ids = Entries(competition, 4);
         var stage = Skeleton(competition, 4);
-        stage.ReplaceAffectationAuthoring(ids.Take(3).ToArray(), _clock);
+        stage.ReplaceAffectationAuthoring([.. ids.Take(3)], _clock);
         var group = stage.Groups[0];
         stage.AssignEntryToGroup(group.Id, ids[3]);
 
@@ -175,7 +175,7 @@ public sealed class SetGroupEntriesTests
     [Fact]
     public void Ceiling_5_of_4_identical_set_is_noop()
     {
-        var (competition, stage, ids, group) = ExcessGroup(places: 4, memberCount: 5, entryCount: 6);
+        var (competition, stage, _, group) = ExcessGroup(places: 4, memberCount: 5, entryCount: 6);
         var current = group.EntryIds.ToArray();
         var mutated = SetGroupEntries.Execute(stage, competition, group.Id, current, null);
         mutated.Should().BeFalse();
@@ -186,7 +186,7 @@ public sealed class SetGroupEntriesTests
     {
         var (competition, stage, ids, group) = ExcessGroup(places: 4, memberCount: 5, entryCount: 7);
         var current = group.EntryIds.ToArray();
-        var act = () => SetGroupEntries.Execute(stage, competition, group.Id, current.Append(ids[5]).ToArray(), current);
+        var act = () => SetGroupEntries.Execute(stage, competition, group.Id, [.. current, ids[5]], current);
         act.Should().Throw<GroupPlacementRejectedException>().Which.Code.Should().Be(StageErrorCodes.GroupFull);
     }
 
@@ -208,7 +208,7 @@ public sealed class SetGroupEntriesTests
             destination,
             competition,
             group.Id,
-            current.Append(ids[4]).ToArray(),
+            [.. current, ids[4]],
             current,
             competitionStages: [source, destination]);
         act.Should().Throw<GroupPlacementRejectedException>()
@@ -275,7 +275,7 @@ public sealed class SetGroupEntriesTests
             destination,
             competition,
             group.Id,
-            current.Append(ids[4]).ToArray(),
+            [.. current, ids[4]],
             current,
             competitionStages: [source, destination]);
         act.Should().Throw<GroupPlacementRejectedException>()
@@ -336,5 +336,5 @@ public sealed class SetGroupEntriesTests
         ConfigureStructure.Execute(competition, null, StructureIntent.Groups(2, places), _clock).Stage;
 
     private EntryId[] Entries(Competition competition, int count) =>
-        Enumerable.Range(0, count).Select(index => AddEntry.Execute(competition, $"T{index}", _clock).Id).ToArray();
+        [.. Enumerable.Range(0, count).Select(index => AddEntry.Execute(competition, $"T{index}", _clock).Id)];
 }

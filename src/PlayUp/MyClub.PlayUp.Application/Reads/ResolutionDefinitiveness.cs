@@ -90,7 +90,7 @@ public static class ResolutionDefinitiveness
                 sourceCompleted && !OverallUsesFallbackParticipants(competition, path),
             StructureResolutionIndeterminacyCause.SourceAbsente =>
                 SourceAbsenceIsDefinitive(competition, source, occupant),
-            _ => false,
+            _ => false
         };
     }
 
@@ -106,7 +106,7 @@ public static class ResolutionDefinitiveness
     /// With no active entry, an overall standing is rebuilt from match participants.
     /// </summary>
     private static bool OverallUsesFallbackParticipants(Competition competition, QualificationPath? path) =>
-        IsOverall(path) && !competition.Entries.Any(entry => entry.Status == EntryStatus.Active);
+        IsOverall(path) && competition.Entries.All(entry => entry.Status != EntryStatus.Active);
 
     private static bool IsOverall(QualificationPath? path)
     {
@@ -131,10 +131,10 @@ public static class ResolutionDefinitiveness
         {
             ResolutionSourceAbsence.Unreadable => false,
             ResolutionSourceAbsence.StageNotLoaded =>
-                occupant.ParsedSourceStageId is Guid sourceId
-                && !competition.StageIds.Any(stageId => stageId.Value == sourceId),
+                occupant.ParsedSourceStageId is { } sourceId
+                && competition.StageIds.All(stageId => stageId.Value != sourceId),
             ResolutionSourceAbsence.PathGone => source is { Status: StageStatus.Completed },
-            _ => false,
+            _ => false
         };
 }
 

@@ -226,8 +226,7 @@ public sealed partial class UseCaseExecutor
     public async Task ApplyProgressionOutcomeAsync(
         StageId sourceStageId,
         FixtureId fixtureId,
-        CancellationToken cancellationToken = default)
-    {
+        CancellationToken cancellationToken = default) =>
         await ExecuteOnStageCompetitionAsync(
             sourceStageId,
             async innerToken =>
@@ -288,7 +287,6 @@ public sealed partial class UseCaseExecutor
                 await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
             },
             cancellationToken).ConfigureAwait(false);
-    }
 
     /// <summary>
     /// Loads competition stages and source matches, calculates standings, applies qualification, and saves once.
@@ -502,8 +500,7 @@ public sealed partial class UseCaseExecutor
     public async Task ApplyDrawAsync(
         StageId stageId,
         DrawId drawId,
-        CancellationToken cancellationToken = default)
-    {
+        CancellationToken cancellationToken = default) =>
         await ExecuteOnStageCompetitionAsync(
             stageId,
             async innerToken =>
@@ -528,7 +525,6 @@ public sealed partial class UseCaseExecutor
                     result.CreatedMatches.Count);
             },
             cancellationToken).ConfigureAwait(false);
-    }
 
     /// <summary>
     /// Loads a stage, runs <see cref="RedoDraw"/> (cancel → release → preview), and saves once.
@@ -650,8 +646,7 @@ public sealed partial class UseCaseExecutor
         StageId stageId,
         GroupId groupId,
         EntryId entryId,
-        CancellationToken cancellationToken = default)
-    {
+        CancellationToken cancellationToken = default) =>
         await ExecuteOnStageCompetitionAsync(
             stageId,
             async innerToken =>
@@ -680,7 +675,6 @@ public sealed partial class UseCaseExecutor
                 await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
             },
             cancellationToken).ConfigureAwait(false);
-    }
 
     /// <summary>
     /// Clears manual group membership for an entry.
@@ -689,8 +683,7 @@ public sealed partial class UseCaseExecutor
         StageId stageId,
         GroupId groupId,
         EntryId entryId,
-        CancellationToken cancellationToken = default)
-    {
+        CancellationToken cancellationToken = default) =>
         await ExecuteOnStageCompetitionAsync(
             stageId,
             async innerToken =>
@@ -707,7 +700,6 @@ public sealed partial class UseCaseExecutor
                 await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
             },
             cancellationToken).ConfigureAwait(false);
-    }
 
     /// <summary>
     /// Replaces the team on a group seat. The seat index is kept.
@@ -717,8 +709,7 @@ public sealed partial class UseCaseExecutor
         GroupId groupId,
         EntryId currentEntryId,
         EntryId replacementEntryId,
-        CancellationToken cancellationToken = default)
-    {
+        CancellationToken cancellationToken = default) =>
         await ExecuteOnStageCompetitionAsync(
             stageId,
             async innerToken =>
@@ -739,7 +730,6 @@ public sealed partial class UseCaseExecutor
                 await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
             },
             cancellationToken).ConfigureAwait(false);
-    }
 
     /// <summary>
     /// Places several entries in one group, all or nothing.
@@ -840,8 +830,11 @@ public sealed partial class UseCaseExecutor
                 ApplicationErrorCodes.StageNotFound);
         }
 
-        var loaded = new List<Stage>(siblingIds.Length + 1) { stage };
-        loaded.AddRange(siblings);
+        List<Stage> loaded =
+        [
+            with(siblingIds.Length + 1), stage,
+            .. siblings
+        ];
         return loaded;
     }
 
@@ -1036,7 +1029,7 @@ public sealed partial class UseCaseExecutor
         var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
             .ConfigureAwait(false);
         var competitionStages = competition.StageIds.Count == 1 && competition.StageIds[0].Equals(stage.Id)
-            ? new List<Stage> { stage }
+            ? [stage]
             : await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken).ConfigureAwait(false);
         if (stage.Status is StageStatus.Completed
             || !QualificationResolutionApplyWitness.Exists(stage, competitionStages))
@@ -1154,8 +1147,7 @@ public sealed partial class UseCaseExecutor
     public async Task ReplaceStageAffectationAuthoringAsync(
         StageId stageId,
         IReadOnlyList<EntryId> entryIds,
-        CancellationToken cancellationToken = default)
-    {
+        CancellationToken cancellationToken = default) =>
         await ExecuteOnStageCompetitionAsync(
             stageId,
             async innerToken =>
@@ -1178,7 +1170,6 @@ public sealed partial class UseCaseExecutor
                 await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
             },
             cancellationToken).ConfigureAwait(false);
-    }
 
     /// <summary>
     /// Replaces or clears the stage default TieFormat.
@@ -1805,7 +1796,7 @@ public sealed partial class UseCaseExecutor
         return result ?? throw new InvalidOperationException("Definitive resolution release did not run.");
     }
 
-    private async Task<(Domain.Competitions.Competition Competition, List<Stage> Stages, List<Match> Matches)>
+    private async Task<(Competition Competition, List<Stage> Stages, List<Match> Matches)>
         LoadCascadeReadAsync(StageId stageId, CancellationToken cancellationToken)
     {
         var competitionId = await stages.GetCompetitionIdReadOnlyAsync(stageId, cancellationToken)
@@ -1823,12 +1814,12 @@ public sealed partial class UseCaseExecutor
             StageReadCapabilities.FromProfile(StageLoadProfile.Full),
             cancellationToken).ConfigureAwait(false);
         var grouped = await matches.ListByStageIdsReadOnlyAsync(
-            stageList.Select(stage => stage.Id).ToArray(),
+            [.. stageList.Select(stage => stage.Id)],
             cancellationToken).ConfigureAwait(false);
-        return (competition, stageList, grouped.SelectMany(pair => pair.Value).ToList());
+        return (competition, stageList, [.. grouped.SelectMany(pair => pair.Value)]);
     }
 
-    private async Task<(Domain.Competitions.Competition Competition, List<Stage> Stages, List<Match> Matches)>
+    private async Task<(Competition Competition, List<Stage> Stages, List<Match> Matches)>
         LoadCascadeForUpdateAsync(StageId stageId, CancellationToken cancellationToken)
     {
         var origin = await stages.GetByIdForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false)
@@ -1844,8 +1835,8 @@ public sealed partial class UseCaseExecutor
         var stageList = await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken)
             .ConfigureAwait(false);
         var grouped = await matches.ListByStageIdsForUpdateAsync(
-            stageList.Select(stage => stage.Id).ToArray(),
+            [.. stageList.Select(stage => stage.Id)],
             cancellationToken).ConfigureAwait(false);
-        return (competition, stageList, grouped.SelectMany(pair => pair.Value).ToList());
+        return (competition, stageList, [.. grouped.SelectMany(pair => pair.Value)]);
     }
 }

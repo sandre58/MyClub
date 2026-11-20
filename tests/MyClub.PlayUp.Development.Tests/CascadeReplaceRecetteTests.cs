@@ -39,7 +39,7 @@ public sealed class CascadeReplaceRecetteTests(DevelopmentPostgresFixture fixtur
     {
         var competition = await competitions.GetByIdForUpdateAsync(listed.Id);
         competition.Should().NotBeNull();
-        return competition!;
+        return competition;
     }
 
     private static Competition Find(IReadOnlyList<Competition> competitions, string name) =>
@@ -56,7 +56,7 @@ public sealed class CascadeReplaceRecetteTests(DevelopmentPostgresFixture fixtur
         {
             var stage = await stages.GetByIdForUpdateAsync(stageId);
             stage.Should().NotBeNull();
-            stageList.Add(stage!);
+            stageList.Add(stage);
             matchList.AddRange(await matches.ListByStageForUpdateAsync(stageId));
         }
 
@@ -74,14 +74,7 @@ public sealed class CascadeReplaceRecetteTests(DevelopmentPostgresFixture fixtur
         var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
         var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
         var loaded = await competitions.ListAsync();
-        loaded.Select(competition => competition.Name.Value).Should().BeEquivalentTo(
-        [
-            CascadeReplaceRecetteNames.Simple,
-            CascadeReplaceRecetteNames.Played,
-            CascadeReplaceRecetteNames.Transitive,
-            CascadeReplaceRecetteNames.Completed,
-            CascadeReplaceRecetteNames.Direct,
-        ]);
+        loaded.Select(competition => competition.Name.Value).Should().BeEquivalentTo(CascadeReplaceRecetteNames.Simple, CascadeReplaceRecetteNames.Played, CascadeReplaceRecetteNames.Transitive, CascadeReplaceRecetteNames.Completed, CascadeReplaceRecetteNames.Direct);
 
         await AssertSimpleAsync(await ReloadAsync(competitions, Find(loaded, CascadeReplaceRecetteNames.Simple)), stages, matches);
         await AssertPlayedAsync(await ReloadAsync(competitions, Find(loaded, CascadeReplaceRecetteNames.Played)), stages, matches);
@@ -195,14 +188,16 @@ public sealed class CascadeReplaceRecetteTests(DevelopmentPostgresFixture fixtur
                 .GroupBy(match => match.StageId)
                 .ToDictionary(
                     group => group.Key,
-                    group => (IReadOnlyList<MatchSummaryRow>)group.Select(match => new MatchSummaryRow(
-                        match.Id,
-                        match.StageId,
-                        match.Status,
-                        match.HomeEntryId,
-                        match.AwayEntryId,
-                        match.Result,
-                        match.HasObservedLive)).ToArray()));
+                    group => (IReadOnlyList<MatchSummaryRow>)[
+                        .. group.Select(match => new MatchSummaryRow(
+                            match.Id,
+                            match.StageId,
+                            match.Status,
+                            match.HomeEntryId,
+                            match.AwayEntryId,
+                            match.Result,
+                            match.HasObservedLive))
+                    ]));
         var occupant = assessments.Single(row =>
             row.Target == StructureResolutionOccupantTarget.Slot
             && row.SlotKey == slotKey);

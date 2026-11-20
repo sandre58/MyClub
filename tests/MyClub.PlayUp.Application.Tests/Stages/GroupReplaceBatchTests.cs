@@ -4,7 +4,6 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-using System.Reflection;
 using FluentAssertions;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
@@ -83,7 +82,7 @@ public sealed class GroupReplaceBatchTests
         var competition = CreateCompetition.Execute("Outside", _clock);
         var ids = Entries(competition, 4);
         var stage = Skeleton(competition, places: 4);
-        stage.ReplaceAffectationAuthoring(ids.Take(3).ToArray(), _clock);
+        stage.ReplaceAffectationAuthoring([.. ids.Take(3)], _clock);
         stage.AssignEntryToGroup(stage.Groups[0].Id, ids[3]);
 
         ReplaceEntryInGroup.Execute(stage, competition, stage.Groups[0].Id, ids[3], ids[0]);
@@ -536,5 +535,5 @@ public sealed class GroupReplaceBatchTests
         ConfigureStructure.Execute(competition, null, StructureIntent.Groups(2, places), _clock).Stage;
 
     private EntryId[] Entries(Competition competition, int count) =>
-        Enumerable.Range(0, count).Select(index => AddEntry.Execute(competition, $"T{index}", _clock).Id).ToArray();
+        [.. Enumerable.Range(0, count).Select(index => AddEntry.Execute(competition, $"T{index}", _clock).Id)];
 }

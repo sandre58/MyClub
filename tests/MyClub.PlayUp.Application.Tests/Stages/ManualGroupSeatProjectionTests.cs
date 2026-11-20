@@ -271,7 +271,7 @@ public sealed class ManualGroupSeatProjectionTests
             null,
             StructureIntent.Groups(2, 4),
             _clock).Stage;
-        stage.ReplaceAffectationAuthoring(ids.Take(3).ToArray(), _clock);
+        stage.ReplaceAffectationAuthoring([.. ids.Take(3)], _clock);
         stage.AssignEntryToGroup(stage.Groups[0].Id, ids[0]);
         stage.AssignEntryToGroup(stage.Groups[0].Id, ids[1]);
         stage.AssignEntryToGroup(stage.Groups[0].Id, ids[2]);
@@ -348,10 +348,7 @@ public sealed class ManualGroupSeatProjectionTests
     [InlineData(ApplicationErrorCodes.GroupSeatReservedByInboundFeed, GroupSeatModes.Reserved)]
     [InlineData(StageErrorCodes.StructureLocked, GroupSeatModes.Editable)]
     [InlineData(null, GroupSeatModes.Editable)]
-    public void Refusal_code_maps_to_one_seat_mode(string? code, string mode)
-    {
-        GroupSeatModes.FromRefusal(code).Should().Be(mode);
-    }
+    public void Refusal_code_maps_to_one_seat_mode(string? code, string mode) => GroupSeatModes.FromRefusal(code).Should().Be(mode);
 
     private SchematicCaseDto Seat(
         Stage stage,
@@ -359,11 +356,9 @@ public sealed class ManualGroupSeatProjectionTests
         GroupId groupId,
         int index,
         Match? match = null,
-        IReadOnlyList<Stage>? competitionStages = null)
-    {
-        return Seats(stage, competition, groupId, match, competitionStages)
+        IReadOnlyList<Stage>? competitionStages = null) =>
+        Seats(stage, competition, groupId, match, competitionStages)
             .Single(item => item.FormPosition.Index == index);
-    }
 
     private IReadOnlyList<SchematicCaseDto> Seats(
         Stage stage,

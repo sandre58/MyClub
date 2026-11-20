@@ -12,8 +12,6 @@ using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
-using ApplicationErrorCodes = MyClub.PlayUp.Application.ApplicationErrorCodes;
-using ApplicationFailureException = MyClub.PlayUp.Application.ApplicationFailureException;
 
 namespace MyClub.PlayUp.Application.Stages.ReleaseResolution;
 
@@ -178,8 +176,8 @@ public static class ReleaseDefinitiveResolutions
                 continue;
             }
 
-            var attemptStages = liveStages.Select(CascadeAggregateCopy.Copy).ToList();
-            var attemptMatches = liveMatches.Select(CascadeAggregateCopy.Copy).ToList();
+            var attemptStages = liveStages.ConvertAll(CascadeAggregateCopy.Copy);
+            var attemptMatches = liveMatches.ConvertAll(CascadeAggregateCopy.Copy);
             var attempt = Find(Inspect(competition, attemptStages, attemptMatches), place);
             var stage = attemptStages.Single(candidateStage => candidateStage.Id.Value == place.StageId);
             try
@@ -187,7 +185,7 @@ public static class ReleaseDefinitiveResolutions
                 var applied = ReleaseResolution.Apply(competition, stage, attemptMatches, attempt, clock);
                 scratchStages = attemptStages;
                 scratchMatches = attemptMatches;
-                releases.AddRange(Rows(competition, attemptStages, applied));
+                releases.AddRange(Rows(attemptStages, applied));
                 detached.AddRange(applied.Detached);
                 released.Add(place);
             }
@@ -243,8 +241,8 @@ public static class ReleaseDefinitiveResolutions
             return occupant.ParsedSourceStageId == source.Value;
         }
 
-        return occupant.ParsedSourceStageId is Guid parsed
-            && !competition.StageIds.Any(id => id.Value == parsed);
+        return occupant.ParsedSourceStageId is { } parsed
+            && competition.StageIds.All(id => id.Value != parsed);
     }
 
     private static bool AlreadyReleased(
@@ -265,7 +263,7 @@ public static class ReleaseDefinitiveResolutions
     {
         var stagesById = stages.ToDictionary(stage => stage.Id.Value);
         stagesById.TryGetValue(occupant.StageId, out var destination);
-        Stage? source = occupant.ParsedSourceStageId is Guid parsed && stagesById.TryGetValue(parsed, out var found)
+        var source = occupant.ParsedSourceStageId is { } parsed && stagesById.TryGetValue(parsed, out var found)
             ? found
             : null;
         var path = source is null || occupant.Kind != ResolutionProvenanceKind.Qualification
@@ -285,58 +283,38 @@ public static class ReleaseDefinitiveResolutions
     private static QualificationPath? FindQualificationPath(Stage source, string sourcePathId)
     {
         var paths = source.Regulation.QualificationRules?.Paths;
-        if (paths is null)
-        {
-            return null;
-        }
-
-        foreach (var path in paths)
-        {
-            if (string.Equals(
-                    ResolutionPathIdentifier.ForQualification(source.Id, path),
-                    sourcePathId,
-                    StringComparison.Ordinal))
-            {
-                return path;
-            }
-        }
-
-        return null;
+        return paths?.FirstOrDefault(path => string.Equals(ResolutionPathIdentifier.ForQualification(source.Id, path), sourcePathId, StringComparison.Ordinal));
     }
 
     private static List<ResolutionOccupantAssessment> Inspect(
         Competition competition,
         IReadOnlyList<Stage> stages,
         IReadOnlyList<Match> matches) =>
-        ResolutionFreshnessDetector.Inspect(competition, stages, Summaries(matches)).ToList();
+        [.. ResolutionFreshnessDetector.Inspect(competition, stages, Summaries(matches))];
 
     private static Dictionary<StageId, IReadOnlyList<MatchSummaryRow>> Summaries(IReadOnlyList<Match> matches) =>
         matches
             .GroupBy(match => match.StageId)
             .ToDictionary(
                 group => group.Key,
-                group => (IReadOnlyList<MatchSummaryRow>)group.Select(match => new MatchSummaryRow(
-                    match.Id,
-                    match.StageId,
-                    match.Status,
-                    match.HomeEntryId,
-                    match.AwayEntryId,
-                    match.Result,
-                    match.HasObservedLive)).ToArray());
+                group => (IReadOnlyList<MatchSummaryRow>)[
+                    .. group.Select(match => new MatchSummaryRow(
+                        match.Id,
+                        match.StageId,
+                        match.Status,
+                        match.HomeEntryId,
+                        match.AwayEntryId,
+                        match.Result,
+                        match.HasObservedLive))
+                ]);
 
-    private static List<DefinitiveResolutionReleaseRow> Rows(
-        Competition competition,
-        IReadOnlyList<Stage> stages,
+    private static List<DefinitiveResolutionReleaseRow> Rows(IReadOnlyList<Stage> stages,
         ReleaseResolution.AppliedRelease applied)
     {
-        var rows = new List<DefinitiveResolutionReleaseRow>(applied.Releases.Count);
-        for (var index = 0; index < applied.Releases.Count; index++)
-        {
-            var row = applied.Releases[index];
-
-            // Index 0 is the place Apply was asked to release. Any later row is the population
-            // side effect Apply appends only when PopulationRemoved is true.
-            rows.Add(new DefinitiveResolutionReleaseRow(
+        List<DefinitiveResolutionReleaseRow> rows =
+        [
+            with(applied.Releases.Count),
+            .. applied.Releases.Select((row, index) => new DefinitiveResolutionReleaseRow(
                 row.StageId,
                 row.Target,
                 row.SlotKey,
@@ -346,8 +324,8 @@ public static class ReleaseDefinitiveResolutions
                 StageName(stages, row.StageId),
                 PlaceLabel(stages, row.StageId, row.SlotKey, row.GroupId),
                 index == 0 && applied.PopulationRemoved,
-                index > 0));
-        }
+                index > 0))
+        ];
 
         return rows;
     }
@@ -461,7 +439,7 @@ public static class ReleaseDefinitiveResolutions
             return slotKey;
         }
 
-        if (groupId is not Guid id)
+        if (groupId is not { } id)
         {
             return null;
         }
@@ -477,7 +455,7 @@ public static class ReleaseDefinitiveResolutions
         {
             ApplicationFailureException application when !string.IsNullOrWhiteSpace(application.Code) => application.Code,
             DomainException domain when !string.IsNullOrWhiteSpace(domain.Code) => domain.Code,
-            _ => ApplicationErrorCodes.ResolutionReleaseNotReleasable,
+            _ => ApplicationErrorCodes.ResolutionReleaseNotReleasable
         };
 
     private static ApplicationFailureException Fail(string message, string code) => new(message, code);

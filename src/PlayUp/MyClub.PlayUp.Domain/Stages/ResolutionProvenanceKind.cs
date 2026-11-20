@@ -37,5 +37,5 @@ public enum ResolutionProvenanceKind
     /// <summary>
     /// Explicit non-reconstructible provenance (historical rattrapage or ambiguous feed).
     /// </summary>
-    NonVerifiee = 5,
+    NonVerifiee = 5
 }

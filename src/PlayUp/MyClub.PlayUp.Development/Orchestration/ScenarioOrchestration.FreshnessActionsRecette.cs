@@ -14,7 +14,6 @@ using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
-using MyClub.PlayUp.Domain.Standings;
 using MyClub.PlayUp.TestKit;
 
 namespace MyClub.PlayUp.Development.Orchestration;
@@ -73,7 +72,7 @@ internal static partial class ScenarioOrchestration
             seule,
             exAequo,
             condition,
-            genere,
+            genere
         };
 
         var matches = RoundRobin(context, poules, [nord, est, sud, ouest, centre]);
@@ -85,7 +84,7 @@ internal static partial class ScenarioOrchestration
             new QualificationRules(
             [
                 QualPath(1, 1, tableau.Id, "Tete"),
-                QualPath(2, 5, classement.Id, "Dernier"),
+                QualPath(2, 5, classement.Id, "Dernier")
             ]),
             context.Clock);
         ApplyQualification.Execute(poules, standing, stages, context.Clock);
@@ -101,7 +100,7 @@ internal static partial class ScenarioOrchestration
                 new ProgressionPath(
                     "P1",
                     ProgressionOutcome.Winner,
-                    new ProgressionDestination(aval.Id, "Suite")),
+                    new ProgressionDestination(aval.Id, "Suite"))
             ]),
             context.Clock);
         ApplyProgressionOutcome.Execute(tableau, upstream.FixtureId, [upstream.Match], stages, context.Clock);
@@ -191,7 +190,7 @@ internal static partial class ScenarioOrchestration
                 QualPath(2, 5, classement.Id, "Dernier"),
                 partage,
                 seuil,
-                libre,
+                libre
             ]),
             context.Clock);
         StampQualified(context, poules, partage, exAequo, "Partage", nord);
@@ -250,7 +249,7 @@ internal static partial class ScenarioOrchestration
         stage.ReplaceBracketPairs(
         [
             new BracketPair("P1", slotA, slotB),
-            new BracketPair("P2", slotC, slotD),
+            new BracketPair("P2", slotC, slotD)
         ]);
         competition.AddStage(stage.Id, context.Clock);
         return stage;

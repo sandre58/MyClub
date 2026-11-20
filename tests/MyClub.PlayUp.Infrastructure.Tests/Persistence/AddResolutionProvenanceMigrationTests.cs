@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using System.Diagnostics.CodeAnalysis;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -110,5 +111,6 @@ public sealed class AddResolutionProvenanceMigrationTests : IAsyncLifetime
         return scope;
     }
 
+    [SuppressMessage("ReSharper", "ClassNeverInstantiated.Local", Justification = "Instantiated by the runtime.")]
     private sealed record ColumnRow(string Name, string DataType, string IsNullable);
 }

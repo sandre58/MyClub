@@ -6,6 +6,7 @@
 
 using System.Diagnostics;
 using FluentAssertions;
+using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages.ReleaseResolution;
@@ -16,8 +17,6 @@ using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using Xunit;
-using ApplicationErrorCodes = MyClub.PlayUp.Application.ApplicationErrorCodes;
-using ApplicationFailureException = MyClub.PlayUp.Application.ApplicationFailureException;
 
 namespace MyClub.PlayUp.Application.Tests.Stages;
 
@@ -251,33 +250,33 @@ public sealed class ReleaseDefinitiveResolutionsTests
         Complete(league);
         var stages = new List<Stage> { league, terminal };
         var matches = new List<Match> { match, cancelled };
-        var summaries = new Dictionary<StageId, IReadOnlyList<MyClub.PlayUp.Application.Abstractions.MatchSummaryRow>>
+        var summaries = new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>
         {
             [league.Id] = [],
             [terminal.Id] = [],
+            [league.Id] =
+            [
+                new MatchSummaryRow(
+                    match.Id,
+                    match.StageId,
+                    match.Status,
+                    match.HomeEntryId,
+                    match.AwayEntryId,
+                    match.Result,
+                    match.HasObservedLive)
+            ],
+            [terminal.Id] =
+            [
+                new MatchSummaryRow(
+                    cancelled.Id,
+                    cancelled.StageId,
+                    cancelled.Status,
+                    cancelled.HomeEntryId,
+                    cancelled.AwayEntryId,
+                    cancelled.Result,
+                    cancelled.HasObservedLive)
+            ]
         };
-        summaries[league.Id] =
-        [
-            new(
-                match.Id,
-                match.StageId,
-                match.Status,
-                match.HomeEntryId,
-                match.AwayEntryId,
-                match.Result,
-                match.HasObservedLive),
-        ];
-        summaries[terminal.Id] =
-        [
-            new(
-                cancelled.Id,
-                cancelled.StageId,
-                cancelled.Status,
-                cancelled.HomeEntryId,
-                cancelled.AwayEntryId,
-                cancelled.Result,
-                cancelled.HasObservedLive),
-        ];
 
         var occupants = ResolutionFreshnessDetector.Evaluate(competition, stages, summaries)
             .SelectMany(pair => pair.Value)
@@ -493,13 +492,14 @@ public sealed class ReleaseDefinitiveResolutionsTests
             "seed");
 
     private static DefinitiveResolutionReleaseRow[] Primary(DefinitiveResolutionReleaseResult result) =>
-        result.Releases.Where(row => !row.SideEffect).ToArray();
+        [.. result.Releases.Where(row => !row.SideEffect)];
 
     private static DefinitiveResolutionReleasePlace[] Places(DefinitiveResolutionReleaseResult result) =>
-        Primary(result)
+    [
+        .. Primary(result)
             .Select(row => new DefinitiveResolutionReleasePlace(
                 row.StageId, row.Target, row.EntryId, row.SlotKey, row.GroupId))
-            .ToArray();
+    ];
 
     private (DefinitiveResolutionReleaseResult Plan, Stage Terminal) DrawWorld()
     {
@@ -560,7 +560,7 @@ public sealed class ReleaseDefinitiveResolutionsTests
         var entries = new[]
         {
             AddEntry.Execute(competition, "Nord", _clock).Id,
-            AddEntry.Execute(competition, "Sud", _clock).Id,
+            AddEntry.Execute(competition, "Sud", _clock).Id
         };
         var league = Stage.Create(competition.Id, new StageName("League"), SampleRegulations.Standard(), _clock);
         league.AddMatchday(1, _clock);
@@ -574,7 +574,7 @@ public sealed class ReleaseDefinitiveResolutionsTests
     }
 
     private void Stamp(Stage league, Stage terminal, params (string Slot, EntryId Entry)[] seats) =>
-        Stamp(league, seats.Select(seat => (seat.Slot, terminal, seat.Entry)).ToArray());
+        Stamp(league, [.. seats.Select(seat => (seat.Slot, terminal, seat.Entry))]);
 
     private void Stamp(Stage league, params (string Slot, Stage Terminal, EntryId Entry)[] seats)
     {

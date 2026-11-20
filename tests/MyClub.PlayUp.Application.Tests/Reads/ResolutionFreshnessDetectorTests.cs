@@ -14,7 +14,6 @@ using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
-using MyClub.PlayUp.Domain.Qualification;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Domain.Standings;
@@ -51,7 +50,7 @@ public sealed class ResolutionFreshnessDetectorTests
     {
         var summaries = played.ToDictionary(
             pair => pair.Stage.Id,
-            pair => (IReadOnlyList<MatchSummaryRow>)StageStartReadinessGuard.ToSummaryRows(pair.Matches));
+            pair => StageStartReadinessGuard.ToSummaryRows(pair.Matches));
         return new Dictionary<Guid, IReadOnlyList<StructureResolutionOccupantDto>>(
             ResolutionFreshnessDetector.Evaluate(competition, stages, summaries));
     }
@@ -65,7 +64,7 @@ public sealed class ResolutionFreshnessDetectorTests
         .. stage.CompositionEntries.Select(entry => (
             entry.EntryId.Value,
             entry.ResolutionProvenance?.SourcePathId,
-            entry.ResolutionProvenance?.UpstreamResultFingerprint)),
+            entry.ResolutionProvenance?.UpstreamResultFingerprint))
     ];
 
     [Fact]
@@ -130,7 +129,7 @@ public sealed class ResolutionFreshnessDetectorTests
                 EntryId = stored.Value,
                 State = StructureResolutionFreshness.Perime,
                 StalenessCause = StructureResolutionStalenessCause.ResultatAmont,
-                CascadeReplaceable = true,
+                CascadeReplaceable = true
             });
         terminal.FindSlot("Champ")!.EntryId.Should().Be(stored);
     }
@@ -144,7 +143,7 @@ public sealed class ResolutionFreshnessDetectorTests
         league.ReplaceQualificationRules(
             new QualificationRules(
             [
-                OverallPath(2, terminal.Id, "Champ"),
+                OverallPath(2, terminal.Id, "Champ")
             ]),
             _clock);
 
@@ -302,9 +301,9 @@ public sealed class ResolutionFreshnessDetectorTests
             cup,
             draw.Id,
             _clock,
-            cup.Slots.Select(slot => slot.SlotKey).ToArray(),
-            competitionStages: [cup],
-            randomSource: new SeededRandomSource(1));
+            [.. cup.Slots.Select(slot => slot.SlotKey)],
+            randomSource: new SeededRandomSource(1),
+            competitionStages: [cup]);
         PublishDraw.Execute(cup, draw.Id, _clock);
         ApplyDraw.Execute(cup, draw.Id, _clock);
 
@@ -358,7 +357,7 @@ public sealed class ResolutionFreshnessDetectorTests
                     1,
                     QualificationSource.FromGroup(group.Id),
                     new QualificationSelection(SelectionMode.Position, 1),
-                    QualificationDestination.ForSlot(cup.Id, "QF-A")),
+                    QualificationDestination.ForSlot(cup.Id, "QF-A"))
             ]),
             _clock);
         ApplyQualification.Execute(
@@ -382,7 +381,7 @@ public sealed class ResolutionFreshnessDetectorTests
                 new ProgressionPath(
                     "P1",
                     ProgressionOutcome.Winner,
-                    new ProgressionDestination(ranking.Id, "R1")),
+                    new ProgressionDestination(ranking.Id, "R1"))
             ]),
             _clock);
         ApplyProgressionOutcome.Execute(cup, fixture.Id, [cupMatch], [groups, cup, ranking], _clock);
@@ -456,9 +455,7 @@ public sealed class ResolutionFreshnessDetectorTests
         assessed.IndeterminacyCause.Should().Be(StructureResolutionIndeterminacyCause.MatchNonJoue);
         assessed.ActionMatchId.Should().Be(match.Id.Value);
         var away = match.AwayEntryId ?? throw new InvalidOperationException("Away entry is required.");
-        string Name(EntryId entryId) =>
-            competition.Entries.Single(entry => entry.Id.Equals(entryId)).DisplayName;
-        assessed.ActionMatchLabel.Should().Be($"{Name(occupant)} – {Name(away)}");
+        assessed.ActionMatchLabel.Should().Be($"{name(occupant)} – {name(away)}");
         assessed.UpstreamStageId.Should().Be(source.Id.Value);
 
         var attention = NeedsAttentionAssembler.Assemble(
@@ -476,17 +473,21 @@ public sealed class ResolutionFreshnessDetectorTests
             [source, destination],
             matchSummariesByStage: new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>
             {
-                [source.Id] = StageStartReadinessGuard.ToSummaryRows([match]),
+                [source.Id] = StageStartReadinessGuard.ToSummaryRows([match])
             });
         var completed = view with
         {
-            Stages = [.. view.Stages.Select(stage => stage with { Status = StageStatus.Completed })],
+            Stages = [.. view.Stages.Select(stage => stage with { Status = StageStatus.Completed })]
         };
         var hidden = new List<NeedsAttentionItemDto>();
         StructurePresentedAttentionCollector.Collect(completed, hidden);
         hidden.Should().NotContain(item =>
             item.Source == NeedsAttentionAssembler.SourceResolutionPerime
             || item.Source == NeedsAttentionAssembler.SourceResolutionIndetermine);
+        return;
+
+        string name(EntryId entryId) =>
+            competition.Entries.Single(entry => entry.Id.Equals(entryId)).DisplayName;
     }
 
     [Fact]
@@ -633,7 +634,7 @@ public sealed class ResolutionFreshnessDetectorTests
             [league, terminal],
             matchSummariesByStage: new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>
             {
-                [league.Id] = StageStartReadinessGuard.ToSummaryRows(matches),
+                [league.Id] = StageStartReadinessGuard.ToSummaryRows(matches)
             });
         var completedTerminal = view with
         {
@@ -642,8 +643,8 @@ public sealed class ResolutionFreshnessDetectorTests
                 .. view.Stages.Select(stage =>
                     stage.StageId == terminal.Id.Value
                         ? stage with { Status = StageStatus.Completed }
-                        : stage),
-            ],
+                        : stage)
+            ]
         };
         completedTerminal.Stages.Single(stage => stage.StageId == terminal.Id.Value)
             .ResolutionOccupants.Should().Contain(occupant =>
@@ -755,7 +756,7 @@ public sealed class ResolutionFreshnessDetectorTests
             new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>
             {
                 [league.Id] = StageStartReadinessGuard.ToSummaryRows(matches),
-                [terminal.Id] = [],
+                [terminal.Id] = []
             });
         loaded.SelectMany(pair => pair.Value).Should().Contain(occupant =>
             occupant.SlotKey == "Champ" && occupant.Releasable);
@@ -773,7 +774,7 @@ public sealed class ResolutionFreshnessDetectorTests
         int? top,
         int? minimumPoints)
     {
-        var selection = top is int count
+        var selection = top is { } count
             ? new QualificationSelection(SelectionMode.Top, count)
             : new QualificationSelection(SelectionMode.Position, position ?? 1);
         var path = new QualificationPath(
@@ -781,7 +782,7 @@ public sealed class ResolutionFreshnessDetectorTests
             QualificationSource.Overall(),
             selection,
             QualificationDestination.ForSlot(terminal.Id, "Champ"),
-            minimumPoints is int points ? QualificationCondition.PointsAtLeast(points) : null);
+            minimumPoints is { } points ? QualificationCondition.PointsAtLeast(points) : null);
         league.ReplaceQualificationRules(new QualificationRules([path]), _clock);
         var provenance = new ResolutionProvenance(
             ResolutionProvenanceKind.Qualification,

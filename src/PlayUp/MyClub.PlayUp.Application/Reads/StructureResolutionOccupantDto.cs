@@ -22,7 +22,7 @@ public enum StructureResolutionOccupantTarget
     Group = 2,
 
     /// <summary>Population (composition) occupant.</summary>
-    Population = 3,
+    Population = 3
 }
 
 /// <summary>
@@ -41,7 +41,7 @@ public enum StructureResolutionFreshness
     Indetermine = 3,
 
     /// <summary>Provenance was explicitly not verified.</summary>
-    NonVerifiee = 4,
+    NonVerifiee = 4
 }
 
 /// <summary>
@@ -57,7 +57,7 @@ public enum StructureResolutionStalenessCause
     RegleQualification = 2,
 
     /// <summary>An upstream occupant this resolution depends on is already stale.</summary>
-    AmontPerime = 3,
+    AmontPerime = 3
 }
 
 /// <summary>
@@ -88,7 +88,7 @@ public enum StructureResolutionIndeterminacyCause
     ConditionNonRemplie = 7,
 
     /// <summary>Source-phase setup threw while the selection was evaluated.</summary>
-    ConfigurationInvalide = 8,
+    ConfigurationInvalide = 8
 }
 
 /// <summary>

@@ -32,23 +32,17 @@ public sealed class DeferredParticipantsRecetteIntegrationTests(DevelopmentPostg
         var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
         var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
         var list = await competitions.ListAsync();
-        list.Select(item => item.Name.Value).Should().BeEquivalentTo(
-        [
-            DeferredParticipantsRecetteNames.Planned,
-            DeferredParticipantsRecetteNames.OneSide,
-            DeferredParticipantsRecetteNames.BothSides,
-            DeferredParticipantsRecetteNames.PoolStanding
-        ]);
+        list.Select(item => item.Name.Value).Should().BeEquivalentTo(DeferredParticipantsRecetteNames.Planned, DeferredParticipantsRecetteNames.OneSide, DeferredParticipantsRecetteNames.BothSides, DeferredParticipantsRecetteNames.PoolStanding);
 
-        var planned = await CupMatchAsync(list, DeferredParticipantsRecetteNames.Planned);
+        var planned = await cupMatchAsync(list, DeferredParticipantsRecetteNames.Planned);
         planned.HomeEntryId.Should().BeNull();
         planned.AwayEntryId.Should().BeNull();
 
-        var oneSide = await CupMatchAsync(list, DeferredParticipantsRecetteNames.OneSide);
+        var oneSide = await cupMatchAsync(list, DeferredParticipantsRecetteNames.OneSide);
         oneSide.ParticipantsResolved.Should().BeFalse();
         (oneSide.HomeEntryId is not null || oneSide.AwayEntryId is not null).Should().BeTrue();
 
-        var both = await CupMatchAsync(list, DeferredParticipantsRecetteNames.BothSides);
+        var both = await cupMatchAsync(list, DeferredParticipantsRecetteNames.BothSides);
         both.HomeEntryId.Should().NotBeNull();
         both.AwayEntryId.Should().NotBeNull();
         both.HomeEntryId.Should().NotBe(both.AwayEntryId);
@@ -70,14 +64,15 @@ public sealed class DeferredParticipantsRecetteIntegrationTests(DevelopmentPostg
             competition.Regulation.StandingRules);
         standing.Rows.Should().OnlyContain(row => row.Played == 1);
         deferred.Status.Should().Be(MatchStatus.Scheduled);
+        return;
 
-        async Task<Match> CupMatchAsync(
+        async Task<Match> cupMatchAsync(
             IReadOnlyList<Competition> summaries,
             string name)
         {
             var summary = summaries.Single(item => item.Name.Value == name);
-            var competition = (await competitions.GetByIdForUpdateAsync(summary.Id))!;
-            var cup = (await stages.GetByIdsForUpdateAsync(competition.StageIds))
+            var forUpdate = (await competitions.GetByIdForUpdateAsync(summary.Id))!;
+            var cup = (await stages.GetByIdsForUpdateAsync(forUpdate.StageIds))
                 .Single(stage => stage.Name.Value == "Demi-finale");
             var stageMatches = await matches.ListByStageForUpdateAsync(cup.Id);
             var semi = cup.Rounds.Single(round => round.Name == "SF").Fixtures.Single();

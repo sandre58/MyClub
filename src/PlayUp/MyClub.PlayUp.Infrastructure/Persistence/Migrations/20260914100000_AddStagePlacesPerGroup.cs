@@ -4,11 +4,10 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+#nullable disable
+
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
-using MyClub.PlayUp.Infrastructure.Persistence;
-
-#nullable disable
 
 namespace MyClub.PlayUp.Infrastructure.Persistence.Migrations;
 

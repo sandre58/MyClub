@@ -11,8 +11,6 @@ using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
-using ApplicationErrorCodes = MyClub.PlayUp.Application.ApplicationErrorCodes;
-using ApplicationFailureException = MyClub.PlayUp.Application.ApplicationFailureException;
 
 namespace MyClub.PlayUp.Application.Stages.CascadeReplace;
 
@@ -97,15 +95,16 @@ public static class CascadeReplace
         Competition competition,
         IReadOnlyList<Stage> stages,
         IReadOnlyList<CascadePlayedMatch> played) =>
-        played
+    [
+        .. played
             .Select(row => row with
             {
                 HomeName = EntryDisplayName(competition, row.HomeEntryId),
                 AwayName = EntryDisplayName(competition, row.AwayEntryId),
                 StageName = PhaseName(stages, row.StageId),
-                LegIndex = LegWhenMultiLeg(stages, row.StageId, row.MatchId),
+                LegIndex = LegWhenMultiLeg(stages, row.StageId, row.MatchId)
             })
-            .ToArray();
+    ];
 
     private static string? EntryDisplayName(Competition competition, Guid? entryId)
     {
@@ -230,8 +229,7 @@ public static class CascadeReplace
             }
 
             if (node.Members.Any(member =>
-                    member.Target == StructureResolutionOccupantTarget.Slot
-                    && member.SlotKey is { } slotKey
+                    member is { Target: StructureResolutionOccupantTarget.Slot, SlotKey: { } slotKey }
                     && stage.DirectAssignments.Any(assignment =>
                         string.Equals(assignment.SlotKey, slotKey, StringComparison.Ordinal))))
             {
@@ -283,9 +281,9 @@ public static class CascadeReplace
         var stageMatches = matches.Where(match => match.StageId.Equals(stage.Id)).ToArray();
         var provenance = new ResolutionProvenance(replay.Kind, replay.SourcePathId, fingerprint);
         var slot = members.FirstOrDefault(member =>
-            member.Target == StructureResolutionOccupantTarget.Slot && member.SlotKey is not null);
+            member is { Target: StructureResolutionOccupantTarget.Slot, SlotKey: not null });
         var group = members.FirstOrDefault(member =>
-            member.Target == StructureResolutionOccupantTarget.Group && member.GroupId is not null);
+            member is { Target: StructureResolutionOccupantTarget.Group, GroupId: not null });
 
         if (slot?.SlotKey is { } slotKey)
         {
@@ -448,17 +446,9 @@ public static class CascadeReplace
     {
         var inSet = closure.ToHashSet();
         var color = closure.ToDictionary(node => node, _ => 0);
-        foreach (var node in closure)
-        {
-            if (color[node] == 0 && Visit(node))
-            {
-                return true;
-            }
-        }
+        return closure.Any(node => color[node] == 0 && visit(node));
 
-        return false;
-
-        bool Visit(ResolutionNode node)
+        bool visit(ResolutionNode node)
         {
             color[node] = 1;
             foreach (var next in forward[node])
@@ -468,7 +458,7 @@ public static class CascadeReplace
                     continue;
                 }
 
-                if (color[next] == 1 || (color[next] == 0 && Visit(next)))
+                if (color[next] == 1 || (color[next] == 0 && visit(next)))
                 {
                     return true;
                 }
@@ -487,12 +477,9 @@ public static class CascadeReplace
         var incoming = closure.ToDictionary(node => node, _ => 0);
         foreach (var node in closure)
         {
-            foreach (var next in forward[node])
+            foreach (var next in forward[node].Where(inSet.Contains))
             {
-                if (inSet.Contains(next))
-                {
-                    incoming[next]++;
-                }
+                incoming[next]++;
             }
         }
 
@@ -502,13 +489,8 @@ public static class CascadeReplace
         {
             var node = queue.Dequeue();
             ordered.Add(node);
-            foreach (var next in forward[node])
+            foreach (var next in forward[node].Where(inSet.Contains))
             {
-                if (!inSet.Contains(next))
-                {
-                    continue;
-                }
-
                 incoming[next]--;
                 if (incoming[next] == 0)
                 {
@@ -525,14 +507,16 @@ public static class CascadeReplace
             .GroupBy(match => match.StageId)
             .ToDictionary(
                 group => group.Key,
-                group => (IReadOnlyList<MatchSummaryRow>)group.Select(match => new MatchSummaryRow(
-                    match.Id,
-                    match.StageId,
-                    match.Status,
-                    match.HomeEntryId,
-                    match.AwayEntryId,
-                    match.Result,
-                    match.HasObservedLive)).ToArray());
+                group => (IReadOnlyList<MatchSummaryRow>)[
+                    .. group.Select(match => new MatchSummaryRow(
+                        match.Id,
+                        match.StageId,
+                        match.Status,
+                        match.HomeEntryId,
+                        match.AwayEntryId,
+                        match.Result,
+                        match.HasObservedLive))
+                ]);
 
     private static ApplicationFailureException Fail(string message, string code) =>
         new(message, code);

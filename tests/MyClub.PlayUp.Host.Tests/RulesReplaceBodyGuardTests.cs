@@ -15,12 +15,12 @@ public sealed class RulesReplaceBodyGuardTests
 {
     public static IEnumerable<object?[]> TruthTable()
     {
-        yield return new object?[] { true, null, false };
-        yield return new object?[] { true, 0, false };
-        yield return new object?[] { true, 2, true };
-        yield return new object?[] { false, null, true };
-        yield return new object?[] { false, 0, true };
-        yield return new object?[] { false, 1, false };
+        yield return [true, null, false];
+        yield return [true, 0, false];
+        yield return [true, 2, true];
+        yield return [false, null, true];
+        yield return [false, 0, true];
+        yield return [false, 1, false];
     }
 
     [Theory]

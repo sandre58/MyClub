@@ -32,7 +32,7 @@ public sealed class IntentAndRulesJsonConverterTests
         var restored = JsonSerializer.Deserialize<ProgressionIntent>(json, StageRegulationJson.Options);
 
         restored.Should().NotBeNull();
-        restored!.Id.Should().Be(intent.Id);
+        restored.Id.Should().Be(intent.Id);
         restored.Order.Should().Be(intent.Order);
         restored.RoundId.Should().Be(intent.RoundId);
         restored.Outcome.Should().Be(intent.Outcome);
@@ -85,7 +85,7 @@ public sealed class IntentAndRulesJsonConverterTests
         var json = JsonSerializer.Serialize(intent, StageRegulationJson.Options);
         var restored = JsonSerializer.Deserialize<QualificationIntent>(json, StageRegulationJson.Options);
         restored.Should().NotBeNull();
-        restored!.Id.Should().Be(intent.Id);
+        restored.Id.Should().Be(intent.Id);
         restored.SourceKind.Should().Be(intent.SourceKind);
         restored.DestinationSlotKeys.Should().Equal("A", "B");
 

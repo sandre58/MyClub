@@ -618,7 +618,7 @@ public static class StructureViewAssembler
                 competitionStages,
                 summary,
                 drawExecutionBadge,
-                summaries),
+                summaries)
         };
     }
 
@@ -766,11 +766,13 @@ public static class StructureViewAssembler
             return null;
         }
 
-        return stage.CompositionEntries
-            .Select(entry => new StructureCompositionEntryPotDto(
-                entry.EntryId.Value,
-                pots[entry.EntryId]))
-            .ToArray();
+        return
+        [
+            .. stage.CompositionEntries
+                .Select(entry => new StructureCompositionEntryPotDto(
+                    entry.EntryId.Value,
+                    pots[entry.EntryId]))
+        ];
     }
 
     /// <summary>
@@ -988,14 +990,12 @@ public static class StructureViewAssembler
         if (attachedMatches > 0
             && !CupCanonicalEntryRoundStartGate.BlocksStart(stage, competition, competitionStages))
         {
-            if (StructureSkeleton.InferFormat(stage) == StructureFormatKind.Groups)
-            {
-                actions.Add(ActionAssignEntryToGroup);
-                actions.Add(ActionClearEntryFromGroup);
-                actions.Add(ActionReplaceEntryInGroup);
-                actions.Add(ActionAssignEntriesToGroup);
-                actions.Add(ActionSetGroupEntries);
-            }
+            if (StructureSkeleton.InferFormat(stage) != StructureFormatKind.Groups) return actions;
+            actions.Add(ActionAssignEntryToGroup);
+            actions.Add(ActionClearEntryFromGroup);
+            actions.Add(ActionReplaceEntryInGroup);
+            actions.Add(ActionAssignEntriesToGroup);
+            actions.Add(ActionSetGroupEntries);
 
             return actions;
         }

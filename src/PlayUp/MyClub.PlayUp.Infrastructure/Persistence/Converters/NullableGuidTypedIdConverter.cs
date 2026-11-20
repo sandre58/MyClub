@@ -28,8 +28,8 @@ public sealed class NullableGuidTypedIdConverter<TId> : ValueConverter<TId?, Gui
     private static Expression<Func<TId?, Guid?>> CreateToProviderExpression()
     {
         var id = Expression.Parameter(typeof(TId?), "id");
-        var hasValue = Expression.Property(id, nameof(Nullable<TId>.HasValue));
-        var value = Expression.Property(Expression.Property(id, nameof(Nullable<TId>.Value)), GetValueProperty());
+        var hasValue = Expression.Property(id, nameof(Nullable<>.HasValue));
+        var value = Expression.Property(Expression.Property(id, nameof(Nullable<>.Value)), GetValueProperty());
         var body = Expression.Condition(
             hasValue,
             Expression.Convert(value, typeof(Guid?)),
@@ -40,8 +40,8 @@ public sealed class NullableGuidTypedIdConverter<TId> : ValueConverter<TId?, Gui
     private static Expression<Func<Guid?, TId?>> CreateFromProviderExpression()
     {
         var value = Expression.Parameter(typeof(Guid?), "value");
-        var hasValue = Expression.Property(value, nameof(Nullable<Guid>.HasValue));
-        var guid = Expression.Property(value, nameof(Nullable<Guid>.Value));
+        var hasValue = Expression.Property(value, nameof(Nullable<>.HasValue));
+        var guid = Expression.Property(value, nameof(Nullable<>.Value));
         var constructed = Expression.Convert(
             Expression.New(GetGuidConstructor(), guid),
             typeof(TId?));

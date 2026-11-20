@@ -22,7 +22,7 @@ public enum PathOccupantIndeterminacyReason
     Ambiguous = 2,
 
     /// <summary>The selection could not be computed.</summary>
-    Uncomputable = 3,
+    Uncomputable = 3
 }
 
 /// <summary>
@@ -44,7 +44,7 @@ public enum PathOccupantSelectionStatus
     /// <summary>
     /// Qualification condition gate skipped the path.
     /// </summary>
-    Skipped = 3,
+    Skipped = 3
 }
 
 /// <summary>

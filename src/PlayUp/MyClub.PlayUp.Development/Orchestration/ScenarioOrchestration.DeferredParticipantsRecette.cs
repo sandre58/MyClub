@@ -9,7 +9,6 @@ using MyClub.PlayUp.Application.Standings;
 using MyClub.PlayUp.Development.Runtime;
 using MyClub.PlayUp.Development.Scenarios;
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
@@ -71,7 +70,7 @@ internal static partial class ScenarioOrchestration
             competition.AddEntry(TeamId.New(), "Gamma", context.Clock).Id,
             competition.AddEntry(TeamId.New(), "Delta", context.Clock).Id,
             competition.AddEntry(TeamId.New(), "Epsilon", context.Clock).Id,
-            competition.AddEntry(TeamId.New(), "Zeta", context.Clock).Id,
+            competition.AddEntry(TeamId.New(), "Zeta", context.Clock).Id
         };
         var league = Stage.Create(competition.Id, new StageName("Poule"), RegulationPacks.Standard(), context.Clock);
         var cup = Stage.Create(competition.Id, new StageName("Demi-finale"), RegulationPacks.Standard(), context.Clock);
@@ -87,16 +86,11 @@ internal static partial class ScenarioOrchestration
             [home, away],
             [played],
             competition.Regulation.StandingRules);
-        if (stop == DeferredCupStop.OneSide)
-        {
-            league.ReplaceQualificationRules(
-                new QualificationRules([DeferredQualPath(1, 1, cup, "SF-A")]),
-                context.Clock);
-        }
-        else
-        {
-            league.ReplaceQualificationRules(DeferredSemiRules(cup), context.Clock);
-        }
+        league.ReplaceQualificationRules(
+            stop == DeferredCupStop.OneSide
+                ? new QualificationRules([DeferredQualPath(1, 1, cup, "SF-A")])
+                : DeferredSemiRules(cup),
+            context.Clock);
 
         PrepareStage.Execute(cup, stages, context.Clock);
         var created = MaterializeCupFromOccupiedSlots.Execute(
@@ -153,7 +147,7 @@ internal static partial class ScenarioOrchestration
             competition.AddEntry(TeamId.New(), "Quart A", context.Clock).Id,
             competition.AddEntry(TeamId.New(), "Quart B", context.Clock).Id,
             competition.AddEntry(TeamId.New(), "Quart C", context.Clock).Id,
-            competition.AddEntry(TeamId.New(), "Quart D", context.Clock).Id,
+            competition.AddEntry(TeamId.New(), "Quart D", context.Clock).Id
         };
         var groups = Stage.Create(competition.Id, new StageName("Poules"), RegulationPacks.Standard(), context.Clock);
         var cup = Stage.Create(competition.Id, new StageName("Demi-finale"), RegulationPacks.Standard(), context.Clock);
@@ -182,7 +176,7 @@ internal static partial class ScenarioOrchestration
                     2,
                     QualificationSource.FromGroup(group.Id),
                     new QualificationSelection(SelectionMode.Position, 2),
-                    QualificationDestination.ForSlot(cup.Id, "SF-B")),
+                    QualificationDestination.ForSlot(cup.Id, "SF-B"))
             ]),
             context.Clock);
         PrepareStage.Execute(cup, stages, context.Clock);
@@ -218,7 +212,7 @@ internal static partial class ScenarioOrchestration
         [
             new BracketPair("Q1", "QF-A", "QF-B"),
             new BracketPair("Q2", "QF-C", "QF-D"),
-            new BracketPair("S1", "SF-A", "SF-B"),
+            new BracketPair("S1", "SF-A", "SF-B")
         ]);
         cup.AddFixture(quarter.Id, clock, "QF-A", "QF-B", "Q1");
         cup.AddFixture(quarter.Id, clock, "QF-C", "QF-D", "Q2");
@@ -235,7 +229,7 @@ internal static partial class ScenarioOrchestration
         new(
         [
             DeferredQualPath(1, 1, cup, "SF-A"),
-            DeferredQualPath(2, 2, cup, "SF-B"),
+            DeferredQualPath(2, 2, cup, "SF-B")
         ]);
 
     private static Match SemiMatch(Stage cup, IReadOnlyList<Match> created)

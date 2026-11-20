@@ -6,8 +6,6 @@
 
 using MyClub.PlayUp.Domain.Stages;
 
-using ApplicationErrorCodes = MyClub.PlayUp.Application.ApplicationErrorCodes;
-
 namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
@@ -47,6 +45,6 @@ public static class GroupSeatModes
             StageErrorCodes.GroupPlacementResolutionLocked => QualProg,
             StageErrorCodes.GroupAssignLockedByGroupMatches => MatchLocked,
             ApplicationErrorCodes.GroupSeatReservedByInboundFeed => Reserved,
-            _ => Editable,
+            _ => Editable
         };
 }

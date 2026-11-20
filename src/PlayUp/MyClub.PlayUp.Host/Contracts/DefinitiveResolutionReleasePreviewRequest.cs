@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Application.Reads;
-using MyClub.PlayUp.Application.Stages.ReleaseResolution;
 
 namespace MyClub.PlayUp.Host.Contracts;
 

@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Domain.Matches;
 
 namespace MyClub.PlayUp.Domain.Stages;
 

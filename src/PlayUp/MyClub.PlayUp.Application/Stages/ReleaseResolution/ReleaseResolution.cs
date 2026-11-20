@@ -6,14 +6,11 @@
 
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Reads;
-using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Stages.CascadeReplace;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
-using ApplicationErrorCodes = MyClub.PlayUp.Application.ApplicationErrorCodes;
-using ApplicationFailureException = MyClub.PlayUp.Application.ApplicationFailureException;
 using CascadeReplaceUseCase = MyClub.PlayUp.Application.Stages.CascadeReplace.CascadeReplace;
 
 namespace MyClub.PlayUp.Application.Stages.ReleaseResolution;
@@ -150,7 +147,7 @@ public static class ReleaseResolution
     {
         var entryId = new EntryId(origin.EntryId);
         var detached = new List<ResolutionReleaseDetachedMatch>();
-        if (origin.Target == StructureResolutionOccupantTarget.Slot && origin.SlotKey is not null)
+        if (origin is { Target: StructureResolutionOccupantTarget.Slot, SlotKey: not null })
         {
             UnresolveBracket(competition, stage, origin.SlotKey, entryId, matches, clock, detached);
         }
@@ -158,13 +155,14 @@ public static class ReleaseResolution
         var releases = new List<ResolutionReleaseRow> { ReleaseRow(competition, stage, origin) };
         var snapshots = MaterializedParticipantSnapshots.FromMatches(
             matches.Where(match => match.StageId.Equals(stage.Id)));
-        if (origin.Target == StructureResolutionOccupantTarget.Slot && origin.SlotKey is not null)
+        switch (origin)
         {
-            stage.ClearResolvedEntry(origin.SlotKey, clock, snapshots);
-        }
-        else if (origin.Target == StructureResolutionOccupantTarget.Group && origin.GroupId is { } groupId)
-        {
-            stage.RemoveResolvedGroupEntry(new GroupId(groupId), entryId, snapshots);
+            case { Target: StructureResolutionOccupantTarget.Slot, SlotKey: not null }:
+                stage.ClearResolvedEntry(origin.SlotKey, clock, snapshots);
+                break;
+            case { Target: StructureResolutionOccupantTarget.Group, GroupId: { } groupId }:
+                stage.RemoveResolvedGroupEntry(new GroupId(groupId), entryId, snapshots);
+                break;
         }
 
         foreach (var witness in stage.FormPathResolutions
@@ -177,20 +175,19 @@ public static class ReleaseResolution
         }
 
         var populationRemoved = false;
-        if (!CascadeReplaceUseCase.Referenced(stage, entryId))
+        if (CascadeReplaceUseCase.Referenced(stage, entryId))
+            return new AppliedRelease(releases, detached, populationRemoved);
+        stage.RemoveResolvedPopulationEntry(entryId, clock, snapshots);
+        populationRemoved = true;
+        if (origin.Target != StructureResolutionOccupantTarget.Population)
         {
-            stage.RemoveResolvedPopulationEntry(entryId, clock, snapshots);
-            populationRemoved = true;
-            if (origin.Target != StructureResolutionOccupantTarget.Population)
-            {
-                releases.Add(new ResolutionReleaseRow(
-                    stage.Id.Value,
-                    StructureResolutionOccupantTarget.Population,
-                    null,
-                    null,
-                    origin.EntryId,
-                    EntryName(competition, origin.EntryId)));
-            }
+            releases.Add(new ResolutionReleaseRow(
+                stage.Id.Value,
+                StructureResolutionOccupantTarget.Population,
+                null,
+                null,
+                origin.EntryId,
+                EntryName(competition, origin.EntryId)));
         }
 
         return new AppliedRelease(releases, detached, populationRemoved);
@@ -345,7 +342,7 @@ public static class ReleaseResolution
             return occupant.SlotKey;
         }
 
-        if (occupant.GroupId is not Guid groupId)
+        if (occupant.GroupId is not { } groupId)
         {
             return null;
         }
@@ -386,14 +383,16 @@ public static class ReleaseResolution
             .GroupBy(match => match.StageId)
             .ToDictionary(
                 group => group.Key,
-                group => (IReadOnlyList<MatchSummaryRow>)group.Select(match => new MatchSummaryRow(
-                    match.Id,
-                    match.StageId,
-                    match.Status,
-                    match.HomeEntryId,
-                    match.AwayEntryId,
-                    match.Result,
-                    match.HasObservedLive)).ToArray());
+                group => (IReadOnlyList<MatchSummaryRow>)[
+                    .. group.Select(match => new MatchSummaryRow(
+                        match.Id,
+                        match.StageId,
+                        match.Status,
+                        match.HomeEntryId,
+                        match.AwayEntryId,
+                        match.Result,
+                        match.HasObservedLive))
+                ]);
 
     private static string Message(string code) =>
         code switch
@@ -414,7 +413,7 @@ public static class ReleaseResolution
                 "Matches are already generated and the phase is in progress: the place cannot be released. Decide the upstream result first.",
             ApplicationErrorCodes.ResolutionReleaseBlockedByDraw =>
                 "The team is still in a draw whose placements remain.",
-            _ => "This place cannot be released.",
+            _ => "This place cannot be released."
         };
 
     private static ApplicationFailureException Fail(string message, string code) =>

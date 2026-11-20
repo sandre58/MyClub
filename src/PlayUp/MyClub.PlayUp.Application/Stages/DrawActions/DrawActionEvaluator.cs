@@ -7,7 +7,6 @@
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
 
@@ -33,10 +32,9 @@ internal static class DrawActionEvaluator
     internal static bool NeedsGroupDraftParticipantRows(Stage stage)
     {
         ArgumentNullException.ThrowIfNull(stage);
-        return stage.Status == StageStatus.Draft
-            && stage.Groups.Count > 0
-            && StructureSkeleton.CountAttachedMatches(stage) > 0
-            && stage.Draws.Any(draw => draw.Kind == DrawResolutionKind.Group);
+        return stage is { Status: StageStatus.Draft, Groups.Count: > 0 }
+               && StructureSkeleton.CountAttachedMatches(stage) > 0
+               && stage.Draws.Any(draw => draw.Kind == DrawResolutionKind.Group);
     }
 
     internal static DrawActionsAssessment Evaluate(DrawActionContext context, Draw draw)
@@ -134,12 +132,7 @@ internal static class DrawActionEvaluator
             return ApplicationErrorCodes.DrawReleaseRequiresCancelled;
         }
 
-        if (draw.Resolution.State != DrawResolutionState.Resolved)
-        {
-            return ApplicationErrorCodes.DrawReleaseFailure;
-        }
-
-        if (PublishedAppliedBlocksRelease(context.Stage, draw, ignoreSelf: treatAsCancelled))
+        if (draw.Resolution.State != DrawResolutionState.Resolved || PublishedAppliedBlocksRelease(context.Stage, draw, ignoreSelf: treatAsCancelled))
         {
             return ApplicationErrorCodes.DrawReleaseFailure;
         }
@@ -177,12 +170,8 @@ internal static class DrawActionEvaluator
             return ApplicationErrorCodes.DrawKindNotSupported;
         }
 
-        if (draw.Status != DrawStatus.Published)
-        {
-            return ApplicationErrorCodes.DrawApplyFailure;
-        }
-
-        if (draw.Resolution.State != DrawResolutionState.Resolved
+        if (draw.Status != DrawStatus.Published
+            || draw.Resolution.State != DrawResolutionState.Resolved
             || draw.Resolution.ResolvedKind != draw.Kind
             || draw.Inputs is null)
         {
@@ -270,12 +259,7 @@ internal static class DrawActionEvaluator
             foreach (var placement in draw.Resolution.SlotResults)
             {
                 var slot = stage.FindSlot(placement.SlotKey);
-                if (slot is null || !pool.Contains(placement.EntryId) || IsDirectAssignment(stage, placement.SlotKey))
-                {
-                    return ApplicationErrorCodes.DrawApplyFailure;
-                }
-
-                if (slot.EntryId is { } current && !current.Equals(placement.EntryId))
+                if (slot is null || !pool.Contains(placement.EntryId) || IsDirectAssignment(stage, placement.SlotKey) || (slot.EntryId is { } current && !current.Equals(placement.EntryId)))
                 {
                     return ApplicationErrorCodes.DrawApplyFailure;
                 }
@@ -289,15 +273,7 @@ internal static class DrawActionEvaluator
             return null;
         }
 
-        foreach (var placement in draw.Resolution.GroupResults)
-        {
-            if (stage.FindGroup(placement.GroupId) is null || !pool.Contains(placement.EntryId))
-            {
-                return ApplicationErrorCodes.DrawApplyFailure;
-            }
-        }
-
-        return null;
+        return draw.Resolution.GroupResults.Any(placement => stage.FindGroup(placement.GroupId) is null || !pool.Contains(placement.EntryId)) ? ApplicationErrorCodes.DrawApplyFailure : null;
     }
 
     private static string? CoherenceBlock(DrawActionContext context, Draw draw)

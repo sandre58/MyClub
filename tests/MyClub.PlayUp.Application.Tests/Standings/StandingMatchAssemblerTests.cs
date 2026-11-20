@@ -56,7 +56,7 @@ public sealed class StandingMatchAssemblerTests
         played.Start(_clock);
         played.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
 
-        var deferred = new MyClub.PlayUp.Application.Abstractions.MatchSummaryRow(
+        var deferred = new Abstractions.MatchSummaryRow(
             MatchId.New(),
             StageId.New(),
             MatchStatus.Finished,
@@ -68,7 +68,7 @@ public sealed class StandingMatchAssemblerTests
         var fromMatches = StandingMatchAssembler.Assemble([played]);
         var fromRows = StandingMatchAssembler.Assemble(
         [
-            new MyClub.PlayUp.Application.Abstractions.MatchSummaryRow(
+            new Abstractions.MatchSummaryRow(
                 played.Id,
                 played.StageId,
                 played.Status,

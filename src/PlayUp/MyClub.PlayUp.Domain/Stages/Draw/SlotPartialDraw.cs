@@ -31,15 +31,13 @@ public static class SlotPartialDraw
         ArgumentNullException.ThrowIfNull(snapshot);
 
         var composition = stage.CompositionEntries.Select(entry => entry.EntryId).ToHashSet();
-        var facts = new List<SlotDrawPlaceFact>(stage.Slots.Count);
-        foreach (var slot in stage.Slots)
-        {
-            var feed = SlotFeedResolver.Resolve(snapshot, slot.SlotKey);
-            facts.Add(new SlotDrawPlaceFact(
-                slot.SlotKey,
-                ClassifyOccupancy(slot.EntryId, composition, feed),
-                slot.EntryId));
-        }
+        List<SlotDrawPlaceFact> facts =
+        [
+            with(stage.Slots.Count),
+            .. from slot in stage.Slots
+            let feed = SlotFeedResolver.Resolve(snapshot, slot.SlotKey)
+            select new SlotDrawPlaceFact(slot.SlotKey, ClassifyOccupancy(slot.EntryId, composition, feed), slot.EntryId)
+        ];
 
         return facts;
     }
@@ -75,14 +73,7 @@ public static class SlotPartialDraw
             }
         }
 
-        var unplaced = new List<EntryId>();
-        foreach (var entry in stage.CompositionEntries)
-        {
-            if (!placed.Contains(entry.EntryId))
-            {
-                unplaced.Add(entry.EntryId);
-            }
-        }
+        var unplaced = (from entry in stage.CompositionEntries where !placed.Contains(entry.EntryId) select entry.EntryId).ToList();
 
         var refusal = vacant.Count == 0
             ? SlotPartialDrawRefusal.NoFreeSlot
@@ -101,7 +92,7 @@ public static class SlotPartialDraw
     /// </summary>
     private static bool IsStructuralFeed(SlotFeedResolution feed) =>
         feed.Status != FeedResolutionStatus.Missing
-        && !(feed.Status == FeedResolutionStatus.Unique && feed.Source?.Kind == FeedKind.Direct);
+        && feed is not { Status: FeedResolutionStatus.Unique, Source.Kind: FeedKind.Direct };
 
     private static SlotDrawPlaceOccupancy ClassifyOccupancy(
         EntryId? occupant,
@@ -141,7 +132,7 @@ public enum SlotDrawPlaceOccupancy
     StructuralFeed = 2,
 
     /// <summary>Occupant outside composition, without a structural feed. Not vacant, not unplaced.</summary>
-    Withdrawn = 3,
+    Withdrawn = 3
 }
 
 /// <summary>
@@ -170,7 +161,7 @@ public enum SlotPartialDrawRefusal
     NotEnoughTeams = 2,
 
     /// <summary>More unplaced teams than free slots.</summary>
-    TooManyTeams = 3,
+    TooManyTeams = 3
 }
 
 /// <summary>

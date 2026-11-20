@@ -53,5 +53,5 @@ internal static class GroupsPlacementReadiness
     }
 
     private static int CountValidGroupMembers(Group group, HashSet<EntryId> composition) =>
-        group.EntryIds.Count(entryId => composition.Contains(entryId));
+        group.EntryIds.Count(composition.Contains);
 }

@@ -24,7 +24,7 @@ public static class ManualPlacementSource
     public static bool AllowsOverwrite(Competition competition, Stage? source, Guid? sourceStageId)
     {
         ArgumentNullException.ThrowIfNull(competition);
-        if (sourceStageId is not Guid id)
+        if (sourceStageId is not { } id)
         {
             return false;
         }

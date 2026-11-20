@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
@@ -461,10 +462,10 @@ public static class CompetitionFlowAnalyzer
             '|',
             path.Source.Scope?.ToString() ?? "Overall",
             path.Source.GroupId?.Value.ToString("N") ?? "-",
-            path.Source.AcrossGroupsPosition?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "-",
+            path.Source.AcrossGroupsPosition?.ToString(CultureInfo.InvariantCulture) ?? "-",
             path.Selection.Mode.ToString(),
-            path.Selection.Value.ToString(System.Globalization.CultureInfo.InvariantCulture),
-            path.Selection.EndValue?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "-");
+            path.Selection.Value.ToString(CultureInfo.InvariantCulture),
+            path.Selection.EndValue?.ToString(CultureInfo.InvariantCulture) ?? "-");
 
     private static bool HasInboundFeed(Stage stage, IReadOnlyList<Stage> stages)
     {

@@ -72,7 +72,7 @@ public static class GroupDrawPots
         }
 
         return Compute(
-            stage.CompositionEntries.Select(entry => entry.EntryId).ToArray(),
+            [.. stage.CompositionEntries.Select(entry => entry.EntryId)],
             numberOfPots.Value);
     }
 }

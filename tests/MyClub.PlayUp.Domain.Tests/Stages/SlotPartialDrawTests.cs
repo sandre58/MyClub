@@ -165,7 +165,7 @@ public sealed class SlotPartialDrawTests
     private static SlotFeedSnapshot EmptySnapshot(Stage stage) =>
         new(
             stage.Id,
-            stage.Slots.Select(slot => slot.SlotKey).ToArray(),
+            [.. stage.Slots.Select(slot => slot.SlotKey)],
             [],
             [],
             [],

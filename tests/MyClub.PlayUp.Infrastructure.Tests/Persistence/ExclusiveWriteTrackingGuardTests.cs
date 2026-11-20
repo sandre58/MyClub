@@ -10,7 +10,6 @@ using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
-using MyClub.PlayUp.Infrastructure.Persistence;
 using MyClub.PlayUp.Infrastructure.Tests.Common;
 using Xunit;
 
@@ -21,7 +20,7 @@ public sealed class ExclusiveWriteTrackingGuardTests
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 11, 18, 12, 0, 0, TimeSpan.Zero));
 
     [Fact]
-    public async Task ExecuteExclusive_throws_when_a_stage_is_already_tracked()
+    public async Task ExecuteExclusive_throws_when_a_stage_is_already_trackedAsync()
     {
         await using var context = PlayUpInMemory.CreateContext();
         var stage = Stage.Create(
@@ -39,7 +38,7 @@ public sealed class ExclusiveWriteTrackingGuardTests
     }
 
     [Fact]
-    public async Task ExecuteExclusive_throws_when_a_match_is_already_tracked()
+    public async Task ExecuteExclusive_throws_when_a_match_is_already_trackedAsync()
     {
         await using var context = PlayUpInMemory.CreateContext();
         var competitionId = CompetitionId.New();
@@ -54,7 +53,7 @@ public sealed class ExclusiveWriteTrackingGuardTests
     }
 
     [Fact]
-    public async Task ExecuteExclusive_runs_when_only_a_competition_is_tracked()
+    public async Task ExecuteExclusive_runs_when_only_a_competition_is_trackedAsync()
     {
         await using var context = PlayUpInMemory.CreateContext();
         var competition = Competition.Create(
@@ -76,7 +75,7 @@ public sealed class ExclusiveWriteTrackingGuardTests
     }
 
     [Fact]
-    public async Task ClearTrackedChanges_lets_the_next_exclusive_write_start()
+    public async Task ClearTrackedChanges_lets_the_next_exclusive_write_startAsync()
     {
         await using var context = PlayUpInMemory.CreateContext();
         var stage = Stage.Create(

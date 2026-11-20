@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
@@ -17,7 +16,6 @@ using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
-using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Host.Contracts;
@@ -196,7 +194,7 @@ public sealed class SetGroupMembershipEndpointTests(HostPostgresFixture fixture)
             new SetGroupEntriesRequest([Guid.Empty], current));
         using var tooMany = await client.PutAsJsonAsync(
             MembershipUri(seed),
-            new SetGroupEntriesRequest(Enumerable.Repeat(seed.Entries[0].Value, 65).ToArray(), current));
+            new SetGroupEntriesRequest([.. Enumerable.Repeat(seed.Entries[0].Value, 65)], current));
 
         missingExpected.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         clearWithoutExpected.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -246,7 +244,7 @@ public sealed class SetGroupMembershipEndpointTests(HostPostgresFixture fixture)
         await using var command = new NpgsqlCommand(
             "SELECT sort_order FROM group_entries WHERE group_id = @groupId ORDER BY sort_order",
             connection);
-        command.Parameters.AddWithValue("groupId", groupId.Value);
+        command.Parameters.AddWithValue(nameof(groupId), groupId.Value);
         var rows = new List<int>();
         await using var reader = await command.ExecuteReaderAsync();
         while (await reader.ReadAsync())
@@ -254,7 +252,7 @@ public sealed class SetGroupMembershipEndpointTests(HostPostgresFixture fixture)
             rows.Add(reader.GetInt32(0));
         }
 
-        return rows.ToArray();
+        return [.. rows];
     }
 
     private async Task<HttpResponseMessage[]> OverlapOnCompetitionLockAsync(
@@ -324,7 +322,7 @@ public sealed class SetGroupMembershipEndpointTests(HostPostgresFixture fixture)
         {
             string text => text,
             JsonElement { ValueKind: JsonValueKind.String } element => element.GetString(),
-            _ => raw.ToString(),
+            _ => raw.ToString()
         };
     }
 

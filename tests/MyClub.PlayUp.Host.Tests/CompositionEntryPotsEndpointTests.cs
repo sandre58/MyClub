@@ -11,9 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Stages;
-using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Rules;
-using MyClub.PlayUp.Domain.Stages;
 using Xunit;
 
 namespace MyClub.PlayUp.Host.Tests;
@@ -80,7 +78,7 @@ public sealed class CompositionEntryPotsEndpointTests(HostPostgresFixture fixtur
         scope.ServiceProvider.GetRequiredService<IStageRepository>().Add(stage);
         await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().SaveChangesAsync();
 
-        return new Seed(competition.Id.Value, ids.Select(id => id.Value).ToArray());
+        return new Seed(competition.Id.Value, [.. ids.Select(id => id.Value)]);
     }
 
     private sealed record Seed(Guid CompetitionId, Guid[] EntryIds);

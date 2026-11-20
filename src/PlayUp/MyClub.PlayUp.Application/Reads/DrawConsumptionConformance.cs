@@ -26,32 +26,7 @@ public static class DrawConsumptionConformance
         ArgumentNullException.ThrowIfNull(draw);
         ArgumentNullException.ThrowIfNull(stage);
 
-        if (draw.Status is DrawStatus.Cancelled or DrawStatus.Draft)
-        {
-            return false;
-        }
-
-        if (draw.Resolution.State is DrawResolutionState.NoSolution)
-        {
-            return false;
-        }
-
-        if (draw.Status != DrawStatus.Published)
-        {
-            return false;
-        }
-
-        if (draw.Resolution.State != DrawResolutionState.Resolved)
-        {
-            return false;
-        }
-
-        if (DrawAppliedState.IsApplied(draw, stage))
-        {
-            return false;
-        }
-
-        return ResolutionEntriesDiverge(draw, stage);
+        return draw.Status is not (DrawStatus.Cancelled or DrawStatus.Draft) && (draw.Resolution.State is not DrawResolutionState.NoSolution && (draw is { Status: DrawStatus.Published, Resolution.State: DrawResolutionState.Resolved } && (!DrawAppliedState.IsApplied(draw, stage) && ResolutionEntriesDiverge(draw, stage))));
     }
 
     /// <summary>

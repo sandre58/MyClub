@@ -39,10 +39,8 @@ public sealed record GroupResolutionProvenance
             entryId,
             provenance.Kind,
             provenance.SourcePathId,
-            provenance.UpstreamResultFingerprint)
-    {
+            provenance.UpstreamResultFingerprint) =>
         ArgumentNullException.ThrowIfNull(provenance);
-    }
 
     /// <summary>
     /// Gets the target group identity.

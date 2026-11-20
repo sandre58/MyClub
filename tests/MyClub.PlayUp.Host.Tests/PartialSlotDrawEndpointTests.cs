@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
@@ -176,7 +175,7 @@ public sealed class PartialSlotDrawEndpointTests(HostPostgresFixture fixture)
             {
                 string text => text,
                 JsonElement { ValueKind: JsonValueKind.String } element => element.GetString(),
-                _ => raw.ToString(),
+                _ => raw.ToString()
             };
 
     private static string InputsUri(StageId stageId, DrawId drawId) =>

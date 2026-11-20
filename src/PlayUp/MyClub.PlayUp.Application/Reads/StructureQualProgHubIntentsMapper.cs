@@ -212,9 +212,7 @@ internal static class StructureQualProgHubIntentsMapper
         [
             .. paths
                 .Select((path, index) => (path, index))
-                .OrderBy(item => rank.TryGetValue(item.path.SourcePairKey, out var expandIndex)
-                    ? expandIndex
-                    : int.MaxValue)
+                .OrderBy(item => rank.GetValueOrDefault(item.path.SourcePairKey, int.MaxValue))
                 .ThenBy(item => item.path.SourcePairKey, StringComparer.Ordinal)
                 .ThenBy(item => item.index)
                 .Select(item => item.path.Destination.GroupId!.Value.Value)

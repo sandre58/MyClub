@@ -43,18 +43,22 @@ internal sealed partial class PlayUpExceptionHandler(ILogger<PlayUpExceptionHand
             problem.Extensions["code"] = code;
         }
 
-        if (exception is ApplicationFailureException { Reasons.Count: > 0 } application)
+        switch (exception)
         {
-            problem.Extensions["reasons"] = application.Reasons;
-            if (application.Code == ApplicationErrorCodes.ReadyConsumerWouldBreak)
-            {
-                problem.Extensions["consumerStageIds"] = application.Reasons;
-            }
-        }
+            case ApplicationFailureException { Reasons.Count: > 0 } application:
+                {
+                    problem.Extensions["reasons"] = application.Reasons;
+                    if (application.Code == ApplicationErrorCodes.ReadyConsumerWouldBreak)
+                    {
+                        problem.Extensions["consumerStageIds"] = application.Reasons;
+                    }
 
-        if (exception is GroupPlacementRejectedException rejected)
-        {
-            problem.Extensions["entryId"] = rejected.EntryId.Value;
+                    break;
+                }
+
+            case GroupPlacementRejectedException rejected:
+                problem.Extensions["entryId"] = rejected.EntryId.Value;
+                break;
         }
 
         if (statusCode >= StatusCodes.Status500InternalServerError)
@@ -213,6 +217,6 @@ internal sealed partial class PlayUpExceptionHandler(ILogger<PlayUpExceptionHand
                 (StatusCodes.Status409Conflict, "Applied draw group placement protected", rejected.Code),
             ApplicationErrorCodes.GroupSeatReservedByInboundFeed =>
                 (StatusCodes.Status409Conflict, "Group seat reserved by inbound feed", rejected.Code),
-            _ => (StatusCodes.Status409Conflict, "Group placement rejected", rejected.Code),
+            _ => (StatusCodes.Status409Conflict, "Group placement rejected", rejected.Code)
         };
 }

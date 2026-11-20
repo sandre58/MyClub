@@ -10,8 +10,6 @@ using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Development.Runtime;
 using MyClub.PlayUp.Development.Tests.Diagnostics;
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Domain.Matches;
-using MyClub.PlayUp.Domain.Stages;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -102,7 +100,7 @@ public sealed class MatchRepositoryLoadBaselineTests(
         var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
         var competition = await competitions.GetByIdReadOnlyAsync(competitionId);
         competition.Should().NotBeNull();
-        return competition!.StageIds;
+        return competition.StageIds;
     }
 
     private async Task<IReadOnlyList<MatchId>> LoadMatchIdsForStageAsync(StageId stageId)
@@ -110,7 +108,7 @@ public sealed class MatchRepositoryLoadBaselineTests(
         using var scope = fixture.Services.CreateScope();
         var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
         var listed = await matches.ListByStageForUpdateAsync(stageId);
-        return listed.Select(match => match.Id).ToArray();
+        return [.. listed.Select(match => match.Id)];
     }
 
     private async Task<int> MeasureAsync(Func<IMatchRepository, Task> action)

@@ -49,6 +49,5 @@ internal static class QualificationResolutionApplyWitness
     }
 
     private static bool IsQualificationFromSource(ResolutionProvenance? provenance, string prefix) =>
-        provenance is { Kind: ResolutionProvenanceKind.Qualification } candidate
-        && candidate.SourcePathId.StartsWith(prefix, StringComparison.Ordinal);
+        provenance is { Kind: ResolutionProvenanceKind.Qualification } && provenance.SourcePathId.StartsWith(prefix, StringComparison.Ordinal);
 }

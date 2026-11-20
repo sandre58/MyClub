@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
@@ -150,9 +149,9 @@ public sealed class ManualGroupPlacementEndpointTests(HostPostgresFixture fixtur
         cases.GetArrayLength().Should().BeGreaterThan(0);
         cases.EnumerateArray().Should().OnlyContain(item =>
             item.GetProperty("seatMode").GetString() == "Editable"
-            && item.GetProperty("canClear").GetBoolean() == false
-            && item.GetProperty("excess").GetBoolean() == false
-            && item.GetProperty("outsideComposition").GetBoolean() == false);
+            && !item.GetProperty("canClear").GetBoolean()
+            && !item.GetProperty("excess").GetBoolean()
+            && !item.GetProperty("outsideComposition").GetBoolean());
     }
 
     [IntegrationFact]
@@ -183,7 +182,7 @@ public sealed class ManualGroupPlacementEndpointTests(HostPostgresFixture fixtur
             new AssignEntriesToGroupRequest(
             [
                 seed.ThirdEntryId.Value,
-                seed.FourthEntryId.Value,
+                seed.FourthEntryId.Value
             ]));
         using var one = await client.PostAsJsonAsync(
             batchUri,
@@ -291,7 +290,7 @@ public sealed class ManualGroupPlacementEndpointTests(HostPostgresFixture fixtur
         {
             string text => text,
             JsonElement { ValueKind: JsonValueKind.String } element => element.GetString(),
-            _ => raw.ToString(),
+            _ => raw.ToString()
         };
     }
 
@@ -317,7 +316,7 @@ public sealed class ManualGroupPlacementEndpointTests(HostPostgresFixture fixtur
         }
 
         stage.ReplaceAffectationAuthoring(ids, _clock);
-        EntryId protectedEntry = ids[0];
+        var protectedEntry = ids[0];
         var otherGroup = stage.Groups[1].Id;
         if (applyDraw)
         {
@@ -374,9 +373,9 @@ public sealed class ManualGroupPlacementEndpointTests(HostPostgresFixture fixtur
         stage.AssignEntryToGroup(stage.Groups[1].Id, ids[2]);
         stage.AssignEntryToGroup(stage.Groups[1].Id, ids[3]);
         var matchday = stage.Matchdays.Count == 0 ? stage.AddMatchday(1, _clock) : stage.Matchdays[0];
-        var fixture = stage.AddFixture(matchday.Id, _clock);
+        var addFixture = stage.AddFixture(matchday.Id, _clock);
         var match = Match.Create(competition.Id, stage.Id, ids[0], ids[1], _clock);
-        stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
+        stage.AttachMatch(addFixture.Id, match.Id, legIndex: 1, _clock);
 
         using var scope = factory.Services.CreateScope();
         var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();

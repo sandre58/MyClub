@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using System.Globalization;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Standings;
@@ -114,10 +115,7 @@ public static class NeedsAttentionAssembler
             competition,
             stages,
             matchSummariesByStage);
-        var perimeSlotKeys = ResolutionPerimeSlotAttention.Build(
-            competition,
-            stages,
-            resolutionByStage);
+        var perimeSlotKeys = ResolutionPerimeSlotAttention.Build();
         foreach (var stage in stages)
         {
             CollectDrawNoSolutions(stage, items);
@@ -168,10 +166,10 @@ public static class NeedsAttentionAssembler
                 competition.Id.Value.ToString(),
                 new Dictionary<string, string>
                 {
-                    ["activeCount"] = activeCount.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                    ["minimumTeams"] = minimum.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    ["activeCount"] = activeCount.ToString(CultureInfo.InvariantCulture),
+                    ["minimumTeams"] = minimum.ToString(CultureInfo.InvariantCulture),
                     ["missingCount"] = (minimum - activeCount).ToString(
-                        System.Globalization.CultureInfo.InvariantCulture)
+                        CultureInfo.InvariantCulture)
                 }));
     }
 
@@ -276,8 +274,7 @@ public static class NeedsAttentionAssembler
                             perimeSlotKeys,
                             destination,
                             path,
-                            source.Id,
-                            out _))
+                            source.Id))
                     {
                         var slotKey = path.Destination.SlotKey!;
                         var actualEntryId = destination.FindSlot(slotKey)?.EntryId;
@@ -301,7 +298,7 @@ public static class NeedsAttentionAssembler
                                         ? ResolutionPerimeSlotAttention.EntryDisplayName(
                                             competition,
                                             actualId)
-                                        : string.Empty,
+                                        : string.Empty
                                 }));
                         break;
                     }
@@ -565,11 +562,13 @@ public static class NeedsAttentionAssembler
         IReadOnlyDictionary<StageId, IReadOnlyList<MatchAttentionSlice>> matchesByStage) =>
         matchesByStage.ToDictionary(
             pair => pair.Key,
-            pair => (IReadOnlyList<MatchSummaryRow>)pair.Value.Select(match => new MatchSummaryRow(
+            pair => (IReadOnlyList<MatchSummaryRow>)[
+                .. pair.Value.Select(match => new MatchSummaryRow(
                     match.Id,
                     match.StageId,
                     match.Status,
                     match.HomeEntryId,
                     match.AwayEntryId,
-                    match.Result)).ToArray());
+                    match.Result))
+            ]);
 }

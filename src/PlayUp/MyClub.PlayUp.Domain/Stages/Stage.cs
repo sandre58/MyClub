@@ -6,7 +6,6 @@
 
 using System.Diagnostics;
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages.Events;
 
@@ -1336,7 +1335,7 @@ public sealed class Stage : AggregateRoot<StageId>
         EnsureOperationalExitRulesMutable();
 
         var owningGroup = _groups.FirstOrDefault(g => g.Contains(entryId));
-        if (owningGroup is not null && owningGroup.Id.Equals(groupId))
+        if (owningGroup?.Id.Equals(groupId) == true)
         {
             return;
         }
@@ -1370,7 +1369,7 @@ public sealed class Stage : AggregateRoot<StageId>
     {
         EnsureManualAssignAllowed(groupId, entryId, materializedParticipants);
         var owningGroup = _groups.FirstOrDefault(group => group.Contains(entryId));
-        if (owningGroup is not null && owningGroup.Id.Equals(groupId))
+        if (owningGroup?.Id.Equals(groupId) == true)
         {
             return;
         }
@@ -1396,15 +1395,13 @@ public sealed class Stage : AggregateRoot<StageId>
         IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants = null)
     {
         var group = FindGroup(groupId);
-        if (group is not null
-            && group.Contains(currentEntryId)
+        if (group?.Contains(currentEntryId) == true
             && currentEntryId.Equals(replacementEntryId))
         {
             return;
         }
 
-        if (group is not null
-            && !group.Contains(currentEntryId)
+        if (group?.Contains(currentEntryId) == false
             && group.Contains(replacementEntryId))
         {
             return;
@@ -1454,7 +1451,7 @@ public sealed class Stage : AggregateRoot<StageId>
         IReadOnlyList<MatchParticipantSnapshot>? materializedParticipants = null)
     {
         ArgumentNullException.ThrowIfNull(entryIds);
-        if (PlacesPerGroup is not int capacity || capacity < 1)
+        if (PlacesPerGroup is not { } capacity || capacity < 1)
         {
             throw new DomainException(
                 "A group lot requires PlacesPerGroup of at least 1.",
@@ -1556,7 +1553,7 @@ public sealed class Stage : AggregateRoot<StageId>
         }
 
         var owningGroup = _groups.FirstOrDefault(group => group.Contains(entryId));
-        if (owningGroup is not null && owningGroup.Id.Equals(groupId))
+        if (owningGroup?.Id.Equals(groupId) == true)
         {
             return null;
         }
@@ -1624,12 +1621,7 @@ public sealed class Stage : AggregateRoot<StageId>
         }
 
         var group = FindGroup(groupId);
-        if (group is null)
-        {
-            return StageErrorCodes.GroupNotFound;
-        }
-
-        return FindGroupCapacityRefusal(group, entryId: null);
+        return group is null ? StageErrorCodes.GroupNotFound : FindGroupCapacityRefusal(group, entryId: null);
     }
 
     /// <summary>
@@ -2402,11 +2394,9 @@ public sealed class Stage : AggregateRoot<StageId>
 
         foreach (var other in _slots.Where(other => !ReferenceEquals(other, slot)))
         {
-            if (other.EntryId is { } occupied && occupied.Equals(entryId))
-            {
-                other.ClearEntry();
-                Raise(new StageSlotOccupantChanged(Id, other.SlotKey, occupied, entryId: null, clock));
-            }
+            if (other.EntryId is not { } occupied || !occupied.Equals(entryId)) continue;
+            other.ClearEntry();
+            Raise(new StageSlotOccupantChanged(Id, other.SlotKey, occupied, entryId: null, clock));
         }
 
         var previousEntryId = slot.EntryId;
@@ -2535,7 +2525,7 @@ public sealed class Stage : AggregateRoot<StageId>
     {
         ArgumentNullException.ThrowIfNull(provenance);
         var group = FindGroup(groupId);
-        if (group is null || !group.Contains(entryId))
+        if (group?.Contains(entryId) != true)
         {
             return;
         }
@@ -3596,8 +3586,7 @@ public sealed class Stage : AggregateRoot<StageId>
                 continue;
             }
 
-            if (snapshot.HomeEntryId is { } home
-                && snapshot.AwayEntryId is { } away
+            if (snapshot is { HomeEntryId: { } home, AwayEntryId: { } away }
                 && members.Contains(home)
                 && members.Contains(away))
             {
@@ -3643,7 +3632,7 @@ public sealed class Stage : AggregateRoot<StageId>
             StageErrorCodes.GroupNotFound => $"Group '{groupId}' was not found.",
             StageErrorCodes.GroupFull =>
                 $"Group '{groupId}' already has its PlacesPerGroup entries.",
-            _ => $"Manual assignment to group '{groupId}' was refused.",
+            _ => $"Manual assignment to group '{groupId}' was refused."
         };
 
     private string ManualClearRefusalMessage(string code, GroupId groupId, EntryId entryId) =>
@@ -3658,7 +3647,7 @@ public sealed class Stage : AggregateRoot<StageId>
                 $"Entry '{entryId}' group membership is sealed by qualification/progression resolution.",
             StageErrorCodes.GroupClearLockedByStageMatches =>
                 $"Cannot remove an entry from a group: stage '{Id}' already has an attached match.",
-            _ => $"Manual removal from group '{groupId}' was refused.",
+            _ => $"Manual removal from group '{groupId}' was refused."
         };
 
     private string? FindGroupCapacityRefusal(
@@ -3768,7 +3757,7 @@ public sealed class Stage : AggregateRoot<StageId>
         MaterializedOpponentCoherence.EnsureEntryNotBoundToAttachedMatch(
             this,
             entryId,
-            materializedParticipants ?? []);
+            materializedParticipants);
         group.Remove(entryId);
         RemoveGroupResolutionProvenanceIfPresent(groupId, entryId);
     }

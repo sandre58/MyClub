@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using System.Globalization;
 using MyClub.PlayUp.Domain.Common;
 
 namespace MyClub.PlayUp.Application.Reads;
@@ -64,7 +65,7 @@ public static class StructurePresentedAttentionCollector
         }
 
         return coalescedQualificationSlots
-            .Where(item => item.TargetType == "Slot" && item.TargetId is not null)
+            .Where(item => item is { TargetType: "Slot", TargetId: not null })
             .Select(item => item.TargetId!)
             .ToHashSet(StringComparer.Ordinal);
     }
@@ -159,7 +160,7 @@ public static class StructurePresentedAttentionCollector
             new Dictionary<string, string>
             {
                 ["stageId"] = stage.StageId.ToString(),
-                ["count"] = count.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                ["count"] = count.ToString(CultureInfo.InvariantCulture)
             });
 
     private static bool ShouldEmitAttention(

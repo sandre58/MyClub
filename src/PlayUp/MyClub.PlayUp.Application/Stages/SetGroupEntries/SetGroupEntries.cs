@@ -71,7 +71,7 @@ public static class SetGroupEntries
                 ApplicationErrorCodes.GroupMembershipStale);
         }
 
-        if (stage.PlacesPerGroup is not int capacity || capacity < 1)
+        if (stage.PlacesPerGroup is not { } capacity || capacity < 1)
         {
             throw new ApplicationFailureException(
                 "Setting group membership requires PlacesPerGroup of at least 1.",
@@ -156,23 +156,10 @@ public static class SetGroupEntries
         IReadOnlyList<EntryId> requested)
     {
         var requestedSet = requested.ToHashSet();
-        var final = new List<EntryId>();
-        foreach (var entryId in current)
-        {
-            if (requestedSet.Contains(entryId))
-            {
-                final.Add(entryId);
-            }
-        }
+        var final = current.Where(requestedSet.Contains).ToList();
 
         var present = final.ToHashSet();
-        foreach (var entryId in requested)
-        {
-            if (present.Add(entryId))
-            {
-                final.Add(entryId);
-            }
-        }
+        final.AddRange(requested.Where(present.Add));
 
         return final;
     }
@@ -187,7 +174,7 @@ public static class SetGroupEntries
     {
         code = null;
         entryId = null;
-        if (stage.PlacesPerGroup is not int capacity || capacity < 1)
+        if (stage.PlacesPerGroup is not { } capacity || capacity < 1)
         {
             return;
         }
@@ -204,13 +191,11 @@ public static class SetGroupEntries
         }
 
         var reservedCap = Math.Max(currentCount, Math.Max(0, capacity - pending));
-        if (finalCount > reservedCap)
-        {
-            code = pending > 0
-                ? ApplicationErrorCodes.GroupSeatReservedByInboundFeed
-                : StageErrorCodes.GroupFull;
-            entryId = FirstAddition(group.EntryIds, requested);
-        }
+        if (finalCount <= reservedCap) return;
+        code = pending > 0
+            ? ApplicationErrorCodes.GroupSeatReservedByInboundFeed
+            : StageErrorCodes.GroupFull;
+        entryId = FirstAddition(group.EntryIds, requested);
     }
 
     private static EntryId FirstAddition(IReadOnlyList<EntryId> current, IReadOnlyList<EntryId> requested)

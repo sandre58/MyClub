@@ -78,7 +78,7 @@ public sealed class ManualGroupPlacementTests
     {
         var competition = CreateCompetition.Execute("G-not-pool", _clock);
         var ids = Enumerable.Range(0, 4)
-            .Select(_ => AddEntry.Execute(competition, $"T{_}", _clock).Id)
+            .Select(i => AddEntry.Execute(competition, $"T{i}", _clock).Id)
             .ToArray();
         var stage = ConfigureStructure.Execute(
             competition,
@@ -219,7 +219,7 @@ public sealed class ManualGroupPlacementTests
         draft.Actions.Should().Contain(StructureViewAssembler.ActionAssignEntriesToGroup);
 
         var ids = Enumerable.Range(0, 4)
-            .Select(_ => AddEntry.Execute(competition, $"T{_}", _clock).Id)
+            .Select(i => AddEntry.Execute(competition, $"T{i}", _clock).Id)
             .ToArray();
         groups.ReplaceAffectationAuthoring(ids, _clock);
         groups.Prepare(_clock);
@@ -360,7 +360,7 @@ public sealed class ManualGroupPlacementTests
         ApplyDraw.Execute(stage, draw.Id, _clock);
         DrawAppliedState.IsApplied(draw, stage).Should().BeTrue();
 
-        return (competition, stage, stage.GetDraw(draw.Id), stage.Groups.Select(g => g.Id).ToArray());
+        return (competition, stage, stage.GetDraw(draw.Id), [.. stage.Groups.Select(g => g.Id)]);
     }
 
     private (Competition Competition, Stage Stage, Group GroupA, EntryId EntryId) SeedDraftGroupsWithManualPlacement()

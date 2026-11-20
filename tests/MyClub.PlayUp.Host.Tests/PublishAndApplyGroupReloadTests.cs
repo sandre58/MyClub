@@ -122,7 +122,7 @@ public sealed class PublishAndApplyGroupReloadTests(HostPostgresFixture fixture)
 
         public async Task DeleteAsync()
         {
-            if (EntryId is not Guid entryId)
+            if (EntryId is not { } entryId)
             {
                 return;
             }

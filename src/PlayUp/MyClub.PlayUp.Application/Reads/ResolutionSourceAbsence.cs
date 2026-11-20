@@ -22,5 +22,5 @@ public enum ResolutionSourceAbsence
     StageNotLoaded = 2,
 
     /// <summary>The source stage is loaded, but the path, fixture, or round is gone.</summary>
-    PathGone = 3,
+    PathGone = 3
 }

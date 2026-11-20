@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
@@ -106,7 +105,7 @@ public sealed class ResolutionReleaseEndpointTests(HostPostgresFixture fixture)
             (SeedConfigurationAsync, ApplicationErrorCodes.ResolutionReleaseNotReleasable),
             (SeedReferencedPopulationAsync, ApplicationErrorCodes.ResolutionReleaseNotReleasable),
             (SeedRunningGroupAsync, ApplicationErrorCodes.ResolutionReleaseBlockedByMatchesRunning),
-            (SeedSuspendedPopulationAsync, ApplicationErrorCodes.ResolutionReleaseBlockedByMatchesRunning),
+            (SeedSuspendedPopulationAsync, ApplicationErrorCodes.ResolutionReleaseBlockedByMatchesRunning)
         };
 
         using var client = factory.CreateClient();
@@ -203,9 +202,9 @@ public sealed class ResolutionReleaseEndpointTests(HostPostgresFixture fixture)
     {
         var (competition, league, terminal, entries, match) = Build(position: 9);
         var matchday = terminal.AddMatchday(1, _clock);
-        var fixture = terminal.AddFixture(matchday.Id, _clock);
+        var addFixture = terminal.AddFixture(matchday.Id, _clock);
         var attached = Match.Create(competition.Id, terminal.Id, entries[0], entries[1], _clock);
-        terminal.AttachMatch(fixture.Id, attached.Id, 1, _clock);
+        terminal.AttachMatch(addFixture.Id, attached.Id, 1, _clock);
         if (running)
         {
             terminal.Prepare(_clock);
@@ -316,9 +315,9 @@ public sealed class ResolutionReleaseEndpointTests(HostPostgresFixture fixture)
         }
 
         var matchday = terminal.AddMatchday(1, _clock);
-        var fixture = terminal.AddFixture(matchday.Id, _clock);
+        var addFixture = terminal.AddFixture(matchday.Id, _clock);
         var attached = Match.Create(competition.Id, terminal.Id, entries[0], entries[1], _clock);
-        terminal.AttachMatch(fixture.Id, attached.Id, 1, _clock);
+        terminal.AttachMatch(addFixture.Id, attached.Id, 1, _clock);
         terminal.Prepare(_clock);
         terminal.Start(_clock);
         if (status == StageStatus.Suspended)
@@ -363,8 +362,7 @@ public sealed class ResolutionReleaseEndpointTests(HostPostgresFixture fixture)
             null,
             StructureResolutionOccupantTarget.Slot,
             match.Id.Value,
-            league.Id.Value,
-            entries[1].Value);
+            league.Id.Value);
     }
 
     private async Task<Seed> SaveAsync(PlayUpWebApplicationFactory factory, int position, bool persist = true)
@@ -391,7 +389,7 @@ public sealed class ResolutionReleaseEndpointTests(HostPostgresFixture fixture)
         var entries = new[]
         {
             competition.AddEntry(TeamId.New(), "Nord", _clock).Id,
-            competition.AddEntry(TeamId.New(), "Sud", _clock).Id,
+            competition.AddEntry(TeamId.New(), "Sud", _clock).Id
         };
         var league = Stage.Create(competition.Id, new StageName("League"), SampleRegulations.Standard(), _clock);
         league.AddMatchday(1, _clock);
@@ -402,27 +400,24 @@ public sealed class ResolutionReleaseEndpointTests(HostPostgresFixture fixture)
         var match = Match.Create(competition.Id, league.Id, entries[0], entries[1], _clock);
         match.Start(_clock);
         match.Finish(new MatchResult(ResultType.Played, new Score(2, 0)), _clock);
-        if (position is int selected)
-        {
-            var path = new QualificationPath(
-                1,
-                QualificationSource.Overall(),
-                new QualificationSelection(SelectionMode.Position, selected),
-                QualificationDestination.ForSlot(terminal.Id, "Champ"));
-            league.ReplaceQualificationRules(new QualificationRules([path]), _clock);
-            var provenance = new ResolutionProvenance(
-                ResolutionProvenanceKind.Qualification,
-                ResolutionPathIdentifier.ForQualification(league.Id, path),
-                "seed");
-            terminal.AddResolvedPopulationEntry(entries[0], _clock, provenance);
-            terminal.ApplyResolvedEntry("Champ", entries[0], _clock, provenance);
-        }
+        if (position is not { } selected) return (competition, league, terminal, entries, match);
+        var path = new QualificationPath(
+            1,
+            QualificationSource.Overall(),
+            new QualificationSelection(SelectionMode.Position, selected),
+            QualificationDestination.ForSlot(terminal.Id, "Champ"));
+        league.ReplaceQualificationRules(new QualificationRules([path]), _clock);
+        var provenance = new ResolutionProvenance(
+            ResolutionProvenanceKind.Qualification,
+            ResolutionPathIdentifier.ForQualification(league.Id, path),
+            "seed");
+        terminal.AddResolvedPopulationEntry(entries[0], _clock, provenance);
+        terminal.ApplyResolvedEntry("Champ", entries[0], _clock, provenance);
 
         return (competition, league, terminal, entries, match);
     }
 
-    private static async Task<Seed> PersistAsync(
-        PlayUpWebApplicationFactory factory,
+    private static async Task PersistAsync(PlayUpWebApplicationFactory factory,
         Competition competition,
         IReadOnlyList<Stage> stages,
         IReadOnlyList<Match> matches)
@@ -444,7 +439,6 @@ public sealed class ResolutionReleaseEndpointTests(HostPostgresFixture fixture)
         }
 
         await unitOfWork.SaveChangesAsync();
-        return new Seed(competition.Id.Value, Guid.Empty, Guid.Empty, null, null, StructureResolutionOccupantTarget.Slot, Guid.Empty);
     }
 
     private static Seed SlotSeed(Competition competition, Stage terminal, EntryId entry, Match match) =>
@@ -470,7 +464,7 @@ public sealed class ResolutionReleaseEndpointTests(HostPostgresFixture fixture)
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var view = await response.Content.ReadFromJsonAsync<StructureViewDto>(HostJson.Options);
         view.Should().NotBeNull();
-        return view.Stages.SelectMany(stage => stage.ResolutionOccupants ?? []).ToArray();
+        return [.. view.Stages.SelectMany(stage => stage.ResolutionOccupants ?? [])];
     }
 
     private static string? GetCode(ProblemDetails? problem) =>
@@ -491,6 +485,5 @@ public sealed class ResolutionReleaseEndpointTests(HostPostgresFixture fixture)
         Guid? GroupId,
         StructureResolutionOccupantTarget Target,
         Guid MatchId,
-        Guid LeagueId = default,
-        Guid OtherEntryId = default);
+        Guid LeagueId = default);
 }

@@ -15,7 +15,6 @@ using MyClub.PlayUp.Development.Runtime;
 using MyClub.PlayUp.Development.Scenarios;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
-using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
 using Xunit;
 
@@ -53,16 +52,18 @@ public sealed class ResolutionVisualRecetteIntegrationTests(DevelopmentPostgresF
             var stage = (await stages.GetByIdForUpdateAsync(stageId))!;
             loaded.Add(stage);
             var stageMatches = await matches.ListByStageForUpdateAsync(stageId);
-            summaries[stageId] = stageMatches
-                .Select(match => new MatchSummaryRow(
-                    match.Id,
-                    match.StageId,
-                    match.Status,
-                    match.HomeEntryId,
-                    match.AwayEntryId,
-                    match.Result,
-                    match.HasObservedLive))
-                .ToArray();
+            summaries[stageId] =
+            [
+                .. stageMatches
+                    .Select(match => new MatchSummaryRow(
+                        match.Id,
+                        match.StageId,
+                        match.Status,
+                        match.HomeEntryId,
+                        match.AwayEntryId,
+                        match.Result,
+                        match.HasObservedLive))
+            ];
         }
 
         return StructureViewAssembler.Assemble(competition, loaded, matchSummariesByStage: summaries);
@@ -75,19 +76,7 @@ public sealed class ResolutionVisualRecetteIntegrationTests(DevelopmentPostgresF
         using var scope = fixture.Services.CreateScope();
         var list = await scope.ServiceProvider.GetRequiredService<ICompetitionRepository>().ListAsync();
         list.Should().HaveCount(10);
-        list.Select(c => c.Name.Value).Should().BeEquivalentTo(
-        [
-            ResolutionVisualRecetteNames.QualRuleSlot,
-            ResolutionVisualRecetteNames.UpstreamScoreSlot,
-            ResolutionVisualRecetteNames.AmontPerimeCascade,
-            ResolutionVisualRecetteNames.IndeterminateQual,
-            ResolutionVisualRecetteNames.NonVerifieeSlot,
-            ResolutionVisualRecetteNames.QualRulePopulation,
-            ResolutionVisualRecetteNames.QualRuleGroup,
-            ResolutionVisualRecetteNames.StaleDrawActive,
-            ResolutionVisualRecetteNames.StaleDrawBlocked,
-            ResolutionVisualRecetteNames.WithdrawnOccupant,
-        ]);
+        list.Select(c => c.Name.Value).Should().BeEquivalentTo(ResolutionVisualRecetteNames.QualRuleSlot, ResolutionVisualRecetteNames.UpstreamScoreSlot, ResolutionVisualRecetteNames.AmontPerimeCascade, ResolutionVisualRecetteNames.IndeterminateQual, ResolutionVisualRecetteNames.NonVerifieeSlot, ResolutionVisualRecetteNames.QualRulePopulation, ResolutionVisualRecetteNames.QualRuleGroup, ResolutionVisualRecetteNames.StaleDrawActive, ResolutionVisualRecetteNames.StaleDrawBlocked, ResolutionVisualRecetteNames.WithdrawnOccupant);
     }
 
     private async Task AssertCupSchematicAsync(
@@ -109,16 +98,18 @@ public sealed class ResolutionVisualRecetteIntegrationTests(DevelopmentPostgresF
             var loadedStage = (await stages.GetByIdForUpdateAsync(stageId))!;
             loaded.Add(loadedStage);
             var stageMatches = await matches.ListByStageForUpdateAsync(stageId);
-            summaries[stageId] = stageMatches
-                .Select(match => new MatchSummaryRow(
-                    match.Id,
-                    match.StageId,
-                    match.Status,
-                    match.HomeEntryId,
-                    match.AwayEntryId,
-                    match.Result,
-                    match.HasObservedLive))
-                .ToArray();
+            summaries[stageId] =
+            [
+                .. stageMatches
+                    .Select(match => new MatchSummaryRow(
+                        match.Id,
+                        match.StageId,
+                        match.Status,
+                        match.HomeEntryId,
+                        match.AwayEntryId,
+                        match.Result,
+                        match.HasObservedLive))
+            ];
         }
 
         var stage = loaded.Single(s => s.Name.Value == stageName);
@@ -157,7 +148,7 @@ public sealed class ResolutionVisualRecetteIntegrationTests(DevelopmentPostgresF
             .Should().BeEquivalentTo(new
             {
                 State = StructureResolutionFreshness.Perime,
-                StalenessCause = StructureResolutionStalenessCause.RegleQualification,
+                StalenessCause = StructureResolutionStalenessCause.RegleQualification
             });
     }
 
@@ -169,7 +160,7 @@ public sealed class ResolutionVisualRecetteIntegrationTests(DevelopmentPostgresF
             .Should().BeEquivalentTo(new
             {
                 State = StructureResolutionFreshness.Perime,
-                StalenessCause = StructureResolutionStalenessCause.ResultatAmont,
+                StalenessCause = StructureResolutionStalenessCause.ResultatAmont
             });
     }
 
@@ -182,7 +173,7 @@ public sealed class ResolutionVisualRecetteIntegrationTests(DevelopmentPostgresF
             .Should().BeEquivalentTo(new
             {
                 State = StructureResolutionFreshness.Perime,
-                StalenessCause = StructureResolutionStalenessCause.AmontPerime,
+                StalenessCause = StructureResolutionStalenessCause.AmontPerime
             });
     }
 
@@ -228,7 +219,7 @@ public sealed class ResolutionVisualRecetteIntegrationTests(DevelopmentPostgresF
             .Which.Should().BeEquivalentTo(new
             {
                 State = StructureResolutionFreshness.Perime,
-                StalenessCause = StructureResolutionStalenessCause.RegleQualification,
+                StalenessCause = StructureResolutionStalenessCause.RegleQualification
             });
     }
 
