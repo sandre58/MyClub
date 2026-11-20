@@ -129,6 +129,11 @@ function batchFacts() {
 const placementDialogTitle = (target: string) =>
   `Placement — Phase de groupes — ${target}`;
 
+const groupMembershipStaleUpdating =
+  'Le groupe a été modifié entre-temps. Mise à jour…';
+const groupChangedReseeded =
+  'Le groupe a changé : sélection mise à jour. Vérifiez puis enregistrez.';
+
 function renderDialog(
   props: Partial<ComponentProps<typeof StructureGroupPlacementDialog>> = {},
   queryClient = new QueryClient({
@@ -1545,7 +1550,15 @@ describe('StructureGroupPlacementDialog', () => {
       'aria-checked',
       'true',
     );
-    expect(screen.getByText('Le groupe a changé')).toBeInTheDocument();
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByRole('status')).toHaveTextContent(
+      groupChangedReseeded,
+    );
+    expect(screen.getAllByText(groupChangedReseeded)).toHaveLength(1);
+    const announcer = dialog.querySelector(
+      '.ds-visually-hidden[aria-live="polite"]',
+    );
+    expect(announcer?.textContent?.trim() ?? '').not.toBe(groupChangedReseeded);
   });
 
   it('surfaces membership stale without reseeding before hub refresh (M2)', async () => {
@@ -1564,7 +1577,7 @@ describe('StructureGroupPlacementDialog', () => {
         'Application.GroupMembershipStale',
       ),
     );
-    renderDialog(
+    const { rerender } = renderDialog(
       {
         place: null,
         cases: [
@@ -1596,15 +1609,132 @@ describe('StructureGroupPlacementDialog', () => {
             },
           }),
         ],
+        entries: [
+          entry('e1', 'Alpha'),
+          entry('e2', 'Bravo'),
+          entry('e3', 'Charlie'),
+          entry('e4', 'Delta'),
+        ],
+        stage: stage({ compositionEntryIds: ['e1', 'e2', 'e3', 'e4'] }),
       },
       queryClient,
     );
     await user.click(screen.getByRole('checkbox', { name: 'Alpha' }));
     await user.click(screen.getByRole('button', { name: 'Enregistrer' }));
-    expect(await screen.findByText('Le groupe a changé')).toBeInTheDocument();
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByRole('status')).toHaveTextContent(
+      groupMembershipStaleUpdating,
+    );
     expect(screen.getByRole('checkbox', { name: 'Alpha' })).toHaveAttribute(
       'aria-checked',
       'false',
+    );
+    expect(screen.queryByText(groupChangedReseeded)).not.toBeInTheDocument();
+    const announcerBeforeHub = dialog.querySelector(
+      '.ds-visually-hidden[aria-live="polite"]',
+    );
+    expect(announcerBeforeHub?.textContent?.trim() ?? '').not.toBe(
+      groupMembershipStaleUpdating,
+    );
+
+    rerender(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <StructureGroupPlacementDialog
+            open
+            onClose={vi.fn()}
+            competitionId="comp-1"
+            stage={stage({ compositionEntryIds: ['e1', 'e2', 'e3', 'e4'] })}
+            structureStages={[stage()]}
+            entries={[
+              entry('e1', 'Alpha'),
+              entry('e2', 'Bravo'),
+              entry('e3', 'Charlie'),
+              entry('e4', 'Delta'),
+            ]}
+            cases={[
+              groupPlace({
+                entry: { entryId: 'e4', displayName: 'Delta' },
+              }),
+              groupPlace({
+                entry: { entryId: 'e1', displayName: 'Alpha' },
+                formPosition: {
+                  kind: 'GroupPlace',
+                  groupId,
+                  groupName: 'A',
+                  index: 2,
+                },
+              }),
+              groupPlace({
+                formPosition: {
+                  kind: 'GroupPlace',
+                  groupId,
+                  groupName: 'A',
+                  index: 3,
+                },
+              }),
+              groupPlace({
+                formPosition: {
+                  kind: 'GroupPlace',
+                  groupId,
+                  groupName: 'A',
+                  index: 4,
+                },
+              }),
+            ]}
+            place={null}
+            fixedGroupId={groupId}
+          />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(within(dialog).getByRole('status')).toHaveTextContent(
+      groupChangedReseeded,
+    );
+    expect(screen.getAllByText(groupChangedReseeded)).toHaveLength(1);
+
+    await user.click(screen.getByRole('checkbox', { name: 'Delta' }));
+    expect(within(dialog).queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.queryByText(groupChangedReseeded)).not.toBeInTheDocument();
+  });
+
+  it('exposes protect reason via aria-describedby on unavailable member tiles', () => {
+    const cases = [
+      groupPlace({
+        formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index: 1 },
+        entry: { entryId: 'e1', displayName: 'Alpha' },
+        seatMode: 'Draw',
+        canClear: false,
+      }),
+      groupPlace({
+        formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index: 2 },
+      }),
+      groupPlace({
+        formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index: 3 },
+      }),
+      groupPlace({
+        formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index: 4 },
+      }),
+    ];
+    renderDialog({
+      place: null,
+      cases,
+      stage: stage({ compositionEntryIds: ['e1', 'e2', 'e3', 'e4'] }),
+      entries: [
+        entry('e1', 'Alpha'),
+        entry('e2', 'Bravo'),
+        entry('e3', 'Charlie'),
+        entry('e4', 'Delta'),
+      ],
+    });
+
+    const tile = screen.getByRole('checkbox', { name: 'Alpha' });
+    const describedBy = tile.getAttribute('aria-describedby') ?? '';
+    expect(describedBy).toContain('group-protect-e1');
+    const reason = document.getElementById('group-protect-e1');
+    expect(reason).toHaveTextContent(
+      'Cette équipe a été placée par le tirage appliqué. Elle est protégée.',
     );
   });
 

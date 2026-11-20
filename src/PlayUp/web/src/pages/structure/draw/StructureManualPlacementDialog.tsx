@@ -9,7 +9,6 @@ import { assignEntryToSlot, clearSlotAssignment } from '../../../api';
 import { ChoiceTile } from '../../../design-system/components/ChoiceTile';
 import { ConfirmDialog } from '../../../design-system/components/ConfirmDialog';
 import { Dialog } from '../../../design-system/components/Dialog';
-import { Select } from '../../../design-system/components/Select';
 import {
   CheckIcon,
   DrawPendingIcon,
@@ -43,8 +42,8 @@ type StructureManualPlacementDialogProps = {
   entries: StructureEntry[];
   cases: SchematicCase[];
   structureStages: readonly StructureStageHubSummary[];
-  /** Preselect from schematic click; null = CTA (pick place). */
-  initialSlotKey?: string | null;
+  /** Cup slot from schematic click or operational menu. */
+  initialSlotKey: string;
 };
 
 type TeamChoice = {
@@ -67,7 +66,7 @@ export function StructureManualPlacementDialog({
   entries,
   cases,
   structureStages,
-  initialSlotKey = null,
+  initialSlotKey,
 }: StructureManualPlacementDialogProps) {
   const { t } = useTranslation('structure');
   const { t: tCommon } = useTranslation('common');
@@ -80,16 +79,9 @@ export function StructureManualPlacementDialog({
     () => listCupManualPlaces(cases, structureStages),
     [cases, structureStages],
   );
-  const editablePlaces = useMemo(
-    () => places.filter((p) => p.mode === 'editable'),
-    [places],
-  );
-
   const [slotKey, setSlotKey] = useState<string | null>(null);
   const [entryId, setEntryId] = useState<string | null>(null);
   const [liveNote, setLiveNote] = useState<string | null>(null);
-  /** Schematic click locks the place for the whole session. */
-  const [placeLocked, setPlaceLocked] = useState(false);
 
   const selectedPlace = places.find((p) => p.slotKey === slotKey) ?? null;
   const mode: ManualPlaceMode | null = selectedPlace?.mode ?? null;
@@ -119,11 +111,7 @@ export function StructureManualPlacementDialog({
 
   useEffect(() => {
     if (!open) return;
-    const locked = initialSlotKey != null && initialSlotKey.trim() !== '';
-    setPlaceLocked(locked);
-    const preferred = locked
-      ? initialSlotKey
-      : (editablePlaces[0]?.slotKey ?? places[0]?.slotKey ?? null);
+    const preferred = initialSlotKey.trim();
     setSlotKey(preferred);
     const place = places.find((p) => p.slotKey === preferred);
     setEntryId(place?.mode === 'editable' ? place.entryId : null);
@@ -193,29 +181,6 @@ export function StructureManualPlacementDialog({
     return choices;
   }, [stage, occupied, entryId, entryById, places, slotKey, t]);
 
-  const placeOptions = useMemo(
-    () =>
-      places.map((p) => {
-        const teamName =
-          p.entryId != null
-            ? (entryById.get(p.entryId)?.displayName?.trim() ??
-              t('manualPlacement.unknownTeam'))
-            : null;
-        return {
-          value: p.slotKey,
-          label:
-            teamName != null
-              ? t('manualPlacement.placeOccupied', {
-                  place: p.label,
-                  team: teamName,
-                })
-              : t('manualPlacement.placeFree', { place: p.label }),
-          disabled: p.mode !== 'editable' && p.slotKey !== slotKey,
-        };
-      }),
-    [places, slotKey, entryById, t],
-  );
-
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!slotKey) {
@@ -279,14 +244,6 @@ export function StructureManualPlacementDialog({
               icon: <EmptySelectionIcon size="lg" />,
             }
           : null;
-
-  const onPlaceChange = (next: string | null) => {
-    if (placeLocked) return;
-    setSlotKey(next);
-    const place = places.find((p) => p.slotKey === next);
-    setEntryId(place?.mode === 'editable' ? place.entryId : null);
-    saveMutation.reset();
-  };
 
   const canSave = canEdit && dirty;
   const cupTargetLabel = selectedPlace?.label ?? slotKey ?? '';
@@ -355,22 +312,6 @@ export function StructureManualPlacementDialog({
           >
             {liveNote}
           </p>
-          {!placeLocked ? (
-            <div className="structure-manual-placement__field">
-              <span className="structure-manual-placement__label">
-                {t('manualPlacement.placeLabel')}
-              </span>
-              <Select
-                options={placeOptions}
-                value={slotKey}
-                onChange={onPlaceChange}
-                placeholder={t('manualPlacement.placePlaceholder')}
-                aria-label={t('manualPlacement.placeLabel')}
-                disabled={pending || places.length === 0}
-              />
-            </div>
-          ) : null}
-
           {canEdit ? (
             <div
               className="structure-qualification__facts structure-manual-placement__facts"

@@ -26,7 +26,7 @@ describe('DropDownButton', () => {
     expect(trigger).toHaveClass('ds-dropdown-button__trigger');
   });
 
-  it('migrates legacy ds-btn classes from root className onto the trigger', () => {
+  it('keeps layout className on the root and never styles the trigger from it', () => {
     const { container } = render(
       <DropDownButton
         className="ds-btn--sm dropdown-layout-hook"
@@ -38,10 +38,10 @@ describe('DropDownButton', () => {
     );
     const root = container.firstElementChild;
     expect(root).toHaveClass('dropdown-layout-hook');
-    expect(root).not.toHaveClass('ds-btn--sm');
-    expect(screen.getByRole('button', { name: 'Add item' })).toHaveClass(
-      'ds-btn--sm',
-    );
+    expect(root).toHaveClass('ds-btn--sm');
+    const trigger = screen.getByRole('button', { name: 'Add item' });
+    expect(trigger).not.toHaveClass('ds-btn--sm');
+    expect(trigger).toHaveClass('ds-btn--primary');
   });
 
   it('opens a menu and selects an item', async () => {

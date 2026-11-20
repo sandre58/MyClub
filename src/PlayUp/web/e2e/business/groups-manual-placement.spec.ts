@@ -415,7 +415,7 @@ test.describe('manual group placement', () => {
     );
   });
 
-  test('compacts group seats after withdrawal and replace targets the shifted occupant', async ({
+  test('compacts group seats after withdrawal and opens seat 3 on the shifted occupant', async ({
     page,
     request,
   }) => {

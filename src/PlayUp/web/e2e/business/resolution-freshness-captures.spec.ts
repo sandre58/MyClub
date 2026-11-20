@@ -40,8 +40,9 @@ test.describe('Recette captures (opt-in)', () => {
       `/competitions/${competition.id}/structure?stage=${manuelId}`,
     );
     await page.getByRole('button', { name: 'Placer manuellement' }).click();
+    await page.getByRole('menuitem').first().click();
     const placementDialog = page.getByRole('dialog', {
-      name: /Placement manuel/,
+      name: /^Placement —/,
     });
     await expect(placementDialog).toBeVisible();
     await placementDialog.screenshot({

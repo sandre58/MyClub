@@ -81,6 +81,7 @@ function renderDialog(
           entries={[entry('e1', 'Alpha'), entry('e2', 'Bravo')]}
           cases={[cupSlot('A'), cupSlot('B')]}
           structureStages={[hubStage()]}
+          initialSlotKey="A"
           {...props}
         />
       </MemoryRouter>

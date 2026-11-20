@@ -1,7 +1,7 @@
 // Manual group placement dialog. Cup placement stays in StructureManualPlacementDialog.
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ApiError,
@@ -10,7 +10,9 @@ import {
   replaceEntryInGroup,
   setGroupEntries,
 } from '../../../api';
+import { Alert } from '../../../design-system/components/Alert';
 import { ChoiceTile } from '../../../design-system/components/ChoiceTile';
+import { Tooltip } from '../../../design-system/components/Tooltip';
 import { ConfirmDialog } from '../../../design-system/components/ConfirmDialog';
 import { Dialog } from '../../../design-system/components/Dialog';
 import {
@@ -44,6 +46,7 @@ import {
   purgeUnavailableSelection,
   batchSelectionExceedsCapacity,
   memberEntryClearable,
+  memberProtectReasonKey,
   membershipSetsEqual,
   reseedMembershipSelection,
   listGroupSelectTargets,
@@ -143,6 +146,9 @@ export function StructureGroupPlacementDialog({
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [liveNote, setLiveNote] = useState<string | null>(null);
+  const [membershipStaleFooter, setMembershipStaleFooter] = useState<
+    string | null
+  >(null);
   const [seatBlocked, setSeatBlocked] = useState(false);
   const [placementBlocked, setPlacementBlocked] = useState(false);
   const [refusedEntryId, setRefusedEntryId] = useState<string | null>(null);
@@ -361,7 +367,7 @@ export function StructureGroupPlacementDialog({
           error.code === 'Application.GroupMembershipStale' &&
           effectiveBatch
         ) {
-          setLiveNote(t('groupPlacement.groupChanged'));
+          setMembershipStaleFooter(t('groupPlacement.membershipStaleUpdating'));
           saveMutation.reset();
           return;
         }
@@ -402,6 +408,7 @@ export function StructureGroupPlacementDialog({
     setPlacementBlocked(false);
     setRefusedEntryId(null);
     setLiveNote(null);
+    setMembershipStaleFooter(null);
 
     if (mode === 'edit') {
       const subjectId = occupantId(placeProp);
@@ -458,7 +465,7 @@ export function StructureGroupPlacementDialog({
     setSelectedIds((selection) =>
       reseedMembershipSelection(hubMemberEntryIds, selection, available),
     );
-    setLiveNote(t('groupPlacement.groupChanged'));
+    setMembershipStaleFooter(t('groupPlacement.groupChanged'));
   }, [open, effectiveBatch, groupId, hubMemberEntryIds, available, t]);
 
   useEffect(() => {
@@ -586,11 +593,17 @@ export function StructureGroupPlacementDialog({
     cancelDiscard,
   } = useDiscardConfirm(dirty, onClose);
 
+  function dismissMembershipStaleFooter() {
+    setMembershipStaleFooter(null);
+  }
+
   function requestClose() {
+    dismissMembershipStaleFooter();
     requestDiscardClose(saveMutation.isPending);
   }
 
   function onClearSeatSelection() {
+    dismissMembershipStaleFooter();
     setSelectedId(null);
     setLiveNote(t('groupPlacement.selectionCleared'));
     saveMutation.reset();
@@ -684,6 +697,7 @@ export function StructureGroupPlacementDialog({
       }
     }
     setSelectedIds([...next]);
+    dismissMembershipStaleFooter();
     saveMutation.reset();
   };
 
@@ -711,6 +725,7 @@ export function StructureGroupPlacementDialog({
         t('groupPlacement.willRemoveMembers', { count: removableMembers }),
       );
     }
+    dismissMembershipStaleFooter();
     saveMutation.reset();
   };
 
@@ -725,6 +740,7 @@ export function StructureGroupPlacementDialog({
     );
 
   const toggleBatch = (entryId: string, next: boolean) => {
+    dismissMembershipStaleFooter();
     setSelectedIds((current) => {
       if (next) {
         if (current.includes(entryId)) {
@@ -773,7 +789,11 @@ export function StructureGroupPlacementDialog({
         trapFocus={!discardOpen}
         focusKey={`${mode}:${groupId ?? ''}:${focusEpoch}`}
         footerStatus={
-          mutationError ? (
+          membershipStaleFooter ? (
+            <Alert tone="info" role="status">
+              {membershipStaleFooter}
+            </Alert>
+          ) : mutationError ? (
             batchErrorMessage ? (
               <div
                 id={batchErrorId}
@@ -808,7 +828,10 @@ export function StructureGroupPlacementDialog({
                 type="button"
                 className="ds-btn ds-btn--primary"
                 disabled={pending || !canSave}
-                onClick={() => saveMutation.mutate()}
+                onClick={() => {
+                  dismissMembershipStaleFooter();
+                  saveMutation.mutate();
+                }}
               >
                 {pending ? (
                   <PendingLabel>{t('manualPlacement.saving')}</PendingLabel>
@@ -1040,9 +1063,27 @@ export function StructureGroupPlacementDialog({
                         const placementHint = isMember
                           ? entryGroupPlacementHint(cases, team.entryId, t)
                           : undefined;
-                        return (
+                        const protectReasonKey =
+                          protectedMember && groupId
+                            ? memberProtectReasonKey(
+                                cases,
+                                groupId,
+                                team.entryId,
+                              )
+                            : null;
+                        const protectReasonText = protectReasonKey
+                          ? t(`groupPlacement.${protectReasonKey}`)
+                          : null;
+                        const protectDescId = `group-protect-${team.entryId}`;
+                        const describedByParts = [
+                          refusedEntryId === team.entryId && batchErrorMessage
+                            ? batchErrorId
+                            : null,
+                          lockedAtCap ? capHintId : null,
+                          protectReasonText ? protectDescId : null,
+                        ].filter(Boolean);
+                        const tile = (
                           <ChoiceTile
-                            key={team.entryId}
                             label={team.displayName}
                             description={placementHint ?? undefined}
                             layout="inline"
@@ -1060,18 +1101,34 @@ export function StructureGroupPlacementDialog({
                             disabled={pending}
                             unavailable={protectedMember || lockedAtCap}
                             aria-describedby={
-                              refusedEntryId === team.entryId &&
-                              batchErrorMessage
-                                ? batchErrorId
-                                : lockedAtCap
-                                  ? capHintId
-                                  : undefined
+                              describedByParts.length > 0
+                                ? describedByParts.join(' ')
+                                : undefined
                             }
                             onChange={(next) => {
                               if (pending || protectedMember) return;
                               toggleBatch(team.entryId, next);
                             }}
                           />
+                        );
+                        return (
+                          <Fragment key={team.entryId}>
+                            {protectReasonText ? (
+                              <span
+                                id={protectDescId}
+                                className="ds-visually-hidden"
+                              >
+                                {protectReasonText}
+                              </span>
+                            ) : null}
+                            {protectReasonText ? (
+                              <Tooltip content={protectReasonText}>
+                                {tile}
+                              </Tooltip>
+                            ) : (
+                              tile
+                            )}
+                          </Fragment>
                         );
                       })
                     : teamChoices.map((team) => {
