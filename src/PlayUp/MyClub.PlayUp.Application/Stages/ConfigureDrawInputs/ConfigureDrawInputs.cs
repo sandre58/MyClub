@@ -79,6 +79,13 @@ public static class ConfigureDrawInputs
                 ApplicationErrorCodes.DrawKindNotSupported);
         }
 
+        if (competitionStages is null)
+        {
+            throw new ArgumentNullException(
+                nameof(competitionStages),
+                "Competition stages are required to validate partial draw inputs.");
+        }
+
         if (inputs.FixedSlots.Count > 0 || inputs.FixedGroups.Count > 0)
         {
             throw new ApplicationFailureException(

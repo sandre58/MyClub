@@ -756,7 +756,7 @@ internal static class StageEndpoints
                 CancellationToken cancellationToken) =>
             {
                 ArgumentNullException.ThrowIfNull(request);
-                if (string.IsNullOrWhiteSpace(request.VersionToken))
+                if (request.Places is null || string.IsNullOrWhiteSpace(request.VersionToken))
                 {
                     return InvalidReleaseBody();
                 }
@@ -800,7 +800,7 @@ internal static class StageEndpoints
                 CancellationToken cancellationToken) =>
             {
                 ArgumentNullException.ThrowIfNull(request);
-                if (string.IsNullOrWhiteSpace(request.VersionToken))
+                if (request.Places is null || string.IsNullOrWhiteSpace(request.VersionToken))
                 {
                     return InvalidReleaseBody();
                 }

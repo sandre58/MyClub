@@ -104,7 +104,7 @@ public static class ResolutionReleaseRules
         }
 
         if (matches.Any(match => Involves(match, subject.EntryId)
-            && match.Status is MatchStatus.Live or MatchStatus.Finished))
+                                 && match.Status is MatchStatus.Live or MatchStatus.Finished))
         {
             return ApplicationErrorCodes.ResolutionReleaseBlockedByPlayedMatch;
         }
@@ -119,7 +119,7 @@ public static class ResolutionReleaseRules
         }
 
         if (matches.Any(match => Involves(match, subject.EntryId)
-            && match.Status == MatchStatus.Cancelled))
+                                 && match.Status == MatchStatus.Cancelled))
         {
             return ApplicationErrorCodes.ResolutionReleaseBlockedByCancelledMatch;
         }
@@ -202,6 +202,14 @@ public static class ResolutionReleaseRules
             }
         }
 
-        return (from @group in (from placement in draw.Resolution.GroupResults let @group = stage.FindGroup(placement.GroupId) select @group).OfType<Group>() where @group.EntryIds.Contains(placement.EntryId) select placement).Any();
+        foreach (var placement in draw.Resolution.GroupResults)
+        {
+            if (stage.FindGroup(placement.GroupId)?.EntryIds.Contains(placement.EntryId) == true)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

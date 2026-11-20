@@ -115,7 +115,7 @@ public static class NeedsAttentionAssembler
             competition,
             stages,
             matchSummariesByStage);
-        var perimeSlotKeys = ResolutionPerimeSlotAttention.Build();
+        var perimeSlotKeys = ResolutionPerimeSlotAttention.Build(resolutionByStage);
         foreach (var stage in stages)
         {
             CollectDrawNoSolutions(stage, items);
@@ -183,10 +183,7 @@ public static class NeedsAttentionAssembler
                 SeverityBlocking,
                 "Draw",
                 draw.Id.Value.ToString(),
-                new Dictionary<string, string>
-                {
-                    ["stageId"] = stage.Id.Value.ToString()
-                }));
+                new Dictionary<string, string> { ["stageId"] = stage.Id.Value.ToString() }));
 
     /// <summary>Attention params flag when a qualification conflict is merged with a périmé slot occupant.</summary>
     public const string QualificationCoalescedParam = "qualificationCoalesced";
@@ -266,50 +263,51 @@ public static class NeedsAttentionAssembler
                         ResolveAttentionTargetId(destination, path.Destination)));
                     break;
                 case DestinationSatisfaction.Kind.Conflict:
-                {
-                    var targetId = ResolveAttentionTargetId(destination, path.Destination);
-                    if (path.Destination.TargetsSlot
-                        && destination.Status != StageStatus.Completed
-                        && ResolutionPerimeSlotAttention.TryMatchQualificationConflict(
-                            perimeSlotKeys,
-                            destination,
-                            path,
-                            source.Id))
                     {
-                        var slotKey = path.Destination.SlotKey!;
-                        var actualEntryId = destination.FindSlot(slotKey)?.EntryId;
-                        coalescedQualificationSlots.Add(
-                            new NeedsAttentionItemDto(
-                                SourceResolutionPerime,
-                                SeverityWarning,
-                                "Slot",
-                                targetId,
-                                new Dictionary<string, string>
-                                {
-                                    ["stageId"] = destination.Id.Value.ToString(),
-                                    ["slotKey"] = slotKey,
-                                    ["count"] = "1",
-                                    [QualificationCoalescedParam] = bool.TrueString,
-                                    ["expectedEntryName"] =
-                                        ResolutionPerimeSlotAttention.EntryDisplayName(
-                                            competition,
-                                            instruction.EntryId),
-                                    ["actualEntryName"] = actualEntryId is { } actualId
-                                        ? ResolutionPerimeSlotAttention.EntryDisplayName(
-                                            competition,
-                                            actualId)
-                                        : string.Empty
-                                }));
+                        var targetId = ResolveAttentionTargetId(destination, path.Destination);
+                        if (path.Destination.TargetsSlot
+                            && destination.Status != StageStatus.Completed
+                            && ResolutionPerimeSlotAttention.TryMatchQualificationConflict(
+                                perimeSlotKeys,
+                                destination,
+                                path,
+                                source.Id,
+                                out _))
+                        {
+                            var slotKey = path.Destination.SlotKey!;
+                            var actualEntryId = destination.FindSlot(slotKey)?.EntryId;
+                            coalescedQualificationSlots.Add(
+                                new NeedsAttentionItemDto(
+                                    SourceResolutionPerime,
+                                    SeverityWarning,
+                                    "Slot",
+                                    targetId,
+                                    new Dictionary<string, string>
+                                    {
+                                        ["stageId"] = destination.Id.Value.ToString(),
+                                        ["slotKey"] = slotKey,
+                                        ["count"] = "1",
+                                        [QualificationCoalescedParam] = bool.TrueString,
+                                        ["expectedEntryName"] =
+                                            ResolutionPerimeSlotAttention.EntryDisplayName(
+                                                competition,
+                                                instruction.EntryId),
+                                        ["actualEntryName"] = actualEntryId is { } actualId
+                                            ? ResolutionPerimeSlotAttention.EntryDisplayName(
+                                                competition,
+                                                actualId)
+                                            : string.Empty
+                                    }));
+                            break;
+                        }
+
+                        items.Add(new NeedsAttentionItemDto(
+                            SourceQualificationConflict,
+                            SeverityBlocking,
+                            ResolveAttentionTargetType(path.Destination),
+                            targetId));
                         break;
                     }
-
-                    items.Add(new NeedsAttentionItemDto(
-                        SourceQualificationConflict,
-                        SeverityBlocking,
-                        ResolveAttentionTargetType(path.Destination),
-                        targetId));
-                    break;
-                }
 
                 case DestinationSatisfaction.Kind.Satisfied:
                 default:
@@ -531,7 +529,7 @@ public static class NeedsAttentionAssembler
         if (path.Source.Scope == RankingScope.AcrossGroups)
         {
             var position = path.Source.AcrossGroupsPosition
-                ?? throw new InvalidOperationException("AcrossGroups position missing.");
+                           ?? throw new InvalidOperationException("AcrossGroups position missing.");
             return CrossGroupStandingAssembler.BuildFromAttentionSlices(
                 sourceStage.Groups,
                 groupStandings,

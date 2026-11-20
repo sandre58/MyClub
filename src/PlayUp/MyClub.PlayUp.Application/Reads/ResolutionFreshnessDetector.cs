@@ -504,12 +504,12 @@ public static class ResolutionFreshnessDetector
                     {
                         stagesById.TryGetValue(occupant.StageId, out var stage);
                         var source = SourceStage(occupant, stagesById);
-                        IReadOnlyList<ResolutionReleaseMatch>? matches = null;
+
                         // A missing stage key means this caller loaded no rows for it.
                         // The structure read writes an empty list for every stage, so a
                         // null dictionary is the case where matches were not loaded at all.
                         matchesByStage.TryGetValue(occupant.StageId, out var loaded);
-                        matches = loaded ?? [];
+                        IReadOnlyList<ResolutionReleaseMatch> matches = loaded ?? [];
 
                         var verdict = ResolutionDefinitiveness.Evaluate(
                             competition,

@@ -520,7 +520,6 @@ public static class BackfillResolutionProvenance
 
         tracker.RecordIndeterminate();
         return ResolutionProvenance.NonVerifiee();
-
     }
 
     private static bool TryResolveFixtureOutcome(

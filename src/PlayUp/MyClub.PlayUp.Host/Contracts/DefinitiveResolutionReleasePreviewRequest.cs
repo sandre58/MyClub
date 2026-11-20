@@ -23,7 +23,7 @@ public sealed record DefinitiveResolutionReleasePreviewRequest(Guid? Destination
 public sealed record DefinitiveResolutionReleaseConfirmRequest(
     Guid? DestinationStageId,
     string VersionToken,
-    IReadOnlyList<DefinitiveResolutionReleasePlaceRequest> Places);
+    IReadOnlyList<DefinitiveResolutionReleasePlaceRequest>? Places);
 
 /// <summary>
 /// Body of <c>POST /stages/{destinationId}/resolution/release-definitive-deleted</c>.
@@ -32,7 +32,7 @@ public sealed record DefinitiveResolutionReleaseConfirmRequest(
 /// <param name="Places">Primary places from that preview, in that order.</param>
 public sealed record DeletedSourceDefinitiveReleaseConfirmRequest(
     string VersionToken,
-    IReadOnlyList<DefinitiveResolutionReleasePlaceRequest> Places);
+    IReadOnlyList<DefinitiveResolutionReleasePlaceRequest>? Places);
 
 /// <summary>
 /// One primary place to confirm.
