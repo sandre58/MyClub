@@ -1112,10 +1112,10 @@
   gap: 0;
 }
 
-/* Two single lines must fit inside --team-crest-height-sm (1.7rem); --leading-tight overflows. */
+/* label+meta at 1.1 × (0.8125 + 0.75) ≈ 1.72rem — descenders clear ellipsis; tile height unchanged. */
 .structure-manual-placement__teams .ds-choice-tile--inline .ds-choice-tile__text .ds-choice-tile__title,
 .structure-manual-placement__teams .ds-choice-tile--inline .ds-choice-tile__text .ds-choice-tile__description {
-  line-height: 1;
+  line-height: 1.1;
 }
 
 .structure-manual-placement__teams .ds-choice-tile--inline .ds-choice-tile__description {
