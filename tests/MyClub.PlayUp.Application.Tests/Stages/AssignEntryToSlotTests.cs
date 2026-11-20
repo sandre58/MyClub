@@ -10,6 +10,7 @@ using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
+using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using Xunit;
 
@@ -27,13 +28,14 @@ public sealed class AssignEntryToSlotTests
     {
         var (stage, entryId) = SeedCupWithPopulation();
 
-        AssignEntryToSlot.Execute(stage, "S1", entryId);
+        AssignEntryToSlot.Execute(stage, "S1", entryId, expectedEntryId: null)
+            .Should().BeTrue();
 
         stage.DirectAssignments.Should().ContainSingle(a =>
             a.SlotKey == "S1" && a.EntryId.Equals(entryId));
         stage.FindSlot("S1")!.EntryId.Should().Be(entryId);
 
-        ClearSlotAssignment.Execute(stage, "S1");
+        ClearSlotAssignment.Execute(stage, "S1", entryId).Should().BeTrue();
 
         stage.DirectAssignments.Should().BeEmpty();
         stage.FindSlot("S1")!.EntryId.Should().BeNull();
@@ -46,7 +48,7 @@ public sealed class AssignEntryToSlotTests
         stage.Prepare(_clock);
         stage.Start(_clock);
 
-        var act = () => AssignEntryToSlot.Execute(stage, "S1", entryId);
+        var act = () => AssignEntryToSlot.Execute(stage, "S1", entryId, expectedEntryId: null);
 
         act.Should().Throw<ApplicationFailureException>()
             .Which.Code.Should().Be(ApplicationErrorCodes.StructureNotMutable);
@@ -56,11 +58,11 @@ public sealed class AssignEntryToSlotTests
     public void Clear_rejects_when_stage_running()
     {
         var (stage, entryId) = SeedCupWithPopulation();
-        AssignEntryToSlot.Execute(stage, "S1", entryId);
+        AssignEntryToSlot.Execute(stage, "S1", entryId, expectedEntryId: null);
         stage.Prepare(_clock);
         stage.Start(_clock);
 
-        var act = () => ClearSlotAssignment.Execute(stage, "S1");
+        var act = () => ClearSlotAssignment.Execute(stage, "S1", entryId);
 
         act.Should().Throw<ApplicationFailureException>()
             .Which.Code.Should().Be(ApplicationErrorCodes.StructureNotMutable);
@@ -71,7 +73,7 @@ public sealed class AssignEntryToSlotTests
     {
         var (stage, entryId) = SeedCupWithPopulation();
 
-        var act = () => AssignEntryToSlot.Execute(stage, "  ", entryId);
+        var act = () => AssignEntryToSlot.Execute(stage, "  ", entryId, expectedEntryId: null);
 
         act.Should().Throw<ApplicationFailureException>()
             .Which.Code.Should().Be(ApplicationErrorCodes.InvalidStructureIntent);
@@ -83,7 +85,7 @@ public sealed class AssignEntryToSlotTests
         var (stage, _) = SeedCupWithPopulation();
         var outsider = EntryId.New();
 
-        var act = () => AssignEntryToSlot.Execute(stage, "S1", outsider);
+        var act = () => AssignEntryToSlot.Execute(stage, "S1", outsider, expectedEntryId: null);
 
         act.Should().Throw<DomainException>()
             .Which.Code.Should().Be(StageErrorCodes.EntryNotInPopulation);
@@ -95,7 +97,8 @@ public sealed class AssignEntryToSlotTests
         var (stage, _) = SeedCupWithPopulation();
         stage.ApplyResolvedEntry("S1", stage.CompositionEntries[0].EntryId, _clock);
 
-        ClearSlotAssignment.Execute(stage, "S1");
+        var occupant = stage.FindSlot("S1")!.EntryId;
+        ClearSlotAssignment.Execute(stage, "S1", occupant).Should().BeFalse();
 
         stage.DirectAssignments.Should().BeEmpty();
         stage.FindSlot("S1")!.EntryId.Should().NotBeNull();
@@ -107,7 +110,7 @@ public sealed class AssignEntryToSlotTests
         var (stage, entryA, entryB, match) = SeedMaterializedCupPair();
         var other = stage.CompositionEntries.First(e => !e.EntryId.Equals(entryA) && !e.EntryId.Equals(entryB)).EntryId;
 
-        var act = () => AssignEntryToSlot.Execute(stage, "S1", other, [match]);
+        var act = () => AssignEntryToSlot.Execute(stage, "S1", other, entryA, [match]);
 
         act.Should().Throw<DomainException>()
             .Which.Code.Should().Be(StageErrorCodes.MaterializedOpponentConflict);
@@ -119,14 +122,92 @@ public sealed class AssignEntryToSlotTests
     public void Clear_refuses_when_materialized_pair_would_diverge()
     {
         var (stage, entryA, entryB, match) = SeedMaterializedCupPair();
-        AssignEntryToSlot.Execute(stage, "S1", entryA, [match]);
+        stage.AssignEntryToSlot(
+            "S1",
+            entryA,
+            MaterializedParticipantSnapshots.FromMatches([match]));
 
-        var act = () => ClearSlotAssignment.Execute(stage, "S1", [match]);
+        var act = () => ClearSlotAssignment.Execute(stage, "S1", entryA, [match]);
 
         act.Should().Throw<DomainException>()
             .Which.Code.Should().Be(StageErrorCodes.MaterializedOpponentConflict);
         stage.FindSlot("S1")!.EntryId.Should().Be(entryA);
         stage.FindSlot("S2")!.EntryId.Should().Be(entryB);
+    }
+
+    [Fact]
+    public void Assign_with_current_expected_mutates()
+    {
+        var (stage, entryId, other) = SeedCupWithTwoEntries();
+
+        AssignEntryToSlot.Execute(stage, "S1", entryId, expectedEntryId: null).Should().BeTrue();
+        AssignEntryToSlot.Execute(stage, "S1", other, entryId).Should().BeTrue();
+
+        stage.FindSlot("S1")!.EntryId.Should().Be(other);
+    }
+
+    [Fact]
+    public void Assign_with_stale_expected_refuses_and_keeps_occupant()
+    {
+        var (stage, entryId, other) = SeedCupWithTwoEntries();
+        AssignEntryToSlot.Execute(stage, "S1", entryId, expectedEntryId: null);
+
+        var act = () => AssignEntryToSlot.Execute(stage, "S1", other, expectedEntryId: null);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.SlotAssignmentStale);
+        stage.FindSlot("S1")!.EntryId.Should().Be(entryId);
+    }
+
+    [Fact]
+    public void Assign_null_expected_on_occupied_slot_is_stale()
+    {
+        var (stage, entryId) = SeedCupWithPopulation();
+        AssignEntryToSlot.Execute(stage, "S1", entryId, expectedEntryId: null);
+
+        var act = () => AssignEntryToSlot.Execute(stage, "S1", entryId, expectedEntryId: null);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.SlotAssignmentStale);
+        stage.FindSlot("S1")!.EntryId.Should().Be(entryId);
+    }
+
+    [Fact]
+    public void Assign_same_occupant_is_noop()
+    {
+        var (stage, entryId) = SeedCupWithPopulation();
+        AssignEntryToSlot.Execute(stage, "S1", entryId, expectedEntryId: null);
+
+        AssignEntryToSlot.Execute(stage, "S1", entryId, entryId).Should().BeFalse();
+
+        stage.DirectAssignments.Should().ContainSingle();
+        stage.FindSlot("S1")!.EntryId.Should().Be(entryId);
+    }
+
+    [Fact]
+    public void Clear_free_slot_with_null_expected_is_noop()
+    {
+        var (stage, _) = SeedCupWithPopulation();
+
+        ClearSlotAssignment.Execute(stage, "S1", expectedEntryId: null).Should().BeFalse();
+
+        stage.FindSlot("S1")!.EntryId.Should().BeNull();
+        stage.DirectAssignments.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Stale_expected_on_applied_draw_slot_is_refused_before_the_draw_gate()
+    {
+        var (stage, protectedSlot, occupant, other) = SeedAppliedDrawSlot();
+
+        var assign = () => AssignEntryToSlot.Execute(stage, protectedSlot, other, expectedEntryId: null);
+        var clear = () => ClearSlotAssignment.Execute(stage, protectedSlot, expectedEntryId: null);
+
+        assign.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.SlotAssignmentStale);
+        clear.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.SlotAssignmentStale);
+        stage.FindSlot(protectedSlot)!.EntryId.Should().Be(occupant);
     }
 
     private (Stage Stage, EntryId EntryId) SeedCupWithPopulation()
@@ -139,6 +220,46 @@ public sealed class AssignEntryToSlotTests
         var entry = competition.AddEntry(TeamId.New(), "Team A", _clock);
         ReplaceStageAffectationAuthoring.Execute(stage, competition, [entry.Id], _clock);
         return (stage, entry.Id);
+    }
+
+    private (Stage Stage, EntryId First, EntryId Second) SeedCupWithTwoEntries()
+    {
+        var competition = CreateCompetition.Execute("Cup-Manual-2", _clock);
+        var stage = AddCompetitionStage.Execute(
+            competition,
+            StructureIntent.Cup(2, "KO"),
+            _clock);
+        var first = competition.AddEntry(TeamId.New(), "Team A", _clock);
+        var second = competition.AddEntry(TeamId.New(), "Team B", _clock);
+        ReplaceStageAffectationAuthoring.Execute(stage, competition, [first.Id, second.Id], _clock);
+        return (stage, first.Id, second.Id);
+    }
+
+    private (Stage Stage, string ProtectedSlot, EntryId Occupant, EntryId Other) SeedAppliedDrawSlot()
+    {
+        var competition = CreateCompetition.Execute("Cup-Stale-Gate", _clock);
+        for (var i = 0; i < 4; i++)
+        {
+            AddEntry.Execute(competition, $"T{i}", _clock);
+        }
+
+        var stage = ConfigureStructure.Execute(competition, null, StructureIntent.Cup(4), _clock).Stage;
+        var entryIds = competition.Entries.Select(entry => entry.Id).ToArray();
+        stage.ReplaceAffectationAuthoring(entryIds, _clock);
+        ReplaceStageDrawRules.Execute(stage, new DrawRules(DrawMode.Random), _clock);
+        var draw = CreateDraw.Execute(stage, DrawResolutionKind.Slot, _clock);
+        ConfigureDrawInputs.Execute(
+            stage,
+            draw.Id,
+            DrawInputsFactory.CreateDefault(stage, DrawResolutionKind.Slot));
+        var slotTargets = stage.Slots.Select(slot => slot.SlotKey).ToArray();
+        GenerateDrawResolution.Execute(stage, draw.Id, _clock, slotTargets).IsResolved.Should().BeTrue();
+        PublishDraw.Execute(stage, draw.Id, _clock);
+        ApplyDraw.Execute(stage, draw.Id, _clock);
+        var protectedSlot = draw.Resolution.SlotResults[0].SlotKey;
+        var occupant = draw.Resolution.SlotResults[0].EntryId;
+        var other = entryIds.First(id => !id.Equals(occupant));
+        return (stage, protectedSlot, occupant, other);
     }
 
     private (Stage Stage, EntryId EntryA, EntryId EntryB, Match Match) SeedMaterializedCupPair()

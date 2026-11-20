@@ -1028,6 +1028,8 @@
     "blockedUnavailable": "This place is not available for manual placement.",
     "save": "Save",
     "saving": "Saving…",
+    "placeChangedUpdating": "This place changed while you were editing. Updating…",
+    "placeChanged": "The place has changed: selection was updated.",
     "toastSaved": "Manual assignment saved",
     "toastCleared": "Manual assignment cleared",
     "selectionCleared": "Selection cleared",

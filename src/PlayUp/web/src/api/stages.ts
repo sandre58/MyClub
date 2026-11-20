@@ -108,11 +108,12 @@ export function assignEntryToSlot(
   stageId: string,
   slotKey: string,
   entryId: string,
+  expectedEntryId: string | null,
 ): Promise<void> {
   return sendNoContent(
     'PUT',
     `/stages/${stageId}/slots/${encodeURIComponent(slotKey)}/assignment`,
-    { entryId },
+    { entryId, expectedEntryId },
   );
 }
 
@@ -120,10 +121,15 @@ export function assignEntryToSlot(
 export function clearSlotAssignment(
   stageId: string,
   slotKey: string,
+  expectedEntryId: string | null,
 ): Promise<void> {
+  const query =
+    expectedEntryId == null
+      ? ''
+      : `?expectedEntryId=${encodeURIComponent(expectedEntryId)}`;
   return sendNoContent(
     'DELETE',
-    `/stages/${stageId}/slots/${encodeURIComponent(slotKey)}/assignment`,
+    `/stages/${stageId}/slots/${encodeURIComponent(slotKey)}/assignment${query}`,
   );
 }
 

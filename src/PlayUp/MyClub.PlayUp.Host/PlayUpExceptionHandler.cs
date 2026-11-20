@@ -129,6 +129,8 @@ internal sealed partial class PlayUpExceptionHandler(ILogger<PlayUpExceptionHand
                 (StatusCodes.Status409Conflict, "Group membership conflict", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.GroupMembershipStale } application =>
                 (StatusCodes.Status409Conflict, "Group membership stale", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.SlotAssignmentStale } application =>
+                (StatusCodes.Status409Conflict, "Slot assignment stale", application.Code),
             GroupPlacementRejectedException rejected => MapPlacementRejection(rejected),
             ApplicationFailureException { Code: ApplicationErrorCodes.DrawObsoleteForConsumption } application =>
                 (StatusCodes.Status409Conflict, "Draw obsolete for consumption", application.Code),

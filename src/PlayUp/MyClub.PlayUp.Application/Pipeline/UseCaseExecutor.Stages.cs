@@ -606,38 +606,72 @@ public sealed partial class UseCaseExecutor
 
     /// <summary>
     /// Assigns an entry to a Cup slot via DirectAssignment (manual placement).
+    /// Skips <c>SaveChanges</c> when the occupant is already <paramref name="entryId"/>.
     /// </summary>
+    /// <param name="stageId">Stage that owns the slot.</param>
+    /// <param name="slotKey">Target slot key.</param>
+    /// <param name="entryId">Entry to pin.</param>
+    /// <param name="expectedEntryId">Resolved occupant the caller observed, or null when the slot was free.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task AssignEntryToSlotAsync(
         StageId stageId,
         string slotKey,
         EntryId entryId,
-        CancellationToken cancellationToken = default)
-    {
-        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        await EnsureCompetitionAllowsLifecycleMutationAsync(stage.CompetitionId, cancellationToken)
-            .ConfigureAwait(false);
-        var stageMatches = await matches.ListByStageForUpdateAsync(stageId, cancellationToken)
-            .ConfigureAwait(false);
-        AssignEntryToSlot.Execute(stage, slotKey, entryId, stageMatches);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
+        EntryId? expectedEntryId,
+        CancellationToken cancellationToken = default) =>
+        await ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await RequireStageAsync(stageId, innerToken).ConfigureAwait(false);
+                var competition = await RequireCompetitionAsync(stage.CompetitionId, innerToken)
+                    .ConfigureAwait(false);
+                EnsureCompetitionAllowsLifecycleMutation(competition);
+                var stageMatches = await matches.ListByStageForUpdateAsync(stageId, innerToken)
+                    .ConfigureAwait(false);
+                var mutated = AssignEntryToSlot.Execute(
+                    stage,
+                    slotKey,
+                    entryId,
+                    expectedEntryId,
+                    stageMatches);
+                if (mutated)
+                {
+                    await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+                }
+            },
+            cancellationToken).ConfigureAwait(false);
 
     /// <summary>
     /// Clears a Cup DirectAssignment (and synced occupant) when present.
+    /// Skips <c>SaveChanges</c> when the slot is already free or the clear does not change the occupant.
     /// </summary>
+    /// <param name="stageId">Stage that owns the slot.</param>
+    /// <param name="slotKey">Target slot key.</param>
+    /// <param name="expectedEntryId">Resolved occupant the caller observed, or null when the slot was free.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task ClearSlotAssignmentAsync(
         StageId stageId,
         string slotKey,
-        CancellationToken cancellationToken = default)
-    {
-        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        await EnsureCompetitionAllowsLifecycleMutationAsync(stage.CompetitionId, cancellationToken)
-            .ConfigureAwait(false);
-        var stageMatches = await matches.ListByStageForUpdateAsync(stageId, cancellationToken)
-            .ConfigureAwait(false);
-        ClearSlotAssignment.Execute(stage, slotKey, stageMatches);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
+        EntryId? expectedEntryId,
+        CancellationToken cancellationToken = default) =>
+        await ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await RequireStageAsync(stageId, innerToken).ConfigureAwait(false);
+                var competition = await RequireCompetitionAsync(stage.CompetitionId, innerToken)
+                    .ConfigureAwait(false);
+                EnsureCompetitionAllowsLifecycleMutation(competition);
+                var stageMatches = await matches.ListByStageForUpdateAsync(stageId, innerToken)
+                    .ConfigureAwait(false);
+                var mutated = ClearSlotAssignment.Execute(stage, slotKey, expectedEntryId, stageMatches);
+                if (mutated)
+                {
+                    await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+                }
+            },
+            cancellationToken).ConfigureAwait(false);
 
     /// <summary>
     /// Assigns an entry to a group (manual placement).
@@ -1308,25 +1342,39 @@ public sealed partial class UseCaseExecutor
     }
 
     /// <summary>
-    /// Materializes Fixtures/Matches for the stage format (Championship / Groups / Cup fixtures).
+    /// Materializes Fixtures/Matches for the stage format (Championship / Groups).
     /// </summary>
     public async Task<MaterializeMatchesResult> MaterializeMatchesAsync(
         StageId stageId,
         CancellationToken cancellationToken = default)
     {
-        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken).ConfigureAwait(false);
-        var existing = await matches.ListByStageForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false);
-        var competitionStages =
-            await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken).ConfigureAwait(false);
-        var result = MaterializeMatches.Execute(competition, stage, existing, clock, competitionStages);
-        foreach (var created in result.CreatedMatches)
-        {
-            matches.Add(created);
-        }
+        MaterializeMatchesResult? result = null;
+        await ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await RequireStageAsync(stageId, innerToken).ConfigureAwait(false);
+                var competition = await RequireCompetitionAsync(stage.CompetitionId, innerToken)
+                    .ConfigureAwait(false);
+                var existing = await matches.ListByStageForUpdateAsync(stageId, innerToken).ConfigureAwait(false);
+                var competitionStages =
+                    await LoadCompetitionStagesForUpdateAsync(competition, innerToken).ConfigureAwait(false);
+                var materialized = MaterializeMatches.Execute(
+                    competition,
+                    stage,
+                    existing,
+                    clock,
+                    competitionStages);
+                foreach (var created in materialized.CreatedMatches)
+                {
+                    matches.Add(created);
+                }
 
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return result;
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+                result = materialized;
+            },
+            cancellationToken).ConfigureAwait(false);
+        return result ?? throw new InvalidOperationException("Match materialization did not run.");
     }
 
     /// <summary>
@@ -1338,33 +1386,42 @@ public sealed partial class UseCaseExecutor
         bool planEntireRound = false,
         CancellationToken cancellationToken = default)
     {
-        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken).ConfigureAwait(false);
-        var existing = await matches.ListByStageForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false);
-        var competitionStages = await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken)
-            .ConfigureAwait(false);
-        var matchSummariesByStage =
-            competition.StageIds.Count == 0
-                ? new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>()
-                : await matches
-                    .ListSummaryRowsByStageIdsReadOnlyAsync(competition.StageIds, cancellationToken)
+        MaterializeCupFromOccupiedSlotsResult? result = null;
+        await ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await RequireStageAsync(stageId, innerToken).ConfigureAwait(false);
+                var competition = await RequireCompetitionAsync(stage.CompetitionId, innerToken)
                     .ConfigureAwait(false);
-        var result = MaterializeCupFromOccupiedSlots.Execute(
-            competition,
-            stage,
-            pairKeys,
-            existing,
-            clock,
-            competitionStages,
-            matchSummariesByStage,
-            planEntireRound);
-        foreach (var created in result.CreatedMatches)
-        {
-            matches.Add(created);
-        }
+                var existing = await matches.ListByStageForUpdateAsync(stageId, innerToken).ConfigureAwait(false);
+                var competitionStages = await LoadCompetitionStagesForUpdateAsync(competition, innerToken)
+                    .ConfigureAwait(false);
+                var matchSummariesByStage =
+                    competition.StageIds.Count == 0
+                        ? new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>()
+                        : await matches
+                            .ListSummaryRowsByStageIdsReadOnlyAsync(competition.StageIds, innerToken)
+                            .ConfigureAwait(false);
+                var materialized = MaterializeCupFromOccupiedSlots.Execute(
+                    competition,
+                    stage,
+                    pairKeys,
+                    existing,
+                    clock,
+                    competitionStages,
+                    matchSummariesByStage,
+                    planEntireRound);
+                foreach (var created in materialized.CreatedMatches)
+                {
+                    matches.Add(created);
+                }
 
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return result;
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+                result = materialized;
+            },
+            cancellationToken).ConfigureAwait(false);
+        return result ?? throw new InvalidOperationException("Cup materialization did not run.");
     }
 
     /// <summary>
@@ -1374,34 +1431,47 @@ public sealed partial class UseCaseExecutor
         StageId stageId,
         CancellationToken cancellationToken = default)
     {
-        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken).ConfigureAwait(false);
-        var existing = await matches.ListByStageForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false);
-        var format = StructureSkeleton.InferFormat(stage)
-                     ?? throw new ApplicationFailureException(
-                         "Dematerialization requires a structured stage.",
-                         ApplicationErrorCodes.DematerializationFailure);
-
-        var result = format switch
-        {
-            StructureFormatKind.Championship or StructureFormatKind.Groups => new DematerializePhaseResult(
-                DematerializeChampionshipOrGroups.Execute(competition, stage, existing, matches, clock)
-                    .RemovedMatchCount,
-                RemovedRoundNumber: null),
-            StructureFormatKind.Cup => new DematerializePhaseResult(
-                DematerializeCup.Execute(competition, stage, existing, matches, clock).RemovedMatchCount,
-                RemovedRoundNumber: null),
-            StructureFormatKind.Swiss => DematerializeSwissLastRound.Execute(competition, stage, existing, matches, clock) switch
+        DematerializePhaseResult? result = null;
+        await ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
             {
-                var swiss => new DematerializePhaseResult(swiss.RemovedMatchCount, swiss.RemovedRoundNumber)
-            },
-            _ => throw new ApplicationFailureException(
-                $"Dematerialization is not supported for format '{format}'.",
-                ApplicationErrorCodes.DematerializationFailure)
-        };
+                var stage = await RequireStageAsync(stageId, innerToken).ConfigureAwait(false);
+                var competition = await RequireCompetitionAsync(stage.CompetitionId, innerToken)
+                    .ConfigureAwait(false);
+                var existing = await matches.ListByStageForUpdateAsync(stageId, innerToken).ConfigureAwait(false);
+                var format = StructureSkeleton.InferFormat(stage)
+                             ?? throw new ApplicationFailureException(
+                                 "Dematerialization requires a structured stage.",
+                                 ApplicationErrorCodes.DematerializationFailure);
 
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return result;
+                result = format switch
+                {
+                    StructureFormatKind.Championship or StructureFormatKind.Groups => new DematerializePhaseResult(
+                        DematerializeChampionshipOrGroups.Execute(competition, stage, existing, matches, clock)
+                            .RemovedMatchCount,
+                        RemovedRoundNumber: null),
+                    StructureFormatKind.Cup => new DematerializePhaseResult(
+                        DematerializeCup.Execute(competition, stage, existing, matches, clock).RemovedMatchCount,
+                        RemovedRoundNumber: null),
+                    StructureFormatKind.Swiss => DematerializeSwissLastRound.Execute(
+                        competition,
+                        stage,
+                        existing,
+                        matches,
+                        clock) switch
+                    {
+                        var swiss => new DematerializePhaseResult(swiss.RemovedMatchCount, swiss.RemovedRoundNumber)
+                    },
+                    _ => throw new ApplicationFailureException(
+                        $"Dematerialization is not supported for format '{format}'.",
+                        ApplicationErrorCodes.DematerializationFailure)
+                };
+
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
+        return result ?? throw new InvalidOperationException("Phase dematerialization did not run.");
     }
 
     /// <summary>

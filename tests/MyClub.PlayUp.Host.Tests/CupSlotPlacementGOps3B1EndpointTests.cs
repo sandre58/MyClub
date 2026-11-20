@@ -35,7 +35,8 @@ public sealed class CupSlotPlacementGOps3B1EndpointTests(HostPostgresFixture fix
         var seed = await SeedCupWithAppliedSlotDrawAsync(factory);
         using var client = factory.CreateClient();
 
-        using var response = await client.DeleteAsync(AssignmentUri(seed.StageId, seed.ProtectedSlot));
+        using var response = await client.DeleteAsync(
+            AssignmentUri(seed.StageId, seed.ProtectedSlot, seed.ProtectedEntry));
 
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
         var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
@@ -51,15 +52,23 @@ public sealed class CupSlotPlacementGOps3B1EndpointTests(HostPostgresFixture fix
 
         using var response = await client.PutAsJsonAsync(
             AssignmentUri(seed.StageId, seed.ProtectedSlot),
-            new AssignEntryToSlotRequest(seed.OtherEntry.Value));
+            new AssignEntryToSlotRequest(seed.OtherEntry.Value, seed.ProtectedEntry.Value));
 
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
         var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
         GetCode(problem!).Should().Be(ApplicationErrorCodes.AppliedDrawSlotPlacementProtected);
     }
 
-    private static Uri AssignmentUri(StageId stageId, string slotKey) =>
-        new($"/stages/{stageId.Value}/slots/{Uri.EscapeDataString(slotKey)}/assignment", UriKind.Relative);
+    private static Uri AssignmentUri(StageId stageId, string slotKey, EntryId? expectedEntryId = null)
+    {
+        var path = $"/stages/{stageId.Value}/slots/{Uri.EscapeDataString(slotKey)}/assignment";
+        if (expectedEntryId is { } expected)
+        {
+            path += $"?expectedEntryId={expected.Value}";
+        }
+
+        return new Uri(path, UriKind.Relative);
+    }
 
     private static string? GetCode(ProblemDetails problem) =>
         !problem.Extensions.TryGetValue("code", out var raw) || raw is null
@@ -112,8 +121,12 @@ public sealed class CupSlotPlacementGOps3B1EndpointTests(HostPostgresFixture fix
         stages.Add(stage);
         await unitOfWork.SaveChangesAsync();
 
-        return new CupB1Seed(stage.Id, protectedSlot, otherEntry);
+        return new CupB1Seed(stage.Id, protectedSlot, protectedEntry, otherEntry);
     }
 
-    private sealed record CupB1Seed(StageId StageId, string ProtectedSlot, EntryId OtherEntry);
+    private sealed record CupB1Seed(
+        StageId StageId,
+        string ProtectedSlot,
+        EntryId ProtectedEntry,
+        EntryId OtherEntry);
 }

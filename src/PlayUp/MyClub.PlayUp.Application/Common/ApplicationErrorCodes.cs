@@ -313,6 +313,11 @@ public static class ApplicationErrorCodes
     public const string GroupMembershipStale = "Application.GroupMembershipStale";
 
     /// <summary>
+    /// Gets the code when <c>expectedEntryId</c> does not match the resolved occupant of a Cup slot.
+    /// </summary>
+    public const string SlotAssignmentStale = "Application.SlotAssignmentStale";
+
+    /// <summary>
     /// Gets the code when a draw resolution is obsolete for consumption.
     /// </summary>
     public const string DrawObsoleteForConsumption = "Application.DrawObsoleteForConsumption";

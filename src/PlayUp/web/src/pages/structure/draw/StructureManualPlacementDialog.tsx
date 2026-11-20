@@ -6,6 +6,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { assignEntryToSlot, clearSlotAssignment } from '../../../api';
+import { ApiError } from '../../../api';
+import { Alert } from '../../../design-system/components/Alert';
 import { ChoiceTile } from '../../../design-system/components/ChoiceTile';
 import { ConfirmDialog } from '../../../design-system/components/ConfirmDialog';
 import { Dialog } from '../../../design-system/components/Dialog';
@@ -81,7 +83,13 @@ export function StructureManualPlacementDialog({
   );
   const [slotKey, setSlotKey] = useState<string | null>(null);
   const [entryId, setEntryId] = useState<string | null>(null);
+  const [expectedEntryId, setExpectedEntryId] = useState<string | null>(null);
+  const [placeChangedFooter, setPlaceChangedFooter] = useState<string | null>(
+    null,
+  );
   const [liveNote, setLiveNote] = useState<string | null>(null);
+  const occupantSeededRef = useRef(false);
+  const lastHubOccupantRef = useRef<string | null | undefined>(undefined);
 
   const selectedPlace = places.find((p) => p.slotKey === slotKey) ?? null;
   const mode: ManualPlaceMode | null = selectedPlace?.mode ?? null;
@@ -110,13 +118,43 @@ export function StructureManualPlacementDialog({
   };
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      occupantSeededRef.current = false;
+      lastHubOccupantRef.current = undefined;
+      return;
+    }
     const preferred = initialSlotKey.trim();
     setSlotKey(preferred);
     const place = places.find((p) => p.slotKey === preferred);
-    setEntryId(place?.mode === 'editable' ? place.entryId : null);
+    const occupant = place?.mode === 'editable' ? place.entryId : null;
+    setEntryId(occupant);
+    setExpectedEntryId(occupant);
+    setPlaceChangedFooter(null);
+    occupantSeededRef.current = true;
+    lastHubOccupantRef.current = undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- open edge: seed from props once
   }, [open, initialSlotKey]);
+
+  useEffect(() => {
+    if (!open || !slotKey || !occupantSeededRef.current) {
+      return;
+    }
+    const place = places.find((item) => item.slotKey === slotKey);
+    const occupant = place?.entryId ?? null;
+    const previous = lastHubOccupantRef.current;
+    if (previous !== undefined && previous === occupant) {
+      return;
+    }
+    lastHubOccupantRef.current = occupant;
+    if (previous === undefined) {
+      return;
+    }
+    setExpectedEntryId(occupant);
+    if (place?.mode === 'editable') {
+      setEntryId(occupant);
+    }
+    setPlaceChangedFooter(t('manualPlacement.placeChanged'));
+  }, [open, slotKey, places, t]);
 
   const occupied = useMemo(
     () => occupiedEntryIds(places, slotKey),
@@ -187,17 +225,30 @@ export function StructureManualPlacementDialog({
         throw new Error('missing selection');
       }
       if (entryId) {
-        await assignEntryToSlot(stage.stageId, slotKey, entryId);
+        await assignEntryToSlot(
+          stage.stageId,
+          slotKey,
+          entryId,
+          expectedEntryId,
+        );
         return;
       }
-      await clearSlotAssignment(stage.stageId, slotKey);
+      await clearSlotAssignment(stage.stageId, slotKey, expectedEntryId);
     },
     onSuccess: () => {
       onClose();
       refresh();
     },
-    onError: () => {
+    onError: (error) => {
       refresh();
+      if (
+        error instanceof ApiError &&
+        error.code === 'Application.SlotAssignmentStale'
+      ) {
+        setPlaceChangedFooter(t('manualPlacement.placeChangedUpdating'));
+        saveMutation.reset();
+        focusTeamList();
+      }
     },
   });
 
@@ -206,7 +257,12 @@ export function StructureManualPlacementDialog({
   const pending = saveMutation.isPending;
   const mutationError = saveMutation.error;
 
+  function dismissPlaceChangedFooter() {
+    setPlaceChangedFooter(null);
+  }
+
   function requestClose() {
+    dismissPlaceChangedFooter();
     requestDiscardClose(pending);
   }
 
@@ -266,7 +322,11 @@ export function StructureManualPlacementDialog({
         closeDisabled={pending || discardOpen}
         trapFocus={!discardOpen}
         footerStatus={
-          mutationError ? (
+          placeChangedFooter ? (
+            <Alert tone="info" role="status">
+              {placeChangedFooter}
+            </Alert>
+          ) : mutationError ? (
             <MutationError
               error={mutationError}
               structureStages={structureStages}
@@ -289,7 +349,10 @@ export function StructureManualPlacementDialog({
                 type="button"
                 className="ds-btn ds-btn--primary"
                 disabled={pending || !canSave}
-                onClick={() => saveMutation.mutate()}
+                onClick={() => {
+                  dismissPlaceChangedFooter();
+                  saveMutation.mutate();
+                }}
               >
                 {saveMutation.isPending ? (
                   <PendingLabel>{t('manualPlacement.saving')}</PendingLabel>
@@ -365,6 +428,7 @@ export function StructureManualPlacementDialog({
                       disabled={entryId == null || pending}
                       aria-label={t('groupPlacement.removeAll')}
                       onClick={() => {
+                        dismissPlaceChangedFooter();
                         setEntryId(null);
                         setLiveNote(t('manualPlacement.selectionCleared'));
                         saveMutation.reset();
@@ -422,6 +486,7 @@ export function StructureManualPlacementDialog({
                           unavailable={elsewhere != null}
                           onChange={(next) => {
                             if (pending || !canEdit || elsewhere) return;
+                            dismissPlaceChangedFooter();
                             setEntryId(next ? team.entryId : null);
                             saveMutation.reset();
                           }}
