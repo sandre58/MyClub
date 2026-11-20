@@ -198,8 +198,7 @@ describe('StructureGroupPlacementDialog', () => {
     const dialog = screen.getByRole('dialog', {
       name: placementDialogTitle('Groupe A'),
     });
-    expect(within(dialog).getAllByText('Pot 1').length).toBeGreaterThan(0);
-    expect(within(dialog).getByText('Pot 2')).toBeInTheDocument();
+    expect(within(dialog).queryByText(/^Pot /)).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('checkbox', { name: 'Bravo' }));
     await user.click(screen.getByRole('button', { name: 'Enregistrer' }));
@@ -217,12 +216,53 @@ describe('StructureGroupPlacementDialog', () => {
     await waitFor(() => expect(invalidate).toHaveBeenCalled());
   });
 
-  it('hides pots when the server sends none', () => {
+  it('does not show pot labels on team tiles (placement hint only)', () => {
     renderDialog({
       stage: stage({ compositionEntryPots: null, hasDrawRules: false }),
     });
     expect(screen.queryByText(/^Pot /)).not.toBeInTheDocument();
     expect(screen.getByText('Alpha')).toBeInTheDocument();
+  });
+
+  it('shows a group placement hint on occupied batch members', () => {
+    renderDialog({
+      cases: [
+        groupPlace({
+          formPosition: {
+            kind: 'GroupPlace',
+            groupId,
+            groupName: 'A',
+            index: 1,
+          },
+          entry: { entryId: 'e1', displayName: 'Alpha' },
+        }),
+        groupPlace({
+          formPosition: {
+            kind: 'GroupPlace',
+            groupId,
+            groupName: 'A',
+            index: 2,
+          },
+        }),
+        groupPlace({
+          formPosition: {
+            kind: 'GroupPlace',
+            groupId,
+            groupName: 'A',
+            index: 3,
+          },
+        }),
+        groupPlace({
+          formPosition: {
+            kind: 'GroupPlace',
+            groupId,
+            groupName: 'A',
+            index: 4,
+          },
+        }),
+      ],
+    });
+    expect(screen.getByText(/Groupe A, place 1/)).toBeInTheDocument();
   });
 
   it('says when every composition team is already placed and when the composition is empty', () => {
@@ -904,7 +944,7 @@ describe('StructureGroupPlacementDialog', () => {
 
     const other = screen.getByRole('checkbox', { name: 'Bravo' });
     expect(other).toHaveAttribute('aria-disabled', 'true');
-    expect(screen.getByText('Dans le Groupe B')).toBeInTheDocument();
+    expect(screen.getByText('Groupe B, place 1')).toBeInTheDocument();
 
     await user.click(
       screen.getByRole('button', { name: 'Compléter le groupe' }),

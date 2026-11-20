@@ -92,17 +92,12 @@ async function findCompetition(request: APIRequestContext, name: string) {
   return hit;
 }
 
-async function placeOneTeamFromDialog(page: Page, expectPot: boolean) {
+async function placeOneTeamFromDialog(page: Page) {
   const dialog = page.getByRole('dialog', {
     name: /Placement — .* —/,
   });
   await expect(dialog).toBeVisible();
-  const pot = dialog.getByText(/^Pot /);
-  if (expectPot) {
-    await expect(pot.first()).toBeVisible();
-  } else {
-    await expect(pot).toHaveCount(0);
-  }
+  await expect(dialog.getByText(/^Pot /)).toHaveCount(0);
   const teamPicker = dialog.getByRole('checkbox', { checked: false });
   await expect(teamPicker.first()).toBeVisible();
   await teamPicker.first().click();
@@ -113,7 +108,7 @@ async function placeOneTeamFromDialog(page: Page, expectPot: boolean) {
 }
 
 /** Continues from whatever seats are still empty, so a CI retry can finish a partial grid. */
-async function fillRemainingSeats(page: Page, expectPot: boolean) {
+async function fillRemainingSeats(page: Page) {
   const pools = page.getByRole('group', { name: '2 groupes' });
   await expect(pools).toBeVisible();
   await expect
@@ -127,18 +122,13 @@ async function fillRemainingSeats(page: Page, expectPot: boolean) {
   let remaining = await placeButtons(page).count();
   while (remaining > 0) {
     await placeButtons(page).first().click();
-    await placeOneTeamFromDialog(page, expectPot);
+    await placeOneTeamFromDialog(page);
     await expect(placeButtons(page)).toHaveCount(remaining - 1);
     remaining -= 1;
   }
 }
 
-async function fillGroupSeats(
-  page: Page,
-  groupLabel: string,
-  expectPot: boolean,
-  count = 4,
-) {
+async function fillGroupSeats(page: Page, groupLabel: string, count = 4) {
   const group = page
     .locator('.regulation-schematic__card')
     .filter({ hasText: groupLabel });
@@ -150,7 +140,7 @@ async function fillGroupSeats(
     const open = await localPlace.count();
     if (open === 0) break;
     await localPlace.first().click();
-    await placeOneTeamFromDialog(page, expectPot);
+    await placeOneTeamFromDialog(page);
   }
   await expect(group.getByText(`${count}/${count}`)).toBeVisible();
 }
@@ -198,7 +188,7 @@ test.describe('manual group placement', () => {
     await dialog.getByRole('button', { name: 'Enregistrer' }).click();
     await expect(dialog).toBeHidden();
 
-    await fillRemainingSeats(page, false);
+    await fillRemainingSeats(page);
     const pools = page.getByRole('group', { name: '2 groupes' });
     await expect(pools.getByText('4/4')).toHaveCount(2);
     await produceMatchesIfNeeded(page);
@@ -208,7 +198,7 @@ test.describe('manual group placement', () => {
     test.setTimeout(120_000);
     const competition = await prepareCompetition(request, MANUAL);
     await page.goto(`/competitions/${competition.id}/structure`);
-    await fillGroupSeats(page, 'Groupe A', false);
+    await fillGroupSeats(page, 'Groupe A');
 
     const groupA = page
       .locator('.regulation-schematic__card')
@@ -250,7 +240,7 @@ test.describe('manual group placement', () => {
     const groupB = page
       .locator('.regulation-schematic__card')
       .filter({ hasText: 'Groupe B' });
-    await fillGroupSeats(page, 'Groupe B', false);
+    await fillGroupSeats(page, 'Groupe B');
 
     const editSeat = groupB
       .getByRole('button', {
@@ -294,7 +284,7 @@ test.describe('manual group placement', () => {
     test.setTimeout(120_000);
     const competition = await prepareCompetition(request, MANUAL);
     await page.goto(`/competitions/${competition.id}/structure`);
-    await fillRemainingSeats(page, false);
+    await fillRemainingSeats(page);
 
     const pools = page.getByRole('group', { name: '2 groupes' });
     await expect(pools.getByText('4/4')).toHaveCount(2);
@@ -308,7 +298,7 @@ test.describe('manual group placement', () => {
     test.setTimeout(120_000);
     const competition = await prepareCompetition(request, MANUAL_DRAW);
     await page.goto(`/competitions/${competition.id}/structure`);
-    await fillRemainingSeats(page, true);
+    await fillRemainingSeats(page);
 
     const pools = page.getByRole('group', { name: '2 groupes' });
     await expect(pools.getByText('4/4')).toHaveCount(2);
@@ -365,7 +355,7 @@ test.describe('manual group placement', () => {
     test.setTimeout(120_000);
     const competition = await prepareCompetition(request, MANUAL);
     await page.goto(`/competitions/${competition.id}/structure`);
-    await fillGroupSeats(page, 'Groupe A', false);
+    await fillGroupSeats(page, 'Groupe A');
 
     const groupA = page
       .locator('.regulation-schematic__card')

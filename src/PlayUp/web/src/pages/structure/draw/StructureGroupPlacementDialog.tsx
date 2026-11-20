@@ -44,12 +44,12 @@ import {
   purgeUnavailableSelection,
   batchSelectionExceedsCapacity,
   memberEntryClearable,
-  memberProtectReasonKey,
   membershipSetsEqual,
   reseedMembershipSelection,
   listGroupSelectTargets,
   membershipAdditionLimit,
   resolveGroupDisplayLabel,
+  entryGroupPlacementHint,
   type GroupStatusSuffix,
   type OtherGroupPlacementChoice,
 } from './manualGroupPlacementUi';
@@ -999,9 +999,13 @@ export function StructureGroupPlacementDialog({
                             <ChoiceTile
                               key={`other-${team.entryId}`}
                               label={team.displayName}
-                              description={t('groupPlacement.inOtherGroup', {
-                                group: row.team.groupLabel,
-                              })}
+                              description={
+                                entryGroupPlacementHint(
+                                  cases,
+                                  team.entryId,
+                                  t,
+                                ) ?? undefined
+                              }
                               layout="inline"
                               reserveSelectionMark
                               leading={
@@ -1033,21 +1037,14 @@ export function StructureGroupPlacementDialog({
                         const protectedMember = isMember && !clearable;
                         const selected = selectedIds.includes(team.entryId);
                         const lockedAtCap = !isMember && !selected && atCap;
-                        const description =
-                          team.pot == null
-                            ? undefined
-                            : t('groupPlacement.pot', { pot: team.pot });
+                        const placementHint = isMember
+                          ? entryGroupPlacementHint(cases, team.entryId, t)
+                          : undefined;
                         return (
                           <ChoiceTile
                             key={team.entryId}
                             label={team.displayName}
-                            description={
-                              protectedMember && groupId != null
-                                ? t(
-                                    `groupPlacement.${memberProtectReasonKey(cases, groupId, team.entryId) ?? 'clearLocked'}`,
-                                  )
-                                : description
-                            }
+                            description={placementHint ?? undefined}
                             layout="inline"
                             reserveSelectionMark
                             leading={
@@ -1079,15 +1076,16 @@ export function StructureGroupPlacementDialog({
                       })
                     : teamChoices.map((team) => {
                         const selected = selectedId === team.entryId;
+                        const placementHint = entryGroupPlacementHint(
+                          cases,
+                          team.entryId,
+                          t,
+                        );
                         return (
                           <ChoiceTile
                             key={team.entryId}
                             label={team.displayName}
-                            description={
-                              team.pot == null
-                                ? undefined
-                                : t('groupPlacement.pot', { pot: team.pot })
-                            }
+                            description={placementHint ?? undefined}
                             layout="inline"
                             reserveSelectionMark
                             leading={
