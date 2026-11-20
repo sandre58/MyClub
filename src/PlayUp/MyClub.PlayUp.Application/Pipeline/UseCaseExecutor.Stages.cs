@@ -1239,9 +1239,16 @@ public sealed partial class UseCaseExecutor
     /// <summary>
     /// Creates a Draft Draw on a stage.
     /// </summary>
+    /// <param name="stageId">Stage that owns the draw.</param>
+    /// <param name="kind">Resolution kind.</param>
+    /// <param name="intent">
+    /// Applied on create. Groups <see cref="DrawInputsIntent.Rerun"/> refuses an occupied grid before any draft exists.
+    /// </param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     public async Task<DrawSummaryDto> CreateDrawAsync(
         StageId stageId,
         DrawResolutionKind kind,
+        DrawInputsIntent intent = DrawInputsIntent.Default,
         CancellationToken cancellationToken = default)
     {
         DrawSummaryDto? dto = null;
@@ -1255,7 +1262,12 @@ public sealed partial class UseCaseExecutor
                 EnsureCompetitionAllowsLifecycleMutation(competition);
                 var competitionStages = await LoadCompetitionStagesForUpdateAsync(competition, innerToken)
                     .ConfigureAwait(false);
-                var draw = CreateDraw.Execute(stage, kind, clock, competitionStages: competitionStages);
+                var draw = CreateDraw.Execute(
+                    stage,
+                    kind,
+                    clock,
+                    competitionStages: competitionStages,
+                    intent: intent);
                 await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
                 dto = ToDrawSummary(stage.Id, draw);
             },

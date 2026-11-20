@@ -66,7 +66,12 @@ public static class ConfigureDrawInputs
         if (draw.Kind == DrawResolutionKind.Group
             && configureIntent is DrawInputsIntent.Default or DrawInputsIntent.Rerun)
         {
-            GroupDrawLaunchRules.Evaluate(stage, competitionStages ?? [stage]).EnsureAllowed();
+            var decision = GroupDrawLaunchRules.Evaluate(stage, competitionStages ?? [stage]);
+            decision.EnsureAllowed();
+            inputs = DrawInputs.ForGroup(
+                inputs.Entries,
+                potMembership: new PotMembership(decision.Pots!),
+                fixedPlacements: configureIntent == DrawInputsIntent.Default ? decision.FixedGroups : []);
         }
 
         stage.ConfigureDrawInputs(drawId, inputs, configureIntent);

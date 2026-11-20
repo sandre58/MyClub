@@ -42,7 +42,7 @@
     "DrawNotEnoughTeams": "Les équipes non placées ne suffisent pas à remplir les places encore libres.",
     "DrawObsoleteForConsumption": "Ce tirage ne correspond plus à la phase — annulez-le ou rétablissez la cohérence avant d’appliquer ou de produire des matchs.",
     "DrawPotsMissing": "Les pots du tirage sont absents ou incomplets. Complétez les pots avant de tirer.",
-    "DrawRedoRequiresApplied": "Refaire ne s’applique qu’à un tirage appliqué.",
+    "DrawRedoRequiresApplied": "Annulez le tirage, libérez ses placements puis relancez le tirage.",
     "DrawReleaseBlockedByAttachedMatches": "Impossible de libérer les placements : des matchs sont déjà rattachés à cette phase. Détachez-les ou repassez la phase en brouillon.",
     "DrawReleaseFailure": "Impossible de libérer les placements du tirage.",
     "DrawReleaseRequiresCancelled": "Libérer ne s’applique qu’à un tirage annulé.",

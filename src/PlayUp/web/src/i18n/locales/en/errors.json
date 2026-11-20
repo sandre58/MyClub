@@ -42,7 +42,7 @@
     "DrawNotEnoughTeams": "Unplaced teams are not enough to fill every free place.",
     "DrawObsoleteForConsumption": "This draw no longer matches the phase — cancel it or restore coherence before applying or producing matches.",
     "DrawPotsMissing": "Draw pots are missing or incomplete. Complete the pots before drawing.",
-    "DrawRedoRequiresApplied": "Redo applies only to an applied draw.",
+    "DrawRedoRequiresApplied": "Cancel the draw, release its placements, then run the draw again.",
     "DrawReleaseBlockedByAttachedMatches": "Cannot release placements: matches are already attached to this stage. Detach them or revert the stage to draft.",
     "DrawReleaseFailure": "Unable to release draw placements.",
     "DrawReleaseRequiresCancelled": "Release applies only to a cancelled draw.",

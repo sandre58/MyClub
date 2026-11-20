@@ -176,6 +176,24 @@ public sealed class GroupDrawLaunchRulesTests
     }
 
     [Fact]
+    public void Rerun_create_on_an_occupied_grid_leaves_no_draft()
+    {
+        var (_, stage, ids) = OpenGroups();
+        stage.AssignEntryToGroup(stage.Groups[0].Id, ids[0]);
+
+        var act = () => CreateDraw.Execute(
+            stage,
+            DrawResolutionKind.Group,
+            _clock,
+            competitionStages: [stage],
+            intent: DrawInputsIntent.Rerun);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.DrawLaunchGridNotVacant);
+        stage.Draws.Should().BeEmpty();
+    }
+
+    [Fact]
     public void Rerun_on_an_occupied_grid_stays_vacant_grid()
     {
         var (_, stage, ids) = OpenGroups();

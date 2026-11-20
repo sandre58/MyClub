@@ -183,7 +183,7 @@ public sealed class StructureDrawCreateLaunchGateContractTests
     }
 
     [Fact]
-    public void Groups_with_two_legal_occupants_allows_launch()
+    public void Groups_with_two_legal_occupants_stays_blocked_while_the_client_sends_rerun()
     {
         var situation = TestCompetition.Create("Groups occupied", _clock)
             .WithTeams("A", "B", "C", "D")
@@ -200,18 +200,77 @@ public sealed class StructureDrawCreateLaunchGateContractTests
 
         var hub = StructureViewAssembler.Assemble(situation.Competition, situation.Stages).Stages.Single();
 
-        hub.DrawCreateLaunch.Allowed.Should().BeTrue();
-        hub.DrawCreateLaunch.BlockReasonCode.Should().BeNull();
-        hub.DrawCreateLaunch.BlockDetail.Should().BeNull();
+        hub.DrawCreateLaunch.Allowed.Should().BeFalse();
+        hub.DrawCreateLaunch.BlockReasonCode.Should().Be(ApplicationErrorCodes.DrawLaunchGridNotVacant);
         hub.DrawCreateLaunch.BlockReasonCode.Should().NotBe(StructureDrawCreateLaunchGate.BlockBracketPlacesOccupied);
     }
 
-    [Fact]
-    public void Groups_gate_reasons_match_the_server_codes()
+    [Theory]
+    [InlineData("missing-pots")]
+    [InlineData("shape")]
+    [InlineData("inbound")]
+    [InlineData("pot-conflict")]
+    [InlineData("outside-composition")]
+    [InlineData("capacity")]
+    [InlineData("occupied-rerun")]
+    [InlineData("active-draw")]
+    public void Groups_gate_reason_matches_the_server_code(string cause)
     {
-        StructureDrawCreateLaunchGate.GroupReasonParity.Should().OnlyHaveUniqueItems(pair => pair.GateCode);
-        StructureDrawCreateLaunchGate.GroupReasonParity.Should()
-            .NotContain(pair => pair.GateCode == StructureDrawCreateLaunchGate.BlockBracketPlacesOccupied);
+        var (competition, stage, stages, intent) = BuildGroupsCause(cause);
+        var hub = StructureViewAssembler.Assemble(competition, stages).Stages
+            .Single(item => item.StageId == stage.Id.Value);
+        var badge = cause == "active-draw"
+            ? StructureDrawExecutionBadge.ToLaunch
+            : hub.DrawExecutionBadge;
+        var gateCode = StructureDrawCreateLaunchGate.Evaluate(
+            competition,
+            stage,
+            stages,
+            hub,
+            badge,
+            matchSummaries: null).BlockReasonCode;
+        gateCode.Should().NotBeNull();
+
+        var serverCode = RefusalCode(() => CreateDraw.Execute(
+            stage,
+            DrawResolutionKind.Group,
+            _clock,
+            competitionStages: stages,
+            intent: intent));
+
+        serverCode.Should().Be(gateCode switch
+        {
+            StructureDrawCreateLaunchGate.BlockMissingPots => ApplicationErrorCodes.DrawPotsMissing,
+            StructureDrawCreateLaunchGate.BlockGroupShapeInvalid => ApplicationErrorCodes.DrawGroupShapeInvalid,
+            StructureDrawCreateLaunchGate.BlockActiveDrawPresent => StageErrorCodes.NonCancelledDrawAlreadyExists,
+            _ => gateCode
+        });
+        if (cause == "inbound")
+        {
+            serverCode.Should().Be(ApplicationErrorCodes.DrawGroupSeatsReservedByInboundFeed);
+        }
+
+        if (cause != "active-draw")
+        {
+            stage.Draws.Should().BeEmpty();
+        }
+
+        static string? RefusalCode(Action act)
+        {
+            try
+            {
+                act();
+                return null;
+            }
+            catch (ApplicationFailureException exception)
+            {
+                return exception.Code;
+            }
+            catch (DomainException exception)
+            {
+                return exception.Code;
+            }
+        }
     }
 
     [Fact]
@@ -302,6 +361,71 @@ public sealed class StructureDrawCreateLaunchGateContractTests
 
         hub.DrawCreateLaunch.Allowed.Should().BeFalse();
         hub.DrawCreateLaunch.BlockReasonCode.Should().Be(StructureDrawCreateLaunchGate.BlockGroupShapeInvalid);
+    }
+
+    private (Competition Competition, Stage Stage, Stage[] Stages, DrawInputsIntent Intent) BuildGroupsCause(
+        string cause)
+    {
+        var competition = CreateCompetition.Execute(cause, _clock);
+        var count = cause == "shape" ? 3 : 4;
+        var ids = Enumerable.Range(0, count)
+            .Select(index => AddEntry.Execute(competition, $"T{index}", _clock).Id)
+            .ToArray();
+        var places = cause == "capacity" ? 4 : 2;
+        var stage = ConfigureStructure.Execute(competition, null, StructureIntent.Groups(2, places), _clock).Stage;
+        if (cause == "missing-pots")
+        {
+            ReplaceStageDrawRules.Execute(stage, new DrawRules(DrawMode.Random), _clock);
+        }
+        else
+        {
+            var pots = cause == "capacity" ? 4 : 2;
+            ReplaceStageDrawRules.Execute(stage, new DrawRules(DrawMode.Random, potRules: new PotRules(pots)), _clock);
+        }
+
+        stage.ReplaceAffectationAuthoring(ids, _clock);
+        var stages = new List<Stage> { stage };
+        var intent = DrawInputsIntent.Default;
+        switch (cause)
+        {
+            case "inbound":
+                stage.ReplaceAffectationAuthoring(ids.Take(3).ToArray(), _clock);
+                var source = Stage.Create(competition.Id, new StageName("Source"), SampleRegulations.Standard(), _clock);
+                source.ReplaceQualificationRules(
+                    new QualificationRules(
+                    [
+                        new QualificationPath(
+                            1,
+                            QualificationSource.Overall(),
+                            new QualificationSelection(SelectionMode.Position, 1),
+                            QualificationDestination.ForGroup(stage.Id, stage.Groups[0].Id))
+                    ]),
+                    _clock);
+                stages.Insert(0, source);
+                break;
+            case "pot-conflict":
+                stage.AssignEntryToGroup(stage.Groups[0].Id, ids[0]);
+                stage.AssignEntryToGroup(stage.Groups[0].Id, ids[1]);
+                break;
+            case "outside-composition":
+                stage.AssignEntryToGroup(stage.Groups[0].Id, EntryId.New());
+                break;
+            case "capacity":
+                stage.AssignEntryToGroup(stage.Groups[0].Id, ids[0]);
+                stage.AssignEntryToGroup(stage.Groups[0].Id, ids[1]);
+                stage.AssignEntryToGroup(stage.Groups[0].Id, ids[2]);
+                break;
+            case "occupied-rerun":
+                stage.AssignEntryToGroup(stage.Groups[0].Id, ids[0]);
+                stage.AssignEntryToGroup(stage.Groups[0].Id, ids[2]);
+                intent = DrawInputsIntent.Rerun;
+                break;
+            case "active-draw":
+                CreateDraw.Execute(stage, DrawResolutionKind.Group, _clock, competitionStages: [stage]);
+                break;
+        }
+
+        return (competition, stage, [.. stages], intent);
     }
 
     private (Competition Competition, Stage Stage) CupWithPopulation(int slots, int teams)

@@ -58,14 +58,13 @@ public sealed class GroupDrawFixedPlacementEndpointTests(HostPostgresFixture fix
         }
 
         var applied = await ReloadAsync(factory, seed.StageId);
-        var pinned = applied.Groups[0].EntryIds.Take(2).ToArray();
-        pinned.Should().HaveCount(2);
+        applied.Groups[0].EntryIds.Should().BeEquivalentTo(seed.Pinned);
         await AssertSqlInvariantsAsync(seed.StageId, applied: true);
 
         using var redo = await client.PostAsync(RedoUri(seed.StageId, drawId), content: null);
         redo.StatusCode.Should().Be(HttpStatusCode.OK);
         var afterRedo = await ReloadAsync(factory, seed.StageId);
-        afterRedo.Groups.SelectMany(group => group.EntryIds).Should().Contain(pinned);
+        afterRedo.Groups.SelectMany(group => group.EntryIds).Should().Contain(seed.Pinned);
         afterRedo.GetDraw(drawId).Status.Should().Be(DrawStatus.Cancelled);
         afterRedo.Draws.Count(draw => draw.Status != DrawStatus.Cancelled).Should().Be(1);
         await AssertSqlInvariantsAsync(seed.StageId, applied: false);
@@ -93,6 +92,94 @@ public sealed class GroupDrawFixedPlacementEndpointTests(HostPostgresFixture fix
         (await ReadCodeAsync(feed)).Should().Be(ApplicationErrorCodes.DrawGroupSeatsReservedByInboundFeed);
         (await ReloadAsync(factory, fed.StageId)).Draws.Should().BeEmpty();
         await AssertAtMostOneOpenDrawAsync(fed.StageId);
+    }
+
+    [IntegrationFact]
+    public async Task Occupied_grid_with_rerun_refuses_create_without_a_draftAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var seed = await SeedGroupsAsync(factory, occupyDifferentPots: true);
+        using var client = factory.CreateClient();
+
+        using var refused = await client.PostAsJsonAsync(
+            $"/stages/{seed.StageId.Value}/draws",
+            new CreateDrawRequest("Group", "Rerun"));
+
+        refused.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        (await ReadCodeAsync(refused)).Should().Be(ApplicationErrorCodes.DrawLaunchGridNotVacant);
+        (await ReloadAsync(factory, seed.StageId)).Draws.Should().BeEmpty();
+    }
+
+    [IntegrationFact]
+    public async Task Applied_groups_materialize_matchesAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var seed = await SeedGroupsAsync(factory, occupyDifferentPots: true);
+        using var client = factory.CreateClient();
+        var drawId = await CreateDrawAsync(client, seed.StageId);
+        using (var inputs = await client.PostAsJsonAsync(InputsUri(seed.StageId, drawId), new ConfigureDrawInputsRequest("Default")))
+        {
+            inputs.EnsureSuccessStatusCode();
+        }
+
+        using (var generate = await client.PostAsync(GenerateUri(seed.StageId, drawId), content: null))
+        {
+            generate.EnsureSuccessStatusCode();
+        }
+
+        using (var apply = await client.PostAsync(PublishUri(seed.StageId, drawId), content: null))
+        {
+            apply.EnsureSuccessStatusCode();
+        }
+
+        var applied = await ReloadAsync(factory, seed.StageId);
+        applied.Groups[0].EntryIds.Should().BeEquivalentTo(seed.Pinned);
+
+        using (var prepare = await client.PostAsync($"/stages/{seed.StageId.Value}/prepare", content: null))
+        {
+            prepare.EnsureSuccessStatusCode();
+        }
+
+        using var materialize = await client.PostAsync($"/stages/{seed.StageId.Value}/matches/materialize", content: null);
+        materialize.EnsureSuccessStatusCode();
+        var body = await materialize.Content.ReadFromJsonAsync<MaterializeMatchesResponse>(HostJson.Options);
+        body!.CreatedCount.Should().BeGreaterThan(0);
+    }
+
+    [IntegrationFact]
+    public async Task Release_after_cancel_keeps_the_seeded_occupantsAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var seed = await SeedGroupsAsync(factory, occupyDifferentPots: true);
+        using var client = factory.CreateClient();
+        var drawId = await CreateDrawAsync(client, seed.StageId);
+        using (var inputs = await client.PostAsJsonAsync(InputsUri(seed.StageId, drawId), new ConfigureDrawInputsRequest("Default")))
+        {
+            inputs.EnsureSuccessStatusCode();
+        }
+
+        using (var generate = await client.PostAsync(GenerateUri(seed.StageId, drawId), content: null))
+        {
+            generate.EnsureSuccessStatusCode();
+        }
+
+        using (var apply = await client.PostAsync(PublishUri(seed.StageId, drawId), content: null))
+        {
+            apply.EnsureSuccessStatusCode();
+        }
+
+        using (var cancel = await client.PostAsync($"/stages/{seed.StageId.Value}/draws/{drawId.Value}/cancel", content: null))
+        {
+            cancel.EnsureSuccessStatusCode();
+        }
+
+        using var release = await client.PostAsync(
+            $"/stages/{seed.StageId.Value}/draws/{drawId.Value}/release-aligned-placements",
+            content: null);
+        release.EnsureSuccessStatusCode();
+        var after = await ReloadAsync(factory, seed.StageId);
+        after.Groups.SelectMany(group => group.EntryIds).Should().BeEquivalentTo(seed.Pinned);
+        await AssertOneEntryPerPhaseAsync(seed.StageId);
     }
 
     [IntegrationFact]
@@ -319,19 +406,20 @@ public sealed class GroupDrawFixedPlacementEndpointTests(HostPostgresFixture fix
         }
 
         await SaveAsync(factory, competition, stage, source);
+        EntryId[] pinned = [];
         if (occupySamePot)
         {
-            await PlacePairAsync(factory, stage.Id, samePot: true);
+            pinned = await PlacePairAsync(factory, stage.Id, samePot: true);
         }
         else if (occupyDifferentPots)
         {
-            await PlacePairAsync(factory, stage.Id, samePot: false);
+            pinned = await PlacePairAsync(factory, stage.Id, samePot: false);
         }
 
-        return new Seed(competition.Id, stage.Id, stage.Groups[0].Id, ids);
+        return new Seed(competition.Id, stage.Id, stage.Groups[0].Id, ids, pinned);
     }
 
-    private static async Task PlacePairAsync(PlayUpWebApplicationFactory factory, StageId stageId, bool samePot)
+    private static async Task<EntryId[]> PlacePairAsync(PlayUpWebApplicationFactory factory, StageId stageId, bool samePot)
     {
         using var scope = factory.Services.CreateScope();
         var stage = (await scope.ServiceProvider.GetRequiredService<IStageRepository>()
@@ -354,6 +442,7 @@ public sealed class GroupDrawFixedPlacementEndpointTests(HostPostgresFixture fix
         stage.AssignEntryToGroup(stage.Groups[0].Id, first);
         stage.AssignEntryToGroup(stage.Groups[0].Id, second);
         await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().SaveChangesAsync();
+        return [first, second];
     }
 
     private static async Task SaveAsync(
@@ -576,5 +665,10 @@ public sealed class GroupDrawFixedPlacementEndpointTests(HostPostgresFixture fix
         return (await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(stageId))!;
     }
 
-    private sealed record Seed(CompetitionId CompetitionId, StageId StageId, GroupId GroupId, EntryId[] Entries);
+    private sealed record Seed(
+        CompetitionId CompetitionId,
+        StageId StageId,
+        GroupId GroupId,
+        EntryId[] Entries,
+        EntryId[] Pinned);
 }

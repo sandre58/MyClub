@@ -299,7 +299,7 @@ Server decision for starting a new draw execution on that phase. The SPA display
 | Field | Type | Notes |
 | :--- | :--- | :--- |
 | `allowed` | boolean | True when a new draw may be launched |
-| `blockReasonCode` | string \| null | Stable code when `allowed` is false. Slot: `NoFreeSlot`, `NotEnoughTeams`, `TooManyTeams` (free places must match unplaced teams). Group: `MissingPots`, `GroupShapeInvalid`, `Application.DrawGroupSeatsReservedByInboundFeed` (inbound feeds reserve places), `Application.DrawFixedPotConflict`, `Application.DrawFixedOutsideComposition`, `Application.DrawFixedExceedsCapacity`. A partial grid whose occupants are valid fixed placements is allowed. Also `DrawRulesMissing`, `ActiveDrawPresent`, …. Null when allowed |
+| `blockReasonCode` | string \| null | Stable code when `allowed` is false. Slot: `NoFreeSlot`, `NotEnoughTeams`, `TooManyTeams` (free places must match unplaced teams). Group: `MissingPots`, `GroupShapeInvalid`, `Application.DrawGroupSeatsReservedByInboundFeed` (an incomplete composition waiting on a qualification returns this, not the upstream-empty code), `Application.DrawFixedPotConflict`, `Application.DrawFixedOutsideComposition`, `Application.DrawFixedExceedsCapacity`, `Application.DrawLaunchGridNotVacant`. The client still posts `Rerun`, so an occupied grid stays blocked with that last code. Also `DrawRulesMissing`, `ActiveDrawPresent`, …. Null when allowed |
 | `blockDetail` | string[] \| omitted | Additive. Present on a Groups refusal that names groups, pots, or teams (same strings as ProblemDetails `reasons`). Omitted when allowed or when the refusal has no detail. The SPA does not read it yet |
 
 #### `stages[].resolutionOccupants`
@@ -981,12 +981,12 @@ These DTOs live in `MyClub.PlayUp.Host/Contracts`. They expose Guids only — no
 
 ### Slot draw inputs — `Partial`
 
-`POST /stages/{stageId}/draws` and `POST /stages/{stageId}/draws/{drawId}/inputs` accept `intent`: `Default`, `Rerun`, or `Partial` (omitted → `Default`).
+`POST /stages/{stageId}/draws` and `POST /stages/{stageId}/draws/{drawId}/inputs` accept `intent`: `Default`, `Rerun`, or `Partial` (omitted → `Default`). Create applies that intent. Groups `Rerun` runs the vacant-grid guard before the draft exists, so an occupied grid is **409** `Application.DrawLaunchGridNotVacant` and no draw is stored.
 
 | Intent | What is drawn | Occupants |
 | :--- | :--- | :--- |
 | `Default` | Encoding F: composition pool, current occupants as Fixed*. **Groups:** fixed = current occupants that belong to the composition (manual, qualified, or left by a previous apply). Pots are the current composition via the shared pot function. Refused (409, no new behaviour on an already refused create) when an inbound feed reserves a place (`Application.DrawGroupSeatsReservedByInboundFeed`), an occupant is outside the composition (`Application.DrawFixedOutsideComposition`), two fixed teams share a pot in one group (`Application.DrawFixedPotConflict`), a group holds more teams than the draw capacity (`Application.DrawFixedExceedsCapacity`), pots are missing (`Application.DrawPotsMissing`), or the shape cannot be drawn (`Application.DrawGroupShapeInvalid`). `reasons` names the groups, pots, and teams. **Slot:** unchanged — Apply skips a slot whose occupant is already the instructed team and refuses a different occupant or a move |
-| `Rerun` | Full reshuffle. Refused when the grid is not vacant or a direct assignment exists (`Application.DrawLaunchGridNotVacant`). Groups keeps that vacant-grid check. A Groups rerun pool is the current composition with pots recomputed; a Cup rerun stays the applied pool intersected with the composition | Not cleared by configure or generate |
+| `Rerun` | Full reshuffle. Refused when the grid is not vacant or a direct assignment exists (`Application.DrawLaunchGridNotVacant`), including on Groups create, before any draft. A Cup rerun pool stays the applied pool intersected with the composition. Groups redo is not this intent: it is `Default` | Not cleared by configure or generate |
 | `Partial` | Slot only. Unplaced teams into free slots (no occupant and feed Missing), exact count | Left out of the pool and the resolution, so a later release of this draw does not clear them |
 
 `Partial` refusals are HTTP 409: `Application.DrawNoFreeSlot` (no free slot, even if extra teams remain), `Application.DrawNotEnoughTeams`, `Application.DrawTooManyTeams`. Generate does not write slot occupants. Publish-and-apply is what fills the free slots. Redo stays a full reshuffle and stays hidden until the draw is applied (`Application.DrawRedoRequiresApplied`).
@@ -1057,7 +1057,7 @@ Decision D — explicit liberate: clears occupants that still exactly match this
 
 Atomic "Refaire le tirage": in one `UseCaseExecutor` command (single `SaveChanges`), cancels the current draw, releases the placements the draw itself assigned, then creates, configures, and generates the preview of a new draw of the same kind. No request body. On any guard failure or mid-sequence domain error nothing is persisted — the original draw stays `Published`/applied and its placements stay occupied.
 
-**Groups.** Drawn teams are the resolution minus `FixedGroups`. Release removes only those. The new draw is `Default` on the current composition: every remaining occupant (manual, qualified, or placed after Apply) is fixed, pots are recomputed, and a team that joined the composition after Apply is included. The launch rule runs before Cancel, treating the drawn teams as vacant. Cup redo is unchanged: `Rerun` on the applied pool intersected with the composition, vacant-grid guard included.
+**Groups.** Drawn teams are the resolution minus `FixedGroups`. Release removes only those. The new draw is `Default` on the composition at redo time: every remaining occupant (manual, qualified, or left by the previous apply) is fixed, and pots come from the launch rule. A team that joined the composition after Apply is not included by Redo. Removing a resolved occupant makes the draw no longer applied, so Redo is **409** `Application.DrawRedoRequiresApplied`; Cancel, Release, then a new `Default` create is what takes the current composition and recomputes pots. The launch rule runs before Cancel, treating the drawn teams as vacant. Cup redo is unchanged: `Rerun` on the applied pool intersected with the composition, vacant-grid guard included.
 
 The guard reuses the `DrawActionEvaluator` `Redo` action (the same evaluator backing the stage projection) before running the sequence:
 

@@ -944,9 +944,9 @@ internal static class StageEndpoints
             async (Guid stageId, CreateDrawRequest request, UseCaseExecutor executor, CancellationToken cancellationToken) =>
             {
                 var kind = EndpointHttpHelpers.ParseDrawKind(request.Kind);
-                _ = EndpointHttpHelpers.ParseDrawInputsIntent(request.Intent); // validate early; inputs step applies intent
+                var intent = EndpointHttpHelpers.ParseDrawInputsIntent(request.Intent);
                 var summary = await executor
-                    .CreateDrawAsync(new StageId(stageId), kind, cancellationToken)
+                    .CreateDrawAsync(new StageId(stageId), kind, intent, cancellationToken)
                     .ConfigureAwait(false);
                 return Results.Created($"/stages/{stageId}/draws/{summary.DrawId}", summary);
             });

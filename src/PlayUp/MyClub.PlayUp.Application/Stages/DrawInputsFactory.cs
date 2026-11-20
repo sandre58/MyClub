@@ -81,11 +81,9 @@ public static class DrawInputsFactory
     }
 
     /// <summary>
-    /// Builds Rerun inputs.
-    /// Slot keeps the applied draw's pool intersected with the current composition: a team added
-    /// after Apply must not widen a Cup rerun.
-    /// Group uses the current composition and recomputes pots with <see cref="GroupDrawPots.Compute"/>,
-    /// so a team that joined the composition after Apply is included. Fixed groups stay empty.
+    /// Builds Cup rerun inputs from the applied draw's pool intersected with the current composition.
+    /// A team added after Apply must not widen the pool. Groups redo does not call this method:
+    /// it configures <see cref="DrawInputsIntent.Default"/> from <see cref="GroupDrawLaunchRules"/>.
     /// </summary>
     public static DrawInputs CreateRerun(Stage stage, Draw appliedDraw)
     {
@@ -97,12 +95,6 @@ public static class DrawInputsFactory
             throw new ApplicationFailureException(
                 $"Draw '{appliedDraw.Id}' has no inputs to rerun.",
                 ApplicationErrorCodes.DrawGenerationFailure);
-        }
-
-        if (appliedDraw.Kind == DrawResolutionKind.Group)
-        {
-            var current = ResolveComposition(stage);
-            return DrawInputs.ForGroup(current, potMembership: BuildSequentialPots(current, stage));
         }
 
         var composition = stage.CompositionEntries.Select(entry => entry.EntryId).ToHashSet();

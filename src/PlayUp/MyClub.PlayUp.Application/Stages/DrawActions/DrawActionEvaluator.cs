@@ -368,10 +368,25 @@ internal static class DrawActionEvaluator
         {
             DrawResolutionKind.Slot => draw.Resolution.SlotResults.Count(placement =>
                 !IsDirectAssignment(stage, placement.SlotKey) && SlotAligned(stage, placement)),
-            DrawResolutionKind.Group => GroupDrawLaunchRules.DrawnEntries(draw).Count(entryId =>
-                stage.Groups.Any(group => group.EntryIds.Contains(entryId))),
+            DrawResolutionKind.Group => CountDrawnStillInResolutionGroup(stage, draw),
             _ => 0
         };
+    }
+
+    private static int CountDrawnStillInResolutionGroup(Stage stage, Draw draw)
+    {
+        var drawn = GroupDrawLaunchRules.DrawnEntries(draw);
+        var count = 0;
+        foreach (var placement in draw.Resolution.GroupResults)
+        {
+            if (drawn.Contains(placement.EntryId)
+                && stage.FindGroup(placement.GroupId)?.EntryIds.Contains(placement.EntryId) == true)
+            {
+                count++;
+            }
+        }
+
+        return count;
     }
 
     private static HashSet<string> AlignedSlotKeys(Stage stage, Draw draw)

@@ -69,26 +69,31 @@ public static class RedoDraw
         }
 
         var kind = draw.Kind;
+        GroupDrawLaunchDecision? groupDecision = null;
         if (kind == DrawResolutionKind.Group)
         {
-            GroupDrawLaunchRules
-                .Evaluate(stage, competitionStages, GroupDrawLaunchRules.DrawnEntries(draw))
-                .EnsureAllowed();
+            groupDecision = GroupDrawLaunchRules.Evaluate(
+                stage,
+                competitionStages,
+                GroupDrawLaunchRules.DrawnEntries(draw));
+            groupDecision.EnsureAllowed();
         }
 
         CancelDraw.Execute(stage, drawId, clock);
         ReleaseDrawAlignedPlacements.Execute(stage, drawId, clock, stageMatches);
 
         var created = CreateDraw.Execute(stage, kind, clock, stageMatches, competitionStages);
-        var relaunchGroups = kind == DrawResolutionKind.Group;
-        var inputs = relaunchGroups
-            ? DrawInputsFactory.CreateDefault(stage, kind)
+        var inputs = groupDecision is not null
+            ? DrawInputs.ForGroup(
+                [.. stage.CompositionEntries.Select(entry => entry.EntryId)],
+                potMembership: new PotMembership(groupDecision.Pots!),
+                fixedPlacements: groupDecision.FixedGroups)
             : DrawInputsFactory.CreateRerun(stage, draw);
         ConfigureDrawInputs.Execute(
             stage,
             created.Id,
             inputs,
-            relaunchGroups ? DrawInputsIntent.Default : DrawInputsIntent.Rerun,
+            groupDecision is not null ? DrawInputsIntent.Default : DrawInputsIntent.Rerun,
             competitionStages,
             stageMatches);
 
