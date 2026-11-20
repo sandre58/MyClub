@@ -127,11 +127,14 @@ describe('DropDownButton', () => {
     await user.click(trigger);
     const menu = await screen.findByRole('menu');
     expect(menu).toHaveAttribute('data-align', 'end');
+    const remPx = Number.parseFloat(
+      getComputedStyle(document.documentElement).fontSize,
+    );
     await waitFor(() => {
       const menuWidth = Number.parseFloat(menu.style.width);
-      expect(menuWidth).toBeGreaterThanOrEqual(12 * 16 - 1);
-      expect(menuWidth).toBeLessThanOrEqual(22 * 16 + 1);
-      expect(menuWidth).toBeLessThan(20 * 16);
+      expect(menuWidth).toBeGreaterThanOrEqual(12 * remPx - 1);
+      expect(menuWidth).toBeLessThanOrEqual(22 * remPx + 1);
+      expect(menuWidth).toBeLessThan(20 * remPx);
     });
 
     document.head.removeChild(style);

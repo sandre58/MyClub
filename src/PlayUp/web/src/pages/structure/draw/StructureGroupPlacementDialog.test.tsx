@@ -299,6 +299,33 @@ describe('StructureGroupPlacementDialog', () => {
     });
   });
 
+  it('always shows Retirer on the team section row in edit mode', () => {
+    const occupied = groupPlace({
+      entry: { entryId: 'e1', displayName: 'Alpha' },
+      canClear: true,
+    });
+    renderDialog({
+      place: occupied,
+      cases: [
+        occupied,
+        groupPlace({
+          formPosition: {
+            kind: 'GroupPlace',
+            groupId,
+            groupName: 'A',
+            index: 2,
+          },
+        }),
+      ],
+    });
+    const remove = screen.getByRole('button', { name: 'Retirer' });
+    expect(remove).toBeInTheDocument();
+    expect(remove).toBeEnabled();
+    expect(
+      screen.queryByRole('button', { name: 'Compléter le groupe' }),
+    ).not.toBeInTheDocument();
+  });
+
   it('always shows Compléter and Retirer on the team section row in batch mode', () => {
     renderDialog({ place: null });
     expect(
@@ -409,11 +436,9 @@ describe('StructureGroupPlacementDialog', () => {
       ],
     });
 
-    await user.click(
-      screen.getByRole('button', {
-        name: /Retirer l.équipe de la place/,
-      }),
-    );
+    const remove = screen.getByRole('button', { name: 'Retirer' });
+    expect(remove).toBeEnabled();
+    await user.click(remove);
     await user.click(screen.getByRole('button', { name: 'Enregistrer' }));
 
     await waitFor(() => {
@@ -1230,9 +1255,10 @@ describe('StructureGroupPlacementDialog', () => {
       ],
     });
 
-    await user.click(
-      screen.getByRole('button', { name: /Retirer l.équipe de la place/ }),
-    );
+    const remove = screen.getByRole('button', { name: 'Retirer' });
+    expect(remove).toBeEnabled();
+    await user.click(remove);
+    expect(remove).toBeDisabled();
     expect(screen.getByText('Sélection effacée')).toBeInTheDocument();
     const dialog = screen.getByRole('dialog');
     await waitFor(() =>

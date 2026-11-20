@@ -1097,9 +1097,10 @@
 }
 
 .structure-manual-placement__teams .ds-choice-tile--inline {
-  height: var(--control-height);
-  min-height: var(--control-height);
-  max-height: var(--control-height);
+  /* team-crest--sm (1.7rem) + block padding + borders — keep sm crest, no clipping */
+  height: calc(1.7rem + 2 * var(--space-8) + 2 * var(--border-width));
+  min-height: calc(1.7rem + 2 * var(--space-8) + 2 * var(--border-width));
+  max-height: calc(1.7rem + 2 * var(--space-8) + 2 * var(--border-width));
   align-items: center;
 }
 
@@ -1131,7 +1132,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: var(--text-caption);
+  font-size: var(--text-meta);
   color: var(--color-text-secondary);
 }
 

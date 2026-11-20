@@ -13,7 +13,6 @@ import {
 import { ChoiceTile } from '../../../design-system/components/ChoiceTile';
 import { ConfirmDialog } from '../../../design-system/components/ConfirmDialog';
 import { Dialog } from '../../../design-system/components/Dialog';
-import { Tooltip } from '../../../design-system/components/Tooltip';
 import {
   CheckIcon,
   EmptySelectionIcon,
@@ -948,39 +947,35 @@ export function StructureGroupPlacementDialog({
                   toolbar={
                     <>
                       {effectiveBatch ? (
-                        <>
-                          <button
-                            type="button"
-                            className="ds-btn ds-btn--ghost ds-btn--sm structure-composition__select-all"
-                            disabled={!canFillGroup || pending}
-                            onClick={fillGroup}
-                          >
-                            <ListChecksIcon size="sm" />
-                            {t('groupPlacement.fillGroup')}
-                          </button>
-                          <button
-                            type="button"
-                            className="ds-btn ds-btn--ghost ds-btn--sm structure-composition__select-all"
-                            disabled={!canRemoveMembers || pending}
-                            onClick={clearDecheckableSelection}
-                          >
-                            <CloseIcon size="sm" />
-                            {t('groupPlacement.removeAll')}
-                          </button>
-                        </>
+                        <button
+                          type="button"
+                          className="ds-btn ds-btn--ghost ds-btn--sm structure-composition__select-all"
+                          disabled={!canFillGroup || pending}
+                          onClick={fillGroup}
+                        >
+                          <ListChecksIcon size="sm" />
+                          {t('groupPlacement.fillGroup')}
+                        </button>
                       ) : null}
-                      {mode === 'edit' && selectedId != null && !pending ? (
-                        <Tooltip content={t('groupPlacement.clearSeat')}>
-                          <button
-                            type="button"
-                            className="ds-btn ds-btn--ghost ds-icon-button ds-icon-button--compact ds-icon-button--dismiss"
-                            disabled={pending}
-                            aria-label={t('groupPlacement.clearSeat')}
-                            onClick={onClearSeatSelection}
-                          >
-                            <CloseIcon size="sm" />
-                          </button>
-                        </Tooltip>
+                      {effectiveBatch || mode === 'edit' ? (
+                        <button
+                          type="button"
+                          className="ds-btn ds-btn--ghost ds-btn--sm structure-composition__select-all"
+                          disabled={
+                            pending ||
+                            (effectiveBatch
+                              ? !canRemoveMembers
+                              : selectedId == null)
+                          }
+                          onClick={
+                            effectiveBatch
+                              ? clearDecheckableSelection
+                              : onClearSeatSelection
+                          }
+                        >
+                          <CloseIcon size="sm" />
+                          {t('groupPlacement.removeAll')}
+                        </button>
                       ) : null}
                     </>
                   }

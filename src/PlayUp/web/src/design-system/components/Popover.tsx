@@ -22,6 +22,20 @@ const CARET_EDGE_PAD_PX = 12;
 /** Match --motion-duration (160ms) + small buffer for exit unmount. */
 const EXIT_MS = 200;
 
+function rootFontSizePx(): number {
+  if (typeof document === 'undefined') {
+    return 16;
+  }
+  const parsed = Number.parseFloat(
+    getComputedStyle(document.documentElement).fontSize,
+  );
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 16;
+}
+
+function remToPx(rem: number): number {
+  return rem * rootFontSizePx();
+}
+
 export type PopoverProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -117,10 +131,17 @@ export function Popover({
       const viewportMax = window.innerWidth - VIEWPORT_PAD_PX * 2;
       const panelEl = panelRef.current;
       let panelWidth: number;
-      const minContent = 12 * 16;
-      const maxContent = 22 * 16;
+      const minContent = remToPx(12);
+      const maxContent = remToPx(22);
       if (contentWidth) {
-        const measured = panelEl?.scrollWidth ?? minContent;
+        const measuredRect = panelEl?.getBoundingClientRect().width ?? 0;
+        const measuredScroll = panelEl?.scrollWidth ?? 0;
+        const measured =
+          measuredRect > 0
+            ? measuredRect
+            : measuredScroll > 0
+              ? measuredScroll
+              : minContent;
         panelWidth = Math.min(
           viewportMax,
           Math.max(minContent, Math.min(maxContent, measured)),
@@ -128,7 +149,7 @@ export function Popover({
       } else {
         panelWidth = Math.min(
           viewportMax,
-          width ?? Math.max(rect.width, 16 * 16),
+          width ?? Math.max(rect.width, remToPx(16)),
         );
       }
 
