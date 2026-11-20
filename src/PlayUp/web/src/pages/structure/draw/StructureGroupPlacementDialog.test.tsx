@@ -1135,26 +1135,20 @@ describe('StructureGroupPlacementDialog', () => {
     expect(screen.getByRole('button', { name: 'Enregistrer' })).toBeDisabled();
   });
 
-  // Temporary CI retry; remove once the root cause is fixed.
-  // Notion: https://app.notion.com/p/41d75fb92d1081eca471dd6b3c461260
-  it(
-    'does not reset focus to the first tile when toggling batch selection',
-    { retry: 2 },
-    async () => {
-      const user = userEvent.setup();
-      renderDialog({ place: null });
+  it('does not reset focus to the first tile when toggling batch selection', async () => {
+    const user = userEvent.setup();
+    renderDialog({ place: null });
 
-      await user.click(screen.getByRole('checkbox', { name: 'Charlie' }));
-      await waitFor(() =>
-        expect(screen.getByRole('checkbox', { name: 'Charlie' })).toHaveFocus(),
-      );
-      await user.click(screen.getByRole('checkbox', { name: 'Bravo' }));
-      await waitFor(() =>
-        expect(screen.getByRole('checkbox', { name: 'Bravo' })).toHaveFocus(),
-      );
-      expect(screen.getByRole('checkbox', { name: 'Alpha' })).not.toHaveFocus();
-    },
-  );
+    await user.click(screen.getByRole('checkbox', { name: 'Charlie' }));
+    await waitFor(() =>
+      expect(screen.getByRole('checkbox', { name: 'Charlie' })).toHaveFocus(),
+    );
+    await user.click(screen.getByRole('checkbox', { name: 'Bravo' }));
+    await waitFor(() =>
+      expect(screen.getByRole('checkbox', { name: 'Bravo' })).toHaveFocus(),
+    );
+    expect(screen.getByRole('checkbox', { name: 'Alpha' })).not.toHaveFocus();
+  });
 
   it('focuses the selected occupant tile in legacy edit mode', async () => {
     const occupied = groupPlace({

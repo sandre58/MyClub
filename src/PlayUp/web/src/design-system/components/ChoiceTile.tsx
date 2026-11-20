@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useLayoutEffect, useRef, type ReactNode } from 'react';
 import { CheckIcon } from '../icons/contentIcons';
 
 export type ChoiceTileProps = {
@@ -52,8 +52,18 @@ export function ChoiceTile({
   layout = 'stacked',
   reserveSelectionMark = false,
 }: ChoiceTileProps) {
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const retainFocusRef = useRef(false);
   const inactive = disabled || unavailable;
   const inlineLeading = layout === 'inline' && leading != null;
+
+  useLayoutEffect(() => {
+    if (!retainFocusRef.current) {
+      return;
+    }
+    retainFocusRef.current = false;
+    buttonRef.current?.focus({ preventScroll: true });
+  }, [selected]);
   const classes = [
     'ds-choice-tile',
     layout === 'inline' ? 'ds-choice-tile--inline' : null,
@@ -63,6 +73,7 @@ export function ChoiceTile({
 
   return (
     <button
+      ref={buttonRef}
       type="button"
       role={role}
       aria-checked={selected}
@@ -76,6 +87,7 @@ export function ChoiceTile({
       data-leading={leading ? leadingPlacement : undefined}
       onClick={(event) => {
         if (!inactive) {
+          retainFocusRef.current = true;
           onChange(role === 'radio' ? true : !selected);
           event.currentTarget.focus({ preventScroll: true });
         }

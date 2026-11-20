@@ -110,6 +110,10 @@ export function Dialog({
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const hadOpenedRef = useRef(false);
   const fallbackReturnRef = useRef<HTMLElement | null>(null);
+  const lastInitialFocusRef = useRef<{
+    focusKey: string | undefined;
+    element: HTMLElement | null;
+  } | null>(null);
   const { present: mounted, state: presenceState } = usePresence(
     open,
     DS_MOTION_EXIT_MS,
@@ -136,8 +140,29 @@ export function Dialog({
     }
   }, [mounted, returnFocusRef]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!open || !visible) {
+      if (!open) {
+        lastInitialFocusRef.current = null;
+      }
+      return;
+    }
+
+    const focusKeyChanged = lastInitialFocusRef.current?.focusKey !== focusKey;
+    const panel = panelRef.current;
+    const active = document.activeElement;
+    const userFocusedInside =
+      panel &&
+      active instanceof HTMLElement &&
+      panel.contains(active) &&
+      active !== document.body &&
+      active !== lastInitialFocusRef.current?.element;
+
+    if (userFocusedInside) {
+      return;
+    }
+
+    if (!focusKeyChanged && lastInitialFocusRef.current?.element != null) {
       return;
     }
 
@@ -154,6 +179,7 @@ export function Dialog({
         ? footerInitial
         : (bodyFocusable[0] ?? footerInitial);
     initial?.focus({ preventScroll: true });
+    lastInitialFocusRef.current = { focusKey, element: initial };
   }, [open, visible, initialFocus, focusKey]);
 
   // Stay on the dismiss stack while open so Escape is consumed even when
