@@ -111,7 +111,7 @@ test('Structure — zone de tap du badge sans activer la case', async ({
   await expect(
     page.getByRole('dialog', { name: 'Libérer cette place ?' }),
   ).toBeVisible();
-  await expect(
-    page.getByRole('dialog', { name: /Placement manuel/ }),
-  ).toHaveCount(0);
+  await expect(page.getByRole('dialog', { name: /Placement —/ })).toHaveCount(
+    0,
+  );
 });

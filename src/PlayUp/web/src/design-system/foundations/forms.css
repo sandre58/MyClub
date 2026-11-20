@@ -700,14 +700,6 @@
   min-width: 0;
 }
 
-.ds-choice-tile--inline .ds-choice-tile__text .ds-choice-tile__title,
-.ds-choice-tile--inline .ds-choice-tile__text .ds-choice-tile__description {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  line-height: var(--leading-tight);
-}
-
 .ds-choice-tile__title {
   min-width: 0;
 }

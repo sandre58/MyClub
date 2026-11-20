@@ -1736,19 +1736,21 @@ export function StructurePhaseFiche({
               reservedFromFeeds={populationFeedVolume}
               focusSearch={composeFocusSearch}
             />
-            <StructureManualPlacementDialog
-              open={manualOpen}
-              onClose={() => {
-                setManualOpen(false);
-                setManualSlotKey(null);
-              }}
-              competitionId={data.competitionId}
-              stage={stage}
-              structureStages={data.stages}
-              entries={data.participants.entries}
-              cases={schematicQuery.data?.cases ?? []}
-              initialSlotKey={manualSlotKey}
-            />
+            {manualOpen && manualSlotKey != null ? (
+              <StructureManualPlacementDialog
+                open
+                onClose={() => {
+                  setManualOpen(false);
+                  setManualSlotKey(null);
+                }}
+                competitionId={data.competitionId}
+                stage={stage}
+                structureStages={data.stages}
+                entries={data.participants.entries}
+                cases={schematicQuery.data?.cases ?? []}
+                initialSlotKey={manualSlotKey}
+              />
+            ) : null}
             <StructureGroupPlacementDialog
               key={groupSession}
               open={groupOpen}

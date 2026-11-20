@@ -45,22 +45,6 @@ export type DropDownButtonProps = {
   onOpenChange?: (open: boolean) => void;
 };
 
-function splitRootAndButtonClasses(className: string): {
-  root: string;
-  trigger: string;
-} {
-  const root: string[] = [];
-  const trigger: string[] = [];
-  for (const token of className.split(/\s+/).filter(Boolean)) {
-    if (token === 'ds-btn' || token.startsWith('ds-btn--')) {
-      trigger.push(token);
-    } else {
-      root.push(token);
-    }
-  }
-  return { root: root.join(' '), trigger: trigger.join(' ') };
-}
-
 function firstEnabledIndex(items: DropDownButtonItem[]) {
   return items.findIndex((item) => !item.disabled);
 }
@@ -116,17 +100,12 @@ export function DropDownButton({
   };
 
   const enabled = !disabled;
-  const { root: layoutClass, trigger: migratedTriggerClass } =
-    splitRootAndButtonClasses(className);
-  const rootClass = ['ds-dropdown-button', layoutClass]
-    .filter(Boolean)
-    .join(' ');
+  const rootClass = ['ds-dropdown-button', className].filter(Boolean).join(' ');
   const triggerClass = [
     'ds-btn',
     `ds-btn--${variant}`,
     size === 'sm' ? 'ds-btn--sm' : null,
     'ds-dropdown-button__trigger',
-    migratedTriggerClass,
     triggerClassName,
   ]
     .filter(Boolean)

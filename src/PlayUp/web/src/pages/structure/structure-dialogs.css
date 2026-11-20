@@ -1115,6 +1115,9 @@
 /* label+meta at 1.1 × (0.8125 + 0.75) ≈ 1.72rem — descenders clear ellipsis; tile height unchanged. */
 .structure-manual-placement__teams .ds-choice-tile--inline .ds-choice-tile__text .ds-choice-tile__title,
 .structure-manual-placement__teams .ds-choice-tile--inline .ds-choice-tile__text .ds-choice-tile__description {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   line-height: 1.1;
 }
 

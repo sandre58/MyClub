@@ -1545,7 +1545,11 @@ describe('StructureGroupPlacementDialog', () => {
       'aria-checked',
       'true',
     );
-    expect(screen.getByText('Le groupe a changé')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Le groupe a changé : sélection mise à jour. Vérifiez puis enregistrez.',
+      ),
+    ).toBeInTheDocument();
   });
 
   it('surfaces membership stale without reseeding before hub refresh (M2)', async () => {
@@ -1601,10 +1605,58 @@ describe('StructureGroupPlacementDialog', () => {
     );
     await user.click(screen.getByRole('checkbox', { name: 'Alpha' }));
     await user.click(screen.getByRole('button', { name: 'Enregistrer' }));
-    expect(await screen.findByText('Le groupe a changé')).toBeInTheDocument();
+    expect(
+      await screen.findByText(
+        'Le groupe a été modifié entre-temps. Mise à jour…',
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: 'Alpha' })).toHaveAttribute(
       'aria-checked',
       'false',
+    );
+    expect(
+      screen.queryByText(
+        'Le groupe a changé : sélection mise à jour. Vérifiez puis enregistrez.',
+      ),
+    ).not.toBeInTheDocument();
+  });
+
+  it('exposes protect reason via aria-describedby on unavailable member tiles', () => {
+    const cases = [
+      groupPlace({
+        formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index: 1 },
+        entry: { entryId: 'e1', displayName: 'Alpha' },
+        seatMode: 'Draw',
+        canClear: false,
+      }),
+      groupPlace({
+        formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index: 2 },
+      }),
+      groupPlace({
+        formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index: 3 },
+      }),
+      groupPlace({
+        formPosition: { kind: 'GroupPlace', groupId, groupName: 'A', index: 4 },
+      }),
+    ];
+    renderDialog({
+      place: null,
+      cases,
+      stage: stage({ compositionEntryIds: ['e1', 'e2', 'e3', 'e4'] }),
+      entries: [
+        entry('e1', 'Alpha'),
+        entry('e2', 'Bravo'),
+        entry('e3', 'Charlie'),
+        entry('e4', 'Delta'),
+      ],
+    });
+
+    const tile = screen.getByRole('checkbox', { name: 'Alpha' });
+    const describedBy = tile.getAttribute('aria-describedby') ?? '';
+    expect(describedBy).toContain('group-protect-e1');
+    const reason = document.getElementById('group-protect-e1');
+    expect(reason).toHaveTextContent(
+      'Cette équipe a été placée par le tirage appliqué. Elle est protégée.',
     );
   });
 
