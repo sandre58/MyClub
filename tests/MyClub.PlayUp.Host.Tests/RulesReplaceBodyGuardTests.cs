@@ -13,14 +13,18 @@ namespace MyClub.PlayUp.Host.Tests;
 
 public sealed class RulesReplaceBodyGuardTests
 {
-    public static IEnumerable<object?[]> TruthTable()
+    public static TheoryData<bool, int?, bool> TruthTable()
     {
-        yield return [true, null, false];
-        yield return [true, 0, false];
-        yield return [true, 2, true];
-        yield return [false, null, true];
-        yield return [false, 0, true];
-        yield return [false, 1, false];
+        var data = new TheoryData<bool, int?, bool>
+        {
+            { true, null, false },
+            { true, 0, false },
+            { true, 2, true },
+            { false, null, true },
+            { false, 0, true },
+            { false, 1, false }
+        };
+        return data;
     }
 
     [Theory]

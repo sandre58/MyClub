@@ -4,7 +4,6 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-using System.Diagnostics.CodeAnalysis;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Domain.Common;
@@ -441,7 +440,6 @@ public static class CascadeReplace
         return [.. set];
     }
 
-    [SuppressMessage("ReSharper", "LoopCanBeConvertedToQuery", Justification = "DFS visit must stay iterative.")]
     private static bool HasCycle(
         IReadOnlyList<ResolutionNode> closure,
         Dictionary<ResolutionNode, List<ResolutionNode>> forward)
@@ -453,17 +451,10 @@ public static class CascadeReplace
         bool visit(ResolutionNode node)
         {
             color[node] = 1;
-            foreach (var next in forward[node])
+            if (forward[node].Any(next =>
+                    inSet.Contains(next) && (color[next] == 1 || (color[next] == 0 && visit(next)))))
             {
-                if (!inSet.Contains(next))
-                {
-                    continue;
-                }
-
-                if (color[next] == 1 || (color[next] == 0 && visit(next)))
-                {
-                    return true;
-                }
+                return true;
             }
 
             color[node] = 2;

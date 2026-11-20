@@ -23,8 +23,19 @@ public sealed class ResolutionDefinitivenessTests
 {
     private static readonly FakeClock Clock = new(new DateTimeOffset(2026, 11, 12, 15, 0, 0, TimeSpan.Zero));
 
-    public static IEnumerable<object[]> Matrix()
+    public static TheoryData<
+        StructureResolutionIndeterminacyCause,
+        string,
+        string,
+        string,
+        CompetitionStatus> Matrix()
     {
+        var data = new TheoryData<
+            StructureResolutionIndeterminacyCause,
+            string,
+            string,
+            string,
+            CompetitionStatus>();
         var causes = new (StructureResolutionIndeterminacyCause Cause, string Absence)[]
         {
             (StructureResolutionIndeterminacyCause.MatchNonJoue, string.Empty),
@@ -49,43 +60,90 @@ public sealed class ResolutionDefinitivenessTests
                 {
                     foreach (var competition in competitions)
                     {
-                        yield return [cause, absence, sourceStatus, scope, competition];
+                        data.Add(cause, absence, sourceStatus, scope, competition);
                     }
                 }
             }
         }
+
+        return data;
     }
 
-    public static IEnumerable<object[]> PrincipalRows()
+    public static TheoryData<
+        StructureResolutionIndeterminacyCause,
+        string,
+        string,
+        string,
+        CompetitionStatus,
+        bool> PrincipalRows() => new()
     {
-        yield return Row(StructureResolutionIndeterminacyCause.MatchNonJoue, string.Empty, "Completed", "Group", CompetitionStatus.Running, true);
-        yield return Row(StructureResolutionIndeterminacyCause.MatchNonJoue, string.Empty, "Running", "Group", CompetitionStatus.Running, false);
-        yield return Row(StructureResolutionIndeterminacyCause.Egalite, string.Empty, "Completed", "Overall", CompetitionStatus.Suspended, true);
-        yield return Row(StructureResolutionIndeterminacyCause.Egalite, string.Empty, "Draft", "Overall", CompetitionStatus.Completed, false);
-        yield return Row(StructureResolutionIndeterminacyCause.EgaliteClassement, string.Empty, "Completed", "Overall", CompetitionStatus.Running, false);
-        yield return Row(StructureResolutionIndeterminacyCause.EgaliteClassement, string.Empty, "Completed", "Overall", CompetitionStatus.Completed, true);
-        yield return Row(StructureResolutionIndeterminacyCause.EgaliteClassement, string.Empty, "Completed", "Group", CompetitionStatus.Running, true);
-        yield return Row(StructureResolutionIndeterminacyCause.ConditionNonRemplie, string.Empty, "Completed", "Overall", CompetitionStatus.Suspended, false);
-        yield return Row(StructureResolutionIndeterminacyCause.ConditionNonRemplie, string.Empty, "Completed", "AcrossGroups", CompetitionStatus.Running, true);
-        yield return Row(StructureResolutionIndeterminacyCause.SelectionVide, string.Empty, "Completed", "Overall", CompetitionStatus.Running, true);
-        yield return Row(StructureResolutionIndeterminacyCause.SelectionVide, string.Empty, "Running", "Overall", CompetitionStatus.Completed, false);
-        yield return Row(StructureResolutionIndeterminacyCause.SourceAbsente, nameof(ResolutionSourceAbsence.StageNotLoaded), "Deleted", "Overall", CompetitionStatus.Running, true);
-        yield return Row(StructureResolutionIndeterminacyCause.SourceAbsente, nameof(ResolutionSourceAbsence.StageNotLoaded), "Completed", "Group", CompetitionStatus.Completed, false);
-        yield return Row(StructureResolutionIndeterminacyCause.SourceAbsente, nameof(ResolutionSourceAbsence.PathGone), "Completed", "Group", CompetitionStatus.Running, true);
-        yield return Row(StructureResolutionIndeterminacyCause.SourceAbsente, nameof(ResolutionSourceAbsence.PathGone), "Running", "Overall", CompetitionStatus.Completed, false);
-        yield return Row(StructureResolutionIndeterminacyCause.SourceAbsente, nameof(ResolutionSourceAbsence.Unreadable), "Completed", "Overall", CompetitionStatus.Completed, false);
-        yield return Row(StructureResolutionIndeterminacyCause.ConfigurationInvalide, string.Empty, "Completed", "Overall", CompetitionStatus.Completed, false);
-        yield return Row(StructureResolutionIndeterminacyCause.Autre, string.Empty, "Completed", "Group", CompetitionStatus.Completed, false);
-    }
-
-    private static object[] Row(
-        StructureResolutionIndeterminacyCause cause,
-        string absenceName,
-        string sourceStatus,
-        string scope,
-        CompetitionStatus competitionStatus,
-        bool expected) =>
-        [cause, absenceName, sourceStatus, scope, competitionStatus, expected];
+        {
+            StructureResolutionIndeterminacyCause.MatchNonJoue, string.Empty, "Completed", "Group",
+            CompetitionStatus.Running, true
+        },
+        {
+            StructureResolutionIndeterminacyCause.MatchNonJoue, string.Empty, "Running", "Group",
+            CompetitionStatus.Running, false
+        },
+        { StructureResolutionIndeterminacyCause.Egalite, string.Empty, "Completed", "Overall", CompetitionStatus.Suspended, true },
+        { StructureResolutionIndeterminacyCause.Egalite, string.Empty, "Draft", "Overall", CompetitionStatus.Completed, false },
+        {
+            StructureResolutionIndeterminacyCause.EgaliteClassement, string.Empty, "Completed", "Overall",
+            CompetitionStatus.Running, false
+        },
+        {
+            StructureResolutionIndeterminacyCause.EgaliteClassement, string.Empty, "Completed", "Overall",
+            CompetitionStatus.Completed, true
+        },
+        {
+            StructureResolutionIndeterminacyCause.EgaliteClassement, string.Empty, "Completed", "Group",
+            CompetitionStatus.Running, true
+        },
+        {
+            StructureResolutionIndeterminacyCause.ConditionNonRemplie, string.Empty, "Completed", "Overall",
+            CompetitionStatus.Suspended, false
+        },
+        {
+            StructureResolutionIndeterminacyCause.ConditionNonRemplie, string.Empty, "Completed", "AcrossGroups",
+            CompetitionStatus.Running, true
+        },
+        {
+            StructureResolutionIndeterminacyCause.SelectionVide, string.Empty, "Completed", "Overall",
+            CompetitionStatus.Running, true
+        },
+        {
+            StructureResolutionIndeterminacyCause.SelectionVide, string.Empty, "Running", "Overall",
+            CompetitionStatus.Completed, false
+        },
+        {
+            StructureResolutionIndeterminacyCause.SourceAbsente, nameof(ResolutionSourceAbsence.StageNotLoaded),
+            "Deleted", "Overall", CompetitionStatus.Running, true
+        },
+        {
+            StructureResolutionIndeterminacyCause.SourceAbsente, nameof(ResolutionSourceAbsence.StageNotLoaded),
+            "Completed", "Group", CompetitionStatus.Completed, false
+        },
+        {
+            StructureResolutionIndeterminacyCause.SourceAbsente, nameof(ResolutionSourceAbsence.PathGone), "Completed",
+            "Group", CompetitionStatus.Running, true
+        },
+        {
+            StructureResolutionIndeterminacyCause.SourceAbsente, nameof(ResolutionSourceAbsence.PathGone), "Running",
+            "Overall", CompetitionStatus.Completed, false
+        },
+        {
+            StructureResolutionIndeterminacyCause.SourceAbsente, nameof(ResolutionSourceAbsence.Unreadable),
+            "Completed", "Overall", CompetitionStatus.Completed, false
+        },
+        {
+            StructureResolutionIndeterminacyCause.ConfigurationInvalide, string.Empty, "Completed", "Overall",
+            CompetitionStatus.Completed, false
+        },
+        {
+            StructureResolutionIndeterminacyCause.Autre, string.Empty, "Completed", "Group",
+            CompetitionStatus.Completed, false
+        }
+    };
 
     [Theory]
     [MemberData(nameof(Matrix))]
