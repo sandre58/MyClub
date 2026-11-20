@@ -299,9 +299,11 @@ test.describe('manual group placement', () => {
     await replacee.click();
     await savePlacementDialog(dialog);
     await expect(groupA.getByText('4/4')).toBeVisible();
-    const seatOne = groupA.locator('.schematic-slot').first();
-    await expect(seatOne).toContainText(replacedName);
-    await expect(seatOne).not.toContainText(originalName);
+    // Batch replace keeps remaining seats; newcomer may not land on seat 1 (SetGroupEntries).
+    await expect(groupA.getByText(replacedName, { exact: true })).toBeVisible();
+    await expect(groupA.getByText(originalName, { exact: true })).toHaveCount(
+      0,
+    );
   });
 
   test('removes a team with clear then save', async ({ page, request }) => {
