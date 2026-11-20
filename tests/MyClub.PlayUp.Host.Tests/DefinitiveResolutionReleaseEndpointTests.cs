@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using System.Net;
-using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using FluentAssertions;
@@ -199,7 +198,7 @@ public sealed class DefinitiveResolutionReleaseEndpointTests(HostPostgresFixture
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var view = await response.Content.ReadFromJsonAsync<StructureViewDto>(HostJson.Options);
         view.Should().NotBeNull();
-        return view.Stages.SelectMany(stage => stage.ResolutionOccupants ?? []).ToArray();
+        return [.. view.Stages.SelectMany(stage => stage.ResolutionOccupants ?? [])];
     }
 
     private static async Task<string?> ReadCodeAsync(HttpResponseMessage response)

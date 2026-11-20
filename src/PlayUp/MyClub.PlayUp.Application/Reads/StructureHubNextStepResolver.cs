@@ -65,7 +65,7 @@ public static class StructureHubNextStepResolver
             IReadOnlyList<MatchSummaryRow>? summaries = null;
             matchSummariesByStage?.TryGetValue(stage.Id, out summaries);
 
-            if (TryPerStageCandidate(competition, stage, competitionStages, hub, summaries, out var tier, out var decision))
+            if (TryPerStageCandidate(stage, competitionStages, hub, summaries, out var tier, out var decision))
             {
                 candidates.Add((tier, decision));
             }
@@ -81,9 +81,7 @@ public static class StructureHubNextStepResolver
         return atBest.Length == 1 ? atBest[0].Decision : null;
     }
 
-    private static bool TryPerStageCandidate(
-        Competition competition,
-        Stage stage,
+    private static bool TryPerStageCandidate(Stage stage,
         IReadOnlyList<Stage> competitionStages,
         StructureStageHubSummaryDto hub,
         IReadOnlyList<MatchSummaryRow>? summaries,
@@ -176,13 +174,8 @@ public static class StructureHubNextStepResolver
             ? StageAttachedProduction.HasAttachedMatches(stage, summaries)
             : StructureSkeleton.CountAttachedMatches(stage) > 0;
         var context = new DrawActionContext(stage, competitionStages, snapshots, hasAttached);
-        foreach (var draw in stage.Draws)
+        if (stage.Draws.Any(draw => DrawActionEvaluator.Evaluate(context, draw).Apply.State == StageDrawActionState.Available))
         {
-            if (DrawActionEvaluator.Evaluate(context, draw).Apply.State != StageDrawActionState.Available)
-            {
-                continue;
-            }
-
             decision = Pack(stage, OverviewAssembler.ActionApplyDraw);
             return true;
         }

@@ -62,7 +62,7 @@ public sealed class ApplyProgressionOutcomeEndpointTests(HostPostgresFixture fix
         var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
         var destination = await stages.GetByIdForUpdateAsync(seed.DestinationStageId);
         destination.Should().NotBeNull();
-        destination!.FindSlot("SF1-A")!.EntryId.Should().Be(seed.Home);
+        destination.FindSlot("SF1-A")!.EntryId.Should().Be(seed.Home);
         destination.FindSlot("SF1-A")!.ResolutionProvenance.Should().NotBeNull();
         destination.FindSlot("SF1-A")!.ResolutionProvenance!.Kind
             .Should()

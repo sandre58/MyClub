@@ -47,12 +47,7 @@ internal static class StageDrawDisplay
             return (null, null);
         }
 
-        if (draw.Status != DrawStatus.Draft)
-        {
-            return (null, HistoricalCells(draw, stage, entries));
-        }
-
-        return (stageMetrics, DraftCells(draw, stage, competitionStages, entries));
+        return draw.Status != DrawStatus.Draft ? (null, HistoricalCells(draw, stage, entries)) : (stageMetrics, DraftCells(draw, stage, competitionStages, entries));
     }
 
     private static StageDrawDisplayMetricsDto Metrics(
@@ -115,7 +110,7 @@ internal static class StageDrawDisplay
                     DrawPlacementOrigin.Manual,
                     entries),
                 _ => throw new InvalidOperationException(
-                    $"Slot occupancy '{fact.Occupancy}' is not a draft cell."),
+                    $"Slot occupancy '{fact.Occupancy}' is not a draft cell.")
             };
         }
 

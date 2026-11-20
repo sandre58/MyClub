@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
@@ -45,7 +44,7 @@ public sealed class RedoDrawEndpointTests(HostPostgresFixture fixture)
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<DrawGenerationDto>(HostJson.Options);
         body.Should().NotBeNull();
-        body!.DrawId.Should().NotBe(seed.DrawId.Value);
+        body.DrawId.Should().NotBe(seed.DrawId.Value);
         body.IsResolved.Should().BeTrue();
         body.IsNoSolution.Should().BeFalse();
         body.Status.Should().Be(DrawStatus.Draft);
@@ -54,7 +53,7 @@ public sealed class RedoDrawEndpointTests(HostPostgresFixture fixture)
         using var scope = factory.Services.CreateScope();
         var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(seed.StageId);
         stage.Should().NotBeNull();
-        stage!.GetDraw(seed.DrawId).Status.Should().Be(DrawStatus.Cancelled);
+        stage.GetDraw(seed.DrawId).Status.Should().Be(DrawStatus.Cancelled);
         stage.GetDraw(new DrawId(body.DrawId)).Status.Should().Be(DrawStatus.Draft);
         stage.FindSlot("S1")!.EntryId.Should().BeNull();
         stage.FindSlot("S2")!.EntryId.Should().BeNull();
@@ -76,7 +75,7 @@ public sealed class RedoDrawEndpointTests(HostPostgresFixture fixture)
         using var scope = factory.Services.CreateScope();
         var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(seed.StageId);
         stage.Should().NotBeNull();
-        stage!.GetDraw(seed.DrawId).Status.Should().Be(DrawStatus.Published);
+        stage.GetDraw(seed.DrawId).Status.Should().Be(DrawStatus.Published);
         stage.FindSlot("S1")!.EntryId.Should().Be(seed.SlotS1Entry);
         stage.FindSlot("S2")!.EntryId.Should().Be(seed.SlotS2Entry);
         stage.Draws.Should().ContainSingle();
@@ -98,7 +97,7 @@ public sealed class RedoDrawEndpointTests(HostPostgresFixture fixture)
         using var scope = factory.Services.CreateScope();
         var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(seed.StageId);
         stage.Should().NotBeNull();
-        stage!.GetDraw(seed.DrawId).Status.Should().Be(DrawStatus.Draft);
+        stage.GetDraw(seed.DrawId).Status.Should().Be(DrawStatus.Draft);
         stage.Draws.Should().ContainSingle();
         stage.FindSlot("S1")!.EntryId.Should().BeNull();
         stage.FindSlot("S2")!.EntryId.Should().BeNull();
@@ -124,7 +123,7 @@ public sealed class RedoDrawEndpointTests(HostPostgresFixture fixture)
         using var scope = factory.Services.CreateScope();
         var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(seed.StageId);
         stage.Should().NotBeNull();
-        stage!.GetDraw(seed.DrawId).Status.Should().Be(DrawStatus.Published);
+        stage.GetDraw(seed.DrawId).Status.Should().Be(DrawStatus.Published);
         stage.Draws.Should().ContainSingle();
         stage.FindSlot("SF1-A")!.EntryId.Should().Be(seed.SlotS1Entry);
         stage.FindSlot("SF1-B")!.EntryId.Should().Be(seed.SlotS2Entry);

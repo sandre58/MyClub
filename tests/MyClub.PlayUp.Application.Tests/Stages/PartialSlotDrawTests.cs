@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
-using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
@@ -35,8 +34,8 @@ public sealed class PartialSlotDrawTests
             draw.Id,
             _clock,
             explicitTargets,
-            competitionStages: [stage],
-            randomSource: new SeededRandomSource(7));
+            randomSource: new SeededRandomSource(7),
+            competitionStages: [stage]);
 
         stage.GetDraw(draw.Id).Resolution.SlotResults
             .Select(placement => placement.SlotKey)
@@ -59,9 +58,9 @@ public sealed class PartialSlotDrawTests
             stage,
             draw.Id,
             _clock,
-            stage.Slots.Select(slot => slot.SlotKey).ToArray(),
-            competitionStages: [stage],
-            randomSource: new SeededRandomSource(3));
+            [.. stage.Slots.Select(slot => slot.SlotKey)],
+            randomSource: new SeededRandomSource(3),
+            competitionStages: [stage]);
 
         stage.GetDraw(draw.Id).Resolution.SlotResults
             .Select(placement => placement.SlotKey)
@@ -80,9 +79,9 @@ public sealed class PartialSlotDrawTests
             stage,
             draw.Id,
             _clock,
-            stage.Slots.Select(slot => slot.SlotKey).ToArray(),
-            competitionStages: [stage],
-            randomSource: new SeededRandomSource(4));
+            [.. stage.Slots.Select(slot => slot.SlotKey)],
+            randomSource: new SeededRandomSource(4),
+            competitionStages: [stage]);
         PublishDraw.Execute(stage, draw.Id, _clock);
         ApplyDraw.Execute(stage, draw.Id, _clock);
 
@@ -108,9 +107,9 @@ public sealed class PartialSlotDrawTests
             stage,
             draw.Id,
             _clock,
-            stage.Slots.Select(slot => slot.SlotKey).ToArray(),
-            competitionStages: [stage],
-            randomSource: new SeededRandomSource(1));
+            [.. stage.Slots.Select(slot => slot.SlotKey)],
+            randomSource: new SeededRandomSource(1),
+            competitionStages: [stage]);
 
         stage.FindSlot(manualKey)!.EntryId.Should().Be(entries[0]);
         stage.FindSlot(previousKey)!.EntryId.Should().Be(entries[1]);
@@ -149,9 +148,9 @@ public sealed class PartialSlotDrawTests
             stage,
             draw.Id,
             _clock,
-            stage.Slots.Select(slot => slot.SlotKey).ToArray(),
-            competitionStages: [stage],
-            randomSource: new SeededRandomSource(2));
+            [.. stage.Slots.Select(slot => slot.SlotKey)],
+            randomSource: new SeededRandomSource(2),
+            competitionStages: [stage]);
 
         stage.FindSlot(occupiedKey)!.EntryId.Should().Be(entries[0]);
         stage.FindSlot(stage.Slots[1].SlotKey)!.EntryId.Should().BeNull();
@@ -231,7 +230,7 @@ public sealed class PartialSlotDrawTests
                     1,
                     QualificationSource.Overall(),
                     new QualificationSelection(SelectionMode.Position, 1),
-                    QualificationDestination.ForSlot(cup.Id, cup.Slots[0].SlotKey)),
+                    QualificationDestination.ForSlot(cup.Id, cup.Slots[0].SlotKey))
             ]),
             _clock);
         competition.AddStage(league.Id, _clock);

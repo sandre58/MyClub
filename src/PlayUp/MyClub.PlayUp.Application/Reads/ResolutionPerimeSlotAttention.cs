@@ -21,13 +21,8 @@ internal readonly record struct ResolutionPerimeSlotAttentionKey(
 
 internal static class ResolutionPerimeSlotAttention
 {
-    internal static HashSet<ResolutionPerimeSlotAttentionKey> Build(
-        Competition competition,
-        IReadOnlyList<Stage> stages,
-        IReadOnlyDictionary<Guid, IReadOnlyList<StructureResolutionOccupantDto>> occupantsByStage)
+    internal static HashSet<ResolutionPerimeSlotAttentionKey> Build(IReadOnlyDictionary<Guid, IReadOnlyList<StructureResolutionOccupantDto>> occupantsByStage)
     {
-        ArgumentNullException.ThrowIfNull(competition);
-        ArgumentNullException.ThrowIfNull(stages);
         ArgumentNullException.ThrowIfNull(occupantsByStage);
 
         var keys = new HashSet<ResolutionPerimeSlotAttentionKey>();
@@ -46,7 +41,7 @@ internal static class ResolutionPerimeSlotAttention
                     new ResolutionPerimeSlotAttentionKey(
                         stageId,
                         occupant.SlotKey,
-                        occupant.SourcePathId ?? string.Empty));
+                        occupant.SourcePathId));
             }
         }
 
@@ -57,35 +52,15 @@ internal static class ResolutionPerimeSlotAttention
         HashSet<ResolutionPerimeSlotAttentionKey> perimeSlots,
         Stage destination,
         QualificationPath path,
-        StageId sourceStageId,
-        out ResolutionPerimeSlotAttentionKey matched)
+        StageId sourceStageId)
     {
         var pathId = ResolutionPathIdentifier.ForQualification(sourceStageId, path);
         if (!path.Destination.TargetsSlot || string.IsNullOrEmpty(path.Destination.SlotKey))
         {
-            matched = default;
             return false;
         }
 
-        foreach (var key in perimeSlots)
-        {
-            if (key.DestinationStageId != destination.Id.Value
-                || !string.Equals(key.SlotKey, path.Destination.SlotKey, StringComparison.Ordinal))
-            {
-                continue;
-            }
-
-            if (!string.Equals(key.SourcePathId, pathId, StringComparison.Ordinal))
-            {
-                continue;
-            }
-
-            matched = key;
-            return true;
-        }
-
-        matched = default;
-        return false;
+        return perimeSlots.Any(key => key.DestinationStageId == destination.Id.Value && string.Equals(key.SlotKey, path.Destination.SlotKey, StringComparison.Ordinal) && string.Equals(key.SourcePathId, pathId, StringComparison.Ordinal));
     }
 
     internal static string EntryDisplayName(Competition competition, EntryId entryId)

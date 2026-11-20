@@ -37,45 +37,13 @@ internal static class StructureAppliedDrawGroupPlacementGate
     internal static bool AssignWouldBreakAppliedDraw(Stage stage, GroupId groupId, EntryId proposedEntryId)
     {
         ArgumentNullException.ThrowIfNull(stage);
-        foreach (var draw in stage.Draws)
-        {
-            if (!DrawAppliedState.IsApplied(draw, stage) || draw.Kind != DrawResolutionKind.Group)
-            {
-                continue;
-            }
-
-            foreach (var placement in draw.Resolution.GroupResults)
-            {
-                if (!placement.EntryId.Equals(proposedEntryId))
-                {
-                    continue;
-                }
-
-                return !placement.GroupId.Equals(groupId);
-            }
-        }
-
-        return false;
+        return (from draw in stage.Draws where DrawAppliedState.IsApplied(draw, stage) && draw.Kind == DrawResolutionKind.Group from placement in draw.Resolution.GroupResults where placement.EntryId.Equals(proposedEntryId) select !placement.GroupId.Equals(groupId)).FirstOrDefault();
     }
 
     internal static bool ClearWouldBreakAppliedDraw(Stage stage, GroupId groupId, EntryId entryId)
     {
         ArgumentNullException.ThrowIfNull(stage);
-        foreach (var draw in stage.Draws)
-        {
-            if (!DrawAppliedState.IsApplied(draw, stage) || draw.Kind != DrawResolutionKind.Group)
-            {
-                continue;
-            }
-
-            if (draw.Resolution.GroupResults.Any(placement =>
-                    placement.GroupId.Equals(groupId) && placement.EntryId.Equals(entryId)))
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return stage.Draws.Any(draw => DrawAppliedState.IsApplied(draw, stage) && draw.Kind == DrawResolutionKind.Group && draw.Resolution.GroupResults.Any(placement => placement.GroupId.Equals(groupId) && placement.EntryId.Equals(entryId)));
     }
 
     private static void ThrowProtected() =>

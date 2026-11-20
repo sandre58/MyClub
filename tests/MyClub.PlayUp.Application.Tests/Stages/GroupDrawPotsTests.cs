@@ -112,7 +112,7 @@ public sealed class GroupDrawPotsTests
             _clock).Stage;
         if (compositionCount > 0)
         {
-            stage.ReplaceAffectationAuthoring(ids.Take(compositionCount).ToArray(), _clock);
+            stage.ReplaceAffectationAuthoring([.. ids.Take(compositionCount)], _clock);
         }
 
         return stage;

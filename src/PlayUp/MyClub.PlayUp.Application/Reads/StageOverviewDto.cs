@@ -159,7 +159,7 @@ public enum DrawPlacementOrigin
     Feed = 1,
 
     /// <summary>Manual placement, resolved occupant, or an occupant left by a previous draw. A unique direct assignment is manual.</summary>
-    Manual = 2,
+    Manual = 2
 }
 
 /// <summary>
@@ -184,7 +184,7 @@ public enum SlotDrawCellState
     Free = 4,
 
     /// <summary>Structural slot absent from this draw's resolution. Published and Cancelled only.</summary>
-    OutsideDraw = 5,
+    OutsideDraw = 5
 }
 
 /// <summary>

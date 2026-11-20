@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using System.Diagnostics.CodeAnalysis;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -126,5 +127,7 @@ public sealed class NullableMatchParticipantsMigrationTests : IAsyncLifetime
         }
     }
 
+    [SuppressMessage("ReSharper", "ClassNeverInstantiated.Local", Justification = "Instantiated by the runtime.")]
+    [SuppressMessage("ReSharper", "NotAccessedPositionalProperty.Local", Justification = "Migration column shape.")]
     private sealed record ColumnRow(string Name, string DataType, string IsNullable);
 }

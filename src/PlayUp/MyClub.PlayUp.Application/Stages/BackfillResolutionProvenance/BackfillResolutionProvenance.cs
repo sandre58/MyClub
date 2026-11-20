@@ -8,7 +8,6 @@ using MyClub.PlayUp.Application.Standings;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
-using MyClub.PlayUp.Domain.Progression;
 using MyClub.PlayUp.Domain.Qualification;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
@@ -130,9 +129,8 @@ public static class BackfillResolutionProvenance
         SlotFeedResolution resolution,
         IReadOnlyList<Stage> competitionStages,
         IReadOnlyDictionary<StageId, IReadOnlyList<Match>>? matchesByStage,
-        Tracker tracker)
-    {
-        return resolution.Status switch
+        Tracker tracker) =>
+        resolution.Status switch
         {
             FeedResolutionStatus.Unique => ResolveUniqueFeedProvenance(
                 competition,
@@ -148,7 +146,6 @@ public static class BackfillResolutionProvenance
                 or FeedResolutionStatus.InvalidFeed => ResolutionProvenance.NonVerifiee(),
             _ => ResolutionProvenance.NonVerifiee()
         };
-    }
 
     private static ResolutionProvenance ResolveUniqueFeedProvenance(
         Competition competition,
@@ -158,24 +155,20 @@ public static class BackfillResolutionProvenance
         UniqueFeedSource source,
         IReadOnlyList<Stage> competitionStages,
         IReadOnlyDictionary<StageId, IReadOnlyList<Match>>? matchesByStage,
-        Tracker tracker)
-    {
-        return source.Kind switch
+        Tracker tracker) =>
+        source.Kind switch
         {
             FeedKind.Direct => ResolveDirectFeedProvenance(slotKey, occupant, source.Direct!.ConfiguredEntryId),
             FeedKind.Draw => ResolveDrawFeedProvenance(stage, slotKey, occupant, source.Draw!.DrawId),
             FeedKind.Qualification => ResolveQualificationSlotProvenance(
                 competition,
-                stage,
                 slotKey,
                 occupant,
                 source.Qualification!,
                 competitionStages,
                 matchesByStage,
                 tracker),
-            FeedKind.Progression => ResolveProgressionSlotProvenance(
-                stage,
-                slotKey,
+            FeedKind.Progression => ResolveProgressionSlotProvenance(slotKey,
                 occupant,
                 source.Progression!,
                 competitionStages,
@@ -183,7 +176,6 @@ public static class BackfillResolutionProvenance
                 tracker),
             _ => ResolutionProvenance.NonVerifiee()
         };
-    }
 
     private static ResolutionProvenance ResolveDirectFeedProvenance(
         string slotKey,
@@ -210,14 +202,13 @@ public static class BackfillResolutionProvenance
         var placement = draw.Resolution.SlotResults
             .FirstOrDefault(candidate =>
                 string.Equals(candidate.SlotKey, slotKey, StringComparison.Ordinal));
-        return placement is not null && placement.EntryId.Equals(occupant)
+        return placement?.EntryId.Equals(occupant) == true
             ? ResolutionProvenance.Tirage(drawId, slotKey, occupant)
             : ResolutionProvenance.NonVerifiee();
     }
 
     private static ResolutionProvenance ResolveQualificationSlotProvenance(
         Competition competition,
-        Stage destination,
         string slotKey,
         EntryId occupant,
         QualificationFeedRef feed,
@@ -242,9 +233,7 @@ public static class BackfillResolutionProvenance
             tracker);
     }
 
-    private static ResolutionProvenance ResolveProgressionSlotProvenance(
-        Stage destination,
-        string slotKey,
+    private static ResolutionProvenance ResolveProgressionSlotProvenance(string slotKey,
         EntryId occupant,
         ProgressionFeedRef feed,
         IReadOnlyList<Stage> competitionStages,
@@ -307,7 +296,7 @@ public static class BackfillResolutionProvenance
                         var fingerprint = FormPathResolutionKey.FromQualification(source.Id, path);
                         var witness = destination.FormPathResolutions
                             .FirstOrDefault(resolution => resolution.PathFingerprint == fingerprint);
-                        if (witness is null || !witness.EntryId.Equals(entryId))
+                        if (witness?.EntryId.Equals(entryId) != true)
                         {
                             continue;
                         }
@@ -350,7 +339,7 @@ public static class BackfillResolutionProvenance
                     var fingerprint = FormPathResolutionKey.FromProgression(source.Id, path);
                     var witness = destination.FormPathResolutions
                         .FirstOrDefault(resolution => resolution.PathFingerprint == fingerprint);
-                    if (witness is null || !witness.EntryId.Equals(entryId))
+                    if (witness?.EntryId.Equals(entryId) != true)
                     {
                         continue;
                     }
@@ -495,8 +484,7 @@ public static class BackfillResolutionProvenance
         }
 
         if (selection.Status != PathOccupantSelectionStatus.Resolved
-            || selection.EntryId is null
-            || !selection.EntryId.Value.Equals(expectedOccupant))
+            || selection.EntryId?.Equals(expectedOccupant) != true)
         {
             return ResolutionProvenance.NonVerifiee();
         }
@@ -523,18 +511,15 @@ public static class BackfillResolutionProvenance
         }
 
         var selection = PathOccupantSelector.SelectProgression(path, outcome);
-        if (selection.Status == PathOccupantSelectionStatus.Indeterminate)
+        if (selection.Status != PathOccupantSelectionStatus.Indeterminate)
         {
-            tracker.RecordIndeterminate();
-            return ResolutionProvenance.NonVerifiee();
+            return selection.EntryId?.Equals(expectedOccupant) != true
+                ? ResolutionProvenance.NonVerifiee()
+                : ResolutionProvenanceFactory.ForProgressionApply(source.Id, path, outcome);
         }
 
-        if (selection.EntryId is null || !selection.EntryId.Value.Equals(expectedOccupant))
-        {
-            return ResolutionProvenance.NonVerifiee();
-        }
-
-        return ResolutionProvenanceFactory.ForProgressionApply(source.Id, path, outcome);
+        tracker.RecordIndeterminate();
+        return ResolutionProvenance.NonVerifiee();
     }
 
     private static bool TryResolveFixtureOutcome(

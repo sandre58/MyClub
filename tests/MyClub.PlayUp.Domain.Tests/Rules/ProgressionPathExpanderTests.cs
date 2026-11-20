@@ -57,7 +57,7 @@ public sealed class ProgressionPathExpanderTests
         paths.Should().HaveCount(2);
         paths[0].Destination.SlotKey.Should().Be("SF1-A");
         paths[1].Destination.SlotKey.Should().Be("SF1-B");
-        paths.Select(p => p.SourcePairKey).Should().Equal(stage.BracketPairs.OrderBy(bp => bp.PairKey).Select(bp => bp.PairKey));
+        paths.Select(p => p.SourcePairKey).Should().Equal(stage.BracketPairs.OrderBy(bp => bp.PairKey, StringComparer.Ordinal).Select(bp => bp.PairKey));
     }
 
     [Fact]

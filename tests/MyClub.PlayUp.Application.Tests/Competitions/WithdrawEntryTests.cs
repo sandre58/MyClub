@@ -8,6 +8,7 @@ using FluentAssertions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
 using Xunit;
@@ -61,10 +62,10 @@ public sealed class WithdrawEntryTests
     }
 
     private (
-        Domain.Competitions.Competition Competition,
+        Competition Competition,
         Stage Stage,
-        Domain.Competitions.CompetitionEntry Home,
-        Domain.Competitions.CompetitionEntry Away,
+        CompetitionEntry Home,
+        CompetitionEntry Away,
         Match Match) CreateRunningWithMatch()
     {
         var competition = CreateCompetition.Execute("Forfeit Cup", _clock);

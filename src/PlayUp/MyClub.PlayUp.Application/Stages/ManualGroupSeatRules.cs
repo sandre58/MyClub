@@ -4,7 +4,6 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Stages;
@@ -132,19 +131,13 @@ internal static class ManualGroupSeatRules
         }
 
         var group = stage.FindGroup(groupId);
-        if (group is not null
-            && !group.EntryIds.Contains(currentEntryId)
+        if (group?.EntryIds.Contains(currentEntryId) == false
             && group.EntryIds.Contains(replacementEntryId))
         {
             return null;
         }
 
-        if (StructureAppliedDrawGroupPlacementGate.ClearWouldBreakAppliedDraw(stage, groupId, currentEntryId))
-        {
-            return ApplicationErrorCodes.AppliedDrawGroupPlacementProtected;
-        }
-
-        if (StructureAppliedDrawGroupPlacementGate.AssignWouldBreakAppliedDraw(
+        if (StructureAppliedDrawGroupPlacementGate.ClearWouldBreakAppliedDraw(stage, groupId, currentEntryId) || StructureAppliedDrawGroupPlacementGate.AssignWouldBreakAppliedDraw(
                 stage,
                 groupId,
                 replacementEntryId))
@@ -166,8 +159,7 @@ internal static class ManualGroupSeatRules
             return incoming;
         }
 
-        if (group is not null
-            && group.EntryIds.Contains(replacementEntryId)
+        if (group?.EntryIds.Contains(replacementEntryId) == true
             && !replacementEntryId.Equals(currentEntryId))
         {
             return StageErrorCodes.DuplicateEntry;
@@ -189,12 +181,7 @@ internal static class ManualGroupSeatRules
             return ApplicationErrorCodes.ManualGroupPlacementBlockedByActiveDraw;
         }
 
-        if (StructureAppliedDrawGroupPlacementGate.ClearWouldBreakAppliedDraw(stage, groupId, entryId))
-        {
-            return ApplicationErrorCodes.AppliedDrawGroupPlacementProtected;
-        }
-
-        return stage.FindManualClearRefusal(groupId, entryId);
+        return StructureAppliedDrawGroupPlacementGate.ClearWouldBreakAppliedDraw(stage, groupId, entryId) ? ApplicationErrorCodes.AppliedDrawGroupPlacementProtected : stage.FindManualClearRefusal(groupId, entryId);
     }
 
     internal static Assessment Project(
@@ -208,7 +195,7 @@ internal static class ManualGroupSeatRules
         int unresolvedPendingFeeds)
     {
         ArgumentNullException.ThrowIfNull(composition);
-        var excess = stage.PlacesPerGroup is int capacity && index > capacity;
+        var excess = stage.PlacesPerGroup is { } capacity && index > capacity;
         var outsideComposition = occupant is { } placed && !composition.Contains(placed);
         var refusal = occupant is { } entryId
             ? EvaluateClear(stage, group.Id, entryId)
@@ -283,7 +270,7 @@ internal static class ManualGroupSeatRules
 
     private static bool IsReserved(Stage stage, Group group, int pending, int? projectedMemberCount = null)
     {
-        if (stage.PlacesPerGroup is not int capacity || capacity < 1 || pending <= 0)
+        if (stage.PlacesPerGroup is not { } capacity || capacity < 1 || pending <= 0)
         {
             return false;
         }
@@ -300,6 +287,6 @@ internal static class ManualGroupSeatRules
                 "Cancel the draw, including a draw in draft, or apply it only when it can still be applied, before placing or removing a team.",
             ApplicationErrorCodes.GroupSeatReservedByInboundFeed =>
                 "This group place is reserved for a pending qualification or progression feed.",
-            _ => "Group placement is protected by the applied draw on this stage.",
+            _ => "Group placement is protected by the applied draw on this stage."
         };
 }

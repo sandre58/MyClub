@@ -9,7 +9,6 @@ using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
-using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using Xunit;
@@ -135,14 +134,12 @@ public sealed class GroupsFullGridDrawNotRequiredTests
             stage,
             new DrawRules(DrawMode.Random, potRules: new PotRules(2)),
             _clock);
-        stage.ReplaceAffectationAuthoring(placeEveryone ? ids : ids.Take(2).ToArray(), _clock);
-        if (placeEveryone)
-        {
-            stage.AssignEntryToGroup(stage.Groups[0].Id, ids[0]);
-            stage.AssignEntryToGroup(stage.Groups[0].Id, ids[1]);
-            stage.AssignEntryToGroup(stage.Groups[1].Id, ids[2]);
-            stage.AssignEntryToGroup(stage.Groups[1].Id, ids[3]);
-        }
+        stage.ReplaceAffectationAuthoring(placeEveryone ? ids : [.. ids.Take(2)], _clock);
+        if (!placeEveryone) return (competition, stage);
+        stage.AssignEntryToGroup(stage.Groups[0].Id, ids[0]);
+        stage.AssignEntryToGroup(stage.Groups[0].Id, ids[1]);
+        stage.AssignEntryToGroup(stage.Groups[1].Id, ids[2]);
+        stage.AssignEntryToGroup(stage.Groups[1].Id, ids[3]);
 
         return (competition, stage);
     }

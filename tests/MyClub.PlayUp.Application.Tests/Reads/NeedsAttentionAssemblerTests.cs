@@ -13,7 +13,6 @@ using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
-using MyClub.PlayUp.Domain.Qualification;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using Xunit;
@@ -250,7 +249,7 @@ public sealed class NeedsAttentionAssemblerTests
     [Fact]
     public void Assemble_without_slot_occupant_emits_qualification_pending_not_coalesced()
     {
-        var (competition, league, terminal, entries, matches) = LeagueFeed(2);
+        var (competition, league, terminal, _, matches) = LeagueFeed(2);
         league.ReplaceQualificationRules(
             new QualificationRules(
             [
@@ -258,7 +257,7 @@ public sealed class NeedsAttentionAssemblerTests
                     1,
                     QualificationSource.Overall(),
                     new QualificationSelection(SelectionMode.Position, 1),
-                    QualificationDestination.ForSlot(terminal.Id, "Champ")),
+                    QualificationDestination.ForSlot(terminal.Id, "Champ"))
             ]),
             _clock);
 

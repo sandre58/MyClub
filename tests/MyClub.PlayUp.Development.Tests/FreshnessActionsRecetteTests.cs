@@ -11,7 +11,6 @@ using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Development.Runtime;
 using MyClub.PlayUp.Development.Scenarios;
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
 using Xunit;
@@ -36,7 +35,7 @@ public sealed class FreshnessActionsRecetteTests(DevelopmentPostgresFixture fixt
         var competition = await competitions.GetByIdForUpdateAsync(
             listed.Single(item => item.Name.Value == FreshnessActionsRecetteNames.Competition).Id);
         competition.Should().NotBeNull();
-        competition!.Entries.Count(entry => entry.Status == EntryStatus.Active).Should().BeGreaterThanOrEqualTo(4);
+        competition.Entries.Count(entry => entry.Status == EntryStatus.Active).Should().BeGreaterThanOrEqualTo(4);
 
         var stages = new List<Stage>();
         var matches = new List<Match>();
@@ -44,8 +43,8 @@ public sealed class FreshnessActionsRecetteTests(DevelopmentPostgresFixture fixt
         {
             var stage = await stagesRepo.GetByIdForUpdateAsync(stageId);
             stage.Should().NotBeNull();
-            stages.Add(stage!);
-            stage!.CompositionEntries.Count.Should().BeGreaterThanOrEqualTo(4);
+            stages.Add(stage);
+            stage.CompositionEntries.Count.Should().BeGreaterThanOrEqualTo(4);
             stage.Status.Should().NotBe(StageStatus.Completed);
             matches.AddRange(await matchesRepo.ListByStageForUpdateAsync(stageId));
         }
@@ -53,16 +52,18 @@ public sealed class FreshnessActionsRecetteTests(DevelopmentPostgresFixture fixt
         var summaries = new Dictionary<StageId, IReadOnlyList<MatchSummaryRow>>();
         foreach (var group in matches.GroupBy(match => match.StageId))
         {
-            summaries[group.Key] = group
-                .Select(match => new MatchSummaryRow(
-                    match.Id,
-                    match.StageId,
-                    match.Status,
-                    match.HomeEntryId,
-                    match.AwayEntryId,
-                    match.Result,
-                    match.HasObservedLive))
-                .ToArray();
+            summaries[group.Key] =
+            [
+                .. group
+                    .Select(match => new MatchSummaryRow(
+                        match.Id,
+                        match.StageId,
+                        match.Status,
+                        match.HomeEntryId,
+                        match.AwayEntryId,
+                        match.Result,
+                        match.HasObservedLive))
+            ];
         }
 
         var byOccupantStage = ResolutionFreshnessDetector.Evaluate(competition, stages, summaries);
@@ -114,7 +115,7 @@ public sealed class FreshnessActionsRecetteTests(DevelopmentPostgresFixture fixt
 
         var byStage = matches
             .GroupBy(match => match.StageId)
-            .ToDictionary(group => group.Key, group => (IReadOnlyList<Match>)group.ToList());
+            .ToDictionary(group => group.Key, group => (IReadOnlyList<Match>)[.. group]);
         var attention = NeedsAttentionAssembler.Assemble(competition, stages, byStage);
         attention.Items.Should().Contain(item =>
             item.Source == NeedsAttentionAssembler.SourceResolutionPerime

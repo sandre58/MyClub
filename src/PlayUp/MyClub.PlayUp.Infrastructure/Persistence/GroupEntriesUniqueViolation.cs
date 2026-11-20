@@ -18,8 +18,7 @@ internal static class GroupEntriesUniqueViolation
     {
         for (var current = exception; current is not null; current = current.InnerException)
         {
-            if (current is PostgresException postgres
-                && postgres.SqlState == PostgresErrorCodes.UniqueViolation
+            if (current is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation } postgres
                 && NamesGroupEntries(postgres))
             {
                 return true;

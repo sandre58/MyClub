@@ -9,6 +9,8 @@ using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
+using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.TestKit;
@@ -291,10 +293,10 @@ public sealed class StructureDrawCreateLaunchGateContractTests
         hub.DrawCreateLaunch.BlockReasonCode.Should().Be(StructureDrawCreateLaunchGate.BlockGroupShapeInvalid);
     }
 
-    private (Domain.Competitions.Competition Competition, Stage Stage) CupWithPopulation(int slots, int teams)
+    private (Competition Competition, Stage Stage) CupWithPopulation(int slots, int teams)
     {
         var competition = CreateCompetition.Execute($"Cup {slots}x{teams}", _clock);
-        var ids = new List<Domain.Common.EntryId>();
+        var ids = new List<EntryId>();
         for (var index = 0; index < teams; index++)
         {
             ids.Add(AddEntry.Execute(competition, $"T{index}", _clock).Id);

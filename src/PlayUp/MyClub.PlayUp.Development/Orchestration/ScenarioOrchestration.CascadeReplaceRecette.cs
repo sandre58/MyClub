@@ -134,7 +134,7 @@ internal static partial class ScenarioOrchestration
                     1,
                     QualificationSource.FromGroup(group.Id),
                     new QualificationSelection(SelectionMode.Position, 1),
-                    QualificationDestination.ForGroup(middle.Id, middleGroup.Id)),
+                    QualificationDestination.ForGroup(middle.Id, middleGroup.Id))
             ]),
             context.Clock);
         ApplyQualification.Execute(
@@ -144,7 +144,7 @@ internal static partial class ScenarioOrchestration
             stages,
             context.Clock);
         var middleStanding = CalculateStanding.Execute(
-            middleGroup.EntryIds.ToArray(),
+            [.. middleGroup.EntryIds],
             Array.Empty<Match>(),
             middle.Regulation.StandingRules!);
         middle.ReplaceQualificationRules(
@@ -154,7 +154,7 @@ internal static partial class ScenarioOrchestration
                     1,
                     QualificationSource.FromGroup(middleGroup.Id),
                     new QualificationSelection(SelectionMode.Position, 1),
-                    QualificationDestination.ForSlot(final.Id, "Champ")),
+                    QualificationDestination.ForSlot(final.Id, "Champ"))
             ]),
             context.Clock);
         ApplyQualification.Execute(

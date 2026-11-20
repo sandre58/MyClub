@@ -62,7 +62,7 @@ public static class AssignEntriesToGroup
                 lifecycle);
         }
 
-        if (stage.PlacesPerGroup is not int capacity || capacity < 1)
+        if (stage.PlacesPerGroup is not { } capacity || capacity < 1)
         {
             throw new ApplicationFailureException(
                 "A group lot requires PlacesPerGroup of at least 1.",
@@ -114,14 +114,6 @@ public static class AssignEntriesToGroup
     private static bool HasDuplicate(IReadOnlyList<EntryId> entryIds)
     {
         var seen = new HashSet<EntryId>();
-        foreach (var entryId in entryIds)
-        {
-            if (!seen.Add(entryId))
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return entryIds.Any(entryId => !seen.Add(entryId));
     }
 }

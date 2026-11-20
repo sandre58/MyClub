@@ -6,9 +6,7 @@
 
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
-using ApplicationErrorCodes = MyClub.PlayUp.Application.ApplicationErrorCodes;
 using CascadeReplaceUseCase = MyClub.PlayUp.Application.Stages.CascadeReplace.CascadeReplace;
 
 namespace MyClub.PlayUp.Application.Stages.ReleaseResolution;
@@ -106,7 +104,7 @@ public static class ResolutionReleaseRules
         }
 
         if (matches.Any(match => Involves(match, subject.EntryId)
-            && match.Status is MatchStatus.Live or MatchStatus.Finished))
+                                 && match.Status is MatchStatus.Live or MatchStatus.Finished))
         {
             return ApplicationErrorCodes.ResolutionReleaseBlockedByPlayedMatch;
         }
@@ -121,28 +119,21 @@ public static class ResolutionReleaseRules
         }
 
         if (matches.Any(match => Involves(match, subject.EntryId)
-            && match.Status == MatchStatus.Cancelled))
+                                 && match.Status == MatchStatus.Cancelled))
         {
             return ApplicationErrorCodes.ResolutionReleaseBlockedByCancelledMatch;
         }
 
-        if (DrawBlocks(stage, entryId))
-        {
-            return ApplicationErrorCodes.ResolutionReleaseBlockedByDraw;
-        }
-
-        return null;
+        return DrawBlocks(stage, entryId) ? ApplicationErrorCodes.ResolutionReleaseBlockedByDraw : null;
     }
 
     private static bool HoldsDirectAssignment(Stage stage, ResolutionReleaseSubject subject) =>
-        subject.Target == StructureResolutionOccupantTarget.Slot
-        && subject.SlotKey is not null
+        subject is { Target: StructureResolutionOccupantTarget.Slot, SlotKey: not null }
         && stage.DirectAssignments.Any(assignment =>
             string.Equals(assignment.SlotKey, subject.SlotKey, StringComparison.Ordinal));
 
     private static bool IsBracketSlot(Stage stage, ResolutionReleaseSubject subject) =>
-        subject.Target == StructureResolutionOccupantTarget.Slot
-        && subject.SlotKey is not null
+        subject is { Target: StructureResolutionOccupantTarget.Slot, SlotKey: not null }
         && stage.Rounds.SelectMany(round => round.Fixtures).Any(fixture =>
             string.Equals(fixture.SlotAKey, subject.SlotKey, StringComparison.Ordinal)
             || string.Equals(fixture.SlotBKey, subject.SlotKey, StringComparison.Ordinal));
@@ -211,15 +202,7 @@ public static class ResolutionReleaseRules
             }
         }
 
-        foreach (var placement in draw.Resolution.GroupResults)
-        {
-            var group = stage.FindGroup(placement.GroupId);
-            if (group is not null && group.EntryIds.Contains(placement.EntryId))
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return draw.Resolution.GroupResults.Any(placement =>
+            stage.FindGroup(placement.GroupId)?.EntryIds.Contains(placement.EntryId) == true);
     }
 }

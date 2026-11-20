@@ -190,15 +190,7 @@ public sealed class DraftUnderRunningAuthoringTests
 
         view.Actions.Should().NotContain(StructureViewAssembler.ActionConfigureStructure);
         hub.Actions.Should().NotIntersectWith(DraftExtrasOutsideReadyOps);
-        hub.Actions.Should().BeEquivalentTo(
-        [
-            StructureViewAssembler.ActionRenameStage,
-            StructureViewAssembler.ActionReplaceProgressionRules,
-            StructureViewAssembler.ActionReplacePlacementAwardRules,
-            StructureViewAssembler.ActionReplaceAffectationAuthoring,
-            StructureViewAssembler.ActionAssignEntryToSlot,
-            StructureViewAssembler.ActionClearSlotAssignment
-        ]);
+        hub.Actions.Should().BeEquivalentTo(StructureViewAssembler.ActionRenameStage, StructureViewAssembler.ActionReplaceProgressionRules, StructureViewAssembler.ActionReplacePlacementAwardRules, StructureViewAssembler.ActionReplaceAffectationAuthoring, StructureViewAssembler.ActionAssignEntryToSlot, StructureViewAssembler.ActionClearSlotAssignment);
 
         AssertDraftExtrasDenied(competition, semi, [quarter, semi]);
         semi.Status.Should().Be(StageStatus.Draft);
@@ -224,12 +216,7 @@ public sealed class DraftUnderRunningAuthoringTests
 
         view.Actions.Should().NotContain(StructureViewAssembler.ActionConfigureStructure);
         hub.Actions.Should().NotIntersectWith(DraftExtrasOutsideReadyOps);
-        hub.Actions.Should().BeEquivalentTo(
-        [
-            StructureViewAssembler.ActionRenameStage,
-            StructureViewAssembler.ActionReplaceQualificationRules,
-            StructureViewAssembler.ActionReplaceAffectationAuthoring
-        ]);
+        hub.Actions.Should().BeEquivalentTo(StructureViewAssembler.ActionRenameStage, StructureViewAssembler.ActionReplaceQualificationRules, StructureViewAssembler.ActionReplaceAffectationAuthoring);
 
         AssertDraftExtrasDenied(competition, finale, [groups, finale]);
         finale.Status.Should().Be(StageStatus.Draft);

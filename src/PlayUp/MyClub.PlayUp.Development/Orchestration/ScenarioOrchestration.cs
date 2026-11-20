@@ -3796,7 +3796,7 @@ internal static partial class ScenarioOrchestration
                     1,
                     QualificationSource.Overall(),
                     new QualificationSelection(SelectionMode.Position, 1),
-                    QualificationDestination.ForSlot(terminal.Id, "Champ")),
+                    QualificationDestination.ForSlot(terminal.Id, "Champ"))
             ]),
             context.Clock);
 

@@ -12,7 +12,6 @@ using MyClub.PlayUp.Development.Scenarios;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
-using MyClub.PlayUp.Domain.Qualification;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Domain.Standings;
@@ -106,7 +105,7 @@ internal static partial class ScenarioOrchestration
                     2,
                     terminal.Id.Value,
                     RankingScope.Overall,
-                    DestinationSlotKey: "Champ"),
+                    DestinationSlotKey: "Champ")
             ],
             context.Clock,
             stages,
@@ -176,7 +175,7 @@ internal static partial class ScenarioOrchestration
                     1,
                     QualificationSource.FromGroup(group.Id),
                     new QualificationSelection(SelectionMode.Position, 1),
-                    QualificationDestination.ForSlot(phaseB.Id, "QF-A")),
+                    QualificationDestination.ForSlot(phaseB.Id, "QF-A"))
             ]),
             context.Clock);
         ApplyQualification.Execute(
@@ -200,7 +199,7 @@ internal static partial class ScenarioOrchestration
                 new ProgressionPath(
                     "P1",
                     ProgressionOutcome.Winner,
-                    new ProgressionDestination(phaseC.Id, "Finale")),
+                    new ProgressionDestination(phaseC.Id, "Finale"))
             ]),
             context.Clock);
         ApplyProgressionOutcome.Execute(
@@ -323,7 +322,7 @@ internal static partial class ScenarioOrchestration
                     2,
                     QualificationSource.Overall(),
                     new QualificationSelection(SelectionMode.Position, 2),
-                    QualificationDestination.ForPopulation(downstream.Id)),
+                    QualificationDestination.ForPopulation(downstream.Id))
             ]),
             context.Clock);
         ApplyQualification.Execute(league, standing, [league, downstream], context.Clock);
@@ -337,7 +336,7 @@ internal static partial class ScenarioOrchestration
                     SelectionMode.Position,
                     3,
                     downstream.Id.Value,
-                    RankingScope.Overall),
+                    RankingScope.Overall)
             ],
             context.Clock,
             stages,
@@ -385,7 +384,7 @@ internal static partial class ScenarioOrchestration
                     1,
                     QualificationSource.FromGroup(sourceGroup.Id),
                     new QualificationSelection(SelectionMode.Position, 1),
-                    QualificationDestination.ForGroup(dest.Id, destGroup.Id)),
+                    QualificationDestination.ForGroup(dest.Id, destGroup.Id))
             ]),
             context.Clock);
         ApplyQualification.Execute(
@@ -405,7 +404,7 @@ internal static partial class ScenarioOrchestration
                     2,
                     dest.Id.Value,
                     GroupId: sourceGroup.Id.Value,
-                    DestinationGroupId: destGroup.Id.Value),
+                    DestinationGroupId: destGroup.Id.Value)
             ],
             context.Clock,
             stages,
@@ -550,7 +549,7 @@ internal static partial class ScenarioOrchestration
                     1,
                     QualificationSource.Overall(),
                     new QualificationSelection(SelectionMode.Position, position),
-                    QualificationDestination.ForSlot(terminal.Id, slotKey)),
+                    QualificationDestination.ForSlot(terminal.Id, slotKey))
             ]),
             context.Clock);
         ApplyQualification.Execute(league, standing, [league, terminal], context.Clock);

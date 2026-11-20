@@ -10,7 +10,6 @@ using MyClub.PlayUp.Application.Stages.ReleaseResolution;
 using MyClub.PlayUp.Application.Standings;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
-using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Qualification;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
@@ -152,16 +151,7 @@ public static class ResolutionFreshnessDetector
                     groupId: null));
             }
 
-            foreach (var row in stage.GroupResolutionProvenances)
-            {
-                occupants.Add(WorkingOccupant.Create(
-                    stage.Id.Value,
-                    StructureResolutionOccupantTarget.Group,
-                    row.EntryId.Value,
-                    row.Provenance,
-                    slotKey: null,
-                    row.GroupId.Value));
-            }
+            occupants.AddRange(stage.GroupResolutionProvenances.Select(row => WorkingOccupant.Create(stage.Id.Value, StructureResolutionOccupantTarget.Group, row.EntryId.Value, row.Provenance, slotKey: null, row.GroupId.Value)));
         }
 
         return occupants;
@@ -270,8 +260,7 @@ public static class ResolutionFreshnessDetector
             return;
         }
 
-        if (selection.Status == PathOccupantSelectionStatus.Resolved
-            && selection.EntryId is { } selected
+        if (selection is { Status: PathOccupantSelectionStatus.Resolved, EntryId: { } selected }
             && selected != storedEntry)
         {
             occupant.RememberReplay(
@@ -362,7 +351,7 @@ public static class ResolutionFreshnessDetector
             return;
         }
 
-        if (selection.Status == PathOccupantSelectionStatus.Resolved && selection.EntryId is { } selected)
+        if (selection is { Status: PathOccupantSelectionStatus.Resolved, EntryId: { } selected })
         {
             occupant.RememberReplay(selected.Value, progressionFingerprint);
             MarkStale(occupant, StructureResolutionStalenessCause.ResultatAmont);
@@ -409,7 +398,7 @@ public static class ResolutionFreshnessDetector
             {
                 if (occupant.State != StructureResolutionFreshness.AJour
                     || occupant.Kind is ResolutionProvenanceKind.Directe or ResolutionProvenanceKind.NonVerifiee
-                    || occupant.DependsOnStageId is not Guid sourceStageId
+                    || occupant.DependsOnStageId is not { } sourceStageId
                     || occupant.DependsOnEntryIds.Count == 0)
                 {
                     continue;
@@ -450,18 +439,55 @@ public static class ResolutionFreshnessDetector
 
         var stagesById = stages.ToDictionary(stage => stage.Id.Value);
         var matchesByStage = new Dictionary<Guid, ResolutionReleaseMatch[]>();
-        if (matchSummariesByStage is not null)
+        if (matchSummariesByStage is null)
         {
-            foreach (var (stageId, rows) in matchSummariesByStage)
-            {
-                matchesByStage[stageId.Value] = rows
+            return occupants
+                .OrderBy(occupant => order.GetValueOrDefault(occupant.StageId, int.MaxValue))
+                .ThenBy(occupant => occupant.Target)
+                .ThenBy(occupant => occupant.SlotKey ?? string.Empty, StringComparer.Ordinal)
+                .ThenBy(occupant => occupant.GroupId ?? Guid.Empty)
+                .ThenBy(occupant => occupant.EntryId)
+                .GroupBy(occupant => occupant.StageId)
+                .ToDictionary(
+                    group => group.Key,
+                    group => (IReadOnlyList<StructureResolutionOccupantDto>)[
+                        .. group.Select(occupant =>
+                        {
+                            stagesById.TryGetValue(occupant.StageId, out var stage);
+                            var source = SourceStage(occupant, stagesById);
+                            IReadOnlyList<ResolutionReleaseMatch>? matches = null;
+                            if (matchSummariesByStage is not null)
+                            {
+                                // A missing stage key means this caller loaded no rows for it.
+                                // The structure read writes an empty list for every stage, so a
+                                // null dictionary is the case where matches were not loaded at all.
+                                matchesByStage.TryGetValue(occupant.StageId, out var loaded);
+                                matches = loaded ?? [];
+                            }
+
+                            var verdict = ResolutionDefinitiveness.Evaluate(
+                                competition,
+                                source,
+                                QualificationPathOf(source, occupant),
+                                occupant.ToAssessment(),
+                                stage,
+                                matches);
+                            return occupant.ToDto(verdict.Releasable, verdict.Definitive, stage);
+                        })
+                    ]);
+        }
+
+        foreach (var (stageId, rows) in matchSummariesByStage)
+        {
+            matchesByStage[stageId.Value] =
+            [
+                .. rows
                     .Select(row => new ResolutionReleaseMatch(
                         row.Id.Value,
                         row.Status,
                         row.HomeEntryId?.Value,
                         row.AwayEntryId?.Value))
-                    .ToArray();
-            }
+            ];
         }
 
         return occupants
@@ -473,29 +499,28 @@ public static class ResolutionFreshnessDetector
             .GroupBy(occupant => occupant.StageId)
             .ToDictionary(
                 group => group.Key,
-                group => (IReadOnlyList<StructureResolutionOccupantDto>)group.Select(occupant =>
-                {
-                    stagesById.TryGetValue(occupant.StageId, out var stage);
-                    var source = SourceStage(occupant, stagesById);
-                    IReadOnlyList<ResolutionReleaseMatch>? matches = null;
-                    if (matchSummariesByStage is not null)
+                group => (IReadOnlyList<StructureResolutionOccupantDto>)[
+                    .. group.Select(occupant =>
                     {
+                        stagesById.TryGetValue(occupant.StageId, out var stage);
+                        var source = SourceStage(occupant, stagesById);
+
                         // A missing stage key means this caller loaded no rows for it.
                         // The structure read writes an empty list for every stage, so a
                         // null dictionary is the case where matches were not loaded at all.
                         matchesByStage.TryGetValue(occupant.StageId, out var loaded);
-                        matches = loaded ?? [];
-                    }
+                        IReadOnlyList<ResolutionReleaseMatch> matches = loaded ?? [];
 
-                    var verdict = ResolutionDefinitiveness.Evaluate(
-                        competition,
-                        source,
-                        QualificationPathOf(source, occupant),
-                        occupant.ToAssessment(),
-                        stage,
-                        matches);
-                    return occupant.ToDto(verdict.Releasable, verdict.Definitive, stage);
-                }).ToArray());
+                        var verdict = ResolutionDefinitiveness.Evaluate(
+                            competition,
+                            source,
+                            QualificationPathOf(source, occupant),
+                            occupant.ToAssessment(),
+                            stage,
+                            matches);
+                        return occupant.ToDto(verdict.Releasable, verdict.Definitive, stage);
+                    })
+                ]);
     }
 
     /// <summary>
@@ -547,7 +572,7 @@ public static class ResolutionFreshnessDetector
         RememberDependencies(occupant, source.Id.Value, standing.Rows.Select(row => row.EntryId.Value));
         occupant.RememberPath(ResolutionPathIdentifier.ForQualification(source.Id, match));
         var selection = PathOccupantSelector.SelectQualification(match, standing);
-        if (selection.Status == PathOccupantSelectionStatus.Resolved && selection.EntryId is { } selected)
+        if (selection is { Status: PathOccupantSelectionStatus.Resolved, EntryId: { } selected })
         {
             occupant.RememberReplay(
                 selected.Value,
@@ -580,45 +605,13 @@ public static class ResolutionFreshnessDetector
     private static QualificationPath? FindQualificationPath(Stage source, string sourcePathId)
     {
         var paths = source.Regulation.QualificationRules?.Paths;
-        if (paths is null)
-        {
-            return null;
-        }
-
-        foreach (var path in paths)
-        {
-            if (string.Equals(
-                    ResolutionPathIdentifier.ForQualification(source.Id, path),
-                    sourcePathId,
-                    StringComparison.Ordinal))
-            {
-                return path;
-            }
-        }
-
-        return null;
+        return paths?.FirstOrDefault(path => string.Equals(ResolutionPathIdentifier.ForQualification(source.Id, path), sourcePathId, StringComparison.Ordinal));
     }
 
     private static ProgressionPath? FindProgressionPath(Stage source, string sourcePathId)
     {
         var paths = source.Regulation.ProgressionRules?.Paths;
-        if (paths is null)
-        {
-            return null;
-        }
-
-        foreach (var path in paths)
-        {
-            if (string.Equals(
-                    ResolutionPathIdentifier.ForProgression(source.Id, path),
-                    sourcePathId,
-                    StringComparison.Ordinal))
-            {
-                return path;
-            }
-        }
-
-        return null;
+        return paths?.FirstOrDefault(path => string.Equals(ResolutionPathIdentifier.ForProgression(source.Id, path), sourcePathId, StringComparison.Ordinal));
     }
 
     private static bool DrawPopulationChanged(Stage stage, Draw draw)
@@ -630,23 +623,11 @@ public static class ResolutionFreshnessDetector
             return true;
         }
 
-        foreach (var extra in composition)
-        {
-            if (pool.Contains(extra))
-            {
-                continue;
-            }
-
-            var placed = draw.Kind == DrawResolutionKind.Group
-                ? stage.Groups.Any(group => group.EntryIds.Contains(extra))
-                : stage.Slots.Any(slot => slot.EntryId == extra);
-            if (!placed)
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return (from extra in composition
+            where !pool.Contains(extra)
+            select draw.Kind == DrawResolutionKind.Group
+                ? stage.Groups.Any(@group => @group.EntryIds.Contains(extra))
+                : stage.Slots.Any(slot => slot.EntryId == extra)).Any(placed => !placed);
     }
 
     /// <summary>
@@ -666,13 +647,13 @@ public static class ResolutionFreshnessDetector
 
     private static Stage? SourceStage(WorkingOccupant occupant, Dictionary<Guid, Stage> stagesById)
     {
-        if (occupant.ParsedSourceStageId is Guid parsed
+        if (occupant.ParsedSourceStageId is { } parsed
             && stagesById.TryGetValue(parsed, out var parsedStage))
         {
             return parsedStage;
         }
 
-        return occupant.DependsOnStageId is Guid depends && stagesById.TryGetValue(depends, out var depended)
+        return occupant.DependsOnStageId is { } depends && stagesById.TryGetValue(depends, out var depended)
             ? depended
             : null;
     }
@@ -697,19 +678,14 @@ public static class ResolutionFreshnessDetector
 
     private static bool TryReadPrefixedId(string sourcePathId, char prefix, out Guid id)
     {
-        id = default;
+        id = Guid.Empty;
         if (sourcePathId.Length < 3 || sourcePathId[0] != prefix || sourcePathId[1] != '|')
         {
             return false;
         }
 
         var separator = sourcePathId.IndexOf('|', 2, StringComparison.Ordinal);
-        if (separator < 0)
-        {
-            return false;
-        }
-
-        return Guid.TryParseExact(sourcePathId[2..separator], "N", out id);
+        return separator >= 0 && Guid.TryParseExact(sourcePathId[2..separator], "N", out id);
     }
 
     private static StructureResolutionIndeterminacyCause ClassifyQualification(
@@ -720,19 +696,17 @@ public static class ResolutionFreshnessDetector
             return StructureResolutionIndeterminacyCause.ConditionNonRemplie;
         }
 
-        if (selection.Status == PathOccupantSelectionStatus.Indeterminate
-            && selection.Indeterminacy == PathOccupantIndeterminacyReason.Empty)
+        return selection switch
         {
-            return StructureResolutionIndeterminacyCause.SelectionVide;
-        }
-
-        if (selection.Status == PathOccupantSelectionStatus.Indeterminate
-            && selection.Indeterminacy == PathOccupantIndeterminacyReason.Ambiguous)
-        {
-            return StructureResolutionIndeterminacyCause.EgaliteClassement;
-        }
-
-        return StructureResolutionIndeterminacyCause.Autre;
+            { Status: PathOccupantSelectionStatus.Indeterminate, Indeterminacy: PathOccupantIndeterminacyReason.Empty }
+                => StructureResolutionIndeterminacyCause.SelectionVide,
+            {
+                Status: PathOccupantSelectionStatus.Indeterminate,
+                Indeterminacy: PathOccupantIndeterminacyReason.Ambiguous
+            }
+                => StructureResolutionIndeterminacyCause.EgaliteClassement,
+            _ => StructureResolutionIndeterminacyCause.Autre
+        };
     }
 
     private static StructureResolutionIndeterminacyCause Classify(Exception exception) =>
@@ -742,7 +716,7 @@ public static class ResolutionFreshnessDetector
                 StructureResolutionIndeterminacyCause.MatchNonJoue,
             DomainException { Code: StageErrorCodes.FixtureOutcomeUndecided } =>
                 StructureResolutionIndeterminacyCause.Egalite,
-            _ => StructureResolutionIndeterminacyCause.ConfigurationInvalide,
+            _ => StructureResolutionIndeterminacyCause.ConfigurationInvalide
         };
 
     private static void MarkCurrent(WorkingOccupant occupant)
@@ -777,7 +751,7 @@ public static class ResolutionFreshnessDetector
         occupant.SourceAbsence = cause == StructureResolutionIndeterminacyCause.SourceAbsente
             ? absence
             : null;
-        if (parsedSourceStageId is Guid parsed)
+        if (parsedSourceStageId is { } parsed)
         {
             occupant.ParsedSourceStageId = parsed;
         }
@@ -797,9 +771,9 @@ public static class ResolutionFreshnessDetector
 
         public required string Fingerprint { get; init; }
 
-        public string? SlotKey { get; init; }
+        public string? SlotKey { get; private init; }
 
-        public Guid? GroupId { get; init; }
+        public Guid? GroupId { get; private init; }
 
         public StructureResolutionFreshness State { get; set; }
 
@@ -821,9 +795,9 @@ public static class ResolutionFreshnessDetector
 
         public HashSet<Guid> DependsOnEntryIds { get; } = [];
 
-        public Guid? ReplayEntryId { get; private set; }
+        private Guid? ReplayEntryId { get; set; }
 
-        public string? ReplayFingerprint { get; private set; }
+        private string? ReplayFingerprint { get; set; }
 
         public ResolutionSourceAbsence? SourceAbsence { get; set; }
 
@@ -845,7 +819,7 @@ public static class ResolutionFreshnessDetector
                 SourcePathId = provenance.SourcePathId,
                 Fingerprint = provenance.UpstreamResultFingerprint,
                 SlotKey = slotKey,
-                GroupId = groupId,
+                GroupId = groupId
             };
 
         public void RememberReplay(Guid entryId, string fingerprint)
@@ -854,10 +828,7 @@ public static class ResolutionFreshnessDetector
             ReplayFingerprint = fingerprint;
         }
 
-        public void RememberPath(string sourcePathId)
-        {
-            SourcePathId = sourcePathId;
-        }
+        public void RememberPath(string sourcePathId) => SourcePathId = sourcePathId;
 
         public void ClearReplay()
         {
@@ -875,13 +846,12 @@ public static class ResolutionFreshnessDetector
         public StructureResolutionOccupantDto ToDto(bool releasable, bool definitive, Stage? stage)
         {
             var cascadeReplaceable = State == StructureResolutionFreshness.Perime
-                && (Kind == ResolutionProvenanceKind.Qualification
-                    || Kind == ResolutionProvenanceKind.Progression)
+                && Kind is ResolutionProvenanceKind.Qualification or ResolutionProvenanceKind.Progression
                 && Cause != StructureResolutionStalenessCause.AmontPerime
                 && ReplayEntryId is not null
                 && ReplayFingerprint is not null
                 && !BlocksCascadeReplace(stage);
-            return new(
+            return new StructureResolutionOccupantDto(
                 Target,
                 EntryId,
                 Kind,

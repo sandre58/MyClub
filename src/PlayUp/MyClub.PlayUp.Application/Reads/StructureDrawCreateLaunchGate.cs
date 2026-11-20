@@ -114,19 +114,27 @@ public static class StructureDrawCreateLaunchGate
                     SlotPartialDrawRefusal.NoFreeSlot => BlockNoFreeSlot,
                     SlotPartialDrawRefusal.NotEnoughTeams => BlockNotEnoughTeams,
                     SlotPartialDrawRefusal.TooManyTeams => BlockTooManyTeams,
-                    _ => throw new InvalidOperationException(
+                    SlotPartialDrawRefusal.None => throw new InvalidOperationException(
                         $"Unexpected partial draw refusal '{scope.Refusal}'."),
+                    _ => throw new InvalidOperationException(
+                        $"Unexpected partial draw refusal '{scope.Refusal}'.")
                 });
             }
         }
 
-        if (kind == DrawResolutionKind.Group)
+        if (kind != DrawResolutionKind.Group)
         {
-            var facts = StageDrawBracketLaunchClassifier.ClassifyForDrawKind(stage, competitionStages, kind);
-            if (facts.BlockingPlaceCount > 0)
-            {
-                return Deny(BlockBracketPlacesOccupied);
-            }
+            return StructureDrawConsumptionGate.StageHasObsoleteDrawForConsumption(stage)
+                ? Deny(BlockDrawObsoleteForConsumption)
+                : !TryAllowOperationalDrawEdit(stage)
+                    ? Deny(BlockOperationalExitEdit)
+                    : Allow();
+        }
+
+        var facts = StageDrawBracketLaunchClassifier.ClassifyForDrawKind(stage, competitionStages, kind);
+        if (facts.BlockingPlaceCount > 0)
+        {
+            return Deny(BlockBracketPlacesOccupied);
         }
 
         return StructureDrawConsumptionGate.StageHasObsoleteDrawForConsumption(stage)

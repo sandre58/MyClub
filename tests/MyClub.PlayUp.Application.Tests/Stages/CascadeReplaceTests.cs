@@ -4,9 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-using System.Reflection;
 using FluentAssertions;
-using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
@@ -20,7 +18,6 @@ using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Domain.Standings;
 using Xunit;
-using ApplicationFailureException = MyClub.PlayUp.Application.ApplicationFailureException;
 
 namespace MyClub.PlayUp.Application.Tests.Stages;
 
@@ -327,7 +324,7 @@ public sealed class CascadeReplaceTests
                     1,
                     QualificationSource.FromGroup(group.Id),
                     new QualificationSelection(SelectionMode.Position, 1),
-                    QualificationDestination.ForGroup(middle.Id, middleGroup.Id)),
+                    QualificationDestination.ForGroup(middle.Id, middleGroup.Id))
             ]),
             _clock);
         ApplyQualification.Execute(
@@ -338,7 +335,7 @@ public sealed class CascadeReplaceTests
             _clock);
         var qualified = middleGroup.EntryIds.Should().ContainSingle().Subject;
         var middleStanding = CalculateStanding.Execute(
-            middleGroup.EntryIds.ToArray(),
+            [.. middleGroup.EntryIds],
             Array.Empty<Match>(),
             middle.Regulation.StandingRules!);
         middle.ReplaceQualificationRules(
@@ -348,7 +345,7 @@ public sealed class CascadeReplaceTests
                     1,
                     QualificationSource.FromGroup(middleGroup.Id),
                     new QualificationSelection(SelectionMode.Position, 1),
-                    QualificationDestination.ForSlot(final.Id, "Champ")),
+                    QualificationDestination.ForSlot(final.Id, "Champ"))
             ]),
             _clock);
         ApplyQualification.Execute(
@@ -428,7 +425,7 @@ public sealed class CascadeReplaceTests
                     1,
                     QualificationSource.FromGroup(group.Id),
                     new QualificationSelection(SelectionMode.Position, 1),
-                    QualificationDestination.ForGroup(middle.Id, middleGroup.Id)),
+                    QualificationDestination.ForGroup(middle.Id, middleGroup.Id))
             ]),
             _clock);
         ApplyQualification.Execute(
@@ -664,7 +661,7 @@ public sealed class CascadeReplaceTests
                 new ProgressionPath(
                     "P1",
                     ProgressionOutcome.Winner,
-                    new ProgressionDestination(destination.Id, slot)),
+                    new ProgressionDestination(destination.Id, slot))
             ]),
             _clock);
         ApplyProgressionOutcome.Execute(source, fixture.Id, [match], stages, _clock);

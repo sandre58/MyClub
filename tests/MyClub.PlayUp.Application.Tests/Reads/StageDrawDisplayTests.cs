@@ -72,7 +72,7 @@ public sealed class StageDrawDisplayTests
                     1,
                     QualificationSource.Overall(),
                     new QualificationSelection(SelectionMode.Position, 1),
-                    QualificationDestination.ForSlot(cup.Id, fed)),
+                    QualificationDestination.ForSlot(cup.Id, fed))
             ]),
             _clock);
         competition.AddStage(league.Id, _clock);
@@ -290,9 +290,9 @@ public sealed class StageDrawDisplayTests
             stage,
             draw.Id,
             _clock,
-            stage.Slots.Select(slot => slot.SlotKey).ToArray(),
-            competitionStages: [stage],
-            randomSource: new SeededRandomSource(3));
+            [.. stage.Slots.Select(slot => slot.SlotKey)],
+            randomSource: new SeededRandomSource(3),
+            competitionStages: [stage]);
         return draw;
     }
 
@@ -305,9 +305,9 @@ public sealed class StageDrawDisplayTests
             stage,
             draw.Id,
             _clock,
-            stage.Slots.Select(slot => slot.SlotKey).ToArray(),
-            competitionStages: [stage],
-            randomSource: new SeededRandomSource(1));
+            [.. stage.Slots.Select(slot => slot.SlotKey)],
+            randomSource: new SeededRandomSource(1),
+            competitionStages: [stage]);
         return draw;
     }
 

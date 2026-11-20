@@ -257,7 +257,7 @@ public sealed class MaterializeMatchesTests
         int teamCount)
     {
         var entries = Enumerable.Range(0, teamCount)
-            .Select(i => EntryId.New())
+            .Select(_ => EntryId.New())
             .ToArray();
         var canonical = MaterializeMatches.BuildRoundRobinRounds(
             [.. entries.OrderBy(id => id.Value)],
@@ -288,12 +288,12 @@ public sealed class MaterializeMatchesTests
 
     private static List<string> Signature(
         IReadOnlyList<IReadOnlyList<(EntryId Home, EntryId Away)>> rounds) =>
-        rounds
-            .SelectMany(
-                (round, roundIndex) => round.Select(
-                    pair => $"{roundIndex}:{pair.Home.Value:N}>{pair.Away.Value:N}"))
+    [
+        .. rounds
+            .SelectMany((round, roundIndex) =>
+                round.Select(pair => $"{roundIndex}:{pair.Home.Value:N}>{pair.Away.Value:N}"))
             .OrderBy(line => line, StringComparer.Ordinal)
-            .ToList();
+    ];
 
     private static IEnumerable<EntryId[]> Permutations(EntryId[] items) =>
         Permute(items, 0);

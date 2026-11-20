@@ -77,6 +77,6 @@ public sealed record CompositionEntry
         {
             ResolutionProvenanceKind = provenance.Kind,
             ResolutionSourcePathId = provenance.SourcePathId,
-            ResolutionUpstreamFingerprint = provenance.UpstreamResultFingerprint,
+            ResolutionUpstreamFingerprint = provenance.UpstreamResultFingerprint
         };
 }

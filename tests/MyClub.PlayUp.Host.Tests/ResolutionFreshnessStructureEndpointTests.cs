@@ -5,11 +5,9 @@
 // -----------------------------------------------------------------------
 
 using System.Net;
-using System.Net.Http.Json;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using MyClub.PlayUp.Application.Abstractions;
-using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Standings;
@@ -89,7 +87,7 @@ public sealed class ResolutionFreshnessStructureEndpointTests(HostPostgresFixtur
                     2,
                     2,
                     seeded.TerminalId,
-                    DestinationSlotKeys: ["Champ"]),
+                    DestinationSlotKeys: ["Champ"])
             ]),
             HostJson.Options);
 
@@ -140,7 +138,7 @@ public sealed class ResolutionFreshnessStructureEndpointTests(HostPostgresFixtur
                     1,
                     QualificationSource.Overall(),
                     new QualificationSelection(SelectionMode.Position, 1),
-                    QualificationDestination.ForSlot(terminal.Id, "Champ")),
+                    QualificationDestination.ForSlot(terminal.Id, "Champ"))
             ]),
             _clock);
         ApplyQualification.Execute(league, standing, [league, terminal], _clock);

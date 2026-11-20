@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
@@ -38,7 +37,7 @@ public sealed class ReleaseDrawAlignedPlacementsEndpointTests(HostPostgresFixtur
         overviewResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var overview = await overviewResponse.Content.ReadFromJsonAsync<StageOverviewDto>(HostJson.Options);
         overview.Should().NotBeNull();
-        overview!.ReleaseCandidateDrawId.Should().Be(seed.DrawId.Value);
+        overview.ReleaseCandidateDrawId.Should().Be(seed.DrawId.Value);
         var draw = overview.Draws.Should().ContainSingle().Subject;
         draw.Actions.Should().NotBeNull();
         draw.Actions!.Release.State.Should().Be(StageDrawActionState.Available);

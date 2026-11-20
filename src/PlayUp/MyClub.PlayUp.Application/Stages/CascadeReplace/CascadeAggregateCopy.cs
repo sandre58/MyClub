@@ -60,34 +60,37 @@ internal static class CascadeAggregateCopy
             return copy;
         }
 
-        if (value is IList list && type.GetConstructor(Type.EmptyTypes) is not null)
+        switch (value)
         {
-            var copy = (IList)Activator.CreateInstance(type)!;
-            seen[value] = copy;
-            foreach (var item in list)
-            {
-                copy.Add(CopyObject(item, seen));
-            }
-
-            return copy;
-        }
-
-        if (value is IDictionary map && type.GetConstructor(Type.EmptyTypes) is not null)
-        {
-            var copy = (IDictionary)Activator.CreateInstance(type)!;
-            seen[value] = copy;
-            foreach (DictionaryEntry entry in map)
-            {
-                var key = CopyObject(entry.Key, seen);
-                if (key is null)
+            case IList list when type.GetConstructor(Type.EmptyTypes) is not null:
                 {
-                    continue;
+                    var copy = (IList)Activator.CreateInstance(type)!;
+                    seen[value] = copy;
+                    foreach (var item in list)
+                    {
+                        copy.Add(CopyObject(item, seen));
+                    }
+
+                    return copy;
                 }
 
-                copy.Add(key, CopyObject(entry.Value, seen));
-            }
+            case IDictionary map when type.GetConstructor(Type.EmptyTypes) is not null:
+                {
+                    var copy = (IDictionary)Activator.CreateInstance(type)!;
+                    seen[value] = copy;
+                    foreach (DictionaryEntry entry in map)
+                    {
+                        var key = CopyObject(entry.Key, seen);
+                        if (key is null)
+                        {
+                            continue;
+                        }
 
-            return copy;
+                        copy.Add(key, CopyObject(entry.Value, seen));
+                    }
+
+                    return copy;
+                }
         }
 
         if (!InDomain(type))

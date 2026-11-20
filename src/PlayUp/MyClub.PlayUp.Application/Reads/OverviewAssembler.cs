@@ -216,7 +216,7 @@ public static class OverviewAssembler
 
         var summaryByStage = matchesByStage.ToDictionary(
             pair => pair.Key,
-            pair => (IReadOnlyList<MatchSummaryRow>)StageStartReadinessGuard.ToSummaryRows(pair.Value));
+            pair => StageStartReadinessGuard.ToSummaryRows(pair.Value));
         return Assemble(competition, stages, summaryByStage);
     }
 

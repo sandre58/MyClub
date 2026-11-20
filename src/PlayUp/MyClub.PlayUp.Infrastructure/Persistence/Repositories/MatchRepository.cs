@@ -239,15 +239,17 @@ internal sealed class MatchRepository(PlayUpDbContext context) : IMatchRepositor
                 (candidate, participation) => new
                 {
                     EntryId = participation.Side == Side.Home ? candidate.HomeEntryId : candidate.AwayEntryId,
-                    MemberId = participation.Id,
+                    MemberId = participation.Id
                 })
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        return rows
-            .Where(row => row.EntryId is not null)
-            .Select(row => new MatchSheetMemberRef(row.EntryId!.Value, row.MemberId))
-            .ToArray();
+        return
+        [
+            .. rows
+                .Where(row => row.EntryId is not null)
+                .Select(row => new MatchSheetMemberRef(row.EntryId!.Value, row.MemberId))
+        ];
     }
 
     /// <inheritdoc />

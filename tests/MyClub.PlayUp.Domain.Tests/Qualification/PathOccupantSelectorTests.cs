@@ -6,13 +6,11 @@
 
 using FluentAssertions;
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Progression;
 using MyClub.PlayUp.Domain.Qualification;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Domain.Standings;
-using MyClub.PlayUp.Domain.Tests.Common;
 using Xunit;
 
 namespace MyClub.PlayUp.Domain.Tests.Qualification;

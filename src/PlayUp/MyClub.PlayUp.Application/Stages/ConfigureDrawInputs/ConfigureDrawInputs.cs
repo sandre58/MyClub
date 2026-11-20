@@ -49,20 +49,18 @@ public static class ConfigureDrawInputs
 
         inputs.EnsureCompatibleWith(draw.Kind);
 
-        if (configureIntent == DrawInputsIntent.Rerun)
+        switch (configureIntent)
         {
-            if (competitionStages is null)
-            {
+            case DrawInputsIntent.Rerun when competitionStages is null:
                 throw new ArgumentNullException(
                     nameof(competitionStages),
                     "Competition stages are required to validate Rerun draw inputs.");
-            }
-
-            StageDrawRerunLaunchGuard.Ensure(stage, competitionStages, draw.Kind);
-        }
-        else if (configureIntent == DrawInputsIntent.Partial)
-        {
-            EnsurePartialSlotInputs(stage, draw, inputs, competitionStages);
+            case DrawInputsIntent.Rerun:
+                StageDrawRerunLaunchGuard.Ensure(stage, competitionStages, draw.Kind);
+                break;
+            case DrawInputsIntent.Partial:
+                EnsurePartialSlotInputs(stage, draw, inputs, competitionStages);
+                break;
         }
 
         stage.ConfigureDrawInputs(drawId, inputs, configureIntent);
@@ -81,12 +79,9 @@ public static class ConfigureDrawInputs
                 ApplicationErrorCodes.DrawKindNotSupported);
         }
 
-        if (competitionStages is null)
-        {
-            throw new ArgumentNullException(
-                nameof(competitionStages),
-                "Competition stages are required to validate partial draw inputs.");
-        }
+        _ = competitionStages ?? throw new ArgumentNullException(
+            nameof(competitionStages),
+            "Competition stages are required to validate partial draw inputs.");
 
         if (inputs.FixedSlots.Count > 0 || inputs.FixedGroups.Count > 0)
         {

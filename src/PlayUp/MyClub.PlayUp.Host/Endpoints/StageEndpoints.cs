@@ -224,7 +224,7 @@ internal static class StageEndpoints
                     .AssignEntriesToGroupAsync(
                         new StageId(stageId),
                         new GroupId(groupId),
-                        entryIds.Select(id => new EntryId(id)).ToArray(),
+                        [.. entryIds.Select(id => new EntryId(id))],
                         cancellationToken)
                     .ConfigureAwait(false);
                 return Results.NoContent();
@@ -242,15 +242,10 @@ internal static class StageEndpoints
                 if (request?.EntryIds is not { } entryIds
                     || entryIds.Count > SetGroupEntries.MaxBatchSize
                     || entryIds.Any(id => id == Guid.Empty)
-                    || entryIds.Distinct().Count() != entryIds.Count)
-                {
-                    return Results.BadRequest(new { code = ApplicationErrorCodes.InvalidStructureIntent });
-                }
-
-                if (request.ExpectedEntryIds is { } expected
+                    || entryIds.Distinct().Count() != entryIds.Count || (request.ExpectedEntryIds is { } expected
                     && (expected.Count > SetGroupEntries.MaxBatchSize
                         || expected.Any(id => id == Guid.Empty)
-                        || expected.Distinct().Count() != expected.Count))
+                        || expected.Distinct().Count() != expected.Count)))
                 {
                     return Results.BadRequest(new { code = ApplicationErrorCodes.InvalidStructureIntent });
                 }
@@ -259,7 +254,7 @@ internal static class StageEndpoints
                     .SetGroupEntriesAsync(
                         new StageId(stageId),
                         new GroupId(groupId),
-                        entryIds.Select(id => new EntryId(id)).ToArray(),
+                        [.. entryIds.Select(id => new EntryId(id))],
                         request.ExpectedEntryIds?.Select(id => new EntryId(id)).ToArray(),
                         cancellationToken)
                     .ConfigureAwait(false);
@@ -747,7 +742,7 @@ internal static class StageEndpoints
                 ArgumentNullException.ThrowIfNull(request);
                 var result = await executor.PreviewDefinitiveResolutionReleaseAsync(
                     new StageId(sourceId),
-                    request.DestinationStageId is Guid destination ? new StageId(destination) : null,
+                    request.DestinationStageId is { } destination ? new StageId(destination) : null,
                     cancellationToken).ConfigureAwait(false);
                 return Results.Ok(ToDefinitiveResolutionReleaseResponse(result));
             });
@@ -768,16 +763,17 @@ internal static class StageEndpoints
 
                 var result = await executor.ConfirmDefinitiveResolutionReleaseAsync(
                     new StageId(sourceId),
-                    request.DestinationStageId is Guid destination ? new StageId(destination) : null,
+                    request.DestinationStageId is { } destination ? new StageId(destination) : null,
                     request.VersionToken,
-                    request.Places
-                        .Select(place => new DefinitiveResolutionReleasePlace(
-                            place.StageId,
-                            place.Target,
-                            place.EntryId,
-                            place.SlotKey,
-                            place.GroupId))
-                        .ToArray(),
+                    [
+                        .. request.Places
+                            .Select(place => new DefinitiveResolutionReleasePlace(
+                                place.StageId,
+                                place.Target,
+                                place.EntryId,
+                                place.SlotKey,
+                                place.GroupId))
+                    ],
                     cancellationToken).ConfigureAwait(false);
                 return Results.Ok(ToDefinitiveResolutionReleaseResponse(result));
             });
@@ -812,14 +808,15 @@ internal static class StageEndpoints
                 var result = await executor.ConfirmDeletedSourceDefinitiveReleaseAsync(
                     new StageId(destinationId),
                     request.VersionToken,
-                    request.Places
-                        .Select(place => new DefinitiveResolutionReleasePlace(
-                            place.StageId,
-                            place.Target,
-                            place.EntryId,
-                            place.SlotKey,
-                            place.GroupId))
-                        .ToArray(),
+                    [
+                        .. request.Places
+                            .Select(place => new DefinitiveResolutionReleasePlace(
+                                place.StageId,
+                                place.Target,
+                                place.EntryId,
+                                place.SlotKey,
+                                place.GroupId))
+                    ],
                     cancellationToken).ConfigureAwait(false);
                 return Results.Ok(ToDefinitiveResolutionReleaseResponse(result));
             });
@@ -1069,117 +1066,126 @@ internal static class StageEndpoints
     private static CascadeReplaceResponse ToCascadeReplaceResponse(CascadeReplaceResult result) =>
         new(
             result.VersionToken,
-            result.PlayedMatches
-                .Select(match => new CascadePlayedMatchDto(
-                    match.MatchId,
-                    match.StageId,
-                    match.HomeEntryId,
-                    match.AwayEntryId,
-                    match.HomeName,
-                    match.AwayName,
-                    match.StageName,
-                    match.LegIndex))
-                .ToArray(),
-            result.Replacements
-                .Select(row => new CascadeReplacementDto(
-                    row.StageId,
-                    row.Target,
-                    row.SlotKey,
-                    row.GroupId,
-                    row.PreviousEntryId,
-                    row.EntryId))
-                .ToArray());
+            [
+                .. result.PlayedMatches
+                    .Select(match => new CascadePlayedMatchDto(
+                        match.MatchId,
+                        match.StageId,
+                        match.HomeEntryId,
+                        match.AwayEntryId,
+                        match.HomeName,
+                        match.AwayName,
+                        match.StageName,
+                        match.LegIndex))
+            ],
+            [
+                .. result.Replacements
+                    .Select(row => new CascadeReplacementDto(
+                        row.StageId,
+                        row.Target,
+                        row.SlotKey,
+                        row.GroupId,
+                        row.PreviousEntryId,
+                        row.EntryId))
+            ]);
 
     private static DefinitiveResolutionReleaseResponse ToDefinitiveResolutionReleaseResponse(
         DefinitiveResolutionReleaseResult result) =>
         new(
             result.VersionToken,
-            result.Releases
-                .Select(row => new DefinitiveResolutionReleaseRowDto(
-                    row.StageId,
-                    row.Target,
-                    row.SlotKey,
-                    row.GroupId,
-                    row.EntryId,
-                    row.EntryName,
-                    row.StageName,
-                    row.PlaceLabel,
-                    row.PopulationRemoved,
-                    row.SideEffect))
-                .ToArray(),
-            result.DetachedMatches
-                .Select(match => new ResolutionReleaseDetachedMatchDto(
-                    match.MatchId,
-                    match.StageId,
-                    match.LegIndex,
-                    match.Side,
-                    match.HomeEntryId,
-                    match.AwayEntryId,
-                    match.HomeName,
-                    match.AwayName))
-                .ToArray(),
-            result.Exclusions
-                .Select(row => new DefinitiveResolutionReleaseExclusionDto(
-                    row.StageId,
-                    row.Target,
-                    row.SlotKey,
-                    row.GroupId,
-                    row.EntryId,
-                    row.EntryName,
-                    row.StageName,
-                    row.PlaceLabel,
-                    row.Code))
-                .ToArray(),
-            result.AffectedOccupants
-                .Select(occupant => new ResolutionReleaseAffectedOccupantDto(
-                    occupant.StageId,
-                    occupant.Target,
-                    occupant.SlotKey,
-                    occupant.GroupId,
-                    occupant.EntryId,
-                    occupant.StateBefore,
-                    occupant.StateAfter,
-                    occupant.EntryName,
-                    occupant.StageName,
-                    occupant.PlaceLabel))
-                .ToArray());
+            [
+                .. result.Releases
+                    .Select(row => new DefinitiveResolutionReleaseRowDto(
+                        row.StageId,
+                        row.Target,
+                        row.SlotKey,
+                        row.GroupId,
+                        row.EntryId,
+                        row.EntryName,
+                        row.StageName,
+                        row.PlaceLabel,
+                        row.PopulationRemoved,
+                        row.SideEffect))
+            ],
+            [
+                .. result.DetachedMatches
+                    .Select(match => new ResolutionReleaseDetachedMatchDto(
+                        match.MatchId,
+                        match.StageId,
+                        match.LegIndex,
+                        match.Side,
+                        match.HomeEntryId,
+                        match.AwayEntryId,
+                        match.HomeName,
+                        match.AwayName))
+            ],
+            [
+                .. result.Exclusions
+                    .Select(row => new DefinitiveResolutionReleaseExclusionDto(
+                        row.StageId,
+                        row.Target,
+                        row.SlotKey,
+                        row.GroupId,
+                        row.EntryId,
+                        row.EntryName,
+                        row.StageName,
+                        row.PlaceLabel,
+                        row.Code))
+            ],
+            [
+                .. result.AffectedOccupants
+                    .Select(occupant => new ResolutionReleaseAffectedOccupantDto(
+                        occupant.StageId,
+                        occupant.Target,
+                        occupant.SlotKey,
+                        occupant.GroupId,
+                        occupant.EntryId,
+                        occupant.StateBefore,
+                        occupant.StateAfter,
+                        occupant.EntryName,
+                        occupant.StageName,
+                        occupant.PlaceLabel))
+            ]);
 
     private static ResolutionReleaseResponse ToResolutionReleaseResponse(ResolutionReleaseResult result) =>
         new(
             result.VersionToken,
-            result.Releases
-                .Select(row => new ResolutionReleaseRowDto(
-                    row.StageId,
-                    row.Target,
-                    row.SlotKey,
-                    row.GroupId,
-                    row.EntryId,
-                    row.EntryName))
-                .ToArray(),
-            result.DetachedMatches
-                .Select(match => new ResolutionReleaseDetachedMatchDto(
-                    match.MatchId,
-                    match.StageId,
-                    match.LegIndex,
-                    match.Side,
-                    match.HomeEntryId,
-                    match.AwayEntryId,
-                    match.HomeName,
-                    match.AwayName))
-                .ToArray(),
-            result.AffectedOccupants
-                .Select(occupant => new ResolutionReleaseAffectedOccupantDto(
-                    occupant.StageId,
-                    occupant.Target,
-                    occupant.SlotKey,
-                    occupant.GroupId,
-                    occupant.EntryId,
-                    occupant.StateBefore,
-                    occupant.StateAfter,
-                    occupant.EntryName,
-                    occupant.StageName,
-                    occupant.PlaceLabel))
-                .ToArray());
+            [
+                .. result.Releases
+                    .Select(row => new ResolutionReleaseRowDto(
+                        row.StageId,
+                        row.Target,
+                        row.SlotKey,
+                        row.GroupId,
+                        row.EntryId,
+                        row.EntryName))
+            ],
+            [
+                .. result.DetachedMatches
+                    .Select(match => new ResolutionReleaseDetachedMatchDto(
+                        match.MatchId,
+                        match.StageId,
+                        match.LegIndex,
+                        match.Side,
+                        match.HomeEntryId,
+                        match.AwayEntryId,
+                        match.HomeName,
+                        match.AwayName))
+            ],
+            [
+                .. result.AffectedOccupants
+                    .Select(occupant => new ResolutionReleaseAffectedOccupantDto(
+                        occupant.StageId,
+                        occupant.Target,
+                        occupant.SlotKey,
+                        occupant.GroupId,
+                        occupant.EntryId,
+                        occupant.StateBefore,
+                        occupant.StateAfter,
+                        occupant.EntryName,
+                        occupant.StageName,
+                        occupant.PlaceLabel))
+            ]);
 
     private static IResult InvalidReleaseBody() =>
         Results.BadRequest(new { code = ApplicationErrorCodes.InvalidStructureIntent });

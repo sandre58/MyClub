@@ -23,5 +23,5 @@ public enum DrawInputsIntent
     Rerun = 1,
 
     /// <summary>Slot draw of unplaced teams into free slots. Existing occupants are not in the pool.</summary>
-    Partial = 2,
+    Partial = 2
 }

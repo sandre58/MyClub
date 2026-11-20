@@ -207,18 +207,10 @@ public static class StandingCalculator
         List<RankableRow> group,
         IReadOnlyList<RankingCriterion> criteria)
     {
-        IOrderedEnumerable<RankableRow>? ordered = null;
-        foreach (var criterion in criteria)
-        {
-            if (criterion == RankingCriterion.HeadToHead)
-            {
-                continue;
-            }
-
-            ordered = ordered is null
+        var ordered = criteria.Where(criterion => criterion != RankingCriterion.HeadToHead)
+            .Aggregate<RankingCriterion, IOrderedEnumerable<RankableRow>?>(null, (current, criterion) => current is null
                 ? group.OrderByDescending(r => GlobalKey(r, criterion))
-                : ordered.ThenByDescending(r => GlobalKey(r, criterion));
-        }
+                : current.ThenByDescending(r => GlobalKey(r, criterion)));
 
         return ordered is null
             ? [.. group.OrderBy(r => r.EntryId.Value)]

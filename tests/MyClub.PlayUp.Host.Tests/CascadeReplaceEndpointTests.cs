@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
@@ -287,7 +286,7 @@ public sealed class CascadeReplaceEndpointTests(HostPostgresFixture fixture)
                     1,
                     QualificationSource.Overall(),
                     new QualificationSelection(SelectionMode.Position, 1),
-                    QualificationDestination.ForSlot(terminal.Id, "Champ")),
+                    QualificationDestination.ForSlot(terminal.Id, "Champ"))
             ]),
             _clock);
         ApplyQualification.Execute(league, standing, [league, terminal], _clock);
@@ -298,11 +297,11 @@ public sealed class CascadeReplaceEndpointTests(HostPostgresFixture fixture)
             var round = terminal.AddRound("Final", new TieFormat(TieFormat.SingleLeg, aggregateScoring: false), _clock);
             terminal.AddSlot("Finalist");
             terminal.ReplaceBracketPairs([new BracketPair("P1", "Champ", "Finalist")]);
-            var fixture = terminal.AddFixture(round.Id, _clock, "Champ", "Finalist", "P1");
+            var addFixture = terminal.AddFixture(round.Id, _clock, "Champ", "Finalist", "P1");
             terminal.AddResolvedPopulationEntry(gamma.Id, _clock);
             terminal.AssignEntryToSlot("Finalist", gamma.Id);
             final = Match.Create(competition.Id, terminal.Id, home.Id, gamma.Id, _clock);
-            terminal.AttachMatch(fixture.Id, final.Id, legIndex: 1, _clock);
+            terminal.AttachMatch(addFixture.Id, final.Id, legIndex: 1, _clock);
             if (downstream == DownstreamMatch.Live)
             {
                 final.Start(_clock);
@@ -371,6 +370,6 @@ public sealed class CascadeReplaceEndpointTests(HostPostgresFixture fixture)
     {
         None,
         Finished,
-        Live,
+        Live
     }
 }

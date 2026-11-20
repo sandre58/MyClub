@@ -66,7 +66,7 @@ internal static partial class ScenarioOrchestration
             GroupCount = 2,
             PlacesPerGroup = 4,
             StageName = "Phase de groupes",
-            TeamNames = TeamNameSource.Generated,
+            TeamNames = TeamNameSource.Generated
         };
 
         var competition = await CreateCompetitionFromRecipeAsync(

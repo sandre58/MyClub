@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using System.Net;
-using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using FluentAssertions;
@@ -182,7 +181,7 @@ public sealed class ReplaceRulesListOrClearEndpointTests(HostPostgresFixture fix
         using var scope = factory.Services.CreateScope();
         var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(stageId);
         stage.Should().NotBeNull();
-        return stage!;
+        return stage;
     }
 
     private static Uri RulesUri(StageId stageId, string segment) =>

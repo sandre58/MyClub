@@ -8,7 +8,6 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using FluentAssertions;
-using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
@@ -36,7 +35,7 @@ public sealed class StageDrawDisplayGoldenTests
     {
         var options = new JsonSerializerOptions(JsonSerializerDefaults.Web)
         {
-            WriteIndented = true,
+            WriteIndented = true
         };
         options.Converters.Add(new JsonStringEnumConverter());
         return options;
@@ -99,14 +98,14 @@ public sealed class StageDrawDisplayGoldenTests
                 cell.SlotKey,
                 cell.CellState,
                 cell.DisplayName,
-                cell.Origin,
+                cell.Origin
             }).ToArray(),
             BracketPairs = overview.BracketPairs.Select(pair => new
             {
                 pair.PairKey,
                 pair.SlotAKey,
-                pair.SlotBKey,
-            }).ToArray(),
+                pair.SlotBKey
+            }).ToArray()
         };
     }
 
@@ -119,9 +118,9 @@ public sealed class StageDrawDisplayGoldenTests
             stage,
             draw.Id,
             _clock,
-            stage.Slots.Select(slot => slot.SlotKey).ToArray(),
-            competitionStages: [stage],
-            randomSource: new SeededRandomSource(3));
+            [.. stage.Slots.Select(slot => slot.SlotKey)],
+            randomSource: new SeededRandomSource(3),
+            competitionStages: [stage]);
         return draw;
     }
 

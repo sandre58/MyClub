@@ -181,8 +181,7 @@ public static class MaterializeMatches
         foreach (var match in existingMatches)
         {
             if (stage.HasMatch(match.Id)
-                && match.HomeEntryId is { } home
-                && match.AwayEntryId is { } away)
+                && match is { HomeEntryId: { } home, AwayEntryId: { } away })
             {
                 keys.Add(DirectedPair(home, away));
             }

@@ -39,7 +39,7 @@ public sealed class ReplaceStageQualificationRulesAfterApplyTests
         IReadOnlyList<Match> matches) =>
         new()
         {
-            [stage.Id] = StageStartReadinessGuard.ToSummaryRows(matches),
+            [stage.Id] = StageStartReadinessGuard.ToSummaryRows(matches)
         };
 
     [Fact]
@@ -116,7 +116,7 @@ public sealed class ReplaceStageQualificationRulesAfterApplyTests
                     2,
                     QualificationSource.Overall(),
                     new QualificationSelection(SelectionMode.Position, 2),
-                    QualificationDestination.ForPopulation(terminal.Id)),
+                    QualificationDestination.ForPopulation(terminal.Id))
             ]),
             _clock);
         ApplyQualification.Execute(league, standing, [league, terminal], _clock);
@@ -134,7 +134,7 @@ public sealed class ReplaceStageQualificationRulesAfterApplyTests
                     SelectionMode.Position,
                     1,
                     terminal.Id.Value,
-                    RankingScope.Overall),
+                    RankingScope.Overall)
             ],
             _clock,
             [league, terminal],
@@ -172,7 +172,7 @@ public sealed class ReplaceStageQualificationRulesAfterApplyTests
                     1,
                     QualificationSource.Overall(),
                     new QualificationSelection(SelectionMode.Position, 1),
-                    QualificationDestination.ForPopulation(downstream.Id)),
+                    QualificationDestination.ForPopulation(downstream.Id))
             ]),
             _clock);
         ApplyQualification.Execute(stage, standing, [stage, downstream], _clock);
@@ -200,7 +200,7 @@ public sealed class ReplaceStageQualificationRulesAfterApplyTests
                     SelectionMode.Position,
                     2,
                     downstream.Id.Value,
-                    RankingScope.Overall),
+                    RankingScope.Overall)
             ],
             _clock,
             [stage, downstream],
@@ -259,7 +259,7 @@ public sealed class ReplaceStageQualificationRulesAfterApplyTests
                     position,
                     terminal.Id.Value,
                     RankingScope.Overall,
-                    DestinationSlotKey: "Champ"),
+                    DestinationSlotKey: "Champ")
             ],
             _clock,
             stages,

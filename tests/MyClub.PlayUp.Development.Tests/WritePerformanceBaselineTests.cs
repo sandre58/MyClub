@@ -14,7 +14,6 @@ using MyClub.PlayUp.Application.Pipeline;
 using MyClub.PlayUp.Development.Runtime;
 using MyClub.PlayUp.Development.Tests.Diagnostics;
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Domain.Stages;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -68,11 +67,9 @@ public sealed class WritePerformanceBaselineTests(
                 MaxSqlCommandsPerCall,
                 "S2A early status guard must not load QF match graphs before refusal (every call, warmups included)");
 
-            if (callIndex >= WarmupCallCount)
-            {
-                measuredDurations.Add(sample.Elapsed);
-                measuredSqlCounts.Add(sample.SqlCommandCount);
-            }
+            if (callIndex < WarmupCallCount) continue;
+            measuredDurations.Add(sample.Elapsed);
+            measuredSqlCounts.Add(sample.SqlCommandCount);
         }
 
         await AssertStageStillRunningAsync(stageId);
@@ -96,11 +93,11 @@ public sealed class WritePerformanceBaselineTests(
         var competitionId = (await competitions.ListAsync()).Should().ContainSingle().Subject.Id;
         var competition = await competitions.GetByIdReadOnlyAsync(competitionId);
         competition.Should().NotBeNull();
-        var stageId = competition!.StageIds.Should().ContainSingle().Subject;
+        var stageId = competition.StageIds.Should().ContainSingle().Subject;
         var executor = scope.ServiceProvider.GetRequiredService<UseCaseExecutor>();
         var stage = await stages.GetByIdForUpdateAsync(stageId);
         stage.Should().NotBeNull();
-        if (stage!.Status is StageStatus.Ready)
+        if (stage.Status is StageStatus.Ready)
         {
             await executor.StartStageAsync(stageId);
             stage = await stages.GetByIdForUpdateAsync(stageId);
@@ -116,7 +113,7 @@ public sealed class WritePerformanceBaselineTests(
         var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
         var stage = await stages.GetByIdReadOnlyAsync(stageId, StageLoadProfile.Summary);
         stage.Should().NotBeNull();
-        stage!.Status.Should().Be(StageStatus.Running, "refused replace must not mutate stage status");
+        stage.Status.Should().Be(StageStatus.Running, "refused replace must not mutate stage status");
     }
 
     private async Task<RefusalCallSample> MeasureRefusalCallAsync(StageId stageId)
@@ -140,7 +137,7 @@ public sealed class WritePerformanceBaselineTests(
         stopwatch.Stop();
 
         failure.Should().NotBeNull("ReplaceStageQualificationRulesAsync must fail on Running stage");
-        failure!.Code.Should().Be(ApplicationErrorCodes.StructureNotMutable);
+        failure.Code.Should().Be(ApplicationErrorCodes.StructureNotMutable);
 
         return new RefusalCallSample(stopwatch.Elapsed, counter.CommandCount);
     }

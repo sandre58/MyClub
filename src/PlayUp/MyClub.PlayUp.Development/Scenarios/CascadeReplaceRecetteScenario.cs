@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Development.Orchestration;
+using MyClub.PlayUp.Development.Recipes;
 using MyClub.PlayUp.Development.Runtime;
 
 namespace MyClub.PlayUp.Development.Scenarios;
@@ -31,7 +32,7 @@ public sealed class CascadeReplaceRecetteScenario : IScenario
     public bool AcceptsProgress => false;
 
     /// <inheritdoc />
-    public Recipes.CompetitionRecipe? Recipe => null;
+    public CompetitionRecipe? Recipe => null;
 
     /// <inheritdoc />
     public Task ExecuteAsync(ScenarioContext context, CancellationToken cancellationToken = default) =>

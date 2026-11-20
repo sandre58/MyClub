@@ -10,7 +10,6 @@ using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Standings;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Matches.Events;
 using MyClub.PlayUp.Domain.Rules;

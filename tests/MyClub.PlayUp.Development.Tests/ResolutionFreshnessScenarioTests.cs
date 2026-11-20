@@ -20,16 +20,10 @@ namespace MyClub.PlayUp.Development.Tests;
 public sealed class ResolutionFreshnessScenarioTests(DevelopmentPostgresFixture fixture)
 {
     [Fact]
-    public async Task Cup_qf_sf_resolution_occupants_stay_currentAsync()
-    {
-        await AssertSeededResolutionIsCurrentAsync("cup-qf-sf");
-    }
+    public async Task Cup_qf_sf_resolution_occupants_stay_currentAsync() => await AssertSeededResolutionIsCurrentAsync("cup-qf-sf");
 
     [Fact]
-    public async Task Groups_to_ko_mid_resolution_occupants_stay_currentAsync()
-    {
-        await AssertSeededResolutionIsCurrentAsync("groups-to-ko-mid");
-    }
+    public async Task Groups_to_ko_mid_resolution_occupants_stay_currentAsync() => await AssertSeededResolutionIsCurrentAsync("groups-to-ko-mid");
 
     private async Task AssertSeededResolutionIsCurrentAsync(string seed)
     {
@@ -52,16 +46,18 @@ public sealed class ResolutionFreshnessScenarioTests(DevelopmentPostgresFixture 
             stage.Should().NotBeNull();
             loaded.Add(stage);
             var stageMatches = await matches.ListByStageForUpdateAsync(stageId);
-            summaries[stageId] = stageMatches
-                .Select(match => new MatchSummaryRow(
-                    match.Id,
-                    match.StageId,
-                    match.Status,
-                    match.HomeEntryId,
-                    match.AwayEntryId,
-                    match.Result,
-                    match.HasObservedLive))
-                .ToArray();
+            summaries[stageId] =
+            [
+                .. stageMatches
+                    .Select(match => new MatchSummaryRow(
+                        match.Id,
+                        match.StageId,
+                        match.Status,
+                        match.HomeEntryId,
+                        match.AwayEntryId,
+                        match.Result,
+                        match.HasObservedLive))
+            ];
         }
 
         var view = StructureViewAssembler.Assemble(

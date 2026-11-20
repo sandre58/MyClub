@@ -13,7 +13,6 @@ using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
-using MyClub.PlayUp.Domain.Standings;
 using Xunit;
 
 namespace MyClub.PlayUp.Application.Tests.Stages;
@@ -25,7 +24,7 @@ public sealed class BackfillResolutionProvenanceTests
     [Fact]
     public void Direct_assignment_slot_is_backfilled_as_Directe()
     {
-        var (competition, terminal, _) = CreateTerminalWithDirectSlot("A");
+        var (competition, terminal) = CreateTerminalWithDirectSlot("A");
         var report = RunBackfill(competition, [terminal]);
 
         report.SkippedAlreadyPresent.Should().BeGreaterThan(0);
@@ -137,7 +136,7 @@ public sealed class BackfillResolutionProvenanceTests
 
         var before = terminal.FindSlot("Champ")!.ResolutionProvenance;
         before.Should().NotBeNull();
-        before!.Kind.Should().Be(ResolutionProvenanceKind.Qualification);
+        before.Kind.Should().Be(ResolutionProvenanceKind.Qualification);
 
         var report = RunBackfill(competition, [league, terminal], matches);
 
@@ -162,7 +161,7 @@ public sealed class BackfillResolutionProvenanceTests
         return BackfillResolutionProvenance.Execute(competition, stages, byStage);
     }
 
-    private (Competition Competition, Stage Terminal, EntryId EntryId) CreateTerminalWithDirectSlot(string slotKey)
+    private (Competition Competition, Stage Terminal) CreateTerminalWithDirectSlot(string slotKey)
     {
         var competition = Competition.Create(new CompetitionName("Direct"), SampleRegulations.Standard(), _clock);
         var terminal = Stage.Create(competition.Id, new StageName("Terminal"), SampleRegulations.Standard(), _clock);
@@ -170,7 +169,7 @@ public sealed class BackfillResolutionProvenanceTests
         var entryId = competition.AddEntry(TeamId.New(), "Team", _clock).Id;
         terminal.AddResolvedPopulationEntry(entryId, _clock, ResolutionProvenance.NonVerifiee());
         terminal.AssignEntryToSlot(slotKey, entryId);
-        return (competition, terminal, entryId);
+        return (competition, terminal);
     }
 
     private (

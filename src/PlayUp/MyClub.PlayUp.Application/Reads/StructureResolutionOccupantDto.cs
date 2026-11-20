@@ -13,6 +13,7 @@ namespace MyClub.PlayUp.Application.Reads;
 /// Where a resolution occupant is stored on a phase.
 /// </summary>
 [SuppressMessage("Design", "CA1008:Enums should have zero value", Justification = "Explicit occupant targets without an unknown sentinel.")]
+[SuppressMessage("ReSharper", "MissingZeroValueItemInEnum", Justification = "Explicit occupant targets without an unknown sentinel.")]
 public enum StructureResolutionOccupantTarget
 {
     /// <summary>Slot occupant.</summary>
@@ -22,13 +23,14 @@ public enum StructureResolutionOccupantTarget
     Group = 2,
 
     /// <summary>Population (composition) occupant.</summary>
-    Population = 3,
+    Population = 3
 }
 
 /// <summary>
 /// Server-computed freshness of a stored resolution occupant.
 /// </summary>
 [SuppressMessage("Design", "CA1008:Enums should have zero value", Justification = "Explicit freshness vocabulary without an unknown sentinel.")]
+[SuppressMessage("ReSharper", "MissingZeroValueItemInEnum", Justification = "Explicit freshness vocabulary without an unknown sentinel.")]
 public enum StructureResolutionFreshness
 {
     /// <summary>Stored occupant still matches the current upstream selection.</summary>
@@ -41,13 +43,14 @@ public enum StructureResolutionFreshness
     Indetermine = 3,
 
     /// <summary>Provenance was explicitly not verified.</summary>
-    NonVerifiee = 4,
+    NonVerifiee = 4
 }
 
 /// <summary>
 /// Why a resolution occupant is <see cref="StructureResolutionFreshness.Perime"/>.
 /// </summary>
 [SuppressMessage("Design", "CA1008:Enums should have zero value", Justification = "Explicit staleness causes without an unknown sentinel.")]
+[SuppressMessage("ReSharper", "MissingZeroValueItemInEnum", Justification = "Explicit staleness causes without an unknown sentinel.")]
 public enum StructureResolutionStalenessCause
 {
     /// <summary>Upstream result or draw population no longer selects this occupant.</summary>
@@ -57,13 +60,14 @@ public enum StructureResolutionStalenessCause
     RegleQualification = 2,
 
     /// <summary>An upstream occupant this resolution depends on is already stale.</summary>
-    AmontPerime = 3,
+    AmontPerime = 3
 }
 
 /// <summary>
 /// Why a resolution occupant is <see cref="StructureResolutionFreshness.Indetermine"/>.
 /// </summary>
 [SuppressMessage("Design", "CA1008:Enums should have zero value", Justification = "Explicit indeterminacy causes without an unknown sentinel.")]
+[SuppressMessage("ReSharper", "MissingZeroValueItemInEnum", Justification = "Explicit indeterminacy causes without an unknown sentinel.")]
 public enum StructureResolutionIndeterminacyCause
 {
     /// <summary>A progression match is not finished.</summary>
@@ -88,7 +92,7 @@ public enum StructureResolutionIndeterminacyCause
     ConditionNonRemplie = 7,
 
     /// <summary>Source-phase setup threw while the selection was evaluated.</summary>
-    ConfigurationInvalide = 8,
+    ConfigurationInvalide = 8
 }
 
 /// <summary>

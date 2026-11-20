@@ -5,15 +5,12 @@
 // -----------------------------------------------------------------------
 
 using System.Net;
-using System.Net.Http.Json;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
-using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Host.Contracts;
 using Xunit;
@@ -38,7 +35,7 @@ public sealed class GenerateNextRoundEndpointTests(HostPostgresFixture fixture)
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<GenerateNextRoundResponse>(HostJson.Options);
         body.Should().NotBeNull();
-        body!.AlreadyComplete.Should().BeFalse();
+        body.AlreadyComplete.Should().BeFalse();
         body.RoundIndex.Should().Be(1);
         body.CreatedCount.Should().Be(2);
         body.AttachedMatchIds.Should().HaveCount(2);
