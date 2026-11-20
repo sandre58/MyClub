@@ -739,7 +739,11 @@
           "notEnoughTeams": "Pas assez d’équipes pour les places libres.",
           "tooManyTeams": "Plus d’équipes que de places libres.",
           "missingPots": "Pots de tirage non configurés.",
-          "groupShape": "Équipes ≠ pots × groupes."
+          "groupShape": "Équipes ≠ pots × groupes.",
+          "reservedSeats": "Attendez la résolution des qualifications ou placez les équipes à la main.",
+          "fixedPotConflict": "Déplacez une équipe du même pot avant de tirer.",
+          "fixedOutsideComposition": "Retirez l’équipe hors composition ou rétablissez-la avant de tirer.",
+          "fixedExceedsCapacity": "Retirez des équipes du groupe trop plein avant de tirer."
         },
         "detail": {
           "emptyPool": "Ajoutez d’abord les équipes de cette phase avant de lancer un tirage.",
@@ -751,7 +755,11 @@
           "notEnoughTeams": "Les équipes non placées ne suffisent pas à remplir les places encore libres.",
           "tooManyTeams": "Il y a plus d’équipes non placées que de places libres. Le tirage ne laisse pas de place vide et n’en écrase aucune.",
           "missingPots": "Définissez le nombre de pots avant de générer le tirage.",
-          "groupShape": "Le nombre d’équipes doit égaler pots × groupes."
+          "groupShape": "Le nombre d’équipes doit égaler pots × groupes.",
+          "reservedSeats": "Des places sont réservées à des équipes qualifiées. Attendez la résolution des qualifications ou placez les équipes à la main.",
+          "fixedPotConflict": "Deux équipes du même pot sont dans le même groupe. Déplacez-en une avant de tirer.",
+          "fixedOutsideComposition": "Une équipe placée n’est plus dans la composition. Retirez-la du groupe ou rétablissez la composition avant de tirer.",
+          "fixedExceedsCapacity": "Un groupe contient plus d’équipes que le tirage ne peut en placer. Retirez des équipes avant de tirer."
         },
         "echoTeams": "Ouvrir les équipes"
       },

@@ -115,7 +115,7 @@ public static class StructureDrawCreateLaunchGate
             }
             catch (ApplicationFailureException exception)
             {
-                return Deny(exception.Code ?? ApplicationErrorCodes.DrawLaunchGridNotVacant);
+                return Deny(MapGroupRuleCode(exception.Code ?? ApplicationErrorCodes.DrawLaunchGridNotVacant));
             }
         }
         else
@@ -145,7 +145,8 @@ public static class StructureDrawCreateLaunchGate
 
     /// <summary>
     /// Gets the Groups gate reason and the server code a command returns for the same cause.
-    /// <see cref="BlockBracketPlacesOccupied"/> is not a Groups reason.
+    /// An occupied grid uses <see cref="BlockBracketPlacesOccupied"/> so the existing placement label stays;
+    /// the command still returns <see cref="ApplicationErrorCodes.DrawLaunchGridNotVacant"/>.
     /// </summary>
     internal static IReadOnlyList<(string GateCode, string ServerCode)> GroupReasonParity { get; } =
     [
@@ -156,7 +157,7 @@ public static class StructureDrawCreateLaunchGate
         (ApplicationErrorCodes.DrawFixedOutsideComposition, ApplicationErrorCodes.DrawFixedOutsideComposition),
         (ApplicationErrorCodes.DrawFixedExceedsCapacity, ApplicationErrorCodes.DrawFixedExceedsCapacity),
         (BlockActiveDrawPresent, StageErrorCodes.NonCancelledDrawAlreadyExists),
-        (ApplicationErrorCodes.DrawLaunchGridNotVacant, ApplicationErrorCodes.DrawLaunchGridNotVacant),
+        (BlockBracketPlacesOccupied, ApplicationErrorCodes.DrawLaunchGridNotVacant),
         (BlockDrawObsoleteForConsumption, ApplicationErrorCodes.DrawObsoleteForConsumption),
     ];
 
@@ -165,6 +166,7 @@ public static class StructureDrawCreateLaunchGate
         {
             ApplicationErrorCodes.DrawPotsMissing => BlockMissingPots,
             ApplicationErrorCodes.DrawGroupShapeInvalid => BlockGroupShapeInvalid,
+            ApplicationErrorCodes.DrawLaunchGridNotVacant => BlockBracketPlacesOccupied,
             _ => code,
         };
 

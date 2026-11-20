@@ -739,7 +739,11 @@
           "notEnoughTeams": "Not enough teams for the free places.",
           "tooManyTeams": "More teams than free places.",
           "missingPots": "Draw pots not configured.",
-          "groupShape": "Teams ≠ pots × groups."
+          "groupShape": "Teams ≠ pots × groups.",
+          "reservedSeats": "Wait for the qualifications to resolve or place the teams by hand.",
+          "fixedPotConflict": "Move a team from the same pot before drawing.",
+          "fixedOutsideComposition": "Remove the team outside the composition, or restore it, before drawing.",
+          "fixedExceedsCapacity": "Remove teams from the over-full group before drawing."
         },
         "detail": {
           "emptyPool": "Add this phase’s teams before starting a draw.",
@@ -751,7 +755,11 @@
           "notEnoughTeams": "Unplaced teams are not enough to fill the places that are still free.",
           "tooManyTeams": "There are more unplaced teams than free places. The draw does not leave a place empty and does not overwrite one.",
           "missingPots": "Set the number of pots before generating the draw.",
-          "groupShape": "Team count must equal pots × groups."
+          "groupShape": "Team count must equal pots × groups.",
+          "reservedSeats": "Some places are reserved for qualified teams. Wait for the qualifications to resolve or place the teams by hand.",
+          "fixedPotConflict": "Two teams from the same pot are in the same group. Move one of them before drawing.",
+          "fixedOutsideComposition": "A placed team is no longer in the composition. Remove it from the group or restore the composition before drawing.",
+          "fixedExceedsCapacity": "A group holds more teams than the draw can place. Remove teams before drawing."
         },
         "echoTeams": "Open teams"
       },

@@ -201,8 +201,9 @@ public sealed class StructureDrawCreateLaunchGateContractTests
         var hub = StructureViewAssembler.Assemble(situation.Competition, situation.Stages).Stages.Single();
 
         hub.DrawCreateLaunch.Allowed.Should().BeFalse();
-        hub.DrawCreateLaunch.BlockReasonCode.Should().Be(ApplicationErrorCodes.DrawLaunchGridNotVacant);
-        hub.DrawCreateLaunch.BlockReasonCode.Should().NotBe(StructureDrawCreateLaunchGate.BlockBracketPlacesOccupied);
+        hub.DrawCreateLaunch.BlockReasonCode.Should().Be(StructureDrawCreateLaunchGate.BlockBracketPlacesOccupied);
+        StructureDrawCreateLaunchGate.GroupReasonParity.Should().Contain(
+            (StructureDrawCreateLaunchGate.BlockBracketPlacesOccupied, ApplicationErrorCodes.DrawLaunchGridNotVacant));
     }
 
     [Theory]
@@ -243,6 +244,7 @@ public sealed class StructureDrawCreateLaunchGateContractTests
             StructureDrawCreateLaunchGate.BlockMissingPots => ApplicationErrorCodes.DrawPotsMissing,
             StructureDrawCreateLaunchGate.BlockGroupShapeInvalid => ApplicationErrorCodes.DrawGroupShapeInvalid,
             StructureDrawCreateLaunchGate.BlockActiveDrawPresent => StageErrorCodes.NonCancelledDrawAlreadyExists,
+            StructureDrawCreateLaunchGate.BlockBracketPlacesOccupied => ApplicationErrorCodes.DrawLaunchGridNotVacant,
             _ => gateCode
         });
         if (cause == "inbound")
