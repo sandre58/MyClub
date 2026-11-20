@@ -139,8 +139,19 @@ public sealed class CupSlotPlacementConcurrencyEndpointTests(HostPostgresFixture
         var outcomes = await ReadAsync(responses);
 
         outcomes.Should().ContainSingle(outcome => outcome.Status == HttpStatusCode.OK);
-        outcomes.Should().ContainSingle(outcome =>
-            outcome.Status == HttpStatusCode.NoContent || outcome.Status == HttpStatusCode.Conflict);
+        var placement = outcomes.Single(outcome => outcome.Status != HttpStatusCode.OK);
+        if (placement.Status != HttpStatusCode.NoContent)
+        {
+            // Generation first attaches matches. A complete cup then refuses the
+            // placement with StructureNotMutable (HTTP 400). A divergent occupant
+            // on a still-editable cup is a 409 coherence code.
+            placement.Code.Should().BeOneOf(
+                ApplicationErrorCodes.StructureNotMutable,
+                ApplicationErrorCodes.SlotAssignmentStale,
+                StageErrorCodes.MaterializedOpponentConflict,
+                StageErrorCodes.DuplicateEntry);
+        }
+
         outcomes.Should().OnlyContain(outcome => (int)outcome.Status < 500);
         await AssertCupSqlAsync(seed.StageId);
     }
