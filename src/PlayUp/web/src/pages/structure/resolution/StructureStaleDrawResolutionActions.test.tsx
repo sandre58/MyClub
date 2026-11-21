@@ -115,6 +115,35 @@ describe('StructureStaleDrawResolutionActions', () => {
     ).toBeDisabled();
   });
 
+  it('shows group redo detail lines on the banner', () => {
+    const groupId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    const alpha = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+    const beta = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+    renderActions({
+      activeDraw: {
+        ...appliedDraw(
+          drawActions({
+            redo: {
+              state: 'Blocked',
+              blockCode: 'Application.DrawFixedPotConflict',
+              blockDetail: [`group:${groupId}:pot:1:entries:${alpha},${beta}`],
+            },
+          }),
+        ),
+        kind: 'Group',
+      },
+      detailGroups: [{ id: groupId, name: 'A' }],
+      detailRoster: [
+        { entryId: alpha, displayName: 'Alpha' },
+        { entryId: beta, displayName: 'Beta' },
+      ],
+    });
+
+    expect(
+      screen.getByText('Groupe A, pot 1 : Alpha et Beta'),
+    ).toBeInTheDocument();
+  });
+
   it('disables Libérer when release action is blocked', () => {
     renderActions({
       activeDraw: appliedDraw(

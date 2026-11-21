@@ -69,6 +69,13 @@ test.describe('Play’Up business (Host + PostgreSQL)', () => {
       .getByRole('button', { name: 'Fermer', exact: true })
       .click();
 
+    await expect(
+      dialog.getByRole('button', { name: 'Annuler le tirage' }),
+    ).toBeVisible();
+    await expect(
+      dialog.getByRole('button', { name: 'Refaire le tirage' }),
+    ).toBeVisible();
+
     await dialog.getByRole('button', { name: 'Fermer', exact: true }).click();
     await expect(dialog).toBeHidden();
     await expect(

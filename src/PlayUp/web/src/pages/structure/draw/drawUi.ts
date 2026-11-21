@@ -21,6 +21,7 @@ export type GroupPlacementEntry = {
   displayName: string;
   logoMediaId?: string | null;
   primaryColor?: string | null;
+  origin?: StageDrawGroupPlacement['origin'];
 };
 
 export type GroupPlacementRow = {
@@ -93,6 +94,7 @@ export function groupPlacementRows(
       displayName: placement.displayName?.trim() || unknownEntry,
       logoMediaId: placement.logoMediaId,
       primaryColor: placement.primaryColor,
+      origin: placement.origin ?? 'Draw',
     });
   }
   return [...byGroup.values()].sort((a, b) =>

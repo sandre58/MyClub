@@ -293,42 +293,77 @@ public sealed class GroupDrawFixedPlacementEndpointTests(HostPostgresFixture fix
     }
 
     [IntegrationFact]
-    public async Task Redo_racing_membership_keeps_the_applied_placement_or_a_new_draftAsync()
+    public async Task Redo_racing_a_fixed_membership_edit_opens_one_draft_or_blocks_the_editAsync()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
         var seed = await SeedGroupsAsync(factory, occupyDifferentPots: true);
         using var client = factory.CreateClient();
-        var drawId = await CreateDrawAsync(client, seed.StageId);
-        using (var inputs = await client.PostAsJsonAsync(InputsUri(seed.StageId, drawId), new ConfigureDrawInputsRequest("Default")))
-        {
-            inputs.EnsureSuccessStatusCode();
-        }
-
-        using (var generate = await client.PostAsync(GenerateUri(seed.StageId, drawId), content: null))
-        {
-            generate.EnsureSuccessStatusCode();
-        }
-
-        using (var apply = await client.PostAsync(PublishUri(seed.StageId, drawId), content: null))
-        {
-            apply.EnsureSuccessStatusCode();
-        }
-
+        var drawId = await ApplyDefaultAsync(client, seed.StageId);
         var applied = await ReloadAsync(factory, seed.StageId);
         var current = applied.Groups[0].EntryIds.Select(entry => entry.Value).ToArray();
+        var removed = current[1];
         var responses = await OverlapAsync(
             seed.CompetitionId,
             () => client.PostAsync(RedoUri(seed.StageId, drawId), content: null),
             () => client.PutAsJsonAsync(
                 MembershipUri(seed),
-                new SetGroupEntriesRequest([.. current.Take(1)], current)));
+                new SetGroupEntriesRequest([current[0]], current)));
 
-        responses.Should().ContainSingle(response => response.StatusCode == HttpStatusCode.OK);
+        responses.Should().OnlyContain(response => (int)response.StatusCode < 500);
+        var codes = responses.Select(response => (int)response.StatusCode).Order().ToArray();
+        (codes.SequenceEqual([200, 204]) || codes.SequenceEqual([200, 409])).Should().BeTrue();
+        if (codes.SequenceEqual([200, 409]))
+        {
+            var failure = responses.Single(response => response.StatusCode == HttpStatusCode.Conflict);
+            (await ReadCodeAsync(failure)).Should().Be(ApplicationErrorCodes.ManualGroupPlacementBlockedByActiveDraw);
+        }
+
+        var stage = await ReloadAsync(factory, seed.StageId);
+        stage.Draws.Count(draw => draw.Status == DrawStatus.Draft).Should().Be(1);
+        if (responses.Any(response => response.StatusCode == HttpStatusCode.NoContent))
+        {
+            var draft = stage.Draws.Single(draw => draw.Status == DrawStatus.Draft);
+            GroupDrawLaunchRules.DrawnEntries(draft).Should().Contain(new EntryId(removed));
+        }
+
+        await AssertOneEntryPerPhaseAsync(seed.StageId);
+        await AssertAtMostOneOpenDrawAsync(seed.StageId);
+        foreach (var response in responses)
+        {
+            response.Dispose();
+        }
+    }
+
+    [IntegrationFact]
+    public async Task Redo_racing_a_drawn_clear_keeps_one_consistent_outcomeAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var seed = await SeedGroupsAsync(factory, occupyDifferentPots: true);
+        using var client = factory.CreateClient();
+        var drawId = await ApplyDefaultAsync(client, seed.StageId);
+        var applied = await ReloadAsync(factory, seed.StageId);
+        var fixedIds = applied.GetDraw(drawId).Inputs!.FixedGroups.Select(row => row.EntryId).ToHashSet();
+        var drawn = applied.GetDraw(drawId).Resolution.GroupResults
+            .First(row => !fixedIds.Contains(row.EntryId) && row.GroupId.Equals(applied.Groups[1].Id));
+        var responses = await OverlapAsync(
+            seed.CompetitionId,
+            () => client.PostAsync(RedoUri(seed.StageId, drawId), content: null),
+            () => client.DeleteAsync(EntryUri(seed.StageId, drawn.GroupId, drawn.EntryId)));
+
+        responses.Should().OnlyContain(response => (int)response.StatusCode < 500);
         var failure = responses.Single(response => response.StatusCode == HttpStatusCode.Conflict);
+        var success = responses.Single(response => response.StatusCode == HttpStatusCode.OK);
+        success.RequestMessage!.Method.Should().Be(HttpMethod.Post);
         var code = await ReadCodeAsync(failure);
         code.Should().BeOneOf(
             ApplicationErrorCodes.AppliedDrawGroupPlacementProtected,
             ApplicationErrorCodes.ManualGroupPlacementBlockedByActiveDraw);
+
+        var stage = await ReloadAsync(factory, seed.StageId);
+        var draft = stage.Draws.Single(draw => draw.Status == DrawStatus.Draft);
+        draft.Resolution.GroupResults.Should().Contain(row => row.EntryId.Equals(drawn.EntryId));
+        stage.Groups.SelectMany(group => group.EntryIds).Should().NotContain(drawn.EntryId);
+
         await AssertOneEntryPerPhaseAsync(seed.StageId);
         await AssertAtMostOneOpenDrawAsync(seed.StageId);
         foreach (var response in responses)
@@ -621,6 +656,227 @@ public sealed class GroupDrawFixedPlacementEndpointTests(HostPostgresFixture fix
     {
         var bytes = competitionId.Value.ToByteArray();
         return BitConverter.ToInt64(bytes, 0) ^ BitConverter.ToInt64(bytes, 8);
+    }
+
+    [IntegrationFact]
+    public async Task Editing_fixed_teams_keeps_the_draw_appliedAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var seed = await SeedGroupsAsync(factory, occupyDifferentPots: true);
+        using var client = factory.CreateClient();
+        var drawId = await ApplyDefaultAsync(client, seed.StageId);
+        var applied = await ReloadAsync(factory, seed.StageId);
+        var pinned = applied.GetDraw(drawId).Inputs!.FixedGroups.Select(row => row.EntryId).ToArray();
+        var group = applied.Groups[0];
+
+        using (var removed = await client.DeleteAsync(EntryUri(seed.StageId, group.Id, pinned[0])))
+        {
+            removed.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        }
+
+        var afterClear = await ReloadAsync(factory, seed.StageId);
+        DrawAppliedState.IsApplied(afterClear.GetDraw(drawId), afterClear).Should().BeTrue();
+
+        using (var restored = await client.PutAsync(EntryUri(seed.StageId, group.Id, pinned[0]), null))
+        {
+            restored.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        }
+
+        using var swapped = await client.PutAsJsonAsync(
+            MembershipUri(seed),
+            new SetGroupEntriesRequest([pinned[1].Value, pinned[0].Value], [pinned[0].Value, pinned[1].Value]));
+        swapped.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        var afterSwap = await ReloadAsync(factory, seed.StageId);
+        DrawAppliedState.IsApplied(afterSwap.GetDraw(drawId), afterSwap).Should().BeTrue();
+
+        using var overview = await client.GetAsync(new Uri($"/stages/{seed.StageId.Value}", UriKind.Relative));
+        overview.StatusCode.Should().Be(HttpStatusCode.OK);
+        using var document = await JsonDocument.ParseAsync(await overview.Content.ReadAsStreamAsync());
+        var draw = document.RootElement.GetProperty("draws").EnumerateArray()
+            .Single(item => item.GetProperty("id").GetGuid() == drawId.Value);
+        draw.GetProperty("isApplied").GetBoolean().Should().BeTrue();
+        draw.GetProperty("actions").GetProperty("redo").GetProperty("state").GetString().Should().Be("Available");
+        draw.GetProperty("actions").GetProperty("apply").GetProperty("state").GetString().Should().Be("Hidden");
+        draw.GetProperty("actions").GetProperty("redo").TryGetProperty("blockDetail", out _).Should().BeFalse();
+
+        using var schematic = await client.GetAsync(new Uri($"/stages/{seed.StageId.Value}/schematic", UriKind.Relative));
+        schematic.EnsureSuccessStatusCode();
+        using var seats = await JsonDocument.ParseAsync(await schematic.Content.ReadAsStreamAsync());
+        var drawnIds = afterSwap.GetDraw(drawId).Resolution.GroupResults
+            .Select(row => row.EntryId)
+            .Where(id => !pinned.Contains(id))
+            .Select(id => id.Value)
+            .ToHashSet();
+        foreach (var seatCase in seats.RootElement.GetProperty("cases").EnumerateArray())
+        {
+            if (seatCase.GetProperty("formPosition").GetProperty("kind").GetString() != "GroupPlace")
+            {
+                continue;
+            }
+
+            if (!seatCase.TryGetProperty("entry", out var entry) || entry.ValueKind == JsonValueKind.Null)
+            {
+                continue;
+            }
+
+            var entryId = entry.GetProperty("entryId").GetGuid();
+            var mode = seatCase.GetProperty("seatMode").GetString();
+            if (drawnIds.Contains(entryId))
+            {
+                mode.Should().Be("Draw");
+            }
+            else if (pinned.Any(id => id.Value == entryId))
+            {
+                mode.Should().Be("Editable");
+            }
+        }
+    }
+
+    [IntegrationFact]
+    public async Task Hand_made_pot_conflict_is_allowed_and_blocks_redo_with_reasonsAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var seed = await SeedWideGroupsAsync(factory);
+        using var client = factory.CreateClient();
+        var drawId = await ApplyDefaultAsync(client, seed.StageId);
+        var applied = await ReloadAsync(factory, seed.StageId);
+        var pots = GroupDrawPots.TryRead(applied)!;
+        var pot1 = pots.Where(row => row.Value == 1).Select(row => row.Key).ToArray();
+        var source = applied.Groups.First(group => group.EntryIds.Contains(pot1[0]));
+        var target = applied.Groups.First(group => group.EntryIds.Contains(pot1[1]));
+        using (var moved = await client.DeleteAsync(EntryUri(seed.StageId, source.Id, pot1[0])))
+        {
+            moved.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        }
+
+        using (var placed = await client.PutAsync(EntryUri(seed.StageId, target.Id, pot1[0]), null))
+        {
+            placed.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        }
+
+        using var redo = await client.PostAsync(RedoUri(seed.StageId, drawId), content: null);
+        redo.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        var problem = await redo.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
+        ReadCode(problem).Should().Be(ApplicationErrorCodes.DrawFixedPotConflict);
+        var reasons = ReadReasons(problem);
+        reasons.Should().NotBeEmpty();
+
+        using var overview = await client.GetAsync(new Uri($"/stages/{seed.StageId.Value}", UriKind.Relative));
+        using var document = await JsonDocument.ParseAsync(await overview.Content.ReadAsStreamAsync());
+        var action = document.RootElement.GetProperty("draws").EnumerateArray()
+            .Single(item => item.GetProperty("id").GetGuid() == drawId.Value)
+            .GetProperty("actions").GetProperty("redo");
+        action.GetProperty("state").GetString().Should().Be("Blocked");
+        action.GetProperty("blockCode").GetString().Should().Be(ApplicationErrorCodes.DrawFixedPotConflict);
+        action.GetProperty("blockDetail").EnumerateArray().Select(item => item.GetString())
+            .Should().Equal(reasons);
+    }
+
+    [IntegrationFact]
+    public async Task Redo_after_removing_a_fixed_team_draws_that_teamAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var seed = await SeedGroupsAsync(factory, occupyDifferentPots: true);
+        using var client = factory.CreateClient();
+        var drawId = await ApplyDefaultAsync(client, seed.StageId);
+        var applied = await ReloadAsync(factory, seed.StageId);
+        var pinned = applied.GetDraw(drawId).Inputs!.FixedGroups.ToArray();
+        var removed = pinned[0];
+        using (var clear = await client.DeleteAsync(EntryUri(seed.StageId, removed.GroupId, removed.EntryId)))
+        {
+            clear.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        }
+
+        using var redo = await client.PostAsync(RedoUri(seed.StageId, drawId), content: null);
+        redo.StatusCode.Should().Be(HttpStatusCode.OK);
+        var stage = await ReloadAsync(factory, seed.StageId);
+        var draft = stage.Draws.Single(draw => draw.Status == DrawStatus.Draft);
+        GroupDrawLaunchRules.DrawnEntries(draft).Should().Contain(removed.EntryId);
+        draft.Inputs!.FixedGroups.Select(row => row.EntryId).Should().NotContain(removed.EntryId);
+        draft.Inputs.FixedGroups.Select(row => row.EntryId)
+            .Should().Contain(pinned[1].EntryId);
+    }
+
+    private async Task<Seed> SeedWideGroupsAsync(PlayUpWebApplicationFactory factory)
+    {
+        var competition = CreateCompetition.Execute($"Wide-{Guid.NewGuid():N}", _clock);
+        var ids = Enumerable.Range(0, 4)
+            .Select(index => AddEntry.Execute(competition, $"W{index}", _clock).Id)
+            .ToArray();
+        var stage = ConfigureStructure.Execute(competition, null, StructureIntent.Groups(2, 3), _clock).Stage;
+        ReplaceStageDrawRules.Execute(
+            stage,
+            competition,
+            new DrawRules(DrawMode.Random, potRules: new PotRules(2)),
+            _clock);
+        stage.ReplaceAffectationAuthoring(ids, _clock);
+        await SaveAsync(factory, competition, stage, null);
+        var pots = GroupDrawPots.TryRead(stage)!;
+        var pot1 = pots.Where(row => row.Value == 1).Select(row => row.Key).ToArray();
+        await PlaceAsync(factory, stage.Id, stage.Groups[0].Id, pot1[0]);
+        await PlaceAsync(factory, stage.Id, stage.Groups[1].Id, pot1[1]);
+        return new Seed(competition.Id, stage.Id, stage.Groups[0].Id, ids, pot1);
+    }
+
+    private static async Task PlaceAsync(
+        PlayUpWebApplicationFactory factory,
+        StageId stageId,
+        GroupId groupId,
+        EntryId entryId)
+    {
+        using var scope = factory.Services.CreateScope();
+        var stage = (await scope.ServiceProvider.GetRequiredService<IStageRepository>()
+            .GetByIdForUpdateAsync(stageId))!;
+        stage.AssignEntryToGroup(groupId, entryId);
+        await scope.ServiceProvider.GetRequiredService<IUnitOfWork>().SaveChangesAsync();
+    }
+
+    private static async Task<DrawId> ApplyDefaultAsync(HttpClient client, StageId stageId)
+    {
+        var drawId = await CreateDrawAsync(client, stageId);
+        using (var inputs = await client.PostAsJsonAsync(
+            InputsUri(stageId, drawId),
+            new ConfigureDrawInputsRequest("Default")))
+        {
+            inputs.EnsureSuccessStatusCode();
+        }
+
+        using (var generate = await client.PostAsync(GenerateUri(stageId, drawId), content: null))
+        {
+            generate.EnsureSuccessStatusCode();
+        }
+
+        using var apply = await client.PostAsync(PublishUri(stageId, drawId), content: null);
+        apply.EnsureSuccessStatusCode();
+        return drawId;
+    }
+
+    private static Uri EntryUri(StageId stageId, GroupId groupId, EntryId entryId) =>
+        new($"/stages/{stageId.Value}/groups/{groupId.Value}/entries/{entryId.Value}", UriKind.Relative);
+
+    private static string? ReadCode(ProblemDetails? problem)
+    {
+        if (problem is null || !problem.Extensions.TryGetValue("code", out var raw) || raw is null)
+        {
+            return null;
+        }
+
+        return raw switch
+        {
+            string text => text,
+            JsonElement { ValueKind: JsonValueKind.String } element => element.GetString(),
+            _ => raw.ToString()
+        };
+    }
+
+    private static string[] ReadReasons(ProblemDetails? problem)
+    {
+        if (problem is null || !problem.Extensions.TryGetValue("reasons", out var raw) || raw is not JsonElement element)
+        {
+            return [];
+        }
+
+        return element.EnumerateArray().Select(item => item.GetString()!).ToArray();
     }
 
     private static Uri MembershipUri(Seed seed) =>

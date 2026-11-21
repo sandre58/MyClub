@@ -12,6 +12,8 @@ export class ApiError extends Error {
   readonly consumerStageIds?: readonly string[];
   /** Entry rejected by a batch assign when present on ProblemDetails. */
   readonly entryId?: string;
+  /** Machine fragments from ProblemDetails `reasons`, when the command sends them. */
+  readonly reasons?: readonly string[];
 
   constructor(
     status: number,
@@ -20,6 +22,7 @@ export class ApiError extends Error {
     code?: string,
     consumerStageIds?: readonly string[],
     entryId?: string,
+    reasons?: readonly string[],
   ) {
     super(message);
     this.name = 'ApiError';
@@ -28,6 +31,7 @@ export class ApiError extends Error {
     this.code = code;
     this.consumerStageIds = consumerStageIds;
     this.entryId = entryId;
+    this.reasons = reasons;
   }
 }
 
@@ -54,6 +58,7 @@ export async function throwIfNotOk(response: Response): Promise<void> {
   let code: string | undefined;
   let consumerStageIds: string[] | undefined;
   let entryId: string | undefined;
+  let reasons: string[] | undefined;
   try {
     const problem = (await response.json()) as {
       title?: string;
@@ -61,10 +66,12 @@ export async function throwIfNotOk(response: Response): Promise<void> {
       code?: string;
       entryId?: string;
       consumerStageIds?: unknown;
+      reasons?: unknown;
       extensions?: {
         code?: string;
         entryId?: string;
         consumerStageIds?: unknown;
+        reasons?: unknown;
       };
     };
     detail = problem.detail ?? problem.title;
@@ -83,6 +90,9 @@ export async function throwIfNotOk(response: Response): Promise<void> {
     consumerStageIds =
       readStringArray(problem.consumerStageIds) ??
       readStringArray(problem.extensions?.consumerStageIds);
+    reasons =
+      readStringArray(problem.reasons) ??
+      readStringArray(problem.extensions?.reasons);
   } catch {
     // Non-JSON body (rare)
   }
@@ -94,6 +104,7 @@ export async function throwIfNotOk(response: Response): Promise<void> {
     code,
     consumerStageIds,
     entryId,
+    reasons,
   );
 }
 

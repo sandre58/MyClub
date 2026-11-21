@@ -1181,6 +1181,8 @@ export function StructurePhaseFiche({
       onOpenConfirmRelease={() => setStaleReleaseConfirmOpen(true)}
       onCancelConfirmRedo={() => setStaleRedoConfirmOpen(false)}
       onCancelConfirmRelease={() => setStaleReleaseConfirmOpen(false)}
+      detailGroups={drawOverviewQuery.data?.groups}
+      detailRoster={data.participants.entries}
       onConfirmRedo={() => {
         if (activeDraw && !staleRedoMutation.isPending) {
           staleRedoMutation.mutate(activeDraw.id);

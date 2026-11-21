@@ -178,14 +178,16 @@ public sealed class ManualGroupPlacementGuardTests
             .Which.Code.Should().Be(ApplicationErrorCodes.ManualGroupPlacementBlockedByActiveDraw);
 
         ApplyDraw.Execute(stage, draw.Id, _clock);
-        var placement = stage.GetDraw(draw.Id).Resolution.GroupResults
-            .First(result => result.EntryId.Equals(placed));
-        AssignEntryToGroup.Execute(stage, competition, placement.GroupId, placed);
+        var applied = stage.GetDraw(draw.Id);
+        var fixedIds = applied.Inputs!.FixedGroups.Select(row => row.EntryId).ToHashSet();
+        var drawn = applied.Resolution.GroupResults.First(result => !fixedIds.Contains(result.EntryId));
+        AssignEntryToGroup.Execute(stage, competition, stage.Groups[0].Id, placed);
+        ClearEntryFromGroup.Execute(stage, competition, stage.Groups[0].Id, placed);
         var clearDrawn = () => ClearEntryFromGroup.Execute(
             stage,
             competition,
-            placement.GroupId,
-            placed);
+            drawn.GroupId,
+            drawn.EntryId);
         clearDrawn.Should().Throw<ApplicationFailureException>()
             .Which.Code.Should().Be(ApplicationErrorCodes.AppliedDrawGroupPlacementProtected);
     }

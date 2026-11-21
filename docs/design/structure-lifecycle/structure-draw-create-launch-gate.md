@@ -56,7 +56,9 @@ The SPA gate is a **parity reference**, not the SoT. The SoT is the **stack of r
 
 ## Implementation
 
-`StructureDrawCreateLaunchGate.Evaluate` returns `StructureDrawCreateLaunchDto` (`Allowed`, `BlockReasonCode`). `StructureViewAssembler` projects that value onto each hub row. `StructureHubNextStepResolver` reads `hub.DrawCreateLaunch.Allowed` and does not evaluate the gate again.
+`StructureDrawCreateLaunchGate.Evaluate` returns `StructureDrawCreateLaunchDto` (`Allowed`, `BlockReasonCode`, `BlockDetail`). `StructureViewAssembler` projects that value onto each hub row. `StructureHubNextStepResolver` reads `hub.DrawCreateLaunch.Allowed` and does not evaluate the gate again.
+
+The applied group door uses the same drawn set. `AppliedGroupDrawScope` is `GroupDrawLaunchRules.DrawnEntries`: resolution entries absent from `FixedGroups`. Only those entries are protected and, when the set is not empty, only they keep `IsGroupApplied`. A draw with no drawn entry keeps the previous rule (every resolution row must stay). A draw with no inputs treats the whole resolution as drawn. `redo.blockDetail` repeats the launch-rule fragments when Group redo is blocked, and the redo command returns those fragments as ProblemDetails `reasons`.
 
 ## Wire projection
 

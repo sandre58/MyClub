@@ -7,6 +7,7 @@ import {
   UnlockIcon,
 } from '../../../design-system/icons/contentIcons';
 import type { StructureStageHubSummary, StageDraw } from '../../../types';
+import { ApiError } from '../../../api/http';
 import { MutationError, PendingLabel } from '../../../ui';
 import {
   type DrawRedoPresentation,
@@ -15,6 +16,10 @@ import {
   releaseBlockReason,
   redoPresentation,
 } from '../draw/drawActions';
+import {
+  drawCreateBlockDetailNameIndex,
+  formatDrawCreateBlockDetailLines,
+} from '../draw/drawCreateBlockDetail';
 import { StripOperationalDiagnosticMessage } from '../fiche/structureOperationalStripUi';
 
 export type StructureStaleDrawResolutionActionsProps = {
@@ -33,6 +38,8 @@ export type StructureStaleDrawResolutionActionsProps = {
   onCancelConfirmRelease: () => void;
   onConfirmRedo: () => void;
   onConfirmRelease: () => void;
+  detailGroups?: readonly { id: string; name: string }[];
+  detailRoster?: readonly { entryId: string; displayName?: string | null }[];
 };
 
 function redoDisabledReason(
@@ -61,6 +68,8 @@ export function StructureStaleDrawResolutionActions({
   onCancelConfirmRelease,
   onConfirmRedo,
   onConfirmRelease,
+  detailGroups,
+  detailRoster,
 }: StructureStaleDrawResolutionActionsProps) {
   const { t } = useTranslation(['structure', 'draw', 'common']);
   const redo =
@@ -69,6 +78,23 @@ export function StructureStaleDrawResolutionActions({
       : { kind: 'hidden' as const };
   const canRedo = redo.kind === 'available';
   const redoReason = redoDisabledReason(redo, t);
+  const detailNames = drawCreateBlockDetailNameIndex({
+    groups: detailGroups,
+    roster: detailRoster ?? [],
+  });
+  const redoNamedLines =
+    activeDraw != null && redo.kind === 'blocked'
+      ? formatDrawCreateBlockDetailLines(
+          activeDraw.actions?.redo.blockDetail,
+          detailNames,
+          t,
+        )
+      : [];
+  const redoErrorLines = formatDrawCreateBlockDetailLines(
+    redoError instanceof ApiError ? redoError.reasons : undefined,
+    detailNames,
+    t,
+  );
 
   const appliedReleaseMode =
     activeDraw != null ? releaseFooterMode(activeDraw) : 'hidden';
@@ -166,6 +192,11 @@ export function StructureStaleDrawResolutionActions({
           {t('structure:resolution.staleDraw.message')}
         </StripOperationalDiagnosticMessage>
         {actionRow}
+        {redoNamedLines.map((line, index) => (
+          <p key={index} className="ds-body">
+            {line}
+          </p>
+        ))}
       </div>
       <ConfirmDialog
         open={confirmRedoOpen}
@@ -182,10 +213,17 @@ export function StructureStaleDrawResolutionActions({
         confirmPendingLabel={t('draw:redoing')}
         footerStatus={
           redoError ? (
-            <MutationError
-              error={redoError}
-              structureStages={structureStages}
-            />
+            <>
+              <MutationError
+                error={redoError}
+                structureStages={structureStages}
+              />
+              {redoErrorLines.map((line, index) => (
+                <p key={index} className="ds-body">
+                  {line}
+                </p>
+              ))}
+            </>
           ) : null
         }
         onCancel={onCancelConfirmRedo}

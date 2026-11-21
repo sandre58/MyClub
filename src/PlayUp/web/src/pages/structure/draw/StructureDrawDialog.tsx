@@ -74,6 +74,7 @@ import {
 } from './drawCreateBlockDetail';
 import { redoAppliedDraw } from './drawRedo';
 import {
+  DRAW_RELEASE_ATTACHED_MATCHES,
   drawActionsOf,
   isDrawActionAvailable,
   releaseBlockReason,
@@ -135,6 +136,20 @@ const EMPTY_SLOTS: StageSlot[] = [];
 const EMPTY_GROUPS: StageGroupOverview[] = [];
 
 type ConfirmKind = 'apply' | 'abandon' | 'release' | 'redo' | 'cancelApplied';
+
+function cancelAppliedGroupsMessage(
+  draw: StageDraw,
+  stage: StructureStageHubSummary,
+  tDraw: (key: string) => string,
+): string {
+  const base = tDraw('confirmCancelAppliedGroups');
+  const matchesBlocked =
+    draw.actions?.redo.blockCode === DRAW_RELEASE_ATTACHED_MATCHES ||
+    (stage.status === 'Ready' && stage.matchCount > 0);
+  return matchesBlocked
+    ? `${base} ${tDraw('confirmCancelAppliedGroupsMatches')}`
+    : base;
+}
 
 /**
  * Work dialog — stage draw executions.
@@ -271,17 +286,22 @@ export function StructureDrawDialog({
           })
         : t(launchBlock.detailKey)
       : null;
+  const blockDetailNames = drawCreateBlockDetailNameIndex({
+    groups: overviewGroups,
+    roster: blockDetailRoster,
+  });
   const createBlockNamedLines =
     createBlockedDetail != null && createBlockPresentation?.kind === 'inline'
       ? formatDrawCreateBlockDetailLines(
           stage.drawCreateLaunch?.blockDetail,
-          drawCreateBlockDetailNameIndex({
-            groups: overviewGroups,
-            roster: blockDetailRoster,
-          }),
+          blockDetailNames,
           t,
         )
       : [];
+  const occupiedGroupPlaces = overviewGroups.reduce(
+    (sum, group) => sum + group.entryIds.length,
+    0,
+  );
 
   /** Draft create / generate — hub + schematic unchanged until publish/apply. */
   function scheduleDrawOverviewRefresh() {
@@ -505,10 +525,17 @@ export function StructureDrawDialog({
     !activeUi.isApplied &&
     isDrawActionAvailable(drawActionsOf(activeDraw).cancel);
   const canRedo = activeRedo.kind === 'available';
+  const redoNamedLines =
+    activeDraw != null && activeRedo.kind === 'blocked'
+      ? formatDrawCreateBlockDetailLines(
+          drawActionsOf(activeDraw).redo.blockDetail,
+          blockDetailNames,
+          t,
+        )
+      : [];
   const canCancelApplied =
     activeDraw != null &&
     activeUi?.isApplied === true &&
-    activeRedo.kind === 'blocked' &&
     isDrawActionAvailable(drawActionsOf(activeDraw).cancel);
 
   const releaseTarget = (() => {
@@ -657,7 +684,12 @@ export function StructureDrawDialog({
     />
   ) : activeDraw != null && activeRedo.kind === 'blocked' ? (
     <Alert tone="info" role="status">
-      {tDraw(`redoBlocked.${activeRedo.reason}`)}
+      <p className="ds-body">{tDraw(`redoBlocked.${activeRedo.reason}`)}</p>
+      {redoNamedLines.map((line, index) => (
+        <p key={index} className="ds-body">
+          {line}
+        </p>
+      ))}
     </Alert>
   ) : releaseFooterBlocked ? (
     <Alert tone="info" role="status">
@@ -921,11 +953,12 @@ export function StructureDrawDialog({
             absent, the hint falls back to whether any slot already has an occupant.
           */}
           {canLaunch &&
-          drawKind === 'Slot' &&
-          (stageDrawMetrics
-            ? stageDrawMetrics.alreadyPlacedEntryCount > 0 &&
-              stageDrawMetrics.vacantSlotKeyCount > 0
-            : slotsHaveOccupants(slots)) ? (
+          ((drawKind === 'Group' && occupiedGroupPlaces > 0) ||
+            (drawKind === 'Slot' &&
+              (stageDrawMetrics
+                ? stageDrawMetrics.alreadyPlacedEntryCount > 0 &&
+                  stageDrawMetrics.vacantSlotKeyCount > 0
+                : slotsHaveOccupants(slots)))) ? (
             <Alert tone="info" role="status">
               <p className="ds-body">
                 {t('fiche.drawWorkflow.partialFillHint')}
@@ -1212,7 +1245,13 @@ export function StructureDrawDialog({
       <ConfirmDialog
         open={confirm === 'cancelApplied'}
         title={tDraw('confirmCancelAppliedTitle')}
-        message={tDraw('confirmCancelApplied')}
+        message={
+          confirmDraw?.kind === 'Group'
+            ? cancelAppliedGroupsMessage(confirmDraw, stage, (key) =>
+                tDraw(key),
+              )
+            : tDraw('confirmCancelApplied')
+        }
         confirmLabel={tDraw('cancelAppliedDraw')}
         confirmIcon={<CloseIcon size="sm" />}
         cancelLabel={tCommon('close')}
@@ -1308,16 +1347,29 @@ export function StructureDrawDialog({
         confirmPendingLabel={tDraw('redoing')}
         footerStatus={
           redoMutation.isError ? (
-            <MutationError
-              error={
-                stickyMutationError(redoMutation.error) ?? redoMutation.error
-              }
-              structureStages={structureStages}
-              sotHref={persistentStructureMutationSotHref(
-                redoMutation.error,
-                competitionId,
-              )}
-            />
+            <>
+              <MutationError
+                error={
+                  stickyMutationError(redoMutation.error) ?? redoMutation.error
+                }
+                structureStages={structureStages}
+                sotHref={persistentStructureMutationSotHref(
+                  redoMutation.error,
+                  competitionId,
+                )}
+              />
+              {formatDrawCreateBlockDetailLines(
+                redoMutation.error instanceof ApiError
+                  ? redoMutation.error.reasons
+                  : undefined,
+                blockDetailNames,
+                t,
+              ).map((line, index) => (
+                <p key={index} className="ds-body">
+                  {line}
+                </p>
+              ))}
+            </>
           ) : null
         }
         onCancel={() => {
@@ -1570,6 +1622,10 @@ function DrawExecutionView({
               groups={groupModel}
               ariaLabel={omitResultAriaLabel ? undefined : t('result')}
               ghostLabel={t('ghostPlace')}
+              placedLabels={{
+                alreadyPlaced: t('alreadyPlaced'),
+                originManualHint: t('originManualHint'),
+              }}
             />
           </div>
         ) : null}

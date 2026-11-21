@@ -1737,15 +1737,19 @@ describe('StructureDrawDialog', () => {
 
     renderDialog();
 
-    expect(
-      await screen.findByRole('button', { name: 'Refaire le tirage' }),
-    ).toBeInTheDocument();
+    const redo = await screen.findByRole('button', {
+      name: 'Refaire le tirage',
+    });
+    const cancelApplied = screen.getByRole('button', {
+      name: 'Annuler le tirage',
+    });
     expect(
       screen.queryByRole('button', { name: 'Abandonner' }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: 'Annuler le tirage' }),
-    ).not.toBeInTheDocument();
+      cancelApplied.compareDocumentPosition(redo) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it('hides Abandonner when competition is Completed (D)', async () => {
@@ -2091,13 +2095,191 @@ describe('StructureDrawDialog', () => {
     const redo = await screen.findByRole('button', {
       name: 'Refaire le tirage',
     });
+    const cancelApplied = screen.getByRole('button', {
+      name: 'Annuler le tirage',
+    });
     expect(redo.className).toContain('ds-btn--primary');
+    expect(cancelApplied.className).toContain('ds-btn--destructive');
     expect(
-      screen.queryByRole('button', { name: 'Annuler le tirage' }),
-    ).not.toBeInTheDocument();
+      cancelApplied.compareDocumentPosition(redo) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
     expect(
       screen.queryByText(/n’est pas en brouillon/),
     ).not.toBeInTheDocument();
+  });
+
+  it('confirms group cancellation without the matches sentence in Draft', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([
+        groupDraw({
+          status: 'Published',
+          isApplied: true,
+          actions: appliedDrawActions(),
+        }),
+      ]),
+    );
+
+    renderDialog();
+    await user.click(
+      await screen.findByRole('button', { name: 'Annuler le tirage' }),
+    );
+    const confirm = await screen.findByRole('dialog', {
+      name: 'Annuler le tirage ?',
+    });
+    expect(confirm).toHaveTextContent(
+      'Les équipes restent à leur place et ne sont plus protégées.',
+    );
+    expect(confirm).not.toHaveTextContent('Des matchs sont générés');
+  });
+
+  it('adds the matches sentence when the phase is Ready and has matches', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview(
+        [
+          groupDraw({
+            status: 'Published',
+            isApplied: true,
+            actions: appliedDrawActions(),
+          }),
+        ],
+        { status: 'Ready' },
+      ),
+    );
+
+    renderDialog(groupsStage({ status: 'Ready', matchCount: 2 }));
+    await user.click(
+      await screen.findByRole('button', { name: 'Annuler le tirage' }),
+    );
+    expect(
+      await screen.findByRole('dialog', { name: 'Annuler le tirage ?' }),
+    ).toHaveTextContent(
+      'Des matchs sont générés : la libération ne sera pas possible.',
+    );
+  });
+
+  it('pins a fixed team in the group preview and shows redo detail lines', async () => {
+    const groupId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    const alpha = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+    const beta = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview(
+        [
+          groupDraw({
+            status: 'Published',
+            isApplied: true,
+            groupPlacements: [
+              {
+                groupId,
+                groupDisplayName: 'A',
+                entryId: alpha,
+                displayName: 'Alpha',
+                origin: 'Manual',
+              },
+              {
+                groupId,
+                groupDisplayName: 'A',
+                entryId: beta,
+                displayName: 'Beta',
+                origin: 'Draw',
+              },
+            ],
+            actions: drawActions({
+              cancel: { state: 'Available' },
+              redo: {
+                state: 'Blocked',
+                blockCode: 'Application.DrawFixedPotConflict',
+                blockDetail: [
+                  `group:${groupId}:pot:1:entries:${alpha},${beta}`,
+                ],
+              },
+            }),
+          }),
+        ],
+        { groups: [{ id: groupId, name: 'A', entryIds: [alpha, beta] }] },
+      ),
+    );
+
+    renderDialog(groupsStage(), true, 'Draft', [
+      { entryId: alpha, displayName: 'Alpha' },
+      { entryId: beta, displayName: 'Beta' },
+    ]);
+
+    const pinned = await screen.findByLabelText(
+      'Alpha, Déjà placée, Origine d’affichage : manuelle ou issue d’un tirage précédent.',
+    );
+    expect(pinned.querySelector('[tabindex="-1"]')).toBeNull();
+    expect(
+      screen.queryByLabelText(/Beta, Déjà placée/),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText('Groupe A, pot 1 : Alpha et Beta'),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/deux équipes du même pot/)).toBeInTheDocument();
+  });
+
+  it('shows command refusal lines when redo returns reasons', async () => {
+    const user = userEvent.setup();
+    const groupId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    const alpha = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+    const beta = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview(
+        [
+          groupDraw({
+            status: 'Published',
+            isApplied: true,
+            actions: appliedDrawActions(),
+          }),
+        ],
+        { groups: [{ id: groupId, name: 'A', entryIds: [alpha] }] },
+      ),
+    );
+    vi.mocked(redoDraw).mockRejectedValue(
+      new ApiError(
+        409,
+        'blocked',
+        'blocked',
+        'Application.DrawFixedPotConflict',
+        undefined,
+        undefined,
+        [`group:${groupId}:pot:1:entries:${alpha},${beta}`],
+      ),
+    );
+
+    renderDialog(groupsStage(), true, 'Draft', [
+      { entryId: alpha, displayName: 'Alpha' },
+      { entryId: beta, displayName: 'Beta' },
+    ]);
+    await user.click(
+      await screen.findByRole('button', { name: 'Refaire le tirage' }),
+    );
+    await user.click(
+      within(
+        await screen.findByRole('dialog', { name: 'Refaire le tirage ?' }),
+      ).getByRole('button', { name: 'Refaire le tirage' }),
+    );
+    expect(
+      await screen.findByText('Groupe A, pot 1 : Alpha et Beta'),
+    ).toBeInTheDocument();
+  });
+
+  it('shows the partial fill hint for an occupied groups grid', async () => {
+    const groupId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([], {
+        groups: [{ id: groupId, name: 'A', entryIds: ['e1'] }],
+      }),
+    );
+
+    renderDialog();
+    expect(
+      await screen.findByText(
+        'Le tirage remplira uniquement les places libres. Les équipes déjà placées restent en place.',
+      ),
+    ).toBeInTheDocument();
   });
 
   it('refuses Cup Refaire when a touched pair has an attached match', async () => {
