@@ -4,6 +4,7 @@ import {
   expectCupDrawAppliedOnStructure,
   findCupCompositionCompleteCompetition,
   getPrimaryStageId,
+  playUpApiBase,
   runCupSlotDrawPublishAndApply,
 } from './hostSeed';
 import { applyCupPartialDrawAfterDirectAssignment } from './cup-partial-redo-helpers';
@@ -92,10 +93,8 @@ test.describe('Play’Up business (Host + PostgreSQL)', () => {
     request,
   }) => {
     const competition = await findCupCompositionCompleteCompetition(request);
-    const { manualSlotKey } = await applyCupPartialDrawAfterDirectAssignment(
-      request,
-      competition.id,
-    );
+    const { stageId, manualSlotKey, manualEntryId } =
+      await applyCupPartialDrawAfterDirectAssignment(request, competition.id);
 
     await page.goto(`/competitions/${competition.id}/structure`);
     await page
@@ -120,6 +119,20 @@ test.describe('Play’Up business (Host + PostgreSQL)', () => {
     await confirm.getByRole('button', { name: 'Refaire le tirage' }).click();
     await expect(confirm).toBeHidden();
     await expect(dialog.getByRole('list', { name: 'Résultat' })).toBeVisible();
+
+    const overviewAfterRedo = await request.get(
+      `${playUpApiBase()}/stages/${stageId}`,
+    );
+    expect(overviewAfterRedo.ok()).toBeTruthy();
+    const overview = (await overviewAfterRedo.json()) as {
+      draws?: { status: string; inputsIntent?: string }[];
+      slots?: { slotKey: string; entryId?: string | null }[];
+    };
+    const preview = overview.draws?.find((draw) => draw.status === 'Draft');
+    expect(preview?.inputsIntent).toBe('Partial');
+    expect(
+      overview.slots?.find((slot) => slot.slotKey === manualSlotKey)?.entryId,
+    ).toBe(manualEntryId);
 
     await dialog.getByRole('button', { name: 'Fermer', exact: true }).click();
     await expect(dialog).toBeHidden();

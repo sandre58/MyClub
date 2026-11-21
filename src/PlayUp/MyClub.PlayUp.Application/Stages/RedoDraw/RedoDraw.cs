@@ -87,7 +87,7 @@ public static class RedoDraw
         ReleaseDrawAlignedPlacements.Execute(stage, drawId, clock, stageMatches);
 
         var created = CreateDraw.Execute(stage, kind, clock, stageMatches, competitionStages);
-        var usePartialCupRedo = kind == DrawResolutionKind.Slot && (draw.Inputs?.FixedSlots.Count ?? 0) == 0;
+        var usePartialCupRedo = SlotCupRedoPath.UsesPartialVoieP(draw);
         var inputs = groupDecision is not null
             ? DrawInputs.ForGroup(
                 [.. stage.CompositionEntries.Select(entry => entry.EntryId)],

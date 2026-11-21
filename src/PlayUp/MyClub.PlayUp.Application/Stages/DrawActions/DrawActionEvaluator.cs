@@ -266,7 +266,7 @@ internal static class DrawActionEvaluator
             return DrawActionAssessment.Hidden;
         }
 
-        if (draw.InputsIntent == DrawInputsIntent.Partial)
+        if (SlotCupRedoPath.UsesPartialVoieP(draw))
         {
             var partialBlock = SlotPartialDrawPlanner.TryGetPartialRedoBlockCode(
                 context.Stage,
@@ -278,7 +278,7 @@ internal static class DrawActionEvaluator
                 : DrawActionAssessment.Block(partialBlock);
         }
 
-        if (draw.Inputs is { FixedSlots.Count: > 0 })
+        if (SlotCupRedoPath.UsesDefaultRerun(draw))
         {
             if (context.Stage.DirectAssignments.Count > 0)
             {
@@ -296,14 +296,7 @@ internal static class DrawActionEvaluator
                 : DrawActionAssessment.Available;
         }
 
-        var block = SlotPartialDrawPlanner.TryGetPartialRedoBlockCode(
-            context.Stage,
-            context.CompetitionStages,
-            AlignedSlotKeys(context.Stage, draw),
-            draw.Id);
-        return block is null
-            ? DrawActionAssessment.Available
-            : DrawActionAssessment.Block(block);
+        return DrawActionAssessment.Hidden;
     }
 
     private static string? PlacementBlock(Stage stage, Draw draw)
