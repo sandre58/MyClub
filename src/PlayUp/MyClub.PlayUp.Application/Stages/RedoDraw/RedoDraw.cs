@@ -12,8 +12,10 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
-/// Application use case: redo an applied draw in one transaction — cancel, release the aligned
-/// placements, then preview a new resolution (create → configure Rerun inputs → generate).
+/// Application use case: redo an applied draw in one transaction — cancel, release the drawn
+/// placements, then preview a new resolution. Cup configures Rerun inputs. Groups configures
+/// Default on the current composition, after the launch rule has accepted the grid the release
+/// will leave. The rule runs before Cancel, so a refusal leaves the applied draw untouched.
 /// </summary>
 /// <remarks>
 /// Reuses <see cref="CancelDraw"/>, <see cref="ReleaseDrawAlignedPlacements"/>, <see cref="CreateDraw"/>,
@@ -67,17 +69,31 @@ public static class RedoDraw
         }
 
         var kind = draw.Kind;
+        GroupDrawLaunchDecision? groupDecision = null;
+        if (kind == DrawResolutionKind.Group)
+        {
+            groupDecision = GroupDrawLaunchRules.Evaluate(
+                stage,
+                competitionStages,
+                GroupDrawLaunchRules.DrawnEntries(draw));
+            groupDecision.EnsureAllowed();
+        }
 
         CancelDraw.Execute(stage, drawId, clock);
         ReleaseDrawAlignedPlacements.Execute(stage, drawId, clock, stageMatches);
 
-        var created = CreateDraw.Execute(stage, kind, clock, stageMatches);
-        var inputs = DrawInputsFactory.CreateRerun(stage, draw);
+        var created = CreateDraw.Execute(stage, kind, clock, stageMatches, competitionStages);
+        var inputs = groupDecision is not null
+            ? DrawInputs.ForGroup(
+                [.. stage.CompositionEntries.Select(entry => entry.EntryId)],
+                potMembership: new PotMembership(groupDecision.Pots!),
+                fixedPlacements: groupDecision.FixedGroups)
+            : DrawInputsFactory.CreateRerun(stage, draw);
         ConfigureDrawInputs.Execute(
             stage,
             created.Id,
             inputs,
-            DrawInputsIntent.Rerun,
+            groupDecision is not null ? DrawInputsIntent.Default : DrawInputsIntent.Rerun,
             competitionStages,
             stageMatches);
 

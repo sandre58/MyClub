@@ -380,6 +380,10 @@ export type DrawCreateBlockReason =
   | 'countMismatch'
   | 'directAssignment'
   | 'occupiedSlots'
+  | 'reservedSeats'
+  | 'fixedPotConflict'
+  | 'fixedOutsideComposition'
+  | 'fixedExceedsCapacity'
   | 'noFreeSlot'
   | 'notEnoughTeams'
   | 'tooManyTeams';
@@ -511,6 +515,10 @@ export function resolveDrawCreateBlockPresentation(
     case 'belowMinimumTeams':
     case 'groupShape':
     case 'missingPots':
+    case 'reservedSeats':
+    case 'fixedPotConflict':
+    case 'fixedOutsideComposition':
+    case 'fixedExceedsCapacity':
       return { kind: 'inline', tone: 'warning', action: false };
     case 'occupiedSlots':
     case 'directAssignment':
@@ -593,6 +601,27 @@ const DRAW_CREATE_LAUNCH_BLOCK_COPY: Record<
     reason: 'occupiedSlots',
     shortKey: 'fiche.drawWorkflow.createBlocked.short.occupiedSlots',
     detailKey: 'fiche.drawWorkflow.createBlocked.detail.occupiedSlots',
+  },
+  'Application.DrawGroupSeatsReservedByInboundFeed': {
+    reason: 'reservedSeats',
+    shortKey: 'fiche.drawWorkflow.createBlocked.short.reservedSeats',
+    detailKey: 'fiche.drawWorkflow.createBlocked.detail.reservedSeats',
+  },
+  'Application.DrawFixedPotConflict': {
+    reason: 'fixedPotConflict',
+    shortKey: 'fiche.drawWorkflow.createBlocked.short.fixedPotConflict',
+    detailKey: 'fiche.drawWorkflow.createBlocked.detail.fixedPotConflict',
+  },
+  'Application.DrawFixedOutsideComposition': {
+    reason: 'fixedOutsideComposition',
+    shortKey: 'fiche.drawWorkflow.createBlocked.short.fixedOutsideComposition',
+    detailKey:
+      'fiche.drawWorkflow.createBlocked.detail.fixedOutsideComposition',
+  },
+  'Application.DrawFixedExceedsCapacity': {
+    reason: 'fixedExceedsCapacity',
+    shortKey: 'fiche.drawWorkflow.createBlocked.short.fixedExceedsCapacity',
+    detailKey: 'fiche.drawWorkflow.createBlocked.detail.fixedExceedsCapacity',
   },
   NoFreeSlot: {
     reason: 'noFreeSlot',

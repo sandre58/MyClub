@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
@@ -72,6 +73,18 @@ public static class GenerateDrawResolution
             ResolveRandomSource(seed, randomSource));
 
         var result = DrawResolutionGenerator.Generate(request);
+        if (result.IsResolved
+            && draw.Kind == DrawResolutionKind.Group
+            && DrawConsumptionConformance.GroupResolutionDiverges(
+                stage,
+                draw.Inputs.FixedGroups,
+                result.Resolution!.GroupResults))
+        {
+            throw new ApplicationFailureException(
+                $"Draw '{draw.Id}' is obsolete for consumption on stage '{stage.Id}'.",
+                ApplicationErrorCodes.DrawObsoleteForConsumption);
+        }
+
         if (result.IsNoSolution)
         {
             stage.MarkDrawNoSolution(drawId, clock);

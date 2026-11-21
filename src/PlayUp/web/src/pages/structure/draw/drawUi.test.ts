@@ -2,6 +2,8 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import enStructure from '../../../i18n/locales/en/structure.json';
+import frStructure from '../../../i18n/locales/fr/structure.json';
 import type {
   DrawInputsIntent,
   StageBracketPair,
@@ -395,9 +397,11 @@ describe('drawCreateLaunchBlockCopy', () => {
       shortKey: 'fiche.drawWorkflow.createBlocked.short.countMismatch',
       detailKey: 'fiche.drawWorkflow.createBlocked.detail.countMismatch',
     });
-    expect(drawCreateLaunchBlockCopy('BracketPlacesOccupied').reason).toBe(
-      'occupiedSlots',
-    );
+    expect(drawCreateLaunchBlockCopy('BracketPlacesOccupied')).toMatchObject({
+      reason: 'occupiedSlots',
+      shortKey: 'fiche.drawWorkflow.createBlocked.short.occupiedSlots',
+      detailKey: 'fiche.drawWorkflow.createBlocked.detail.occupiedSlots',
+    });
     expect(drawCreateLaunchBlockCopy('NoFreeSlot').reason).toBe('noFreeSlot');
     expect(drawCreateLaunchBlockCopy('NotEnoughTeams').reason).toBe(
       'notEnoughTeams',
@@ -418,6 +422,92 @@ describe('drawCreateLaunchBlockCopy', () => {
       reason: null,
       shortKey: null,
     });
+  });
+
+  it('maps reserved group seats to an instruction in both locales', () => {
+    const copy = drawCreateLaunchBlockCopy(
+      'Application.DrawGroupSeatsReservedByInboundFeed',
+    );
+    expect(copy).toMatchObject({
+      reason: 'reservedSeats',
+      shortKey: 'fiche.drawWorkflow.createBlocked.short.reservedSeats',
+      detailKey: 'fiche.drawWorkflow.createBlocked.detail.reservedSeats',
+      presentation: { kind: 'inline', tone: 'warning', action: false },
+    });
+    expect(copy.shortKey).not.toBe('lifecycle.disabled._unknown');
+    expect(
+      frStructure.fiche.drawWorkflow.createBlocked.short.reservedSeats,
+    ).toBe(
+      'Attendez la résolution des qualifications ou placez les équipes à la main.',
+    );
+    expect(
+      enStructure.fiche.drawWorkflow.createBlocked.short.reservedSeats,
+    ).toBe(
+      'Wait for the qualifications to resolve or place the teams by hand.',
+    );
+  });
+
+  it('maps a fixed pot conflict to an instruction in both locales', () => {
+    const copy = drawCreateLaunchBlockCopy('Application.DrawFixedPotConflict');
+    expect(copy).toMatchObject({
+      reason: 'fixedPotConflict',
+      shortKey: 'fiche.drawWorkflow.createBlocked.short.fixedPotConflict',
+      detailKey: 'fiche.drawWorkflow.createBlocked.detail.fixedPotConflict',
+      presentation: { kind: 'inline', tone: 'warning', action: false },
+    });
+    expect(copy.shortKey).not.toBe('lifecycle.disabled._unknown');
+    expect(
+      frStructure.fiche.drawWorkflow.createBlocked.short.fixedPotConflict,
+    ).toBe('Déplacez une équipe du même pot avant de tirer.');
+    expect(
+      enStructure.fiche.drawWorkflow.createBlocked.short.fixedPotConflict,
+    ).toBe('Move a team from the same pot before drawing.');
+  });
+
+  it('maps a fixed placement outside the composition to an instruction in both locales', () => {
+    const copy = drawCreateLaunchBlockCopy(
+      'Application.DrawFixedOutsideComposition',
+    );
+    expect(copy).toMatchObject({
+      reason: 'fixedOutsideComposition',
+      shortKey:
+        'fiche.drawWorkflow.createBlocked.short.fixedOutsideComposition',
+      detailKey:
+        'fiche.drawWorkflow.createBlocked.detail.fixedOutsideComposition',
+      presentation: { kind: 'inline', tone: 'warning', action: false },
+    });
+    expect(copy.shortKey).not.toBe('lifecycle.disabled._unknown');
+    expect(
+      frStructure.fiche.drawWorkflow.createBlocked.short
+        .fixedOutsideComposition,
+    ).toBe(
+      'Retirez l’équipe hors composition ou rétablissez-la avant de tirer.',
+    );
+    expect(
+      enStructure.fiche.drawWorkflow.createBlocked.short
+        .fixedOutsideComposition,
+    ).toBe(
+      'Remove the team outside the composition, or restore it, before drawing.',
+    );
+  });
+
+  it('maps a group over the draw capacity to an instruction in both locales', () => {
+    const copy = drawCreateLaunchBlockCopy(
+      'Application.DrawFixedExceedsCapacity',
+    );
+    expect(copy).toMatchObject({
+      reason: 'fixedExceedsCapacity',
+      shortKey: 'fiche.drawWorkflow.createBlocked.short.fixedExceedsCapacity',
+      detailKey: 'fiche.drawWorkflow.createBlocked.detail.fixedExceedsCapacity',
+      presentation: { kind: 'inline', tone: 'warning', action: false },
+    });
+    expect(copy.shortKey).not.toBe('lifecycle.disabled._unknown');
+    expect(
+      frStructure.fiche.drawWorkflow.createBlocked.short.fixedExceedsCapacity,
+    ).toBe('Retirez des équipes du groupe trop plein avant de tirer.');
+    expect(
+      enStructure.fiche.drawWorkflow.createBlocked.short.fixedExceedsCapacity,
+    ).toBe('Remove teams from the over-full group before drawing.');
   });
 });
 

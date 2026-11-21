@@ -222,6 +222,26 @@ public static class StageErrorCodes
     public const string DrawGenerationInvalid = "Stage.DrawGenerationInvalid";
 
     /// <summary>
+    /// Gets the code when Group generation is refused because NumberOfPots is not the group capacity.
+    /// </summary>
+    public const string DrawPotCountNotEqualCapacity = "Stage.DrawPotCountNotEqualCapacity";
+
+    /// <summary>
+    /// Gets the code when a pot does not contain one entry per group target.
+    /// </summary>
+    public const string DrawPotSizeMismatch = "Stage.DrawPotSizeMismatch";
+
+    /// <summary>
+    /// Gets the code when fixed group placements put two entries from the same pot into one group.
+    /// </summary>
+    public const string DrawFixedPotConflict = "Stage.DrawFixedPotConflict";
+
+    /// <summary>
+    /// Gets the code when fixed group placements exceed group capacity.
+    /// </summary>
+    public const string DrawFixedExceedsCapacity = "Stage.DrawFixedExceedsCapacity";
+
+    /// <summary>
     /// Gets the code when a standing penalty cannot be found.
     /// </summary>
     public const string PenaltyNotFound = "Stage.PenaltyNotFound";

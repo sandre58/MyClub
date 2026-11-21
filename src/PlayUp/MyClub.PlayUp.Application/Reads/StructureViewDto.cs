@@ -376,7 +376,17 @@ public readonly record struct StructureDrawCreateLaunchDto
     /// <summary>Gets the stable block reason code when launch is not allowed; otherwise null.</summary>
     public string? BlockReasonCode { get; }
 
-    public StructureDrawCreateLaunchDto(bool allowed, string? blockReasonCode)
+    /// <summary>
+    /// Gets machine detail for a Groups refusal (groups, pots, teams). Null when launch is allowed
+    /// or the refusal has no detail. Omitted from JSON when null. The SPA reads it when it sends Default.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<string>? BlockDetail { get; }
+
+    public StructureDrawCreateLaunchDto(
+        bool allowed,
+        string? blockReasonCode,
+        IReadOnlyList<string>? blockDetail = null)
     {
         if (allowed)
         {
@@ -385,6 +395,13 @@ public readonly record struct StructureDrawCreateLaunchDto
                 throw new ArgumentException(
                     "BlockReasonCode must be null when launch is allowed.",
                     nameof(blockReasonCode));
+            }
+
+            if (blockDetail is { Count: > 0 })
+            {
+                throw new ArgumentException(
+                    "BlockDetail must be null when launch is allowed.",
+                    nameof(blockDetail));
             }
         }
         else if (string.IsNullOrEmpty(blockReasonCode))
@@ -396,6 +413,7 @@ public readonly record struct StructureDrawCreateLaunchDto
 
         Allowed = allowed;
         BlockReasonCode = blockReasonCode;
+        BlockDetail = blockDetail is { Count: > 0 } ? blockDetail : null;
     }
 }
 

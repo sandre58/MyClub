@@ -254,7 +254,7 @@ public sealed class StageDrawDisplayTests
             .Select(index => AddEntry.Execute(competition, $"G{index}", _clock).Id)
             .ToArray();
         var stage = ConfigureStructure.Execute(competition, null, StructureIntent.Groups(2, 2), _clock).Stage;
-        ReplaceStageDrawRules.Execute(stage, new DrawRules(DrawMode.Random), _clock);
+        ReplaceStageDrawRules.Execute(stage, new DrawRules(DrawMode.Random, potRules: new PotRules(2)), _clock);
         stage.ReplaceAffectationAuthoring(entries, _clock);
         var draw = CreateDraw.Execute(stage, DrawResolutionKind.Group, _clock);
         ConfigureDrawInputs.Execute(

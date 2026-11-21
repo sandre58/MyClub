@@ -116,6 +116,24 @@ describe('functionalProblemPresentation', () => {
     expect(notEnough.titleKey).toBe(
       'fiche.drawWorkflow.createBlocked.short.notEnoughTeams',
     );
+
+    for (const source of [
+      'reservedSeats',
+      'fixedPotConflict',
+      'fixedOutsideComposition',
+      'fixedExceedsCapacity',
+    ]) {
+      const presentation = functionalProblemPresentation({
+        source,
+        competitionId: 'comp-1',
+        stageId: 'stage-1',
+      });
+      expect(presentation.tone).toBe('warning');
+      expect(presentation.canal).toBe('draw-gate');
+      expect(presentation.titleKey).toBe(
+        `fiche.drawWorkflow.createBlocked.short.${source}`,
+      );
+    }
   });
 
   it('maps structureIssues children via structureIssuePresentation', () => {

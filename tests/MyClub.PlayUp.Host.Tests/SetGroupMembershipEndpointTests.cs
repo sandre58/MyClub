@@ -391,7 +391,8 @@ public sealed class SetGroupMembershipEndpointTests(HostPostgresFixture fixture)
             stage.AssignEntryToGroup(stage.Groups[0].Id, ids[index]);
         }
 
-        _ = CreateDraw.Execute(stage, DrawResolutionKind.Group, _clock);
+        // Domain create: the fixture only needs a draft; the launch rule is not the subject.
+        _ = stage.CreateDraw(DrawResolutionKind.Group, _clock);
 
         await SaveAsync(factory, competition, stage);
         return new Seed(competition.Id, stage.Id, stage.Groups[0].Id, ids);

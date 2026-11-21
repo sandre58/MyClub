@@ -221,6 +221,64 @@ public sealed class ReleaseDrawAlignedPlacementsTests
     }
 
     [Fact]
+    public void Execute_group_skips_a_fixed_entry_and_releases_the_drawn_one()
+    {
+        var stage = CreateStage();
+        var group = stage.AddGroup("A", _clock);
+        var other = stage.AddGroup("B", _clock);
+        var pinned = EntryId.New();
+        var drawn = EntryId.New();
+        stage.ReplaceAffectationAuthoring([pinned, drawn], _clock);
+        stage.AssignEntryToGroup(group.Id, pinned);
+        var draw = stage.CreateDraw(DrawResolutionKind.Group, _clock);
+        stage.ConfigureDrawInputs(
+            draw.Id,
+            DrawInputs.ForGroup([pinned, drawn], fixedPlacements: [new GroupDrawPlacement(pinned, group.Id)]));
+        stage.RecordDrawResolution(
+            draw.Id,
+            DrawResolution.ResolvedGroups(
+            [
+                new GroupDrawPlacement(pinned, group.Id),
+                new GroupDrawPlacement(drawn, other.Id)
+            ]),
+            _clock);
+        stage.PublishDraw(draw.Id, _clock);
+        ApplyDraw.Execute(stage, draw.Id, _clock);
+        stage.CancelDraw(draw.Id, _clock);
+        DrawActionEvaluator.Evaluate(DrawActionEvaluator.ForCommand(stage, null), draw).Release.ReleasableCount
+            .Should().Be(1);
+
+        var result = ReleaseDrawAlignedPlacements.Execute(stage, draw.Id, _clock);
+
+        result.ReleasedCount.Should().Be(1);
+        result.SkippedCount.Should().Be(1);
+        group.EntryIds.Should().Contain(pinned);
+        other.EntryIds.Should().NotContain(drawn);
+    }
+
+    [Fact]
+    public void Releasable_count_ignores_a_drawn_entry_that_left_its_resolution_group()
+    {
+        var stage = CreateStage();
+        var home = stage.AddGroup("A", _clock);
+        var away = stage.AddGroup("B", _clock);
+        var drawn = EntryId.New();
+        stage.ReplaceAffectationAuthoring([drawn], _clock);
+        stage.AssignEntryToGroup(home.Id, drawn);
+
+        // Domain create: the launch rule is not the subject; the resolution group differs from the occupant.
+        var draw = stage.CreateDraw(DrawResolutionKind.Group, _clock);
+        stage.ConfigureDrawInputs(draw.Id, DrawInputs.ForGroup([drawn]));
+        stage.RecordDrawResolution(
+            draw.Id,
+            DrawResolution.ResolvedGroups([new GroupDrawPlacement(drawn, away.Id)]),
+            _clock);
+
+        DrawActionEvaluator.Evaluate(DrawActionEvaluator.ForCommand(stage, null), draw).Release.ReleasableCount
+            .Should().Be(0);
+    }
+
+    [Fact]
     public void Execute_group_Ready_with_attached_matches_is_refused()
     {
         var stage = CreateStage();

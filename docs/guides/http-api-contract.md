@@ -299,7 +299,8 @@ Server decision for starting a new draw execution on that phase. The SPA display
 | Field | Type | Notes |
 | :--- | :--- | :--- |
 | `allowed` | boolean | True when a new draw may be launched |
-| `blockReasonCode` | string \| null | Stable code when `allowed` is false. Slot: `NoFreeSlot`, `NotEnoughTeams`, `TooManyTeams` (free places must match unplaced teams). Group: `BracketPlacesOccupied` when a place is taken. Also `DrawRulesMissing`, `MissingPots`, `GroupShapeInvalid`, …. Null when allowed |
+| `blockReasonCode` | string \| null | Stable code when `allowed` is false. Slot: `NoFreeSlot`, `NotEnoughTeams`, `TooManyTeams` (free places must match unplaced teams). Group: `MissingPots`, `GroupShapeInvalid`, `Application.DrawGroupSeatsReservedByInboundFeed` (an incomplete composition waiting on a qualification returns this, not the upstream-empty code), `Application.DrawFixedPotConflict`, `Application.DrawFixedOutsideComposition`, `Application.DrawFixedExceedsCapacity`, `BracketPlacesOccupied`. The client still posts `Rerun`, so an occupied grid stays blocked with `BracketPlacesOccupied` (create itself remains **409** `Application.DrawLaunchGridNotVacant`). Also `DrawRulesMissing`, `ActiveDrawPresent`, …. Null when allowed |
+| `blockDetail` | string[] \| omitted | Additive. Present on a Groups refusal that names groups, pots, or teams (same strings as ProblemDetails `reasons`). Omitted when allowed or when the refusal has no detail. The SPA does not read it yet |
 
 #### `stages[].resolutionOccupants`
 
@@ -980,12 +981,12 @@ These DTOs live in `MyClub.PlayUp.Host/Contracts`. They expose Guids only — no
 
 ### Slot draw inputs — `Partial`
 
-`POST /stages/{stageId}/draws` and `POST /stages/{stageId}/draws/{drawId}/inputs` accept `intent`: `Default`, `Rerun`, or `Partial` (omitted → `Default`).
+`POST /stages/{stageId}/draws` and `POST /stages/{stageId}/draws/{drawId}/inputs` accept `intent`: `Default`, `Rerun`, or `Partial` (omitted → `Default`). Create applies that intent. Groups `Rerun` runs the vacant-grid guard before the draft exists, so an occupied grid is **409** `Application.DrawLaunchGridNotVacant` and no draw is stored.
 
 | Intent | What is drawn | Occupants |
 | :--- | :--- | :--- |
-| `Default` | Encoding F: composition pool, current occupants as Fixed* | Unchanged until Apply. Apply skips a slot whose occupant is already the instructed team and refuses a different occupant or a move |
-| `Rerun` | Full reshuffle. Refused when the grid is not vacant or a direct assignment exists | Not cleared by configure or generate |
+| `Default` | Encoding F: composition pool, current occupants as Fixed*. **Groups:** fixed = current occupants that belong to the composition (manual, qualified, or left by a previous apply). Pots are the current composition via the shared pot function. Refused (409, no new behaviour on an already refused create) when an inbound feed reserves a place (`Application.DrawGroupSeatsReservedByInboundFeed`), an occupant is outside the composition (`Application.DrawFixedOutsideComposition`), two fixed teams share a pot in one group (`Application.DrawFixedPotConflict`), a group holds more teams than the draw capacity (`Application.DrawFixedExceedsCapacity`), pots are missing (`Application.DrawPotsMissing`), or the shape cannot be drawn (`Application.DrawGroupShapeInvalid`). `reasons` names the groups, pots, and teams. **Slot:** unchanged — Apply skips a slot whose occupant is already the instructed team and refuses a different occupant or a move |
+| `Rerun` | Full reshuffle. Refused when the grid is not vacant or a direct assignment exists (`Application.DrawLaunchGridNotVacant`), including on Groups create, before any draft. A Cup rerun pool stays the applied pool intersected with the composition. Groups redo is not this intent: it is `Default` | Not cleared by configure or generate |
 | `Partial` | Slot only. Unplaced teams into free slots (no occupant and feed Missing), exact count | Left out of the pool and the resolution, so a later release of this draw does not clear them |
 
 `Partial` refusals are HTTP 409: `Application.DrawNoFreeSlot` (no free slot, even if extra teams remain), `Application.DrawNotEnoughTeams`, `Application.DrawTooManyTeams`. Generate does not write slot occupants. Publish-and-apply is what fills the free slots. Redo stays a full reshuffle and stays hidden until the draw is applied (`Application.DrawRedoRequiresApplied`).
@@ -1054,7 +1055,9 @@ Decision D — explicit liberate: clears occupants that still exactly match this
 
 ### `POST /stages/{stageId}/draws/{drawId}/redo` → `DrawGenerationDto`
 
-Atomic "Refaire le tirage": in one `UseCaseExecutor` command (single `SaveChanges`), cancels the current draw, releases the placements still aligned with it, then creates, configures, and generates the preview of a new draw of the same kind. No request body. On any guard failure or mid-sequence domain error nothing is persisted — the original draw stays `Published`/applied and its placements stay occupied.
+Atomic "Refaire le tirage": in one `UseCaseExecutor` command (single `SaveChanges`), cancels the current draw, releases the placements the draw itself assigned, then creates, configures, and generates the preview of a new draw of the same kind. No request body. On any guard failure or mid-sequence domain error nothing is persisted — the original draw stays `Published`/applied and its placements stay occupied.
+
+**Groups.** Drawn teams are the resolution minus `FixedGroups`. Release removes only those. The new draw is `Default` on the composition at redo time: every remaining occupant (manual, qualified, or left by the previous apply) is fixed, and pots come from the launch rule. A team that joined the composition after Apply is not included by Redo. Removing a resolved occupant makes the draw no longer applied, so Redo is **409** `Application.DrawRedoRequiresApplied`; Cancel, Release, then a new `Default` create is what takes the current composition and recomputes pots. The launch rule runs before Cancel, treating the drawn teams as vacant. Cup redo is unchanged: `Rerun` on the applied pool intersected with the composition, vacant-grid guard included.
 
 The guard reuses the `DrawActionEvaluator` `Redo` action (the same evaluator backing the stage projection) before running the sequence:
 
@@ -1065,7 +1068,8 @@ The command rejects any `Redo` state other than `Available`, not just `Blocked`:
 | Draw not applied on the stage (Hidden on the read projection — Draft, Published not yet consumed, or already Cancelled) | `Application.DrawRedoRequiresApplied` |
 | Release guard (same as explicit Release, evaluated as if the draw were already cancelled) | `Application.DrawReleaseBlockedByAttachedMatches`, `Stage.StructureLocked`, `Stage.MaterializedOpponentConflict` |
 | Any stage `DirectAssignment` present | `Application.DrawLaunchDirectAssignmentPresent` |
-| Target slots/groups not vacant once this draw's own placements are excluded (sibling feeds, other draws) | `Application.DrawLaunchGridNotVacant` |
+| Cup: target slots not vacant once this draw's own placements are excluded (sibling feeds, other draws) | `Application.DrawLaunchGridNotVacant` |
+| Groups: the shared launch rule, with this draw's drawn teams (resolution minus fixed groups) treated as vacant, refuses before Cancel. Nothing is saved. Typical codes: `Application.DrawGroupShapeInvalid`, `Application.DrawGroupSeatsReservedByInboundFeed`, `Application.DrawFixedPotConflict`, `Application.DrawFixedOutsideComposition`, `Application.DrawFixedExceedsCapacity`, `Application.DrawPotsMissing` | same code |
 
 This upfront check runs against a single-stage `DrawActionContext` (`ForCommand`), same limitation as the stage projection: a sibling stage feeding into this one can still cause `DrawLaunchGridNotVacant` from the real `GenerateDrawResolution` step even when the upfront check reports `Available`. In that case the exception propagates from mid-sequence and, per the single-`SaveChanges` boundary, nothing is persisted (Cancel/Release/new-draw/preview all stay in the uncommitted unit of work).
 
@@ -1119,6 +1123,12 @@ ProblemDetails extensions:
 - `Application.DrawRedoRequiresApplied`
 - `Application.DrawLaunchDirectAssignmentPresent`
 - `Application.DrawLaunchGridNotVacant`
+- `Application.DrawGroupSeatsReservedByInboundFeed`
+- `Application.DrawFixedPotConflict`
+- `Application.DrawFixedOutsideComposition`
+- `Application.DrawFixedExceedsCapacity`
+- `Application.DrawGroupShapeInvalid`
+- `Application.DrawPotsMissing`
 - `Application.DrawNoFreeSlot`
 - `Application.DrawNotEnoughTeams`
 - `Application.DrawTooManyTeams`

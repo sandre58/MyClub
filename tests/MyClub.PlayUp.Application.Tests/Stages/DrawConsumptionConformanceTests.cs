@@ -205,6 +205,71 @@ public sealed class DrawConsumptionConformanceTests
         DrawConsumptionConformance.IsObsoleteForConsumption(draw, stage).Should().BeFalse();
     }
 
+    [Fact]
+    public void Fixed_entry_that_left_its_group_makes_a_published_draw_obsolete()
+    {
+        var stage = CreateEmptyGroupStage();
+        var entry = stage.CompositionEntries[0].EntryId;
+        var groupA = stage.Groups[0];
+        var groupB = stage.Groups[1];
+        stage.AssignEntryToGroup(groupA.Id, entry);
+        var draw = CreateDraw.Execute(stage, DrawResolutionKind.Group, _clock, competitionStages: [stage]);
+        ConfigureDrawInputs.Execute(
+            stage,
+            draw.Id,
+            DrawInputsFactory.CreateDefault(stage, DrawResolutionKind.Group),
+            competitionStages: [stage]);
+        GenerateDrawResolution.Execute(
+            stage,
+            draw.Id,
+            _clock,
+            groupTargets: [.. stage.Groups.Select(group => group.Id)]).IsResolved.Should().BeTrue();
+        PublishDraw.Execute(stage, draw.Id, _clock);
+        ApplyDraw.Execute(stage, draw.Id, _clock);
+        var blocking = groupB.EntryIds.First(id => !id.Equals(entry));
+        stage.RemoveDrawEntryFromGroup(groupB.Id, blocking);
+        stage.RemoveDrawEntryFromGroup(groupA.Id, entry);
+        stage.AssignEntryToGroup(groupB.Id, entry);
+
+        DrawConsumptionConformance.ResolutionEntriesDiverge(stage.GetDraw(draw.Id), stage).Should().BeTrue();
+        DrawConsumptionConformance.IsObsoleteForConsumption(stage.GetDraw(draw.Id), stage).Should().BeTrue();
+        groupA.EntryIds.Should().NotContain(entry);
+        groupB.EntryIds.Should().Contain(entry);
+    }
+
+    [Fact]
+    public void Generate_refuses_when_a_fixed_team_is_already_in_another_group()
+    {
+        var stage = CreateEmptyGroupStage();
+        var entry = stage.CompositionEntries[0].EntryId;
+        var groupA = stage.Groups[0];
+        var groupB = stage.Groups[1];
+        stage.AssignEntryToGroup(groupB.Id, entry);
+        var draw = stage.CreateDraw(DrawResolutionKind.Group, _clock);
+        var inputs = DrawInputsFactory.CreateDefault(stage, DrawResolutionKind.Group);
+        var moved = inputs.FixedGroups.Single(placement => placement.EntryId.Equals(entry));
+        var rewritten = inputs.FixedGroups
+            .Select(placement => placement.EntryId.Equals(entry)
+                ? new GroupDrawPlacement(entry, groupA.Id)
+                : placement)
+            .ToArray();
+        stage.ConfigureDrawInputs(
+            draw.Id,
+            DrawInputs.ForGroup(inputs.Entries, potMembership: inputs.PotMembership, fixedPlacements: rewritten));
+
+        var act = () => GenerateDrawResolution.Execute(
+            stage,
+            draw.Id,
+            _clock,
+            groupTargets: [.. stage.Groups.Select(group => group.Id)]);
+
+        act.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.DrawObsoleteForConsumption);
+        stage.GetDraw(draw.Id).Resolution.State.Should().Be(DrawResolutionState.NotResolved);
+        groupB.EntryIds.Should().Contain(entry);
+        moved.GroupId.Should().Be(groupB.Id);
+    }
+
     private Stage CreateEmptyGroupStage()
     {
         var competition = CreateCompetition.Execute("state", _clock);

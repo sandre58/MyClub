@@ -161,13 +161,7 @@ public sealed class DrawConsumptionMatStartTests
             _clock,
             groupTargets: [.. stage.Groups.Select(g => g.Id)]).IsResolved.Should().BeTrue();
         PublishDraw.Execute(stage, draw.Id, _clock);
-
-        var groupA = stage.Groups[0];
-        var groupB = stage.Groups[1];
-        stage.AssignEntryToGroup(groupA.Id, ids[0]);
-        stage.AssignEntryToGroup(groupA.Id, ids[1]);
-        stage.AssignEntryToGroup(groupB.Id, ids[2]);
-        stage.AssignEntryToGroup(groupB.Id, ids[3]);
+        ApplyDraw.Execute(stage, draw.Id, _clock);
 
         return (competition, stage, draw.Id, ids);
     }

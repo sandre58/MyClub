@@ -74,7 +74,18 @@ public static class StructureDrawCreateLaunchGate
             return Deny(BlockUnsupportedFormat);
         }
 
-        if (BlocksUpstreamCompositionPool(hub))
+        GroupDrawLaunchDecision? groupDecision = null;
+        if (kind == DrawResolutionKind.Group)
+        {
+            groupDecision = GroupDrawLaunchRules.Evaluate(stage, competitionStages);
+            if (groupDecision.Code == ApplicationErrorCodes.DrawGroupSeatsReservedByInboundFeed)
+            {
+                return Deny(groupDecision.Code, groupDecision.Reasons);
+            }
+        }
+
+        if (BlocksUpstreamCompositionPool(hub)
+            && !(kind == DrawResolutionKind.Group && hub.CompositionEntryCount > 0))
         {
             return Deny(BlockUpstreamCompositionPoolEmpty);
         }
@@ -92,16 +103,19 @@ public static class StructureDrawCreateLaunchGate
 
         if (kind == DrawResolutionKind.Group)
         {
-            var pots = hub.NumberOfPots;
-            var groups = hub.GroupCount;
-            if (pots is null or < 2)
+            if (!groupDecision!.IsAllowed)
             {
-                return Deny(BlockMissingPots);
+                return Deny(MapGroupRuleCode(groupDecision.Code!), groupDecision.Reasons);
             }
 
-            if (groups < 1 || hub.CompositionEntryCount != pots.Value * groups)
+            // The client still posts Rerun. An occupied grid must stay blocked until that intent changes.
+            try
             {
-                return Deny(BlockGroupShapeInvalid);
+                StageDrawRerunLaunchGuard.Ensure(stage, competitionStages, kind);
+            }
+            catch (ApplicationFailureException exception)
+            {
+                return Deny(MapGroupRuleCode(exception.Code ?? ApplicationErrorCodes.DrawLaunchGridNotVacant));
             }
         }
         else
@@ -122,27 +136,39 @@ public static class StructureDrawCreateLaunchGate
             }
         }
 
-        if (kind != DrawResolutionKind.Group)
-        {
-            return StructureDrawConsumptionGate.StageHasObsoleteDrawForConsumption(stage)
-                ? Deny(BlockDrawObsoleteForConsumption)
-                : !TryAllowOperationalDrawEdit(stage)
-                    ? Deny(BlockOperationalExitEdit)
-                    : Allow();
-        }
-
-        var facts = StageDrawBracketLaunchClassifier.ClassifyForDrawKind(stage, competitionStages, kind);
-        if (facts.BlockingPlaceCount > 0)
-        {
-            return Deny(BlockBracketPlacesOccupied);
-        }
-
         return StructureDrawConsumptionGate.StageHasObsoleteDrawForConsumption(stage)
             ? Deny(BlockDrawObsoleteForConsumption)
             : !TryAllowOperationalDrawEdit(stage)
                 ? Deny(BlockOperationalExitEdit)
                 : Allow();
     }
+
+    /// <summary>
+    /// Gets the Groups gate reason and the server code a command returns for the same cause.
+    /// An occupied grid uses <see cref="BlockBracketPlacesOccupied"/> so the existing placement label stays;
+    /// the command still returns <see cref="ApplicationErrorCodes.DrawLaunchGridNotVacant"/>.
+    /// </summary>
+    internal static IReadOnlyList<(string GateCode, string ServerCode)> GroupReasonParity { get; } =
+    [
+        (BlockMissingPots, ApplicationErrorCodes.DrawPotsMissing),
+        (BlockGroupShapeInvalid, ApplicationErrorCodes.DrawGroupShapeInvalid),
+        (ApplicationErrorCodes.DrawGroupSeatsReservedByInboundFeed, ApplicationErrorCodes.DrawGroupSeatsReservedByInboundFeed),
+        (ApplicationErrorCodes.DrawFixedPotConflict, ApplicationErrorCodes.DrawFixedPotConflict),
+        (ApplicationErrorCodes.DrawFixedOutsideComposition, ApplicationErrorCodes.DrawFixedOutsideComposition),
+        (ApplicationErrorCodes.DrawFixedExceedsCapacity, ApplicationErrorCodes.DrawFixedExceedsCapacity),
+        (BlockActiveDrawPresent, StageErrorCodes.NonCancelledDrawAlreadyExists),
+        (BlockBracketPlacesOccupied, ApplicationErrorCodes.DrawLaunchGridNotVacant),
+        (BlockDrawObsoleteForConsumption, ApplicationErrorCodes.DrawObsoleteForConsumption),
+    ];
+
+    private static string MapGroupRuleCode(string code) =>
+        code switch
+        {
+            ApplicationErrorCodes.DrawPotsMissing => BlockMissingPots,
+            ApplicationErrorCodes.DrawGroupShapeInvalid => BlockGroupShapeInvalid,
+            ApplicationErrorCodes.DrawLaunchGridNotVacant => BlockBracketPlacesOccupied,
+            _ => code,
+        };
 
     private static bool BlocksUpstreamCompositionPool(StructureStageHubSummaryDto hub) => !hub.IsRootComposition && (hub.CompositionEntryCount <= 0 || (hub.InboundComposition is { ConfiguredVolume: > 0 } inbound
         && inbound.ResolvedCount < inbound.ConfiguredVolume));
@@ -179,6 +205,6 @@ public static class StructureDrawCreateLaunchGate
     private static StructureDrawCreateLaunchDto Allow() =>
         new(true, null);
 
-    private static StructureDrawCreateLaunchDto Deny(string code) =>
-        new(false, code);
+    private static StructureDrawCreateLaunchDto Deny(string code, IReadOnlyList<string>? detail = null) =>
+        new(false, code, detail is { Count: > 0 } ? detail : null);
 }

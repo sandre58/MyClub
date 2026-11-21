@@ -194,7 +194,9 @@ public sealed class ManualGroupSeatProjectionTests
             stage,
             new DrawRules(DrawMode.Random, potRules: new PotRules(2)),
             _clock);
-        var draw = CreateDraw.Execute(stage, DrawResolutionKind.Group, _clock);
+
+        // Domain create: the fixture only needs a draft; the launch rule is not the subject.
+        var draw = stage.CreateDraw(DrawResolutionKind.Group, _clock);
         stage.MarkDrawNoSolution(draw.Id, _clock);
         stage.GetDraw(draw.Id).Status.Should().Be(DrawStatus.Draft);
 
@@ -310,7 +312,9 @@ public sealed class ManualGroupSeatProjectionTests
             stage,
             new DrawRules(DrawMode.Random, potRules: new PotRules(2)),
             _clock);
-        var draw = CreateDraw.Execute(stage, DrawResolutionKind.Group, _clock);
+
+        // Domain create: the fixture only needs a draft; the launch rule is not the subject.
+        var draw = stage.CreateDraw(DrawResolutionKind.Group, _clock);
         stage.MarkDrawNoSolution(draw.Id, _clock);
         stage.Prepare(_clock);
         stage.Start(_clock);

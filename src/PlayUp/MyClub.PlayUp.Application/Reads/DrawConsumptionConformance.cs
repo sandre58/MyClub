@@ -48,6 +48,13 @@ public static class DrawConsumptionConformance
             return true;
         }
 
+        if (draw.Kind == DrawResolutionKind.Group
+            && draw.Resolution.State == DrawResolutionState.Resolved
+            && GroupResolutionDiverges(stage, draw.Inputs.FixedGroups, draw.Resolution.GroupResults))
+        {
+            return true;
+        }
+
         if (draw.Inputs.FixedSlots.Any(placement => stage.FindSlot(placement.SlotKey) is null))
         {
             return true;
@@ -70,6 +77,47 @@ public static class DrawConsumptionConformance
             }
 
             if (!effectivePool.Contains(entry))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// A fixed team that is no longer in its group, or a drawn team already sitting in another group,
+    /// makes the resolution obsolete. An unassigned drawn team is not a divergence.
+    /// </summary>
+    internal static bool GroupResolutionDiverges(
+        Stage stage,
+        IReadOnlyList<GroupDrawPlacement> fixedGroups,
+        IReadOnlyList<GroupDrawPlacement> resolution)
+    {
+        ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(fixedGroups);
+        ArgumentNullException.ThrowIfNull(resolution);
+
+        var fixedGroupByEntry = new Dictionary<EntryId, GroupId>(fixedGroups.Count);
+        foreach (var placement in fixedGroups)
+        {
+            fixedGroupByEntry[placement.EntryId] = placement.GroupId;
+        }
+
+        foreach (var placement in resolution)
+        {
+            var current = stage.Groups.FirstOrDefault(group => group.EntryIds.Contains(placement.EntryId));
+            if (fixedGroupByEntry.TryGetValue(placement.EntryId, out var fixedGroupId))
+            {
+                if (current is null || !current.Id.Equals(fixedGroupId))
+                {
+                    return true;
+                }
+
+                continue;
+            }
+
+            if (current is not null && !current.Id.Equals(placement.GroupId))
             {
                 return true;
             }
