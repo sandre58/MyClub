@@ -83,6 +83,10 @@ import {
   resolveDrawReadinessChecklist,
 } from '../draw/drawUi';
 import {
+  drawCreateBlockDetailNameIndex,
+  formatDrawCreateBlockDetailLines,
+} from '../draw/drawCreateBlockDetail';
+import {
   resolveServerReleaseCta,
   releaseFooterMode,
 } from '../draw/drawActions';
@@ -705,6 +709,17 @@ export function StructurePhaseFiche({
   const createBlockedShort = launchBlock?.shortKey
     ? t(launchBlock.shortKey)
     : null;
+  const createBlockedNamedLines =
+    launchBlock != null && createBlockPresentation?.kind === 'inline'
+      ? formatDrawCreateBlockDetailLines(
+          stage.drawCreateLaunch?.blockDetail,
+          drawCreateBlockDetailNameIndex({
+            groups: drawOverviewQuery.data?.groups,
+            roster: data.participants.entries,
+          }),
+          t,
+        )
+      : [];
   const stageHasAppliedDraw = stageHasPublishedAppliedDraw(overviewDraws);
   const releaseCta = resolveServerReleaseCta({
     draws: overviewDraws,
@@ -1166,6 +1181,8 @@ export function StructurePhaseFiche({
       onOpenConfirmRelease={() => setStaleReleaseConfirmOpen(true)}
       onCancelConfirmRedo={() => setStaleRedoConfirmOpen(false)}
       onCancelConfirmRelease={() => setStaleReleaseConfirmOpen(false)}
+      detailGroups={drawOverviewQuery.data?.groups}
+      detailRoster={data.participants.entries}
       onConfirmRedo={() => {
         if (activeDraw && !staleRedoMutation.isPending) {
           staleRedoMutation.mutate(activeDraw.id);
@@ -1212,6 +1229,7 @@ export function StructurePhaseFiche({
         activeDraw: Boolean(activeDraw),
         blockPerformDrawCta,
         createBlockedShort,
+        createBlockedNamedLines,
         createBlockedReason,
         showCreateBlockedCaption,
         showPoolHint,
@@ -1720,6 +1738,7 @@ export function StructurePhaseFiche({
               competitionStatus={data.status}
               stage={stage}
               structureStages={data.stages}
+              blockDetailRoster={data.participants.entries}
               open={drawWorkflowOpen}
               onClose={() => setDrawWorkflowOpen(false)}
             />

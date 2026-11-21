@@ -185,7 +185,8 @@ public static class StageOverviewAssembler
                         side.DisplayName,
                         side.ShortName,
                         side.LogoMediaId,
-                        side.PrimaryColor);
+                        side.PrimaryColor,
+                        GroupPlacementOrigin(stage, draw, placement));
                 })
         ];
 
@@ -213,5 +214,27 @@ public static class StageOverviewAssembler
                 assessment.Release.ReleasableCount),
             new StageDrawActionDto(assessment.Apply.State, assessment.Apply.BlockCode),
             new StageDrawActionDto(assessment.PublishAndApply.State, assessment.PublishAndApply.BlockCode),
-            new StageDrawActionDto(assessment.Redo.State, assessment.Redo.BlockCode));
+            new StageDrawActionDto(
+                assessment.Redo.State,
+                assessment.Redo.BlockCode,
+                assessment.Redo.BlockDetail));
+
+    private static DrawPlacementOrigin GroupPlacementOrigin(
+        Stage stage,
+        Draw draw,
+        GroupDrawPlacement placement)
+    {
+        var fixedIds = draw.Inputs?.FixedGroups.Select(row => row.EntryId).ToHashSet();
+        if (fixedIds?.Contains(placement.EntryId) != true)
+        {
+            return DrawPlacementOrigin.Draw;
+        }
+
+        var feed = stage.GroupResolutionProvenances.Any(row =>
+            row.GroupId.Equals(placement.GroupId)
+            && row.EntryId.Equals(placement.EntryId)
+            && row.ProvenanceKind is ResolutionProvenanceKind.Qualification
+                or ResolutionProvenanceKind.Progression);
+        return feed ? DrawPlacementOrigin.Feed : DrawPlacementOrigin.Manual;
+    }
 }

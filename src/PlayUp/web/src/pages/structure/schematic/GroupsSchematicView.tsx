@@ -1,21 +1,36 @@
-import { Fragment, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import { AlreadyPlacedStatus } from '../../../design-system/components/Status';
 import { TeamCrest } from '../../../design-system/TeamCrest';
 import '../phase-schematic.css';
 import {
   groupsSchematicEntryAt,
+  type GroupsSchematicEntry,
   type GroupsSchematicGroup,
 } from './groupsSchematic';
+
+function placedAria(entry: GroupsSchematicEntry, labels: PlacedLabels): string {
+  const already = `${entry.displayName}, ${labels.alreadyPlaced}`;
+  return entry.origin === 'Manual'
+    ? `${already}, ${labels.originManualHint}`
+    : already;
+}
 
 /**
  * Groups × teams schematic. Empty seats are dashed ghosts.
  * The phase sheet passes `renderSeat` so feed labels stay on the source cases.
  */
+type PlacedLabels = {
+  alreadyPlaced: string;
+  originManualHint: string;
+};
+
 export function GroupsSchematicView({
   groups,
   ariaLabel,
   ghostLabel,
   renderSeat,
   seatSummary,
+  placedLabels,
 }: {
   groups: readonly GroupsSchematicGroup[];
   ariaLabel?: string;
@@ -26,6 +41,8 @@ export function GroupsSchematicView({
   ) => ReactNode | undefined;
   /** Phase sheet pool counter. Omitted by the draw dialog. */
   seatSummary?: (group: GroupsSchematicGroup) => string | null;
+  /** Cup pin copy. Omitted by the phase sheet, which does not carry draw origin. */
+  placedLabels?: PlacedLabels;
 }) {
   return (
     <div
@@ -52,20 +69,16 @@ export function GroupsSchematicView({
                   </span>
                 ) : null}
               </div>
-              <div className="regulation-schematic__card-slots">
+              <ul className="regulation-schematic__card-slots">
                 {Array.from({ length: seatCount }, (_, seat) => {
                   const custom = renderSeat?.(group, seat);
                   if (custom != null) {
-                    return (
-                      <Fragment key={`${group.id}-seat-${seat}`}>
-                        {custom}
-                      </Fragment>
-                    );
+                    return <li key={`${group.id}-seat-${seat}`}>{custom}</li>;
                   }
                   const entry = groupsSchematicEntryAt(group, seat);
                   if (!entry) {
                     return (
-                      <span
+                      <li
                         key={`${group.id}-ghost-${seat}`}
                         className="schematic-slot schematic-slot--full schematic-slot--empty"
                       >
@@ -74,13 +87,20 @@ export function GroupsSchematicView({
                             {ghostLabel}
                           </span>
                         ) : null}
-                      </span>
+                      </li>
                     );
                   }
+                  const pinned =
+                    placedLabels != null &&
+                    entry.origin != null &&
+                    entry.origin !== 'Draw';
                   return (
-                    <span
+                    <li
                       key={`${group.id}-${entry.id}-${seat}`}
                       className="schematic-slot schematic-slot--full"
+                      {...(pinned
+                        ? { 'aria-label': placedAria(entry, placedLabels) }
+                        : {})}
                     >
                       <span className="schematic-slot__body">
                         <TeamCrest
@@ -91,15 +111,28 @@ export function GroupsSchematicView({
                           className="schematic-slot__crest"
                         />
                         <span className="schematic-slot__copy">
-                          <span className="schematic-slot__primary">
-                            {entry.displayName}
+                          <span className="schematic-slot__name-row">
+                            <span
+                              className={
+                                pinned
+                                  ? 'schematic-slot__primary structure-draw-slot__name--placed'
+                                  : 'schematic-slot__primary'
+                              }
+                            >
+                              {entry.displayName}
+                            </span>
+                            {pinned ? (
+                              <AlreadyPlacedStatus
+                                label={placedLabels.alreadyPlaced}
+                              />
+                            ) : null}
                           </span>
                         </span>
                       </span>
-                    </span>
+                    </li>
                   );
                 })}
-              </div>
+              </ul>
             </div>
           );
         })}

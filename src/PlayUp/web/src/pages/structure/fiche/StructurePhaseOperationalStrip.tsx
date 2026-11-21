@@ -402,6 +402,7 @@ export function StructurePhaseOperationalStrip({
         compositionLayout={compositionStack}
         structureHubBackgroundRefresh={structureHubBackgroundRefresh}
         {...placement}
+        formatKind={stage.formatKind}
         drawApplied={drawApplied}
       />
     ) : null;
@@ -690,6 +691,7 @@ function DrawColumn(
     /** Composition band: resolved pool meter lives on Qualifiés. */
     compositionLayout?: boolean;
     structureHubBackgroundRefresh?: boolean;
+    formatKind?: StructureStageHubSummary['formatKind'];
   },
 ) {
   const compactIcon =
@@ -758,6 +760,12 @@ function DrawColumn(
     props.showCreateBlockedCaption && props.createBlockedShort ? (
       <StripOperationalMessage kind="attention">
         {props.createBlockedShort}
+        {(props.createBlockedNamedLines ?? []).map((line, index) => (
+          <span key={index} className="ds-body">
+            <br />
+            {line}
+          </span>
+        ))}
         {props.createBlockedReason === 'belowMinimumTeams' ? (
           <>
             {' '}
@@ -921,9 +929,13 @@ function DrawColumn(
       ? t('fiche.viewDrawWorkflow')
       : t('fiche.performDraw');
     const drawSetupEditable = props.canEditDraw && !props.drawApplied;
+    const showNamedGroupsNote =
+      props.formatKind === 'Groups' &&
+      (props.createBlockedNamedLines?.length ?? 0) > 0;
     body = (
       <div className="structure-operational-strip__composition-draw">
-        {!showDrawReadinessChecklist && drawBlockedNote ? (
+        {(!showDrawReadinessChecklist || showNamedGroupsNote) &&
+        drawBlockedNote ? (
           <div className="structure-operational-strip__message-stack">
             {drawBlockedNote}
           </div>

@@ -11,6 +11,180 @@ import {
   playUpApiBase,
 } from './hostSeed';
 
+type HubPot = { entryId: string; pot: number };
+
+type HubStage = {
+  stageId: string;
+  compositionEntryIds?: string[] | null;
+  compositionPreviewNames?: string[] | null;
+  compositionEntryPots?: HubPot[] | null;
+};
+
+type StageGroupWire = { id: string; name: string; entryIds: string[] };
+
+type StageDrawWire = {
+  id: string;
+  status: string;
+  isApplied?: boolean;
+  actions?: {
+    release?: { releasableCount?: number };
+    redo?: { state?: string };
+  };
+};
+
+type StageOverviewWire = {
+  draws?: StageDrawWire[];
+  groups?: StageGroupWire[];
+};
+
+async function readHubStage(
+  request: APIRequestContext,
+  competitionId: string,
+): Promise<HubStage> {
+  const stageId = await getPrimaryStageId(request, competitionId);
+  const response = await request.get(
+    `${playUpApiBase()}/competitions/${competitionId}/structure`,
+  );
+  if (!response.ok()) {
+    throw new Error(`GET structure failed (${response.status()})`);
+  }
+  const view = (await response.json()) as { stages?: HubStage[] };
+  const stage = view.stages?.find((item) => item.stageId === stageId);
+  if (!stage) {
+    throw new Error(`Hub stage ${stageId} is missing`);
+  }
+  return stage;
+}
+
+async function readStageOverview(
+  request: APIRequestContext,
+  stageId: string,
+): Promise<StageOverviewWire> {
+  const response = await request.get(`${playUpApiBase()}/stages/${stageId}`);
+  if (!response.ok()) {
+    throw new Error(`GET stage failed (${response.status()})`);
+  }
+  return (await response.json()) as StageOverviewWire;
+}
+
+type RosterEntry = { entryId: string; displayName?: string | null };
+
+async function readRoster(
+  request: APIRequestContext,
+  competitionId: string,
+): Promise<RosterEntry[]> {
+  const response = await request.get(
+    `${playUpApiBase()}/competitions/${competitionId}/structure`,
+  );
+  if (!response.ok()) {
+    throw new Error(`GET structure failed (${response.status()})`);
+  }
+  const view = (await response.json()) as {
+    participants?: { entries?: RosterEntry[] };
+  };
+  return view.participants?.entries ?? [];
+}
+
+function teamsOfPot(
+  stage: HubStage,
+  roster: readonly RosterEntry[],
+  pot: number,
+): { entryId: string; label: string }[] {
+  const labels = new Map<string, string>();
+  for (const entry of roster) {
+    const name = entry.displayName?.trim();
+    if (entry.entryId && name) {
+      labels.set(entry.entryId, name);
+    }
+  }
+  return (stage.compositionEntryPots ?? [])
+    .filter((row) => row.pot === pot)
+    .flatMap((row) => {
+      const label = labels.get(row.entryId);
+      return label ? [{ entryId: row.entryId, label }] : [];
+    });
+}
+
+async function placeNamedTeam(
+  page: Page,
+  groupLabel: string,
+  teamName: string,
+) {
+  const group = page
+    .locator('.regulation-schematic__card')
+    .filter({ hasText: groupLabel });
+  const seat = group
+    .getByRole('button', { name: /Cliquer pour placer une équipe/ })
+    .first();
+  await expect(seat).toBeEnabled();
+  await seat.click();
+  const dialog = placementDialog(page);
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole('checkbox', { name: teamName, exact: true }).click();
+  await savePlacementDialog(dialog);
+  await expect(group.getByText(teamName, { exact: true })).toBeVisible();
+}
+
+async function discardDraws(request: APIRequestContext, stageId: string) {
+  const before = await readStageOverview(request, stageId);
+  for (const draw of before.draws ?? []) {
+    if (draw.status === 'Cancelled') continue;
+    const cancel = await request.post(
+      `${playUpApiBase()}/stages/${stageId}/draws/${draw.id}/cancel`,
+    );
+    if (!cancel.ok() && cancel.status() !== 409) {
+      throw new Error(
+        `Cancel draw failed (${cancel.status()}): ${await cancel.text()}`,
+      );
+    }
+  }
+  const after = await readStageOverview(request, stageId);
+  for (const draw of after.draws ?? []) {
+    if (draw.status !== 'Cancelled') continue;
+    const release = await request.post(
+      `${playUpApiBase()}/stages/${stageId}/draws/${draw.id}/release-aligned-placements`,
+    );
+    if (!release.ok() && release.status() !== 409 && release.status() !== 404) {
+      throw new Error(
+        `Release draw failed (${release.status()}): ${await release.text()}`,
+      );
+    }
+  }
+}
+
+async function dismissStatus(page: Page, text: string) {
+  const status = page.getByRole('status').filter({ hasText: text });
+  await expect(status).toBeVisible();
+  await status.getByRole('button', { name: 'Fermer', exact: true }).click();
+  await expect(status).toBeHidden();
+}
+
+async function launchAndValidateDraw(page: Page) {
+  await page
+    .getByRole('button', { name: 'Lancer le tirage', exact: true })
+    .click();
+  const dialog = page.getByRole('dialog', { name: /Exécutions de tirage/ });
+  const posted = page.waitForRequest(
+    (req) => req.method() === 'POST' && req.url().endsWith('/draws'),
+  );
+  await expect(dialog).toBeVisible();
+  await dialog
+    .getByRole('button', { name: 'Lancer le tirage', exact: true })
+    .click();
+  const createBody = (await posted).postDataJSON() as { intent?: string };
+  expect(createBody.intent).toBe('Default');
+  // The success toast pauses under the pointer and covers the footer.
+  await dismissStatus(page, 'Nouvelle exécution créée.');
+  const validate = dialog.getByRole('button', {
+    name: 'Valider le tirage',
+    exact: true,
+  });
+  await expect(validate).toBeEnabled();
+  await validate.click();
+  await dismissStatus(page, 'Tirage publié et appliqué.');
+  return dialog;
+}
+
 const MANUAL = 'Placement groupes — manuel';
 const MANUAL_DRAW = 'Placement groupes — tirage';
 const READY_MATCH = 'Placement groupes — match';
@@ -120,6 +294,7 @@ async function prepareCompetition(
       );
     }
   }
+  await discardDraws(request, stageId);
   await clearGroupPlacements(request, competition.id);
   return competition;
 }
@@ -464,5 +639,300 @@ test.describe('manual group placement', () => {
       }),
     ).toBeVisible();
     await replaceDialog.getByRole('button', { name: 'Annuler' }).click();
+  });
+
+  test('disables the draw when two teams of the same pot share a group', async ({
+    page,
+    request,
+  }) => {
+    test.setTimeout(90_000);
+    const competition = await prepareCompetition(request, MANUAL_DRAW);
+    const stageId = await getPrimaryStageId(request, competition.id);
+    await discardDraws(request, stageId);
+    await page.goto(`/competitions/${competition.id}/structure`);
+
+    const stage = await readHubStage(request, competition.id);
+    const roster = await readRoster(request, competition.id);
+    const samePot = teamsOfPot(stage, roster, 1);
+    expect(samePot.length).toBeGreaterThanOrEqual(2);
+    await placeNamedTeam(page, 'Groupe A', samePot[0].label);
+    await placeNamedTeam(page, 'Groupe A', samePot[1].label);
+
+    const launch = page.getByRole('button', { name: 'Lancer le tirage' });
+    await expect(launch).toBeDisabled();
+    await expect(
+      page.getByText('Déplacez une équipe du même pot avant de tirer.'),
+    ).toBeVisible();
+    const named = page.getByText(/Groupe A, pot 1 :/);
+    await expect(named).toBeVisible();
+    await expect(named).toContainText(samePot[0].label);
+    await expect(named).toContainText(samePot[1].label);
+
+    const overview = await readStageOverview(request, stageId);
+    expect(
+      (overview.draws ?? []).every((draw) => draw.status === 'Cancelled'),
+    ).toBe(true);
+  });
+
+  test('draws the remaining group places and keeps the hand-placed teams', async ({
+    page,
+    request,
+  }) => {
+    test.setTimeout(120_000);
+    const competition = await prepareCompetition(request, MANUAL_DRAW);
+    const stageId = await getPrimaryStageId(request, competition.id);
+    await discardDraws(request, stageId);
+    await page.goto(`/competitions/${competition.id}/structure`);
+
+    const stage = await readHubStage(request, competition.id);
+    const roster = await readRoster(request, competition.id);
+    const pot1 = teamsOfPot(stage, roster, 1);
+    const pot2 = teamsOfPot(stage, roster, 2);
+    expect(pot1.length).toBeGreaterThan(0);
+    expect(pot2.length).toBeGreaterThan(0);
+    const kept = [pot1[0], pot2[0]];
+    await placeNamedTeam(page, 'Groupe A', kept[0].label);
+    await placeNamedTeam(page, 'Groupe A', kept[1].label);
+
+    const dialog = await launchAndValidateDraw(page);
+    await expect(
+      dialog.getByRole('button', { name: 'Refaire le tirage' }),
+    ).toBeVisible();
+    await dialog.getByRole('button', { name: 'Fermer', exact: true }).click();
+    await expect(dialog).toBeHidden();
+
+    const groupA = page
+      .locator('.regulation-schematic__card')
+      .filter({ hasText: 'Groupe A' });
+    await expect(groupA.getByText('4/4')).toBeVisible();
+    await expect(
+      groupA.getByText(kept[0].label, { exact: true }),
+    ).toBeVisible();
+    await expect(
+      groupA.getByText(kept[1].label, { exact: true }),
+    ).toBeVisible();
+    const pools = page.getByRole('group', { name: '2 groupes' });
+    await expect(pools.getByText('4/4')).toHaveCount(2);
+
+    const keptIds = kept.map((team) => team.entryId);
+    await expect
+      .poll(async () => {
+        const overview = await readStageOverview(request, stageId);
+        const groupAWire = overview.groups?.find((group) => group.name === 'A');
+        const ids = new Set(groupAWire?.entryIds ?? []);
+        return keptIds.every((id) => ids.has(id));
+      })
+      .toBe(true);
+    const overview = await readStageOverview(request, stageId);
+    const potByEntry = new Map(
+      (stage.compositionEntryPots ?? []).map((row) => [row.entryId, row.pot]),
+    );
+    for (const group of overview.groups ?? []) {
+      const pots = group.entryIds.map((id) => potByEntry.get(id));
+      expect(new Set(pots)).toEqual(new Set([1, 2, 3, 4]));
+    }
+
+    await produceMatchesIfNeeded(page);
+  });
+
+  test('redoes a groups draw and keeps the hand-placed teams', async ({
+    page,
+    request,
+  }) => {
+    test.setTimeout(120_000);
+    const competition = await prepareCompetition(request, MANUAL_DRAW);
+    const stageId = await getPrimaryStageId(request, competition.id);
+    await discardDraws(request, stageId);
+    await page.goto(`/competitions/${competition.id}/structure`);
+
+    const stage = await readHubStage(request, competition.id);
+    const roster = await readRoster(request, competition.id);
+    const kept = [
+      teamsOfPot(stage, roster, 1)[0],
+      teamsOfPot(stage, roster, 2)[0],
+    ];
+    await placeNamedTeam(page, 'Groupe A', kept[0].label);
+    await placeNamedTeam(page, 'Groupe A', kept[1].label);
+    const dialog = await launchAndValidateDraw(page);
+
+    await dialog.getByRole('button', { name: 'Refaire le tirage' }).click();
+    const confirm = page.getByRole('dialog', { name: 'Refaire le tirage ?' });
+    await expect(confirm).toContainText(
+      'retire seulement les équipes placées par le tirage',
+    );
+    await confirm.getByRole('button', { name: 'Refaire le tirage' }).click();
+    await dismissStatus(page, 'Nouvelle exécution créée.');
+    await expect(
+      dialog.getByRole('heading', { name: /Exécution #/ }).first(),
+    ).toBeVisible();
+
+    const overview = await readStageOverview(request, stageId);
+    expect(overview.draws?.some((draw) => draw.status === 'Draft')).toBe(true);
+    const groupA = overview.groups?.find((group) => group.name === 'A');
+    const keptIds = kept.map((team) => team.entryId);
+    expect(groupA?.entryIds).toEqual(expect.arrayContaining(keptIds));
+    await dialog.getByRole('button', { name: 'Fermer', exact: true }).click();
+    await expect(dialog).toBeHidden();
+    const groupACard = page
+      .locator('.regulation-schematic__card')
+      .filter({ hasText: 'Groupe A' });
+    const seats = groupACard.locator('.schematic-slot__name-row');
+    await expect(seats.getByText(kept[0].label, { exact: true })).toBeVisible();
+    await expect(seats.getByText(kept[1].label, { exact: true })).toBeVisible();
+  });
+
+  test('cancels an applied groups draw and offers release of the drawn teams only', async ({
+    page,
+    request,
+  }) => {
+    test.setTimeout(120_000);
+    const competition = await prepareCompetition(request, MANUAL_DRAW);
+    const stageId = await getPrimaryStageId(request, competition.id);
+    await discardDraws(request, stageId);
+    await page.goto(`/competitions/${competition.id}/structure`);
+
+    const stage = await readHubStage(request, competition.id);
+    const roster = await readRoster(request, competition.id);
+    const kept = [
+      teamsOfPot(stage, roster, 1)[0],
+      teamsOfPot(stage, roster, 2)[0],
+    ];
+    await placeNamedTeam(page, 'Groupe A', kept[0].label);
+    await placeNamedTeam(page, 'Groupe A', kept[1].label);
+    const dialog = await launchAndValidateDraw(page);
+
+    const cancelApplied = dialog.getByRole('button', {
+      name: 'Annuler le tirage',
+    });
+    const redo = dialog.getByRole('button', { name: 'Refaire le tirage' });
+    await expect(cancelApplied).toBeVisible();
+    await expect(redo).toBeVisible();
+    const order = await cancelApplied.evaluate((cancel, redoText) => {
+      const footer = cancel.parentElement;
+      const redoButton = [...(footer?.querySelectorAll('button') ?? [])].find(
+        (button) => button.textContent?.includes(redoText),
+      );
+      if (!redoButton) return false;
+      return (
+        (cancel.compareDocumentPosition(redoButton) &
+          Node.DOCUMENT_POSITION_FOLLOWING) !==
+        0
+      );
+    }, 'Refaire le tirage');
+    expect(order).toBe(true);
+
+    await cancelApplied.click();
+    const confirm = page.getByRole('dialog', { name: 'Annuler le tirage ?' });
+    await expect(confirm).toContainText(
+      'Les équipes restent à leur place et ne sont plus protégées.',
+    );
+    await expect(confirm).not.toContainText('Des matchs sont générés');
+    await confirm.getByRole('button', { name: 'Annuler le tirage' }).click();
+
+    await expect(
+      dialog.getByRole('button', { name: /Libérer #/ }),
+    ).toBeVisible();
+    const overview = await readStageOverview(request, stageId);
+    const groupA = overview.groups?.find((group) => group.name === 'A');
+    const keptIds = kept.map((team) => team.entryId);
+    expect(groupA?.entryIds).toEqual(expect.arrayContaining(keptIds));
+    const cancelled = overview.draws?.find(
+      (draw) => draw.status === 'Cancelled',
+    );
+    expect(cancelled?.actions?.release?.releasableCount).toBeGreaterThan(0);
+    expect(cancelled?.actions?.release?.releasableCount).toBeLessThan(
+      (overview.groups ?? []).reduce(
+        (sum, group) => sum + group.entryIds.length,
+        0,
+      ),
+    );
+  });
+
+  test('clears a fixed team after apply and keeps a drawn team protected', async ({
+    page,
+    request,
+  }) => {
+    test.setTimeout(120_000);
+    const competition = await prepareCompetition(request, MANUAL_DRAW);
+    const stageId = await getPrimaryStageId(request, competition.id);
+    await discardDraws(request, stageId);
+    await page.goto(`/competitions/${competition.id}/structure`);
+
+    const stage = await readHubStage(request, competition.id);
+    const roster = await readRoster(request, competition.id);
+    const kept = [
+      teamsOfPot(stage, roster, 1)[0],
+      teamsOfPot(stage, roster, 2)[0],
+    ];
+    await placeNamedTeam(page, 'Groupe A', kept[0].label);
+    await placeNamedTeam(page, 'Groupe A', kept[1].label);
+    const drawDialog = await launchAndValidateDraw(page);
+    await drawDialog
+      .getByRole('button', { name: 'Fermer', exact: true })
+      .click();
+    await expect(drawDialog).toBeHidden();
+
+    const groupACard = page
+      .locator('.regulation-schematic__card')
+      .filter({ hasText: 'Groupe A' });
+    const before = await readStageOverview(request, stageId);
+    const groupA = before.groups?.find((group) => group.name === 'A');
+    const keptIds = kept.map((team) => team.entryId);
+    const drawnId = groupA?.entryIds.find((id) => !keptIds.includes(id));
+    expect(drawnId).toBeTruthy();
+    const drawnName = roster.find(
+      (entry) => entry.entryId === drawnId,
+    )?.displayName;
+    expect(drawnName).toBeTruthy();
+
+    const drawnSlot = groupACard
+      .locator('.schematic-slot')
+      .filter({ hasText: drawnName! });
+    await expect(
+      drawnSlot.getByRole('button', { name: /modifier ou retirer/ }),
+    ).toHaveCount(0);
+    const drawnReasonId = await drawnSlot.getAttribute('aria-describedby');
+    expect(drawnReasonId).toBeTruthy();
+    await expect(page.locator(`[id="${drawnReasonId}"]`)).toContainText(
+      'placée par le tirage appliqué',
+    );
+
+    const fixedSlot = groupACard
+      .locator('.schematic-slot')
+      .filter({ hasText: kept[0].label });
+    await expect(fixedSlot).not.toContainText('placée par le tirage appliqué');
+    await fixedSlot
+      .getByRole('button', { name: /modifier ou retirer/ })
+      .click();
+    const placement = placementDialog(page);
+    await expect(placement).toBeVisible();
+    await placement
+      .getByRole('checkbox', {
+        name: kept[0].label,
+        exact: true,
+        checked: true,
+      })
+      .click();
+    await savePlacementDialog(placement);
+    await expect(
+      groupACard.getByText(kept[0].label, { exact: true }),
+    ).toHaveCount(0);
+
+    const after = await readStageOverview(request, stageId);
+    const applied = after.draws?.find((draw) => draw.status === 'Published');
+    expect(applied?.isApplied).toBe(true);
+    expect(applied?.actions?.redo?.state).toBe('Available');
+    const stillDrawn = groupACard
+      .locator('.schematic-slot')
+      .filter({ hasText: drawnName! });
+    await expect(
+      stillDrawn.getByRole('button', { name: /modifier ou retirer/ }),
+    ).toHaveCount(0);
+    const stillDrawnReasonId =
+      await stillDrawn.getAttribute('aria-describedby');
+    expect(stillDrawnReasonId).toBeTruthy();
+    await expect(page.locator(`[id="${stillDrawnReasonId}"]`)).toContainText(
+      'placée par le tirage appliqué',
+    );
   });
 });

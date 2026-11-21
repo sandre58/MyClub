@@ -183,7 +183,7 @@ public sealed class StructureDrawCreateLaunchGateContractTests
     }
 
     [Fact]
-    public void Groups_with_two_legal_occupants_stays_blocked_while_the_client_sends_rerun()
+    public void Groups_with_two_legal_occupants_allows_launch()
     {
         var situation = TestCompetition.Create("Groups occupied", _clock)
             .WithTeams("A", "B", "C", "D")
@@ -200,10 +200,9 @@ public sealed class StructureDrawCreateLaunchGateContractTests
 
         var hub = StructureViewAssembler.Assemble(situation.Competition, situation.Stages).Stages.Single();
 
-        hub.DrawCreateLaunch.Allowed.Should().BeFalse();
-        hub.DrawCreateLaunch.BlockReasonCode.Should().Be(StructureDrawCreateLaunchGate.BlockBracketPlacesOccupied);
-        StructureDrawCreateLaunchGate.GroupReasonParity.Should().Contain(
-            (StructureDrawCreateLaunchGate.BlockBracketPlacesOccupied, ApplicationErrorCodes.DrawLaunchGridNotVacant));
+        hub.DrawCreateLaunch.Allowed.Should().BeTrue();
+        hub.DrawCreateLaunch.BlockReasonCode.Should().BeNull();
+        hub.DrawCreateLaunch.BlockDetail.Should().BeNull();
     }
 
     [Theory]
@@ -213,7 +212,6 @@ public sealed class StructureDrawCreateLaunchGateContractTests
     [InlineData("pot-conflict")]
     [InlineData("outside-composition")]
     [InlineData("capacity")]
-    [InlineData("occupied-rerun")]
     [InlineData("active-draw")]
     public void Groups_gate_reason_matches_the_server_code(string cause)
     {
@@ -244,7 +242,6 @@ public sealed class StructureDrawCreateLaunchGateContractTests
             StructureDrawCreateLaunchGate.BlockMissingPots => ApplicationErrorCodes.DrawPotsMissing,
             StructureDrawCreateLaunchGate.BlockGroupShapeInvalid => ApplicationErrorCodes.DrawGroupShapeInvalid,
             StructureDrawCreateLaunchGate.BlockActiveDrawPresent => StageErrorCodes.NonCancelledDrawAlreadyExists,
-            StructureDrawCreateLaunchGate.BlockBracketPlacesOccupied => ApplicationErrorCodes.DrawLaunchGridNotVacant,
             _ => gateCode
         });
         if (cause == "inbound")
@@ -418,11 +415,6 @@ public sealed class StructureDrawCreateLaunchGateContractTests
                 stage.AssignEntryToGroup(stage.Groups[0].Id, ids[0]);
                 stage.AssignEntryToGroup(stage.Groups[0].Id, ids[1]);
                 stage.AssignEntryToGroup(stage.Groups[0].Id, ids[2]);
-                break;
-            case "occupied-rerun":
-                stage.AssignEntryToGroup(stage.Groups[0].Id, ids[0]);
-                stage.AssignEntryToGroup(stage.Groups[0].Id, ids[2]);
-                intent = DrawInputsIntent.Rerun;
                 break;
             case "active-draw":
                 CreateDraw.Execute(stage, DrawResolutionKind.Group, _clock, competitionStages: [stage]);

@@ -30,11 +30,26 @@ export const DRAW_RELEASE_FAILURE = 'Application.DrawReleaseFailure';
 
 export const CUP_RELEASE_CONFLICT = 'Stage.MaterializedOpponentConflict';
 
+const DRAW_GROUP_SEATS_RESERVED =
+  'Application.DrawGroupSeatsReservedByInboundFeed';
+const DRAW_FIXED_POT_CONFLICT = 'Application.DrawFixedPotConflict';
+const DRAW_FIXED_OUTSIDE_COMPOSITION =
+  'Application.DrawFixedOutsideComposition';
+const DRAW_FIXED_EXCEEDS_CAPACITY = 'Application.DrawFixedExceedsCapacity';
+const DRAW_GROUP_SHAPE_INVALID = 'Application.DrawGroupShapeInvalid';
+const DRAW_POTS_MISSING = 'Application.DrawPotsMissing';
+
 export type DrawRedoBlockReason =
   | 'cupFixtureAttached'
   | 'groupMatchesAttached'
   | 'launchGridNotVacant'
   | 'launchDirectAssignment'
+  | 'reservedSeats'
+  | 'fixedPotConflict'
+  | 'fixedOutsideComposition'
+  | 'fixedExceedsCapacity'
+  | 'groupShape'
+  | 'missingPots'
   | 'lifecycle';
 
 export type DrawRedoPresentation =
@@ -122,6 +137,24 @@ export function redoBlockReason(
   }
   if (blockCode === DRAW_LAUNCH_DIRECT_ASSIGNMENT) {
     return 'launchDirectAssignment';
+  }
+  if (blockCode === DRAW_GROUP_SEATS_RESERVED) {
+    return 'reservedSeats';
+  }
+  if (blockCode === DRAW_FIXED_POT_CONFLICT) {
+    return 'fixedPotConflict';
+  }
+  if (blockCode === DRAW_FIXED_OUTSIDE_COMPOSITION) {
+    return 'fixedOutsideComposition';
+  }
+  if (blockCode === DRAW_FIXED_EXCEEDS_CAPACITY) {
+    return 'fixedExceedsCapacity';
+  }
+  if (blockCode === DRAW_GROUP_SHAPE_INVALID) {
+    return 'groupShape';
+  }
+  if (blockCode === DRAW_POTS_MISSING) {
+    return 'missingPots';
   }
   return 'lifecycle';
 }

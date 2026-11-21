@@ -248,7 +248,7 @@ internal static class DrawActionEvaluator
                 GroupDrawLaunchRules.DrawnEntries(draw));
             return decision.IsAllowed
                 ? DrawActionAssessment.Available
-                : DrawActionAssessment.Block(decision.Code!);
+                : DrawActionAssessment.Block(decision.Code!, decision.Reasons);
         }
 
         var facts = StageDrawBracketLaunchClassifier.ClassifyForDrawKind(
@@ -457,13 +457,17 @@ internal sealed class DrawActionContext(
     internal bool HasAttachedMatches { get; } = hasAttachedMatches;
 }
 
-internal sealed record DrawActionAssessment(StageDrawActionState State, string? BlockCode)
+internal sealed record DrawActionAssessment(
+    StageDrawActionState State,
+    string? BlockCode,
+    IReadOnlyList<string>? BlockDetail = null)
 {
     internal static DrawActionAssessment Hidden { get; } = new(StageDrawActionState.Hidden, null);
 
     internal static DrawActionAssessment Available { get; } = new(StageDrawActionState.Available, null);
 
-    internal static DrawActionAssessment Block(string code) => new(StageDrawActionState.Blocked, code);
+    internal static DrawActionAssessment Block(string code, IReadOnlyList<string>? detail = null) =>
+        new(StageDrawActionState.Blocked, code, detail is { Count: > 0 } ? detail : null);
 }
 
 internal sealed record DrawReleaseAssessment(
@@ -489,13 +493,13 @@ internal sealed record DrawActionsAssessment(
 
 internal static class DrawActionFailure
 {
-    internal static void Throw(string code, string message)
+    internal static void Throw(string code, string message, IReadOnlyList<string>? reasons = null)
     {
         if (code.StartsWith("Stage.", StringComparison.Ordinal))
         {
             throw new DomainException(message, code);
         }
 
-        throw new ApplicationFailureException(message, code);
+        throw new ApplicationFailureException(message, code, reasons);
     }
 }

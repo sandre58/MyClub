@@ -232,6 +232,7 @@ describe.each(['fr', 'en'] as const)(
           competitionStatus="Draft"
           stage={stage}
           structureStages={[stage]}
+          blockDetailRoster={[]}
         />,
       );
 

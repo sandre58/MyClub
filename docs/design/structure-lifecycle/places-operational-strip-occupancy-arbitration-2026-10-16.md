@@ -30,7 +30,7 @@ Server SoT: `StructureViewAssembler.ResolveDrawExecutionBadge` · SPA mirror: `d
 | **`ToLaunch`** | Draw rules engaged; no active non-cancelled draw yet | No implication |
 | **`InProgress`** | Active draw in **Draft** (generation / resolution in progress) | No implication |
 | **`ToApply`** | Draw **Published** + resolution **Resolved**, but stage slots/groups **do not yet match** draw results (Apply pending) | No — apply still expected |
-| **`Applied`** | Published + resolved draw **aligned** with stage slots (slot entry IDs match results, or group placements reflected) | **No** — only guarantees alignment for **places covered by the draw**, not full bracket N/N |
+| **`Applied`** | Published + resolved draw **aligned** with stage slots (slot entry IDs match results). Groups: every drawn placement is still in its group, or every resolution row when the draw placed nobody | **No** — only guarantees alignment for **places covered by the draw**, not full bracket N/N |
 
 **Decision (retained):** Keep this contract. **`Applied` confirms draw ↔ stage alignment for affected placements, not complete bracket occupancy.**
 

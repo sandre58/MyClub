@@ -90,4 +90,34 @@ describe('groupsSchematicFromDrawDraft', () => {
     });
     expect(groups[0]?.entries[0]?.seat).toBeUndefined();
   });
+
+  it('keeps Feed and treats a missing origin as Draw', () => {
+    const groups = groupsSchematicFromDrawDraft({
+      placements: [
+        {
+          groupId: 'ga',
+          groupDisplayName: 'A',
+          entryId: 'e1',
+          displayName: 'Alpha',
+          origin: 'Feed',
+        },
+        {
+          groupId: 'ga',
+          groupDisplayName: 'A',
+          entryId: 'e2',
+          displayName: 'Beta',
+        },
+      ],
+      stageGroups: [],
+      placesPerGroup: 2,
+      unknownEntry: 'Inconnue',
+      unknownGroup: 'Groupe',
+      groupLabel: label,
+    });
+
+    expect(groups[0]?.entries.map((entry) => entry.origin)).toEqual([
+      'Feed',
+      'Draw',
+    ]);
+  });
 });

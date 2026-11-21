@@ -761,6 +761,13 @@
           "fixedOutsideComposition": "A placed team is no longer in the composition. Remove it from the group or restore the composition before drawing.",
           "fixedExceedsCapacity": "A group holds more teams than the draw can place. Remove teams before drawing."
         },
+        "named": {
+          "potConflict": "{{group}}, pot {{pot}}: {{teamA}} and {{teamB}}",
+          "reserved_one": "{{group}}: {{count}} reserved place",
+          "reserved_other": "{{group}}: {{count}} reserved places",
+          "outside": "{{group}}: {{team}}",
+          "capacity": "{{group}}: {{occupants}} teams for {{capacity}} places"
+        },
         "echoTeams": "Open teams"
       },
       "partialFillHint": "The draw fills only free places. Teams already placed stay where they are.",

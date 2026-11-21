@@ -277,6 +277,11 @@ export interface StructureStageHubSummary {
   drawCreateLaunch?: {
     allowed: boolean;
     blockReasonCode: string | null;
+    /**
+     * Machine fragments for a Groups refusal (group, pot, teams).
+     * Omitted when launch is allowed or the refusal has no detail.
+     */
+    blockDetail?: string[] | null;
   } | null;
   /** Inbound Qual/Prog resolution for Composition Qualifiés; omitted when root composition. */
   inboundComposition?: StructureInboundComposition | null;

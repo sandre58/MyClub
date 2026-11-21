@@ -58,7 +58,10 @@ public static class RedoDraw
             // Hidden (Draft, Published not yet applied, Cancelled) has no BlockCode — the read
             // projection just omits the action — so the command needs its own refusal code.
             var code = redo.BlockCode ?? ApplicationErrorCodes.DrawRedoRequiresApplied;
-            DrawActionFailure.Throw(code, $"Cannot redo draw '{draw.Id}' ({code}).");
+            DrawActionFailure.Throw(
+                code,
+                $"Cannot redo draw '{draw.Id}' ({code}).",
+                redo.BlockDetail);
         }
 
         if (draw.Inputs is null)

@@ -115,6 +115,35 @@ describe('StructureStaleDrawResolutionActions', () => {
     ).toBeDisabled();
   });
 
+  it('shows group redo detail lines on the banner', () => {
+    const groupId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    const alpha = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+    const beta = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+    renderActions({
+      activeDraw: {
+        ...appliedDraw(
+          drawActions({
+            redo: {
+              state: 'Blocked',
+              blockCode: 'Application.DrawFixedPotConflict',
+              blockDetail: [`group:${groupId}:pot:1:entries:${alpha},${beta}`],
+            },
+          }),
+        ),
+        kind: 'Group',
+      },
+      detailGroups: [{ id: groupId, name: 'A' }],
+      detailRoster: [
+        { entryId: alpha, displayName: 'Alpha' },
+        { entryId: beta, displayName: 'Beta' },
+      ],
+    });
+
+    expect(
+      screen.getByText('Groupe A, pot 1 : Alpha et Beta'),
+    ).toBeInTheDocument();
+  });
+
   it('disables Libérer when release action is blocked', () => {
     renderActions({
       activeDraw: appliedDraw(
@@ -149,10 +178,32 @@ describe('StructureStaleDrawResolutionActions', () => {
     renderActions({ confirmRedoOpen: true, onConfirmRedo });
 
     const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveTextContent(
+      'Cela annule l’exécution, libère les placements encore alignés, puis lance un nouvel aperçu, en une seule opération : si une étape échoue, rien n’est modifié.',
+    );
     await user.click(
       within(dialog).getByRole('button', { name: 'Refaire le tirage' }),
     );
     expect(onConfirmRedo).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses the Groups redo confirmation when the draw is a group draw', () => {
+    renderActions({
+      confirmRedoOpen: true,
+      activeDraw: {
+        ...appliedDraw(
+          drawActions({
+            redo: { state: 'Available' },
+            release: { state: 'Available', releasableCount: 2 },
+          }),
+        ),
+        kind: 'Group',
+      },
+    });
+
+    expect(screen.getByRole('dialog')).toHaveTextContent(
+      'Cela annule l’exécution, retire seulement les équipes placées par le tirage, puis lance un nouvel aperçu. Les équipes placées à la main ou qualifiées restent à leur place. Si une étape échoue, rien n’est modifié.',
+    );
   });
 
   it('requests release confirmation before mutating', async () => {
