@@ -170,7 +170,7 @@ public sealed class CupSlotPlacementConcurrencyEndpointTests(HostPostgresFixture
         var bodies = await ReadMaterializeAsync(responses);
 
         bodies.Should().OnlyContain(body => body.Status == HttpStatusCode.OK);
-        bodies.Count(body => body.CreatedCount > 0 && body.AlreadyComplete == false).Should().Be(1);
+        bodies.Count(body => body is { CreatedCount: > 0, AlreadyComplete: false }).Should().Be(1);
         bodies.Count(body => body.AlreadyComplete).Should().Be(1);
         (await CountMatchesAsync(seed.StageId)).Should().Be(bodies.Sum(body => body.CreatedCount));
         await AssertCupSqlAsync(seed.StageId);
@@ -237,7 +237,7 @@ public sealed class CupSlotPlacementConcurrencyEndpointTests(HostPostgresFixture
         }
         else
         {
-            stage.FindSlot(seed.TargetSlot!)!.EntryId.Should().Be(seed.ConflictingEntry);
+            stage.FindSlot(seed.TargetSlot)!.EntryId.Should().Be(seed.ConflictingEntry);
         }
 
         await AssertCupSqlAsync(seed.StageId);
@@ -279,7 +279,7 @@ public sealed class CupSlotPlacementConcurrencyEndpointTests(HostPostgresFixture
         var bodies = await ReadMaterializeAsync(responses);
 
         bodies.Should().OnlyContain(body => body.Status == HttpStatusCode.OK);
-        bodies.Count(body => body.CreatedCount > 0 && body.AlreadyComplete == false).Should().Be(1);
+        bodies.Count(body => body is { CreatedCount: > 0, AlreadyComplete: false }).Should().Be(1);
         bodies.Count(body => body.AlreadyComplete).Should().Be(1);
         await AssertGroupMatchesFollowMembershipAsync(factory, seed.StageId);
     }
@@ -376,7 +376,7 @@ public sealed class CupSlotPlacementConcurrencyEndpointTests(HostPostgresFixture
     private async Task<CupSeed> SeedReadyCupAsync(PlayUpWebApplicationFactory factory, int entryCount, int occupy)
     {
         var (competition, stage, entries) = BuildCup(entryCount);
-        var occupied = AssignOpenSlots(stage, entries.Take(occupy).ToArray());
+        var occupied = AssignOpenSlots(stage, [.. entries.Take(occupy)]);
         stage.Prepare(_clock);
         await SaveAsync(factory, competition, stage, matches: null);
         return new CupSeed(competition.Id, stage.Id, entries, occupied, DrawId: null, TargetSlot: null, ConflictingEntry: null);
@@ -385,7 +385,7 @@ public sealed class CupSlotPlacementConcurrencyEndpointTests(HostPostgresFixture
     private async Task<CupSeed> SeedMaterializedCupAsync(PlayUpWebApplicationFactory factory)
     {
         var (competition, stage, entries) = BuildCup(entryCount: 5);
-        var occupied = AssignOpenSlots(stage, entries.Take(4).ToArray());
+        var occupied = AssignOpenSlots(stage, [.. entries.Take(4)]);
         stage.Prepare(_clock);
         var created = MaterializeCupFromOccupiedSlots.Execute(
             competition,
@@ -424,7 +424,7 @@ public sealed class CupSlotPlacementConcurrencyEndpointTests(HostPostgresFixture
         return new CupSeed(
             competition.Id,
             stage.Id,
-            entries.Select(id => id.Value).ToArray(),
+            [.. entries.Select(id => id.Value)],
             [],
             draw.Id,
             placed.SlotKey,
@@ -449,7 +449,7 @@ public sealed class CupSlotPlacementConcurrencyEndpointTests(HostPostgresFixture
             competition.Id,
             stage.Id,
             stage.Groups[0].Id,
-            entries.Select(id => id.Value).ToArray());
+            [.. entries.Select(id => id.Value)]);
     }
 
     private (Competition Competition, Stage Stage, Guid[] Entries) BuildCup(int entryCount)
@@ -462,7 +462,7 @@ public sealed class CupSlotPlacementConcurrencyEndpointTests(HostPostgresFixture
 
         var stage = ConfigureStructure.Execute(competition, null, StructureIntent.Cup(4), _clock).Stage;
         var entries = competition.Entries.Select(entry => entry.Id.Value).ToArray();
-        stage.ReplaceAffectationAuthoring(competition.Entries.Select(entry => entry.Id).ToArray(), _clock);
+        stage.ReplaceAffectationAuthoring([.. competition.Entries.Select(entry => entry.Id)], _clock);
         return (competition, stage, entries);
     }
 
@@ -618,7 +618,7 @@ public sealed class CupSlotPlacementConcurrencyEndpointTests(HostPostgresFixture
     private static Task<HttpResponseMessage> PostCupGenerationAsync(HttpClient client, StageId stageId) =>
         client.PostAsJsonAsync(
             new Uri($"/stages/{stageId.Value}/matches/materialize-from-slots", UriKind.Relative),
-            new MaterializeCupFromOccupiedSlotsRequest(null, PlanEntireRound: true),
+            new MaterializeCupFromOccupiedSlotsRequest(PlanEntireRound: true),
             HostJson.Options);
 
     private static Task<HttpResponseMessage> PostDematerializeAsync(HttpClient client, StageId stageId) =>
@@ -723,7 +723,7 @@ public sealed class CupSlotPlacementConcurrencyEndpointTests(HostPostgresFixture
 #pragma warning disable CA2100
         await using var command = new NpgsqlCommand(sql, connection);
 #pragma warning restore CA2100
-        command.Parameters.AddWithValue("stageId", stageId.Value);
+        command.Parameters.AddWithValue(nameof(stageId), stageId.Value);
         return (int)(await command.ExecuteScalarAsync() ?? 0);
     }
 
@@ -734,8 +734,8 @@ public sealed class CupSlotPlacementConcurrencyEndpointTests(HostPostgresFixture
         await using var command = new NpgsqlCommand(
             "SELECT entry_id FROM slots WHERE stage_id = @stageId AND slot_key = @slotKey",
             connection);
-        command.Parameters.AddWithValue("stageId", stageId.Value);
-        command.Parameters.AddWithValue("slotKey", slotKey);
+        command.Parameters.AddWithValue(nameof(stageId), stageId.Value);
+        command.Parameters.AddWithValue(nameof(slotKey), slotKey);
         var value = await command.ExecuteScalarAsync();
         return value is Guid id ? id : null;
     }
@@ -747,8 +747,8 @@ public sealed class CupSlotPlacementConcurrencyEndpointTests(HostPostgresFixture
         await using var command = new NpgsqlCommand(
             "SELECT COUNT(*)::int FROM slots WHERE stage_id = @stageId AND entry_id = @entryId",
             connection);
-        command.Parameters.AddWithValue("stageId", stageId.Value);
-        command.Parameters.AddWithValue("entryId", entryId);
+        command.Parameters.AddWithValue(nameof(stageId), stageId.Value);
+        command.Parameters.AddWithValue(nameof(entryId), entryId);
         return (int)(await command.ExecuteScalarAsync() ?? 0);
     }
 

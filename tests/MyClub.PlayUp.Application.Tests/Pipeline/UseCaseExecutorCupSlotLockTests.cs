@@ -7,7 +7,6 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
-using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Pipeline;
@@ -16,7 +15,6 @@ using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Stages;
-using MyClub.PlayUp.TestKit;
 using Xunit;
 using DomainMatch = MyClub.PlayUp.Domain.Matches.Match;
 
@@ -181,13 +179,13 @@ public sealed class UseCaseExecutorCupSlotLockTests
             AlwaysExistingMedia.Instance,
             NullLogger<UseCaseExecutor>.Instance);
 
-        var actions = new Func<Task>[]
+        var actions = new[]
         {
             () => executor.AssignEntryToSlotAsync(stageId, "S1", EntryId.New(), null),
             () => executor.ClearSlotAssignmentAsync(stageId, "S1", null),
             () => executor.MaterializeMatchesAsync(stageId),
             () => executor.MaterializeCupFromOccupiedSlotsAsync(stageId, null),
-            () => executor.DematerializePhaseAsync(stageId),
+            () => executor.DematerializePhaseAsync(stageId)
         };
 
         foreach (var action in actions)
@@ -305,7 +303,6 @@ public sealed class UseCaseExecutorCupSlotLockTests
             }
             catch (DomainException exception) when (exception.Code == StageErrorCodes.SlotFeedConflict)
             {
-                continue;
             }
         }
 
@@ -328,7 +325,6 @@ public sealed class UseCaseExecutorCupSlotLockTests
         public Harness(Competition competition, Stage stage, IReadOnlyList<DomainMatch>? existingMatches = null)
         {
             Competition = competition;
-            Stage = stage;
             Stages = new Mock<IStageRepository>(MockBehavior.Strict);
             Matches = new Mock<IMatchRepository>(MockBehavior.Strict);
             Competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
@@ -365,7 +361,7 @@ public sealed class UseCaseExecutorCupSlotLockTests
                 .Returns(() =>
                 {
                     _inside[0].Should().BeTrue();
-                    return Task.FromResult<IReadOnlyList<DomainMatch>>(existingMatches ?? []);
+                    return Task.FromResult(existingMatches ?? []);
                 });
             UnitOfWork
                 .Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
@@ -380,15 +376,13 @@ public sealed class UseCaseExecutorCupSlotLockTests
                 NullLogger<UseCaseExecutor>.Instance);
         }
 
-        public Competition Competition { get; }
+        private Competition Competition { get; }
 
-        public Stage Stage { get; }
-
-        public Mock<IStageRepository> Stages { get; }
+        private Mock<IStageRepository> Stages { get; }
 
         public Mock<IMatchRepository> Matches { get; }
 
-        public Mock<ICompetitionRepository> Competitions { get; }
+        private Mock<ICompetitionRepository> Competitions { get; }
 
         public Mock<IUnitOfWork> UnitOfWork { get; }
 

@@ -48,8 +48,7 @@ public static class DrawConsumptionConformance
             return true;
         }
 
-        if (draw.Kind == DrawResolutionKind.Group
-            && draw.Resolution.State == DrawResolutionState.Resolved
+        if (draw is { Kind: DrawResolutionKind.Group, Resolution.State: DrawResolutionState.Resolved }
             && GroupResolutionDiverges(stage, draw.Inputs.FixedGroups, draw.Resolution.GroupResults))
         {
             return true;
@@ -109,7 +108,7 @@ public static class DrawConsumptionConformance
             var current = stage.Groups.FirstOrDefault(group => group.EntryIds.Contains(placement.EntryId));
             if (fixedGroupByEntry.TryGetValue(placement.EntryId, out var fixedGroupId))
             {
-                if (current is null || !current.Id.Equals(fixedGroupId))
+                if (current?.Id.Equals(fixedGroupId) != true)
                 {
                     return true;
                 }
@@ -117,7 +116,7 @@ public static class DrawConsumptionConformance
                 continue;
             }
 
-            if (current is not null && !current.Id.Equals(placement.GroupId))
+            if (current?.Id.Equals(placement.GroupId) == false)
             {
                 return true;
             }

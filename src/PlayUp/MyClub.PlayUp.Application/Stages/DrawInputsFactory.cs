@@ -109,6 +109,9 @@ public static class DrawInputsFactory
         return appliedDraw.Kind switch
         {
             DrawResolutionKind.Slot => DrawInputs.ForSlot(entries),
+            DrawResolutionKind.Group => throw new ApplicationFailureException(
+                $"Unsupported draw kind '{appliedDraw.Kind}'.",
+                ApplicationErrorCodes.DrawKindNotSupported),
             _ => throw new ApplicationFailureException(
                 $"Unsupported draw kind '{appliedDraw.Kind}'.",
                 ApplicationErrorCodes.DrawKindNotSupported)
