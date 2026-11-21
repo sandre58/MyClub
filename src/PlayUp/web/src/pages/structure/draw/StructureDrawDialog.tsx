@@ -302,6 +302,14 @@ export function StructureDrawDialog({
     (sum, group) => sum + group.entryIds.length,
     0,
   );
+  const groupSeatCapacity =
+    placesPerGroup != null && (stage.groupCount ?? 0) > 0
+      ? placesPerGroup * (stage.groupCount ?? 0)
+      : null;
+  const groupsHaveAFreePlace =
+    groupSeatCapacity != null &&
+    occupiedGroupPlaces > 0 &&
+    occupiedGroupPlaces < groupSeatCapacity;
 
   /** Draft create / generate — hub + schematic unchanged until publish/apply. */
   function scheduleDrawOverviewRefresh() {
@@ -953,7 +961,7 @@ export function StructureDrawDialog({
             absent, the hint falls back to whether any slot already has an occupant.
           */}
           {canLaunch &&
-          ((drawKind === 'Group' && occupiedGroupPlaces > 0) ||
+          ((drawKind === 'Group' && groupsHaveAFreePlace) ||
             (drawKind === 'Slot' &&
               (stageDrawMetrics
                 ? stageDrawMetrics.alreadyPlacedEntryCount > 0 &&

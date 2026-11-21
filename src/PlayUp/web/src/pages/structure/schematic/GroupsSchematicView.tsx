@@ -1,4 +1,4 @@
-import { Fragment, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { AlreadyPlacedStatus } from '../../../design-system/components/Status';
 import { TeamCrest } from '../../../design-system/TeamCrest';
 import '../phase-schematic.css';
@@ -69,20 +69,16 @@ export function GroupsSchematicView({
                   </span>
                 ) : null}
               </div>
-              <div className="regulation-schematic__card-slots">
+              <ul className="regulation-schematic__card-slots">
                 {Array.from({ length: seatCount }, (_, seat) => {
                   const custom = renderSeat?.(group, seat);
                   if (custom != null) {
-                    return (
-                      <Fragment key={`${group.id}-seat-${seat}`}>
-                        {custom}
-                      </Fragment>
-                    );
+                    return <li key={`${group.id}-seat-${seat}`}>{custom}</li>;
                   }
                   const entry = groupsSchematicEntryAt(group, seat);
                   if (!entry) {
                     return (
-                      <span
+                      <li
                         key={`${group.id}-ghost-${seat}`}
                         className="schematic-slot schematic-slot--full schematic-slot--empty"
                       >
@@ -91,7 +87,7 @@ export function GroupsSchematicView({
                             {ghostLabel}
                           </span>
                         ) : null}
-                      </span>
+                      </li>
                     );
                   }
                   const pinned =
@@ -99,7 +95,7 @@ export function GroupsSchematicView({
                     entry.origin != null &&
                     entry.origin !== 'Draw';
                   return (
-                    <span
+                    <li
                       key={`${group.id}-${entry.id}-${seat}`}
                       className="schematic-slot schematic-slot--full"
                       {...(pinned
@@ -133,10 +129,10 @@ export function GroupsSchematicView({
                           </span>
                         </span>
                       </span>
-                    </span>
+                    </li>
                   );
                 })}
-              </div>
+              </ul>
             </div>
           );
         })}

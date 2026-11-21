@@ -222,4 +222,68 @@ public sealed class StageOverviewAssemblerTests
         after.Draws[0].IsObsoleteForConsumption.Should()
             .Be(DrawConsumptionConformance.IsObsoleteForConsumption(domainDraw, stage));
     }
+
+    [Fact]
+    public void Assemble_maps_group_placement_origin()
+    {
+        var competition = CreateCompetition.Execute("origins", _clock);
+        var manual = AddEntry.Execute(competition, "Manual", _clock);
+        var qualified = AddEntry.Execute(competition, "Qualified", _clock);
+        var departed = AddEntry.Execute(competition, "Departed", _clock);
+        var drawn = AddEntry.Execute(competition, "Drawn", _clock);
+        var stage = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Groups(2, 2),
+            _clock).Stage;
+        var groupA = stage.Groups[0].Id;
+        var groupB = stage.Groups[1].Id;
+        stage.ReplaceAffectationAuthoring(
+            [manual.Id, qualified.Id, departed.Id, drawn.Id],
+            _clock);
+        stage.AssignEntryToGroup(groupA, manual.Id);
+        stage.AssignEntryToGroup(groupA, qualified.Id);
+        stage.WriteGroupResolutionProvenance(
+            groupA,
+            qualified.Id,
+            new ResolutionProvenance(ResolutionProvenanceKind.Qualification, "Q|stay", "fp"));
+        stage.AssignEntryToGroup(groupB, departed.Id);
+        stage.WriteGroupResolutionProvenance(
+            groupB,
+            departed.Id,
+            new ResolutionProvenance(ResolutionProvenanceKind.Qualification, "Q|left", "fp"));
+        stage.RemoveResolvedGroupEntry(groupB, departed.Id);
+        stage.GroupResolutionProvenances.Should().NotContain(row => row.EntryId.Equals(departed.Id));
+        stage.AssignEntryToGroup(groupB, departed.Id);
+
+        var draw = stage.CreateDraw(DrawResolutionKind.Group, _clock);
+        stage.ConfigureDrawInputs(
+            draw.Id,
+            DrawInputs.ForGroup(
+                [manual.Id, qualified.Id, departed.Id, drawn.Id],
+                fixedPlacements:
+                [
+                    new GroupDrawPlacement(manual.Id, groupA),
+                    new GroupDrawPlacement(qualified.Id, groupA),
+                    new GroupDrawPlacement(departed.Id, groupB),
+                ]));
+        stage.RecordDrawResolution(
+            draw.Id,
+            DrawResolution.ResolvedGroups(
+            [
+                new GroupDrawPlacement(manual.Id, groupA),
+                new GroupDrawPlacement(qualified.Id, groupA),
+                new GroupDrawPlacement(departed.Id, groupB),
+                new GroupDrawPlacement(drawn.Id, groupB),
+            ]),
+            _clock);
+
+        var origins = StageOverviewAssembler.Assemble(stage, competition)
+            .Draws[0].GroupPlacements
+            .ToDictionary(row => row.EntryId, row => row.Origin);
+        origins[manual.Id.Value].Should().Be(DrawPlacementOrigin.Manual);
+        origins[qualified.Id.Value].Should().Be(DrawPlacementOrigin.Feed);
+        origins[departed.Id.Value].Should().Be(DrawPlacementOrigin.Manual);
+        origins[drawn.Id.Value].Should().Be(DrawPlacementOrigin.Draw);
+    }
 }

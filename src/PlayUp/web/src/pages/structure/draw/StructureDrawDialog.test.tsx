@@ -2134,6 +2134,35 @@ describe('StructureDrawDialog', () => {
     expect(confirm).not.toHaveTextContent('Des matchs sont générés');
   });
 
+  it('returns focus to Annuler after the cancellation confirmation closes', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([
+        groupDraw({
+          status: 'Published',
+          isApplied: true,
+          actions: appliedDrawActions(),
+        }),
+      ]),
+    );
+
+    renderDialog();
+    const cancelApplied = await screen.findByRole('button', {
+      name: 'Annuler le tirage',
+    });
+    await user.click(cancelApplied);
+    const confirm = await screen.findByRole('dialog', {
+      name: 'Annuler le tirage ?',
+    });
+    await user.keyboard('{Escape}');
+    await waitFor(() => {
+      expect(confirm).not.toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(cancelApplied).toHaveFocus();
+    });
+  });
+
   it('adds the matches sentence when the phase is Ready and has matches', async () => {
     const user = userEvent.setup();
     vi.mocked(fetchStageOverview).mockResolvedValue(
@@ -2207,17 +2236,66 @@ describe('StructureDrawDialog', () => {
       { entryId: beta, displayName: 'Beta' },
     ]);
 
-    const pinned = await screen.findByLabelText(
-      'Alpha, Déjà placée, Origine d’affichage : manuelle ou issue d’un tirage précédent.',
-    );
+    const pinned = await screen.findByRole('listitem', {
+      name: 'Alpha, Déjà placée, Origine d’affichage : manuelle ou issue d’un tirage précédent.',
+    });
     expect(pinned.querySelector('[tabindex="-1"]')).toBeNull();
     expect(
-      screen.queryByLabelText(/Beta, Déjà placée/),
+      screen.queryByRole('listitem', { name: /Beta, Déjà placée/ }),
     ).not.toBeInTheDocument();
     expect(
       screen.getByText('Groupe A, pot 1 : Alpha et Beta'),
     ).toBeInTheDocument();
     expect(screen.getByText(/deux équipes du même pot/)).toBeInTheDocument();
+  });
+
+  it('pins a qualified arrival and tolerates a placement without origin', async () => {
+    const groupId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    const feed = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+    const plain = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview(
+        [
+          groupDraw({
+            status: 'Published',
+            isApplied: true,
+            groupPlacements: [
+              {
+                groupId,
+                groupDisplayName: 'A',
+                entryId: feed,
+                displayName: 'Alpha',
+                origin: 'Feed',
+              },
+              {
+                groupId,
+                groupDisplayName: 'A',
+                entryId: plain,
+                displayName: 'Beta',
+              },
+            ],
+            actions: appliedDrawActions(),
+          }),
+        ],
+        { groups: [{ id: groupId, name: 'A', entryIds: [feed, plain] }] },
+      ),
+    );
+
+    renderDialog(groupsStage(), true, 'Draft', [
+      { entryId: feed, displayName: 'Alpha' },
+      { entryId: plain, displayName: 'Beta' },
+    ]);
+
+    expect(
+      await screen.findByRole('listitem', { name: 'Alpha, Déjà placée' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('listitem', { name: /Alpha, Déjà placée, Origine/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('listitem', { name: /Beta, Déjà placée/ }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText('Beta')).toBeInTheDocument();
   });
 
   it('shows command refusal lines when redo returns reasons', async () => {
@@ -2280,6 +2358,32 @@ describe('StructureDrawDialog', () => {
         'Le tirage remplira uniquement les places libres. Les équipes déjà placées restent en place.',
       ),
     ).toBeInTheDocument();
+  });
+
+  it('hides the partial fill hint when every group place is taken', async () => {
+    const groupA = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    const groupB = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+    const entryIds = (prefix: string) =>
+      [1, 2, 3, 4].map(
+        (index) =>
+          `${prefix}${prefix}${prefix}${prefix}${prefix}${prefix}${prefix}${prefix}-0000-4000-8000-00000000000${index}`,
+      );
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([], {
+        groups: [
+          { id: groupA, name: 'A', entryIds: entryIds('a') },
+          { id: groupB, name: 'B', entryIds: entryIds('b') },
+        ],
+      }),
+    );
+
+    renderDialog();
+    await screen.findByRole('button', { name: 'Lancer le tirage' });
+    expect(
+      screen.queryByText(
+        'Le tirage remplira uniquement les places libres. Les équipes déjà placées restent en place.',
+      ),
+    ).not.toBeInTheDocument();
   });
 
   it('refuses Cup Refaire when a touched pair has an attached match', async () => {

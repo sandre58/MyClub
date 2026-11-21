@@ -463,9 +463,19 @@
   gap: var(--space-4);
   width: 100%;
   min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.regulation-schematic__card-slots > .schematic-slot {
+.regulation-schematic__card-slots > .schematic-slot,
+.regulation-schematic__card-slots > li {
+  width: 100%;
+  min-width: 0;
+}
+
+.regulation-schematic__card-slots > li > .schematic-slot,
+.regulation-schematic__card-slots > li > .schematic-slot-tip {
   width: 100%;
 }
 

@@ -25,7 +25,11 @@ type StageGroupWire = { id: string; name: string; entryIds: string[] };
 type StageDrawWire = {
   id: string;
   status: string;
-  actions?: { release?: { releasableCount?: number } };
+  isApplied?: boolean;
+  actions?: {
+    release?: { releasableCount?: number };
+    redo?: { state?: string };
+  };
 };
 
 type StageOverviewWire = {
@@ -841,6 +845,94 @@ test.describe('manual group placement', () => {
         (sum, group) => sum + group.entryIds.length,
         0,
       ),
+    );
+  });
+
+  test('clears a fixed team after apply and keeps a drawn team protected', async ({
+    page,
+    request,
+  }) => {
+    test.setTimeout(120_000);
+    const competition = await prepareCompetition(request, MANUAL_DRAW);
+    const stageId = await getPrimaryStageId(request, competition.id);
+    await discardDraws(request, stageId);
+    await page.goto(`/competitions/${competition.id}/structure`);
+
+    const stage = await readHubStage(request, competition.id);
+    const roster = await readRoster(request, competition.id);
+    const kept = [
+      teamsOfPot(stage, roster, 1)[0],
+      teamsOfPot(stage, roster, 2)[0],
+    ];
+    await placeNamedTeam(page, 'Groupe A', kept[0].label);
+    await placeNamedTeam(page, 'Groupe A', kept[1].label);
+    const drawDialog = await launchAndValidateDraw(page);
+    await drawDialog
+      .getByRole('button', { name: 'Fermer', exact: true })
+      .click();
+    await expect(drawDialog).toBeHidden();
+
+    const groupACard = page
+      .locator('.regulation-schematic__card')
+      .filter({ hasText: 'Groupe A' });
+    const before = await readStageOverview(request, stageId);
+    const groupA = before.groups?.find((group) => group.name === 'A');
+    const keptIds = kept.map((team) => team.entryId);
+    const drawnId = groupA?.entryIds.find((id) => !keptIds.includes(id));
+    expect(drawnId).toBeTruthy();
+    const drawnName = roster.find(
+      (entry) => entry.entryId === drawnId,
+    )?.displayName;
+    expect(drawnName).toBeTruthy();
+
+    const drawnSlot = groupACard
+      .locator('.schematic-slot')
+      .filter({ hasText: drawnName! });
+    await expect(
+      drawnSlot.getByRole('button', { name: /modifier ou retirer/ }),
+    ).toHaveCount(0);
+    const drawnReasonId = await drawnSlot.getAttribute('aria-describedby');
+    expect(drawnReasonId).toBeTruthy();
+    await expect(page.locator(`[id="${drawnReasonId}"]`)).toContainText(
+      'placée par le tirage appliqué',
+    );
+
+    const fixedSlot = groupACard
+      .locator('.schematic-slot')
+      .filter({ hasText: kept[0].label });
+    await expect(fixedSlot).not.toContainText('placée par le tirage appliqué');
+    await fixedSlot
+      .getByRole('button', { name: /modifier ou retirer/ })
+      .click();
+    const placement = placementDialog(page);
+    await expect(placement).toBeVisible();
+    await placement
+      .getByRole('checkbox', {
+        name: kept[0].label,
+        exact: true,
+        checked: true,
+      })
+      .click();
+    await savePlacementDialog(placement);
+    await expect(
+      groupACard.getByText(kept[0].label, { exact: true }),
+    ).toHaveCount(0);
+
+    const after = await readStageOverview(request, stageId);
+    const applied = after.draws?.find((draw) => draw.status === 'Published');
+    expect(applied?.isApplied).toBe(true);
+    expect(applied?.actions?.redo?.state).toBe('Available');
+    const stillDrawn = groupACard
+      .locator('.schematic-slot')
+      .filter({ hasText: drawnName! });
+    await expect(
+      stillDrawn.getByRole('button', { name: /modifier ou retirer/ }),
+    ).toHaveCount(0);
+    const stillDrawnReasonId =
+      await stillDrawn.getAttribute('aria-describedby');
+    expect(stillDrawnReasonId).toBeTruthy();
+    await expect(page.locator(`[id="${stillDrawnReasonId}"]`)).toContainText(
+      'placée par le tirage appliqué',
     );
   });
 });

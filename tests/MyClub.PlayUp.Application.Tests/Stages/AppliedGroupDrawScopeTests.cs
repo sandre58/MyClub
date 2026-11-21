@@ -76,7 +76,29 @@ public sealed class AppliedGroupDrawScopeTests
                         null)
                     .Should().Be(StageErrorCodes.DuplicateEntry);
                 clear.Should().BeNull();
-                replace.Should().BeNull();
+                var spare = AddEntry.Execute(world.Competition, "Spare", _clock).Id;
+                var population = world.Stage.CompositionEntries
+                    .Select(entry => entry.EntryId)
+                    .Append(spare)
+                    .ToArray();
+                world.Stage.ReplaceAffectationAuthoring(population, _clock);
+                ManualGroupSeatRules.EvaluateReplace(
+                        world.Stage,
+                        subject.GroupId,
+                        subject.EntryId,
+                        spare)
+                    .Should().BeNull();
+                var drawnElsewhere = world.Stage.GetDraw(world.DrawId).Resolution.GroupResults
+                    .First(row =>
+                        !row.GroupId.Equals(subject.GroupId)
+                        && !row.EntryId.Equals(subject.EntryId)
+                        && !row.EntryId.Equals(world.Qualified.EntryId));
+                ManualGroupSeatRules.EvaluateReplace(
+                        world.Stage,
+                        subject.GroupId,
+                        subject.EntryId,
+                        drawnElsewhere.EntryId)
+                    .Should().Be(ApplicationErrorCodes.AppliedDrawGroupPlacementProtected);
                 projected.SeatMode.Should().Be(GroupSeatModes.Editable);
                 projected.CanClear.Should().BeTrue();
                 break;

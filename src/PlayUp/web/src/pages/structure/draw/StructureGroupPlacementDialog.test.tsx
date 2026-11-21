@@ -913,6 +913,47 @@ describe('StructureGroupPlacementDialog', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('saves a member removal when every composition team is already placed', async () => {
+    const user = userEvent.setup();
+    vi.mocked(setGroupEntries).mockResolvedValue(undefined);
+    const names = ['Alpha', 'Bravo', 'Charlie', 'Delta'] as const;
+    const cases = names.map((displayName, index) =>
+      groupPlace({
+        formPosition: {
+          kind: 'GroupPlace',
+          groupId,
+          groupName: 'A',
+          index: index + 1,
+        },
+        entry: { entryId: `e${index + 1}`, displayName },
+        seatMode: index === 0 ? 'Editable' : 'Draw',
+        canClear: index === 0,
+      }),
+    );
+    renderDialog({
+      place: null,
+      cases,
+      stage: stage({
+        placesPerGroup: 4,
+        compositionEntryIds: ['e1', 'e2', 'e3', 'e4'],
+      }),
+      entries: names.map((displayName, index) =>
+        entry(`e${index + 1}`, displayName),
+      ),
+    });
+    expect(screen.queryByRole('button', { name: 'Enregistrer' })).toBeNull();
+    await user.click(screen.getByRole('checkbox', { name: 'Alpha' }));
+    await user.click(screen.getByRole('button', { name: 'Enregistrer' }));
+    await waitFor(() => {
+      expect(setGroupEntries).toHaveBeenCalledWith(
+        stageId,
+        groupId,
+        ['e2', 'e3', 'e4'],
+        ['e1', 'e2', 'e3', 'e4'],
+      );
+    });
+  });
+
   it('grays out teams from another group without affecting batch selection', async () => {
     const user = userEvent.setup();
     const cases = [
