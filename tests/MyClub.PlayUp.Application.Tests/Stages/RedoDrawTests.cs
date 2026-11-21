@@ -401,6 +401,32 @@ public sealed class RedoDrawTests
         actual.Should().Be(code);
     }
 
+    private static HashSet<string> BuildAlignedSlotKeys(Stage stage, Draw draw)
+    {
+        var keys = new HashSet<string>(StringComparer.Ordinal);
+        if (draw.Resolution.State != DrawResolutionState.Resolved)
+        {
+            return keys;
+        }
+
+        foreach (var placement in draw.Resolution.SlotResults)
+        {
+            if (stage.DirectAssignments.Any(assignment =>
+                    string.Equals(assignment.SlotKey, placement.SlotKey, StringComparison.Ordinal)))
+            {
+                continue;
+            }
+
+            var slot = stage.FindSlot(placement.SlotKey);
+            if (slot?.EntryId is { } current && current.Equals(placement.EntryId))
+            {
+                keys.Add(slot.SlotKey);
+            }
+        }
+
+        return keys;
+    }
+
     private void ApplyDrawPipelineToFillSlots(Stage stage, Draw draw)
     {
         var defaultInputs = DrawInputsFactory.CreateDefault(stage, DrawResolutionKind.Slot);
@@ -447,32 +473,6 @@ public sealed class RedoDrawTests
         }
 
         return stage;
-    }
-
-    private static HashSet<string> BuildAlignedSlotKeys(Stage stage, Draw draw)
-    {
-        var keys = new HashSet<string>(StringComparer.Ordinal);
-        if (draw.Resolution.State != DrawResolutionState.Resolved)
-        {
-            return keys;
-        }
-
-        foreach (var placement in draw.Resolution.SlotResults)
-        {
-            if (stage.DirectAssignments.Any(assignment =>
-                    string.Equals(assignment.SlotKey, placement.SlotKey, StringComparison.Ordinal)))
-            {
-                continue;
-            }
-
-            var slot = stage.FindSlot(placement.SlotKey);
-            if (slot?.EntryId is { } current && current.Equals(placement.EntryId))
-            {
-                keys.Add(slot.SlotKey);
-            }
-        }
-
-        return keys;
     }
 
     private Stage CreateStage() =>
