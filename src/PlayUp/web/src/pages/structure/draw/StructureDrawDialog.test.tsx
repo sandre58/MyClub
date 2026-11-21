@@ -263,6 +263,10 @@ function renderDialog(
   stage = groupsStage(),
   open = true,
   competitionStatus: CompetitionStatus = 'Draft',
+  blockDetailRoster: readonly {
+    entryId: string;
+    displayName?: string | null;
+  }[] = [],
 ) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -278,6 +282,7 @@ function renderDialog(
           competitionStatus={competitionStatus}
           stage={stage}
           structureStages={[stage]}
+          blockDetailRoster={blockDetailRoster}
         />
       </QueryClientProvider>
     </MemoryRouter>,
@@ -580,19 +585,28 @@ describe('StructureDrawDialog', () => {
 
         renderDialog(
           groupsStage({
-            compositionEntryIds: [
-              '22222222-2222-4222-8222-222222222222',
-              '33333333-3333-4333-8333-333333333333',
-            ],
-            compositionPreviewNames: ['Alpha', 'Beta'],
-            affectationEntryIds: ['44444444-4444-4444-8444-444444444444'],
-            affectationPreviewNames: ['Hors'],
             drawCreateLaunch: {
               allowed: false,
               blockReasonCode: code,
               blockDetail,
             },
           }),
+          true,
+          'Draft',
+          [
+            {
+              entryId: '33333333-3333-4333-8333-333333333333',
+              displayName: 'Beta',
+            },
+            {
+              entryId: '44444444-4444-4444-8444-444444444444',
+              displayName: 'Hors',
+            },
+            {
+              entryId: '22222222-2222-4222-8222-222222222222',
+              displayName: 'Alpha',
+            },
+          ],
         );
 
         const launch = await screen.findByRole('button', {
@@ -691,6 +705,44 @@ describe('StructureDrawDialog', () => {
     expect(getToastsSnapshot().map((toast) => toast.message)).not.toContain(
       'Génération interrompue. L’exécution a été créée sans résultat.',
     );
+  });
+
+  it('clears a Groups launch refusal when another action starts', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStageOverview).mockResolvedValue(overview([]));
+    vi.mocked(createAndGenerateDraw).mockImplementation(async () => {
+      vi.mocked(fetchStageOverview).mockResolvedValue(
+        overview([groupDraw({ id: 'draw-draft' })]),
+      );
+      throw new ApiError(
+        409,
+        'Conflict',
+        'shape',
+        'Application.DrawGroupShapeInvalid',
+      );
+    });
+
+    renderDialog(
+      groupsStage({
+        drawCreateLaunch: { allowed: true, blockReasonCode: null },
+      }),
+    );
+    await user.click(
+      await screen.findByRole('button', { name: 'Lancer le tirage' }),
+    );
+    expect(
+      await screen.findByText(
+        'La forme des groupes ne permet pas le tirage. Alignez le nombre d’équipes, de groupes et de pots.',
+      ),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Abandonner' }));
+
+    expect(
+      screen.queryByText(
+        'La forme des groupes ne permet pas le tirage. Alignez le nombre d’équipes, de groupes et de pots.',
+      ),
+    ).not.toBeInTheDocument();
   });
 
   it('toasts warning when Create+Generate returns NoSolution', async () => {
@@ -827,6 +879,30 @@ describe('StructureDrawDialog', () => {
       expect(createAndGenerateDraw).toHaveBeenCalledWith(stageId, 'Slot');
     });
     expect(createAndGenerateDraw).not.toHaveBeenCalledWith(stageId, 'Pairing');
+  });
+
+  it('shows a Cup launch refusal in the dialog alert', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStageOverview).mockResolvedValue(overview([]));
+    vi.mocked(createAndGenerateDraw).mockRejectedValue(
+      new ApiError(409, 'Conflict', 'full', 'Application.DrawNoFreeSlot'),
+    );
+
+    renderDialog(
+      cupStage({
+        compositionEntryCount: 4,
+        compositionCapacity: 4,
+        drawCreateLaunch: { allowed: true, blockReasonCode: null },
+      }),
+    );
+    await user.click(
+      await screen.findByRole('button', { name: 'Lancer le tirage' }),
+    );
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Aucune place libre pour ce tirage. Les équipes déjà placées restent en place.',
+    );
+    expect(getToastsSnapshot()).toEqual([]);
   });
 
   it('disables Cup Nouveau when composition does not match Places', async () => {
@@ -1572,6 +1648,7 @@ describe('StructureDrawDialog', () => {
           competitionStatus="Draft"
           stage={groupsStage()}
           structureStages={[groupsStage()]}
+          blockDetailRoster={[]}
         />
       </QueryClientProvider>,
     );
@@ -1592,6 +1669,7 @@ describe('StructureDrawDialog', () => {
           competitionStatus="Draft"
           stage={groupsStage()}
           structureStages={[groupsStage()]}
+          blockDetailRoster={[]}
         />
       </QueryClientProvider>,
     );
@@ -1604,6 +1682,7 @@ describe('StructureDrawDialog', () => {
           competitionStatus="Draft"
           stage={groupsStage()}
           structureStages={[groupsStage()]}
+          blockDetailRoster={[]}
         />
       </QueryClientProvider>,
     );
@@ -2132,7 +2211,7 @@ describe('StructureDrawDialog', () => {
       name: 'Refaire le tirage ?',
     });
     expect(confirm).toHaveTextContent(
-      "Cela annule l'exécution, retire seulement les équipes placées par le tirage, puis lance un nouvel aperçu. Les équipes placées à la main ou qualifiées restent à leur place. Si une étape échoue, rien n'est modifié.",
+      'Cela annule l’exécution, retire seulement les équipes placées par le tirage, puis lance un nouvel aperçu. Les équipes placées à la main ou qualifiées restent à leur place. Si une étape échoue, rien n’est modifié.',
     );
     await user.click(
       within(confirm).getByRole('button', { name: 'Refaire le tirage' }),
@@ -3366,6 +3445,7 @@ describe('StructureDrawDialog', () => {
             competitionStatus="Draft"
             stage={groupsStage()}
             structureStages={[groupsStage()]}
+            blockDetailRoster={[]}
           />
         </QueryClientProvider>
       );
@@ -3781,6 +3861,7 @@ describe('StructureDrawDialog', () => {
               drawCreateLaunch: { allowed: true, blockReasonCode: null },
             })}
             structureStages={[]}
+            blockDetailRoster={[]}
           />
         </QueryClientProvider>
       </MemoryRouter>,

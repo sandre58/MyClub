@@ -696,7 +696,8 @@ export type DrawReadinessCriterionId =
   | 'teamsAllKnown'
   /**
    * Cup: met when at least one place is free for a partial draw.
-   * Groups: met only when no place blocks a full reshuffle.
+   * Groups: always met. The server gate decides whether the draw can start.
+   * The occupied-place count stays informational.
    */
   | 'bracketPlacesFree';
 
@@ -749,9 +750,11 @@ export function resolveDrawReadinessChecklist(input: {
     input.schematicCases,
   );
   const bracketPlacesFree =
-    input.formatKind === 'Cup'
-      ? vacantBracketPlaces === null || vacantBracketPlaces > 0
-      : occupiedBracketPlaces === 0;
+    input.formatKind === 'Groups'
+      ? true
+      : input.formatKind === 'Cup'
+        ? vacantBracketPlaces === null || vacantBracketPlaces > 0
+        : occupiedBracketPlaces === 0;
 
   const items: DrawReadinessChecklistItem[] = [
     {

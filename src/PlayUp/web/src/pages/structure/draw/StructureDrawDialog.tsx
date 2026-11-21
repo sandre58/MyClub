@@ -124,7 +124,7 @@ export type StructureDrawDialogProps = {
   stage: StructureStageHubSummary;
   structureStages: readonly StructureStageHubSummary[];
   /** Seat names from the structure view, keyed by entry id. */
-  blockDetailRoster?: readonly {
+  blockDetailRoster: readonly {
     entryId: string;
     displayName?: string | null;
   }[];
@@ -277,11 +277,7 @@ export function StructureDrawDialog({
           stage.drawCreateLaunch?.blockDetail,
           drawCreateBlockDetailNameIndex({
             groups: overviewGroups,
-            entryIds: stage.compositionEntryIds,
-            entryNames: stage.compositionPreviewNames,
             roster: blockDetailRoster,
-            extraEntryIds: stage.affectationEntryIds,
-            extraEntryNames: stage.affectationPreviewNames,
           }),
           t,
         )
@@ -672,8 +668,8 @@ export function StructureDrawDialog({
     createBlockPresentation?.kind === 'inline' ? (
     <Alert tone={createBlockPresentation.tone} role="status">
       <p className="ds-body">{createBlockedDetail}</p>
-      {createBlockNamedLines.map((line) => (
-        <p key={line} className="ds-body">
+      {createBlockNamedLines.map((line, index) => (
+        <p key={index} className="ds-body">
           {line}
         </p>
       ))}
@@ -723,7 +719,10 @@ export function StructureDrawDialog({
                 type="button"
                 className="ds-btn ds-btn--destructive"
                 disabled={busy}
-                onClick={() => openConfirm('abandon', activeDraw!.id)}
+                onClick={() => {
+                  createMutation.reset();
+                  openConfirm('abandon', activeDraw!.id);
+                }}
               >
                 {cancelMutation.isPending ? (
                   <PendingLabel>{tDraw('abandoning')}</PendingLabel>
@@ -740,7 +739,10 @@ export function StructureDrawDialog({
                 type="button"
                 className="ds-btn ds-btn--destructive"
                 disabled={busy}
-                onClick={() => openConfirm('cancelApplied', activeDraw!.id)}
+                onClick={() => {
+                  createMutation.reset();
+                  openConfirm('cancelApplied', activeDraw!.id);
+                }}
               >
                 {cancelMutation.isPending ? (
                   <PendingLabel>{tDraw('cancelling')}</PendingLabel>
@@ -758,7 +760,10 @@ export function StructureDrawDialog({
                 className="ds-btn ds-btn--secondary"
                 data-action="release-draw-placements"
                 disabled={busy || releaseFooterBlocked}
-                onClick={() => openConfirm('release', releaseTarget.id)}
+                onClick={() => {
+                  createMutation.reset();
+                  openConfirm('release', releaseTarget.id);
+                }}
               >
                 {releaseMutation.isPending ? (
                   <PendingLabel>{tDraw('releasingPlacements')}</PendingLabel>
@@ -783,7 +788,10 @@ export function StructureDrawDialog({
                 type="button"
                 className="ds-btn ds-btn--secondary"
                 disabled={busy}
-                onClick={() => rerunMutation.mutate(activeDraw!.id)}
+                onClick={() => {
+                  createMutation.reset();
+                  rerunMutation.mutate(activeDraw!.id);
+                }}
               >
                 {rerunMutation.isPending ? (
                   <PendingLabel>{tDraw('rerunning')}</PendingLabel>
@@ -843,6 +851,7 @@ export function StructureDrawDialog({
                 className="ds-btn ds-btn--primary"
                 disabled={busy}
                 onClick={() => {
+                  createMutation.reset();
                   applyMutation.reset();
                   publishAndApplyMutation.mutate(activeDraw!);
                 }}
@@ -862,7 +871,10 @@ export function StructureDrawDialog({
                 type="button"
                 className="ds-btn ds-btn--primary"
                 disabled={busy}
-                onClick={() => openConfirm('apply', activeDraw!.id)}
+                onClick={() => {
+                  createMutation.reset();
+                  openConfirm('apply', activeDraw!.id);
+                }}
               >
                 {applyMutation.isPending ? (
                   <PendingLabel>{tDraw('applying')}</PendingLabel>
@@ -879,7 +891,10 @@ export function StructureDrawDialog({
                 type="button"
                 className="ds-btn ds-btn--primary"
                 disabled={busy}
-                onClick={() => openConfirm('redo', activeDraw!.id)}
+                onClick={() => {
+                  createMutation.reset();
+                  openConfirm('redo', activeDraw!.id);
+                }}
               >
                 {redoMutation.isPending ? (
                   <PendingLabel>{tDraw('redoing')}</PendingLabel>

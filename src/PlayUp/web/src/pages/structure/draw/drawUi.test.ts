@@ -656,6 +656,29 @@ describe('draw readiness checklist', () => {
     );
   });
 
+  it('treats the Groups bracket line as met and keeps the occupied count', () => {
+    const items = resolveDrawReadinessChecklist({
+      compositionEntryCount: 4,
+      placesN: 4,
+      inboundResolvedCount: 0,
+      inboundConfiguredVolume: 0,
+      isRootComposition: true,
+      formatKind: 'Groups',
+      slots: [
+        { entryId: 'e1' },
+        { entryId: 'e2' },
+        { entryId: null },
+        { entryId: null },
+      ],
+    });
+    expect(items.find((item) => item.id === 'bracketPlacesFree')).toMatchObject(
+      {
+        met: true,
+        current: 2,
+      },
+    );
+  });
+
   it('omits inbound-known line when no qual/prog volume is configured', () => {
     const items = resolveDrawReadinessChecklist({
       compositionEntryCount: 2,

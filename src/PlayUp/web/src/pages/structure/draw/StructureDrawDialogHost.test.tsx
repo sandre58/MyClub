@@ -77,6 +77,7 @@ function renderHost(open: boolean, onClose = vi.fn()) {
       competitionStatus="Ready"
       stage={stage}
       structureStages={[stage]}
+      blockDetailRoster={[]}
     />,
     { wrapper: Wrapper },
   );
@@ -123,6 +124,7 @@ describe('StructureDrawDialogHost', () => {
         competitionStatus="Ready"
         stage={stage}
         structureStages={[stage]}
+        blockDetailRoster={[]}
       />,
     );
 
@@ -151,6 +153,7 @@ describe('StructureDrawDialogHost', () => {
         competitionStatus="Ready"
         stage={stage}
         structureStages={[stage]}
+        blockDetailRoster={[]}
       />,
     );
 

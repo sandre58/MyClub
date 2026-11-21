@@ -25,11 +25,7 @@ type Translate = (key: string, options?: Record<string, unknown>) => string;
 
 export function drawCreateBlockDetailNameIndex(input: {
   groups?: readonly { id: string; name: string }[] | null;
-  entryIds?: readonly string[] | null;
-  entryNames?: readonly string[] | null;
-  extraEntryIds?: readonly string[] | null;
-  extraEntryNames?: readonly string[] | null;
-  roster?: readonly { entryId: string; displayName?: string | null }[] | null;
+  roster: readonly { entryId: string; displayName?: string | null }[];
 }): DrawCreateBlockDetailNames {
   const groupNameById = new Map<string, string>();
   for (const group of input.groups ?? []) {
@@ -40,12 +36,10 @@ export function drawCreateBlockDetailNameIndex(input: {
   }
 
   const teamNameById = new Map<string, string>();
-  addNames(teamNameById, input.entryIds, input.entryNames);
-  addNames(teamNameById, input.extraEntryIds, input.extraEntryNames);
   addNames(
     teamNameById,
-    (input.roster ?? []).map((entry) => entry.entryId),
-    (input.roster ?? []).map((entry) => entry.displayName ?? ''),
+    input.roster.map((entry) => entry.entryId),
+    input.roster.map((entry) => entry.displayName ?? ''),
   );
   return { groupNameById, teamNameById };
 }

@@ -173,7 +173,7 @@ describe('StructureStaleDrawResolutionActions', () => {
     });
 
     expect(screen.getByRole('dialog')).toHaveTextContent(
-      "Cela annule l'exécution, retire seulement les équipes placées par le tirage, puis lance un nouvel aperçu. Les équipes placées à la main ou qualifiées restent à leur place. Si une étape échoue, rien n'est modifié.",
+      'Cela annule l’exécution, retire seulement les équipes placées par le tirage, puis lance un nouvel aperçu. Les équipes placées à la main ou qualifiées restent à leur place. Si une étape échoue, rien n’est modifié.',
     );
   });
 

@@ -715,10 +715,6 @@ export function StructurePhaseFiche({
           stage.drawCreateLaunch?.blockDetail,
           drawCreateBlockDetailNameIndex({
             groups: drawOverviewQuery.data?.groups,
-            entryIds: stage.compositionEntryIds,
-            entryNames: stage.compositionPreviewNames,
-            extraEntryIds: stage.affectationEntryIds,
-            extraEntryNames: stage.affectationPreviewNames,
             roster: data.participants.entries,
           }),
           t,

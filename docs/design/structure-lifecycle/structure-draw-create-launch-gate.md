@@ -1,6 +1,6 @@
 # RunDraw — Application launch gate (design contract)
 
-Status: **implemented** — `StructureDrawCreateLaunchGate` in Application. Each hub row exposes `drawCreateLaunch { allowed, blockReasonCode }`. PageHead `RunDraw` uses that same projection (nominal step only when `allowed` is true). The SPA displays the field.
+Status: **implemented** — `StructureDrawCreateLaunchGate` in Application. Each hub row exposes `drawCreateLaunch { allowed, blockReasonCode, blockDetail }`. PageHead `RunDraw` uses that same projection (nominal step only when `allowed` is true). The SPA displays the field.
 
 ## Goal
 
@@ -23,7 +23,7 @@ The SPA gate is a **parity reference**, not the SoT. The SoT is the **stack of r
 | L3 | Composition pool | `CompositionEntryCount > 0`; competition `EntryRules.MinimumTeams` satisfied (hub + `competition.Regulation`) |
 | L4 | **Group shape** (when kind = Group) | `NumberOfPots >= 2`, `GroupCount >= 1`, `CompositionEntryCount == NumberOfPots * GroupCount` (facts on `StructureStageHubSummaryDto`) |
 | L5 | **Slot partial scope** (when kind = Slot) | `SlotPartialDraw`: free slots (no occupant, feed Missing) and unplaced composition teams must be a bijection. `NoFreeSlot` when nothing is free (checked first), `NotEnoughTeams` when unplaced teams are fewer, `TooManyTeams` when they are more. Occupants, withdrawn occupants, and reserved or invalid feeds are not free targets. `StageDrawBracketLaunchClassifier` slot facts use the same `SlotPartialDraw.Classify`, so a withdrawn place counts as occupied and never as `VacantForDrawLaunchCount`. |
-| L6 | **Vacant launch grid** (Group only) | `StageDrawBracketLaunchClassifier` → `BlockingPlaceCount == 0`. Slot no longer uses this denial: a partial grid is launchable when L5 passes. Rerun and Redo still require a vacant grid. |
+| L6 | **Groups launch** (kind = Group) | The gate models `DrawInputsIntent.Default`: shared `GroupDrawLaunchRules` only. A legal occupied grid is allowed. Only Rerun and Redo require an empty grid. |
 | L7 | Operational mutability | `StructureOperationalExitEditGuard` would allow draw on stage snapshot (production / exit rules) — mirror read guard used before `CreateDraw` |
 | L8 | No obsolete draw blocking consumption | `!StructureDrawConsumptionGate.StageHasObsoleteDrawForConsumption(stage)` (also disables materialize today) |
 
@@ -49,7 +49,7 @@ The SPA gate is a **parity reference**, not the SoT. The SoT is the **stack of r
 | `missingPots` / `groupShape` | L4 |
 | `countMismatch` | Kept for older payloads. Slot launches no longer emit `PlacesCountMismatch`. |
 | `directAssignment` | Kept for older payloads. Slot launches no longer emit `DirectAssignmentPresent`. Rerun and Redo still refuse a direct assignment. |
-| `occupiedSlots` | L6 — Group `BlockingPlaceCount > 0` (`BracketPlacesOccupied`) |
+| `occupiedSlots` | Kept for Cup and older payloads. The Groups gate models Default and does not emit this denial. Only Rerun and Redo require an empty grid. |
 | `noFreeSlot` / `notEnoughTeams` / `tooManyTeams` | L5 — Slot partial scope (`NoFreeSlot`, `NotEnoughTeams`, `TooManyTeams`) |
 
 **Do not** re-port `schematicCases` fallback into C# for Structure hub: Structure read path already has `TryClassify` with slot feeds (`SlotFeedSnapshotAssembler` / `SlotFeedResolver`). Overview may still ship schematic for other surfaces; hub gate uses **classifier only**.
