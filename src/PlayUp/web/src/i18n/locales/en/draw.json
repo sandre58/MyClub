@@ -33,6 +33,7 @@
   "confirmCancelAppliedTitle": "Cancel the draw?",
   "confirmRedoTitle": "Redo the draw?",
   "confirmRedo": "This cancels the execution, releases placements still aligned with it, then starts a new preview, as a single operation: if any step fails, nothing changes.",
+  "confirmRedoGroups": "This cancels the execution, removes only the teams the draw placed, then starts a new preview. Teams placed by hand or qualified stay in place. If any step fails, nothing changes.",
   "redoBlocked": {
     "cupFixtureAttached": "The draw cannot be redone: a match is attached to a confrontation this release would touch.",
     "groupMatchesAttached": "The draw cannot be redone: matches are already attached to this phase.",

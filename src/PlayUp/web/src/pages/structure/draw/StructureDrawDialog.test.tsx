@@ -2,7 +2,13 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { useState } from 'react';
 import { ApiError } from '../../../api/http';
@@ -453,6 +459,237 @@ describe('StructureDrawDialog', () => {
       competitionId,
       ['hubStageShell'],
       expect.anything(),
+    );
+  });
+
+  it('launches a Groups draw when the gate allows a partly occupied grid', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([], {
+        groups: [
+          {
+            id: '11111111-1111-4111-8111-111111111111',
+            name: 'Groupe A',
+            entryIds: ['22222222-2222-4222-8222-222222222222'],
+          },
+        ],
+      }),
+    );
+    vi.mocked(createAndGenerateDraw).mockResolvedValue({
+      drawId: 'draw-1',
+      isResolved: true,
+      isNoSolution: false,
+    });
+
+    renderDialog(
+      groupsStage({
+        drawCreateLaunch: { allowed: true, blockReasonCode: null },
+      }),
+    );
+
+    const launch = await screen.findByRole('button', {
+      name: 'Lancer le tirage',
+    });
+    expect(launch).toBeEnabled();
+    await user.click(launch);
+
+    await waitFor(() => {
+      expect(createAndGenerateDraw).toHaveBeenCalledWith(stageId, 'Group');
+    });
+  });
+
+  it.each([
+    {
+      reason: 'reservedSeats',
+      code: 'Application.DrawGroupSeatsReservedByInboundFeed',
+      short:
+        'Attendez la résolution des qualifications ou placez les équipes à la main.',
+      detail:
+        'Des places sont réservées à des équipes qualifiées. Attendez la résolution des qualifications ou placez les équipes à la main.',
+      named: 'Groupe A : 1 place réservée',
+      blockDetail: [
+        'group:11111111-1111-4111-8111-111111111111:reserved:1',
+        'not-a-fragment',
+      ],
+    },
+    {
+      reason: 'fixedPotConflict',
+      code: 'Application.DrawFixedPotConflict',
+      short: 'Déplacez une équipe du même pot avant de tirer.',
+      detail:
+        'Deux équipes du même pot sont dans le même groupe. Déplacez-en une avant de tirer.',
+      named: 'Groupe A, pot 1 : Alpha et Beta',
+      blockDetail: [
+        'group:11111111-1111-4111-8111-111111111111:pot:1:entries:22222222-2222-4222-8222-222222222222,33333333-3333-4333-8333-333333333333',
+      ],
+    },
+    {
+      reason: 'fixedOutsideComposition',
+      code: 'Application.DrawFixedOutsideComposition',
+      short:
+        'Retirez l’équipe hors composition ou rétablissez-la avant de tirer.',
+      detail:
+        'Une équipe placée n’est plus dans la composition. Retirez-la du groupe ou rétablissez la composition avant de tirer.',
+      named: 'Groupe A : Hors',
+      blockDetail: [
+        'group:11111111-1111-4111-8111-111111111111:entry:44444444-4444-4444-8444-444444444444',
+      ],
+    },
+    {
+      reason: 'fixedExceedsCapacity',
+      code: 'Application.DrawFixedExceedsCapacity',
+      short: 'Retirez des équipes du groupe trop plein avant de tirer.',
+      detail:
+        'Un groupe contient plus d’équipes que le tirage ne peut en placer. Retirez des équipes avant de tirer.',
+      named: 'Groupe A : 3 équipes pour 2 places',
+      blockDetail: [
+        'group:11111111-1111-4111-8111-111111111111:occupants:3:capacity:2',
+      ],
+    },
+  ])(
+    'disables Groups launch for $reason and names the gate detail',
+    async ({ code, short, detail, named, blockDetail }) => {
+      const previousMatchMedia = window.matchMedia;
+      Object.defineProperty(window, 'matchMedia', {
+        writable: true,
+        configurable: true,
+        value: (query: string) => ({
+          matches:
+            query.includes('hover: hover') && query.includes('pointer: fine'),
+          media: query,
+          onchange: null,
+          addListener: () => undefined,
+          removeListener: () => undefined,
+          addEventListener: () => undefined,
+          removeEventListener: () => undefined,
+          dispatchEvent: () => false,
+        }),
+      });
+      try {
+        vi.mocked(fetchStageOverview).mockResolvedValue(
+          overview([], {
+            groups: [
+              {
+                id: '11111111-1111-4111-8111-111111111111',
+                name: 'A',
+                entryIds: [],
+              },
+            ],
+          }),
+        );
+
+        renderDialog(
+          groupsStage({
+            compositionEntryIds: [
+              '22222222-2222-4222-8222-222222222222',
+              '33333333-3333-4333-8333-333333333333',
+            ],
+            compositionPreviewNames: ['Alpha', 'Beta'],
+            affectationEntryIds: ['44444444-4444-4444-8444-444444444444'],
+            affectationPreviewNames: ['Hors'],
+            drawCreateLaunch: {
+              allowed: false,
+              blockReasonCode: code,
+              blockDetail,
+            },
+          }),
+        );
+
+        const launch = await screen.findByRole('button', {
+          name: 'Lancer le tirage',
+        });
+        expect(launch).toBeDisabled();
+        const status = screen.getByRole('status');
+        expect(status).toHaveTextContent(detail);
+        expect(status).toHaveTextContent(named);
+        expect(status).not.toHaveAttribute('aria-live');
+        expect(screen.queryByText('not-a-fragment')).not.toBeInTheDocument();
+        expect(createAndGenerateDraw).not.toHaveBeenCalled();
+
+        const trigger = launch.closest('.ds-tooltip-trigger');
+        expect(trigger).not.toBeNull();
+        fireEvent.pointerOver(trigger!);
+        expect(
+          await screen.findByRole('tooltip', { name: short }),
+        ).toBeInTheDocument();
+      } finally {
+        Object.defineProperty(window, 'matchMedia', {
+          writable: true,
+          configurable: true,
+          value: previousMatchMedia,
+        });
+      }
+    },
+  );
+
+  it('shows the translated pot-conflict code on create without moving focus', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStageOverview).mockResolvedValue(overview([]));
+    vi.mocked(createAndGenerateDraw).mockRejectedValue(
+      new ApiError(409, 'Conflict', 'pot', 'Application.DrawFixedPotConflict'),
+    );
+
+    renderDialog(
+      groupsStage({
+        drawCreateLaunch: { allowed: true, blockReasonCode: null },
+      }),
+    );
+
+    const launch = await screen.findByRole('button', {
+      name: 'Lancer le tirage',
+    });
+    launch.focus();
+    await user.click(launch);
+
+    expect(
+      await screen.findByText(
+        'Deux équipes du même pot sont dans le même groupe. Déplacez-en une avant de tirer.',
+      ),
+    ).toBeInTheDocument();
+    expect(getToastsSnapshot()).toEqual([]);
+    expect(scheduleStructureRefresh).toHaveBeenCalledWith(
+      expect.anything(),
+      competitionId,
+      ['stageOverview'],
+      { stageId },
+    );
+    expect(document.activeElement).toBe(launch);
+  });
+
+  it('shows the translated refusal and the draft when inputs refuse after Create', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStageOverview).mockResolvedValue(overview([]));
+    vi.mocked(createAndGenerateDraw).mockImplementation(async () => {
+      vi.mocked(fetchStageOverview).mockResolvedValue(
+        overview([groupDraw({ id: 'draw-draft' })]),
+      );
+      throw new ApiError(
+        409,
+        'Conflict',
+        'shape',
+        'Application.DrawGroupShapeInvalid',
+      );
+    });
+
+    renderDialog(
+      groupsStage({
+        drawCreateLaunch: { allowed: true, blockReasonCode: null },
+      }),
+    );
+    await user.click(
+      await screen.findByRole('button', { name: 'Lancer le tirage' }),
+    );
+
+    expect(
+      await screen.findByText(
+        'La forme des groupes ne permet pas le tirage. Alignez le nombre d’équipes, de groupes et de pots.',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: /Exécution #1/ }),
+    ).toBeInTheDocument();
+    expect(getToastsSnapshot().map((toast) => toast.message)).not.toContain(
+      'Génération interrompue. L’exécution a été créée sans résultat.',
     );
   });
 
@@ -1894,6 +2131,9 @@ describe('StructureDrawDialog', () => {
     const confirm = await screen.findByRole('dialog', {
       name: 'Refaire le tirage ?',
     });
+    expect(confirm).toHaveTextContent(
+      "Cela annule l'exécution, retire seulement les équipes placées par le tirage, puis lance un nouvel aperçu. Les équipes placées à la main ou qualifiées restent à leur place. Si une étape échoue, rien n'est modifié.",
+    );
     await user.click(
       within(confirm).getByRole('button', { name: 'Refaire le tirage' }),
     );
@@ -1905,6 +2145,72 @@ describe('StructureDrawDialog', () => {
     expect(cancelDraw).not.toHaveBeenCalled();
     expect(releaseDrawAlignedPlacements).not.toHaveBeenCalled();
     expect(createAndGenerateDraw).not.toHaveBeenCalled();
+  });
+
+  it('keeps the Cup redo confirmation text', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([
+        slotDraw({
+          status: 'Published',
+          isApplied: true,
+          actions: appliedDrawActions(),
+        }),
+      ]),
+    );
+
+    renderDialog(cupStage());
+    await user.click(
+      await screen.findByRole('button', { name: 'Refaire le tirage' }),
+    );
+    const confirm = await screen.findByRole('dialog', {
+      name: 'Refaire le tirage ?',
+    });
+    expect(confirm).toHaveTextContent(
+      'Cela annule l’exécution, libère les placements encore alignés, puis lance un nouvel aperçu, en une seule opération : si une étape échoue, rien n’est modifié.',
+    );
+    expect(confirm).not.toHaveTextContent(
+      'retire seulement les équipes placées par le tirage',
+    );
+  });
+
+  it('shows the translated redo-requires-applied message', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([
+        groupDraw({
+          status: 'Published',
+          isApplied: true,
+          actions: appliedDrawActions(),
+        }),
+      ]),
+    );
+    vi.mocked(redoDraw).mockRejectedValue(
+      new ApiError(
+        409,
+        'Conflict',
+        'not applied',
+        'Application.DrawRedoRequiresApplied',
+      ),
+    );
+
+    renderDialog();
+    await user.click(
+      await screen.findByRole('button', { name: 'Refaire le tirage' }),
+    );
+    const confirm = await screen.findByRole('dialog', {
+      name: 'Refaire le tirage ?',
+    });
+    await user.click(
+      within(confirm).getByRole('button', { name: 'Refaire le tirage' }),
+    );
+
+    expect(
+      await within(confirm).findByText(
+        'Annulez le tirage, libérez ses placements puis relancez le tirage.',
+      ),
+    ).toBeInTheDocument();
+    expect(getToastsSnapshot()).toEqual([]);
   });
 
   it('shows an obsolete badge when the draw result is stale', async () => {

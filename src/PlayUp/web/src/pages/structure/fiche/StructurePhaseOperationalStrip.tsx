@@ -758,6 +758,12 @@ function DrawColumn(
     props.showCreateBlockedCaption && props.createBlockedShort ? (
       <StripOperationalMessage kind="attention">
         {props.createBlockedShort}
+        {(props.createBlockedNamedLines ?? []).map((line) => (
+          <span key={line} className="ds-body">
+            <br />
+            {line}
+          </span>
+        ))}
         {props.createBlockedReason === 'belowMinimumTeams' ? (
           <>
             {' '}
@@ -923,7 +929,7 @@ function DrawColumn(
     const drawSetupEditable = props.canEditDraw && !props.drawApplied;
     body = (
       <div className="structure-operational-strip__composition-draw">
-        {!showDrawReadinessChecklist && drawBlockedNote ? (
+        {drawBlockedNote ? (
           <div className="structure-operational-strip__message-stack">
             {drawBlockedNote}
           </div>

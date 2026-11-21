@@ -170,7 +170,11 @@ export function StructureStaleDrawResolutionActions({
       <ConfirmDialog
         open={confirmRedoOpen}
         title={t('structure:resolution.staleDraw.confirmRedoTitle')}
-        message={t('draw:confirmRedo')}
+        message={
+          activeDraw?.kind === 'Group'
+            ? t('draw:confirmRedoGroups')
+            : t('draw:confirmRedo')
+        }
         confirmLabel={t('structure:resolution.staleDraw.redo')}
         cancelLabel={t('common:close')}
         closeLabel={t('common:close')}

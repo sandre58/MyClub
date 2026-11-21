@@ -149,10 +149,32 @@ describe('StructureStaleDrawResolutionActions', () => {
     renderActions({ confirmRedoOpen: true, onConfirmRedo });
 
     const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveTextContent(
+      'Cela annule l’exécution, libère les placements encore alignés, puis lance un nouvel aperçu, en une seule opération : si une étape échoue, rien n’est modifié.',
+    );
     await user.click(
       within(dialog).getByRole('button', { name: 'Refaire le tirage' }),
     );
     expect(onConfirmRedo).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses the Groups redo confirmation when the draw is a group draw', () => {
+    renderActions({
+      confirmRedoOpen: true,
+      activeDraw: {
+        ...appliedDraw(
+          drawActions({
+            redo: { state: 'Available' },
+            release: { state: 'Available', releasableCount: 2 },
+          }),
+        ),
+        kind: 'Group',
+      },
+    });
+
+    expect(screen.getByRole('dialog')).toHaveTextContent(
+      "Cela annule l'exécution, retire seulement les équipes placées par le tirage, puis lance un nouvel aperçu. Les équipes placées à la main ou qualifiées restent à leur place. Si une étape échoue, rien n'est modifié.",
+    );
   });
 
   it('requests release confirmation before mutating', async () => {

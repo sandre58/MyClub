@@ -16,6 +16,7 @@ import {
   createAndGenerateDraw,
   fetchStageOverview,
   isDrawGenerateFailedError,
+  isStageDrawLaunchRefusalError,
   publishAndApplyDraw,
   releaseDrawAlignedPlacements,
   rerunDrawGeneration,
@@ -50,7 +51,6 @@ import type {
   StructureFormatKind,
   StructureStageHubSummary,
 } from '../../../types';
-import { resolveLifecycleMutationMessage } from '../problems';
 import {
   buildCupDrawDisplayFromDto,
   drawExecutionNumber,
@@ -68,6 +68,10 @@ import {
   type CupDrawCellLabels,
 } from './drawUi';
 import { DrawSlotConfrontationGrid } from './DrawSlotConfrontationGrid';
+import {
+  drawCreateBlockDetailNameIndex,
+  formatDrawCreateBlockDetailLines,
+} from './drawCreateBlockDetail';
 import { redoAppliedDraw } from './drawRedo';
 import {
   drawActionsOf,
@@ -119,6 +123,11 @@ export type StructureDrawDialogProps = {
   competitionStatus: CompetitionStatus;
   stage: StructureStageHubSummary;
   structureStages: readonly StructureStageHubSummary[];
+  /** Seat names from the structure view, keyed by entry id. */
+  blockDetailRoster?: readonly {
+    entryId: string;
+    displayName?: string | null;
+  }[];
 };
 
 const EMPTY_DRAWS: StageDraw[] = [];
@@ -137,6 +146,7 @@ export function StructureDrawDialog({
   competitionId,
   structureStages,
   stage,
+  blockDetailRoster,
 }: StructureDrawDialogProps) {
   const { t } = useTranslation('structure');
   const { t: tDraw } = useTranslation('draw');
@@ -261,6 +271,21 @@ export function StructureDrawDialog({
           })
         : t(launchBlock.detailKey)
       : null;
+  const createBlockNamedLines =
+    createBlockedDetail != null && createBlockPresentation?.kind === 'inline'
+      ? formatDrawCreateBlockDetailLines(
+          stage.drawCreateLaunch?.blockDetail,
+          drawCreateBlockDetailNameIndex({
+            groups: overviewGroups,
+            entryIds: stage.compositionEntryIds,
+            entryNames: stage.compositionPreviewNames,
+            roster: blockDetailRoster,
+            extraEntryIds: stage.affectationEntryIds,
+            extraEntryNames: stage.affectationPreviewNames,
+          }),
+          t,
+        )
+      : [];
 
   /** Draft create / generate — hub + schematic unchanged until publish/apply. */
   function scheduleDrawOverviewRefresh() {
@@ -305,17 +330,14 @@ export function StructureDrawDialog({
         notify.success(tDraw('toastCreated'));
       }
     },
-    onError: async (error) => {
+    onError: (error) => {
+      if (isStageDrawLaunchRefusalError(error)) {
+        scheduleDrawOverviewRefresh();
+        return;
+      }
       if (isDrawGenerateFailedError(error)) {
         scheduleDrawOverviewRefresh();
         notify.error(tDraw('toastGenerationFailed'));
-        return;
-      }
-      if (
-        error instanceof ApiError &&
-        error.code === 'Stage.NonCancelledDrawAlreadyExists'
-      ) {
-        notify.error(resolveLifecycleMutationMessage(t, error));
         return;
       }
       notify.error(tDraw('toastActionFailed'));
@@ -455,6 +477,9 @@ export function StructureDrawDialog({
   const releaseBodyError = stickyMutationError(releaseMutation.error);
 
   const mutationError =
+    (isStageDrawLaunchRefusalError(createMutation.error)
+      ? createMutation.error
+      : null) ??
     stickyMutationError(publishAndApplyMutation.error) ??
     stickyMutationError(cancelMutation.error) ??
     stickyMutationError(applyMutation.error) ??
@@ -647,6 +672,11 @@ export function StructureDrawDialog({
     createBlockPresentation?.kind === 'inline' ? (
     <Alert tone={createBlockPresentation.tone} role="status">
       <p className="ds-body">{createBlockedDetail}</p>
+      {createBlockNamedLines.map((line) => (
+        <p key={line} className="ds-body">
+          {line}
+        </p>
+      ))}
       {createBlockEcho?.cta?.actionCode === 'AddEntry' &&
       createBlockEcho.sotHref ? (
         <p className="ds-body">
@@ -786,8 +816,10 @@ export function StructureDrawDialog({
                   onClick={() => {
                     if (!canLaunch) return;
                     createMutation.mutate(undefined, {
-                      onSettled: () => {
-                        createMutation.reset();
+                      onSettled: (_result, error) => {
+                        if (!isStageDrawLaunchRefusalError(error)) {
+                          createMutation.reset();
+                        }
                       },
                     });
                   }}
@@ -1246,7 +1278,11 @@ export function StructureDrawDialog({
       <ConfirmDialog
         open={confirm === 'redo'}
         title={tDraw('confirmRedoTitle')}
-        message={tDraw('confirmRedo')}
+        message={
+          drawKind === 'Group'
+            ? tDraw('confirmRedoGroups')
+            : tDraw('confirmRedo')
+        }
         confirmLabel={tDraw('redo')}
         confirmIcon={<UndoIcon size="sm" />}
         cancelLabel={tCommon('close')}

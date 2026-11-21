@@ -24,6 +24,8 @@ export type StructurePlacementOperationalSectionProps = {
   activeDraw: boolean;
   blockPerformDrawCta: boolean;
   createBlockedShort: string | null;
+  /** Readable gate detail under the short label. Empty when the refusal has none. */
+  createBlockedNamedLines?: readonly string[];
   createBlockedReason: string | null;
   showCreateBlockedCaption: boolean;
   showPoolHint: boolean;

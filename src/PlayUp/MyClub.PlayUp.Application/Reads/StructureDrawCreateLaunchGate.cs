@@ -29,7 +29,6 @@ public static class StructureDrawCreateLaunchGate
     internal const string BlockGroupShapeInvalid = "GroupShapeInvalid";
     internal const string BlockPlacesCountMismatch = "PlacesCountMismatch";
     internal const string BlockDirectAssignmentPresent = "DirectAssignmentPresent";
-    internal const string BlockBracketPlacesOccupied = "BracketPlacesOccupied";
     internal const string BlockNoFreeSlot = "NoFreeSlot";
     internal const string BlockNotEnoughTeams = "NotEnoughTeams";
     internal const string BlockTooManyTeams = "TooManyTeams";
@@ -107,16 +106,6 @@ public static class StructureDrawCreateLaunchGate
             {
                 return Deny(MapGroupRuleCode(groupDecision.Code!), groupDecision.Reasons);
             }
-
-            // The client still posts Rerun. An occupied grid must stay blocked until that intent changes.
-            try
-            {
-                StageDrawRerunLaunchGuard.Ensure(stage, competitionStages, kind);
-            }
-            catch (ApplicationFailureException exception)
-            {
-                return Deny(MapGroupRuleCode(exception.Code ?? ApplicationErrorCodes.DrawLaunchGridNotVacant));
-            }
         }
         else
         {
@@ -145,8 +134,9 @@ public static class StructureDrawCreateLaunchGate
 
     /// <summary>
     /// Gets the Groups gate reason and the server code a command returns for the same cause.
-    /// An occupied grid uses <see cref="BlockBracketPlacesOccupied"/> so the existing placement label stays;
-    /// the command still returns <see cref="ApplicationErrorCodes.DrawLaunchGridNotVacant"/>.
+    /// The gate follows <see cref="DrawInputsIntent.Default"/>: the shared launch rule only.
+    /// A legal occupied grid is allowed. Create with <see cref="DrawInputsIntent.Rerun"/> still
+    /// refuses that grid with <see cref="ApplicationErrorCodes.DrawLaunchGridNotVacant"/>.
     /// </summary>
     internal static IReadOnlyList<(string GateCode, string ServerCode)> GroupReasonParity { get; } =
     [
@@ -157,7 +147,6 @@ public static class StructureDrawCreateLaunchGate
         (ApplicationErrorCodes.DrawFixedOutsideComposition, ApplicationErrorCodes.DrawFixedOutsideComposition),
         (ApplicationErrorCodes.DrawFixedExceedsCapacity, ApplicationErrorCodes.DrawFixedExceedsCapacity),
         (BlockActiveDrawPresent, StageErrorCodes.NonCancelledDrawAlreadyExists),
-        (BlockBracketPlacesOccupied, ApplicationErrorCodes.DrawLaunchGridNotVacant),
         (BlockDrawObsoleteForConsumption, ApplicationErrorCodes.DrawObsoleteForConsumption),
     ];
 
@@ -166,7 +155,6 @@ public static class StructureDrawCreateLaunchGate
         {
             ApplicationErrorCodes.DrawPotsMissing => BlockMissingPots,
             ApplicationErrorCodes.DrawGroupShapeInvalid => BlockGroupShapeInvalid,
-            ApplicationErrorCodes.DrawLaunchGridNotVacant => BlockBracketPlacesOccupied,
             _ => code,
         };
 
