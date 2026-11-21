@@ -740,18 +740,21 @@ public sealed class GroupDrawFixedPlacementEndpointTests(HostPostgresFixture fix
         using var client = factory.CreateClient();
         var drawId = await ApplyDefaultAsync(client, seed.StageId);
         var applied = await ReloadAsync(factory, seed.StageId);
-        var pots = GroupDrawPots.TryRead(applied)!;
-        var pot1 = pots.Where(row => row.Value == 1).Select(row => row.Key).ToArray();
-        var source = applied.Groups.First(group => group.EntryIds.Contains(pot1[0]));
-        var target = applied.Groups.First(group => group.EntryIds.Contains(pot1[1]));
-        using (var moved = await client.DeleteAsync(EntryUri(seed.StageId, source.Id, pot1[0])))
+        var draw = applied.GetDraw(drawId);
+        draw.Inputs!.FixedGroups.Select(row => row.EntryId).Should().Contain(seed.Pinned);
+        var source = applied.Groups.First(group => group.EntryIds.Contains(seed.Pinned[0]));
+        var target = applied.Groups.First(group => group.EntryIds.Contains(seed.Pinned[1]));
+        source.Id.Should().NotBe(target.Id);
+        using (var moved = await client.DeleteAsync(EntryUri(seed.StageId, source.Id, seed.Pinned[0])))
         {
-            moved.StatusCode.Should().Be(HttpStatusCode.NoContent);
+            var refusal = moved.IsSuccessStatusCode ? string.Empty : await moved.Content.ReadAsStringAsync();
+            moved.StatusCode.Should().Be(HttpStatusCode.NoContent, refusal);
         }
 
-        using (var placed = await client.PutAsync(EntryUri(seed.StageId, target.Id, pot1[0]), null))
+        using (var placed = await client.PutAsync(EntryUri(seed.StageId, target.Id, seed.Pinned[0]), null))
         {
-            placed.StatusCode.Should().Be(HttpStatusCode.NoContent);
+            var refusal = placed.IsSuccessStatusCode ? string.Empty : await placed.Content.ReadAsStringAsync();
+            placed.StatusCode.Should().Be(HttpStatusCode.NoContent, refusal);
         }
 
         using var redo = await client.PostAsync(RedoUri(seed.StageId, drawId), content: null);
@@ -811,11 +814,13 @@ public sealed class GroupDrawFixedPlacementEndpointTests(HostPostgresFixture fix
             _clock);
         stage.ReplaceAffectationAuthoring(ids, _clock);
         await SaveAsync(factory, competition, stage, null);
-        var pots = GroupDrawPots.TryRead(stage)!;
+        var persisted = await ReloadAsync(factory, stage.Id);
+        var pots = GroupDrawPots.TryRead(persisted)!;
         var pot1 = pots.Where(row => row.Value == 1).Select(row => row.Key).ToArray();
-        await PlaceAsync(factory, stage.Id, stage.Groups[0].Id, pot1[0]);
-        await PlaceAsync(factory, stage.Id, stage.Groups[1].Id, pot1[1]);
-        return new Seed(competition.Id, stage.Id, stage.Groups[0].Id, ids, pot1);
+        pot1.Should().HaveCount(2);
+        await PlaceAsync(factory, persisted.Id, persisted.Groups[0].Id, pot1[0]);
+        await PlaceAsync(factory, persisted.Id, persisted.Groups[1].Id, pot1[1]);
+        return new Seed(competition.Id, persisted.Id, persisted.Groups[0].Id, ids, pot1);
     }
 
     private static async Task PlaceAsync(
