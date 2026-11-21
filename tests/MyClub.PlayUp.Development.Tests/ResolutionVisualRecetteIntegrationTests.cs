@@ -234,7 +234,8 @@ public sealed class ResolutionVisualRecetteIntegrationTests(DevelopmentPostgresF
         cupStage.CompositionCapacity.Should().Be(2);
         var overview = StageOverviewAssembler.Assemble(cup, competition, [cup]);
         var draw = overview.Draws.Single(d => d.IsApplied);
-        draw.Actions!.Redo.State.Should().Be(StageDrawActionState.Available);
+        draw.Actions!.Redo.State.Should().Be(StageDrawActionState.Blocked);
+        draw.Actions.Redo.BlockCode.Should().Be(ApplicationErrorCodes.DrawTooManyTeams);
         draw.Actions.Release.ReleasableCount.Should().BeGreaterThan(0);
         draw.Actions.Release.State.Should().Be(StageDrawActionState.Blocked);
         draw.Actions.Release.BlockCode.Should().Be(ApplicationErrorCodes.DrawReleaseRequiresCancelled);
@@ -248,14 +249,15 @@ public sealed class ResolutionVisualRecetteIntegrationTests(DevelopmentPostgresF
         var stagesRepo = redoScope.ServiceProvider.GetRequiredService<IStageRepository>();
         var cupLoaded = (await stagesRepo.GetByIdForUpdateAsync(cup.Id))!;
         var stageMatches = await matchRepo.ListByStageForUpdateAsync(cup.Id);
-        var redoResult = RedoDraw.Execute(
+        var redo = () => RedoDraw.Execute(
             cupLoaded,
             new DrawId(draw.Id),
             clock,
             [cupLoaded],
             stageMatches);
-        redoResult.IsResolved.Should().BeTrue();
-        cupLoaded.GetDraw(redoResult.DrawId).Resolution.State.Should().Be(DrawResolutionState.Resolved);
+        redo.Should().Throw<ApplicationFailureException>()
+            .Which.Code.Should().Be(ApplicationErrorCodes.DrawTooManyTeams);
+        cupLoaded.GetDraw(new DrawId(draw.Id)).Status.Should().Be(DrawStatus.Published);
     }
 
     [Fact]
