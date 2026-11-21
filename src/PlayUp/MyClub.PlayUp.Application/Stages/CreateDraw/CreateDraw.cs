@@ -43,15 +43,17 @@ public static class CreateDraw
         ArgumentNullException.ThrowIfNull(clock);
         StructureOperationalExitEditGuard.Ensure(stage, stageMatches, "Draw");
         EnsureDrawRulesEngaged(stage);
-        if (kind == DrawResolutionKind.Group
-            && !stage.Draws.Any(draw => draw.Status != DrawStatus.Cancelled))
+        if (kind != DrawResolutionKind.Group
+            || stage.Draws.Any(draw => draw.Status != DrawStatus.Cancelled))
         {
-            var stages = competitionStages ?? [stage];
-            GroupDrawLaunchRules.Evaluate(stage, stages).EnsureAllowed();
-            if (intent == DrawInputsIntent.Rerun)
-            {
-                StageDrawRerunLaunchGuard.Ensure(stage, stages, kind);
-            }
+            return stage.CreateDraw(kind, clock);
+        }
+
+        var stages = competitionStages ?? [stage];
+        GroupDrawLaunchRules.Evaluate(stage, stages).EnsureAllowed();
+        if (intent == DrawInputsIntent.Rerun)
+        {
+            StageDrawRerunLaunchGuard.Ensure(stage, stages, kind);
         }
 
         return stage.CreateDraw(kind, clock);

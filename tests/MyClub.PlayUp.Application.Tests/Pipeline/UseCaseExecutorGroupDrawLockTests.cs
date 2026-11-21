@@ -7,7 +7,6 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
-using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Pipeline;
@@ -83,7 +82,7 @@ public sealed class UseCaseExecutorGroupDrawLockTests
         {
             () => executor.CreateDrawAsync(stageId, DrawResolutionKind.Group),
             () => executor.ConfigureDrawInputsAsync(stageId, DrawId.New()),
-            () => executor.GenerateDrawAsync(stageId, DrawId.New()),
+            () => executor.GenerateDrawAsync(stageId, DrawId.New())
         };
 
         foreach (var action in actions)
@@ -138,7 +137,6 @@ public sealed class UseCaseExecutorGroupDrawLockTests
         public Harness(Competition competition, Stage stage)
         {
             Competition = competition;
-            Stage = stage;
             Stages = new Mock<IStageRepository>(MockBehavior.Strict);
             Competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
             UnitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
@@ -181,13 +179,11 @@ public sealed class UseCaseExecutorGroupDrawLockTests
                 NullLogger<UseCaseExecutor>.Instance);
         }
 
-        public Competition Competition { get; }
+        private Competition Competition { get; }
 
-        public Stage Stage { get; }
+        private Mock<IStageRepository> Stages { get; }
 
-        public Mock<IStageRepository> Stages { get; }
-
-        public Mock<ICompetitionRepository> Competitions { get; }
+        private Mock<ICompetitionRepository> Competitions { get; }
 
         public Mock<IUnitOfWork> UnitOfWork { get; }
 

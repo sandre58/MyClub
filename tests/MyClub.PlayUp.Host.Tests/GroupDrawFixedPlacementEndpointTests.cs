@@ -321,7 +321,7 @@ public sealed class GroupDrawFixedPlacementEndpointTests(HostPostgresFixture fix
             () => client.PostAsync(RedoUri(seed.StageId, drawId), content: null),
             () => client.PutAsJsonAsync(
                 MembershipUri(seed),
-                new SetGroupEntriesRequest(current.Take(1).ToArray(), current)));
+                new SetGroupEntriesRequest([.. current.Take(1)], current)));
 
         responses.Should().ContainSingle(response => response.StatusCode == HttpStatusCode.OK);
         var failure = responses.Single(response => response.StatusCode == HttpStatusCode.Conflict);
@@ -507,15 +507,10 @@ public sealed class GroupDrawFixedPlacementEndpointTests(HostPostgresFixture fix
                     Group: item.GetProperty("GroupId").GetGuid()))
                 .ToArray();
             fixedIds.Should().BeSubsetOf(placed.Select(item => item.Entry));
-            placed.GroupBy(item => item.Group).ToList().ForEach(group =>
-            {
-                group.Select(item => pots[item.Entry]).Should().OnlyHaveUniqueItems();
-            });
-            if (applied)
-            {
-                var occupancy = await ReadOccupancyAsync(stageId);
-                occupancy.Should().BeEquivalentTo(placed);
-            }
+            placed.GroupBy(item => item.Group).ToList().ForEach(group => group.Select(item => pots[item.Entry]).Should().OnlyHaveUniqueItems());
+            if (!applied) continue;
+            var occupancy = await ReadOccupancyAsync(stageId);
+            occupancy.Should().BeEquivalentTo(placed);
         }
 
         rows.Should().Be(1);

@@ -147,7 +147,7 @@ public static class StructureDrawCreateLaunchGate
         (ApplicationErrorCodes.DrawFixedOutsideComposition, ApplicationErrorCodes.DrawFixedOutsideComposition),
         (ApplicationErrorCodes.DrawFixedExceedsCapacity, ApplicationErrorCodes.DrawFixedExceedsCapacity),
         (BlockActiveDrawPresent, StageErrorCodes.NonCancelledDrawAlreadyExists),
-        (BlockDrawObsoleteForConsumption, ApplicationErrorCodes.DrawObsoleteForConsumption),
+        (BlockDrawObsoleteForConsumption, ApplicationErrorCodes.DrawObsoleteForConsumption)
     ];
 
     private static string MapGroupRuleCode(string code) =>
@@ -155,7 +155,7 @@ public static class StructureDrawCreateLaunchGate
         {
             ApplicationErrorCodes.DrawPotsMissing => BlockMissingPots,
             ApplicationErrorCodes.DrawGroupShapeInvalid => BlockGroupShapeInvalid,
-            _ => code,
+            _ => code
         };
 
     private static bool BlocksUpstreamCompositionPool(StructureStageHubSummaryDto hub) => !hub.IsRootComposition && (hub.CompositionEntryCount <= 0 || (hub.InboundComposition is { ConfiguredVolume: > 0 } inbound

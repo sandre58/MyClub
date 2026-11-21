@@ -45,10 +45,11 @@ public static class GroupDrawLaunchRules
         var placesPerGroup = stage.PlacesPerGroup;
         var pendingByGroup = CountPending(stage, competitionStages, groups);
         var occupantsByGroup = groups.ToDictionary(
-            group => group.Id,
-            group => (IReadOnlyList<EntryId>)group.EntryIds
-                .Where(entryId => entriesBeingReleased?.Contains(entryId) != true)
-                .ToArray());
+            group => group.Id, IReadOnlyList<EntryId> (group) =>
+            [
+                .. group.EntryIds
+                    .Where(entryId => entriesBeingReleased?.Contains(entryId) != true)
+            ]);
 
         if (TryRefuseInbound(groups, placesPerGroup, numberOfPots, composition.Length, pendingByGroup) is { } inbound)
         {
@@ -70,7 +71,7 @@ public static class GroupDrawLaunchRules
             return conflict;
         }
 
-        if (capacity is int drawCapacity
+        if (capacity is { } drawCapacity
             && TryRefuseCapacity(groups, occupantsByGroup, drawCapacity) is { } overCapacity)
         {
             return overCapacity;
@@ -99,10 +100,7 @@ public static class GroupDrawLaunchRules
         var fixedGroups = new List<GroupDrawPlacement>();
         foreach (var group in groups)
         {
-            foreach (var entryId in occupantsByGroup[group.Id])
-            {
-                fixedGroups.Add(new GroupDrawPlacement(entryId, group.Id));
-            }
+            fixedGroups.AddRange(occupantsByGroup[group.Id].Select(entryId => new GroupDrawPlacement(entryId, group.Id)));
         }
 
         return GroupDrawLaunchDecision.Allow(fixedGroups, pots);
@@ -153,7 +151,7 @@ public static class GroupDrawLaunchRules
             return null;
         }
 
-        if (placesPerGroup is not int places)
+        if (placesPerGroup is not { } places)
         {
             return RefuseInbound(groups, pendingByGroup);
         }
@@ -162,7 +160,7 @@ public static class GroupDrawLaunchRules
         var uniform = drawable.Distinct().Count() == 1;
         var capacity = compositionCount % groups.Count == 0 ? compositionCount / groups.Count : (int?)null;
         var holds = uniform
-            && numberOfPots is int pots
+            && numberOfPots is { } pots
             && drawable[0] == pots
             && capacity == pots;
         return holds ? null : RefuseInbound(groups, pendingByGroup);
@@ -190,13 +188,7 @@ public static class GroupDrawLaunchRules
         var reasons = new List<string>();
         foreach (var group in groups)
         {
-            foreach (var entryId in occupantsByGroup[group.Id])
-            {
-                if (!composition.Contains(entryId))
-                {
-                    reasons.Add($"group:{group.Id.Value:D}:entry:{entryId.Value:D}");
-                }
-            }
+            reasons.AddRange(from entryId in occupantsByGroup[@group.Id] where !composition.Contains(entryId) select $"group:{@group.Id.Value:D}:entry:{entryId.Value:D}");
         }
 
         return reasons.Count == 0
@@ -238,28 +230,14 @@ public static class GroupDrawLaunchRules
     private static GroupDrawLaunchDecision? TryRefuseCapacity(
         IReadOnlyList<Group> groups,
         Dictionary<GroupId, IReadOnlyList<EntryId>> occupantsByGroup,
-        int capacity)
-    {
-        foreach (var group in groups)
-        {
-            var count = occupantsByGroup[group.Id].Count;
-            if (count > capacity)
-            {
-                return GroupDrawLaunchDecision.Deny(
-                    ApplicationErrorCodes.DrawFixedExceedsCapacity,
-                    "A group holds more teams than the draw can place. Remove teams before drawing.",
-                    [$"group:{group.Id.Value:D}:occupants:{count}:capacity:{capacity}"]);
-            }
-        }
-
-        return null;
-    }
+        int capacity) =>
+        (from @group in groups let count = occupantsByGroup[@group.Id].Count where count > capacity select GroupDrawLaunchDecision.Deny(ApplicationErrorCodes.DrawFixedExceedsCapacity, "A group holds more teams than the draw can place. Remove teams before drawing.", [$"group:{@group.Id.Value:D}:occupants:{count}:capacity:{capacity}"])).FirstOrDefault();
 
     private static IReadOnlyDictionary<EntryId, int>? TryComputePots(
         EntryId[] composition,
         int? numberOfPots)
     {
-        if (numberOfPots is not int pots || composition.Length == 0 || composition.Length % pots != 0)
+        if (numberOfPots is not { } pots || composition.Length == 0 || composition.Length % pots != 0)
         {
             return null;
         }
@@ -274,14 +252,7 @@ public static class GroupDrawLaunchRules
     {
         for (var pot = 1; pot <= numberOfPots; pot++)
         {
-            var size = 0;
-            foreach (var value in pots.Values)
-            {
-                if (value == pot)
-                {
-                    size++;
-                }
-            }
+            var size = pots.Values.Count(value => value == pot);
 
             if (size != groupCount)
             {

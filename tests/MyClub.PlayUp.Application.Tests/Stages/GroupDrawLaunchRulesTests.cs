@@ -92,7 +92,7 @@ public sealed class GroupDrawLaunchRulesTests
             ]),
             _clock);
 
-        var stages = new Stage[] { source, stage };
+        var stages = new[] { source, stage };
         var decision = GroupDrawLaunchRules.Evaluate(stage, stages);
         decision.Code.Should().Be(ApplicationErrorCodes.DrawGroupSeatsReservedByInboundFeed);
         decision.Reasons.Should().ContainSingle()

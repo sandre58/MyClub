@@ -229,7 +229,7 @@ public static class ApplyDraw
         foreach (var placement in placements)
         {
             var owningGroup = stage.Groups.FirstOrDefault(g => g.EntryIds.Contains(placement.EntryId));
-            if (owningGroup is not null && !owningGroup.Id.Equals(placement.GroupId))
+            if (owningGroup?.Id.Equals(placement.GroupId) == false)
             {
                 throw new InvalidOperationException(
                     $"Group draw apply cannot move entry '{placement.EntryId}' from group '{owningGroup.Id}' to '{placement.GroupId}'. The resolution is obsolete for consumption.");
