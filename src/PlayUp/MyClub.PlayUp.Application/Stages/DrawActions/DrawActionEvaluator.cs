@@ -266,6 +266,18 @@ internal static class DrawActionEvaluator
             return DrawActionAssessment.Hidden;
         }
 
+        if (draw.InputsIntent == DrawInputsIntent.Partial)
+        {
+            var partialBlock = SlotPartialDrawPlanner.TryGetPartialRedoBlockCode(
+                context.Stage,
+                context.CompetitionStages,
+                AlignedSlotKeys(context.Stage, draw),
+                draw.Id);
+            return partialBlock is null
+                ? DrawActionAssessment.Available
+                : DrawActionAssessment.Block(partialBlock);
+        }
+
         if (draw.Inputs is { FixedSlots.Count: > 0 })
         {
             if (context.Stage.DirectAssignments.Count > 0)
