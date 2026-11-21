@@ -115,7 +115,7 @@ public static class StructureDrawCreateLaunchGate
             }
             catch (ApplicationFailureException exception)
             {
-                return Deny(MapGroupRuleCode(exception.Code ?? ApplicationErrorCodes.DrawLaunchGridNotVacant));
+                return Deny(MapGroupRuleCode(exception.Code));
             }
         }
         else
@@ -158,7 +158,7 @@ public static class StructureDrawCreateLaunchGate
         (ApplicationErrorCodes.DrawFixedExceedsCapacity, ApplicationErrorCodes.DrawFixedExceedsCapacity),
         (BlockActiveDrawPresent, StageErrorCodes.NonCancelledDrawAlreadyExists),
         (BlockBracketPlacesOccupied, ApplicationErrorCodes.DrawLaunchGridNotVacant),
-        (BlockDrawObsoleteForConsumption, ApplicationErrorCodes.DrawObsoleteForConsumption),
+        (BlockDrawObsoleteForConsumption, ApplicationErrorCodes.DrawObsoleteForConsumption)
     ];
 
     private static string MapGroupRuleCode(string code) =>
@@ -167,7 +167,7 @@ public static class StructureDrawCreateLaunchGate
             ApplicationErrorCodes.DrawPotsMissing => BlockMissingPots,
             ApplicationErrorCodes.DrawGroupShapeInvalid => BlockGroupShapeInvalid,
             ApplicationErrorCodes.DrawLaunchGridNotVacant => BlockBracketPlacesOccupied,
-            _ => code,
+            _ => code
         };
 
     private static bool BlocksUpstreamCompositionPool(StructureStageHubSummaryDto hub) => !hub.IsRootComposition && (hub.CompositionEntryCount <= 0 || (hub.InboundComposition is { ConfiguredVolume: > 0 } inbound

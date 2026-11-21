@@ -11,7 +11,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Stages;
-using MyClub.PlayUp.Host;
 using Xunit;
 
 namespace MyClub.PlayUp.Host.Tests;
@@ -28,8 +27,7 @@ public sealed class PlayUpExceptionHandlerGroupDrawTests
     public async Task Group_draw_refusals_are_409_with_a_dedicated_title_code_and_reasonsAsync(string code, string title)
     {
         var handler = new PlayUpExceptionHandler(NullLogger<PlayUpExceptionHandler>.Instance);
-        var context = new DefaultHttpContext();
-        context.Response.Body = new MemoryStream();
+        var context = new DefaultHttpContext { Response = { Body = new MemoryStream() } };
         var reasons = new[] { "group:reason" };
 
         var handled = await handler.TryHandleAsync(
@@ -51,8 +49,7 @@ public sealed class PlayUpExceptionHandlerGroupDrawTests
     public async Task Domain_generator_codes_stay_on_the_generic_domain_titleAsync()
     {
         var handler = new PlayUpExceptionHandler(NullLogger<PlayUpExceptionHandler>.Instance);
-        var context = new DefaultHttpContext();
-        context.Response.Body = new MemoryStream();
+        var context = new DefaultHttpContext { Response = { Body = new MemoryStream() } };
 
         await handler.TryHandleAsync(
             context,

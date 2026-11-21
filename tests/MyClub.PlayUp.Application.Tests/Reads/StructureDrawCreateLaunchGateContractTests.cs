@@ -232,7 +232,7 @@ public sealed class StructureDrawCreateLaunchGateContractTests
             matchSummaries: null).BlockReasonCode;
         gateCode.Should().NotBeNull();
 
-        var serverCode = RefusalCode(() => CreateDraw.Execute(
+        var serverCode = refusalCode(() => CreateDraw.Execute(
             stage,
             DrawResolutionKind.Group,
             _clock,
@@ -257,7 +257,9 @@ public sealed class StructureDrawCreateLaunchGateContractTests
             stage.Draws.Should().BeEmpty();
         }
 
-        static string? RefusalCode(Action act)
+        return;
+
+        static string? refusalCode(Action act)
         {
             try
             {
@@ -391,7 +393,7 @@ public sealed class StructureDrawCreateLaunchGateContractTests
         switch (cause)
         {
             case "inbound":
-                stage.ReplaceAffectationAuthoring(ids.Take(3).ToArray(), _clock);
+                stage.ReplaceAffectationAuthoring([.. ids.Take(3)], _clock);
                 var source = Stage.Create(competition.Id, new StageName("Source"), SampleRegulations.Standard(), _clock);
                 source.ReplaceQualificationRules(
                     new QualificationRules(

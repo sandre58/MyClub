@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using System.Text.Json;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Pipeline;
