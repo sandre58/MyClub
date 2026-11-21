@@ -51,6 +51,7 @@ import type {
 import { StructureDrawDialog } from './StructureDrawDialog';
 import { queryKeys } from '../../../queryKeys';
 import { scheduleStructureRefresh } from '../structureInvalidation';
+import i18n from '../../../i18n';
 
 const scrollIntoViewMock = vi.fn();
 const originalScrollIntoView = Element.prototype.scrollIntoView;
@@ -2512,13 +2513,66 @@ describe('StructureDrawDialog', () => {
     expect(createAndGenerateDraw).not.toHaveBeenCalled();
   });
 
-  it('keeps the Cup redo confirmation text', async () => {
+  it('shows confirmRedoCup for an applied partial cup draw', async () => {
     const user = userEvent.setup();
     vi.mocked(fetchStageOverview).mockResolvedValue(
       overview([
         slotDraw({
           status: 'Published',
           isApplied: true,
+          inputsIntent: 'Partial',
+          actions: appliedDrawActions(),
+        }),
+      ]),
+    );
+
+    renderDialog(cupStage());
+    await user.click(
+      await screen.findByRole('button', { name: 'Refaire le tirage' }),
+    );
+    const confirm = await screen.findByRole('dialog', {
+      name: 'Refaire le tirage ?',
+    });
+    expect(confirm).toHaveTextContent(
+      'Cela annule l’exécution, libère seulement les emplacements placés par le tirage, puis lance un nouvel aperçu. Les équipes placées à la main ou qualifiées restent à leur place. Si une étape échoue, rien n’est modifié.',
+    );
+  });
+
+  it('shows English confirmRedoCup for an applied partial cup draw', async () => {
+    const user = userEvent.setup();
+    await i18n.changeLanguage('en');
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([
+        slotDraw({
+          status: 'Published',
+          isApplied: true,
+          inputsIntent: 'Partial',
+          actions: appliedDrawActions(),
+        }),
+      ]),
+    );
+
+    renderDialog(cupStage());
+    await user.click(
+      await screen.findByRole('button', { name: 'Redo the draw' }),
+    );
+    const confirm = await screen.findByRole('dialog', {
+      name: 'Redo the draw?',
+    });
+    expect(confirm).toHaveTextContent(
+      'This cancels the execution, releases only the slots the draw placed, then starts a new preview.',
+    );
+    await i18n.changeLanguage('fr');
+  });
+
+  it('shows confirmRedo when cup draw inputs intent is not Partial', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([
+        slotDraw({
+          status: 'Published',
+          isApplied: true,
+          inputsIntent: 'Rerun',
           actions: appliedDrawActions(),
         }),
       ]),
@@ -2533,9 +2587,6 @@ describe('StructureDrawDialog', () => {
     });
     expect(confirm).toHaveTextContent(
       'Cela annule l’exécution, libère les placements encore alignés, puis lance un nouvel aperçu, en une seule opération : si une étape échoue, rien n’est modifié.',
-    );
-    expect(confirm).not.toHaveTextContent(
-      'retire seulement les équipes placées par le tirage',
     );
   });
 

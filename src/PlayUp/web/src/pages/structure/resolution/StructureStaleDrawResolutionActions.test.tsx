@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { StageDraw, StructureStageHubSummary } from '../../../types';
 import { drawActions, hiddenDrawActions } from '../../../test/withDrawActions';
+import i18n from '../../../i18n';
 import { renderWithI18n } from '../../../test/renderWithI18n';
 import { DRAW_RELEASE_ATTACHED_MATCHES } from '../draw/drawActions';
 import { StructureStaleDrawResolutionActions } from './StructureStaleDrawResolutionActions';
@@ -185,6 +186,65 @@ describe('StructureStaleDrawResolutionActions', () => {
       within(dialog).getByRole('button', { name: 'Refaire le tirage' }),
     );
     expect(onConfirmRedo).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses the Partial cup redo confirmation when inputsIntent is Partial', () => {
+    renderActions({
+      confirmRedoOpen: true,
+      activeDraw: {
+        ...appliedDraw(
+          drawActions({
+            redo: { state: 'Available' },
+            release: { state: 'Available', releasableCount: 2 },
+          }),
+        ),
+        inputsIntent: 'Partial',
+      },
+    });
+
+    expect(screen.getByRole('dialog')).toHaveTextContent(
+      'Cela annule l’exécution, libère seulement les emplacements placés par le tirage, puis lance un nouvel aperçu. Les équipes placées à la main ou qualifiées restent à leur place. Si une étape échoue, rien n’est modifié.',
+    );
+  });
+
+  it('shows English confirmRedoCup for partial cup draws', async () => {
+    await i18n.changeLanguage('en');
+    renderActions({
+      confirmRedoOpen: true,
+      activeDraw: {
+        ...appliedDraw(
+          drawActions({
+            redo: { state: 'Available' },
+            release: { state: 'Available', releasableCount: 2 },
+          }),
+        ),
+        inputsIntent: 'Partial',
+      },
+    });
+
+    expect(screen.getByRole('dialog')).toHaveTextContent(
+      'This cancels the execution, releases only the slots the draw placed, then starts a new preview.',
+    );
+    await i18n.changeLanguage('fr');
+  });
+
+  it('uses confirmRedo when cup draw inputs intent is not Partial', () => {
+    renderActions({
+      confirmRedoOpen: true,
+      activeDraw: {
+        ...appliedDraw(
+          drawActions({
+            redo: { state: 'Available' },
+            release: { state: 'Available', releasableCount: 2 },
+          }),
+        ),
+        inputsIntent: 'Rerun',
+      },
+    });
+
+    expect(screen.getByRole('dialog')).toHaveTextContent(
+      'libère les placements encore alignés',
+    );
   });
 
   it('uses the Groups redo confirmation when the draw is a group draw', () => {

@@ -4,7 +4,9 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using System.Collections.Generic;
 using System.Net;
+using System.Text;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
@@ -17,6 +19,8 @@ using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
+using MyClub.PlayUp.Host.Contracts;
+using Npgsql;
 using Xunit;
 
 namespace MyClub.PlayUp.Host.Tests;
@@ -165,7 +169,126 @@ public sealed class RedoDrawEndpointTests(HostPostgresFixture fixture)
         stages.Add(stage);
         await unitOfWork.SaveChangesAsync();
 
-        return new PartialSlotDrawSeed(stage.Id, draw.Id, manual);
+        return new PartialSlotDrawSeed(competition.Id, stage.Id, draw.Id, manual);
+    }
+
+    [IntegrationFact]
+    public async Task Redo_when_all_sibling_feeds_reserve_released_slots_returns_409_DrawNoFreeSlotAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var seed = await SeedAppliedSlotDrawWithSiblingFeedAsync(factory, reserveBothSlots: true);
+
+        using var client = factory.CreateClient();
+        using var response = await client.PostAsync(RedoUri(seed.StageId, seed.DrawId), content: null);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        (await ReadCodeAsync(response)).Should().Be(ApplicationErrorCodes.DrawNoFreeSlot);
+
+        using var scope = factory.Services.CreateScope();
+        var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(seed.StageId);
+        stage!.GetDraw(seed.DrawId).Status.Should().Be(DrawStatus.Published);
+    }
+
+    [IntegrationFact]
+    public async Task Redo_then_configure_partial_and_generate_match_redo_perimeterAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var seed = await SeedAppliedPartialSlotDrawWithDirectAssignmentAsync(factory);
+
+        using var client = factory.CreateClient();
+        using var response = await client.PostAsync(RedoUri(seed.StageId, seed.DrawId), content: null);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<DrawGenerationDto>(HostJson.Options);
+        body.Should().NotBeNull();
+        var newDrawId = new DrawId(body!.DrawId);
+
+        using (var inputs = await client.PostAsJsonAsync(
+                   InputsUri(seed.StageId, newDrawId),
+                   new ConfigureDrawInputsRequest("Partial")))
+        {
+            inputs.EnsureSuccessStatusCode();
+        }
+
+        using (var generate = await client.PostAsync(GenerateUri(seed.StageId, newDrawId), content: null))
+        {
+            generate.EnsureSuccessStatusCode();
+        }
+
+        var stage = await ReloadAsync(factory, seed.StageId);
+        var preview = stage.GetDraw(newDrawId);
+        preview.InputsIntent.Should().Be(DrawInputsIntent.Partial);
+        preview.Resolution.SlotResults.Should().NotContain(placement => placement.SlotKey == "S2");
+        preview.Resolution.SlotResults.Should().ContainSingle();
+        stage.FindSlot("S2")!.EntryId.Should().Be(seed.DirectEntry);
+    }
+
+    [IntegrationFact]
+    public async Task Redo_then_assign_on_preview_target_apply_returns_400_and_persists_nothingAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var seed = await SeedAppliedPartialSlotDrawWithDirectAssignmentAsync(factory);
+        using var client = factory.CreateClient();
+        var before = await ReloadAsync(factory, seed.StageId);
+        var manualBefore = before.FindSlot("S2")!.EntryId;
+
+        using var redo = await client.PostAsync(RedoUri(seed.StageId, seed.DrawId), content: null);
+        redo.EnsureSuccessStatusCode();
+        var body = await redo.Content.ReadFromJsonAsync<DrawGenerationDto>(HostJson.Options);
+        var newDrawId = body!.DrawId;
+        var intermediate = await ReloadAsync(factory, seed.StageId);
+        var targetPlacement = intermediate.GetDraw(new DrawId(newDrawId)).Resolution.SlotResults[0];
+        var targetKey = targetPlacement.SlotKey;
+        intermediate.FindSlot(targetKey)!.EntryId.Should().BeNull();
+
+        using (var clear = await client.DeleteAsync(
+                   $"{AssignmentPath(seed.StageId, "S2")}?expectedEntryId={seed.DirectEntry.Value}"))
+        {
+            clear.EnsureSuccessStatusCode();
+        }
+
+        (await PutSlotAsync(
+                client,
+                seed.StageId,
+                targetKey,
+                seed.DirectEntry.Value,
+                expected: null))
+            .EnsureSuccessStatusCode();
+
+        using (var publish = await client.PostAsync(PublishUri(seed.StageId, newDrawId), content: null))
+        {
+            publish.EnsureSuccessStatusCode();
+        }
+
+        using var apply = await client.PostAsync(ApplyUri(seed.StageId, newDrawId), content: null);
+        apply.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await ReadCodeAsync(apply)).Should().Be(ApplicationErrorCodes.DrawApplyFailure);
+
+        var after = await ReloadAsync(factory, seed.StageId);
+        after.FindSlot("S2")!.EntryId.Should().BeNull();
+        after.FindSlot("S1")!.EntryId.Should().Be(seed.DirectEntry);
+        after.DirectAssignments.Should().ContainSingle(assignment => assignment.SlotKey == targetKey);
+        after.GetDraw(new DrawId(newDrawId)).Status.Should().Be(DrawStatus.Published);
+        after.GetDraw(new DrawId(newDrawId)).Resolution.SlotResults
+            .Should().Contain(placement => placement.SlotKey == targetKey);
+    }
+
+    [IntegrationFact]
+    public async Task Redo_parallel_with_assignment_outside_preview_places_nothing_on_direct_assignmentsAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var seed = await SeedAppliedPartialSlotDrawWithDirectAssignmentAsync(factory);
+        using var client = factory.CreateClient();
+        var outsideEntry = EntryId.New();
+        var responses = await OverlapOnCompetitionLockAsync(
+            seed.CompetitionId,
+            () => client.PostAsync(RedoUri(seed.StageId, seed.DrawId), content: null),
+            () => PutSlotAsync(client, seed.StageId, "S2", outsideEntry.Value, expected: seed.DirectEntry.Value));
+        responses.Should().Contain(response => response.StatusCode == HttpStatusCode.OK);
+
+        var stage = await ReloadAsync(factory, seed.StageId);
+        var preview = stage.Draws.Single(draw => draw.Status == DrawStatus.Draft);
+        preview.Resolution.SlotResults.Should().NotContain(placement => placement.SlotKey == "S2");
+        stage.FindSlot("S2")!.EntryId.Should().BeOneOf(seed.DirectEntry, outsideEntry);
     }
 
     [IntegrationFact]
@@ -272,7 +395,9 @@ public sealed class RedoDrawEndpointTests(HostPostgresFixture fixture)
         return new SlotDrawSeed(stage.Id, draw.Id, SlotS1Entry: null, SlotS2Entry: null);
     }
 
-    private async Task<SlotDrawSeed> SeedAppliedSlotDrawWithSiblingFeedAsync(PlayUpWebApplicationFactory factory)
+    private async Task<SlotDrawSeed> SeedAppliedSlotDrawWithSiblingFeedAsync(
+        PlayUpWebApplicationFactory factory,
+        bool reserveBothSlots = false)
     {
         using var scope = factory.Services.CreateScope();
         var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
@@ -302,16 +427,24 @@ public sealed class RedoDrawEndpointTests(HostPostgresFixture fixture)
         // single-stage evaluator never sees this (it reports Redo as Available); only the real Rerun
         // launch guard — fed the full competition stages inside UseCaseExecutor.RedoDrawAsync — catches
         // it, mid-sequence, after Cancel + Release already ran in-memory.
-        source.ReplaceQualificationRules(
-            new QualificationRules(
-            [
-                new QualificationPath(
-                    1,
-                    QualificationSource.Overall(),
-                    new QualificationSelection(SelectionMode.Position, 1),
-                    QualificationDestination.ForSlot(target.Id, "SF1-A"))
-            ]),
-            _clock);
+        var paths = new List<QualificationPath>
+        {
+            new(
+                1,
+                QualificationSource.Overall(),
+                new QualificationSelection(SelectionMode.Position, 1),
+                QualificationDestination.ForSlot(target.Id, "SF1-A"))
+        };
+        if (reserveBothSlots)
+        {
+            paths.Add(new QualificationPath(
+                2,
+                QualificationSource.Overall(),
+                new QualificationSelection(SelectionMode.Position, 2),
+                QualificationDestination.ForSlot(target.Id, "SF1-B")));
+        }
+
+        source.ReplaceQualificationRules(new QualificationRules(paths), _clock);
 
         competition.AddStage(source.Id, _clock);
         competition.AddStage(target.Id, _clock);
@@ -326,7 +459,107 @@ public sealed class RedoDrawEndpointTests(HostPostgresFixture fixture)
         return new SlotDrawSeed(target.Id, draw.Id, slotAEntry, slotBEntry);
     }
 
+    private static async Task<Stage> ReloadAsync(PlayUpWebApplicationFactory factory, StageId stageId)
+    {
+        using var scope = factory.Services.CreateScope();
+        return (await scope.ServiceProvider.GetRequiredService<IStageRepository>()
+            .GetByIdForUpdateAsync(stageId))!;
+    }
+
+    private static async Task<string?> ReadCodeAsync(HttpResponseMessage response)
+    {
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
+        return problem is null ? null : GetCode(problem);
+    }
+
+    private static string InputsUri(StageId stageId, DrawId drawId) =>
+        $"/stages/{stageId.Value}/draws/{drawId.Value}/inputs";
+
+    private static Uri GenerateUri(StageId stageId, DrawId drawId) =>
+        new($"/stages/{stageId.Value}/draws/{drawId.Value}/generate", UriKind.Relative);
+
+    private static Uri PublishAndApplyUri(StageId stageId, Guid drawId) =>
+        new($"/stages/{stageId.Value}/draws/{drawId}/publish-and-apply", UriKind.Relative);
+
+    private static Uri PublishUri(StageId stageId, Guid drawId) =>
+        new($"/stages/{stageId.Value}/draws/{drawId}/publish", UriKind.Relative);
+
+    private static Uri ApplyUri(StageId stageId, Guid drawId) =>
+        new($"/stages/{stageId.Value}/draws/{drawId}/apply", UriKind.Relative);
+
+    private static Task<HttpResponseMessage> PutSlotAsync(
+        HttpClient client,
+        StageId stageId,
+        string slotKey,
+        Guid entryId,
+        Guid? expected)
+    {
+        var expectedJson = expected is null ? "null" : $"\"{expected}\"";
+        var json = $$"""{"entryId":"{{entryId}}","expectedEntryId":{{expectedJson}}}""";
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+        return client.PutAsync(AssignmentPath(stageId, slotKey), content);
+    }
+
+    private static string AssignmentPath(StageId stageId, string slotKey) =>
+        $"/stages/{stageId.Value}/slots/{Uri.EscapeDataString(slotKey)}/assignment";
+
+    private async Task<HttpResponseMessage[]> OverlapOnCompetitionLockAsync(
+        CompetitionId competitionId,
+        Func<Task<HttpResponseMessage>> left,
+        Func<Task<HttpResponseMessage>> right)
+    {
+        var key = CompetitionAdvisoryKey(competitionId);
+        await using var connection = new NpgsqlConnection(fixture.ConnectionString);
+        await connection.OpenAsync();
+        await using (var hold = new NpgsqlCommand("SELECT pg_advisory_lock(@key)", connection))
+        {
+            hold.Parameters.AddWithValue("key", key);
+            _ = await hold.ExecuteScalarAsync();
+        }
+
+        var leftTask = left();
+        var rightTask = right();
+        var overlapped = false;
+        try
+        {
+            for (var attempt = 0; attempt < 100; attempt++)
+            {
+                await using var count = new NpgsqlCommand(
+                    "SELECT COUNT(*)::int FROM pg_locks WHERE locktype = 'advisory' AND NOT granted",
+                    connection);
+                var waiting = (int)(await count.ExecuteScalarAsync() ?? 0);
+                if (waiting >= 2)
+                {
+                    overlapped = true;
+                    break;
+                }
+
+                await Task.Delay(50);
+            }
+        }
+        finally
+        {
+            await using var release = new NpgsqlCommand("SELECT pg_advisory_unlock(@key)", connection);
+            release.Parameters.AddWithValue("key", key);
+            _ = await release.ExecuteScalarAsync();
+        }
+
+        var responses = await Task.WhenAll(leftTask, rightTask);
+        overlapped.Should().BeTrue("both writers must be waiting on the competition advisory lock");
+        return responses;
+    }
+
+    private static long CompetitionAdvisoryKey(CompetitionId competitionId)
+    {
+        var bytes = competitionId.Value.ToByteArray();
+        return BitConverter.ToInt64(bytes, 0) ^ BitConverter.ToInt64(bytes, 8);
+    }
+
     private sealed record SlotDrawSeed(StageId StageId, DrawId DrawId, EntryId? SlotS1Entry, EntryId? SlotS2Entry);
 
-    private sealed record PartialSlotDrawSeed(StageId StageId, DrawId DrawId, EntryId DirectEntry);
+    private sealed record PartialSlotDrawSeed(
+        CompetitionId CompetitionId,
+        StageId StageId,
+        DrawId DrawId,
+        EntryId DirectEntry);
 }

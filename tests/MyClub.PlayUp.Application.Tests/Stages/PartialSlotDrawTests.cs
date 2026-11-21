@@ -67,6 +67,7 @@ public sealed class PartialSlotDrawTests
             .Should().BeEquivalentTo(stage.Slots.Skip(1).Select(slot => slot.SlotKey));
     }
 
+    // C2-ter voie P: Refaire Coupe sur un Partial appliqué relance un aperçu Partial (plus un blocage DA global).
     [Fact]
     public void Redo_after_applied_partial_draw_previews_a_new_partial_resolution()
     {

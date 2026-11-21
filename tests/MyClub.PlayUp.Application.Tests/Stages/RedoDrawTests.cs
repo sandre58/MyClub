@@ -98,6 +98,9 @@ public sealed class RedoDrawTests
         var draw = CreateDraw.Execute(stage, DrawResolutionKind.Slot, _clock);
         ApplyPartialDrawPipelineToFillSlots(stage, draw, seed: 2);
 
+        DrawActionEvaluator.Evaluate(DrawActionEvaluator.ForRedo(stage, [stage], null), draw).Redo.State
+            .Should().Be(StageDrawActionState.Available);
+
         var result = RedoDraw.Execute(stage, draw.Id, _clock, [stage]);
 
         result.IsResolved.Should().BeTrue();
@@ -258,7 +261,7 @@ public sealed class RedoDrawTests
     }
 
     [Fact]
-    public void Redo_surfaces_a_sibling_feed_the_upfront_single_stage_evaluator_cannot_see()
+    public void Redo_blocked_with_DrawLaunchGridNotVacant_when_a_sibling_feed_partially_reserves_a_released_slot()
     {
         var competitionId = CompetitionId.New();
         var source = Stage.Create(competitionId, new StageName("Groups"), SampleRegulations.Standard(), _clock);
@@ -288,23 +291,222 @@ public sealed class RedoDrawTests
             ]),
             _clock);
 
-        DrawActionEvaluator.Evaluate(DrawActionEvaluator.ForRedo(target, [source, target], null), draw).Redo.State
-            .Should().Be(StageDrawActionState.Blocked);
-        var blockCode = DrawActionEvaluator.Evaluate(
-            DrawActionEvaluator.ForRedo(target, [source, target], null),
-            draw).Redo.BlockCode;
-        blockCode.Should().BeOneOf(
-            ApplicationErrorCodes.DrawLaunchGridNotVacant,
-            ApplicationErrorCodes.DrawNoFreeSlot);
+        var redo = DrawActionEvaluator.Evaluate(DrawActionEvaluator.ForRedo(target, [source, target], null), draw).Redo;
+        redo.State.Should().Be(StageDrawActionState.Blocked);
+        redo.BlockCode.Should().Be(ApplicationErrorCodes.DrawLaunchGridNotVacant);
 
-        var act = () => RedoDraw.Execute(target, draw.Id, _clock, [source, target]);
-
-        act.Should().Throw<ApplicationFailureException>()
-            .Which.Code.Should().Be(blockCode);
+        AssertBlocked(
+            () => RedoDraw.Execute(target, draw.Id, _clock, [source, target]),
+            ApplicationErrorCodes.DrawLaunchGridNotVacant);
 
         target.GetDraw(draw.Id).Status.Should().Be(DrawStatus.Published);
         target.FindSlot("SF1-A")!.EntryId.Should().Be(e1);
         target.FindSlot("SF1-B")!.EntryId.Should().Be(e2);
+    }
+
+    [Fact]
+    public void Redo_blocked_with_DrawNoFreeSlot_when_all_released_slots_are_reserved_by_sibling_feeds()
+    {
+        var competitionId = CompetitionId.New();
+        var source = Stage.Create(competitionId, new StageName("Groups"), SampleRegulations.Standard(), _clock);
+        var target = Stage.Create(competitionId, new StageName("KO"), SampleRegulations.Standard(), _clock);
+        target.AddRound("R1", _clock);
+        target.AddSlot("SF1-A");
+        target.AddSlot("SF1-B");
+        ReplaceStageDrawRules.Execute(target, new DrawRules(DrawMode.Random), _clock);
+        var e1 = EntryId.New();
+        var e2 = EntryId.New();
+        target.ReplaceAffectationAuthoring([e1, e2], _clock);
+
+        var draw = ResolveSlotDraw(
+            target,
+            [new SlotDrawPlacement(e1, "SF1-A"), new SlotDrawPlacement(e2, "SF1-B")]);
+        target.PublishDraw(draw.Id, _clock);
+        ApplyDraw.Execute(target, draw.Id, _clock);
+
+        source.ReplaceQualificationRules(
+            new QualificationRules(
+            [
+                new QualificationPath(
+                    1,
+                    QualificationSource.Overall(),
+                    new QualificationSelection(SelectionMode.Position, 1),
+                    QualificationDestination.ForSlot(target.Id, "SF1-A")),
+                new QualificationPath(
+                    2,
+                    QualificationSource.Overall(),
+                    new QualificationSelection(SelectionMode.Position, 2),
+                    QualificationDestination.ForSlot(target.Id, "SF1-B")),
+            ]),
+            _clock);
+
+        var redo = DrawActionEvaluator.Evaluate(DrawActionEvaluator.ForRedo(target, [source, target], null), draw).Redo;
+        redo.State.Should().Be(StageDrawActionState.Blocked);
+        redo.BlockCode.Should().Be(ApplicationErrorCodes.DrawNoFreeSlot);
+
+        AssertBlocked(
+            () => RedoDraw.Execute(target, draw.Id, _clock, [source, target]),
+            ApplicationErrorCodes.DrawNoFreeSlot);
+
+        target.GetDraw(draw.Id).Status.Should().Be(DrawStatus.Published);
+    }
+
+    [Fact]
+    public void Redo_default_with_two_fixed_slots_previews_rerun_when_no_direct_assignment()
+    {
+        var competition = CreateCompetition.Execute("Cup-rerun", _clock);
+        var ids = Enumerable.Range(0, 2)
+            .Select(index => AddEntry.Execute(competition, $"T{index}", _clock).Id)
+            .ToArray();
+        var stage = ConfigureStructure.Execute(competition, null, StructureIntent.Cup(2), _clock).Stage;
+        ReplaceStageDrawRules.Execute(stage, new DrawRules(DrawMode.Random), _clock);
+        stage.ReplaceAffectationAuthoring(ids, _clock);
+        var first = PublishAndApplyDefaultSlotDraw(stage);
+        CancelDraw.Execute(stage, first.Id, _clock);
+
+        var draw = CreateDraw.Execute(stage, DrawResolutionKind.Slot, _clock);
+        ConfigureDrawInputs.Execute(
+            stage,
+            draw.Id,
+            DrawInputsFactory.CreateDefault(stage, DrawResolutionKind.Slot));
+        GenerateDrawResolution.Execute(
+            stage,
+            draw.Id,
+            _clock,
+            [.. stage.Slots.Select(slot => slot.SlotKey)]).IsResolved.Should().BeTrue();
+        PublishDraw.Execute(stage, draw.Id, _clock);
+        ApplyDraw.Execute(stage, draw.Id, _clock);
+        stage.GetDraw(draw.Id).Inputs!.FixedSlots.Count.Should().Be(2);
+        stage.DirectAssignments.Should().BeEmpty();
+
+        var result = RedoDraw.Execute(stage, draw.Id, _clock, [stage]);
+
+        result.IsResolved.Should().BeTrue();
+        stage.GetDraw(result.DrawId).InputsIntent.Should().Be(DrawInputsIntent.Rerun);
+        stage.GetDraw(draw.Id).Status.Should().Be(DrawStatus.Cancelled);
+        stage.GetDraw(result.DrawId).Resolution.SlotResults.Should().NotBeEmpty();
+    }
+
+    [Fact]
+    public void Redo_partial_available_with_a_single_drawn_slot_and_succeeds()
+    {
+        var stage = CreateStageWithSlots(2, 2, out _);
+        var entries = stage.CompositionEntries.Select(entry => entry.EntryId).ToArray();
+        stage.AssignEntryToSlot(stage.Slots[1].SlotKey, entries[1]);
+        var draw = CreateDraw.Execute(stage, DrawResolutionKind.Slot, _clock);
+        ApplyPartialDrawPipelineToFillSlots(stage, draw, seed: 3);
+
+        DrawActionEvaluator.Evaluate(DrawActionEvaluator.ForRedo(stage, [stage], null), draw).Redo.State
+            .Should().Be(StageDrawActionState.Available);
+
+        var result = RedoDraw.Execute(stage, draw.Id, _clock, [stage]);
+        result.IsResolved.Should().BeTrue();
+        stage.GetDraw(result.DrawId).InputsIntent.Should().Be(DrawInputsIntent.Partial);
+    }
+
+    [Fact]
+    public void Redo_partial_succeeds_after_direct_assignment_was_cleared()
+    {
+        var stage = CreateStageWithSlots(2, 2, out _);
+        var entries = stage.CompositionEntries.Select(entry => entry.EntryId).ToArray();
+        var manualKey = stage.Slots[1].SlotKey;
+        stage.AssignEntryToSlot(manualKey, entries[1]);
+        var draw = CreateDraw.Execute(stage, DrawResolutionKind.Slot, _clock);
+        ApplyPartialDrawPipelineToFillSlots(stage, draw, seed: 4);
+        stage.ClearSlotAssignment(manualKey);
+
+        var result = RedoDraw.Execute(stage, draw.Id, _clock, [stage]);
+
+        result.IsResolved.Should().BeTrue();
+        stage.GetDraw(result.DrawId).Resolution.SlotResults
+            .Should().Contain(placement => placement.SlotKey == manualKey);
+    }
+
+    [Fact]
+    public void Redo_partial_blocked_when_a_drawn_entry_left_composition()
+    {
+        var stage = CreateStageWithSlots(2, 2, out var draw, applyPartialFill: true);
+        draw = stage.Draws.Single();
+        var remaining = stage.CompositionEntries.Select(entry => entry.EntryId).Take(1).ToArray();
+        stage.ReplaceAffectationAuthoring(remaining, _clock);
+
+        AssertBlocked(
+            () => RedoDraw.Execute(stage, draw.Id, _clock, [stage]),
+            ApplicationErrorCodes.DrawNotEnoughTeams);
+        stage.GetDraw(draw.Id).Status.Should().Be(DrawStatus.Published);
+    }
+
+    [Fact]
+    public void Redo_partial_blocked_with_materialized_opponent_when_da_and_draw_share_an_attached_pair()
+    {
+        var stage = CreateStage();
+        ReplaceStageDrawRules.Execute(stage, new DrawRules(DrawMode.Random), _clock);
+        stage.AddRound("R1", _clock);
+        stage.AddSlot("S1");
+        stage.AddSlot("S2");
+        stage.SeedEntryRoundBracketPairs();
+        var daEntry = EntryId.New();
+        var drawnEntry = EntryId.New();
+        stage.ReplaceAffectationAuthoring([daEntry, drawnEntry], _clock);
+        stage.AssignEntryToSlot("S1", daEntry);
+
+        var draw = CreateDraw.Execute(stage, DrawResolutionKind.Slot, _clock);
+        ApplyPartialDrawPipelineToFillSlots(stage, draw, seed: 1);
+
+        var round = stage.Rounds.Single();
+        var fixture = stage.AddFixture(round.Id, _clock, "S1", "S2", "P1");
+        var match = Match.Create(_competitionId, stage.Id, daEntry, drawnEntry, _clock);
+        stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
+
+        AssertBlocked(
+            () => RedoDraw.Execute(stage, draw.Id, _clock, [stage], [match]),
+            StageErrorCodes.MaterializedOpponentConflict);
+        stage.GetDraw(draw.Id).Status.Should().Be(DrawStatus.Published);
+        stage.FindSlot("S1")!.EntryId.Should().Be(daEntry);
+        stage.FindSlot("S2")!.EntryId.Should().Be(drawnEntry);
+    }
+
+    [Fact]
+    public void Redo_partial_generation_targets_differ_without_competition_stages()
+    {
+        var stage = CreateStageWithSlots(2, 2, out _);
+        var entries = stage.CompositionEntries.Select(entry => entry.EntryId).ToArray();
+        var vacantKey = stage.Slots[0].SlotKey;
+        stage.AssignEntryToSlot(stage.Slots[1].SlotKey, entries[1]);
+        var draw = CreateDraw.Execute(stage, DrawResolutionKind.Slot, _clock);
+        ApplyPartialDrawPipelineToFillSlots(stage, draw, seed: 6);
+
+        var result = RedoDraw.Execute(stage, draw.Id, _clock, [stage]);
+        stage.GetDraw(result.DrawId).Resolution.SlotResults
+            .Select(placement => placement.SlotKey)
+            .Should().ContainSingle()
+            .Which.Should().Be(vacantKey);
+
+        CancelDraw.Execute(stage, result.DrawId, _clock);
+        var wideDraft = CreateDraw.Execute(stage, DrawResolutionKind.Slot, _clock);
+        ConfigureDrawInputs.Execute(
+            stage,
+            wideDraft.Id,
+            stage.GetDraw(result.DrawId).Inputs!,
+            DrawInputsIntent.Partial,
+            [stage]);
+        var act = () => GenerateDrawResolution.Execute(
+            stage,
+            wideDraft.Id,
+            _clock,
+            [.. stage.Slots.Select(slot => slot.SlotKey)]);
+
+        act.Should().Throw<DomainException>()
+            .WithMessage("*free entries must equal free targets*");
+
+        GenerateDrawResolution.Execute(
+            stage,
+            wideDraft.Id,
+            _clock,
+            [.. stage.Slots.Select(slot => slot.SlotKey)],
+            competitionStages: [stage]).IsResolved.Should().BeTrue();
+        stage.GetDraw(wideDraft.Id).Resolution.SlotResults
+            .Should().ContainSingle(placement => placement.SlotKey == vacantKey);
     }
 
     [Fact]

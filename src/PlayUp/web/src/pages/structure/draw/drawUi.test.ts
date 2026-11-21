@@ -1058,6 +1058,32 @@ describe('resolveDrawHeroModel', () => {
     placeCount: 4,
   };
 
+  it('C2-ter aligns hero toPlace and freePlaces counts on partial after redo', () => {
+    const targetCount = 3;
+    expect(
+      resolveDrawHeroModel({
+        formatKind: 'Cup',
+        groupCount: 0,
+        teamCount: 5,
+        placesCount: 5,
+        metrics: {
+          unplacedEntryCount: targetCount,
+          vacantSlotKeyCount: targetCount,
+          vacantSlotKeys: ['S3', 'S4', 'S5'],
+          alreadyPlacedEntryCount: 2,
+          entryCount: 5,
+          placeCount: 5,
+        },
+        inputsIntent: 'Partial',
+        hasActiveDraw: true,
+      }),
+    ).toEqual({
+      layout: 'duo',
+      primary: { value: targetCount, label: 'heroToPlace' },
+      secondary: { value: targetCount, label: 'heroFreePlaces' },
+    });
+  });
+
   it('T5 uses partial duo when free places and unplaced teams remain', () => {
     expect(
       resolveDrawHeroModel({
