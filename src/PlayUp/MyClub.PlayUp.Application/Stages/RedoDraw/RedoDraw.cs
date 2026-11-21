@@ -13,8 +13,9 @@ namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
 /// Application use case: redo an applied draw in one transaction — cancel, release the drawn
-/// placements, then preview a new resolution. Cup configures Rerun inputs. Groups configures
-/// Default on the current composition, after the launch rule has accepted the grid the release
+/// placements, then preview a new resolution. Cup Partial configures Partial inputs; Cup Default
+/// with fixes configures Rerun. Groups configures Default on the current composition, after the
+/// launch rule has accepted the grid the release
 /// will leave. The rule runs before Cancel, so a refusal leaves the applied draw untouched.
 /// </summary>
 /// <remarks>
@@ -51,7 +52,7 @@ public static class RedoDraw
 
         var draw = stage.GetDraw(drawId);
         var redo = DrawActionEvaluator.Evaluate(
-            DrawActionEvaluator.ForCommand(stage, stageMatches),
+            DrawActionEvaluator.ForRedo(stage, competitionStages, stageMatches),
             draw).Redo;
         if (redo.State != StageDrawActionState.Available)
         {
@@ -86,17 +87,25 @@ public static class RedoDraw
         ReleaseDrawAlignedPlacements.Execute(stage, drawId, clock, stageMatches);
 
         var created = CreateDraw.Execute(stage, kind, clock, stageMatches, competitionStages);
+        var usePartialCupRedo = kind == DrawResolutionKind.Slot && (draw.Inputs?.FixedSlots.Count ?? 0) == 0;
         var inputs = groupDecision is not null
             ? DrawInputs.ForGroup(
                 [.. stage.CompositionEntries.Select(entry => entry.EntryId)],
                 potMembership: new PotMembership(groupDecision.Pots!),
                 fixedPlacements: groupDecision.FixedGroups)
-            : DrawInputsFactory.CreateRerun(stage, draw);
+            : usePartialCupRedo
+                ? DrawInputsFactory.CreatePartial(stage, competitionStages, DrawResolutionKind.Slot)
+                : DrawInputsFactory.CreateRerun(stage, draw);
+        var inputsIntent = groupDecision is not null
+            ? DrawInputsIntent.Default
+            : usePartialCupRedo
+                ? DrawInputsIntent.Partial
+                : DrawInputsIntent.Rerun;
         ConfigureDrawInputs.Execute(
             stage,
             created.Id,
             inputs,
-            groupDecision is not null ? DrawInputsIntent.Default : DrawInputsIntent.Rerun,
+            inputsIntent,
             competitionStages,
             stageMatches);
 
@@ -113,7 +122,8 @@ public static class RedoDraw
             clock,
             slotTargets,
             groupTargets,
-            stageMatches: stageMatches);
+            stageMatches: stageMatches,
+            competitionStages: competitionStages);
 
         return new RedoDrawResult(created.Id, generation.IsResolved, generation.IsNoSolution);
     }

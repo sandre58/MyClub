@@ -34,6 +34,7 @@
   "confirmRedoTitle": "Redo the draw?",
   "confirmRedo": "This cancels the execution, releases placements still aligned with it, then starts a new preview, as a single operation: if any step fails, nothing changes.",
   "confirmRedoGroups": "This cancels the execution, removes only the teams the draw placed, then starts a new preview. Teams placed by hand or qualified stay in place. If any step fails, nothing changes.",
+  "confirmRedoCup": "This cancels the execution, releases only the slots the draw placed, then starts a new preview. Teams placed by hand or qualified stay in place. If any step fails, nothing changes.",
   "redoBlocked": {
     "cupFixtureAttached": "The draw cannot be redone: a match is attached to a confrontation this release would touch.",
     "groupMatchesAttached": "The draw cannot be redone: matches are already attached to this phase.",
@@ -45,6 +46,9 @@
     "fixedExceedsCapacity": "The draw cannot be redone: a group holds more teams than places.",
     "groupShape": "The draw cannot be redone: the group shape is not valid.",
     "missingPots": "The draw cannot be redone: pots are not defined.",
+    "noFreeSlot": "The draw cannot be redone: there is no free slot. Teams already placed stay in place.",
+    "notEnoughTeams": "The draw cannot be redone: not enough unplaced teams to fill every free slot.",
+    "tooManyTeams": "The draw cannot be redone: too many unplaced teams for the free slots.",
     "lifecycle": "The draw cannot be redone in the phase’s current state."
   },
   "executionTitle": "Execution #{{n}}",

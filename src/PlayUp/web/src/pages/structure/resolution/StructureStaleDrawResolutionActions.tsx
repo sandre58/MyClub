@@ -204,7 +204,9 @@ export function StructureStaleDrawResolutionActions({
         message={
           activeDraw?.kind === 'Group'
             ? t('draw:confirmRedoGroups')
-            : t('draw:confirmRedo')
+            : activeDraw?.inputsIntent === 'Partial'
+              ? t('draw:confirmRedoCup')
+              : t('draw:confirmRedo')
         }
         confirmLabel={t('structure:resolution.staleDraw.redo')}
         cancelLabel={t('common:close')}

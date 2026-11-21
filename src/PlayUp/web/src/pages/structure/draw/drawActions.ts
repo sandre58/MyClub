@@ -11,6 +11,10 @@ import {
   DRAW_LAUNCH_GRID_NOT_VACANT,
 } from '../../../api/draws';
 
+const DRAW_NO_FREE_SLOT = 'Application.DrawNoFreeSlot';
+const DRAW_NOT_ENOUGH_TEAMS = 'Application.DrawNotEnoughTeams';
+const DRAW_TOO_MANY_TEAMS = 'Application.DrawTooManyTeams';
+
 const hiddenAction: StageDrawAction = { state: 'Hidden' };
 
 const hiddenActions: StageDrawActions = {
@@ -50,6 +54,9 @@ export type DrawRedoBlockReason =
   | 'fixedExceedsCapacity'
   | 'groupShape'
   | 'missingPots'
+  | 'noFreeSlot'
+  | 'notEnoughTeams'
+  | 'tooManyTeams'
   | 'lifecycle';
 
 export type DrawRedoPresentation =
@@ -137,6 +144,15 @@ export function redoBlockReason(
   }
   if (blockCode === DRAW_LAUNCH_DIRECT_ASSIGNMENT) {
     return 'launchDirectAssignment';
+  }
+  if (blockCode === DRAW_NO_FREE_SLOT) {
+    return 'noFreeSlot';
+  }
+  if (blockCode === DRAW_NOT_ENOUGH_TEAMS) {
+    return 'notEnoughTeams';
+  }
+  if (blockCode === DRAW_TOO_MANY_TEAMS) {
+    return 'tooManyTeams';
   }
   if (blockCode === DRAW_GROUP_SEATS_RESERVED) {
     return 'reservedSeats';

@@ -29,6 +29,21 @@ internal static class DrawActionEvaluator
             StageAttachedProduction.HasAttachedMatches(stage, matches));
     }
 
+    internal static DrawActionContext ForRedo(
+        Stage stage,
+        IReadOnlyList<Stage> competitionStages,
+        IReadOnlyList<Match>? stageMatches)
+    {
+        ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(competitionStages);
+        var matches = stageMatches ?? [];
+        return new DrawActionContext(
+            stage,
+            competitionStages,
+            MaterializedParticipantSnapshots.FromMatches(matches),
+            StageAttachedProduction.HasAttachedMatches(stage, matches));
+    }
+
     internal static bool NeedsGroupDraftParticipantRows(Stage stage)
     {
         ArgumentNullException.ThrowIfNull(stage);
@@ -235,11 +250,6 @@ internal static class DrawActionEvaluator
             return DrawActionAssessment.Block(release.BlockCode!);
         }
 
-        if (context.Stage.DirectAssignments.Count > 0)
-        {
-            return DrawActionAssessment.Block(ApplicationErrorCodes.DrawLaunchDirectAssignmentPresent);
-        }
-
         if (draw.Kind == DrawResolutionKind.Group)
         {
             var decision = GroupDrawLaunchRules.Evaluate(
@@ -251,15 +261,37 @@ internal static class DrawActionEvaluator
                 : DrawActionAssessment.Block(decision.Code!, decision.Reasons);
         }
 
-        var facts = StageDrawBracketLaunchClassifier.ClassifyForDrawKind(
+        if (draw.Kind != DrawResolutionKind.Slot)
+        {
+            return DrawActionAssessment.Hidden;
+        }
+
+        if (draw.Inputs is { FixedSlots.Count: > 0 })
+        {
+            if (context.Stage.DirectAssignments.Count > 0)
+            {
+                return DrawActionAssessment.Block(ApplicationErrorCodes.DrawLaunchDirectAssignmentPresent);
+            }
+
+            var facts = StageDrawBracketLaunchClassifier.ClassifyForDrawKind(
+                context.Stage,
+                context.CompetitionStages,
+                draw.Kind,
+                AlignedSlotKeys(context.Stage, draw),
+                AlignedGroupEntryIds(context.Stage, draw));
+            return facts.BlockingPlaceCount > 0
+                ? DrawActionAssessment.Block(ApplicationErrorCodes.DrawLaunchGridNotVacant)
+                : DrawActionAssessment.Available;
+        }
+
+        var block = SlotPartialDrawPlanner.TryGetPartialRedoBlockCode(
             context.Stage,
             context.CompetitionStages,
-            draw.Kind,
             AlignedSlotKeys(context.Stage, draw),
-            AlignedGroupEntryIds(context.Stage, draw));
-        return facts.BlockingPlaceCount > 0
-            ? DrawActionAssessment.Block(ApplicationErrorCodes.DrawLaunchGridNotVacant)
-            : DrawActionAssessment.Available;
+            draw.Id);
+        return block is null
+            ? DrawActionAssessment.Available
+            : DrawActionAssessment.Block(block);
     }
 
     private static string? PlacementBlock(Stage stage, Draw draw)

@@ -87,6 +87,78 @@ public static class SlotPartialDraw
     }
 
     /// <summary>
+    /// Partial scope after treating aligned draw placements as released, before Cancel runs.
+    /// </summary>
+    /// <param name="stage">Phase whose slots and composition are read.</param>
+    /// <param name="snapshot">Feed snapshot for <paramref name="stage"/>.</param>
+    /// <param name="slotKeysToRelease">Aligned slot keys that Refaire would clear.</param>
+    /// <returns>Scope plus whether a releasing slot stays reserved by a structural feed.</returns>
+    public static SlotPartialDrawAfterReleaseScope ComposeAfterReleasingAlignedPlacements(
+        Stage stage,
+        SlotFeedSnapshot snapshot,
+        IReadOnlySet<string> slotKeysToRelease)
+    {
+        ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(snapshot);
+        ArgumentNullException.ThrowIfNull(slotKeysToRelease);
+
+        var composition = stage.CompositionEntries.Select(entry => entry.EntryId).ToHashSet();
+        var vacant = new List<string>();
+        var placed = new HashSet<EntryId>();
+        var anyLiberatedReservedByFeed = false;
+
+        foreach (var slot in stage.Slots)
+        {
+            var feed = SlotFeedResolver.Resolve(snapshot, slot.SlotKey);
+            var releasing = slotKeysToRelease.Contains(slot.SlotKey);
+
+            if (releasing)
+            {
+                if (IsStructuralFeed(feed))
+                {
+                    anyLiberatedReservedByFeed = true;
+                }
+                else
+                {
+                    vacant.Add(slot.SlotKey);
+                }
+
+                if (slot.EntryId is { } released && composition.Contains(released))
+                {
+                    // Released aligned occupant joins the unplaced pool.
+                }
+
+                continue;
+            }
+
+            var occupancy = ClassifyOccupancy(slot.EntryId, composition, feed);
+            if (occupancy == SlotDrawPlaceOccupancy.Free)
+            {
+                vacant.Add(slot.SlotKey);
+            }
+
+            if (slot.EntryId is { } occupant && composition.Contains(occupant))
+            {
+                placed.Add(occupant);
+            }
+        }
+
+        var unplaced = (from entry in stage.CompositionEntries where !placed.Contains(entry.EntryId) select entry.EntryId).ToList();
+
+        var refusal = vacant.Count == 0
+            ? SlotPartialDrawRefusal.NoFreeSlot
+            : unplaced.Count < vacant.Count
+                ? SlotPartialDrawRefusal.NotEnoughTeams
+                : unplaced.Count > vacant.Count
+                    ? SlotPartialDrawRefusal.TooManyTeams
+                    : SlotPartialDrawRefusal.None;
+
+        return new SlotPartialDrawAfterReleaseScope(
+            new SlotPartialDrawScope(vacant, unplaced, refusal),
+            anyLiberatedReservedByFeed);
+    }
+
+    /// <summary>
     /// A unique direct assignment is a manual placement. Qualification, progression, draw-target,
     /// and non-unique feeds reserve the slot (not drawable, not withdrawn).
     /// </summary>
@@ -180,3 +252,14 @@ public sealed record SlotPartialDrawScope(
     /// </summary>
     public bool IsDrawable => Refusal == SlotPartialDrawRefusal.None;
 }
+
+/// <summary>
+/// Partial scope after aligned placements are treated as released, plus feed reservation hints.
+/// </summary>
+/// <param name="Scope">Vacant slots, unplaced teams, and refusal.</param>
+/// <param name="AnyLiberatedReservedByFeed">
+/// Whether at least one releasing slot stays reserved by a structural feed.
+/// </param>
+public sealed record SlotPartialDrawAfterReleaseScope(
+    SlotPartialDrawScope Scope,
+    bool AnyLiberatedReservedByFeed);

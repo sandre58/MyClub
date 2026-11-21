@@ -1343,7 +1343,9 @@ export function StructureDrawDialog({
         message={
           drawKind === 'Group'
             ? tDraw('confirmRedoGroups')
-            : tDraw('confirmRedo')
+            : activeDraw?.inputsIntent === 'Partial'
+              ? tDraw('confirmRedoCup')
+              : tDraw('confirmRedo')
         }
         confirmLabel={tDraw('redo')}
         confirmIcon={<UndoIcon size="sm" />}

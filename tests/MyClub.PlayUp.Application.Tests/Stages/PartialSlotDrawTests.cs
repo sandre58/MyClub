@@ -68,10 +68,9 @@ public sealed class PartialSlotDrawTests
     }
 
     [Fact]
-    public void Redo_after_applied_partial_draw_is_refused_with_vacant_grid_code()
+    public void Redo_after_applied_partial_draw_previews_a_new_partial_resolution()
     {
-        var (stage, entries) = Cup(2);
-        stage.ApplyResolvedEntry(stage.Slots[0].SlotKey, entries[0], _clock);
+        var (stage, _) = SimpleSlots(2);
         var draw = CreateDraw.Execute(stage, DrawResolutionKind.Slot, _clock);
         var inputs = DrawInputsFactory.CreatePartial(stage, [stage], DrawResolutionKind.Slot);
         ConfigureDrawInputs.Execute(stage, draw.Id, inputs, DrawInputsIntent.Partial, [stage]);
@@ -84,11 +83,14 @@ public sealed class PartialSlotDrawTests
             competitionStages: [stage]);
         PublishDraw.Execute(stage, draw.Id, _clock);
         ApplyDraw.Execute(stage, draw.Id, _clock);
+        var result = RedoDraw.Execute(stage, draw.Id, _clock, [stage]);
 
-        var act = () => RedoDraw.Execute(stage, draw.Id, _clock, [stage]);
-
-        act.Should().Throw<ApplicationFailureException>()
-            .Which.Code.Should().Be(ApplicationErrorCodes.DrawLaunchGridNotVacant);
+        result.IsResolved.Should().BeTrue();
+        stage.GetDraw(draw.Id).Status.Should().Be(DrawStatus.Cancelled);
+        var preview = stage.GetDraw(result.DrawId);
+        preview.InputsIntent.Should().Be(DrawInputsIntent.Partial);
+        preview.Status.Should().Be(DrawStatus.Draft);
+        stage.Slots.Should().OnlyContain(slot => slot.EntryId == null);
     }
 
     [Fact]
@@ -249,6 +251,47 @@ public sealed class PartialSlotDrawTests
             var inputs = DrawInputsFactory.CreatePartial(stage, [stage], DrawResolutionKind.Slot);
             ConfigureDrawInputs.Execute(stage, draw.Id, inputs, DrawInputsIntent.Partial, [stage]);
         };
+    }
+
+    [Fact]
+    public void Partial_redo_perimeter_after_releasing_both_slots_detects_too_many_unplaced_teams()
+    {
+        var (stage, entries) = Cup(2);
+        stage.ApplyResolvedEntry(stage.Slots[0].SlotKey, entries[0], _clock);
+        stage.ApplyResolvedEntry(stage.Slots[1].SlotKey, entries[1], _clock);
+        stage.AddResolvedPopulationEntry(EntryId.New(), _clock);
+
+        var aligned = new HashSet<string>(
+            [stage.Slots[0].SlotKey, stage.Slots[1].SlotKey],
+            StringComparer.Ordinal);
+
+        SlotPartialDrawPlanner.TryGetPartialRedoBlockCode(stage, [stage], aligned, DrawId.New())
+            .Should().Be(ApplicationErrorCodes.DrawTooManyTeams);
+    }
+
+    private (Stage Stage, EntryId[] Entries) SimpleSlots(int slots, int? teams = null)
+    {
+        var competition = CreateCompetition.Execute($"Slots {slots}", _clock);
+        var teamCount = teams ?? slots;
+        var entries = new EntryId[teamCount];
+        for (var index = 0; index < teamCount; index++)
+        {
+            entries[index] = AddEntry.Execute(competition, $"T{index}", _clock).Id;
+        }
+
+        var stage = Stage.Create(
+            competition.Id,
+            new StageName("Phase"),
+            SampleRegulations.Standard(),
+            _clock);
+        for (var index = 0; index < slots; index++)
+        {
+            stage.AddSlot($"S{index + 1}");
+        }
+
+        ReplaceStageDrawRules.Execute(stage, new DrawRules(DrawMode.Random), _clock);
+        stage.ReplaceAffectationAuthoring(entries, _clock);
+        return (stage, entries);
     }
 
     private (Stage Stage, EntryId[] Entries) Cup(int slots, int? teams = null) =>

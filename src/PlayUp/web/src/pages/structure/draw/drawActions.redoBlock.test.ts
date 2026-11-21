@@ -12,6 +12,13 @@ const en = JSON.parse(
   readFileSync(join(root, '../../../i18n/locales/en/draw.json'), 'utf8'),
 ) as { redoBlocked: Record<string, string> };
 
+const partialCodes = [
+  ['Application.DrawNoFreeSlot', 'noFreeSlot'],
+  ['Application.DrawNotEnoughTeams', 'notEnoughTeams'],
+  ['Application.DrawTooManyTeams', 'tooManyTeams'],
+  ['Application.DrawLaunchGridNotVacant', 'launchGridNotVacant'],
+] as const;
+
 const codes = [
   ['Application.DrawGroupSeatsReservedByInboundFeed', 'reservedSeats'],
   ['Application.DrawFixedPotConflict', 'fixedPotConflict'],
@@ -22,6 +29,13 @@ const codes = [
 ] as const;
 
 describe('redoBlockReason', () => {
+  it('maps partial cup redo codes away from lifecycle', () => {
+    for (const [code, reason] of partialCodes) {
+      expect(redoBlockReason(code)).toBe(reason);
+      expect(redoBlockReason(code)).not.toBe('lifecycle');
+    }
+  });
+
   it('maps the six group launch codes away from lifecycle', () => {
     for (const [code, reason] of codes) {
       expect(redoBlockReason(code)).toBe(reason);

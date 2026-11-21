@@ -60,25 +60,28 @@ public sealed class RedoDrawEndpointTests(HostPostgresFixture fixture)
     }
 
     [IntegrationFact]
-    public async Task Redo_when_a_direct_assignment_is_present_returns_409_and_changes_nothingAsync()
+    public async Task Redo_when_a_direct_assignment_is_present_on_partial_draw_returns_200Async()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
-        var seed = await SeedAppliedSlotDrawAsync(factory, withUnrelatedDirectAssignment: true);
+        var seed = await SeedAppliedPartialSlotDrawWithDirectAssignmentAsync(factory);
 
         using var client = factory.CreateClient();
         using var response = await client.PostAsync(RedoUri(seed.StageId, seed.DrawId), content: null);
 
-        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
-        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
-        GetCode(problem!).Should().Be(ApplicationErrorCodes.DrawLaunchDirectAssignmentPresent);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<DrawGenerationDto>(HostJson.Options);
+        body.Should().NotBeNull();
+        body.DrawId.Should().NotBe(seed.DrawId.Value);
 
         using var scope = factory.Services.CreateScope();
         var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(seed.StageId);
         stage.Should().NotBeNull();
-        stage.GetDraw(seed.DrawId).Status.Should().Be(DrawStatus.Published);
-        stage.FindSlot("S1")!.EntryId.Should().Be(seed.SlotS1Entry);
-        stage.FindSlot("S2")!.EntryId.Should().Be(seed.SlotS2Entry);
-        stage.Draws.Should().ContainSingle();
+        stage.GetDraw(seed.DrawId).Status.Should().Be(DrawStatus.Cancelled);
+        stage.GetDraw(new DrawId(body!.DrawId)).InputsIntent.Should().Be(DrawInputsIntent.Partial);
+        stage.FindSlot("S2")!.EntryId.Should().Be(seed.DirectEntry);
+        stage.FindSlot("S1")!.EntryId.Should().BeNull();
+        stage.GetDraw(new DrawId(body.DrawId)).Resolution.SlotResults
+            .Should().NotContain(placement => placement.SlotKey == "S2");
     }
 
     [IntegrationFact]
@@ -112,10 +115,6 @@ public sealed class RedoDrawEndpointTests(HostPostgresFixture fixture)
         using var client = factory.CreateClient();
         using var response = await client.PostAsync(RedoUri(seed.StageId, seed.DrawId), content: null);
 
-        // Cancel + Release already run in-memory on the target Stage by the time the real Rerun
-        // launch guard (fed the full competition stages, unlike the upfront single-stage evaluator)
-        // sees the sibling `source` stage's feed and throws. Only the single SaveChanges never being
-        // reached keeps this half-sequence from persisting.
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
         var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
         GetCode(problem!).Should().Be(ApplicationErrorCodes.DrawLaunchGridNotVacant);
@@ -127,6 +126,46 @@ public sealed class RedoDrawEndpointTests(HostPostgresFixture fixture)
         stage.Draws.Should().ContainSingle();
         stage.FindSlot("SF1-A")!.EntryId.Should().Be(seed.SlotS1Entry);
         stage.FindSlot("SF1-B")!.EntryId.Should().Be(seed.SlotS2Entry);
+    }
+
+    private async Task<PartialSlotDrawSeed> SeedAppliedPartialSlotDrawWithDirectAssignmentAsync(
+        PlayUpWebApplicationFactory factory)
+    {
+        using var scope = factory.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+
+        var competition = Competition.Create(new CompetitionName("Redo Partial Cup"), SampleRegulations.Standard(), _clock);
+        var stage = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
+        stage.AddRound("R1", _clock);
+        stage.AddSlot("S1");
+        stage.AddSlot("S2");
+        stage.SeedEntryRoundBracketPairs();
+        ReplaceStageDrawRules.Execute(stage, competition, new DrawRules(DrawMode.Random), _clock);
+        var drawn = EntryId.New();
+        var manual = EntryId.New();
+        stage.ReplaceAffectationAuthoring([drawn, manual], _clock);
+        stage.AssignEntryToSlot("S2", manual);
+
+        var draw = CreateDraw.Execute(stage, DrawResolutionKind.Slot, _clock);
+        ConfigureDrawInputs.Execute(
+            stage,
+            draw.Id,
+            DrawInputsFactory.CreatePartial(stage, [stage], DrawResolutionKind.Slot),
+            DrawInputsIntent.Partial,
+            [stage]);
+        GenerateDrawResolution.Execute(stage, draw.Id, _clock, slotTargets: ["S1", "S2"], competitionStages: [stage])
+            .IsResolved.Should().BeTrue();
+        PublishDraw.Execute(stage, draw.Id, _clock);
+        ApplyDraw.Execute(stage, draw.Id, _clock);
+
+        competition.AddStage(stage.Id, _clock);
+        competitions.Add(competition);
+        stages.Add(stage);
+        await unitOfWork.SaveChangesAsync();
+
+        return new PartialSlotDrawSeed(stage.Id, draw.Id, manual);
     }
 
     [IntegrationFact]
@@ -288,4 +327,6 @@ public sealed class RedoDrawEndpointTests(HostPostgresFixture fixture)
     }
 
     private sealed record SlotDrawSeed(StageId StageId, DrawId DrawId, EntryId? SlotS1Entry, EntryId? SlotS2Entry);
+
+    private sealed record PartialSlotDrawSeed(StageId StageId, DrawId DrawId, EntryId DirectEntry);
 }
