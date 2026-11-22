@@ -1698,7 +1698,7 @@ describe('StructureDrawDialog', () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(overview([groupDraw()]));
     vi.mocked(publishAndApplyDraw).mockResolvedValue(undefined);
 
-    renderDialog();
+    const { onClose } = renderDialog();
     await user.click(
       await screen.findByRole('button', { name: 'Valider le tirage' }),
     );
@@ -1711,6 +1711,52 @@ describe('StructureDrawDialog', () => {
         'Tirage publié et appliqué.',
       );
     });
+    await waitFor(() => {
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('closes the dialog after a successful publish-and-apply', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([slotDraw({ inputsIntent: 'Partial' })], {
+        bracketPairs: cupBracketPairs,
+      }),
+    );
+    vi.mocked(publishAndApplyDraw).mockResolvedValue(undefined);
+
+    const { onClose } = renderDialog(cupStage());
+    await user.click(
+      await screen.findByRole('button', { name: 'Valider le tirage' }),
+    );
+
+    await waitFor(() => {
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('stays open when publish-and-apply fails', async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetchStageOverview).mockResolvedValue(overview([groupDraw()]));
+    vi.mocked(publishAndApplyDraw).mockRejectedValue(
+      new ApiError(
+        409,
+        'Conflict',
+        'Entry appears on materialized match',
+        'MaterializedOpponentConflict',
+      ),
+    );
+
+    const { onClose } = renderDialog();
+    await user.click(
+      await screen.findByRole('button', { name: 'Valider le tirage' }),
+    );
+
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(onClose).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole('dialog', { name: /Exécutions de tirage/ }),
+    ).toBeInTheDocument();
   });
 
   it('shows Abandonner for Draft when competition open and stage Draft|Ready', async () => {
@@ -2654,7 +2700,7 @@ describe('StructureDrawDialog', () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(overview([groupDraw()]));
     vi.mocked(publishAndApplyDraw).mockResolvedValue(undefined);
 
-    renderDialog();
+    const { onClose } = renderDialog();
     await user.click(
       await screen.findByRole('button', { name: 'Valider le tirage' }),
     );
@@ -2665,6 +2711,9 @@ describe('StructureDrawDialog', () => {
     expect(
       screen.queryByRole('dialog', { name: 'Appliquer le tirage ?' }),
     ).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('cancels an applied draw from a confirmation when Refaire is blocked', async () => {
@@ -4270,6 +4319,73 @@ describe('StructureDrawDialog', () => {
     expect(screen.queryByText('Déjà en place')).not.toBeInTheDocument();
   });
 
+  it('shows Déjà placée on a published partial tile for manual slots outside resolution', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview(
+        [
+          slotDraw({
+            status: 'Published',
+            isApplied: true,
+            inputsIntent: 'Partial',
+            actions: appliedDrawActions(),
+            slotPlacements: [
+              {
+                slotKey: 'S1',
+                entryId: 'e1',
+                displayName: 'Belgium',
+                origin: 'Draw',
+              },
+              {
+                slotKey: 'S3',
+                entryId: 'e3',
+                displayName: 'Turkey',
+                origin: 'Draw',
+              },
+            ],
+            slotDisplayCells: [
+              {
+                slotKey: 'S1',
+                cellState: 'Drawn',
+                entryId: 'e1',
+                displayName: 'Belgium',
+                origin: 'Draw',
+              },
+              {
+                slotKey: 'S2',
+                cellState: 'AlreadyPlaced',
+                entryId: 'e2',
+                displayName: 'Poland',
+                origin: 'Manual',
+              },
+              {
+                slotKey: 'S3',
+                cellState: 'Drawn',
+                entryId: 'e3',
+                displayName: 'Turkey',
+                origin: 'Draw',
+              },
+              {
+                slotKey: 'S4',
+                cellState: 'AlreadyPlaced',
+                entryId: 'e4',
+                displayName: 'Denmark',
+                origin: 'Manual',
+              },
+            ],
+            displayMetrics: null,
+          }),
+        ],
+        { bracketPairs: cupBracketPairs },
+      ),
+    );
+    renderDialog(cupStage());
+    const tile = await screen.findByRole('listitem', {
+      name: /P1.*Belgium.*Poland.*Déjà placée/i,
+    });
+    expect(tile).toBeInTheDocument();
+    expect(screen.queryByText('Hors de ce tirage')).not.toBeInTheDocument();
+  });
+
   it('T6 keeps a published partial history tile after a manual release on the phase', async () => {
     const user = userEvent.setup();
     const cells = [
@@ -4282,14 +4398,15 @@ describe('StructureDrawDialog', () => {
       },
       {
         slotKey: 'S2',
-        cellState: 'OutsideDraw' as const,
-        entryId: null,
-        displayName: null,
-        origin: null,
+        cellState: 'AlreadyPlaced' as const,
+        entryId: 'e9',
+        displayName: 'Other',
+        origin: 'Manual' as const,
       },
     ];
     const draw = slotDraw({
       status: 'Cancelled',
+      inputsIntent: 'Partial',
       actions: hiddenDrawActions(),
       slotPlacements: [
         {
@@ -4331,9 +4448,9 @@ describe('StructureDrawDialog', () => {
       expect(row).not.toBeNull();
       return row as HTMLElement;
     });
-    expect(tile).toHaveAccessibleName('P1 · Belgium vs Hors de ce tirage');
+    expect(tile).toHaveAccessibleName(/P1.*Belgium.*Other/i);
     expect(tile).not.toHaveAccessibleName(/Place libre/);
-    expect(tile).not.toHaveAccessibleName(/Déjà placée/);
+    expect(tile).toHaveAccessibleName(/Déjà en place|Déjà placée/i);
     const before = tile.getAttribute('aria-label');
     released = true;
     await queryClient.invalidateQueries({
@@ -4345,7 +4462,8 @@ describe('StructureDrawDialog', () => {
     });
     expect(screen.queryByText('Place libre')).not.toBeInTheDocument();
     expect(screen.getByText('Belgium')).toBeInTheDocument();
-    expect(screen.getByText('Hors de ce tirage')).toBeInTheDocument();
+    expect(screen.getByText('Other')).toBeInTheDocument();
+    expect(screen.queryByText('Hors de ce tirage')).not.toBeInTheDocument();
   });
 
   it('T7 does not show already placed on a group rerun', async () => {

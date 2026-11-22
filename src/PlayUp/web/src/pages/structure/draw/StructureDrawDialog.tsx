@@ -397,6 +397,7 @@ export function StructureDrawDialog({
     },
     onSuccess: () => {
       notify.success(tDraw('toastPublishedAndApplied'));
+      onClose();
     },
     onError: (error) => {
       if (error instanceof ApiError && error.status === 409) {
@@ -448,6 +449,7 @@ export function StructureDrawDialog({
       closeConfirm();
       scheduleDrawHubRefresh();
       notify.success(tDraw('toastApplied'));
+      onClose();
     },
     onError: (error) => {
       if (error instanceof ApiError && error.status === 409) {

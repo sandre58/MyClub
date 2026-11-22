@@ -182,6 +182,15 @@ async function launchAndValidateDraw(page: Page) {
   await expect(validate).toBeEnabled();
   await validate.click();
   await dismissStatus(page, 'Tirage publié et appliqué.');
+  await expect(dialog).toBeHidden();
+}
+
+async function reopenDrawDialog(page: Page) {
+  await page
+    .getByRole('button', { name: 'Voir le tirage', exact: true })
+    .click();
+  const dialog = page.getByRole('dialog', { name: /Exécutions de tirage/ });
+  await expect(dialog).toBeVisible();
   return dialog;
 }
 
@@ -694,7 +703,8 @@ test.describe('manual group placement', () => {
     await placeNamedTeam(page, 'Groupe A', kept[0].label);
     await placeNamedTeam(page, 'Groupe A', kept[1].label);
 
-    const dialog = await launchAndValidateDraw(page);
+    await launchAndValidateDraw(page);
+    const dialog = await reopenDrawDialog(page);
     await expect(
       dialog.getByRole('button', { name: 'Refaire le tirage' }),
     ).toBeVisible();
@@ -753,7 +763,8 @@ test.describe('manual group placement', () => {
     ];
     await placeNamedTeam(page, 'Groupe A', kept[0].label);
     await placeNamedTeam(page, 'Groupe A', kept[1].label);
-    const dialog = await launchAndValidateDraw(page);
+    await launchAndValidateDraw(page);
+    const dialog = await reopenDrawDialog(page);
 
     await dialog.getByRole('button', { name: 'Refaire le tirage' }).click();
     const confirm = page.getByRole('dialog', { name: 'Refaire le tirage ?' });
@@ -799,7 +810,8 @@ test.describe('manual group placement', () => {
     ];
     await placeNamedTeam(page, 'Groupe A', kept[0].label);
     await placeNamedTeam(page, 'Groupe A', kept[1].label);
-    const dialog = await launchAndValidateDraw(page);
+    await launchAndValidateDraw(page);
+    const dialog = await reopenDrawDialog(page);
 
     const cancelApplied = dialog.getByRole('button', {
       name: 'Annuler le tirage',
@@ -866,11 +878,7 @@ test.describe('manual group placement', () => {
     ];
     await placeNamedTeam(page, 'Groupe A', kept[0].label);
     await placeNamedTeam(page, 'Groupe A', kept[1].label);
-    const drawDialog = await launchAndValidateDraw(page);
-    await drawDialog
-      .getByRole('button', { name: 'Fermer', exact: true })
-      .click();
-    await expect(drawDialog).toBeHidden();
+    await launchAndValidateDraw(page);
 
     const groupACard = page
       .locator('.regulation-schematic__card')
