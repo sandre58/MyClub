@@ -5,11 +5,14 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
+using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
+using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using Xunit;
 
@@ -302,6 +305,43 @@ public sealed class DrawReleaseBriefCompletionTests
         act.Should().Throw<DomainException>()
             .Which.Code.Should().Be(StageErrorCodes.MaterializedOpponentConflict);
         stage.FindSlot("S2")!.EntryId.Should().Be(away);
+    }
+
+    [Fact]
+    public void Cup_sixteen_with_direct_assignments_hides_release_after_reconduced_validation()
+    {
+        var competition = CreateCompetition.Execute("Cup 16 release", _clock);
+        var entries = Enumerable.Range(0, 16)
+            .Select(index => AddEntry.Execute(competition, $"T{index}", _clock).Id)
+            .ToArray();
+        var stage = ConfigureStructure.Execute(competition, null, StructureIntent.Cup(16), _clock).Stage;
+        ReplaceStageDrawRules.Execute(stage, new DrawRules(DrawMode.Random), _clock);
+        stage.ReplaceAffectationAuthoring(entries, _clock);
+        var slotKeys = stage.Slots.Select(slot => slot.SlotKey).Skip(2).Take(2).ToArray();
+        stage.AssignEntryToSlot(stage.Slots[0].SlotKey, entries[0]);
+        stage.AssignEntryToSlot(stage.Slots[1].SlotKey, entries[1]);
+
+        var first = ResolveSlotDraw(
+            stage,
+            [new SlotDrawPlacement(entries[2], slotKeys[0]), new SlotDrawPlacement(entries[3], slotKeys[1])]);
+        stage.PublishDraw(first.Id, _clock);
+        ApplyDraw.Execute(stage, first.Id, _clock);
+        stage.CancelDraw(first.Id, _clock);
+
+        var second = ResolveSlotDraw(
+            stage,
+            [new SlotDrawPlacement(entries[2], slotKeys[0]), new SlotDrawPlacement(entries[3], slotKeys[1])]);
+        stage.PublishDraw(second.Id, _clock);
+        ApplyDraw.Execute(stage, second.Id, _clock);
+
+        var overview = StageOverviewAssembler.Assemble(stage, competition);
+        overview.ReleaseCandidateDrawId.Should().BeNull();
+        foreach (var draw in overview.Draws.Where(item => item.Status == DrawStatus.Cancelled))
+        {
+            draw.Actions!.Release.ReleasableCount.Should().Be(0);
+        }
+
+        DrawActionEvaluator.ReleaseCandidateDrawId(Context(stage), stage).Should().BeNull();
     }
 
     private Stage CreateStage() =>

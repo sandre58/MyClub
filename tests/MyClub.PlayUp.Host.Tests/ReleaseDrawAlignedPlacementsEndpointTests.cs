@@ -65,6 +65,30 @@ public sealed class ReleaseDrawAlignedPlacementsEndpointTests(HostPostgresFixtur
     }
 
     [IntegrationFact]
+    public async Task Get_overview_release_candidate_null_after_applied_collisionAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var seed = await SeedCollisionDrawsAsync(factory);
+
+        using var client = factory.CreateClient();
+        using var overviewResponse = await client.GetAsync(new Uri($"/stages/{seed.StageId.Value}", UriKind.Relative));
+        overviewResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var overview = await overviewResponse.Content.ReadFromJsonAsync<StageOverviewDto>(HostJson.Options);
+        overview.Should().NotBeNull();
+        overview!.ReleaseCandidateDrawId.Should().BeNull();
+        var older = overview.Draws.Single(d => d.Id == seed.OlderDrawId.Value);
+        older.Actions!.Release.ReleasableCount.Should().Be(0);
+        older.Actions.Release.State.Should().Be(StageDrawActionState.Blocked);
+        older.Actions.Release.BlockCode.Should().Be(ApplicationErrorCodes.DrawReleaseFailure);
+
+        using var release = await client.PostAsync(ReleaseUri(seed.StageId, seed.OlderDrawId), content: null);
+        release.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var problem = await release.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
+        problem.Should().NotBeNull();
+        GetCode(problem!).Should().Be(ApplicationErrorCodes.DrawReleaseFailure);
+    }
+
+    [IntegrationFact]
     public async Task Release_when_stage_is_running_returns_409_structure_lockedAsync()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
@@ -131,5 +155,47 @@ public sealed class ReleaseDrawAlignedPlacementsEndpointTests(HostPostgresFixtur
         return new DrawSeed(stage.Id, draw.Id);
     }
 
+    private async Task<CollisionDrawSeed> SeedCollisionDrawsAsync(PlayUpWebApplicationFactory factory)
+    {
+        using var scope = factory.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+
+        var competition = Competition.Create(new CompetitionName("Release collision"), SampleRegulations.Standard(), _clock);
+        competitions.Add(competition);
+
+        var stage = Stage.Create(competition.Id, new StageName("QF"), SampleRegulations.Standard(), _clock);
+        stage.AddRound("Tour", _clock);
+        stage.AddSlot("A");
+        var entry = EntryId.New();
+        stage.ReplaceAffectationAuthoring([entry], _clock);
+        var older = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
+        stage.ConfigureDrawInputs(older.Id, DrawInputs.ForSlot([entry]));
+        stage.RecordDrawResolution(
+            older.Id,
+            DrawResolution.ResolvedSlots([new SlotDrawPlacement(entry, "A")]),
+            _clock);
+        stage.PublishDraw(older.Id, _clock);
+        ApplyDraw.Execute(stage, older.Id, _clock);
+        stage.CancelDraw(older.Id, _clock);
+
+        var active = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
+        stage.ConfigureDrawInputs(active.Id, DrawInputs.ForSlot([entry]));
+        stage.RecordDrawResolution(
+            active.Id,
+            DrawResolution.ResolvedSlots([new SlotDrawPlacement(entry, "A")]),
+            _clock);
+        stage.PublishDraw(active.Id, _clock);
+        ApplyDraw.Execute(stage, active.Id, _clock);
+
+        competition.AddStage(stage.Id, _clock);
+        stages.Add(stage);
+        await unitOfWork.SaveChangesAsync();
+        return new CollisionDrawSeed(stage.Id, older.Id, active.Id);
+    }
+
     private sealed record DrawSeed(StageId StageId, DrawId DrawId);
+
+    private sealed record CollisionDrawSeed(StageId StageId, DrawId OlderDrawId, DrawId ActiveDrawId);
 }
