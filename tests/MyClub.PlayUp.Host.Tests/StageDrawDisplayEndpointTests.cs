@@ -112,7 +112,11 @@ public sealed class StageDrawDisplayEndpointTests(HostPostgresFixture fixture)
         }
 
         var published = await ReadCellsAsync(client, seed.StageId);
-        published.Should().Contain(cell => cell.CellState == SlotDrawCellState.OutsideDraw && cell.SlotKey == "S1");
+        published.Should().Contain(cell =>
+            cell.CellState == SlotDrawCellState.AlreadyPlaced
+            && cell.SlotKey == "S1"
+            && cell.Origin == DrawPlacementOrigin.Manual
+            && cell.EntryId == seed.Entries[0].Value);
         published.Where(cell => cell.SlotKey != "S1").Should().OnlyContain(cell =>
             cell.CellState == SlotDrawCellState.Drawn && cell.Origin == DrawPlacementOrigin.Draw);
 

@@ -231,11 +231,12 @@ public sealed class StageDrawDisplayTests
         after.Should().BeEquivalentTo(before);
         after.Should().OnlyContain(cell =>
             cell.CellState == SlotDrawCellState.Drawn
-            || cell.CellState == SlotDrawCellState.OutsideDraw);
+            || cell.CellState == SlotDrawCellState.AlreadyPlaced);
         after.Should().Contain(cell =>
             cell.SlotKey == keys[0]
-            && cell.CellState == SlotDrawCellState.OutsideDraw
-            && cell.EntryId == null);
+            && cell.CellState == SlotDrawCellState.AlreadyPlaced
+            && cell.EntryId == entries[0].Value
+            && cell.Origin == DrawPlacementOrigin.Manual);
         after.Should().Contain(cell =>
             cell.SlotKey == released.SlotKey
             && cell.CellState == SlotDrawCellState.Drawn
@@ -244,6 +245,49 @@ public sealed class StageDrawDisplayTests
         StageOverviewAssembler.Assemble(stage, competition)
             .Draws.Single(item => item.Id == draw.Id.Value)
             .DisplayMetrics.Should().BeNull();
+    }
+
+    [Fact]
+    public void Published_partial_two_direct_assignments_project_already_placed_manual_cells()
+    {
+        var (competition, stage, entries) = Cup(4);
+        var daKeys = stage.Slots.Take(2).Select(slot => slot.SlotKey).ToArray();
+        stage.AssignEntryToSlot(daKeys[0], entries[0]);
+        stage.AssignEntryToSlot(daKeys[1], entries[1]);
+        var draw = ResolvePartial(stage);
+        PublishDraw.Execute(stage, draw.Id, _clock);
+        ApplyDraw.Execute(stage, draw.Id, _clock);
+
+        var cells = Cells(stage, competition, draw.Id.Value);
+        cells.Where(cell => daKeys.Contains(cell.SlotKey)).Should().AllSatisfy(cell =>
+        {
+            cell.CellState.Should().Be(SlotDrawCellState.AlreadyPlaced);
+            cell.Origin.Should().Be(DrawPlacementOrigin.Manual);
+        });
+        cells.Should().OnlyContain(cell =>
+            cell.CellState == SlotDrawCellState.Drawn
+            || cell.CellState == SlotDrawCellState.AlreadyPlaced);
+        cells.Where(cell => cell.CellState == SlotDrawCellState.Drawn).Should().HaveCount(2);
+    }
+
+    [Fact]
+    public void Cancelled_partial_two_direct_assignments_keep_already_placed_manual_cells()
+    {
+        var (competition, stage, entries) = Cup(4);
+        var daKeys = stage.Slots.Take(2).Select(slot => slot.SlotKey).ToArray();
+        stage.AssignEntryToSlot(daKeys[0], entries[0]);
+        stage.AssignEntryToSlot(daKeys[1], entries[1]);
+        var draw = ResolvePartial(stage);
+        PublishDraw.Execute(stage, draw.Id, _clock);
+        ApplyDraw.Execute(stage, draw.Id, _clock);
+        CancelDraw.Execute(stage, draw.Id, _clock);
+
+        var cells = Cells(stage, competition, draw.Id.Value);
+        cells.Where(cell => daKeys.Contains(cell.SlotKey)).Should().AllSatisfy(cell =>
+        {
+            cell.CellState.Should().Be(SlotDrawCellState.AlreadyPlaced);
+            cell.Origin.Should().Be(DrawPlacementOrigin.Manual);
+        });
     }
 
     [Fact]
