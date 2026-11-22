@@ -94,7 +94,9 @@ test.describe('Play’Up business (Host + PostgreSQL)', () => {
       .click();
     const dialog = page.getByRole('dialog', { name: /Exécutions de tirage/ });
     await expect(dialog).toBeVisible();
-    await expect(dialog.getByText('Déjà placée')).toBeVisible();
+    await expect(
+      dialog.getByRole('listitem', { name: /Déjà placée/i }).first(),
+    ).toBeVisible();
     await expect(dialog.getByText('Hors de ce tirage')).toHaveCount(0);
 
     const redo = dialog.getByRole('button', { name: 'Refaire le tirage' });
