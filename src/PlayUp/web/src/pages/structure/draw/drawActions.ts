@@ -76,8 +76,9 @@ export function isDrawActionAvailable(
 }
 
 /**
- * Footer Libérer. Attached-match blocks stay visible and disabled.
- * Other blocks stay off the footer; the tile carries the existing reason.
+ * Footer Libérer. Shown only for a real reliquat: releasableCount > 0 and Available (enabled),
+ * or Blocked with count > 0 (disabled). Count 0 hides the CTA; Blocked with zero count stays off
+ * the footer (tile / history badge carry the state).
  */
 export function releaseFooterMode(
   draw: StageDraw,
@@ -89,7 +90,7 @@ export function releaseFooterMode(
   if (release.state === 'Available') {
     return 'enabled';
   }
-  if (release.state === 'Blocked') {
+  if (release.state === 'Blocked' && release.releasableCount > 0) {
     return 'disabled';
   }
   return 'hidden';
@@ -199,7 +200,7 @@ export function resolveServerReleaseCta(
     return empty;
   }
   const draw = overview.draws.find((item) => item.id === candidateId) ?? null;
-  if (draw == null || releaseFooterMode(draw) === 'hidden') {
+  if (draw == null || releaseFooterMode(draw) !== 'enabled') {
     return empty;
   }
   const release = drawActionsOf(draw).release;

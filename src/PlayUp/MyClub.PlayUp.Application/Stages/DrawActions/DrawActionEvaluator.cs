@@ -83,7 +83,7 @@ internal static class DrawActionEvaluator
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(stage);
 
-        Guid? candidate = null;
+        var cancelledWithReleasable = new List<(Draw Draw, DrawReleaseAssessment Release)>();
         foreach (var draw in stage.Draws)
         {
             if (draw.Status != DrawStatus.Cancelled)
@@ -94,11 +94,25 @@ internal static class DrawActionEvaluator
             var release = EvaluateRelease(context, draw, treatAsCancelled: false);
             if (release.ReleasableCount >= 1)
             {
-                candidate = draw.Id.Value;
+                cancelledWithReleasable.Add((draw, release));
             }
         }
 
-        return candidate;
+        if (cancelledWithReleasable.Count == 0)
+        {
+            return null;
+        }
+
+        var last = cancelledWithReleasable[^1];
+        if (last.Release.State == StageDrawActionState.Blocked
+            && cancelledWithReleasable
+                .Take(cancelledWithReleasable.Count - 1)
+                .Any(entry => entry.Release.State == StageDrawActionState.Available))
+        {
+            return null;
+        }
+
+        return last.Draw.Id.Value;
     }
 
     private static DrawActionAssessment EvaluateCancel(Stage stage, Draw draw)
@@ -123,7 +137,7 @@ internal static class DrawActionEvaluator
         Draw draw,
         bool treatAsCancelled)
     {
-        var count = CountReleasable(context.Stage, draw);
+        var count = CountReleasable(context, draw);
         var block = TryReleaseBlock(context, draw, treatAsCancelled);
         if (block is not null)
         {
@@ -333,13 +347,14 @@ internal static class DrawActionEvaluator
 
         try
         {
+            var index = context.ReleaseIndex;
             if (draw.Kind == DrawResolutionKind.Slot)
             {
                 var proposed = MaterializedOpponentCoherence.CopySlotOccupants(context.Stage);
                 var changed = false;
-                foreach (var placement in draw.Resolution.SlotResults)
+                foreach (var placement in DrawReleaseReleasability.DrawnSlotPlacements(draw))
                 {
-                    if (IsDirectAssignment(context.Stage, placement.SlotKey) || !SlotAligned(context.Stage, placement))
+                    if (!DrawReleaseReleasability.IsReleasableSlot(context.Stage, draw, placement, index))
                     {
                         continue;
                     }
@@ -371,11 +386,9 @@ internal static class DrawActionEvaluator
                 return null;
             }
 
-            var drawn = GroupDrawLaunchRules.DrawnEntries(draw);
             foreach (var placement in draw.Resolution.GroupResults)
             {
-                if (!drawn.Contains(placement.EntryId)
-                    || context.Stage.FindGroup(placement.GroupId)?.EntryIds.Contains(placement.EntryId) != true)
+                if (!DrawReleaseReleasability.IsReleasableGroup(context.Stage, draw, placement, index))
                 {
                     continue;
                 }
@@ -394,28 +407,8 @@ internal static class DrawActionEvaluator
         }
     }
 
-    private static int CountReleasable(Stage stage, Draw draw)
-    {
-        if (draw.Resolution.State != DrawResolutionState.Resolved)
-        {
-            return 0;
-        }
-
-        return draw.Kind switch
-        {
-            DrawResolutionKind.Slot => draw.Resolution.SlotResults.Count(placement =>
-                !IsDirectAssignment(stage, placement.SlotKey) && SlotAligned(stage, placement)),
-            DrawResolutionKind.Group => CountDrawnStillInResolutionGroup(stage, draw),
-            _ => 0
-        };
-    }
-
-    private static int CountDrawnStillInResolutionGroup(Stage stage, Draw draw)
-    {
-        var drawn = GroupDrawLaunchRules.DrawnEntries(draw);
-
-        return draw.Resolution.GroupResults.Count(placement => drawn.Contains(placement.EntryId) && stage.FindGroup(placement.GroupId)?.EntryIds.Contains(placement.EntryId) == true);
-    }
+    private static int CountReleasable(DrawActionContext context, Draw draw) =>
+        DrawReleaseReleasability.CountReleasable(context.Stage, draw, context.ReleaseIndex);
 
     private static HashSet<string> AlignedSlotKeys(Stage stage, Draw draw)
     {
@@ -485,6 +478,8 @@ internal sealed class DrawActionContext(
     IReadOnlyList<MatchParticipantSnapshot> snapshots,
     bool hasAttachedMatches)
 {
+    private DrawReleaseReleasability.LastDrawnAuthorIndex? _releaseIndex;
+
     internal Stage Stage { get; } = stage;
 
     internal IReadOnlyList<Stage> CompetitionStages { get; } = competitionStages;
@@ -492,6 +487,9 @@ internal sealed class DrawActionContext(
     internal IReadOnlyList<MatchParticipantSnapshot> Snapshots { get; } = snapshots;
 
     internal bool HasAttachedMatches { get; } = hasAttachedMatches;
+
+    internal DrawReleaseReleasability.LastDrawnAuthorIndex ReleaseIndex =>
+        _releaseIndex ??= DrawReleaseReleasability.BuildIndex(Stage);
 }
 
 internal sealed record DrawActionAssessment(

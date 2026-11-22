@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
+using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
@@ -128,6 +129,13 @@ public sealed class ReleaseDrawAlignedPlacementsTests
         stage.PublishDraw(active.Id, _clock);
         ApplyDraw.Execute(stage, active.Id, _clock);
         stage.ClearDomainEvents();
+
+        var release = DrawActionEvaluator.Evaluate(DrawActionEvaluator.ForCommand(stage, null), cancelled).Release;
+        release.ReleasableCount.Should().Be(0);
+        release.State.Should().Be(StageDrawActionState.Blocked);
+        release.BlockCode.Should().Be(ApplicationErrorCodes.DrawReleaseFailure);
+        DrawActionEvaluator.ReleaseCandidateDrawId(DrawActionEvaluator.ForCommand(stage, null), stage)
+            .Should().BeNull();
 
         var act = () => ReleaseDrawAlignedPlacements.Execute(stage, cancelled.Id, _clock);
 
