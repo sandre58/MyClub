@@ -145,6 +145,23 @@ describe('StructureStaleDrawResolutionActions', () => {
     ).toBeInTheDocument();
   });
 
+  it('hides Libérer from server CTA when release is not Available', () => {
+    renderActions({
+      activeDraw: null,
+      releaseCta: {
+        draw: null,
+        aligned: 1,
+        total: 2,
+        disabled: true,
+        disabledReason: 'Application.DrawReleaseFailure',
+      },
+    });
+
+    expect(
+      screen.queryByRole('button', { name: /Libérer les placements/i }),
+    ).not.toBeInTheDocument();
+  });
+
   it('disables Libérer when release action is blocked', () => {
     renderActions({
       activeDraw: appliedDraw(

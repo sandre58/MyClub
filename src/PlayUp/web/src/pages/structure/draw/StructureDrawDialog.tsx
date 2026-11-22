@@ -653,22 +653,7 @@ export function StructureDrawDialog({
       active.isConnected &&
       dialog?.contains(active) === true;
     if (dialog && ((buttonLost && !landedElsewhere) || outsideDialog)) {
-      const footer = dialog.querySelector('.structure-draw-footer');
-      const primary = footer?.querySelector<HTMLElement>(
-        '.ds-btn--primary:not(:disabled)',
-      );
-      const neutral = footer
-        ? [...footer.querySelectorAll<HTMLButtonElement>('button')].find(
-            (button) =>
-              !button.disabled &&
-              !button.classList.contains('ds-btn--primary') &&
-              !button.classList.contains('ds-btn--destructive'),
-          )
-        : undefined;
-      const closeButton = dialog.querySelector<HTMLElement>(
-        'button.ds-icon-button:not(:disabled)',
-      );
-      (primary ?? neutral ?? closeButton)?.focus({
+      pickDrawFooterFocusAfterRelease(dialog)?.focus({
         preventScroll: true,
       });
     }
@@ -862,6 +847,7 @@ export function StructureDrawDialog({
                 <button
                   type="button"
                   className="ds-btn ds-btn--primary"
+                  data-draw-run-trigger="launch"
                   disabled={busy || !canLaunch}
                   onClick={() => {
                     if (!canLaunch) return;

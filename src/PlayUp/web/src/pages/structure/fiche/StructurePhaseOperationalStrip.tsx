@@ -449,6 +449,7 @@ export function StructurePhaseOperationalStrip({
       ) : null}
       <div
         className="structure-operational-strip"
+        data-structure-phase-operational=""
         data-layout-variant={layoutVariant}
         data-places-strip-layout={
           compositionStack ? placesStripLayout : undefined
@@ -824,23 +825,37 @@ function DrawColumn(
       disabled?: boolean;
       disabledTitle?: string;
       variant?: 'primary' | 'secondary';
+      viewDrawWorkflow?: boolean;
     },
   ) => {
     const btnClass =
       options?.variant === 'secondary' ? secondaryBtn : primaryBtn;
     const disabled = options?.disabled ?? false;
     const disabledTitle = options?.disabledTitle;
+    const viewDrawAttrs = options?.viewDrawWorkflow
+      ? { 'data-action': 'view-draw-workflow' as const }
+      : {};
     return disabled ? (
       <Tooltip content={disabledTitle ?? label}>
         <span className="structure-operational-tile__action-wrap structure-operational-strip__composition-draw-cta-wrap">
-          <button type="button" className={btnClass} disabled>
+          <button
+            type="button"
+            className={btnClass}
+            disabled
+            {...viewDrawAttrs}
+          >
             <DrawPendingIcon size="sm" />
             {label}
           </button>
         </span>
       </Tooltip>
     ) : (
-      <button type="button" className={btnClass} onClick={onClick}>
+      <button
+        type="button"
+        className={btnClass}
+        onClick={onClick}
+        {...viewDrawAttrs}
+      >
         <DrawPendingIcon size="sm" />
         {label}
       </button>
@@ -879,7 +894,7 @@ function DrawColumn(
         {compositionLaunchButton(
           t('fiche.viewDrawWorkflow'),
           props.onOpenDrawWorkflow,
-          { variant: 'secondary' },
+          { variant: 'secondary', viewDrawWorkflow: true },
         )}
       </div>
     );
@@ -893,7 +908,7 @@ function DrawColumn(
           {compositionLaunchButton(
             t('fiche.viewDrawWorkflow'),
             props.onOpenDrawWorkflow,
-            { variant: 'secondary' },
+            { variant: 'secondary', viewDrawWorkflow: true },
           )}
         </div>
       ) : (
@@ -903,6 +918,7 @@ function DrawColumn(
             <button
               type="button"
               className={secondaryBtn}
+              data-action="view-draw-workflow"
               onClick={props.onOpenDrawWorkflow}
             >
               <ViewIcon size="sm" />
@@ -952,6 +968,7 @@ function DrawColumn(
                 disabled: props.blockPerformDrawCta,
                 disabledTitle: props.createBlockedShort ?? launchLabel,
                 variant: props.drawApplied ? 'secondary' : 'primary',
+                viewDrawWorkflow: props.drawApplied,
               })
             : null}
           {drawSetupEditable ? (
@@ -1022,6 +1039,7 @@ function DrawColumn(
             <button
               type="button"
               className={secondaryBtn}
+              data-action="view-draw-workflow"
               onClick={props.onOpenDrawWorkflow}
             >
               <ViewIcon size="sm" />

@@ -103,19 +103,21 @@ export function StructureStaleDrawResolutionActions({
 
   const useAppliedRelease =
     appliedReleaseMode !== 'hidden' && activeDraw != null;
+  const staleServerMode =
+    releaseCta.draw != null
+      ? releaseFooterMode(releaseCta.draw)
+      : ('hidden' as const);
+  const releaseMode = useAppliedRelease ? appliedReleaseMode : staleServerMode;
   const releaseDraw = useAppliedRelease ? activeDraw : releaseCta.draw;
   const releaseAligned = useAppliedRelease
     ? (drawActionsReleaseCount(activeDraw!) ?? 0)
     : releaseCta.aligned;
-  const releaseDisabled = useAppliedRelease
-    ? appliedReleaseMode === 'disabled'
-    : releaseCta.disabled || releaseCta.draw == null;
+  const releaseDisabled = releaseMode === 'disabled';
   const releaseDisabledReason = useAppliedRelease
     ? appliedReleaseDisabledReason
     : releaseCta.disabledReason;
 
-  const showRelease =
-    releaseDraw != null && (useAppliedRelease || releaseCta.aligned > 0);
+  const showRelease = releaseMode !== 'hidden' && releaseDraw != null;
 
   const actionRow = (
     <div className="structure-stale-draw-actions__buttons">

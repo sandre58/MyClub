@@ -4,7 +4,14 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { useSyncWhen } from '../../../design-system/useRenderSync';
 import { useTranslation } from 'react-i18next';
 import {
@@ -225,6 +232,7 @@ export function StructurePhaseFiche({
   const [drawWorkflowOpen, setDrawWorkflowOpen] = useState(false);
   const [deactivateDrawOpen, setDeactivateDrawOpen] = useState(false);
   const [releaseConfirmOpen, setReleaseConfirmOpen] = useState(false);
+  const pendingViewDrawFocusRef = useRef(false);
   const [staleRedoConfirmOpen, setStaleRedoConfirmOpen] = useState(false);
   const [staleReleaseConfirmOpen, setStaleReleaseConfirmOpen] = useState(false);
   const [composeOpen, setComposeOpen] = useState(false);
@@ -285,6 +293,7 @@ export function StructurePhaseFiche({
     onSuccess: (result) => {
       setReleaseConfirmOpen(false);
       setStaleReleaseConfirmOpen(false);
+      pendingViewDrawFocusRef.current = true;
       notify.success(tDraw('toastReleased', { count: result.releasedCount }));
       scheduleStructureRefresh(
         queryClient,
@@ -600,6 +609,28 @@ export function StructurePhaseFiche({
     }
   };
 
+  useLayoutEffect(() => {
+    if (!stage) {
+      return;
+    }
+    if (!pendingViewDrawFocusRef.current) {
+      return;
+    }
+    if (releaseMutation.isPending || drawOverviewQuery.isFetching) {
+      return;
+    }
+    pendingViewDrawFocusRef.current = false;
+    const target = document.querySelector<HTMLButtonElement>(
+      '[data-structure-phase-operational] button[data-action="view-draw-workflow"]:not(:disabled)',
+    );
+    target?.focus({ preventScroll: true });
+  }, [
+    stage,
+    drawOverviewQuery.isFetching,
+    drawOverviewQuery.data?.releaseCandidateDrawId,
+    releaseMutation.isPending,
+  ]);
+
   if (!stage) {
     return (
       <section className="structure-fiche" aria-labelledby="fiche-empty">
@@ -728,6 +759,7 @@ export function StructurePhaseFiche({
   const releasableDraw = releaseCta.draw;
   const releasableAlignedCount = releaseCta.aligned;
   const showReleaseCta = releasableDraw != null && releasableAlignedCount > 0;
+
   /** Nouveau path blocked with nothing to manage in the dialog → disable primary CTA. */
   const blockPerformDrawCta =
     showDrawCta && !launchAllowed && !activeDraw && overviewDraws.length === 0;

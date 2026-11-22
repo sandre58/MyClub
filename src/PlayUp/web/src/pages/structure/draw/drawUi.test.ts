@@ -886,19 +886,48 @@ describe('areDrawRulesLockedByExecution', () => {
 });
 
 describe('pickDrawFooterFocusAfterRelease', () => {
-  it('prefers the release footer action by data-action', () => {
+  it('prefers view-draw-workflow over footer primary after release', () => {
     document.body.innerHTML = `
       <div role="dialog">
         <div class="structure-draw-footer">
           <button type="button" class="ds-btn ds-btn--primary">Lancer le tirage</button>
-          <button type="button" class="ds-btn ds-btn--secondary" data-action="release-draw-placements">Libérer #1 (1/1)</button>
+          <button type="button" class="ds-btn ds-btn--secondary" data-action="view-draw-workflow">Voir le tirage</button>
         </div>
       </div>
     `;
     const dialog = document.querySelector('[role="dialog"]')!;
     expect(pickDrawFooterFocusAfterRelease(dialog)?.dataset.action).toBe(
-      'release-draw-placements',
+      'view-draw-workflow',
     );
+  });
+
+  it('does not target elements with tabIndex -1 in RTL', () => {
+    document.body.innerHTML = `
+      <div role="dialog" dir="rtl">
+        <div class="structure-draw-footer">
+          <button type="button" class="ds-btn ds-btn--secondary" data-action="view-draw-workflow">Voir le tirage</button>
+        </div>
+      </div>
+    `;
+    const dialog = document.querySelector('[role="dialog"]')!;
+    const target = pickDrawFooterFocusAfterRelease(dialog);
+    expect(target?.dataset.action).toBe('view-draw-workflow');
+    expect(target?.getAttribute('tabindex')).not.toBe('-1');
+  });
+
+  it('prefers footer run trigger over execution tiles outside the footer', () => {
+    document.body.innerHTML = `
+      <div role="dialog">
+        <button type="button" data-draw-run-trigger="draw-1">Tirage #1</button>
+        <div class="structure-draw-footer">
+          <button type="button" class="ds-btn ds-btn--primary" data-draw-run-trigger="launch">Lancer le tirage</button>
+        </div>
+      </div>
+    `;
+    const dialog = document.querySelector('[role="dialog"]')!;
+    expect(
+      pickDrawFooterFocusAfterRelease(dialog)?.dataset.drawRunTrigger,
+    ).toBe('launch');
   });
 });
 

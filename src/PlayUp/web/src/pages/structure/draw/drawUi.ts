@@ -1199,22 +1199,40 @@ export function drawResolutionPlacementCount(draw: StageDraw): number {
   return draw.slotPlacements.length;
 }
 
-/** Footer focus after Libérer — enabled release secondary, else primary, else header X. */
+/**
+ * Footer / dialog focus after Libérer or when the release CTA disappears.
+ * Prefers « Voir le tirage » (fiche or dialog), then an expanded execution tile, then footer primary.
+ */
 export function pickDrawFooterFocusAfterRelease(
   dialog: Element,
 ): HTMLElement | undefined {
+  const viewDraw = dialog.querySelector<HTMLButtonElement>(
+    'button[data-action="view-draw-workflow"]:not(:disabled)',
+  );
+  if (viewDraw) {
+    return viewDraw;
+  }
   const footer = dialog.querySelector('.structure-draw-footer');
   if (!footer) {
     return undefined;
   }
-  const release = footer.querySelector<HTMLButtonElement>(
+  const releaseCta = footer.querySelector<HTMLButtonElement>(
     'button[data-action="release-draw-placements"]:not(:disabled)',
   );
+  if (releaseCta) {
+    return releaseCta;
+  }
+  const runTrigger = footer.querySelector<HTMLButtonElement>(
+    'button[data-draw-run-trigger]:not(:disabled)',
+  );
+  if (runTrigger) {
+    return runTrigger;
+  }
   const primary = footer.querySelector<HTMLElement>(
     '.ds-btn--primary:not(:disabled)',
   );
   const closeButton = dialog.querySelector<HTMLElement>(
     'button.ds-icon-button:not(:disabled)',
   );
-  return release ?? primary ?? closeButton ?? undefined;
+  return primary ?? closeButton ?? undefined;
 }

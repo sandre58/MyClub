@@ -50,7 +50,7 @@ describe('draw action projection', () => {
     expect(actions.release.releasableCount).toBe(2);
   });
 
-  it('offers a disabled release CTA from the release candidate', () => {
+  it('hides fiche release CTA when candidate release is Blocked', () => {
     const candidate = draw({
       actions: {
         cancel: { state: 'Hidden' },
@@ -68,8 +68,7 @@ describe('draw action projection', () => {
       draws: [candidate],
       releaseCandidateDrawId: candidate.id,
     });
-    expect(cta.draw?.id).toBe(candidate.id);
-    expect(cta.aligned).toBe(1);
-    expect(cta.disabled).toBe(true);
+    expect(cta.draw).toBeNull();
+    expect(cta.aligned).toBe(0);
   });
 });
