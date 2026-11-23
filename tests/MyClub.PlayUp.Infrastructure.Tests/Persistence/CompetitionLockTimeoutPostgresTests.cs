@@ -107,9 +107,10 @@ public sealed class CompetitionLockTimeoutPostgresTests(PostgresFixture fixture)
         try
         {
             await using var contend = new NpgsqlCommand(
-                $"SELECT pg_advisory_xact_lock({key})",
+                "SELECT pg_advisory_xact_lock(@key)",
                 blockingConnection,
                 blockingTransaction);
+            contend.Parameters.AddWithValue("key", key);
             _ = await contend.ExecuteNonQueryAsync();
         }
         catch (PostgresException)
