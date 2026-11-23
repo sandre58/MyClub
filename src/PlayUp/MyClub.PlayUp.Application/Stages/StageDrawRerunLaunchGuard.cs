@@ -20,6 +20,9 @@ public static class StageDrawRerunLaunchGuard
     /// <param name="stage">Stage that owns the draw (tracked snapshot).</param>
     /// <param name="competitionStages">All competition stages for feed resolution.</param>
     /// <param name="drawKind">Draw resolution kind being configured.</param>
+    /// <param name="slotKeysTreatedAsVacant">
+    /// Slot keys treated as vacant for this check only (e.g. Redo release before Rerun).
+    /// </param>
     /// <remarks>
     /// Precedence matches SPA <c>resolveDrawCreateGate</c>: direct assignment before occupied places.
     /// Must run before mutating draw inputs.

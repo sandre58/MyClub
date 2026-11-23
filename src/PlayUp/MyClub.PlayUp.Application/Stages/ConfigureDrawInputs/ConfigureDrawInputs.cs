@@ -27,6 +27,9 @@ public static class ConfigureDrawInputs
     /// </param>
     /// <param name="competitionStages">Required for Rerun and Partial feed classification.</param>
     /// <param name="stageMatches">Matches of stage.</param>
+    /// <param name="rerunLaunchVacantSlotKeys">
+    /// Slot keys treated as vacant for a Rerun launch guard (Refaire redo path).
+    /// </param>
     public static void Execute(
         Stage stage,
         DrawId drawId,
