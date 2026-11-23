@@ -19,7 +19,7 @@ public sealed class UseCaseExecutorExclusiveWriteArchitectureTests
     /// Ratchet: this count may only decrease when a REST lot lands and removes names from
     /// <see cref="PendingByLot"/> — never raise it; adding a pending name without removing another must fail CI.
     /// </summary>
-    private const int ExpectedPendingByLotCount = 17;
+    private const int ExpectedPendingByLotCount = 10;
 
     private static readonly string[] LockMarkers =
     [
@@ -57,13 +57,6 @@ public sealed class UseCaseExecutorExclusiveWriteArchitectureTests
 
     private static readonly HashSet<string> PendingByLot =
     [
-        "PrepareCompetitionAsync",
-        "StartCompetitionAsync",
-        "SuspendCompetitionAsync",
-        "ResumeCompetitionAsync",
-        "CompleteCompetitionAsync",
-        "ArchiveCompetitionAsync",
-        "AddEntryAsync",
         "UpdateCompetitionPresentationAsync",
         "SetCompetitionScheduleAsync",
         "UpdateEntryPresentationAsync",
@@ -109,6 +102,17 @@ public sealed class UseCaseExecutorExclusiveWriteArchitectureTests
         "AddCompetitionStageAsync",
         "InsertCompetitionStageAsync",
         "SetCompetitionStageOrderAsync",
+    ];
+
+    private static readonly HashSet<string> Rest6LifecycleMethods =
+    [
+        "PrepareCompetitionAsync",
+        "StartCompetitionAsync",
+        "SuspendCompetitionAsync",
+        "ResumeCompetitionAsync",
+        "CompleteCompetitionAsync",
+        "ArchiveCompetitionAsync",
+        "AddEntryAsync",
     ];
 
     private static readonly HashSet<string> Rest5ReplaceMethods =
@@ -221,6 +225,10 @@ public sealed class UseCaseExecutorExclusiveWriteArchitectureTests
         PendingByLot.Intersect(Rest5ReplaceMethods)
             .Should()
             .BeEmpty("REST-5 Replace* rules / intents / formats writes must not appear on the pending list");
+
+        PendingByLot.Intersect(Rest6LifecycleMethods)
+            .Should()
+            .BeEmpty("REST-6 competition lifecycle and AddEntry writes must not appear on the pending list");
 
         pendingExtraneous.Should().BeEmpty(
             "the pending list must only name methods that still exist and call SaveChangesAsync without a lock");
