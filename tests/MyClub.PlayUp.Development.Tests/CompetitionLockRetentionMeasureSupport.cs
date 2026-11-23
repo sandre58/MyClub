@@ -14,12 +14,13 @@ using MyClub.PlayUp.Development.Tests.Diagnostics;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
-
+using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Development.Tests;
 
 internal static class CompetitionLockRetentionMeasureSupport
 {
     public const int DefaultCiSampleCount = 5;
+    public const int FullCampaignSampleThreshold = 40;
 
     public static int ResolveSampleCount()
     {
@@ -34,24 +35,7 @@ internal static class CompetitionLockRetentionMeasureSupport
             : DefaultCiSampleCount;
     }
 
-    public static Task AppendConfirmOperationsNotMeasuredAsync(List<SkippedMeasure> skipped)
-    {
-        foreach (var operation in new[]
-                 {
-                     "ConfirmCascadeReplaceAsync",
-                     "ConfirmResolutionReleaseAsync",
-                     "ConfirmDefinitiveResolutionReleaseAsync",
-                     "ConfirmDeletedSourceDefinitiveReleaseAsync"
-                 })
-        {
-            skipped.Add(new SkippedMeasure(
-                operation,
-                "—",
-                "nécessite un état de cascade / résolution amont rejouable idempotemment ; absent des scénarios Development.Tests"));
-        }
-
-        return Task.CompletedTask;
-    }
+    public static bool IsCiReducedCampaign(int sampleCount) => sampleCount < FullCampaignSampleThreshold;
 
     public static async Task EmulateExclusiveRecordGoalAsync(
         IServiceScope scope,
@@ -71,6 +55,26 @@ internal static class CompetitionLockRetentionMeasureSupport
                     Side.Home,
                     cancellationToken: cancellationToken).ConfigureAwait(false);
             }).ConfigureAwait(false);
+    }
+
+    public static CompetitionAdvisoryLockTimingSnapshot MeasureExclusiveOperation(
+        IServiceScope scope,
+        Func<IServiceScope, Task> operation)
+    {
+        var timing = scope.ServiceProvider.GetRequiredService<CompetitionAdvisoryLockTimingInterceptor>();
+        timing.Reset();
+        operation(scope).GetAwaiter().GetResult();
+        return timing.RequireLastSnapshot();
+    }
+
+    public static async Task<CompetitionAdvisoryLockTimingSnapshot> MeasureExclusiveOperationAsync(
+        IServiceScope scope,
+        Func<IServiceScope, Task> operation)
+    {
+        var timing = scope.ServiceProvider.GetRequiredService<CompetitionAdvisoryLockTimingInterceptor>();
+        timing.Reset();
+        await operation(scope).ConfigureAwait(false);
+        return timing.RequireLastSnapshot();
     }
 
     public static async Task<CompetitionShape> LoadShapeFromScopeAsync(IServiceScope scope)
@@ -100,22 +104,55 @@ internal static class CompetitionLockRetentionMeasureSupport
             matchCount);
     }
 
+    public static async Task<CompetitionShape> LoadPrimaryTemplateShapeAsync(IServiceScope scope)
+    {
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
+        var listed = await competitions.ListAsync().ConfigureAwait(false);
+        var summary = listed.Should().ContainSingle().Subject;
+        var competition = await competitions.GetByIdReadOnlyAsync(summary.Id).ConfigureAwait(false);
+        competition.Should().NotBeNull();
+        var stageId = competition!.StageIds[0];
+        var matchCount = 0;
+        foreach (var id in competition.StageIds)
+        {
+            matchCount += (await matches.ListByStageForUpdateAsync(id).ConfigureAwait(false)).Count;
+        }
+
+        return new CompetitionShape(
+            competition.Id,
+            stageId,
+            competition.Entries.Count,
+            competition.StageIds.Count,
+            matchCount);
+    }
+
     public static MeasureRow BuildRow(
         string operation,
         string jeu,
         CompetitionShape shape,
-        List<TimeSpan> retentions) =>
-        new(
+        IReadOnlyList<CompetitionAdvisoryLockTimingSnapshot> snapshots)
+    {
+        var waits = snapshots.Select(item => item.LockWait).ToList();
+        var retentions = snapshots.Select(item => item.LockRetention).ToList();
+        return new MeasureRow(
             operation,
             jeu,
             shape.TeamCount,
             shape.StageCount,
             shape.SeedMatchCount,
-            retentions.Count,
+            snapshots.Count,
+            NearestRankPercentiles.Percentile(waits, 50),
+            NearestRankPercentiles.Percentile(waits, 95),
+            NearestRankPercentiles.Max(waits),
+            NearestRankPercentiles.FractionOverThreshold(waits, NearestRankPercentiles.ThreeSecondThreshold),
             NearestRankPercentiles.Percentile(retentions, 50),
             NearestRankPercentiles.Percentile(retentions, 95),
             NearestRankPercentiles.Max(retentions),
-            NearestRankPercentiles.FractionOverThreshold(retentions, NearestRankPercentiles.ThreeSecondThreshold));
+            NearestRankPercentiles.FractionOverThreshold(
+                retentions,
+                NearestRankPercentiles.ThreeSecondThreshold));
+    }
 }
 
 internal readonly record struct CompetitionShape(
@@ -146,16 +183,21 @@ internal readonly record struct MeasureRow(
     int StageCount,
     int SeedMatchCount,
     int SampleCount,
-    TimeSpan P50,
-    TimeSpan P95,
-    TimeSpan Max,
-    double FractionOverThreeSeconds);
+    TimeSpan WaitP50,
+    TimeSpan WaitP95,
+    TimeSpan WaitMax,
+    double WaitFractionOverThreeSeconds,
+    TimeSpan RetentionP50,
+    TimeSpan RetentionP95,
+    TimeSpan RetentionMax,
+    double RetentionFractionOverThreeSeconds);
 
 internal readonly record struct ConcurrentRecordGoalReport(
     int Attempts,
     int LockTimeoutCount,
     int InvalidOperationExceptions,
     IReadOnlyList<TimeSpan> LockWaits,
+    IReadOnlyList<TimeSpan> LockRetentions,
     IReadOnlyList<TimeSpan> EndToEndLatencies,
     IReadOnlyList<string> UnexpectedFailures);
 
