@@ -68,7 +68,10 @@ function renderRoutes(initialEntry: string) {
       <MemoryRouter initialEntries={[initialEntry]}>
         <Routes>
           <Route path="/matches/:matchId" element={<MatchPage />} />
-          <Route path="/stages/:stageId/matches" element={<StageMatchesPage />} />
+          <Route
+            path="/stages/:stageId/matches"
+            element={<StageMatchesPage />}
+          />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -115,7 +118,12 @@ describe('matchNotFoundNavigation (A7)', () => {
     });
     vi.mocked(fetchMatchDetail).mockResolvedValue(scheduledMatch());
     vi.mocked(startMatch).mockRejectedValue(
-      new ApiError(404, 'Match not found', undefined, 'Application.MatchNotFound'),
+      new ApiError(
+        404,
+        'Match not found',
+        undefined,
+        'Application.MatchNotFound',
+      ),
     );
   });
 
@@ -130,6 +138,8 @@ describe('matchNotFoundNavigation (A7)', () => {
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent('Match introuvable.');
     });
-    expect(screen.queryByRole('button', { name: 'Démarrer le match' })).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: 'Démarrer le match' }),
+    ).toBeNull();
   });
 });
