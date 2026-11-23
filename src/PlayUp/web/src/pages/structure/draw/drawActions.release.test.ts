@@ -75,6 +75,21 @@ describe('resolveServerReleaseCta', () => {
     expect(resolveServerReleaseCta(overview).draw).toBeNull();
   });
 
+  it('returns empty when candidate is null despite an older Available draw (D7)', () => {
+    const overview = {
+      releaseCandidateDrawId: null,
+      draws: [
+        drawWithRelease('older', { state: 'Available', releasableCount: 1 }),
+        drawWithRelease('newer', {
+          state: 'Blocked',
+          blockCode: 'Stage.MaterializedOpponentConflict',
+          releasableCount: 1,
+        }),
+      ],
+    } satisfies Pick<StageOverview, 'draws' | 'releaseCandidateDrawId'>;
+    expect(resolveServerReleaseCta(overview).draw).toBeNull();
+  });
+
   it('returns CTA when candidate is Available', () => {
     const overview = {
       releaseCandidateDrawId: 'd-ok',

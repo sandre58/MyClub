@@ -413,11 +413,13 @@ export function StructureDrawDialog({
     mutationFn: (drawId: string) => cancelDraw(stageId, drawId),
     onSuccess: () => {
       closeConfirm();
+      scheduleDrawOverviewRefresh();
       scheduleDrawHubRefresh();
       notify.success(tDraw('toastCancelled'));
     },
     onError: (error) => {
       if (error instanceof ApiError && error.status === 409) {
+        scheduleDrawOverviewRefresh();
         scheduleDrawHubRefresh();
       }
     },

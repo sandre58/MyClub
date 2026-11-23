@@ -33,7 +33,8 @@ public static class ConfigureDrawInputs
         DrawInputs inputs,
         DrawInputsIntent configureIntent = DrawInputsIntent.Default,
         IReadOnlyList<Stage>? competitionStages = null,
-        IReadOnlyList<Match>? stageMatches = null)
+        IReadOnlyList<Match>? stageMatches = null,
+        IReadOnlySet<string>? rerunLaunchVacantSlotKeys = null)
     {
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(inputs);
@@ -56,7 +57,11 @@ public static class ConfigureDrawInputs
                     nameof(competitionStages),
                     "Competition stages are required to validate Rerun draw inputs.");
             case DrawInputsIntent.Rerun:
-                StageDrawRerunLaunchGuard.Ensure(stage, competitionStages, draw.Kind);
+                StageDrawRerunLaunchGuard.Ensure(
+                    stage,
+                    competitionStages,
+                    draw.Kind,
+                    rerunLaunchVacantSlotKeys);
                 break;
             case DrawInputsIntent.Partial:
                 EnsurePartialSlotInputs(stage, draw, inputs, competitionStages);

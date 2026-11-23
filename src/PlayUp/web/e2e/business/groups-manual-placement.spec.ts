@@ -839,8 +839,15 @@ test.describe('manual group placement', () => {
       'Les équipes restent à leur place et ne sont plus protégées.',
     );
     await expect(confirm).not.toContainText('Des matchs sont générés');
+    const overviewAfterCancel = page.waitForResponse(
+      (response) =>
+        response.request().method() === 'GET' &&
+        response.url().includes(`/stages/${stageId}`) &&
+        response.ok(),
+    );
     await confirm.getByRole('button', { name: 'Annuler le tirage' }).click();
     await expect(confirm).toBeHidden();
+    await overviewAfterCancel;
 
     const releaseOnCancelled = dialog.getByRole('button', {
       name: /Libérer #\d+ \([1-9]\d*\//,
@@ -859,8 +866,18 @@ test.describe('manual group placement', () => {
     expect(alignedMatch).not.toBeNull();
     const aligned = Number(alignedMatch![1]);
     const total = Number(alignedMatch![2]);
-    expect(aligned).toBeGreaterThan(0);
-    expect(aligned).toBeLessThan(occupiedTotal);
+    const releaseCandidate = overview.draws?.find(
+      (draw) => draw.id === overview.releaseCandidateDrawId,
+    );
+    expect(overview.releaseCandidateDrawId).toBeTruthy();
+    expect(releaseCandidate?.status).toBe('Cancelled');
+    expect(releaseCandidate?.actions?.release?.releasableCount).toBeGreaterThan(
+      0,
+    );
+    expect(releaseCandidate?.actions?.release?.releasableCount).toBe(aligned);
+    expect(releaseCandidate?.actions?.release?.releasableCount).toBeLessThan(
+      occupiedTotal,
+    );
     expect(total).toBeGreaterThanOrEqual(aligned);
   });
 

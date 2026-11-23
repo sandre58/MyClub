@@ -83,8 +83,13 @@ public static class RedoDraw
             groupDecision.EnsureAllowed();
         }
 
+        var rerunVacantSlotKeys =
+            draw.Kind == DrawResolutionKind.Slot
+                ? RedoAlignedRelease.AlignedSlotKeys(stage, draw)
+                : null;
+
         CancelDraw.Execute(stage, drawId, clock);
-        ReleaseDrawAlignedPlacements.Execute(stage, drawId, clock, stageMatches);
+        RedoAlignedRelease.Execute(stage, draw, clock, stageMatches);
 
         var created = CreateDraw.Execute(stage, kind, clock, stageMatches, competitionStages);
         var usePartialCupRedo = SlotCupRedoPath.UsesPartialVoieP(draw);
@@ -107,7 +112,8 @@ public static class RedoDraw
             inputs,
             inputsIntent,
             competitionStages,
-            stageMatches);
+            stageMatches,
+            rerunVacantSlotKeys);
 
         IReadOnlyList<string>? slotTargets = kind == DrawResolutionKind.Slot
             ? stage.Slots.Select(slot => slot.SlotKey).ToArray()

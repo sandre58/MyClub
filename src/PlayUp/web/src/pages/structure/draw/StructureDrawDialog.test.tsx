@@ -1565,6 +1565,44 @@ describe('StructureDrawDialog', () => {
     ).toBeInTheDocument();
   });
 
+  it('shows Libérée meta on cancelled run when release count is zero', async () => {
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview(
+        [
+          groupDraw({
+            id: 'draw-aaa',
+            status: 'Cancelled',
+            groupPlacements: [
+              {
+                groupId: 'g-a',
+                groupDisplayName: 'A',
+                entryId: 'e1',
+                displayName: 'Alpha',
+              },
+            ],
+            actions: {
+              cancel: { state: 'Hidden' },
+              release: { state: 'Hidden', releasableCount: 0 },
+              apply: { state: 'Hidden' },
+              publishAndApply: { state: 'Hidden' },
+              redo: { state: 'Hidden' },
+            },
+          }),
+          groupDraw({ id: 'draw-zzz', status: 'Draft' }),
+        ],
+        { groups: [{ id: 'g-a', name: 'A', entryIds: [] }] },
+      ),
+    );
+    renderDialog();
+    const trigger = await screen.findByRole('button', { name: /Exécution #1/ });
+    const lead = trigger.querySelector('.structure-draw-previous__lead');
+    const meta = lead?.querySelector('.structure-draw-previous__meta');
+    expect(meta).not.toBeNull();
+    expect(
+      within(meta as HTMLElement).getByText('Libérée'),
+    ).toBeInTheDocument();
+  });
+
   it('structures previous-run tiles with header badge, Libérée meta, and disclosure state', async () => {
     const user = userEvent.setup();
     vi.mocked(fetchStageOverview).mockResolvedValue(

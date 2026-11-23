@@ -27,7 +27,8 @@ public static class StageDrawRerunLaunchGuard
     public static void Ensure(
         Stage stage,
         IReadOnlyList<Stage> competitionStages,
-        DrawResolutionKind drawKind)
+        DrawResolutionKind drawKind,
+        IReadOnlySet<string>? slotKeysTreatedAsVacant = null)
     {
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(competitionStages);
@@ -42,7 +43,8 @@ public static class StageDrawRerunLaunchGuard
         var facts = StageDrawBracketLaunchClassifier.ClassifyForDrawKind(
             stage,
             competitionStages,
-            drawKind);
+            drawKind,
+            slotKeysTreatedAsVacant);
 
         if (facts.BlockingPlaceCount > 0)
         {
