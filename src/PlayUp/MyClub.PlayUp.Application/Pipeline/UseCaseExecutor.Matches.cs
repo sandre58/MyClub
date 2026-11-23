@@ -23,14 +23,17 @@ public sealed partial class UseCaseExecutor
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A task that completes when the match is started and persisted.</returns>
     /// <exception cref="ApplicationFailureException">Thrown when the match does not exist, the competition is closed, or sportive exploitation is not open.</exception>
-    public async Task StartMatchAsync(MatchId matchId, CancellationToken cancellationToken = default)
-    {
-        var match = await RequireMatchForOperationAsync(matchId, cancellationToken).ConfigureAwait(false);
-
-        StartMatch.Execute(match, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        LogMatchStarted(logger, matchId.Value, match.CompetitionId.Value);
-    }
+    public Task StartMatchAsync(MatchId matchId, CancellationToken cancellationToken = default) =>
+        ExecuteOnMatchCompetitionAsync(
+            matchId,
+            async innerToken =>
+            {
+                var match = await RequireMatchForOperationAsync(matchId, innerToken).ConfigureAwait(false);
+                StartMatch.Execute(match, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+                LogMatchStarted(logger, matchId.Value, match.CompetitionId.Value);
+            },
+            cancellationToken);
 
     /// <summary>
     /// Loads a match, runs <see cref="FinishMatch"/>, and saves changes.
@@ -40,237 +43,303 @@ public sealed partial class UseCaseExecutor
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A task that completes when the match is finished and persisted.</returns>
     /// <exception cref="ApplicationFailureException">Thrown when the match does not exist, the competition is closed, or sportive exploitation is not open.</exception>
-    public async Task FinishMatchAsync(
+    public Task FinishMatchAsync(
         MatchId matchId,
         MatchResult result,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(result);
 
-        var match = await RequireMatchForOperationAsync(matchId, cancellationToken).ConfigureAwait(false);
-
-        FinishMatch.Execute(match, result, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        LogMatchFinished(logger, matchId.Value, match.CompetitionId.Value);
+        return ExecuteOnMatchCompetitionAsync(
+            matchId,
+            async innerToken =>
+            {
+                var match = await RequireMatchForOperationAsync(matchId, innerToken).ConfigureAwait(false);
+                FinishMatch.Execute(match, result, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+                LogMatchFinished(logger, matchId.Value, match.CompetitionId.Value);
+            },
+            cancellationToken);
     }
 
     /// <summary>
     /// Loads a finished match, runs <see cref="CorrectMatchResult"/>, and saves changes.
     /// </summary>
-    public async Task CorrectMatchResultAsync(
+    public Task CorrectMatchResultAsync(
         MatchId matchId,
         MatchResult result,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(result);
 
-        var match = await RequireMatchForOperationAsync(matchId, cancellationToken).ConfigureAwait(false);
-
-        CorrectMatchResult.Execute(match, result, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return ExecuteOnMatchCompetitionAsync(
+            matchId,
+            async innerToken =>
+            {
+                var match = await RequireMatchForOperationAsync(matchId, innerToken).ConfigureAwait(false);
+                CorrectMatchResult.Execute(match, result, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken);
     }
 
     /// <summary>
     /// Adds an eligible player to the match composition sheet and saves changes.
     /// </summary>
-    public async Task AddDeclaredParticipationAsync(
+    public Task AddDeclaredParticipationAsync(
         MatchId matchId,
         MemberId memberId,
         Side side,
         CompositionStatus compositionStatus,
         int? jerseyNumber = null,
-        CancellationToken cancellationToken = default)
-    {
-        var (match, competition) = await RequireMatchWithCompetitionForOperationAsync(matchId, cancellationToken)
-            .ConfigureAwait(false);
-        AddDeclaredParticipation.Execute(match, competition, memberId, side, compositionStatus, clock, jerseyNumber);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
+        CancellationToken cancellationToken = default) =>
+        ExecuteOnMatchCompetitionAsync(
+            matchId,
+            async innerToken =>
+            {
+                var (match, competition) = await RequireMatchWithCompetitionForOperationAsync(matchId, innerToken)
+                    .ConfigureAwait(false);
+                AddDeclaredParticipation.Execute(match, competition, memberId, side, compositionStatus, clock, jerseyNumber);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken);
 
     /// <summary>
     /// Removes a declared participation from the match sheet and saves changes.
     /// </summary>
-    public async Task RemoveDeclaredParticipationAsync(
+    public Task RemoveDeclaredParticipationAsync(
         MatchId matchId,
         MemberId memberId,
-        CancellationToken cancellationToken = default)
-    {
-        var match = await RequireMatchForOperationAsync(matchId, cancellationToken).ConfigureAwait(false);
-        RemoveDeclaredParticipation.Execute(match, memberId, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
+        CancellationToken cancellationToken = default) =>
+        ExecuteOnMatchCompetitionAsync(
+            matchId,
+            async innerToken =>
+            {
+                var match = await RequireMatchForOperationAsync(matchId, innerToken).ConfigureAwait(false);
+                RemoveDeclaredParticipation.Execute(match, memberId, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken);
 
     /// <summary>
     /// Changes starter/bench status on the match sheet and saves changes.
     /// </summary>
-    public async Task ChangeDeclaredParticipationCompositionStatusAsync(
+    public Task ChangeDeclaredParticipationCompositionStatusAsync(
         MatchId matchId,
         MemberId memberId,
         CompositionStatus compositionStatus,
-        CancellationToken cancellationToken = default)
-    {
-        var match = await RequireMatchForOperationAsync(matchId, cancellationToken).ConfigureAwait(false);
-        ChangeDeclaredParticipationCompositionStatus.Execute(match, memberId, compositionStatus, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
+        CancellationToken cancellationToken = default) =>
+        ExecuteOnMatchCompetitionAsync(
+            matchId,
+            async innerToken =>
+            {
+                var match = await RequireMatchForOperationAsync(matchId, innerToken).ConfigureAwait(false);
+                ChangeDeclaredParticipationCompositionStatus.Execute(match, memberId, compositionStatus, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken);
 
     /// <summary>
     /// Sets or clears a jersey number on the match sheet and saves changes.
     /// </summary>
-    public async Task SetDeclaredParticipationJerseyNumberAsync(
+    public Task SetDeclaredParticipationJerseyNumberAsync(
         MatchId matchId,
         MemberId memberId,
         int? jerseyNumber,
-        CancellationToken cancellationToken = default)
-    {
-        var match = await RequireMatchForOperationAsync(matchId, cancellationToken).ConfigureAwait(false);
-        SetDeclaredParticipationJerseyNumber.Execute(match, memberId, jerseyNumber, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
+        CancellationToken cancellationToken = default) =>
+        ExecuteOnMatchCompetitionAsync(
+            matchId,
+            async innerToken =>
+            {
+                var match = await RequireMatchForOperationAsync(matchId, innerToken).ConfigureAwait(false);
+                SetDeclaredParticipationJerseyNumber.Execute(match, memberId, jerseyNumber, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken);
 
     /// <summary>
     /// Replaces the observed Live running score and saves changes.
     /// </summary>
-    public async Task SetRunningScoreAsync(
+    public Task SetRunningScoreAsync(
         MatchId matchId,
         int homeGoals,
         int awayGoals,
-        CancellationToken cancellationToken = default)
-    {
-        var match = await RequireMatchForOperationAsync(matchId, cancellationToken).ConfigureAwait(false);
-        SetRunningScore.Execute(match, homeGoals, awayGoals, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
+        CancellationToken cancellationToken = default) =>
+        ExecuteOnMatchCompetitionAsync(
+            matchId,
+            async innerToken =>
+            {
+                var match = await RequireMatchForOperationAsync(matchId, innerToken).ConfigureAwait(false);
+                SetRunningScore.Execute(match, homeGoals, awayGoals, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken);
 
     /// <summary>
     /// Records a nominative goal and saves changes.
     /// </summary>
-    public async Task RecordGoalAsync(
+    public Task RecordGoalAsync(
         MatchId matchId,
         MemberId scorerMemberId,
         Side creditedSide,
         MemberId? assisterMemberId = null,
-        CancellationToken cancellationToken = default)
-    {
-        var match = await RequireMatchForOperationAsync(matchId, cancellationToken).ConfigureAwait(false);
-        RecordGoal.Execute(match, scorerMemberId, creditedSide, clock, assisterMemberId);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
+        CancellationToken cancellationToken = default) =>
+        ExecuteOnMatchCompetitionAsync(
+            matchId,
+            async innerToken =>
+            {
+                var match = await RequireMatchForOperationAsync(matchId, innerToken).ConfigureAwait(false);
+                RecordGoal.Execute(match, scorerMemberId, creditedSide, clock, assisterMemberId);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken);
 
     /// <summary>
     /// Corrects a nominative goal and saves changes.
     /// </summary>
-    public async Task CorrectRecordedGoalAsync(
+    public Task CorrectRecordedGoalAsync(
         MatchId matchId,
         GoalId goalId,
         MemberId scorerMemberId,
         Side creditedSide,
         MemberId? assisterMemberId = null,
-        CancellationToken cancellationToken = default)
-    {
-        var match = await RequireMatchForOperationAsync(matchId, cancellationToken).ConfigureAwait(false);
-        CorrectRecordedGoal.Execute(match, goalId, scorerMemberId, creditedSide, clock, assisterMemberId);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
+        CancellationToken cancellationToken = default) =>
+        ExecuteOnMatchCompetitionAsync(
+            matchId,
+            async innerToken =>
+            {
+                var match = await RequireMatchForOperationAsync(matchId, innerToken).ConfigureAwait(false);
+                CorrectRecordedGoal.Execute(match, goalId, scorerMemberId, creditedSide, clock, assisterMemberId);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken);
 
     /// <summary>
     /// Removes a nominative goal and saves changes.
     /// </summary>
-    public async Task RemoveRecordedGoalAsync(
+    public Task RemoveRecordedGoalAsync(
         MatchId matchId,
         GoalId goalId,
-        CancellationToken cancellationToken = default)
-    {
-        var match = await RequireMatchForOperationAsync(matchId, cancellationToken).ConfigureAwait(false);
-        RemoveRecordedGoal.Execute(match, goalId, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
+        CancellationToken cancellationToken = default) =>
+        ExecuteOnMatchCompetitionAsync(
+            matchId,
+            async innerToken =>
+            {
+                var match = await RequireMatchForOperationAsync(matchId, innerToken).ConfigureAwait(false);
+                RemoveRecordedGoal.Execute(match, goalId, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken);
 
     /// <summary>
     /// Records a substitution fact and saves changes.
     /// </summary>
-    public async Task RecordSubstitutionAsync(
+    public Task RecordSubstitutionAsync(
         MatchId matchId,
         MemberId outMemberId,
         MemberId inMemberId,
         Side side,
-        CancellationToken cancellationToken = default)
-    {
-        var match = await RequireMatchForOperationAsync(matchId, cancellationToken).ConfigureAwait(false);
-        RecordSubstitution.Execute(match, outMemberId, inMemberId, side, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
+        CancellationToken cancellationToken = default) =>
+        ExecuteOnMatchCompetitionAsync(
+            matchId,
+            async innerToken =>
+            {
+                var match = await RequireMatchForOperationAsync(matchId, innerToken).ConfigureAwait(false);
+                RecordSubstitution.Execute(match, outMemberId, inMemberId, side, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken);
 
     /// <summary>
     /// Corrects a substitution fact and saves changes.
     /// </summary>
-    public async Task CorrectRecordedSubstitutionAsync(
+    public Task CorrectRecordedSubstitutionAsync(
         MatchId matchId,
         SubstitutionId substitutionId,
         MemberId outMemberId,
         MemberId inMemberId,
         Side side,
-        CancellationToken cancellationToken = default)
-    {
-        var match = await RequireMatchForOperationAsync(matchId, cancellationToken).ConfigureAwait(false);
-        CorrectRecordedSubstitution.Execute(match, substitutionId, outMemberId, inMemberId, side, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
+        CancellationToken cancellationToken = default) =>
+        ExecuteOnMatchCompetitionAsync(
+            matchId,
+            async innerToken =>
+            {
+                var match = await RequireMatchForOperationAsync(matchId, innerToken).ConfigureAwait(false);
+                CorrectRecordedSubstitution.Execute(match, substitutionId, outMemberId, inMemberId, side, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken);
 
     /// <summary>
     /// Removes a substitution fact and saves changes.
     /// </summary>
-    public async Task RemoveRecordedSubstitutionAsync(
+    public Task RemoveRecordedSubstitutionAsync(
         MatchId matchId,
         SubstitutionId substitutionId,
-        CancellationToken cancellationToken = default)
-    {
-        var match = await RequireMatchForOperationAsync(matchId, cancellationToken).ConfigureAwait(false);
-        RemoveRecordedSubstitution.Execute(match, substitutionId, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
+        CancellationToken cancellationToken = default) =>
+        ExecuteOnMatchCompetitionAsync(
+            matchId,
+            async innerToken =>
+            {
+                var match = await RequireMatchForOperationAsync(matchId, innerToken).ConfigureAwait(false);
+                RemoveRecordedSubstitution.Execute(match, substitutionId, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken);
 
     /// <summary>
     /// Records a disciplinary fact when authorized by competition rules and saves changes.
     /// </summary>
-    public async Task RecordDisciplinaryEventAsync(
+    public Task RecordDisciplinaryEventAsync(
         MatchId matchId,
         MemberId memberId,
         DisciplinaryType type,
-        CancellationToken cancellationToken = default)
-    {
-        var (match, competition) = await RequireMatchWithCompetitionForOperationAsync(matchId, cancellationToken)
-            .ConfigureAwait(false);
-        RecordDisciplinaryEvent.Execute(match, competition, memberId, type, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
+        CancellationToken cancellationToken = default) =>
+        ExecuteOnMatchCompetitionAsync(
+            matchId,
+            async innerToken =>
+            {
+                var (match, competition) = await RequireMatchWithCompetitionForOperationAsync(matchId, innerToken)
+                    .ConfigureAwait(false);
+                RecordDisciplinaryEvent.Execute(match, competition, memberId, type, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken);
 
     /// <summary>
     /// Corrects a disciplinary fact when authorized by competition rules and saves changes.
     /// </summary>
-    public async Task CorrectRecordedDisciplinaryEventAsync(
+    public Task CorrectRecordedDisciplinaryEventAsync(
         MatchId matchId,
         DisciplinaryEventId disciplinaryEventId,
         MemberId memberId,
         DisciplinaryType type,
-        CancellationToken cancellationToken = default)
-    {
-        var (match, competition) = await RequireMatchWithCompetitionForOperationAsync(matchId, cancellationToken)
-            .ConfigureAwait(false);
-        CorrectRecordedDisciplinaryEvent.Execute(match, competition, disciplinaryEventId, memberId, type, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
+        CancellationToken cancellationToken = default) =>
+        ExecuteOnMatchCompetitionAsync(
+            matchId,
+            async innerToken =>
+            {
+                var (match, competition) = await RequireMatchWithCompetitionForOperationAsync(matchId, innerToken)
+                    .ConfigureAwait(false);
+                CorrectRecordedDisciplinaryEvent.Execute(match, competition, disciplinaryEventId, memberId, type, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken);
 
     /// <summary>
     /// Removes a disciplinary fact and saves changes.
     /// </summary>
-    public async Task RemoveRecordedDisciplinaryEventAsync(
+    public Task RemoveRecordedDisciplinaryEventAsync(
         MatchId matchId,
         DisciplinaryEventId disciplinaryEventId,
-        CancellationToken cancellationToken = default)
-    {
-        var match = await RequireMatchForOperationAsync(matchId, cancellationToken).ConfigureAwait(false);
-        RemoveRecordedDisciplinaryEvent.Execute(match, disciplinaryEventId, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
+        CancellationToken cancellationToken = default) =>
+        ExecuteOnMatchCompetitionAsync(
+            matchId,
+            async innerToken =>
+            {
+                var match = await RequireMatchForOperationAsync(matchId, innerToken).ConfigureAwait(false);
+                RemoveRecordedDisciplinaryEvent.Execute(match, disciplinaryEventId, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken);
 }
