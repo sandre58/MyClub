@@ -19,7 +19,7 @@ public sealed class UseCaseExecutorExclusiveWriteArchitectureTests
     /// Ratchet: this count may only decrease when a REST lot lands and removes names from
     /// <see cref="PendingByLot"/> — never raise it; adding a pending name without removing another must fail CI.
     /// </summary>
-    private const int ExpectedPendingByLotCount = 30;
+    private const int ExpectedPendingByLotCount = 17;
 
     private static readonly string[] LockMarkers =
     [
@@ -57,19 +57,6 @@ public sealed class UseCaseExecutorExclusiveWriteArchitectureTests
 
     private static readonly HashSet<string> PendingByLot =
     [
-        "ReplaceStageMatchGenerationFormatAsync",
-        "ReplaceStageSwissSettingsAsync",
-        "ReplaceStageProgressionRulesAsync",
-        "ReplaceStageProgressionIntentsAsync",
-        "ReplaceStageQualificationRulesAsync",
-        "ReplaceStageQualificationIntentsAsync",
-        "ReplaceStagePlacementAwardRulesAsync",
-        "ReplaceStageStandingRulesAsync",
-        "ReplaceStageMatchRulesAsync",
-        "BindStageRegulationAsync",
-        "ReplaceStageDrawRulesAsync",
-        "ReplaceStageDefaultTieFormatAsync",
-        "ReplaceRoundTieFormatAsync",
         "PrepareCompetitionAsync",
         "StartCompetitionAsync",
         "SuspendCompetitionAsync",
@@ -122,6 +109,23 @@ public sealed class UseCaseExecutorExclusiveWriteArchitectureTests
         "AddCompetitionStageAsync",
         "InsertCompetitionStageAsync",
         "SetCompetitionStageOrderAsync",
+    ];
+
+    private static readonly HashSet<string> Rest5ReplaceMethods =
+    [
+        "ReplaceStageMatchGenerationFormatAsync",
+        "ReplaceStageSwissSettingsAsync",
+        "ReplaceStageProgressionRulesAsync",
+        "ReplaceStageProgressionIntentsAsync",
+        "ReplaceStageQualificationRulesAsync",
+        "ReplaceStageQualificationIntentsAsync",
+        "ReplaceStagePlacementAwardRulesAsync",
+        "ReplaceStageStandingRulesAsync",
+        "ReplaceStageMatchRulesAsync",
+        "BindStageRegulationAsync",
+        "ReplaceStageDrawRulesAsync",
+        "ReplaceStageDefaultTieFormatAsync",
+        "ReplaceRoundTieFormatAsync",
     ];
 
     [Fact]
@@ -213,6 +217,10 @@ public sealed class UseCaseExecutorExclusiveWriteArchitectureTests
         PendingByLot.Intersect(Rest4StructureMethods)
             .Should()
             .BeEmpty("REST-4 structure add / rename / reorder writes must not appear on the pending list");
+
+        PendingByLot.Intersect(Rest5ReplaceMethods)
+            .Should()
+            .BeEmpty("REST-5 Replace* rules / intents / formats writes must not appear on the pending list");
 
         pendingExtraneous.Should().BeEmpty(
             "the pending list must only name methods that still exist and call SaveChangesAsync without a lock");
