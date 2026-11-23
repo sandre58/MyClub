@@ -840,36 +840,28 @@ test.describe('manual group placement', () => {
     );
     await expect(confirm).not.toContainText('Des matchs sont générés');
     await confirm.getByRole('button', { name: 'Annuler le tirage' }).click();
+    await expect(confirm).toBeHidden();
 
-    await expect(
-      dialog.getByRole('button', { name: /Libérer #/ }),
-    ).toBeVisible();
-    let overview = await readStageOverview(request, stageId);
+    const releaseOnCancelled = dialog.getByRole('button', {
+      name: /Libérer #\d+ \([1-9]\d*\//,
+    });
+    await expect(releaseOnCancelled).toBeVisible();
+    const overview = await readStageOverview(request, stageId);
     const groupA = overview.groups?.find((group) => group.name === 'A');
     const keptIds = kept.map((team) => team.entryId);
     expect(groupA?.entryIds).toEqual(expect.arrayContaining(keptIds));
-    await expect
-      .poll(
-        async () => {
-          overview = await readStageOverview(request, stageId);
-          const cancelled = overview.draws?.find(
-            (draw) => draw.status === 'Cancelled',
-          );
-          return cancelled?.actions?.release?.releasableCount ?? 0;
-        },
-        { timeout: 15_000 },
-      )
-      .toBeGreaterThan(0);
-    const cancelled = overview.draws?.find(
-      (draw) => draw.status === 'Cancelled',
+    const occupiedTotal = (overview.groups ?? []).reduce(
+      (sum, group) => sum + group.entryIds.length,
+      0,
     );
-    expect(cancelled?.actions?.release?.releasableCount).toBeGreaterThan(0);
-    expect(cancelled?.actions?.release?.releasableCount).toBeLessThan(
-      (overview.groups ?? []).reduce(
-        (sum, group) => sum + group.entryIds.length,
-        0,
-      ),
-    );
+    const releaseLabel = (await releaseOnCancelled.textContent()) ?? '';
+    const alignedMatch = releaseLabel.match(/\((\d+)\/(\d+)\)/);
+    expect(alignedMatch).not.toBeNull();
+    const aligned = Number(alignedMatch![1]);
+    const total = Number(alignedMatch![2]);
+    expect(aligned).toBeGreaterThan(0);
+    expect(aligned).toBeLessThan(occupiedTotal);
+    expect(total).toBeGreaterThanOrEqual(aligned);
   });
 
   test('clears a fixed team after apply and keeps a drawn team protected', async ({
