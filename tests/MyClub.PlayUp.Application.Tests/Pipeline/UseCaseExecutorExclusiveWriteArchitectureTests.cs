@@ -19,7 +19,7 @@ public sealed class UseCaseExecutorExclusiveWriteArchitectureTests
     /// Ratchet: this count may only decrease when a REST lot lands and removes names from
     /// <see cref="PendingByLot"/> — never raise it; adding a pending name without removing another must fail CI.
     /// </summary>
-    private const int ExpectedPendingByLotCount = 10;
+    private const int ExpectedPendingByLotCount = 0;
 
     private static readonly string[] LockMarkers =
     [
@@ -55,7 +55,9 @@ public sealed class UseCaseExecutorExclusiveWriteArchitectureTests
         "GetMatchDetailAsync",
     ];
 
-    private static readonly HashSet<string> PendingByLot =
+    private static readonly HashSet<string> PendingByLot = [];
+
+    private static readonly HashSet<string> Rest7PresentationMethods =
     [
         "UpdateCompetitionPresentationAsync",
         "SetCompetitionScheduleAsync",
@@ -229,6 +231,10 @@ public sealed class UseCaseExecutorExclusiveWriteArchitectureTests
         PendingByLot.Intersect(Rest6LifecycleMethods)
             .Should()
             .BeEmpty("REST-6 competition lifecycle and AddEntry writes must not appear on the pending list");
+
+        PendingByLot.Intersect(Rest7PresentationMethods)
+            .Should()
+            .BeEmpty("REST-7 presentation / members / regulation / backfill writes must not appear on the pending list");
 
         pendingExtraneous.Should().BeEmpty(
             "the pending list must only name methods that still exist and call SaveChangesAsync without a lock");

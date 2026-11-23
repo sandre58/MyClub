@@ -228,11 +228,18 @@ public sealed partial class UseCaseExecutor
         Guid? logoMediaId,
         CancellationToken cancellationToken = default)
     {
-        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
-        await EnsureLogoMediaExistsAsync(logoMediaId, cancellationToken).ConfigureAwait(false);
-        UpdateCompetitionPresentation.Execute(competition, shortName, logoMediaId, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return await AssembleStructureViewAsync(competition, cancellationToken).ConfigureAwait(false);
+        Competition? loaded = null;
+        await ExecuteOnCompetitionAsync(
+            competitionId,
+            async innerToken =>
+            {
+                loaded = await RequireCompetitionAsync(competitionId, innerToken).ConfigureAwait(false);
+                await EnsureLogoMediaExistsAsync(logoMediaId, innerToken).ConfigureAwait(false);
+                UpdateCompetitionPresentation.Execute(loaded, shortName, logoMediaId, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
+        return await AssembleStructureViewAsync(loaded!, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -244,10 +251,17 @@ public sealed partial class UseCaseExecutor
         DateTimeOffset? scheduledEnd,
         CancellationToken cancellationToken = default)
     {
-        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
-        SetCompetitionSchedule.Execute(competition, scheduledStart, scheduledEnd, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return await AssembleStructureViewAsync(competition, cancellationToken).ConfigureAwait(false);
+        Competition? loaded = null;
+        await ExecuteOnCompetitionAsync(
+            competitionId,
+            async innerToken =>
+            {
+                loaded = await RequireCompetitionAsync(competitionId, innerToken).ConfigureAwait(false);
+                SetCompetitionSchedule.Execute(loaded, scheduledStart, scheduledEnd, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
+        return await AssembleStructureViewAsync(loaded!, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -262,18 +276,25 @@ public sealed partial class UseCaseExecutor
         string? secondaryColor,
         CancellationToken cancellationToken = default)
     {
-        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
-        await EnsureLogoMediaExistsAsync(logoMediaId, cancellationToken).ConfigureAwait(false);
-        UpdateEntryPresentation.Execute(
-            competition,
-            entryId,
-            shortName ?? string.Empty,
-            logoMediaId,
-            primaryColor,
-            secondaryColor,
-            clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return await AssembleStructureViewAsync(competition, cancellationToken).ConfigureAwait(false);
+        Competition? loaded = null;
+        await ExecuteOnCompetitionAsync(
+            competitionId,
+            async innerToken =>
+            {
+                loaded = await RequireCompetitionAsync(competitionId, innerToken).ConfigureAwait(false);
+                await EnsureLogoMediaExistsAsync(logoMediaId, innerToken).ConfigureAwait(false);
+                UpdateEntryPresentation.Execute(
+                    loaded,
+                    entryId,
+                    shortName ?? string.Empty,
+                    logoMediaId,
+                    primaryColor,
+                    secondaryColor,
+                    clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
+        return await AssembleStructureViewAsync(loaded!, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -285,10 +306,17 @@ public sealed partial class UseCaseExecutor
         string displayName,
         CancellationToken cancellationToken = default)
     {
-        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
-        RenameEntry.Execute(competition, entryId, displayName, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return await AssembleStructureViewAsync(competition, cancellationToken).ConfigureAwait(false);
+        Competition? loaded = null;
+        await ExecuteOnCompetitionAsync(
+            competitionId,
+            async innerToken =>
+            {
+                loaded = await RequireCompetitionAsync(competitionId, innerToken).ConfigureAwait(false);
+                RenameEntry.Execute(loaded, entryId, displayName, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
+        return await AssembleStructureViewAsync(loaded!, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -396,12 +424,19 @@ public sealed partial class UseCaseExecutor
         IReadOnlyList<MemberId> memberIds,
         CancellationToken cancellationToken = default)
     {
-        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
-        var competitionMatches =
-            await LoadCompetitionMatchesAsync(competition, cancellationToken).ConfigureAwait(false);
-        RemoveDeclaredMembers.Execute(competition, entryId, memberIds, competitionMatches, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return await AssembleStructureViewAsync(competition, cancellationToken).ConfigureAwait(false);
+        Competition? loaded = null;
+        await ExecuteOnCompetitionAsync(
+            competitionId,
+            async innerToken =>
+            {
+                loaded = await RequireCompetitionAsync(competitionId, innerToken).ConfigureAwait(false);
+                var competitionMatches =
+                    await LoadCompetitionMatchesAsync(loaded, innerToken).ConfigureAwait(false);
+                RemoveDeclaredMembers.Execute(loaded, entryId, memberIds, competitionMatches, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
+        return await AssembleStructureViewAsync(loaded!, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -414,10 +449,17 @@ public sealed partial class UseCaseExecutor
         DeclaredMemberRole role,
         CancellationToken cancellationToken = default)
     {
-        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
-        AddDeclaredMember.Execute(competition, entryId, displayName, role, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return await AssembleStructureViewAsync(competition, cancellationToken).ConfigureAwait(false);
+        Competition? loaded = null;
+        await ExecuteOnCompetitionAsync(
+            competitionId,
+            async innerToken =>
+            {
+                loaded = await RequireCompetitionAsync(competitionId, innerToken).ConfigureAwait(false);
+                AddDeclaredMember.Execute(loaded, entryId, displayName, role, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
+        return await AssembleStructureViewAsync(loaded!, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -429,12 +471,19 @@ public sealed partial class UseCaseExecutor
         MemberId memberId,
         CancellationToken cancellationToken = default)
     {
-        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
-        var competitionMatches =
-            await LoadCompetitionMatchesAsync(competition, cancellationToken).ConfigureAwait(false);
-        RemoveDeclaredMember.Execute(competition, entryId, memberId, competitionMatches, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return await AssembleStructureViewAsync(competition, cancellationToken).ConfigureAwait(false);
+        Competition? loaded = null;
+        await ExecuteOnCompetitionAsync(
+            competitionId,
+            async innerToken =>
+            {
+                loaded = await RequireCompetitionAsync(competitionId, innerToken).ConfigureAwait(false);
+                var competitionMatches =
+                    await LoadCompetitionMatchesAsync(loaded, innerToken).ConfigureAwait(false);
+                RemoveDeclaredMember.Execute(loaded, entryId, memberId, competitionMatches, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
+        return await AssembleStructureViewAsync(loaded!, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -447,10 +496,17 @@ public sealed partial class UseCaseExecutor
         string displayName,
         CancellationToken cancellationToken = default)
     {
-        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
-        RenameDeclaredMember.Execute(competition, entryId, memberId, displayName, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return await AssembleStructureViewAsync(competition, cancellationToken).ConfigureAwait(false);
+        Competition? loaded = null;
+        await ExecuteOnCompetitionAsync(
+            competitionId,
+            async innerToken =>
+            {
+                loaded = await RequireCompetitionAsync(competitionId, innerToken).ConfigureAwait(false);
+                RenameDeclaredMember.Execute(loaded, entryId, memberId, displayName, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
+        return await AssembleStructureViewAsync(loaded!, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -469,11 +525,19 @@ public sealed partial class UseCaseExecutor
     {
         ArgumentNullException.ThrowIfNull(buildReplacement);
 
-        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
-        var competitionStagesForUpdate = await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken).ConfigureAwait(false);
-        var regulation = buildReplacement(competition.Regulation);
-        ReplaceRegulation.Execute(competition, competitionStagesForUpdate, regulation, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return await AssembleStructureViewAsync(competition, cancellationToken).ConfigureAwait(false);
+        Competition? loaded = null;
+        await ExecuteOnCompetitionAsync(
+            competitionId,
+            async innerToken =>
+            {
+                loaded = await RequireCompetitionAsync(competitionId, innerToken).ConfigureAwait(false);
+                var competitionStagesForUpdate =
+                    await LoadCompetitionStagesForUpdateAsync(loaded, innerToken).ConfigureAwait(false);
+                var regulation = buildReplacement(loaded.Regulation);
+                ReplaceRegulation.Execute(loaded, competitionStagesForUpdate, regulation, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
+        return await AssembleStructureViewAsync(loaded!, cancellationToken).ConfigureAwait(false);
     }
 }

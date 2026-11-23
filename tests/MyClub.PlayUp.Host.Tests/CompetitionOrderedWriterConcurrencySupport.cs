@@ -16,7 +16,7 @@ using Npgsql;
 namespace MyClub.PlayUp.Host.Tests;
 
 /// <summary>
-/// Holds a competition <c>pg_advisory_xact_lock</c>, queues two HTTP writers, then commits the gate in FIFO order.
+/// Holds a competition <c>pg_advisory_xact_lock</c>, queues two writers, then commits the gate in FIFO order.
 /// </summary>
 internal static class CompetitionOrderedWriterConcurrencySupport
 {
@@ -34,11 +34,58 @@ internal static class CompetitionOrderedWriterConcurrencySupport
         body.Should().NotContain("55P03");
     }
 
-    public static async Task<(HttpResponseMessage Primary, HttpResponseMessage Secondary)> RunOrderedCompetitionWritersAsync(
+    public static Task<(object? Primary, HttpResponseMessage Secondary)> RunOrderedCompetitionWritersAsync(
+        string connectionString,
+        CompetitionId competitionId,
+        Func<Task> primary,
+        Func<Task<HttpResponseMessage>> secondary) =>
+        RunOrderedCompetitionWritersCoreAsync<object?, HttpResponseMessage>(
+            connectionString,
+            competitionId,
+            async () =>
+            {
+                await primary().ConfigureAwait(false);
+                return null;
+            },
+            secondary,
+            assertSecondaryHttp: true);
+
+    public static Task<(HttpResponseMessage Primary, object? Secondary)> RunOrderedCompetitionWritersAsync(
         string connectionString,
         CompetitionId competitionId,
         Func<Task<HttpResponseMessage>> primary,
-        Func<Task<HttpResponseMessage>> secondary)
+        Func<Task> secondary) =>
+        RunOrderedCompetitionWritersCoreAsync<HttpResponseMessage, object?>(
+            connectionString,
+            competitionId,
+            primary,
+            async () =>
+            {
+                await secondary().ConfigureAwait(false);
+                return null;
+            },
+            assertPrimaryHttp: true);
+
+    public static Task<(HttpResponseMessage Primary, HttpResponseMessage Secondary)> RunOrderedCompetitionWritersAsync(
+        string connectionString,
+        CompetitionId competitionId,
+        Func<Task<HttpResponseMessage>> primary,
+        Func<Task<HttpResponseMessage>> secondary) =>
+        RunOrderedCompetitionWritersCoreAsync(
+            connectionString,
+            competitionId,
+            primary,
+            secondary,
+            assertPrimaryHttp: true,
+            assertSecondaryHttp: true);
+
+    private static async Task<(TPrimary Primary, TSecondary Secondary)> RunOrderedCompetitionWritersCoreAsync<TPrimary, TSecondary>(
+        string connectionString,
+        CompetitionId competitionId,
+        Func<Task<TPrimary>> primary,
+        Func<Task<TSecondary>> secondary,
+        bool assertPrimaryHttp = false,
+        bool assertSecondaryHttp = false)
     {
         var key = CompetitionAdvisoryLock.Key(competitionId);
         await using var gate = new NpgsqlConnection(connectionString);
@@ -56,18 +103,26 @@ internal static class CompetitionOrderedWriterConcurrencySupport
         var primaryTask = primary();
         await WaitUntilAsync(
             async () => await CountAdvisoryLocksAsync(probe, key, granted: false) >= 1,
-            "primary HTTP writer must be queued on pg_advisory_xact_lock");
+            "primary writer must be queued on pg_advisory_xact_lock");
         var secondaryTask = secondary();
         await WaitUntilAsync(
             async () => await CountAdvisoryLocksAsync(probe, key, granted: false) >= 2,
-            "secondary HTTP writer must be queued after primary on pg_advisory_xact_lock");
+            "secondary writer must be queued after primary on pg_advisory_xact_lock");
 
         await gateTransaction.CommitAsync();
 
         var primaryResponse = await primaryTask;
         var secondaryResponse = await secondaryTask;
-        await AssertBodyFreeOfPostgresLockErrorsAsync(primaryResponse);
-        await AssertBodyFreeOfPostgresLockErrorsAsync(secondaryResponse);
+        if (assertPrimaryHttp && primaryResponse is HttpResponseMessage primaryHttp)
+        {
+            await AssertBodyFreeOfPostgresLockErrorsAsync(primaryHttp);
+        }
+
+        if (assertSecondaryHttp && secondaryResponse is HttpResponseMessage secondaryHttp)
+        {
+            await AssertBodyFreeOfPostgresLockErrorsAsync(secondaryHttp);
+        }
+
         return (primaryResponse, secondaryResponse);
     }
 
