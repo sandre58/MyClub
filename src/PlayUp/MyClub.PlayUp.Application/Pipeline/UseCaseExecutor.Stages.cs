@@ -637,13 +637,20 @@ public sealed partial class UseCaseExecutor
         bool? aggregateScoring,
         CancellationToken cancellationToken = default)
     {
-        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
-            .ConfigureAwait(false);
-        var tieFormat = AddStageRound.BuildTieFormat(numberOfLegs, aggregateScoring);
-        var round = AddStageRound.Execute(stage, competition, name, tieFormat, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return round;
+        Round? round = null;
+        await ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await RequireStageAsync(stageId, innerToken).ConfigureAwait(false);
+                var competition = await RequireCompetitionAsync(stage.CompetitionId, innerToken)
+                    .ConfigureAwait(false);
+                var tieFormat = AddStageRound.BuildTieFormat(numberOfLegs, aggregateScoring);
+                round = AddStageRound.Execute(stage, competition, name, tieFormat, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
+        return round!;
     }
 
     /// <summary>
@@ -654,12 +661,19 @@ public sealed partial class UseCaseExecutor
         string slotKey,
         CancellationToken cancellationToken = default)
     {
-        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
-            .ConfigureAwait(false);
-        var slot = AddStageSlot.Execute(stage, competition, slotKey);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return slot;
+        Slot? slot = null;
+        await ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await RequireStageAsync(stageId, innerToken).ConfigureAwait(false);
+                var competition = await RequireCompetitionAsync(stage.CompetitionId, innerToken)
+                    .ConfigureAwait(false);
+                slot = AddStageSlot.Execute(stage, competition, slotKey);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
+        return slot!;
     }
 
     /// <summary>
@@ -936,12 +950,16 @@ public sealed partial class UseCaseExecutor
     public async Task RenameStageAsync(
         StageId stageId,
         string name,
-        CancellationToken cancellationToken = default)
-    {
-        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        RenameStage.Execute(stage, name);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
+        CancellationToken cancellationToken = default) =>
+        await ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await RequireStageAsync(stageId, innerToken).ConfigureAwait(false);
+                RenameStage.Execute(stage, name);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
 
     /// <summary>
     /// Adds a matchday to a stage (locale).
@@ -951,12 +969,19 @@ public sealed partial class UseCaseExecutor
         int? number,
         CancellationToken cancellationToken = default)
     {
-        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
-            .ConfigureAwait(false);
-        var matchday = AddStageMatchday.Execute(stage, competition, number, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return matchday;
+        Matchday? matchday = null;
+        await ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await RequireStageAsync(stageId, innerToken).ConfigureAwait(false);
+                var competition = await RequireCompetitionAsync(stage.CompetitionId, innerToken)
+                    .ConfigureAwait(false);
+                matchday = AddStageMatchday.Execute(stage, competition, number, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
+        return matchday!;
     }
 
     /// <summary>
@@ -967,12 +992,19 @@ public sealed partial class UseCaseExecutor
         string? name,
         CancellationToken cancellationToken = default)
     {
-        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
-            .ConfigureAwait(false);
-        var group = AddStageGroup.Execute(stage, competition, name, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return group;
+        Group? group = null;
+        await ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await RequireStageAsync(stageId, innerToken).ConfigureAwait(false);
+                var competition = await RequireCompetitionAsync(stage.CompetitionId, innerToken)
+                    .ConfigureAwait(false);
+                group = AddStageGroup.Execute(stage, competition, name, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
+        return group!;
     }
 
     /// <summary>

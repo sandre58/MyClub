@@ -66,12 +66,20 @@ public sealed partial class UseCaseExecutor
         StructureIntent intent,
         CancellationToken cancellationToken = default)
     {
-        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
-        var stage = AddCompetitionStage.Execute(competition, intent, clock);
-        stages.Add(stage);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        var view = await AssembleStructureViewAsync(competition, cancellationToken).ConfigureAwait(false);
-        return (stage, view);
+        Stage? stage = null;
+        Competition? competition = null;
+        await ExecuteOnCompetitionAsync(
+            competitionId,
+            async innerToken =>
+            {
+                competition = await RequireCompetitionAsync(competitionId, innerToken).ConfigureAwait(false);
+                stage = AddCompetitionStage.Execute(competition, intent, clock);
+                stages.Add(stage);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
+        var view = await AssembleStructureViewAsync(competition!, cancellationToken).ConfigureAwait(false);
+        return (stage!, view);
     }
 
     /// <summary>
@@ -90,12 +98,20 @@ public sealed partial class UseCaseExecutor
         StageInsertPosition position,
         CancellationToken cancellationToken = default)
     {
-        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
-        var stage = InsertCompetitionStage.Execute(competition, intent, anchorStageId, position, clock);
-        stages.Add(stage);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        var view = await AssembleStructureViewAsync(competition, cancellationToken).ConfigureAwait(false);
-        return (stage, view);
+        Stage? stage = null;
+        Competition? competition = null;
+        await ExecuteOnCompetitionAsync(
+            competitionId,
+            async innerToken =>
+            {
+                competition = await RequireCompetitionAsync(competitionId, innerToken).ConfigureAwait(false);
+                stage = InsertCompetitionStage.Execute(competition, intent, anchorStageId, position, clock);
+                stages.Add(stage);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
+        var view = await AssembleStructureViewAsync(competition!, cancellationToken).ConfigureAwait(false);
+        return (stage!, view);
     }
 
     /// <summary>
@@ -110,10 +126,17 @@ public sealed partial class UseCaseExecutor
         IReadOnlyList<StageId> orderedStageIds,
         CancellationToken cancellationToken = default)
     {
-        var competition = await RequireCompetitionAsync(competitionId, cancellationToken).ConfigureAwait(false);
-        SetCompetitionStageOrder.Execute(competition, orderedStageIds, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return await AssembleStructureViewAsync(competition, cancellationToken).ConfigureAwait(false);
+        Competition? competition = null;
+        await ExecuteOnCompetitionAsync(
+            competitionId,
+            async innerToken =>
+            {
+                competition = await RequireCompetitionAsync(competitionId, innerToken).ConfigureAwait(false);
+                SetCompetitionStageOrder.Execute(competition, orderedStageIds, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
+        return await AssembleStructureViewAsync(competition!, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>

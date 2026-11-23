@@ -19,7 +19,7 @@ public sealed class UseCaseExecutorExclusiveWriteArchitectureTests
     /// Ratchet: this count may only decrease when a REST lot lands and removes names from
     /// <see cref="PendingByLot"/> — never raise it; adding a pending name without removing another must fail CI.
     /// </summary>
-    private const int ExpectedPendingByLotCount = 38;
+    private const int ExpectedPendingByLotCount = 30;
 
     private static readonly string[] LockMarkers =
     [
@@ -57,14 +57,6 @@ public sealed class UseCaseExecutorExclusiveWriteArchitectureTests
 
     private static readonly HashSet<string> PendingByLot =
     [
-        "AddStageRoundAsync",
-        "AddStageSlotAsync",
-        "AddStageMatchdayAsync",
-        "AddStageGroupAsync",
-        "RenameStageAsync",
-        "AddCompetitionStageAsync",
-        "InsertCompetitionStageAsync",
-        "SetCompetitionStageOrderAsync",
         "ReplaceStageMatchGenerationFormatAsync",
         "ReplaceStageSwissSettingsAsync",
         "ReplaceStageProgressionRulesAsync",
@@ -118,6 +110,18 @@ public sealed class UseCaseExecutorExclusiveWriteArchitectureTests
     [
         "GenerateNextRoundAsync",
         "ApplyScheduleAsync",
+    ];
+
+    private static readonly HashSet<string> Rest4StructureMethods =
+    [
+        "AddStageRoundAsync",
+        "AddStageSlotAsync",
+        "AddStageMatchdayAsync",
+        "AddStageGroupAsync",
+        "RenameStageAsync",
+        "AddCompetitionStageAsync",
+        "InsertCompetitionStageAsync",
+        "SetCompetitionStageOrderAsync",
     ];
 
     [Fact]
@@ -205,6 +209,10 @@ public sealed class UseCaseExecutorExclusiveWriteArchitectureTests
         PendingByLot.Intersect(Rest3ScheduleMethods)
             .Should()
             .BeEmpty("REST-3 GenerateNextRound / ApplySchedule writes must not appear on the pending list");
+
+        PendingByLot.Intersect(Rest4StructureMethods)
+            .Should()
+            .BeEmpty("REST-4 structure add / rename / reorder writes must not appear on the pending list");
 
         pendingExtraneous.Should().BeEmpty(
             "the pending list must only name methods that still exist and call SaveChangesAsync without a lock");
