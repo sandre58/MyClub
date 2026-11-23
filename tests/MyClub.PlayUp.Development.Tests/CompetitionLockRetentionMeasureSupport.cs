@@ -15,6 +15,7 @@ using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
+
 namespace MyClub.PlayUp.Development.Tests;
 
 internal static class CompetitionLockRetentionMeasureSupport

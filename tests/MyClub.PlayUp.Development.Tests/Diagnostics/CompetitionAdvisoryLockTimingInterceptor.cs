@@ -6,6 +6,7 @@
 
 using System.Data.Common;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace MyClub.PlayUp.Development.Tests.Diagnostics;
@@ -13,17 +14,17 @@ namespace MyClub.PlayUp.Development.Tests.Diagnostics;
 /// <summary>
 /// Measures competition advisory lock wait (acquisition command) and retention (until async commit/rollback).
 /// </summary>
+[SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Registered as EF Core interceptor singleton; instance entry points required.")]
 internal sealed class CompetitionAdvisoryLockTimingInterceptor : DbCommandInterceptor
 {
-    private readonly CompetitionAdvisoryLockTimingState _state = new();
+    public CompetitionAdvisoryLockTimingSnapshot? LastSnapshot => CompetitionAdvisoryLockTimingState.LastSnapshot;
 
-    public CompetitionAdvisoryLockTimingSnapshot? LastSnapshot => _state.LastSnapshot;
+    public void Reset() => CompetitionAdvisoryLockTimingState.Reset();
 
-    public void Reset() => _state.Reset();
+    internal void CompleteRetention() => CompetitionAdvisoryLockTimingState.CompleteRetention();
 
-    internal void CompleteRetention() => _state.CompleteRetention();
-
-    internal CompetitionAdvisoryLockTimingSnapshot RequireLastSnapshot() => _state.RequireSnapshot();
+    internal CompetitionAdvisoryLockTimingSnapshot RequireLastSnapshot() =>
+        CompetitionAdvisoryLockTimingState.RequireSnapshot();
 
     private static bool IsAdvisoryLockCommand(DbCommand command) =>
         command.CommandText.Contains("pg_advisory_xact_lock", StringComparison.Ordinal);
@@ -35,10 +36,10 @@ internal sealed class CompetitionAdvisoryLockTimingInterceptor : DbCommandInterc
             return;
         }
 
-        _state.BeginWait();
+        CompetitionAdvisoryLockTimingState.BeginWait();
     }
 
-    private void OnAdvisoryLockExecuted() => _state.EndWait();
+    private void OnAdvisoryLockExecuted() => CompetitionAdvisoryLockTimingState.EndWait();
 
     public override InterceptionResult<int> NonQueryExecuting(
         DbCommand command,
@@ -209,103 +210,3 @@ internal sealed class CompetitionAdvisoryLockTransactionInterceptor(
         return base.TransactionRolledBackAsync(transaction, eventData, cancellationToken);
     }
 }
-
-internal sealed class CompetitionAdvisoryLockTimingState
-{
-    private static readonly AsyncLocal<TimingFrame?> Current = new();
-
-    private readonly object _sync = new();
-
-    public CompetitionAdvisoryLockTimingSnapshot? LastSnapshot =>
-        Current.Value?.Snapshot;
-
-    public CompetitionAdvisoryLockTimingSnapshot RequireSnapshot()
-    {
-        var snapshot = Current.Value?.Snapshot;
-        return snapshot ?? throw new InvalidOperationException(
-            "Competition lock timing snapshot is missing (transaction commit/rollback was not observed).");
-    }
-
-    public void Reset()
-    {
-        Current.Value = new TimingFrame();
-    }
-
-    public void BeginWait()
-    {
-        var frame = EnsureFrame();
-        lock (_sync)
-        {
-            frame.WaitStopwatch = Stopwatch.StartNew();
-            frame.AcquisitionCompleted = false;
-            frame.RetentionStopwatch = null;
-            frame.LockWait = TimeSpan.Zero;
-            frame.LockRetention = TimeSpan.Zero;
-            frame.Snapshot = null;
-        }
-    }
-
-    public void EndWait()
-    {
-        var frame = EnsureFrame();
-        lock (_sync)
-        {
-            if (frame.WaitStopwatch is null)
-            {
-                return;
-            }
-
-            frame.WaitStopwatch.Stop();
-            frame.LockWait = frame.WaitStopwatch.Elapsed;
-            frame.WaitStopwatch = null;
-            frame.RetentionStopwatch = Stopwatch.StartNew();
-            frame.AcquisitionCompleted = true;
-        }
-    }
-
-    public void CompleteRetention()
-    {
-        var frame = Current.Value;
-        if (frame is null)
-        {
-            return;
-        }
-
-        lock (_sync)
-        {
-            if (!frame.AcquisitionCompleted || frame.RetentionStopwatch is null)
-            {
-                return;
-            }
-
-            frame.RetentionStopwatch.Stop();
-            frame.LockRetention = frame.RetentionStopwatch.Elapsed;
-            frame.RetentionStopwatch = null;
-            frame.Snapshot = new CompetitionAdvisoryLockTimingSnapshot(frame.LockWait, frame.LockRetention);
-        }
-    }
-
-    private static TimingFrame EnsureFrame()
-    {
-        if (Current.Value is null)
-        {
-            Current.Value = new TimingFrame();
-        }
-
-        return Current.Value;
-    }
-
-    private sealed class TimingFrame
-    {
-        public Stopwatch? WaitStopwatch;
-        public Stopwatch? RetentionStopwatch;
-        public TimeSpan LockWait;
-        public TimeSpan LockRetention;
-        public bool AcquisitionCompleted;
-        public CompetitionAdvisoryLockTimingSnapshot? Snapshot;
-    }
-}
-
-internal readonly record struct CompetitionAdvisoryLockTimingSnapshot(
-    TimeSpan LockWait,
-    TimeSpan LockRetention);

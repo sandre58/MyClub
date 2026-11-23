@@ -6,6 +6,7 @@
 
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
@@ -54,6 +55,9 @@ public sealed class CompetitionLockRetentionMeasureTests(
         ("coupe-de-france", "coupe-de-france", "32 équipes · coupe terminée")
     ];
 
+    private static string FormatJeu((string Seed, string Jeu, string TeamsHint) entry) =>
+        $"{entry.Jeu} ({entry.TeamsHint})";
+
     [Fact]
     public async Task Measure_competition_lock_retention_campaignAsync()
     {
@@ -74,6 +78,7 @@ public sealed class CompetitionLockRetentionMeasureTests(
         {
             await MeasureMaterializeRecetteG1Async(sampleCount, rows, skipped).ConfigureAwait(false);
         }
+
         await TryMeasureConfirmOperationsAsync(skipped).ConfigureAwait(false);
 
         var recordGoalSqlBaseline = await MeasureRecordGoalSqlBaselineAsync().ConfigureAwait(false);
@@ -91,6 +96,7 @@ public sealed class CompetitionLockRetentionMeasureTests(
         concurrent.LockWaits.Count.Should().Be(concurrent.Attempts);
     }
 
+    [SuppressMessage("Security", "CA2100:Review SQL queries for security vulnerabilities", Justification = "Test-only session lock; key from CompetitionAdvisoryLock.Key.")]
     private async Task Assert_contended_wait_is_positive_when_lock_heldAsync()
     {
         await ReloadSeedAsync("cup-sf-running").ConfigureAwait(false);
@@ -350,6 +356,7 @@ public sealed class CompetitionLockRetentionMeasureTests(
                 {
                     await StripMatchesForRematerializeAsync(stageId).ConfigureAwait(false);
                 }
+
                 using var scope = fixture.Services.CreateScope();
                 snapshots.Add(await CompetitionLockRetentionMeasureSupport.MeasureExclusiveOperationAsync(
                     scope,
@@ -424,7 +431,7 @@ public sealed class CompetitionLockRetentionMeasureTests(
         var unexpected = new ConcurrentBag<string>();
 
         using var stopApply = new CancellationTokenSource();
-        var applyLoop = RunContinuousApplyProgressionAsync(targets, stopApply.Token, unexpected);
+        var applyLoop = RunContinuousApplyProgressionAsync(targets, unexpected, stopApply.Token);
 
         await Task.Delay(120).ConfigureAwait(false);
 
@@ -493,37 +500,39 @@ public sealed class CompetitionLockRetentionMeasureTests(
 
     private Task RunContinuousApplyProgressionAsync(
         ConcurrentTargets targets,
-        CancellationToken cancellationToken,
-        ConcurrentBag<string> unexpected)
+        ConcurrentBag<string> unexpected,
+        CancellationToken cancellationToken)
     {
-        return Task.Run(async () =>
-        {
-            while (!cancellationToken.IsCancellationRequested)
+        return Task.Run(
+            async () =>
             {
-                try
+                while (!cancellationToken.IsCancellationRequested)
                 {
-                    using var scope = fixture.Services.CreateScope();
-                    var executor = scope.ServiceProvider.GetRequiredService<UseCaseExecutor>();
-                    await executor.ApplyProgressionOutcomeAsync(
-                        targets.ProgressionSourceStageId,
-                        targets.ProgressionFixtureId,
-                        cancellationToken).ConfigureAwait(false);
+                    try
+                    {
+                        using var scope = fixture.Services.CreateScope();
+                        var executor = scope.ServiceProvider.GetRequiredService<UseCaseExecutor>();
+                        await executor.ApplyProgressionOutcomeAsync(
+                            targets.ProgressionSourceStageId,
+                            targets.ProgressionFixtureId,
+                            cancellationToken).ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                    {
+                        break;
+                    }
+                    catch (ApplicationFailureException ex) when (
+                        ex.Code == ApplicationErrorCodes.CompetitionLockTimeout)
+                    {
+                        // expected under contention
+                    }
+                    catch (Exception ex)
+                    {
+                        unexpected.Add("Apply loop: " + ex.GetType().Name + ": " + ex.Message);
+                    }
                 }
-                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-                {
-                    break;
-                }
-                catch (ApplicationFailureException ex) when (
-                    ex.Code == ApplicationErrorCodes.CompetitionLockTimeout)
-                {
-                    // expected under contention
-                }
-                catch (Exception ex)
-                {
-                    unexpected.Add("Apply loop: " + ex.GetType().Name + ": " + ex.Message);
-                }
-            }
-        }, cancellationToken);
+            },
+            cancellationToken);
     }
 
     private async Task<StageId> PrepareForDematerializeAsync(string seed)
@@ -790,7 +799,4 @@ public sealed class CompetitionLockRetentionMeasureTests(
                 NearestRankPercentiles.Percentile(report.EndToEndLatencies, 95).TotalMilliseconds,
                 NearestRankPercentiles.Max(report.EndToEndLatencies).TotalMilliseconds));
     }
-
-    private static string FormatJeu((string Seed, string Jeu, string TeamsHint) entry) =>
-        $"{entry.Jeu} ({entry.TeamsHint})";
 }
