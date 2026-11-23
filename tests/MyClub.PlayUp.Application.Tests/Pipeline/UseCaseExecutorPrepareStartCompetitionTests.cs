@@ -58,6 +58,12 @@ public sealed class UseCaseExecutorPrepareStartCompetitionTests
         await act.Should().ThrowAsync<ApplicationFailureException>()
             .Where(ex => ex.Code == ApplicationErrorCodes.CompetitionNotFound);
         unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+        unitOfWork.Verify(
+            uow => uow.ExecuteExclusiveAsync(
+                missingId,
+                It.IsAny<Func<CancellationToken, Task>>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
@@ -109,6 +115,12 @@ public sealed class UseCaseExecutorPrepareStartCompetitionTests
         await act.Should().ThrowAsync<ApplicationFailureException>()
             .Where(ex => ex.Code == ApplicationErrorCodes.CompetitionNotFound);
         unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+        unitOfWork.Verify(
+            uow => uow.ExecuteExclusiveAsync(
+                missingId,
+                It.IsAny<Func<CancellationToken, Task>>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
@@ -148,6 +160,12 @@ public sealed class UseCaseExecutorPrepareStartCompetitionTests
         unitOfWork
             .Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
+        unitOfWork
+            .Setup(uow => uow.ExecuteExclusiveAsync(
+                It.IsAny<CompetitionId>(),
+                It.IsAny<Func<CancellationToken, Task>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns((CompetitionId _, Func<CancellationToken, Task> write, CancellationToken token) => write(token));
 
         var executor = new UseCaseExecutor(stages.Object, matches.Object, competitions.Object, unitOfWork.Object, _clock, AlwaysExistingMedia.Instance, NullLogger<UseCaseExecutor>.Instance);
         return (executor, unitOfWork);

@@ -219,7 +219,7 @@ public sealed class UseCaseExecutorCompletionTests
             .Returns(Task.CompletedTask);
         unitOfWork
             .Setup(uow => uow.ExecuteExclusiveAsync(
-                competition.Id,
+                It.IsAny<CompetitionId>(),
                 It.IsAny<Func<CancellationToken, Task>>(),
                 It.IsAny<CancellationToken>()))
             .Returns((CompetitionId _, Func<CancellationToken, Task> write, CancellationToken token) => write(token));
