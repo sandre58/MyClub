@@ -367,9 +367,7 @@ function MatchDetailView({
         </p>
       )}
 
-      {mutationError != null ? (
-        <MutationError error={mutationError} />
-      ) : null}
+      {mutationError != null ? <MutationError error={mutationError} /> : null}
     </div>
   );
 }
