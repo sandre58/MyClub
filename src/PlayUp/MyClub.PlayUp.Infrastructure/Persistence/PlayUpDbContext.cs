@@ -26,10 +26,11 @@ public sealed class PlayUpDbContext(
     DbContextOptions<PlayUpDbContext> options,
     PlayUpCompetitionLockOptions lockOptions) : DbContext(options), IUnitOfWork
 {
-    private static ApplicationFailureException CreateCompetitionLockTimeoutException() =>
+    private static ApplicationFailureException CreateCompetitionLockTimeoutException(Exception innerException) =>
         new(
             "Another operation is in progress on this competition. Please try again shortly.",
-            ApplicationErrorCodes.CompetitionLockTimeout);
+            ApplicationErrorCodes.CompetitionLockTimeout,
+            innerException);
 
     /// <inheritdoc />
     Task IUnitOfWork.SaveChangesAsync(CancellationToken cancellationToken) => SaveChangesAsync(cancellationToken);
@@ -70,7 +71,7 @@ public sealed class PlayUpDbContext(
             }
             catch (Exception exception) when (CompetitionLockFailure.IsCompetitionLockContention(exception))
             {
-                throw CreateCompetitionLockTimeoutException();
+                throw CreateCompetitionLockTimeoutException(exception);
             }
 
             try
@@ -86,7 +87,7 @@ public sealed class PlayUpDbContext(
             }
             catch (Exception exception) when (CompetitionLockFailure.IsCompetitionLockContention(exception))
             {
-                throw CreateCompetitionLockTimeoutException();
+                throw CreateCompetitionLockTimeoutException(exception);
             }
         }
         finally
