@@ -33,34 +33,42 @@ public sealed partial class UseCaseExecutor
     /// <exception cref="ApplicationFailureException">Thrown when the stage does not exist.</exception>
     public async Task PrepareStageAsync(StageId stageId, CancellationToken cancellationToken = default)
     {
-        var stage = await stages.GetByIdForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false)
-                    ?? throw new ApplicationFailureException(
-                        $"Stage '{stageId}' was not found.",
-                        ApplicationErrorCodes.StageNotFound);
+        var competitionId = default(Guid);
+        await ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await stages.GetByIdForUpdateAsync(stageId, innerToken).ConfigureAwait(false)
+                            ?? throw new ApplicationFailureException(
+                                $"Stage '{stageId}' was not found.",
+                                ApplicationErrorCodes.StageNotFound);
 
-        var competition = await competitions.GetByIdForUpdateAsync(stage.CompetitionId, cancellationToken)
-                              .ConfigureAwait(false)
-                          ?? throw new ApplicationFailureException(
-                              $"Competition '{stage.CompetitionId}' was not found.",
-                              ApplicationErrorCodes.CompetitionNotFound);
+                var competition = await competitions.GetByIdForUpdateAsync(stage.CompetitionId, innerToken)
+                                      .ConfigureAwait(false)
+                                  ?? throw new ApplicationFailureException(
+                                      $"Competition '{stage.CompetitionId}' was not found.",
+                                      ApplicationErrorCodes.CompetitionNotFound);
 
-        EnsureCompetitionAllowsLifecycleMutation(competition);
+                EnsureCompetitionAllowsLifecycleMutation(competition);
 
-        var competitionStages =
-            await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken).ConfigureAwait(false);
+                var competitionStages =
+                    await LoadCompetitionStagesForUpdateAsync(competition, innerToken).ConfigureAwait(false);
 
-        if (!competitionStages.Exists(candidate => candidate.Id.Equals(stageId)))
-        {
-            throw new ApplicationFailureException(
-                $"Stage '{stageId}' is not part of the competition stages list.",
-                ApplicationErrorCodes.StageNotInCompetition);
-        }
+                if (!competitionStages.Exists(candidate => candidate.Id.Equals(stageId)))
+                {
+                    throw new ApplicationFailureException(
+                        $"Stage '{stageId}' is not part of the competition stages list.",
+                        ApplicationErrorCodes.StageNotInCompetition);
+                }
 
-        // Prefer the tracked instance from the competition list (same identity as StageIds load).
-        var target = competitionStages.First(candidate => candidate.Id.Equals(stageId));
-        PrepareStage.Execute(target, competitionStages, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        LogStagePrepared(logger, stageId.Value, stage.CompetitionId.Value);
+                // Prefer the tracked instance from the competition list (same identity as StageIds load).
+                var target = competitionStages.First(candidate => candidate.Id.Equals(stageId));
+                PrepareStage.Execute(target, competitionStages, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+                competitionId = stage.CompetitionId.Value;
+            },
+            cancellationToken).ConfigureAwait(false);
+        LogStagePrepared(logger, stageId.Value, competitionId);
     }
 
     /// <summary>
@@ -72,29 +80,37 @@ public sealed partial class UseCaseExecutor
     /// <exception cref="ApplicationFailureException">Thrown when the stage does not exist.</exception>
     public async Task StartStageAsync(StageId stageId, CancellationToken cancellationToken = default)
     {
-        var stage = await stages.GetByIdForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false)
-                    ?? throw new ApplicationFailureException(
-                        $"Stage '{stageId}' was not found.",
-                        ApplicationErrorCodes.StageNotFound);
+        var competitionId = default(Guid);
+        await ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await stages.GetByIdForUpdateAsync(stageId, innerToken).ConfigureAwait(false)
+                            ?? throw new ApplicationFailureException(
+                                $"Stage '{stageId}' was not found.",
+                                ApplicationErrorCodes.StageNotFound);
 
-        var competition = await competitions.GetByIdForUpdateAsync(stage.CompetitionId, cancellationToken)
-                              .ConfigureAwait(false)
-                          ?? throw new ApplicationFailureException(
-                              $"Competition '{stage.CompetitionId}' was not found.",
-                              ApplicationErrorCodes.CompetitionNotFound);
-        EnsureCompetitionAllowsLifecycleMutation(competition);
+                var competition = await competitions.GetByIdForUpdateAsync(stage.CompetitionId, innerToken)
+                                      .ConfigureAwait(false)
+                                  ?? throw new ApplicationFailureException(
+                                      $"Competition '{stage.CompetitionId}' was not found.",
+                                      ApplicationErrorCodes.CompetitionNotFound);
+                EnsureCompetitionAllowsLifecycleMutation(competition);
 
-        var stageMatches = await matches
-            .ListByStageForUpdateAsync(stageId, cancellationToken)
-            .ConfigureAwait(false);
-        var summaries = StageStartReadinessGuard.ToSummaryRows(stageMatches);
-        var competitionStages =
-            await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken).ConfigureAwait(false);
-        StageStartReadinessGuard.EnsureReadyToStart(stage, competition, summaries, competitionStages);
+                var stageMatches = await matches
+                    .ListByStageForUpdateAsync(stageId, innerToken)
+                    .ConfigureAwait(false);
+                var summaries = StageStartReadinessGuard.ToSummaryRows(stageMatches);
+                var competitionStages =
+                    await LoadCompetitionStagesForUpdateAsync(competition, innerToken).ConfigureAwait(false);
+                StageStartReadinessGuard.EnsureReadyToStart(stage, competition, summaries, competitionStages);
 
-        StartStage.Execute(stage, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        LogStageStarted(logger, stageId.Value, stage.CompetitionId.Value);
+                StartStage.Execute(stage, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+                competitionId = stage.CompetitionId.Value;
+            },
+            cancellationToken).ConfigureAwait(false);
+        LogStageStarted(logger, stageId.Value, competitionId);
     }
 
     /// <summary>
@@ -106,114 +122,138 @@ public sealed partial class UseCaseExecutor
     /// <exception cref="ApplicationFailureException">Thrown when the stage does not exist or completion is blocked.</exception>
     public async Task CompleteStageAsync(StageId stageId, CancellationToken cancellationToken = default)
     {
-        var stage = await stages.GetByIdForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false)
-                    ?? throw new ApplicationFailureException(
-                        $"Stage '{stageId}' was not found.",
-                        ApplicationErrorCodes.StageNotFound);
+        var competitionId = default(Guid);
+        await ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await stages.GetByIdForUpdateAsync(stageId, innerToken).ConfigureAwait(false)
+                            ?? throw new ApplicationFailureException(
+                                $"Stage '{stageId}' was not found.",
+                                ApplicationErrorCodes.StageNotFound);
 
-        var competition = await competitions.GetByIdForUpdateAsync(stage.CompetitionId, cancellationToken)
-                              .ConfigureAwait(false)
-                          ?? throw new ApplicationFailureException(
-                              $"Competition '{stage.CompetitionId}' was not found.",
-                              ApplicationErrorCodes.CompetitionNotFound);
-        EnsureCompetitionAllowsLifecycleMutation(competition);
+                var competition = await competitions.GetByIdForUpdateAsync(stage.CompetitionId, innerToken)
+                                      .ConfigureAwait(false)
+                                  ?? throw new ApplicationFailureException(
+                                      $"Competition '{stage.CompetitionId}' was not found.",
+                                      ApplicationErrorCodes.CompetitionNotFound);
+                EnsureCompetitionAllowsLifecycleMutation(competition);
 
-        var stageMatches =
-            await matches.ListByStageForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false);
-        CompleteStage.Execute(stage, stageMatches, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        LogStageCompleted(logger, stageId.Value, stage.CompetitionId.Value);
+                var stageMatches =
+                    await matches.ListByStageForUpdateAsync(stageId, innerToken).ConfigureAwait(false);
+                CompleteStage.Execute(stage, stageMatches, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+                competitionId = stage.CompetitionId.Value;
+            },
+            cancellationToken).ConfigureAwait(false);
+        LogStageCompleted(logger, stageId.Value, competitionId);
     }
 
     /// <summary>
     /// Loads a stage and reverts Ready → Draft when no matches are attached.
     /// </summary>
-    public async Task RevertStageToDraftAsync(StageId stageId, CancellationToken cancellationToken = default)
-    {
-        var stage = await stages.GetByIdForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false)
-                    ?? throw new ApplicationFailureException(
-                        $"Stage '{stageId}' was not found.",
-                        ApplicationErrorCodes.StageNotFound);
+    public Task RevertStageToDraftAsync(StageId stageId, CancellationToken cancellationToken = default) =>
+        ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await stages.GetByIdForUpdateAsync(stageId, innerToken).ConfigureAwait(false)
+                            ?? throw new ApplicationFailureException(
+                                $"Stage '{stageId}' was not found.",
+                                ApplicationErrorCodes.StageNotFound);
 
-        var competition = await competitions.GetByIdForUpdateAsync(stage.CompetitionId, cancellationToken)
-                              .ConfigureAwait(false)
-                          ?? throw new ApplicationFailureException(
-                              $"Competition '{stage.CompetitionId}' was not found.",
-                              ApplicationErrorCodes.CompetitionNotFound);
-        EnsureCompetitionAllowsLifecycleMutation(competition);
+                var competition = await competitions.GetByIdForUpdateAsync(stage.CompetitionId, innerToken)
+                                      .ConfigureAwait(false)
+                                  ?? throw new ApplicationFailureException(
+                                      $"Competition '{stage.CompetitionId}' was not found.",
+                                      ApplicationErrorCodes.CompetitionNotFound);
+                EnsureCompetitionAllowsLifecycleMutation(competition);
 
-        var stageMatches =
-            await matches.ListByStageForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false);
-        RevertToDraft.Execute(stage, stageMatches, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
+                var stageMatches =
+                    await matches.ListByStageForUpdateAsync(stageId, innerToken).ConfigureAwait(false);
+                RevertToDraft.Execute(stage, stageMatches, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken);
 
     /// <summary>
     /// Loads a stage and suspends it (Running → Suspended) when no match is live.
     /// </summary>
-    public async Task SuspendStageAsync(StageId stageId, CancellationToken cancellationToken = default)
-    {
-        var stage = await stages.GetByIdForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false)
-                    ?? throw new ApplicationFailureException(
-                        $"Stage '{stageId}' was not found.",
-                        ApplicationErrorCodes.StageNotFound);
+    public Task SuspendStageAsync(StageId stageId, CancellationToken cancellationToken = default) =>
+        ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await stages.GetByIdForUpdateAsync(stageId, innerToken).ConfigureAwait(false)
+                            ?? throw new ApplicationFailureException(
+                                $"Stage '{stageId}' was not found.",
+                                ApplicationErrorCodes.StageNotFound);
 
-        var competition = await competitions.GetByIdForUpdateAsync(stage.CompetitionId, cancellationToken)
-                              .ConfigureAwait(false)
-                          ?? throw new ApplicationFailureException(
-                              $"Competition '{stage.CompetitionId}' was not found.",
-                              ApplicationErrorCodes.CompetitionNotFound);
-        EnsureCompetitionAllowsLifecycleMutation(competition);
+                var competition = await competitions.GetByIdForUpdateAsync(stage.CompetitionId, innerToken)
+                                      .ConfigureAwait(false)
+                                  ?? throw new ApplicationFailureException(
+                                      $"Competition '{stage.CompetitionId}' was not found.",
+                                      ApplicationErrorCodes.CompetitionNotFound);
+                EnsureCompetitionAllowsLifecycleMutation(competition);
 
-        var stageMatches =
-            await matches.ListByStageForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false);
-        SuspendStage.Execute(stage, stageMatches, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
+                var stageMatches =
+                    await matches.ListByStageForUpdateAsync(stageId, innerToken).ConfigureAwait(false);
+                SuspendStage.Execute(stage, stageMatches, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken);
 
     /// <summary>
     /// Loads a stage and resumes it (Suspended → Running).
     /// </summary>
-    public async Task ResumeStageAsync(StageId stageId, CancellationToken cancellationToken = default)
-    {
-        var stage = await stages.GetByIdForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false)
-                    ?? throw new ApplicationFailureException(
-                        $"Stage '{stageId}' was not found.",
-                        ApplicationErrorCodes.StageNotFound);
+    public Task ResumeStageAsync(StageId stageId, CancellationToken cancellationToken = default) =>
+        ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await stages.GetByIdForUpdateAsync(stageId, innerToken).ConfigureAwait(false)
+                            ?? throw new ApplicationFailureException(
+                                $"Stage '{stageId}' was not found.",
+                                ApplicationErrorCodes.StageNotFound);
 
-        var competition = await competitions.GetByIdForUpdateAsync(stage.CompetitionId, cancellationToken)
-                              .ConfigureAwait(false)
-                          ?? throw new ApplicationFailureException(
-                              $"Competition '{stage.CompetitionId}' was not found.",
-                              ApplicationErrorCodes.CompetitionNotFound);
-        EnsureCompetitionAllowsLifecycleMutation(competition);
+                var competition = await competitions.GetByIdForUpdateAsync(stage.CompetitionId, innerToken)
+                                      .ConfigureAwait(false)
+                                  ?? throw new ApplicationFailureException(
+                                      $"Competition '{stage.CompetitionId}' was not found.",
+                                      ApplicationErrorCodes.CompetitionNotFound);
+                EnsureCompetitionAllowsLifecycleMutation(competition);
 
-        ResumeStage.Execute(stage, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
+                ResumeStage.Execute(stage, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken);
 
     /// <summary>
     /// Loads a stage and reverts it to Ready (Running or Suspended → Ready) when allowed.
     /// </summary>
-    public async Task RevertStageToReadyAsync(StageId stageId, CancellationToken cancellationToken = default)
-    {
-        var stage = await stages.GetByIdForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false)
-                    ?? throw new ApplicationFailureException(
-                        $"Stage '{stageId}' was not found.",
-                        ApplicationErrorCodes.StageNotFound);
+    public Task RevertStageToReadyAsync(StageId stageId, CancellationToken cancellationToken = default) =>
+        ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await stages.GetByIdForUpdateAsync(stageId, innerToken).ConfigureAwait(false)
+                            ?? throw new ApplicationFailureException(
+                                $"Stage '{stageId}' was not found.",
+                                ApplicationErrorCodes.StageNotFound);
 
-        var competition = await competitions.GetByIdForUpdateAsync(stage.CompetitionId, cancellationToken)
-                              .ConfigureAwait(false)
-                          ?? throw new ApplicationFailureException(
-                              $"Competition '{stage.CompetitionId}' was not found.",
-                              ApplicationErrorCodes.CompetitionNotFound);
-        EnsureCompetitionAllowsLifecycleMutation(competition);
+                var competition = await competitions.GetByIdForUpdateAsync(stage.CompetitionId, innerToken)
+                                      .ConfigureAwait(false)
+                                  ?? throw new ApplicationFailureException(
+                                      $"Competition '{stage.CompetitionId}' was not found.",
+                                      ApplicationErrorCodes.CompetitionNotFound);
+                EnsureCompetitionAllowsLifecycleMutation(competition);
 
-        var stageMatches =
-            await matches.ListByStageForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false);
-        RevertToReady.Execute(stage, stageMatches, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
+                var stageMatches =
+                    await matches.ListByStageForUpdateAsync(stageId, innerToken).ConfigureAwait(false);
+                RevertToReady.Execute(stage, stageMatches, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken);
 
     /// <summary>
     /// Loads competition stages and fixture matches, runs <see cref="ApplyProgressionOutcome"/>, and saves once.
