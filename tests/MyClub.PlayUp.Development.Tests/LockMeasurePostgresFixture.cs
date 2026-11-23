@@ -73,7 +73,7 @@ public sealed class LockMeasurePostgresFixture : IAsyncLifetime
         services.AddLogging();
         var sqlCommandCounter = new SqlCommandCounterInterceptor();
         var lockTiming = new CompetitionAdvisoryLockTimingInterceptor();
-        var lockTransactionTiming = new CompetitionAdvisoryLockTransactionInterceptor(lockTiming);
+        var lockTransactionTiming = new CompetitionAdvisoryLockTransactionInterceptor();
         services.AddSingleton(sqlCommandCounter);
         services.AddSingleton(lockTiming);
         services.AddPlayUpInfrastructure(PlayUpConnectionString,

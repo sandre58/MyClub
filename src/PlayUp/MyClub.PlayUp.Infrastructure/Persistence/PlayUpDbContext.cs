@@ -56,11 +56,10 @@ public sealed class PlayUpDbContext(
         try
         {
             var lockTimeoutLiteral = lockOptions.ToPostgresLockTimeoutLiteral();
-#pragma warning disable EF1002 // lock_timeout uses a validated millisecond literal only.
             await Database.ExecuteSqlRawAsync(
-                $"SET LOCAL lock_timeout = '{lockTimeoutLiteral}'",
+                "SET LOCAL lock_timeout = {0}",
+                [lockTimeoutLiteral],
                 cancellationToken).ConfigureAwait(false);
-#pragma warning restore EF1002
 
             var key = CompetitionAdvisoryLock.Key(competitionId);
             try

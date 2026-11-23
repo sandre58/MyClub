@@ -11,7 +11,7 @@ namespace MyClub.PlayUp.Development.Tests.Diagnostics;
 internal static class CompetitionAdvisoryLockTimingState
 {
     private static readonly AsyncLocal<TimingFrame?> Current = new();
-    private static readonly object Sync = new();
+    private static readonly Lock Sync = new();
 
     public static CompetitionAdvisoryLockTimingSnapshot? LastSnapshot =>
         Current.Value?.Snapshot;
@@ -81,11 +81,7 @@ internal static class CompetitionAdvisoryLockTimingState
 
     private static TimingFrame EnsureFrame()
     {
-        if (Current.Value is null)
-        {
-            Current.Value = new TimingFrame();
-        }
-
+        Current.Value ??= new TimingFrame();
         return Current.Value;
     }
 

@@ -118,20 +118,18 @@ public sealed class CompetitionLockRetentionMeasureTests(
         {
             await using var connection = new Npgsql.NpgsqlConnection(fixture.PlayUpConnectionString);
             await connection.OpenAsync().ConfigureAwait(false);
-            await using var hold = new Npgsql.NpgsqlCommand(
-                $"SELECT pg_advisory_lock({key})",
-                connection);
+            await using var hold = new Npgsql.NpgsqlCommand("SELECT pg_advisory_lock(@key)", connection);
+            hold.Parameters.AddWithValue("key", key);
             await hold.ExecuteNonQueryAsync().ConfigureAwait(false);
             holdReady.SetResult();
-            await Task.Delay(holdDuration).ConfigureAwait(false);
-            await using var release = new Npgsql.NpgsqlCommand(
-                $"SELECT pg_advisory_unlock({key})",
-                connection);
+            await Task.Delay(holdDuration, CancellationToken.None).ConfigureAwait(false);
+            await using var release = new Npgsql.NpgsqlCommand("SELECT pg_advisory_unlock(@key)", connection);
+            release.Parameters.AddWithValue("key", key);
             await release.ExecuteNonQueryAsync().ConfigureAwait(false);
         });
 
         await holdReady.Task.WaitAsync(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
-        await Task.Delay(30).ConfigureAwait(false);
+        await Task.Delay(30, CancellationToken.None).ConfigureAwait(false);
 
         using var measureScope = fixture.Services.CreateScope();
         var snapshot = await CompetitionLockRetentionMeasureSupport.MeasureExclusiveOperationAsync(
@@ -415,7 +413,7 @@ public sealed class CompetitionLockRetentionMeasureTests(
             live.MatchId,
             live.ScorerMemberId,
             Side.Home,
-            cancellationToken: default).ConfigureAwait(false);
+            cancellationToken: CancellationToken.None).ConfigureAwait(false);
         return counter.CommandCount;
     }
 
@@ -434,12 +432,12 @@ public sealed class CompetitionLockRetentionMeasureTests(
         using var stopApply = new CancellationTokenSource();
         var applyLoop = RunContinuousApplyProgressionAsync(targets, unexpected, stopApply.Token);
 
-        await Task.Delay(120).ConfigureAwait(false);
+        await Task.Delay(120, CancellationToken.None).ConfigureAwait(false);
 
         for (var index = 0; index < sampleCount; index++)
         {
             using var scope = fixture.Services.CreateScope();
-            var timing = scope.ServiceProvider.GetRequiredService<CompetitionAdvisoryLockTimingInterceptor>();
+            _ = scope.ServiceProvider.GetRequiredService<CompetitionAdvisoryLockTimingInterceptor>();
             CompetitionAdvisoryLockTimingInterceptor.Reset();
             var stopwatch = Stopwatch.StartNew();
             try
@@ -449,7 +447,7 @@ public sealed class CompetitionLockRetentionMeasureTests(
                     targets.RecordGoalMatchId,
                     targets.ScorerMemberId,
                     Side.Home,
-                    cancellationToken: default).ConfigureAwait(false);
+                    cancellationToken: CancellationToken.None).ConfigureAwait(false);
                 var snapshot = CompetitionAdvisoryLockTimingInterceptor.RequireLastSnapshot();
                 waits.Add(snapshot.LockWait);
                 retentions.Add(snapshot.LockRetention);
@@ -471,7 +469,7 @@ public sealed class CompetitionLockRetentionMeasureTests(
             }
             catch (InvalidOperationException)
             {
-                invalidOps++;
+                Interlocked.Increment(ref invalidOps);
                 throw;
             }
             catch (Exception ex)
@@ -610,11 +608,9 @@ public sealed class CompetitionLockRetentionMeasureTests(
         var summary = (await competitions.ListAsync().ConfigureAwait(false)).Single();
         var competition = await competitions.GetByIdReadOnlyAsync(summary.Id).ConfigureAwait(false);
         competition.Should().NotBeNull();
-        var matchCount = 0;
-        foreach (var id in competition.StageIds)
-        {
-            matchCount += (await matches.ListByStageForUpdateAsync(id).ConfigureAwait(false)).Count;
-        }
+        var matchCount = await CompetitionLockRetentionMeasureSupport
+            .CountMatchesForStagesAsync(matches, competition.StageIds)
+            .ConfigureAwait(false);
 
         return new CompetitionShape(
             competition.Id,

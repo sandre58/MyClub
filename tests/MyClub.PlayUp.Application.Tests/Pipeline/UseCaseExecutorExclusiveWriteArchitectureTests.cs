@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using System.Diagnostics.CodeAnalysis;
 using FluentAssertions;
 using Xunit;
 
@@ -55,6 +56,8 @@ public sealed class UseCaseExecutorExclusiveWriteArchitectureTests
         "GetMatchDetailAsync"
     ];
 
+    /// <summary>Mutated in-source when a REST lot lands; empty keeps the ratchet at zero.</summary>
+    [SuppressMessage("ReSharper", "CollectionNeverUpdated.Local", Justification = "It's assumed")]
     private static readonly HashSet<string> PendingByLot = [];
 
     private static readonly HashSet<string> Rest7PresentationMethods =
@@ -339,7 +342,6 @@ public sealed class UseCaseExecutorExclusiveWriteArchitectureTests
         body = source[cursor..(methodEnd + 1)];
         methodEnd++;
         return true;
-
     }
 
     private static int SkipReturnType(string source, int cursor)
@@ -414,62 +416,62 @@ public sealed class UseCaseExecutorExclusiveWriteArchitectureTests
             {
                 if (verbatim)
                 {
-                    if (c == '"' && i + 1 < source.Length && source[i + 1] == '"')
+                    switch (c)
                     {
-                        i++;
-                        continue;
-                    }
-
-                    if (c == '"')
-                    {
-                        inString = false;
-                        verbatim = false;
+                        case '"' when i + 1 < source.Length && source[i + 1] == '"':
+                            i++;
+                            continue;
+                        case '"':
+                            inString = false;
+                            verbatim = false;
+                            break;
                     }
                 }
                 else if (escape)
                 {
                     escape = false;
                 }
-                else if (c == '\\')
+                else
                 {
-                    escape = true;
+                    switch (c)
+                {
+                    case '\\':
+                        escape = true;
+                        break;
+                    case '"':
+                        inString = false;
+                        break;
                 }
-                else if (c == '"')
-                {
-                    inString = false;
                 }
 
                 continue;
             }
 
-            if (c == '@' && i + 1 < source.Length && source[i + 1] == '"')
+            switch (c)
             {
-                verbatim = true;
-                inString = true;
-                i++;
-                continue;
-            }
-
-            if (c == '"')
-            {
-                inString = true;
-                continue;
-            }
-
-            if (c == '\'')
-            {
-                i++;
-                while (i < source.Length && source[i] != '\'')
-                {
-                    if (source[i] == '\\' && i + 1 < source.Length)
+                case '@' when i + 1 < source.Length && source[i + 1] == '"':
+                    verbatim = true;
+                    inString = true;
+                    i++;
+                    continue;
+                case '"':
+                    inString = true;
+                    continue;
+                case '\'':
                     {
                         i++;
+                        while (i < source.Length && source[i] != '\'')
+                        {
+                            if (source[i] == '\\' && i + 1 < source.Length)
+                            {
+                                i++;
+                            }
+
+                            i++;
+                        }
+
+                        continue;
                     }
-
-                    i++;
-                }
-
-                continue;
             }
 
             if (c == open)
@@ -506,52 +508,48 @@ public sealed class UseCaseExecutorExclusiveWriteArchitectureTests
                 {
                     escape = false;
                 }
-                else if (c == '\\')
+                else
                 {
-                    escape = true;
-                }
-                else if (c == '"')
-                {
-                    inString = false;
+                    switch (c)
+                    {
+                        case '\\':
+                            escape = true;
+                            break;
+                        case '"':
+                            inString = false;
+                            break;
+                    }
                 }
 
                 continue;
             }
 
-            if (c == '"')
+            switch (c)
             {
-                inString = true;
-                continue;
-            }
-
-            if (c == '(')
-            {
-                depthParen++;
-            }
-            else if (c == ')')
-            {
-                depthParen--;
-            }
-            else if (c == '<')
-            {
-                depthAngle++;
-            }
-            else if (c == '>')
-            {
-                depthAngle--;
-            }
-            else if (c == '[')
-            {
-                depthBracket++;
-            }
-            else if (c == ']')
-            {
-                depthBracket--;
-            }
-            else if (c == ';' && depthParen == 0 && depthAngle == 0 && depthBracket == 0)
-            {
-                endIndex = i;
-                return true;
+                case '"':
+                    inString = true;
+                    continue;
+                case '(':
+                    depthParen++;
+                    break;
+                case ')':
+                    depthParen--;
+                    break;
+                case '<':
+                    depthAngle++;
+                    break;
+                case '>':
+                    depthAngle--;
+                    break;
+                case '[':
+                    depthBracket++;
+                    break;
+                case ']':
+                    depthBracket--;
+                    break;
+                case ';' when depthParen == 0 && depthAngle == 0 && depthBracket == 0:
+                    endIndex = i;
+                    return true;
             }
         }
 

@@ -50,8 +50,7 @@ public sealed class UseCaseExecutorMatchLockTests
         RemoveRecordedDisciplinaryEvent
     }
 
-    public static IEnumerable<object[]> AllMatchWriteOps() =>
-        Enum.GetValues<MatchWriteOp>().Select(op => new object[] { op });
+    public static TheoryData<MatchWriteOp> AllMatchWriteOps() => new([.. Enum.GetValues<MatchWriteOp>()]);
 
     private static UseCaseExecutor CreateExecutor(
         Mock<IStageRepository> stages,

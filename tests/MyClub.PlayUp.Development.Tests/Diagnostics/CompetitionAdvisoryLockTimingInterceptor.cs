@@ -16,7 +16,8 @@ namespace MyClub.PlayUp.Development.Tests.Diagnostics;
 [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Registered as EF Core interceptor singleton; instance entry points required.")]
 internal sealed class CompetitionAdvisoryLockTimingInterceptor : DbCommandInterceptor
 {
-    public CompetitionAdvisoryLockTimingSnapshot? LastSnapshot => CompetitionAdvisoryLockTimingState.LastSnapshot;
+    public static CompetitionAdvisoryLockTimingSnapshot? LastSnapshot =>
+        CompetitionAdvisoryLockTimingState.LastSnapshot;
 
     public static void Reset() => CompetitionAdvisoryLockTimingState.Reset();
 
@@ -176,8 +177,7 @@ internal sealed class CompetitionAdvisoryLockTimingInterceptor : DbCommandInterc
     }
 }
 
-internal sealed class CompetitionAdvisoryLockTransactionInterceptor(
-    CompetitionAdvisoryLockTimingInterceptor timing) : DbTransactionInterceptor
+internal sealed class CompetitionAdvisoryLockTransactionInterceptor : DbTransactionInterceptor
 {
     public override void TransactionCommitted(DbTransaction transaction, TransactionEndEventData eventData)
     {

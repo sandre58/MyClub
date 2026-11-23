@@ -349,7 +349,7 @@ public sealed class UseCaseExecutorRest4StructureAddsTests
         var loadedStages = extraStages.ToList();
         stages
             .Setup(repository => repository.Add(It.IsAny<Stage>()))
-            .Callback<Stage>(stage => loadedStages.Add(stage))
+            .Callback<Stage>(loadedStages.Add)
             .Verifiable();
         stages
             .Setup(repository => repository.GetByIdsReadOnlyAsync(

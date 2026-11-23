@@ -42,7 +42,7 @@ public sealed class RecordGoalSqlCeilingTests(LockMeasurePostgresFixture fixture
             live.MatchId,
             live.ScorerMemberId,
             Side.Home,
-            cancellationToken: default);
+            cancellationToken: CancellationToken.None);
 
         output.WriteLine(
             $"RecordGoal SQL={counter.CommandCount}, ceiling={CompetitionLockRetentionMeasureSupport.RecordGoalSqlWithLock} " +

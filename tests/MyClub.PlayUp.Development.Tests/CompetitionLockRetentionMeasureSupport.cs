@@ -46,7 +46,7 @@ internal static class CompetitionLockRetentionMeasureSupport
         IServiceScope scope,
         Func<IServiceScope, Task> operation)
     {
-        var timing = scope.ServiceProvider.GetRequiredService<CompetitionAdvisoryLockTimingInterceptor>();
+        _ = scope.ServiceProvider.GetRequiredService<CompetitionAdvisoryLockTimingInterceptor>();
         CompetitionAdvisoryLockTimingInterceptor.Reset();
         operation(scope).GetAwaiter().GetResult();
         return CompetitionAdvisoryLockTimingInterceptor.RequireLastSnapshot();
@@ -56,7 +56,7 @@ internal static class CompetitionLockRetentionMeasureSupport
         IServiceScope scope,
         Func<IServiceScope, Task> operation)
     {
-        var timing = scope.ServiceProvider.GetRequiredService<CompetitionAdvisoryLockTimingInterceptor>();
+        _ = scope.ServiceProvider.GetRequiredService<CompetitionAdvisoryLockTimingInterceptor>();
         CompetitionAdvisoryLockTimingInterceptor.Reset();
         await operation(scope).ConfigureAwait(false);
         return CompetitionAdvisoryLockTimingInterceptor.RequireLastSnapshot();
@@ -75,11 +75,7 @@ internal static class CompetitionLockRetentionMeasureSupport
         var competition = await competitions.GetByIdReadOnlyAsync(summary.Id).ConfigureAwait(false);
         competition.Should().NotBeNull();
         var stageId = competition.StageIds[0];
-        var matchCount = 0;
-        foreach (var id in competition.StageIds)
-        {
-            matchCount += (await matches.ListByStageForUpdateAsync(id).ConfigureAwait(false)).Count;
-        }
+        var matchCount = await CountMatchesForStagesAsync(matches, competition.StageIds).ConfigureAwait(false);
 
         return new CompetitionShape(
             competition.Id,
@@ -98,11 +94,7 @@ internal static class CompetitionLockRetentionMeasureSupport
         var competition = await competitions.GetByIdReadOnlyAsync(summary.Id).ConfigureAwait(false);
         competition.Should().NotBeNull();
         var stageId = competition.StageIds[0];
-        var matchCount = 0;
-        foreach (var id in competition.StageIds)
-        {
-            matchCount += (await matches.ListByStageForUpdateAsync(id).ConfigureAwait(false)).Count;
-        }
+        var matchCount = await CountMatchesForStagesAsync(matches, competition.StageIds).ConfigureAwait(false);
 
         return new CompetitionShape(
             competition.Id,
@@ -110,6 +102,16 @@ internal static class CompetitionLockRetentionMeasureSupport
             competition.Entries.Count,
             competition.StageIds.Count,
             matchCount);
+    }
+
+    internal static async Task<int> CountMatchesForStagesAsync(
+        IMatchRepository matches,
+        IReadOnlyList<StageId> stageIds)
+    {
+        var matchCounts = await Task.WhenAll(
+            stageIds.Select(async id =>
+                (await matches.ListByStageForUpdateAsync(id).ConfigureAwait(false)).Count)).ConfigureAwait(false);
+        return matchCounts.Sum();
     }
 
     public static MeasureRow BuildRow(

@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using System.Data.Common;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
@@ -68,6 +69,7 @@ public sealed class CompetitionLockTimeoutPostgresTests(PostgresFixture fixture)
     }
 
     [IntegrationFact]
+    [SuppressMessage("ReSharper", "AccessToDisposedClosure", Justification = "Intentional concurrency harness.")]
     public async Task ExecuteExclusiveAsync_maps_deadlock_to_competition_lock_timeout_without_double_writeAsync()
     {
         var competitionId = await SeedCompetitionAsync(fixture.ConnectionString);
@@ -196,6 +198,7 @@ public sealed class CompetitionLockTimeoutPostgresTests(PostgresFixture fixture)
     }
 
     [IntegrationFact]
+    [SuppressMessage("ReSharper", "AccessToDisposedClosure", Justification = "Asserting on a scope captured for cancellation.")]
     public async Task Cancelled_exclusive_wait_is_not_mapped_to_competition_lock_timeoutAsync()
     {
         var competitionId = await SeedCompetitionAsync(fixture.ConnectionString);
