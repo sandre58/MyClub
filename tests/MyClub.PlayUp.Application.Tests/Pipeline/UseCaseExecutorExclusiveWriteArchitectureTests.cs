@@ -19,7 +19,7 @@ public sealed class UseCaseExecutorExclusiveWriteArchitectureTests
     /// Ratchet: this count may only decrease when a REST lot lands and removes names from
     /// <see cref="PendingByLot"/> — never raise it; adding a pending name without removing another must fail CI.
     /// </summary>
-    private const int ExpectedPendingByLotCount = 40;
+    private const int ExpectedPendingByLotCount = 38;
 
     private static readonly string[] LockMarkers =
     [
@@ -57,8 +57,6 @@ public sealed class UseCaseExecutorExclusiveWriteArchitectureTests
 
     private static readonly HashSet<string> PendingByLot =
     [
-        "GenerateNextRoundAsync",
-        "ApplyScheduleAsync",
         "AddStageRoundAsync",
         "AddStageSlotAsync",
         "AddStageMatchdayAsync",
@@ -114,6 +112,12 @@ public sealed class UseCaseExecutorExclusiveWriteArchitectureTests
     [
         "PublishDrawAsync",
         "CancelDrawAsync",
+    ];
+
+    private static readonly HashSet<string> Rest3ScheduleMethods =
+    [
+        "GenerateNextRoundAsync",
+        "ApplyScheduleAsync",
     ];
 
     [Fact]
@@ -197,6 +201,10 @@ public sealed class UseCaseExecutorExclusiveWriteArchitectureTests
         PendingByLot.Intersect(Rest1DrawMethods)
             .Should()
             .BeEmpty("REST-1 PublishDraw / CancelDraw writes must not appear on the pending list");
+
+        PendingByLot.Intersect(Rest3ScheduleMethods)
+            .Should()
+            .BeEmpty("REST-3 GenerateNextRound / ApplySchedule writes must not appear on the pending list");
 
         pendingExtraneous.Should().BeEmpty(
             "the pending list must only name methods that still exist and call SaveChangesAsync without a lock");
