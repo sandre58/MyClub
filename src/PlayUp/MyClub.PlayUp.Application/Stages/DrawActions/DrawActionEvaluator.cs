@@ -285,7 +285,7 @@ internal static class DrawActionEvaluator
             var partialBlock = SlotPartialDrawPlanner.TryGetPartialRedoBlockCode(
                 context.Stage,
                 context.CompetitionStages,
-                AlignedSlotKeys(context.Stage, draw),
+                ReleasableAlignedSlotKeys(context, draw),
                 draw.Id);
             return partialBlock is null
                 ? DrawActionAssessment.Available
@@ -303,7 +303,7 @@ internal static class DrawActionEvaluator
                 context.Stage,
                 context.CompetitionStages,
                 draw.Kind,
-                AlignedSlotKeys(context.Stage, draw),
+                ReleasableAlignedSlotKeys(context, draw),
                 AlignedGroupEntryIds(context.Stage, draw));
             return facts.BlockingPlaceCount > 0
                 ? DrawActionAssessment.Block(ApplicationErrorCodes.DrawLaunchGridNotVacant)
@@ -429,6 +429,29 @@ internal static class DrawActionEvaluator
             if (slot is not null)
             {
                 keys.Add(slot.SlotKey);
+            }
+        }
+
+        return keys;
+    }
+
+    private static HashSet<string> ReleasableAlignedSlotKeys(DrawActionContext context, Draw draw)
+    {
+        var keys = new HashSet<string>(StringComparer.Ordinal);
+        if (draw.Kind != DrawResolutionKind.Slot || draw.Resolution.State != DrawResolutionState.Resolved)
+        {
+            return keys;
+        }
+
+        foreach (var placement in DrawReleaseReleasability.DrawnSlotPlacements(draw))
+        {
+            if (DrawReleaseReleasability.IsReleasableSlot(
+                    context.Stage,
+                    draw,
+                    placement,
+                    context.ReleaseIndex))
+            {
+                keys.Add(placement.SlotKey);
             }
         }
 

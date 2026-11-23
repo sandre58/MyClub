@@ -144,13 +144,11 @@ public sealed class RedoDrawTests
         PublishDraw.Execute(stage, draw.Id, _clock);
         ApplyDraw.Execute(stage, draw.Id, _clock);
 
-        AssertRedoCommandMatchesEvaluator(stage, draw.Id, [stage], expectedBlockCode: null);
-        var previewId = stage.Draws.Single(drawEntry => drawEntry.Status == DrawStatus.Draft).Id;
-        stage.GetDraw(previewId).InputsIntent.Should().Be(DrawInputsIntent.Partial);
-        stage.FindSlot(manualKey)!.EntryId.Should().Be(entries[1]);
-        stage.GetDraw(previewId).Resolution.SlotResults
-            .Should().NotContain(placement => placement.SlotKey == manualKey);
-        stage.GetDraw(previewId).Inputs!.FixedSlots.Should().BeEmpty();
+        AssertRedoCommandMatchesEvaluator(
+            stage,
+            draw.Id,
+            [stage],
+            expectedBlockCode: ApplicationErrorCodes.DrawNoFreeSlot);
     }
 
     [Theory]
@@ -193,7 +191,11 @@ public sealed class RedoDrawTests
                     competitionStages: [stage]);
                 PublishDraw.Execute(stage, draw.Id, _clock);
                 ApplyDraw.Execute(stage, draw.Id, _clock);
-                AssertRedoCommandMatchesEvaluator(stage, draw.Id, [stage], null);
+                AssertRedoCommandMatchesEvaluator(
+                    stage,
+                    draw.Id,
+                    [stage],
+                    ApplicationErrorCodes.DrawNoFreeSlot);
                 break;
             }
 
@@ -220,9 +222,11 @@ public sealed class RedoDrawTests
                     [.. stage.Slots.Select(slot => slot.SlotKey)]).IsResolved.Should().BeTrue();
                 PublishDraw.Execute(stage, draw.Id, _clock);
                 ApplyDraw.Execute(stage, draw.Id, _clock);
-                AssertRedoCommandMatchesEvaluator(stage, draw.Id, [stage], null);
-                stage.Draws.Single(drawEntry => drawEntry.Status == DrawStatus.Draft).InputsIntent
-                    .Should().Be(DrawInputsIntent.Rerun);
+                AssertRedoCommandMatchesEvaluator(
+                    stage,
+                    draw.Id,
+                    [stage],
+                    ApplicationErrorCodes.DrawLaunchGridNotVacant);
                 break;
             }
 
@@ -503,7 +507,7 @@ public sealed class RedoDrawTests
     }
 
     [Fact]
-    public void Redo_default_with_two_fixed_slots_previews_rerun_when_no_direct_assignment()
+    public void Redo_default_with_two_fixed_slots_blocks_rerun_when_release_leaves_occupants()
     {
         var competition = CreateCompetition.Execute("Cup-rerun", _clock);
         var ids = Enumerable.Range(0, 2)
@@ -530,12 +534,11 @@ public sealed class RedoDrawTests
         stage.GetDraw(draw.Id).Inputs!.FixedSlots.Count.Should().Be(2);
         stage.DirectAssignments.Should().BeEmpty();
 
-        var result = RedoDraw.Execute(stage, draw.Id, _clock, [stage]);
-
-        result.IsResolved.Should().BeTrue();
-        stage.GetDraw(result.DrawId).InputsIntent.Should().Be(DrawInputsIntent.Rerun);
-        stage.GetDraw(draw.Id).Status.Should().Be(DrawStatus.Cancelled);
-        stage.GetDraw(result.DrawId).Resolution.SlotResults.Should().NotBeEmpty();
+        AssertRedoCommandMatchesEvaluator(
+            stage,
+            draw.Id,
+            [stage],
+            ApplicationErrorCodes.DrawLaunchGridNotVacant);
     }
 
     [Fact]

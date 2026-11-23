@@ -844,10 +844,22 @@ test.describe('manual group placement', () => {
     await expect(
       dialog.getByRole('button', { name: /Libérer #/ }),
     ).toBeVisible();
-    const overview = await readStageOverview(request, stageId);
+    let overview = await readStageOverview(request, stageId);
     const groupA = overview.groups?.find((group) => group.name === 'A');
     const keptIds = kept.map((team) => team.entryId);
     expect(groupA?.entryIds).toEqual(expect.arrayContaining(keptIds));
+    await expect
+      .poll(
+        async () => {
+          overview = await readStageOverview(request, stageId);
+          const cancelled = overview.draws?.find(
+            (draw) => draw.status === 'Cancelled',
+          );
+          return cancelled?.actions?.release?.releasableCount ?? 0;
+        },
+        { timeout: 15_000 },
+      )
+      .toBeGreaterThan(0);
     const cancelled = overview.draws?.find(
       (draw) => draw.status === 'Cancelled',
     );
