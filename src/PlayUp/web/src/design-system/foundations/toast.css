@@ -1,8 +1,8 @@
 /*
- * Toast — ephemeral event feedback (canvas / viewport host).
+ * Toast — ephemeral event feedback (portaled to document.body).
  * Soft fill: ~16% tone wash, no border; tone via icon + 2px progress bar.
  * Progress shrinks toward the left.
- * Above Dialog overlay (z-index 40); below Tooltip (z-index 50).
+ * Above Dialog (z-index 40); below Popover (50), Select (55), Tooltip (60).
  */
 
 .ds-toaster {
