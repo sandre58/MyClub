@@ -87,7 +87,12 @@ public sealed class CompetitionLockRetentionMeasureTests(
         WriteMeasurementTables(rows);
         WriteSkippedOperations(skipped);
         WriteConcurrentBlock(concurrent);
-        output.WriteLine($"RecordGoal SQL baseline (sans verrou) : {recordGoalSqlBaseline} commandes EF");
+        output.WriteLine($"RecordGoal SQL baseline (lot 1 hors verrou) : {CompetitionLockRetentionMeasureSupport.RecordGoalSqlBaselineWithoutLock}");
+        output.WriteLine($"RecordGoal SQL mesuré (verrou réel) : {recordGoalSqlBaseline} commandes EF");
+
+        recordGoalSqlBaseline.Should().BeLessThanOrEqualTo(
+            CompetitionLockRetentionMeasureSupport.RecordGoalSqlCeiling,
+            "RecordGoal plafond = baseline lot 1 + overhead verrou");
 
         rows.Should().NotBeEmpty("at least one exclusive operation must be measured");
         concurrent.Attempts.Should().BeGreaterThan(0);
@@ -443,11 +448,12 @@ public sealed class CompetitionLockRetentionMeasureTests(
             var stopwatch = Stopwatch.StartNew();
             try
             {
-                await CompetitionLockRetentionMeasureSupport.EmulateExclusiveRecordGoalAsync(
-                    scope,
-                    targets.CompetitionId,
+                var executor = scope.ServiceProvider.GetRequiredService<UseCaseExecutor>();
+                await executor.RecordGoalAsync(
                     targets.RecordGoalMatchId,
-                    targets.ScorerMemberId).ConfigureAwait(false);
+                    targets.ScorerMemberId,
+                    Side.Home,
+                    cancellationToken: default).ConfigureAwait(false);
                 var snapshot = timing.RequireLastSnapshot();
                 waits.Add(snapshot.LockWait);
                 retentions.Add(snapshot.LockRetention);
@@ -645,12 +651,16 @@ public sealed class CompetitionLockRetentionMeasureTests(
 
         var target = allMatches.FirstOrDefault(match => match.Status == MatchStatus.Live)
                      ?? allMatches.First(match => match.Status == MatchStatus.Scheduled);
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
         if (target.Status == MatchStatus.Scheduled)
         {
-            await executor.StartMatchAsync(target.Id).ConfigureAwait(false);
-            target = (await matches.GetByIdForUpdateAsync(target.Id).ConfigureAwait(false))!;
+            var scheduledId = target.Id;
+            unitOfWork.ClearTrackedChanges();
+            await executor.StartMatchAsync(scheduledId).ConfigureAwait(false);
         }
 
+        unitOfWork.ClearTrackedChanges();
+        target = (await matches.GetByIdReadOnlyAsync(target.Id).ConfigureAwait(false))!;
         target.DeclaredParticipations.Should().NotBeEmpty();
         var participation = target.DeclaredParticipations[0];
         return new LiveMatchForRecordGoal(competitionId, target.Id, participation.Id);
@@ -675,8 +685,11 @@ public sealed class CompetitionLockRetentionMeasureTests(
         var semiId = competition.StageIds[^1];
         var semiMatches = await matches.ListByStageForUpdateAsync(semiId).ConfigureAwait(false);
         var scheduled = semiMatches.First(match => match.Status == MatchStatus.Scheduled);
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+        unitOfWork.ClearTrackedChanges();
         await executor.StartMatchAsync(scheduled.Id).ConfigureAwait(false);
-        var live = (await matches.GetByIdForUpdateAsync(scheduled.Id).ConfigureAwait(false))!;
+        unitOfWork.ClearTrackedChanges();
+        var live = (await matches.GetByIdReadOnlyAsync(scheduled.Id).ConfigureAwait(false))!;
         live.DeclaredParticipations.Should().NotBeEmpty();
         var scorer = live.DeclaredParticipations[0].Id;
 
@@ -769,7 +782,7 @@ public sealed class CompetitionLockRetentionMeasureTests(
     private void WriteConcurrentBlock(ConcurrentRecordGoalReport report)
     {
         output.WriteLine(string.Empty);
-        output.WriteLine("RecordGoal concurrent (émulation ExecuteExclusiveAsync côté test)");
+        output.WriteLine("RecordGoal concurrent (verrou réel via UseCaseExecutor)");
         output.WriteLine(
             string.Format(
                 CultureInfo.InvariantCulture,

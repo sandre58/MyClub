@@ -14,6 +14,8 @@ using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Competitions;
+using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Host.Contracts;
@@ -28,6 +30,32 @@ namespace MyClub.PlayUp.Host.Tests;
 public sealed class CompetitionLockTimeoutEndpointTests(HostPostgresFixture fixture)
 {
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 11, 23, 9, 0, 0, TimeSpan.Zero));
+
+    [IntegrationFact]
+    public async Task Recorded_goal_post_returns_409_when_session_lock_outlasts_lock_timeoutAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(
+            fixture.ConnectionString,
+            competitionLockTimeout: "500");
+        var seed = await SeedLiveMatchWithScorerAsync(factory);
+        var key = CompetitionAdvisoryLock.Key(seed.CompetitionId);
+        using var client = factory.CreateClient();
+
+        await using var connection = new NpgsqlConnection(fixture.ConnectionString);
+        await connection.OpenAsync();
+        await using (var hold = new NpgsqlCommand("SELECT pg_advisory_lock(@key)", connection))
+        {
+            hold.Parameters.AddWithValue("key", key);
+            _ = await hold.ExecuteScalarAsync();
+
+            using var response = await client.PostAsJsonAsync(
+                RecordedGoalsUri(seed.MatchId),
+                new RecordGoalRequest(seed.ScorerMemberId.Value, Side.Home, null));
+
+            response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+            (await ReadCodeAsync(response)).Should().Be(ApplicationErrorCodes.CompetitionLockTimeout);
+        }
+    }
 
     [IntegrationFact]
     public async Task Http_exclusive_write_returns_409_when_session_lock_outlasts_lock_timeoutAsync()
@@ -73,6 +101,39 @@ public sealed class CompetitionLockTimeoutEndpointTests(HostPostgresFixture fixt
         };
     }
 
+    private static Uri RecordedGoalsUri(MatchId matchId) =>
+        new($"/matches/{matchId.Value}/recorded-goals", UriKind.Relative);
+
+    private async Task<LiveMatchSeed> SeedLiveMatchWithScorerAsync(PlayUpWebApplicationFactory factory)
+    {
+        var competition = CreateCompetition.Execute("Lock-timeout-record-goal", _clock);
+        var home = AddEntry.Execute(competition, "Home", _clock);
+        var away = AddEntry.Execute(competition, "Away", _clock);
+        var scorer = competition.AddDeclaredMember(home.Id, "Scorer", DeclaredMemberRole.Player, _clock).Id;
+
+        var stage = ConfigureStructure.Execute(
+            competition,
+            null,
+            StructureIntent.Championship(),
+            _clock).Stage;
+        stage.ReplaceAffectationAuthoring([home.Id, away.Id], _clock);
+        stage.AddMatchday(1, _clock);
+        stage.Prepare(_clock);
+        stage.Start(_clock);
+
+        var match = Match.Create(competition.Id, stage.Id, home.Id, away.Id, _clock);
+        match.AddDeclaredParticipation(scorer, Side.Home, CompositionStatus.Starter, _clock);
+        match.Start(_clock);
+
+        using var scope = factory.Services.CreateScope();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+        scope.ServiceProvider.GetRequiredService<ICompetitionRepository>().Add(competition);
+        scope.ServiceProvider.GetRequiredService<IStageRepository>().Add(stage);
+        scope.ServiceProvider.GetRequiredService<IMatchRepository>().Add(match);
+        await unitOfWork.SaveChangesAsync();
+        return new LiveMatchSeed(competition.Id, match.Id, scorer);
+    }
+
     private async Task<Seed> SeedGroupsAsync(PlayUpWebApplicationFactory factory)
     {
         var competition = CreateCompetition.Execute("Lock-timeout-host", _clock);
@@ -99,4 +160,9 @@ public sealed class CompetitionLockTimeoutEndpointTests(HostPostgresFixture fixt
         StageId StageId,
         GroupId GroupId,
         IReadOnlyList<EntryId> EntryIds);
+
+    private sealed record LiveMatchSeed(
+        CompetitionId CompetitionId,
+        MatchId MatchId,
+        MemberId ScorerMemberId);
 }

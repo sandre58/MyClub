@@ -23,6 +23,15 @@ internal static class CompetitionLockRetentionMeasureSupport
     public const int DefaultCiSampleCount = 5;
     public const int FullCampaignSampleThreshold = 40;
 
+    /// <summary>Lot 1 baseline (champions-league:running, RecordGoal without competition lock).</summary>
+    public const int RecordGoalSqlBaselineWithoutLock = 80;
+
+    /// <summary>Extra EF commands from GetCompetitionId + transaction + <c>pg_advisory_xact_lock</c>.</summary>
+    public const int RecordGoalSqlLockOverhead = 6;
+
+    public const int RecordGoalSqlCeiling =
+        RecordGoalSqlBaselineWithoutLock + RecordGoalSqlLockOverhead;
+
     public static int ResolveSampleCount()
     {
         var raw = Environment.GetEnvironmentVariable("PLAYUP_LOCK_MEASURE_SAMPLES");
@@ -37,26 +46,6 @@ internal static class CompetitionLockRetentionMeasureSupport
     }
 
     public static bool IsCiReducedCampaign(int sampleCount) => sampleCount < FullCampaignSampleThreshold;
-
-    public static async Task EmulateExclusiveRecordGoalAsync(
-        IServiceScope scope,
-        CompetitionId competitionId,
-        MatchId matchId,
-        MemberId scorerMemberId)
-    {
-        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
-        var executor = scope.ServiceProvider.GetRequiredService<UseCaseExecutor>();
-        await unitOfWork.ExecuteExclusiveAsync(
-            competitionId,
-            async cancellationToken =>
-            {
-                await executor.RecordGoalAsync(
-                    matchId,
-                    scorerMemberId,
-                    Side.Home,
-                    cancellationToken: cancellationToken).ConfigureAwait(false);
-            }).ConfigureAwait(false);
-    }
 
     public static CompetitionAdvisoryLockTimingSnapshot MeasureExclusiveOperation(
         IServiceScope scope,
