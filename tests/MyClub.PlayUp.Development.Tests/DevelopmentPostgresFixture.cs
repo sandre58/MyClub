@@ -66,8 +66,12 @@ public sealed class DevelopmentPostgresFixture : IAsyncLifetime
         var services = new ServiceCollection();
         services.AddLogging();
         var sqlCommandCounter = new SqlCommandCounterInterceptor();
+        var lockTiming = new CompetitionAdvisoryLockTimingInterceptor();
+        var lockTransactionTiming = new CompetitionAdvisoryLockTransactionInterceptor(lockTiming);
         services.AddSingleton(sqlCommandCounter);
-        services.AddPlayUpInfrastructure(connectionString, options => options.AddInterceptors(sqlCommandCounter));
+        services.AddSingleton(lockTiming);
+        services.AddPlayUpInfrastructure(connectionString,
+            options => options.AddInterceptors(sqlCommandCounter, lockTiming, lockTransactionTiming));
         services.AddMediaInfrastructure(connectionString, _mediaStorageRoot);
         services.AddScoped<IMediaReferenceChecker, AlwaysExistingMediaReferences>();
         services.AddSingleton<IWorkspaceStore>(sp => new FixturePostgresWorkspaceStore(
