@@ -55,24 +55,37 @@ if [[ -z "$BUILD_REPORTED_TOTAL" ]]; then
 fi
 
 # One line per diagnostic; MSBuild may duplicate — use unique physical lines.
-mapfile -t UNIQUE_LINES < <(grep -E ': warning [A-Z][A-Z0-9]*[0-9]+:' "$LOG" | sort -u)
+WARNING_CODE_PATTERN='[A-Za-z][A-Za-z0-9]*[0-9]+'
+mapfile -t UNIQUE_LINES < <(grep -E ": warning ${WARNING_CODE_PATTERN}:" "$LOG" | sort -u)
 declare -A ACTUAL_BY_CODE
 for line in "${UNIQUE_LINES[@]}"; do
-  if [[ "$line" =~ warning[[:space:]]([A-Z][A-Z0-9]*[0-9]+): ]]; then
+  if [[ "$line" =~ warning[[:space:]]([A-Za-z][A-Za-z0-9]*[0-9]+): ]]; then
     code="${BASH_REMATCH[1]}"
     ACTUAL_BY_CODE["$code"]=$(( ${ACTUAL_BY_CODE["$code"]:-0} + 1 ))
   fi
 done
 
+# Fail on MSBuild warning lines whose code does not match the gate pattern (e.g. future lowercase codes).
+mapfile -t RAW_WARNING_LINES < <(grep -E ': warning ' "$LOG" | sort -u)
+for line in "${RAW_WARNING_LINES[@]}"; do
+  if [[ ! "$line" =~ warning[[:space:]]([A-Za-z][A-Za-z0-9]*[0-9]+): ]]; then
+    echo "ERROR: unrecognized MSBuild warning diagnostic (extend the gate pattern): $line" >&2
+    exit 1
+  fi
+done
+
 ACTUAL_TOTAL=0
 for code in "${!ACTUAL_BY_CODE[@]}"; do
-  ACTUAL_TOTAL=$((ACTUAL_TOTAL + ACTUAL_BY_CODE[code]))
+  ACTUAL_TOTAL=$((ACTUAL_TOTAL + ${ACTUAL_BY_CODE[$code]}))
 done
 
 echo "dotnet warnings (gated): $ACTUAL_TOTAL (baseline max $MAX_TOTAL); build reported $BUILD_REPORTED_TOTAL"
 
 if (( ACTUAL_TOTAL > MAX_TOTAL )); then
   echo "ERROR: warning total $ACTUAL_TOTAL exceeds baseline $MAX_TOTAL" >&2
+  for code in $(printf '%s\n' "${!ACTUAL_BY_CODE[@]}" | sort); do
+    echo "  $code: ${ACTUAL_BY_CODE[$code]}" >&2
+  done
   exit 1
 fi
 
