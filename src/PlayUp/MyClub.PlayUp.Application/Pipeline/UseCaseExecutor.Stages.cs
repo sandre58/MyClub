@@ -1013,14 +1013,18 @@ public sealed partial class UseCaseExecutor
     public async Task ReplaceStageMatchGenerationFormatAsync(
         StageId stageId,
         MatchGenerationFormat format,
-        CancellationToken cancellationToken = default)
-    {
-        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
-            .ConfigureAwait(false);
-        ReplaceStageMatchGenerationFormat.Execute(stage, competition, format);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
+        CancellationToken cancellationToken = default) =>
+        await ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await RequireStageAsync(stageId, innerToken).ConfigureAwait(false);
+                var competition = await RequireCompetitionAsync(stage.CompetitionId, innerToken)
+                    .ConfigureAwait(false);
+                ReplaceStageMatchGenerationFormat.Execute(stage, competition, format);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
 
     /// <summary>
     /// Sets Swiss planned round count K (locale).
@@ -1028,14 +1032,18 @@ public sealed partial class UseCaseExecutor
     public async Task ReplaceStageSwissSettingsAsync(
         StageId stageId,
         int roundCount,
-        CancellationToken cancellationToken = default)
-    {
-        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
-            .ConfigureAwait(false);
-        ReplaceStageSwissSettings.Execute(stage, competition, roundCount);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
+        CancellationToken cancellationToken = default) =>
+        await ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await RequireStageAsync(stageId, innerToken).ConfigureAwait(false);
+                var competition = await RequireCompetitionAsync(stage.CompetitionId, innerToken)
+                    .ConfigureAwait(false);
+                ReplaceStageSwissSettings.Execute(stage, competition, roundCount);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
 
     /// <summary>
     /// Replaces progression rules on a stage (null/empty clears).
@@ -1043,30 +1051,34 @@ public sealed partial class UseCaseExecutor
     public async Task ReplaceStageProgressionRulesAsync(
         StageId stageId,
         IReadOnlyList<ProgressionPathSpec>? paths,
-        CancellationToken cancellationToken = default)
-    {
-        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        StructureOperationalExitEditGuard.EnsureStatusAllowsExitEditWithoutMatches(stage, "Progression rules");
-        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
-            .ConfigureAwait(false);
-        var competitionStages = await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken)
-            .ConfigureAwait(false);
-        var stageMatches = await matches.ListByStageForUpdateAsync(stageId, cancellationToken)
-            .ConfigureAwait(false);
-        var destinationMatches = await LoadDestinationMatchesForProgressionReplaceAsync(
-                stageId,
-                competitionStages,
-                cancellationToken)
-            .ConfigureAwait(false);
-        ReplaceStageProgressionRules.Execute(
-            stage,
-            paths,
-            clock,
-            competitionStages,
-            stageMatches,
-            destinationMatches);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
+        CancellationToken cancellationToken = default) =>
+        await ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await RequireStageAsync(stageId, innerToken).ConfigureAwait(false);
+                StructureOperationalExitEditGuard.EnsureStatusAllowsExitEditWithoutMatches(stage, "Progression rules");
+                var competition = await RequireCompetitionAsync(stage.CompetitionId, innerToken)
+                    .ConfigureAwait(false);
+                var competitionStages = await LoadCompetitionStagesForUpdateAsync(competition, innerToken)
+                    .ConfigureAwait(false);
+                var stageMatches = await matches.ListByStageForUpdateAsync(stageId, innerToken)
+                    .ConfigureAwait(false);
+                var destinationMatches = await LoadDestinationMatchesForProgressionReplaceAsync(
+                        stageId,
+                        competitionStages,
+                        innerToken)
+                    .ConfigureAwait(false);
+                ReplaceStageProgressionRules.Execute(
+                    stage,
+                    paths,
+                    clock,
+                    competitionStages,
+                    stageMatches,
+                    destinationMatches);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
 
     /// <summary>
     /// Replaces progression rules from authoring intents (null/empty clears).
@@ -1074,30 +1086,34 @@ public sealed partial class UseCaseExecutor
     public async Task ReplaceStageProgressionIntentsAsync(
         StageId stageId,
         IReadOnlyList<ProgressionIntentSpec>? intents,
-        CancellationToken cancellationToken = default)
-    {
-        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        StructureOperationalExitEditGuard.EnsureStatusAllowsExitEditWithoutMatches(stage, "Progression rules");
-        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
-            .ConfigureAwait(false);
-        var competitionStages = await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken)
-            .ConfigureAwait(false);
-        var stageMatches = await matches.ListByStageForUpdateAsync(stageId, cancellationToken)
-            .ConfigureAwait(false);
-        var destinationMatches = await LoadDestinationMatchesForProgressionReplaceAsync(
-                stageId,
-                competitionStages,
-                cancellationToken)
-            .ConfigureAwait(false);
-        ReplaceStageProgressionRules.Execute(
-            stage,
-            intents,
-            clock,
-            competitionStages,
-            stageMatches,
-            destinationMatches);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
+        CancellationToken cancellationToken = default) =>
+        await ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await RequireStageAsync(stageId, innerToken).ConfigureAwait(false);
+                StructureOperationalExitEditGuard.EnsureStatusAllowsExitEditWithoutMatches(stage, "Progression rules");
+                var competition = await RequireCompetitionAsync(stage.CompetitionId, innerToken)
+                    .ConfigureAwait(false);
+                var competitionStages = await LoadCompetitionStagesForUpdateAsync(competition, innerToken)
+                    .ConfigureAwait(false);
+                var stageMatches = await matches.ListByStageForUpdateAsync(stageId, innerToken)
+                    .ConfigureAwait(false);
+                var destinationMatches = await LoadDestinationMatchesForProgressionReplaceAsync(
+                        stageId,
+                        competitionStages,
+                        innerToken)
+                    .ConfigureAwait(false);
+                ReplaceStageProgressionRules.Execute(
+                    stage,
+                    intents,
+                    clock,
+                    competitionStages,
+                    stageMatches,
+                    destinationMatches);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
 
     /// <summary>
     /// Replaces qualification rules on a stage from legacy path specs (null/empty clears).
@@ -1108,14 +1124,18 @@ public sealed partial class UseCaseExecutor
     public async Task ReplaceStageQualificationRulesAsync(
         StageId stageId,
         IReadOnlyList<QualificationPathSpec>? paths,
-        CancellationToken cancellationToken = default)
-    {
-        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        var (competitionStages, stageMatches) =
-            await LoadQualificationReplaceScopeAsync(stage, cancellationToken).ConfigureAwait(false);
-        ReplaceStageQualificationRules.Execute(stage, paths, clock, competitionStages, stageMatches);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
+        CancellationToken cancellationToken = default) =>
+        await ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await RequireStageAsync(stageId, innerToken).ConfigureAwait(false);
+                var (competitionStages, stageMatches) =
+                    await LoadQualificationReplaceScopeAsync(stage, innerToken).ConfigureAwait(false);
+                ReplaceStageQualificationRules.Execute(stage, paths, clock, competitionStages, stageMatches);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
 
     /// <summary>
     /// Replaces qualification rules from authoring intents (null/empty clears).
@@ -1126,14 +1146,18 @@ public sealed partial class UseCaseExecutor
     public async Task ReplaceStageQualificationIntentsAsync(
         StageId stageId,
         IReadOnlyList<QualificationIntentSpec>? intents,
-        CancellationToken cancellationToken = default)
-    {
-        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        var (competitionStages, stageMatches) =
-            await LoadQualificationReplaceScopeAsync(stage, cancellationToken).ConfigureAwait(false);
-        ReplaceStageQualificationRules.Execute(stage, intents, clock, competitionStages, stageMatches);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
+        CancellationToken cancellationToken = default) =>
+        await ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await RequireStageAsync(stageId, innerToken).ConfigureAwait(false);
+                var (competitionStages, stageMatches) =
+                    await LoadQualificationReplaceScopeAsync(stage, innerToken).ConfigureAwait(false);
+                ReplaceStageQualificationRules.Execute(stage, intents, clock, competitionStages, stageMatches);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
 
     /// <summary>
     /// Loads the stages needed to see a qualification Apply. A Running or Completed stage with no Apply
@@ -1198,12 +1222,16 @@ public sealed partial class UseCaseExecutor
     public async Task ReplaceStagePlacementAwardRulesAsync(
         StageId stageId,
         IReadOnlyList<PlacementAwardPathSpec>? paths,
-        CancellationToken cancellationToken = default)
-    {
-        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        ReplaceStagePlacementAwardRules.Execute(stage, paths, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
+        CancellationToken cancellationToken = default) =>
+        await ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await RequireStageAsync(stageId, innerToken).ConfigureAwait(false);
+                ReplaceStagePlacementAwardRules.Execute(stage, paths, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
 
     /// <summary>
     /// Replaces StandingRules on a classifying stage (allowed after Start). No standing recalculation write-side.
@@ -1211,14 +1239,18 @@ public sealed partial class UseCaseExecutor
     public async Task ReplaceStageStandingRulesAsync(
         StageId stageId,
         StandingRules standingRules,
-        CancellationToken cancellationToken = default)
-    {
-        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
-            .ConfigureAwait(false);
-        ReplaceStageStandingRules.Execute(stage, competition, standingRules, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
+        CancellationToken cancellationToken = default) =>
+        await ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await RequireStageAsync(stageId, innerToken).ConfigureAwait(false);
+                var competition = await RequireCompetitionAsync(stage.CompetitionId, innerToken)
+                    .ConfigureAwait(false);
+                ReplaceStageStandingRules.Execute(stage, competition, standingRules, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
 
     /// <summary>
     /// Specializes MatchRules on a stage (unbinds changed heritable parts).
@@ -1226,14 +1258,18 @@ public sealed partial class UseCaseExecutor
     public async Task ReplaceStageMatchRulesAsync(
         StageId stageId,
         MatchRules matchRules,
-        CancellationToken cancellationToken = default)
-    {
-        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
-            .ConfigureAwait(false);
-        ReplaceStageMatchRules.Execute(stage, competition, matchRules, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
+        CancellationToken cancellationToken = default) =>
+        await ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await RequireStageAsync(stageId, innerToken).ConfigureAwait(false);
+                var competition = await RequireCompetitionAsync(stage.CompetitionId, innerToken)
+                    .ConfigureAwait(false);
+                ReplaceStageMatchRules.Execute(stage, competition, matchRules, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
 
     /// <summary>
     /// Rebinds Match or Standing heritable parts to Competition defaults.
@@ -1241,14 +1277,18 @@ public sealed partial class UseCaseExecutor
     public async Task BindStageRegulationAsync(
         StageId stageId,
         string scope,
-        CancellationToken cancellationToken = default)
-    {
-        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
-            .ConfigureAwait(false);
-        BindStageRegulation.Execute(stage, competition, scope, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
+        CancellationToken cancellationToken = default) =>
+        await ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await RequireStageAsync(stageId, innerToken).ConfigureAwait(false);
+                var competition = await RequireCompetitionAsync(stage.CompetitionId, innerToken)
+                    .ConfigureAwait(false);
+                BindStageRegulation.Execute(stage, competition, scope, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
 
     /// <summary>
     /// Replaces or clears DrawRules on a stage.
@@ -1256,14 +1296,18 @@ public sealed partial class UseCaseExecutor
     public async Task ReplaceStageDrawRulesAsync(
         StageId stageId,
         DrawRules? drawRules,
-        CancellationToken cancellationToken = default)
-    {
-        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
-            .ConfigureAwait(false);
-        ReplaceStageDrawRules.Execute(stage, competition, drawRules, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
+        CancellationToken cancellationToken = default) =>
+        await ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await RequireStageAsync(stageId, innerToken).ConfigureAwait(false);
+                var competition = await RequireCompetitionAsync(stage.CompetitionId, innerToken)
+                    .ConfigureAwait(false);
+                ReplaceStageDrawRules.Execute(stage, competition, drawRules, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
 
     /// <summary>
     /// Replaces Affectation authoring on a stage (syncs runtime CompositionEntries by diff).
@@ -1301,14 +1345,18 @@ public sealed partial class UseCaseExecutor
     public async Task ReplaceStageDefaultTieFormatAsync(
         StageId stageId,
         TieFormat? tieFormat,
-        CancellationToken cancellationToken = default)
-    {
-        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
-            .ConfigureAwait(false);
-        ReplaceStageDefaultTieFormat.Execute(stage, competition, tieFormat, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
+        CancellationToken cancellationToken = default) =>
+        await ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await RequireStageAsync(stageId, innerToken).ConfigureAwait(false);
+                var competition = await RequireCompetitionAsync(stage.CompetitionId, innerToken)
+                    .ConfigureAwait(false);
+                ReplaceStageDefaultTieFormat.Execute(stage, competition, tieFormat, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
 
     /// <summary>
     /// Replaces or clears a Round's TieFormat.
@@ -1317,14 +1365,18 @@ public sealed partial class UseCaseExecutor
         StageId stageId,
         RoundId roundId,
         TieFormat? tieFormat,
-        CancellationToken cancellationToken = default)
-    {
-        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken)
-            .ConfigureAwait(false);
-        ReplaceRoundTieFormat.Execute(stage, competition, roundId, tieFormat, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
+        CancellationToken cancellationToken = default) =>
+        await ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await RequireStageAsync(stageId, innerToken).ConfigureAwait(false);
+                var competition = await RequireCompetitionAsync(stage.CompetitionId, innerToken)
+                    .ConfigureAwait(false);
+                ReplaceRoundTieFormat.Execute(stage, competition, roundId, tieFormat, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
 
     /// <summary>
     /// Creates a Draft Draw on a stage.
