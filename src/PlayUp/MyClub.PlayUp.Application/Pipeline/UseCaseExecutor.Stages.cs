@@ -1786,25 +1786,27 @@ public sealed partial class UseCaseExecutor
         CompetitionId competitionId,
         CancellationToken cancellationToken = default)
     {
-        var competition = await competitions.GetByIdForUpdateAsync(competitionId, cancellationToken)
-                              .ConfigureAwait(false)
-                          ?? throw new ApplicationFailureException(
-                              $"Competition '{competitionId}' was not found.",
-                              ApplicationErrorCodes.CompetitionNotFound);
+        BackfillResolutionProvenanceReport? report = null;
+        await ExecuteOnCompetitionAsync(
+            competitionId,
+            async innerToken =>
+            {
+                var competition = await RequireCompetitionAsync(competitionId, innerToken).ConfigureAwait(false);
+                var competitionStages =
+                    await LoadCompetitionStagesForUpdateAsync(competition, innerToken).ConfigureAwait(false);
+                var stageIds = competitionStages.Select(stage => stage.Id).ToArray();
+                var matchesByStage = stageIds.Length == 0
+                    ? new Dictionary<StageId, IReadOnlyList<Match>>()
+                    : await matches.ListByStageIdsForUpdateAsync(stageIds, innerToken).ConfigureAwait(false);
 
-        var competitionStages =
-            await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken).ConfigureAwait(false);
-        var stageIds = competitionStages.Select(stage => stage.Id).ToArray();
-        var matchesByStage = stageIds.Length == 0
-            ? new Dictionary<StageId, IReadOnlyList<Match>>()
-            : await matches.ListByStageIdsForUpdateAsync(stageIds, cancellationToken).ConfigureAwait(false);
-
-        var report = BackfillResolutionProvenance.Execute(
-            competition,
-            competitionStages,
-            matchesByStage);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return report;
+                report = BackfillResolutionProvenance.Execute(
+                    competition,
+                    competitionStages,
+                    matchesByStage);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
+        return report!;
     }
 
     /// <summary>
