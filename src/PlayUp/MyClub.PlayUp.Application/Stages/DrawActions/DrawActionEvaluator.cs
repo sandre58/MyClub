@@ -91,7 +91,7 @@ internal static class DrawActionEvaluator
         }
 
         var last = cancelledWithReleasable[^1];
-        return last.release.State == StageDrawActionState.Blocked && cancelledWithReleasable .Take(cancelledWithReleasable.Count - 1) .Any(entry => entry.release.State == StageDrawActionState.Available) ? null : last.draw.Id.Value;
+        return last.release.State == StageDrawActionState.Blocked && cancelledWithReleasable.Take(cancelledWithReleasable.Count - 1).Any(entry => entry.release.State == StageDrawActionState.Available) ? null : last.draw.Id.Value;
     }
 
     private static DrawActionAssessment EvaluateCancel(Stage stage, Draw draw)
@@ -287,7 +287,6 @@ internal static class DrawActionEvaluator
         return facts.BlockingPlaceCount > 0
             ? DrawActionAssessment.Block(ApplicationErrorCodes.DrawLaunchGridNotVacant)
             : DrawActionAssessment.Available;
-
     }
 
     private static string? PlacementBlock(Stage stage, Draw draw)
