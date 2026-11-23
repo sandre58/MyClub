@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
+import { MATCH_NOT_FOUND_NOTICE_KEY } from '../match/matchNotFoundNavigation';
 import { fetchMatchesByStage, fetchStageOverview } from '../../api';
 import {
   MatchRow,
@@ -26,7 +27,11 @@ import { structureDeepLink } from '../structure/structureNavigation';
 
 export function StageMatchesPage() {
   const { stageId = '' } = useParams();
+  const location = useLocation();
   const { t } = useTranslation('matches');
+  const matchNotFoundNotice = (
+    location.state as { [MATCH_NOT_FOUND_NOTICE_KEY]?: string } | null
+  )?.[MATCH_NOT_FOUND_NOTICE_KEY];
 
   // Stage overview shares queryKeys.stages.detail with Structure / legacy redirect.
   const stageQuery = useQuery({
@@ -66,6 +71,12 @@ export function StageMatchesPage() {
           ) : undefined
         }
       />
+
+      {matchNotFoundNotice ? (
+        <p className="ds-notice ds-notice--warning" role="alert">
+          {matchNotFoundNotice}
+        </p>
+      ) : null}
 
       {pending && <LoadingState />}
       {error && <ErrorState error={error} />}

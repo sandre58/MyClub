@@ -212,6 +212,9 @@ public sealed class DematerializeChampionshipOrGroupsTests
         public Task<Match?> GetByIdForUpdateAsync(MatchId id, CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
 
+        public Task<CompetitionId?> GetCompetitionIdReadOnlyAsync(MatchId id, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
         public Task<IReadOnlyList<Match>> GetByIdsForUpdateAsync(
             IReadOnlyList<MatchId> ids,
             CancellationToken cancellationToken = default) =>

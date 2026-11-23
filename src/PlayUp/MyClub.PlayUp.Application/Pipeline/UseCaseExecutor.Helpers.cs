@@ -492,6 +492,23 @@ public sealed partial class UseCaseExecutor
     }
 
     /// <summary>
+    /// Resolves the match competition id, then runs <paramref name="write"/> under the competition lock.
+    /// The delegate loads match, stage, and competition aggregates it mutates.
+    /// </summary>
+    private async Task ExecuteOnMatchCompetitionAsync(
+        MatchId matchId,
+        Func<CancellationToken, Task> write,
+        CancellationToken cancellationToken)
+    {
+        var competitionId = await matches.GetCompetitionIdReadOnlyAsync(matchId, cancellationToken)
+                                .ConfigureAwait(false)
+                            ?? throw new ApplicationFailureException(
+                                $"Match '{matchId}' was not found.",
+                                ApplicationErrorCodes.MatchNotFound);
+        await unitOfWork.ExecuteExclusiveAsync(competitionId, write, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// Reads the competition id, then runs <paramref name="write"/> under the competition lock.
     /// The delegate loads the aggregates it mutates.
     /// </summary>

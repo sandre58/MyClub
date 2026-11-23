@@ -3,7 +3,14 @@
 // -----------------------------------------------------------------------
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { assignEntryToSlot, clearSlotAssignment } from '../../../api';
 import { ApiError } from '../../../api';
@@ -88,6 +95,7 @@ export function StructureManualPlacementDialog({
     null,
   );
   const [liveNote, setLiveNote] = useState<string | null>(null);
+  const [teamFocusRestoreEpoch, setTeamFocusRestoreEpoch] = useState(0);
   const occupantSeededRef = useRef(false);
   const lastHubOccupantRef = useRef<string | null | undefined>(undefined);
 
@@ -247,10 +255,17 @@ export function StructureManualPlacementDialog({
       ) {
         setPlaceChangedFooter(t('manualPlacement.placeChangedUpdating'));
         saveMutation.reset();
-        focusTeamList();
+        setTeamFocusRestoreEpoch((value) => value + 1);
       }
     },
   });
+
+  useLayoutEffect(() => {
+    if (teamFocusRestoreEpoch === 0) {
+      return;
+    }
+    focusTeamList();
+  }, [teamFocusRestoreEpoch, entryId]);
 
   useClearMutationsOnOpen(open, saveMutation);
 
@@ -267,17 +282,24 @@ export function StructureManualPlacementDialog({
   }
 
   function focusTeamList() {
-    window.requestAnimationFrame(() => {
-      const root = teamsListRef.current;
-      const tile = root?.querySelector<HTMLElement>(
-        'button[role="radio"]:not([aria-disabled="true"]), input[type="radio"]:not(:disabled)',
+    const root = teamsListRef.current;
+    if (!root) {
+      return;
+    }
+
+    const selected = root.querySelector<HTMLElement>(
+      'button[role="radio"][aria-checked="true"]:not(:disabled):not([aria-disabled="true"])',
+    );
+    const tile =
+      selected ??
+      root.querySelector<HTMLElement>(
+        'button[role="radio"]:not(:disabled):not([aria-disabled="true"])',
       );
-      if (tile) {
-        tile.focus();
-        return;
-      }
-      root?.focus();
-    });
+    if (tile) {
+      tile.focus({ preventScroll: true });
+      return;
+    }
+    root.focus({ preventScroll: true });
   }
 
   const blockedEmpty =

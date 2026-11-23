@@ -652,6 +652,7 @@ public sealed class UseCaseExecutorTests
         var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
         var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
 
+        ArmMatchExclusiveWrite(matchRepo, unitOfWork, match.Id, competition.Id);
         matchRepo
             .Setup(repository => repository.GetByIdForUpdateAsync(match.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(match);
@@ -679,9 +680,7 @@ public sealed class UseCaseExecutorTests
         var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
         var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
 
-        matchRepo
-            .Setup(repository => repository.GetByIdForUpdateAsync(matchId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((DomainMatch?)null);
+        SetupMatchCompetitionId(matchRepo, matchId, null);
 
         var executor = CreateExecutor(stages, matchRepo, competitions, unitOfWork);
         var act = async () => await executor.StartMatchAsync(matchId);
@@ -704,6 +703,7 @@ public sealed class UseCaseExecutorTests
         var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
         var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
 
+        ArmMatchExclusiveWrite(matchRepo, unitOfWork, match.Id, competition.Id);
         matchRepo
             .Setup(repository => repository.GetByIdForUpdateAsync(match.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(match);
@@ -734,6 +734,7 @@ public sealed class UseCaseExecutorTests
         var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
         var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
 
+        ArmMatchExclusiveWrite(matchRepo, unitOfWork, match.Id, competition.Id);
         matchRepo
             .Setup(repository => repository.GetByIdForUpdateAsync(match.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(match);
@@ -763,9 +764,7 @@ public sealed class UseCaseExecutorTests
         var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
         var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
 
-        matchRepo
-            .Setup(repository => repository.GetByIdForUpdateAsync(matchId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((DomainMatch?)null);
+        SetupMatchCompetitionId(matchRepo, matchId, null);
 
         var executor = CreateExecutor(stages, matchRepo, competitions, unitOfWork);
         var act = async () => await executor.FinishMatchAsync(matchId, result);
@@ -789,6 +788,7 @@ public sealed class UseCaseExecutorTests
         var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
         var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
 
+        ArmMatchExclusiveWrite(matchRepo, unitOfWork, match.Id, competition.Id);
         matchRepo
             .Setup(repository => repository.GetByIdForUpdateAsync(match.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(match);
@@ -817,6 +817,7 @@ public sealed class UseCaseExecutorTests
         var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
         var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
 
+        ArmMatchExclusiveWrite(matchRepo, unitOfWork, match.Id, competition.Id);
         matchRepo
             .Setup(repository => repository.GetByIdForUpdateAsync(match.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(match);
@@ -846,6 +847,7 @@ public sealed class UseCaseExecutorTests
         var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
         var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
 
+        ArmMatchExclusiveWrite(matchRepo, unitOfWork, match.Id, competition.Id);
         matchRepo
             .Setup(repository => repository.GetByIdForUpdateAsync(match.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(match);
@@ -875,6 +877,7 @@ public sealed class UseCaseExecutorTests
         var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
         var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
 
+        ArmMatchExclusiveWrite(matchRepo, unitOfWork, match.Id, competition.Id);
         matchRepo
             .Setup(repository => repository.GetByIdForUpdateAsync(match.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(match);
@@ -990,6 +993,24 @@ public sealed class UseCaseExecutorTests
         stages
             .Setup(repository => repository.GetCompetitionIdReadOnlyAsync(stageId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(competitionId);
+
+    private static void SetupMatchCompetitionId(
+        Mock<IMatchRepository> matchRepo,
+        MatchId matchId,
+        CompetitionId? competitionId) =>
+        matchRepo
+            .Setup(repository => repository.GetCompetitionIdReadOnlyAsync(matchId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(competitionId);
+
+    private static void ArmMatchExclusiveWrite(
+        Mock<IMatchRepository> matchRepo,
+        Mock<IUnitOfWork> unitOfWork,
+        MatchId matchId,
+        CompetitionId competitionId)
+    {
+        SetupMatchCompetitionId(matchRepo, matchId, competitionId);
+        SetupExclusive(unitOfWork);
+    }
 
     private static void SetupCompetitionLookup(Mock<ICompetitionRepository> competitions, Competition competition) =>
         competitions

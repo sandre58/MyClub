@@ -274,7 +274,12 @@ describe('MatchPage goals', () => {
   it('Live: if RunningScore fails after RecordGoal, shows desync and still lists goal', async () => {
     const user = userEvent.setup();
     vi.mocked(setRunningScore).mockRejectedValue(
-      new ApiError(409, 'RS failed', undefined, 'Match.InvalidTransition'),
+      new ApiError(
+        409,
+        'Lock timeout',
+        undefined,
+        'Application.CompetitionLockTimeout',
+      ),
     );
     vi.mocked(fetchMatchDetail).mockImplementation(async () => {
       if (vi.mocked(recordGoal).mock.calls.length > 0) {
@@ -315,8 +320,16 @@ describe('MatchPage goals', () => {
         selector: '.match-goals__scorer',
       }),
     ).toBeInTheDocument();
-    expect(recordGoal).toHaveBeenCalled();
-    expect(setRunningScore).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(recordGoal).toHaveBeenCalledTimes(1);
+    });
+    expect(setRunningScore).toHaveBeenCalledTimes(1);
+    expect(
+      within(goalsPanel).queryByRole('button', { name: /réessayer/i }),
+    ).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(recordGoal).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('Scheduled: records a goal without SetRunningScore', async () => {
@@ -424,5 +437,93 @@ describe('MatchPage goals', () => {
         awayGoals: 0,
       });
     });
+  });
+
+  it('Live: correct goal does not replay PUT when RunningScore fails after success', async () => {
+    const user = userEvent.setup();
+    vi.mocked(setRunningScore).mockRejectedValue(
+      new ApiError(
+        409,
+        'Lock timeout',
+        undefined,
+        'Application.CompetitionLockTimeout',
+      ),
+    );
+    vi.mocked(fetchMatchDetail).mockResolvedValue(
+      baseMatch({
+        status: 'Live',
+        hasObservedLive: true,
+        runningScore: { homeGoals: 1, awayGoals: 0 },
+        recordedGoals: [goal()],
+      }),
+    );
+
+    renderMatchPage();
+
+    const goalsPanel = (
+      await screen.findByRole('heading', { name: 'Buts' })
+    ).closest('section') as HTMLElement;
+
+    await user.click(
+      within(goalsPanel).getByRole('button', { name: 'Corriger' }),
+    );
+    await user.selectOptions(
+      within(goalsPanel).getByLabelText(/Buteur/i),
+      martinId,
+    );
+    await user.click(
+      within(goalsPanel).getByRole('button', {
+        name: 'Enregistrer la correction',
+      }),
+    );
+
+    await waitFor(() => {
+      expect(correctRecordedGoal).toHaveBeenCalledTimes(1);
+    });
+    expect(setRunningScore).toHaveBeenCalledTimes(1);
+    expect(
+      within(goalsPanel).queryByRole('button', { name: /réessayer/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('Live: remove goal does not replay DELETE when RunningScore fails after success', async () => {
+    const user = userEvent.setup();
+    vi.mocked(setRunningScore).mockRejectedValue(
+      new ApiError(
+        409,
+        'Lock timeout',
+        undefined,
+        'Application.CompetitionLockTimeout',
+      ),
+    );
+    vi.mocked(fetchMatchDetail).mockResolvedValue(
+      baseMatch({
+        status: 'Live',
+        hasObservedLive: true,
+        runningScore: { homeGoals: 1, awayGoals: 0 },
+        recordedGoals: [goal()],
+      }),
+    );
+
+    renderMatchPage();
+
+    const goalsPanel = (
+      await screen.findByRole('heading', { name: 'Buts' })
+    ).closest('section') as HTMLElement;
+
+    await user.click(
+      within(goalsPanel).getByRole('button', { name: 'Retirer' }),
+    );
+    await user.click(
+      within(goalsPanel).getByRole('button', { name: 'Confirmer le retrait' }),
+    );
+
+    await waitFor(() => {
+      expect(removeRecordedGoal).toHaveBeenCalledTimes(1);
+    });
+    expect(setRunningScore).toHaveBeenCalledTimes(1);
+    expect(
+      within(goalsPanel).queryByRole('button', { name: /réessayer/i }),
+    ).not.toBeInTheDocument();
   });
 });
