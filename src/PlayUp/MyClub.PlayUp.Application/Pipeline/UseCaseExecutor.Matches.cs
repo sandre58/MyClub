@@ -23,17 +23,21 @@ public sealed partial class UseCaseExecutor
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A task that completes when the match is started and persisted.</returns>
     /// <exception cref="ApplicationFailureException">Thrown when the match does not exist, the competition is closed, or sportive exploitation is not open.</exception>
-    public Task StartMatchAsync(MatchId matchId, CancellationToken cancellationToken = default) =>
-        ExecuteOnMatchCompetitionAsync(
+    public async Task StartMatchAsync(MatchId matchId, CancellationToken cancellationToken = default)
+    {
+        var competitionId = default(Guid);
+        await ExecuteOnMatchCompetitionAsync(
             matchId,
             async innerToken =>
             {
                 var match = await RequireMatchForOperationAsync(matchId, innerToken).ConfigureAwait(false);
                 StartMatch.Execute(match, clock);
                 await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
-                LogMatchStarted(logger, matchId.Value, match.CompetitionId.Value);
+                competitionId = match.CompetitionId.Value;
             },
-            cancellationToken);
+            cancellationToken).ConfigureAwait(false);
+        LogMatchStarted(logger, matchId.Value, competitionId);
+    }
 
     /// <summary>
     /// Loads a match, runs <see cref="FinishMatch"/>, and saves changes.
@@ -50,16 +54,26 @@ public sealed partial class UseCaseExecutor
     {
         ArgumentNullException.ThrowIfNull(result);
 
-        return ExecuteOnMatchCompetitionAsync(
+        return FinishMatchAndLogAfterCommitAsync(matchId, result, cancellationToken);
+    }
+
+    private async Task FinishMatchAndLogAfterCommitAsync(
+        MatchId matchId,
+        MatchResult result,
+        CancellationToken cancellationToken)
+    {
+        var competitionId = default(Guid);
+        await ExecuteOnMatchCompetitionAsync(
             matchId,
             async innerToken =>
             {
                 var match = await RequireMatchForOperationAsync(matchId, innerToken).ConfigureAwait(false);
                 FinishMatch.Execute(match, result, clock);
                 await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
-                LogMatchFinished(logger, matchId.Value, match.CompetitionId.Value);
+                competitionId = match.CompetitionId.Value;
             },
-            cancellationToken);
+            cancellationToken).ConfigureAwait(false);
+        LogMatchFinished(logger, matchId.Value, competitionId);
     }
 
     /// <summary>

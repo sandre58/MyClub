@@ -28,7 +28,7 @@ internal static class CompetitionLockRetentionMeasureSupport
 
     /// <summary>
     /// Measured delta with real lock (champions-league:running). BEGIN/COMMIT are not counted;
-    /// +3 EF commands = projection competition id + transaction + <c>pg_advisory_xact_lock</c>.
+    /// +3 EF commands = projection competition id + <c>SET LOCAL lock_timeout</c> + <c>pg_advisory_xact_lock</c>.
     /// </summary>
     public const int RecordGoalSqlWithLock = 83;
 
