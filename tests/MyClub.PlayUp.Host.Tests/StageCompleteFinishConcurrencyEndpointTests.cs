@@ -5,7 +5,9 @@
 // -----------------------------------------------------------------------
 
 using System.Net;
+using System.Text.Json;
 using FluentAssertions;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Abstractions;
@@ -94,14 +96,19 @@ public sealed class StageCompleteFinishConcurrencyEndpointTests(HostPostgresFixt
                 CompetitionOrderedWriterConcurrencySupport.AssertNoUnhandledPostgresContention(finishResponse);
 
                 completeResponse.StatusCode.Should().Be(HttpStatusCode.Conflict);
-                (await CompetitionOrderedWriterConcurrencySupport.ReadCodeAsync(completeResponse))
-                    .Should().Be(ApplicationErrorCodes.StageCompletionBlocked);
+                var completeProblem =
+                    await completeResponse.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
+                GetCode(completeProblem).Should().Be(ApplicationErrorCodes.StageCompletionBlocked);
+                GetReasons(completeProblem!).Should().Contain(CompleteStage.ReasonOpenMatches);
                 finishResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
                 using var scope = factory.Services.CreateScope();
                 var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+                var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
                 var loaded = await stages.GetByIdForUpdateAsync(seed.StageId);
                 loaded!.Status.Should().Be(StageStatus.Running);
+                var match = await matches.GetByIdForUpdateAsync(seed.LiveMatchId);
+                match!.Status.Should().Be(MatchStatus.Finished);
             }
         }
     }
@@ -134,6 +141,29 @@ public sealed class StageCompleteFinishConcurrencyEndpointTests(HostPostgresFixt
 
         return new CompleteFinishSeed(situation.Competition.Id, stage.Id, live.Id);
     }
+
+    private static string? GetCode(ProblemDetails? problem) =>
+        problem is null || !problem.Extensions.TryGetValue("code", out var raw) || raw is null
+            ? null
+            : raw switch
+            {
+                string text => text,
+                JsonElement { ValueKind: JsonValueKind.String } element => element.GetString(),
+                _ => raw.ToString()
+            };
+
+    private static IReadOnlyList<string> GetReasons(ProblemDetails problem) =>
+        !problem.Extensions.TryGetValue("reasons", out var raw) || raw is null
+            ? []
+            : raw switch
+            {
+                JsonElement { ValueKind: JsonValueKind.Array } element =>
+                [
+                    .. element.EnumerateArray().Select(item => item.GetString()!)
+                ]!,
+                IEnumerable<string> texts => [.. texts],
+                _ => []
+            };
 
     private static Uri CompleteUri(StageId stageId) =>
         new($"/stages/{stageId.Value}/complete", UriKind.Relative);
