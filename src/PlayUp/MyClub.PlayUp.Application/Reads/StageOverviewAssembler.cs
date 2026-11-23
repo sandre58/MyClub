@@ -211,7 +211,8 @@ public static class StageOverviewAssembler
             new StageDrawReleaseActionDto(
                 assessment.Release.State,
                 assessment.Release.BlockCode,
-                assessment.Release.ReleasableCount),
+                assessment.Release.ReleasableCount,
+                assessment.Release.DrawnTargetCount),
             new StageDrawActionDto(assessment.Apply.State, assessment.Apply.BlockCode),
             new StageDrawActionDto(assessment.PublishAndApply.State, assessment.PublishAndApply.BlockCode),
             new StageDrawActionDto(

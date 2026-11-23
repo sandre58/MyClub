@@ -126,6 +126,8 @@ export interface StageDrawAction {
 
 export interface StageDrawReleaseAction extends StageDrawAction {
   releasableCount: number;
+  /** Drawn targets in this execution (slot results minus fixed slots, or drawn group entries). */
+  drawnTargetCount?: number;
 }
 
 export interface StageDrawActions {

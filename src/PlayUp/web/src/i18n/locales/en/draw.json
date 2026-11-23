@@ -60,6 +60,7 @@
   "noActiveBody": "Start a new draw",
   "noActiveReleaseFirst": "Release placements from execution #{{n}} first",
   "releaseRun": "Release #{{n}} ({{aligned}}/{{total}})",
+  "releaseDrawnTeam": "Release the drawn team",
   "releaseHeldByActive": "Abandon the active execution to release these placements",
   "runMetaUnreleased": "{{aligned}}/{{total}} not released",
   "runMetaReleased": "Released",

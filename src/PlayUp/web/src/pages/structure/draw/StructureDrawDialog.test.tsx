@@ -1167,6 +1167,36 @@ describe('StructureDrawDialog', () => {
     ).toBeInTheDocument();
   });
 
+  it('hides Cup NoFreeSlot footer while Libérer is available', async () => {
+    const cancelled = slotDraw({
+      id: 'draw-cancelled',
+      status: 'Cancelled',
+      actions: releaseAvailable(2),
+      slotPlacements: [
+        { slotKey: 'R16-1-A', entryId: 'e1', displayName: 'Belgium' },
+        { slotKey: 'R16-1-B', entryId: 'e2', displayName: 'Poland' },
+      ],
+    });
+    vi.mocked(fetchStageOverview).mockResolvedValue(
+      overview([cancelled], {}, 'draw-cancelled'),
+    );
+    renderDialog(
+      cupStage({
+        compositionEntryCount: 16,
+        compositionCapacity: 16,
+        drawCreateLaunch: { allowed: false, blockReasonCode: 'NoFreeSlot' },
+      }),
+    );
+    await screen.findByRole('button', {
+      name: 'Libérer les 2 équipes tirées',
+    });
+    expect(
+      screen.queryByText(
+        'Toutes les places de cette phase sont déjà occupées ou réservées. Le tirage ne remplace pas les équipes déjà placées.',
+      ),
+    ).not.toBeInTheDocument();
+  });
+
   it('selects the new draw after Nouveau when history had a cancelled execution', async () => {
     const user = userEvent.setup();
     vi.mocked(fetchStageOverview).mockResolvedValue(
@@ -1920,7 +1950,7 @@ describe('StructureDrawDialog', () => {
 
     expect(await screen.findByText('1/2 non libérés')).toBeInTheDocument();
     const releaseButton = screen.getByRole('button', {
-      name: 'Libérer les 1 équipes tirées',
+      name: "Libérer l'équipe tirée",
     });
     expect(releaseButton.closest('.structure-draw-footer')).not.toBeNull();
     expect(releaseButton.closest('summary')).toBeNull();
@@ -1933,7 +1963,7 @@ describe('StructureDrawDialog', () => {
     });
     await user.click(
       within(confirm).getByRole('button', {
-        name: 'Libérer les 1 équipes tirées',
+        name: "Libérer l'équipe tirée",
       }),
     );
 
@@ -2006,7 +2036,7 @@ describe('StructureDrawDialog', () => {
     expect(footer).not.toBeNull();
     const footerRelease = await within(footer as HTMLElement).findByRole(
       'button',
-      { name: 'Libérer les 1 équipes tirées' },
+      { name: "Libérer l'équipe tirée (#2)" },
     );
     expect(
       within(footer as HTMLElement).queryByRole('button', {
@@ -2020,7 +2050,7 @@ describe('StructureDrawDialog', () => {
     });
     await user.click(
       within(confirm).getByRole('button', {
-        name: 'Libérer les 1 équipes tirées',
+        name: "Libérer l'équipe tirée (#2)",
       }),
     );
 
@@ -3211,7 +3241,7 @@ describe('StructureDrawDialog', () => {
       }),
     );
     const release = await screen.findByRole('button', {
-      name: 'Libérer les 1 équipes tirées',
+      name: "Libérer l'équipe tirée",
     });
     release.focus();
     await user.click(release);
@@ -3220,7 +3250,7 @@ describe('StructureDrawDialog', () => {
     });
     await user.click(
       within(confirm).getByRole('button', {
-        name: 'Libérer les 1 équipes tirées',
+        name: "Libérer l'équipe tirée",
       }),
     );
     await waitFor(() => {
@@ -3278,7 +3308,7 @@ describe('StructureDrawDialog', () => {
       vi.mocked(fetchStageOverview).mockResolvedValue(payload);
       renderDialog(groupsStage());
       expect(
-        await screen.findByRole('button', { name: 'Libérer #1 (1/1)' }),
+        await screen.findByRole('button', { name: "Libérer l'équipe tirée" }),
       ).toBeInTheDocument();
     });
 
@@ -3354,14 +3384,16 @@ describe('StructureDrawDialog', () => {
       });
       renderDialog(groupsStage());
       await user.click(
-        await screen.findByRole('button', { name: 'Libérer #2 (1/1)' }),
+        await screen.findByRole('button', {
+          name: "Libérer l'équipe tirée (#2)",
+        }),
       );
       const confirm = await screen.findByRole('dialog', {
         name: 'Libérer les placements du tirage ?',
       });
       await user.click(
         within(confirm).getByRole('button', {
-          name: 'Libérer les placements du tirage',
+          name: "Libérer l'équipe tirée (#2)",
         }),
       );
       await waitFor(() => {
@@ -3373,13 +3405,13 @@ describe('StructureDrawDialog', () => {
       });
       await waitFor(() => {
         expect(
-          screen.getByRole('button', { name: 'Libérer #1 (1/1)' }),
+          screen.getByRole('button', { name: "Libérer l'équipe tirée" }),
         ).toBeInTheDocument();
       });
       await vi.advanceTimersByTimeAsync(160);
       await waitFor(() => {
         expect(
-          screen.getByRole('button', { name: 'Libérer #1 (1/1)' }),
+          screen.getByRole('button', { name: "Libérer l'équipe tirée" }),
         ).toHaveFocus();
       });
     });
@@ -3425,7 +3457,7 @@ describe('StructureDrawDialog', () => {
       renderDialog(cupStage());
       await user.click(
         await screen.findByRole('button', {
-          name: 'Libérer les 1 équipes tirées',
+          name: "Libérer l'équipe tirée",
         }),
       );
       const confirm = await screen.findByRole('dialog', {
@@ -3433,7 +3465,7 @@ describe('StructureDrawDialog', () => {
       });
       await user.click(
         within(confirm).getByRole('button', {
-          name: 'Libérer les 1 équipes tirées',
+          name: "Libérer l'équipe tirée",
         }),
       );
       await waitFor(() => {
@@ -3446,7 +3478,7 @@ describe('StructureDrawDialog', () => {
       await vi.advanceTimersByTimeAsync(160);
       await waitFor(() => {
         expect(
-          screen.getByRole('button', { name: 'Libérer les 1 équipes tirées' }),
+          screen.getByRole('button', { name: "Libérer l'équipe tirée" }),
         ).toHaveFocus();
       });
     });
@@ -3478,14 +3510,14 @@ describe('StructureDrawDialog', () => {
       );
       renderDialog(groupsStage());
       await user.click(
-        await screen.findByRole('button', { name: 'Libérer #1 (1/1)' }),
+        await screen.findByRole('button', { name: "Libérer l'équipe tirée" }),
       );
       const confirm = await screen.findByRole('dialog', {
         name: 'Libérer les placements du tirage ?',
       });
       await user.click(
         within(confirm).getByRole('button', {
-          name: 'Libérer les placements du tirage',
+          name: "Libérer l'équipe tirée",
         }),
       );
       await waitFor(() => {
@@ -3512,7 +3544,7 @@ describe('StructureDrawDialog', () => {
       await vi.advanceTimersByTimeAsync(160);
       await waitFor(() => {
         expect(
-          screen.getByRole('button', { name: 'Libérer #1 (1/1)' }),
+          screen.getByRole('button', { name: "Libérer l'équipe tirée" }),
         ).toHaveFocus();
         expect(document.body).not.toHaveFocus();
       });
@@ -3600,7 +3632,7 @@ describe('StructureDrawDialog', () => {
     );
     renderDialog(groupsStage({ status: 'Ready', matchCount: 2 }));
     const release = await screen.findByRole('button', {
-      name: 'Libérer #1 (1/1)',
+      name: "Libérer l'équipe tirée",
     });
     expect(release).toBeDisabled();
     const reason = releaseAttachedMatchesError;
@@ -3663,14 +3695,14 @@ describe('StructureDrawDialog', () => {
     });
     renderDialog(groupsStage({ matchCount: 2 }));
     await user.click(
-      await screen.findByRole('button', { name: 'Libérer #1 (1/1)' }),
+      await screen.findByRole('button', { name: "Libérer l'équipe tirée" }),
     );
     const confirm = await screen.findByRole('dialog', {
       name: 'Libérer les placements du tirage ?',
     });
     await user.click(
       within(confirm).getByRole('button', {
-        name: 'Libérer les placements du tirage',
+        name: "Libérer l'équipe tirée",
       }),
     );
     const main = screen
@@ -3989,7 +4021,7 @@ describe('StructureDrawDialog', () => {
     expect(screen.getByText('Lancez un nouveau tirage')).toBeInTheDocument();
   });
 
-  it('shows noActiveReleaseFirst when a releasable cancelled draw blocks launch', async () => {
+  it('shows noActiveBody for Groups when launch stays allowed despite a releasable run', async () => {
     vi.mocked(fetchStageOverview).mockResolvedValue(
       overview(
         [
@@ -4013,10 +4045,11 @@ describe('StructureDrawDialog', () => {
     );
     renderDialog();
     expect(
-      await screen.findByText(
-        "Libérez d'abord les placements de l'exécution #1",
-      ),
+      await screen.findByText('Lancez un nouveau tirage'),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Libérez d'abord les placements/),
+    ).not.toBeInTheDocument();
   });
 
   it('shows releaseHeldByActive in cancelled detail when an active draft blocks release', async () => {
@@ -4104,14 +4137,14 @@ describe('StructureDrawDialog', () => {
     });
     renderDialog(groupsStage());
     await user.click(
-      await screen.findByRole('button', { name: 'Libérer #1 (1/1)' }),
+      await screen.findByRole('button', { name: "Libérer l'équipe tirée" }),
     );
     const confirm = await screen.findByRole('dialog', {
       name: 'Libérer les placements du tirage ?',
     });
     await user.click(
       within(confirm).getByRole('button', {
-        name: 'Libérer les placements du tirage',
+        name: "Libérer l'équipe tirée",
       }),
     );
     await waitFor(() => {
@@ -4238,7 +4271,7 @@ describe('StructureDrawDialog', () => {
     renderDialog(groupsStage());
 
     const release = await screen.findByRole('button', {
-      name: 'Libérer #1 (1/1)',
+      name: "Libérer l'équipe tirée",
     });
     expect(release).toBeDisabled();
     expect(screen.getByText(releaseAttachedMatchesError)).toBeInTheDocument();
@@ -4560,7 +4593,7 @@ describe('StructureDrawDialog', () => {
     const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
     await user.click(
       await screen.findByRole('button', {
-        name: 'Libérer les 1 équipes tirées',
+        name: "Libérer l'équipe tirée",
       }),
     );
     const confirm = await screen.findByRole('dialog', {
@@ -4568,7 +4601,7 @@ describe('StructureDrawDialog', () => {
     });
     await user.click(
       within(confirm).getByRole('button', {
-        name: 'Libérer les 1 équipes tirées',
+        name: "Libérer l'équipe tirée",
       }),
     );
     await waitFor(() => {

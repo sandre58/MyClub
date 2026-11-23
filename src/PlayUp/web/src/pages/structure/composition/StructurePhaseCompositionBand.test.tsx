@@ -56,6 +56,7 @@ const basePlacement: StructurePlacementOperationalSectionProps = {
   showPoolHint: false,
   releasableAlignedCount: 0,
   releasableTotal: 0,
+  releaseButtonLabel: '',
   releasePending: false,
   deactivateDrawPending: false,
   drawOperationalReady: true,

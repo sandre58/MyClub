@@ -138,15 +138,16 @@ internal static class DrawActionEvaluator
         bool treatAsCancelled)
     {
         var count = CountReleasable(context, draw);
+        var drawnTargets = DrawReleaseReleasability.CountDrawnTargets(draw);
         var block = TryReleaseBlock(context, draw, treatAsCancelled);
         if (block is not null)
         {
-            return new DrawReleaseAssessment(StageDrawActionState.Blocked, block, count);
+            return new DrawReleaseAssessment(StageDrawActionState.Blocked, block, count, drawnTargets);
         }
 
         return count == 0
-            ? new DrawReleaseAssessment(StageDrawActionState.Hidden, null, 0)
-            : new DrawReleaseAssessment(StageDrawActionState.Available, null, count);
+            ? new DrawReleaseAssessment(StageDrawActionState.Hidden, null, 0, drawnTargets)
+            : new DrawReleaseAssessment(StageDrawActionState.Available, null, count, drawnTargets);
     }
 
     private static string? TryReleaseBlock(DrawActionContext context, Draw draw, bool treatAsCancelled)
@@ -508,7 +509,8 @@ internal sealed record DrawActionAssessment(
 internal sealed record DrawReleaseAssessment(
     StageDrawActionState State,
     string? BlockCode,
-    int ReleasableCount);
+    int ReleasableCount,
+    int DrawnTargetCount);
 
 internal sealed record DrawActionsAssessment(
     DrawActionAssessment Cancel,

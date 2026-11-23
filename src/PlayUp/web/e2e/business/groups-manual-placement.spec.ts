@@ -850,7 +850,7 @@ test.describe('manual group placement', () => {
     await overviewAfterCancel;
 
     const releaseOnCancelled = dialog.getByRole('button', {
-      name: /Libérer #\d+ \([1-9]\d*\//,
+      name: /Libérer (l'équipe|les \d+ équipes) tirées/,
     });
     await expect(releaseOnCancelled).toBeVisible();
     const overview = await readStageOverview(request, stageId);
@@ -862,10 +862,13 @@ test.describe('manual group placement', () => {
       0,
     );
     const releaseLabel = (await releaseOnCancelled.textContent()) ?? '';
-    const alignedMatch = releaseLabel.match(/\((\d+)\/(\d+)\)/);
+    const alignedMatch = releaseLabel.match(
+      /Libérer (?:l'équipe tirée|les (\d+) équipes tirées)/,
+    );
     expect(alignedMatch).not.toBeNull();
-    const aligned = Number(alignedMatch![1]);
-    const total = Number(alignedMatch![2]);
+    const aligned = releaseLabel.includes("l'équipe tirée")
+      ? 1
+      : Number(alignedMatch![1]);
     const releaseCandidate = overview.draws?.find(
       (draw) => draw.id === overview.releaseCandidateDrawId,
     );
@@ -878,7 +881,9 @@ test.describe('manual group placement', () => {
     expect(releaseCandidate?.actions?.release?.releasableCount).toBeLessThan(
       occupiedTotal,
     );
-    expect(total).toBeGreaterThanOrEqual(aligned);
+    expect(releaseCandidate?.actions?.release?.drawnTargetCount).toBe(
+      releaseCandidate?.actions?.release?.releasableCount,
+    );
   });
 
   test('clears a fixed team after apply and keeps a drawn team protected', async ({

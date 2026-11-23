@@ -60,6 +60,7 @@
   "noActiveBody": "Lancez un nouveau tirage",
   "noActiveReleaseFirst": "Libérez d'abord les placements de l'exécution #{{n}}",
   "releaseRun": "Libérer #{{n}} ({{aligned}}/{{total}})",
+  "releaseDrawnTeam": "Libérer l'équipe tirée",
   "releaseHeldByActive": "Abandonnez l'exécution active pour libérer ces placements",
   "runMetaUnreleased": "{{aligned}}/{{total}} non libérés",
   "runMetaReleased": "Libérée",

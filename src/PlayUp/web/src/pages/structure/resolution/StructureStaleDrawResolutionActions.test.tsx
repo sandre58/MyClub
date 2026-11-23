@@ -53,13 +53,15 @@ const noop = () => {};
 type Props = ComponentProps<typeof StructureStaleDrawResolutionActions>;
 
 function renderActions(overrides: Partial<Props> = {}) {
+  const activeDraw = appliedDraw(
+    drawActions({
+      redo: { state: 'Available' },
+      release: { state: 'Available', releasableCount: 2, drawnTargetCount: 2 },
+    }),
+  );
+  const resolvedActive =
+    overrides.activeDraw === undefined ? activeDraw : overrides.activeDraw;
   const props: Props = {
-    activeDraw: appliedDraw(
-      drawActions({
-        redo: { state: 'Available' },
-        release: { state: 'Available', releasableCount: 2 },
-      }),
-    ),
     releaseCta: {
       draw: null,
       aligned: 0,
@@ -81,6 +83,10 @@ function renderActions(overrides: Partial<Props> = {}) {
     onConfirmRedo: noop,
     onConfirmRelease: noop,
     ...overrides,
+    activeDraw: resolvedActive,
+    stageDraws:
+      overrides.stageDraws ??
+      (resolvedActive != null ? [resolvedActive] : []),
   };
 
   return renderWithI18n(<StructureStaleDrawResolutionActions {...props} />);
@@ -94,8 +100,8 @@ describe('StructureStaleDrawResolutionActions', () => {
       screen.getByRole('button', { name: 'Refaire le tirage' }),
     ).toBeEnabled();
     expect(
-      screen.getByRole('button', { name: /Libérer les placements/i }),
-    ).toHaveTextContent('Libérer les placements (2)');
+      screen.getByRole('button', { name: 'Libérer les 2 équipes tirées' }),
+    ).toBeEnabled();
   });
 
   it('disables Refaire when redo is blocked by server guard', () => {
@@ -177,7 +183,7 @@ describe('StructureStaleDrawResolutionActions', () => {
     });
 
     expect(
-      screen.getByRole('button', { name: 'Libérer les placements' }),
+      screen.getByRole('button', { name: 'Libérer les 3 équipes tirées' }),
     ).toBeDisabled();
   });
 
@@ -289,7 +295,7 @@ describe('StructureStaleDrawResolutionActions', () => {
     renderActions({ onOpenConfirmRelease });
 
     await user.click(
-      screen.getByRole('button', { name: /Libérer les placements/i }),
+      screen.getByRole('button', { name: 'Libérer les 2 équipes tirées' }),
     );
     expect(onOpenConfirmRelease).toHaveBeenCalledTimes(1);
   });

@@ -78,6 +78,24 @@ internal static class DrawReleaseReleasability
         };
     }
 
+    /// <summary>
+    /// Drawn targets in this execution's resolution (slot results minus fixed slots, or drawn group entries).
+    /// </summary>
+    internal static int CountDrawnTargets(Draw draw)
+    {
+        if (draw.Resolution.State != DrawResolutionState.Resolved)
+        {
+            return 0;
+        }
+
+        return draw.Kind switch
+        {
+            DrawResolutionKind.Slot => DrawnSlotPlacements(draw).Count(),
+            DrawResolutionKind.Group => GroupDrawLaunchRules.DrawnEntries(draw).Count,
+            _ => 0
+        };
+    }
+
     internal static bool IsReleasableSlot(
         Stage stage,
         Draw draw,

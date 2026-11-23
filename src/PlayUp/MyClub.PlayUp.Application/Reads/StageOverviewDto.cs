@@ -279,10 +279,12 @@ public sealed record StageDrawActionDto(
 /// <param name="State">Hidden when the count is zero and nothing else blocks the command.</param>
 /// <param name="BlockCode">Existing error code when <paramref name="State"/> is Blocked.</param>
 /// <param name="ReleasableCount">Aligned placements the command would release.</param>
+/// <param name="DrawnTargetCount">Drawn targets in this execution (slot results minus fixed slots, or drawn group entries).</param>
 public sealed record StageDrawReleaseActionDto(
     StageDrawActionState State,
     string? BlockCode,
-    int ReleasableCount);
+    int ReleasableCount,
+    int DrawnTargetCount);
 
 /// <summary>
 /// Draw actions on <c>GET /stages/{id}</c>.

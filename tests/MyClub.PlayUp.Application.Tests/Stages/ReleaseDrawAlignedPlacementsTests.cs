@@ -262,6 +262,7 @@ public sealed class ReleaseDrawAlignedPlacementsTests
             DrawActionEvaluator.ForCommand(stage, null),
             draw).Release;
         release.ReleasableCount.Should().Be(2);
+        release.DrawnTargetCount.Should().Be(2);
         release.State.Should().Be(StageDrawActionState.Available);
     }
 

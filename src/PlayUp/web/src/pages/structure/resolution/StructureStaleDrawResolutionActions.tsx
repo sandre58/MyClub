@@ -12,6 +12,7 @@ import { MutationError, PendingLabel } from '../../../ui';
 import {
   type DrawRedoPresentation,
   type ServerReleaseCta,
+  formatReleaseDrawnTeamsLabel,
   releaseFooterMode,
   releaseBlockReason,
   redoPresentation,
@@ -40,6 +41,7 @@ export type StructureStaleDrawResolutionActionsProps = {
   onConfirmRelease: () => void;
   detailGroups?: readonly { id: string; name: string }[];
   detailRoster?: readonly { entryId: string; displayName?: string | null }[];
+  stageDraws?: readonly StageDraw[];
 };
 
 function redoDisabledReason(
@@ -70,6 +72,7 @@ export function StructureStaleDrawResolutionActions({
   onConfirmRelease,
   detailGroups,
   detailRoster,
+  stageDraws = [],
 }: StructureStaleDrawResolutionActionsProps) {
   const { t } = useTranslation(['structure', 'draw', 'common']);
   const redo =
@@ -109,15 +112,16 @@ export function StructureStaleDrawResolutionActions({
       : ('hidden' as const);
   const releaseMode = useAppliedRelease ? appliedReleaseMode : staleServerMode;
   const releaseDraw = useAppliedRelease ? activeDraw : releaseCta.draw;
-  const releaseAligned = useAppliedRelease
-    ? (drawActionsReleaseCount(activeDraw!) ?? 0)
-    : releaseCta.aligned;
   const releaseDisabled = releaseMode === 'disabled';
   const releaseDisabledReason = useAppliedRelease
     ? appliedReleaseDisabledReason
     : releaseCta.disabledReason;
 
   const showRelease = releaseMode !== 'hidden' && releaseDraw != null;
+  const releaseLabel =
+    releaseDraw != null
+      ? formatReleaseDrawnTeamsLabel(t, releaseDraw, stageDraws)
+      : t('structure:resolution.staleDraw.release');
 
   const actionRow = (
     <div className="structure-stale-draw-actions__buttons">
@@ -159,10 +163,10 @@ export function StructureStaleDrawResolutionActions({
               type="button"
               className="ds-btn ds-btn--secondary"
               disabled
-              aria-label={t('structure:resolution.staleDraw.release')}
+              aria-label={releaseLabel}
             >
               <UnlockIcon size="sm" />
-              {t('structure:resolution.staleDraw.release')}
+              {releaseLabel}
             </button>
           </Tooltip>
         ) : (
@@ -177,8 +181,7 @@ export function StructureStaleDrawResolutionActions({
             ) : (
               <>
                 <UnlockIcon size="sm" />
-                {t('structure:resolution.staleDraw.release')}
-                {releaseAligned > 0 ? ` (${releaseAligned})` : null}
+                {releaseLabel}
               </>
             )}
           </button>
@@ -237,7 +240,11 @@ export function StructureStaleDrawResolutionActions({
         open={confirmReleaseOpen}
         title={t('structure:resolution.staleDraw.confirmReleaseTitle')}
         message={t('draw:confirmRelease')}
-        confirmLabel={t('draw:releasePlacements')}
+        confirmLabel={
+          releaseDraw != null
+            ? formatReleaseDrawnTeamsLabel(t, releaseDraw, stageDraws)
+            : t('draw:releasePlacements')
+        }
         confirmIcon={<UnlockIcon size="sm" />}
         cancelLabel={t('common:close')}
         closeLabel={t('common:close')}
@@ -256,12 +263,4 @@ export function StructureStaleDrawResolutionActions({
       />
     </>
   );
-}
-
-function drawActionsReleaseCount(draw: StageDraw): number | null {
-  const release = draw.actions?.release;
-  if (release == null || release.releasableCount <= 0) {
-    return null;
-  }
-  return release.releasableCount;
 }

@@ -94,6 +94,7 @@ import {
   formatDrawCreateBlockDetailLines,
 } from '../draw/drawCreateBlockDetail';
 import {
+  formatReleaseDrawnTeamsLabel,
   resolveServerReleaseCta,
   releaseFooterMode,
 } from '../draw/drawActions';
@@ -759,6 +760,10 @@ export function StructurePhaseFiche({
   const releasableDraw = releaseCta.draw;
   const releasableAlignedCount = releaseCta.aligned;
   const showReleaseCta = releasableDraw != null && releasableAlignedCount > 0;
+  const releaseButtonLabel =
+    releasableDraw != null
+      ? formatReleaseDrawnTeamsLabel(tDraw, releasableDraw, overviewDraws)
+      : '';
 
   /** Nouveau path blocked with nothing to manage in the dialog → disable primary CTA. */
   const blockPerformDrawCta =
@@ -1202,6 +1207,7 @@ export function StructurePhaseFiche({
     <StructureStaleDrawResolutionActions
       activeDraw={activeDraw}
       releaseCta={releaseCta}
+      stageDraws={overviewDraws}
       redoPending={staleRedoMutation.isPending}
       releasePending={releaseMutation.isPending}
       redoError={staleRedoMutation.error}
@@ -1267,6 +1273,7 @@ export function StructurePhaseFiche({
         showPoolHint,
         releasableAlignedCount,
         releasableTotal: releaseCta.total,
+        releaseButtonLabel,
         releaseDisabled: releaseCta.disabled,
         releaseDisabledReason: releaseCta.disabled
           ? releaseCta.disabledReason
@@ -1737,7 +1744,7 @@ export function StructurePhaseFiche({
               open={releaseConfirmOpen}
               title={tDraw('confirmReleaseTitle')}
               message={tDraw('confirmRelease')}
-              confirmLabel={tDraw('releasePlacements')}
+              confirmLabel={releaseButtonLabel || tDraw('releasePlacements')}
               confirmIcon={<UnlockIcon size="sm" />}
               cancelLabel={tCommon('close')}
               closeLabel={tCommon('close')}

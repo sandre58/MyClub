@@ -52,6 +52,7 @@ const basePlacement: StructurePlacementOperationalSectionProps = {
   showPoolHint: true,
   releasableAlignedCount: 0,
   releasableTotal: 0,
+  releaseButtonLabel: '',
   releasePending: false,
   deactivateDrawPending: false,
   drawOperationalReady: true,
@@ -369,11 +370,14 @@ describe('StructurePhaseOperationalStrip', () => {
         showReleaseCta: true,
         releasableAlignedCount: 1,
         releasableTotal: 2,
+        releaseButtonLabel: "Libérer l'équipe tirée",
         releaseDisabled: false,
       },
     });
 
-    expect(screen.getByRole('button', { name: 'Libérer 1/2' })).toBeEnabled();
+    expect(
+      screen.getByRole('button', { name: "Libérer l'équipe tirée" }),
+    ).toBeEnabled();
   });
 
   it('keeps blocked release visible and disabled with the server reason', () => {
@@ -386,12 +390,15 @@ describe('StructurePhaseOperationalStrip', () => {
         showReleaseCta: true,
         releasableAlignedCount: 1,
         releasableTotal: 1,
+        releaseButtonLabel: "Libérer l'équipe tirée",
         releaseDisabled: true,
         releaseDisabledReason: reason,
       },
     });
 
-    const release = screen.getByRole('button', { name: 'Libérer 1/1' });
+    const release = screen.getByRole('button', {
+      name: "Libérer l'équipe tirée",
+    });
     expect(release).toBeDisabled();
     expect(release).toHaveAttribute('title', reason);
   });

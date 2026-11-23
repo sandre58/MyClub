@@ -54,7 +54,6 @@ import type {
 import {
   buildCupDrawDisplayFromDto,
   drawExecutionNumber,
-  drawResolutionPlacementCount,
   getDrawUiProjection,
   pickActiveDraw,
   drawCreateLaunchBlockCopy,
@@ -76,8 +75,10 @@ import { redoAppliedDraw } from './drawRedo';
 import {
   DRAW_RELEASE_ATTACHED_MATCHES,
   drawActionsOf,
+  formatReleaseDrawnTeamsLabel,
   isDrawActionAvailable,
   releaseBlockReason,
+  releaseDrawnTargetCount,
   redoPresentation,
   releaseFooterMode,
   releaseHoldForDraw,
@@ -564,6 +565,8 @@ export function StructureDrawDialog({
 
   const releaseFooterBlocked =
     releaseTarget != null && releaseFooterMode(releaseTarget) === 'disabled';
+  const releaseFooterEnabled =
+    releaseTarget != null && releaseFooterMode(releaseTarget) === 'enabled';
   const releaseFooterBlockedReason =
     releaseTarget != null ? releaseBlockReason(releaseTarget) : null;
 
@@ -694,7 +697,8 @@ export function StructureDrawDialog({
     </Alert>
   ) : !overviewQuery.isLoading &&
     createBlockedDetail != null &&
-    createBlockPresentation?.kind === 'inline' ? (
+    createBlockPresentation?.kind === 'inline' &&
+    !(createBlockedReason === 'noFreeSlot' && releaseFooterEnabled) ? (
     <Alert tone={createBlockPresentation.tone} role="status">
       <p className="ds-body">{createBlockedDetail}</p>
       {createBlockNamedLines.map((line, index) => (
@@ -799,15 +803,11 @@ export function StructureDrawDialog({
                 ) : (
                   <>
                     <UnlockIcon size="sm" />
-                    {releaseTarget.kind === 'Slot'
-                      ? tDraw('releaseDrawnTeams', {
-                          n: alignedCountFor(releaseTarget),
-                        })
-                      : tDraw('releaseRun', {
-                          n: drawExecutionNumber(drawList, releaseTarget.id),
-                          aligned: alignedCountFor(releaseTarget),
-                          total: drawResolutionPlacementCount(releaseTarget),
-                        })}
+                    {formatReleaseDrawnTeamsLabel(
+                      tDraw,
+                      releaseTarget,
+                      drawList,
+                    )}
                   </>
                 )}
               </button>
@@ -1004,7 +1004,7 @@ export function StructureDrawDialog({
               icon={<RandomIcon size="lg" />}
               title={tDraw('noActiveTitle')}
             >
-              {releaseTarget != null && !releaseFooterBlocked
+              {releaseTarget != null && !releaseFooterBlocked && !canLaunch
                 ? tDraw('noActiveReleaseFirst', {
                     n: drawExecutionNumber(drawList, releaseTarget.id),
                   })
@@ -1055,7 +1055,7 @@ export function StructureDrawDialog({
                 {cancelledDraws.map((draw) => {
                   const expanded = draw.id === expandedDrawId;
                   const aligned = alignedCountFor(draw);
-                  const total = drawResolutionPlacementCount(draw);
+                  const total = releaseDrawnTargetCount(draw);
                   const panelId = previousRunDetailId(runsDomId, draw.id);
                   const executionNumber = drawExecutionNumber(
                     drawList,
@@ -1289,10 +1289,8 @@ export function StructureDrawDialog({
         title={tDraw('confirmReleaseTitle')}
         message={tDraw('confirmRelease')}
         confirmLabel={
-          confirmDraw?.kind === 'Slot'
-            ? tDraw('releaseDrawnTeams', {
-                n: alignedCountFor(confirmDraw),
-              })
+          confirmDraw != null
+            ? formatReleaseDrawnTeamsLabel(tDraw, confirmDraw, drawList)
             : tDraw('releasePlacements')
         }
         confirmIcon={<UnlockIcon size="sm" />}

@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next';
 import type {
   StageDraw,
   StageDrawAction,
@@ -10,6 +11,7 @@ import {
   DRAW_LAUNCH_DIRECT_ASSIGNMENT,
   DRAW_LAUNCH_GRID_NOT_VACANT,
 } from '../../../api/draws';
+import { drawExecutionNumber } from './drawUi';
 
 const DRAW_NO_FREE_SLOT = 'Application.DrawNoFreeSlot';
 const DRAW_NOT_ENOUGH_TEAMS = 'Application.DrawNotEnoughTeams';
@@ -184,6 +186,42 @@ export interface ServerReleaseCta {
   disabledReason: string | null;
 }
 
+/** Drawn targets for this execution (server `drawnTargetCount`, else test fallback). */
+export function releaseDrawnTargetCount(draw: StageDraw): number {
+  const fromServer = drawActionsOf(draw).release.drawnTargetCount;
+  if (fromServer !== undefined) {
+    return fromServer;
+  }
+  if (draw.kind === 'Group') {
+    return draw.groupPlacements?.length ?? 0;
+  }
+  return draw.slotPlacements.length;
+}
+
+function cancelledReleasableDraws(drawList: readonly StageDraw[]): StageDraw[] {
+  return drawList.filter(
+    (item) =>
+      item.status === 'Cancelled' && releaseFooterMode(item) !== 'hidden',
+  );
+}
+
+/** Libérer CTA label shared by dialog, fiche, and confirmations. */
+export function formatReleaseDrawnTeamsLabel(
+  t: TFunction,
+  draw: StageDraw,
+  drawList: readonly StageDraw[],
+): string {
+  const count = drawActionsOf(draw).release.releasableCount;
+  const base =
+    count === 1
+      ? t('draw:releaseDrawnTeam')
+      : t('draw:releaseDrawnTeams', { n: count });
+  if (cancelledReleasableDraws(drawList).length > 1) {
+    return `${base} (#${drawExecutionNumber(drawList, draw.id)})`;
+  }
+  return base;
+}
+
 /** Fiche Libérer from `releaseCandidateDrawId` and that draw's release action. */
 export function resolveServerReleaseCta(
   overview: Pick<StageOverview, 'draws' | 'releaseCandidateDrawId'>,
@@ -204,10 +242,7 @@ export function resolveServerReleaseCta(
     return empty;
   }
   const release = drawActionsOf(draw).release;
-  const total =
-    draw.kind === 'Group'
-      ? (draw.groupPlacements?.length ?? 0)
-      : draw.slotPlacements.length;
+  const total = releaseDrawnTargetCount(draw);
   return {
     draw,
     aligned: release.releasableCount,

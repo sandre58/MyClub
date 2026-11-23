@@ -31,6 +31,8 @@ export type StructurePlacementOperationalSectionProps = {
   showPoolHint: boolean;
   releasableAlignedCount: number;
   releasableTotal: number;
+  /** Libérer button label (shared Coupe / Groupes wording). */
+  releaseButtonLabel: string;
   releasePending: boolean;
   /** Server release action is Blocked. Button stays visible with the block reason. */
   releaseDisabled?: boolean;

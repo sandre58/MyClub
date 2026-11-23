@@ -997,10 +997,7 @@ function DrawColumn(
               ) : (
                 <>
                   <UnlockIcon size="sm" />
-                  {tDraw('releasePlacementsCount', {
-                    aligned: props.releasableAlignedCount,
-                    total: props.releasableTotal,
-                  })}
+                  {props.releaseButtonLabel}
                 </>
               )}
             </button>
@@ -1153,10 +1150,7 @@ function DrawColumn(
               ) : (
                 <>
                   <UnlockIcon size="sm" />
-                  {tDraw('releasePlacementsCount', {
-                    aligned: props.releasableAlignedCount,
-                    total: props.releasableTotal,
-                  })}
+                  {props.releaseButtonLabel}
                 </>
               )}
             </button>

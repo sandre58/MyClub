@@ -852,9 +852,11 @@ function compareDrawCreationOrder(a: StageDraw, b: StageDraw): number {
 }
 
 /** Oldest execution first (stable chronological identity). */
-export function sortDrawsOldestFirst(draws: StageDraw[]): StageDraw[] {
+export function sortDrawsOldestFirst(
+  draws: ReadonlyArray<StageDraw>,
+): StageDraw[] {
   if (draws.length <= 1) {
-    return draws;
+    return [...draws];
   }
   return [...draws].sort(compareDrawCreationOrder);
 }
@@ -863,16 +865,18 @@ export function sortDrawsOldestFirst(draws: StageDraw[]): StageDraw[] {
  * Newest execution first — rail / default selection.
  * Sorted by draw id (UUID v7), not by a blind reverse of the payload order.
  */
-export function sortDrawsNewestFirst(draws: StageDraw[]): StageDraw[] {
+export function sortDrawsNewestFirst(
+  draws: ReadonlyArray<StageDraw>,
+): StageDraw[] {
   if (draws.length <= 1) {
-    return draws;
+    return [...draws];
   }
   return [...draws].sort((a, b) => compareDrawCreationOrder(b, a));
 }
 
 /** Chronological label #1…#N (oldest = 1), independent of rail display order. */
 export function drawExecutionNumber(
-  draws: StageDraw[],
+  draws: ReadonlyArray<StageDraw>,
   drawId: string,
 ): number {
   const index = sortDrawsOldestFirst(draws).findIndex((d) => d.id === drawId);
