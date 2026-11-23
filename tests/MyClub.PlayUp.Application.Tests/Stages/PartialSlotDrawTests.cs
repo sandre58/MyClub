@@ -71,7 +71,7 @@ public sealed class PartialSlotDrawTests
     [Fact]
     public void Redo_after_applied_partial_draw_previews_a_new_partial_resolution()
     {
-        var (stage, _) = SimpleSlots(2);
+        var stage = SimpleSlots(2);
         var draw = CreateDraw.Execute(stage, DrawResolutionKind.Slot, _clock);
         var inputs = DrawInputsFactory.CreatePartial(stage, [stage], DrawResolutionKind.Slot);
         ConfigureDrawInputs.Execute(stage, draw.Id, inputs, DrawInputsIntent.Partial, [stage]);
@@ -270,7 +270,7 @@ public sealed class PartialSlotDrawTests
             .Should().Be(ApplicationErrorCodes.DrawTooManyTeams);
     }
 
-    private (Stage Stage, EntryId[] Entries) SimpleSlots(int slots, int? teams = null)
+    private Stage SimpleSlots(int slots, int? teams = null)
     {
         var competition = CreateCompetition.Execute($"Slots {slots}", _clock);
         var teamCount = teams ?? slots;
@@ -292,7 +292,7 @@ public sealed class PartialSlotDrawTests
 
         ReplaceStageDrawRules.Execute(stage, new DrawRules(DrawMode.Random), _clock);
         stage.ReplaceAffectationAuthoring(entries, _clock);
-        return (stage, entries);
+        return stage;
     }
 
     private (Stage Stage, EntryId[] Entries) Cup(int slots, int? teams = null) =>

@@ -49,6 +49,5 @@ internal static class SlotCupRedoPath
     /// Draft or applied draw configured as Partial (generation narrows targets to free slots).
     /// </summary>
     public static bool UsesPartialGeneration(Draw draw) =>
-        draw.Kind == DrawResolutionKind.Slot
-        && draw.InputsIntent == DrawInputsIntent.Partial;
+        draw is { Kind: DrawResolutionKind.Slot, InputsIntent: DrawInputsIntent.Partial };
 }

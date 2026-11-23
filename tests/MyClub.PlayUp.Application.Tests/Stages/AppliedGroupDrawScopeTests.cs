@@ -4,7 +4,6 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-using System.Reflection;
 using FluentAssertions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
@@ -60,7 +59,7 @@ public sealed class AppliedGroupDrawScopeTests
             seat,
             index,
             subject.EntryId,
-            world.Stage.CompositionEntries.Select(entry => entry.EntryId).ToHashSet(),
+            [.. world.Stage.CompositionEntries.Select(entry => entry.EntryId)],
             [],
             0);
 

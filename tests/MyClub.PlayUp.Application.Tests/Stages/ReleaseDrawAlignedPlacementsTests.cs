@@ -251,7 +251,7 @@ public sealed class ReleaseDrawAlignedPlacementsTests
             [
                 new GroupDrawPlacement(pinned, group.Id),
                 new GroupDrawPlacement(drawnA, group.Id),
-                new GroupDrawPlacement(drawnB, other.Id),
+                new GroupDrawPlacement(drawnB, other.Id)
             ]),
             _clock);
         stage.PublishDraw(draw.Id, _clock);

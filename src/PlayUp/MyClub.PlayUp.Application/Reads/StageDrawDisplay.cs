@@ -190,7 +190,7 @@ internal static class StageDrawDisplay
                     SlotDrawCellState.Withdrawn,
                     DrawPlacementOrigin.Manual,
                     entries),
-                _ => WithoutTeam(slotKey, SlotDrawCellState.OutsideDraw, origin: null),
+                _ => WithoutTeam(slotKey, SlotDrawCellState.OutsideDraw, origin: null)
             };
         }
 
