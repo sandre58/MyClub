@@ -707,13 +707,8 @@ public sealed class GroupDrawFixedPlacementEndpointTests(HostPostgresFixture fix
             .Where(id => !pinned.Contains(id))
             .Select(id => id.Value)
             .ToHashSet();
-        foreach (var seatCase in seats.RootElement.GetProperty("cases").EnumerateArray())
+        foreach (var seatCase in seats.RootElement.GetProperty("cases").EnumerateArray().Where(seatCase => seatCase.GetProperty("formPosition").GetProperty("kind").GetString() == "GroupPlace"))
         {
-            if (seatCase.GetProperty("formPosition").GetProperty("kind").GetString() != "GroupPlace")
-            {
-                continue;
-            }
-
             if (!seatCase.TryGetProperty("entry", out var entry) || entry.ValueKind == JsonValueKind.Null)
             {
                 continue;
@@ -881,7 +876,7 @@ public sealed class GroupDrawFixedPlacementEndpointTests(HostPostgresFixture fix
             return [];
         }
 
-        return element.EnumerateArray().Select(item => item.GetString()!).ToArray();
+        return [.. element.EnumerateArray().Select(item => item.GetString()!)];
     }
 
     private static Uri MembershipUri(Seed seed) =>

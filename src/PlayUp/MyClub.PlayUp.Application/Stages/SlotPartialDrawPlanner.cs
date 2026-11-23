@@ -107,7 +107,7 @@ public static class SlotPartialDrawPlanner
             competitionStages,
             alignedSlotKeys,
             appliedDrawId);
-        if (afterRelease.AnyLiberatedReservedByFeed && afterRelease.Scope.VacantSlotKeys.Count > 0)
+        if (afterRelease is { AnyLiberatedReservedByFeed: true, Scope.VacantSlotKeys.Count: > 0 })
         {
             return ApplicationErrorCodes.DrawLaunchGridNotVacant;
         }

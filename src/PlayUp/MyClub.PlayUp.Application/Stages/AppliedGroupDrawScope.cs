@@ -21,9 +21,11 @@ internal static class AppliedGroupDrawScope
     {
         ArgumentNullException.ThrowIfNull(draw);
         var drawn = GroupDrawLaunchRules.DrawnEntries(draw);
-        return draw.Resolution.GroupResults
-            .Where(placement => drawn.Contains(placement.EntryId))
-            .ToArray();
+        return
+        [
+            .. draw.Resolution.GroupResults
+                .Where(placement => drawn.Contains(placement.EntryId))
+        ];
     }
 
     /// <summary>

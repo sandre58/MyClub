@@ -386,7 +386,7 @@ public sealed class StructureDrawCreateLaunchGateContractTests
 
         stage.ReplaceAffectationAuthoring(ids, _clock);
         var stages = new List<Stage> { stage };
-        var intent = DrawInputsIntent.Default;
+        const DrawInputsIntent intent = DrawInputsIntent.Default;
         switch (cause)
         {
             case "inbound":

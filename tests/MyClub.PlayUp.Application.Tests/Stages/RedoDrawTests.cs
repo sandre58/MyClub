@@ -487,7 +487,7 @@ public sealed class RedoDrawTests
                     2,
                     QualificationSource.Overall(),
                     new QualificationSelection(SelectionMode.Position, 2),
-                    QualificationDestination.ForSlot(target.Id, "SF1-B")),
+                    QualificationDestination.ForSlot(target.Id, "SF1-B"))
             ]),
             _clock);
 
@@ -805,17 +805,6 @@ public sealed class RedoDrawTests
             expectedBlockCode);
     }
 
-    private void ApplyDrawPipelineToFillSlots(Stage stage, Draw draw)
-    {
-        var defaultInputs = DrawInputsFactory.CreateDefault(stage, DrawResolutionKind.Slot);
-        ConfigureDrawInputs.Execute(stage, draw.Id, defaultInputs);
-        var slotTargets = stage.Slots.Select(slot => slot.SlotKey).ToArray();
-        GenerateDrawResolution.Execute(stage, draw.Id, _clock, slotTargets);
-        PublishDraw.Execute(stage, draw.Id, _clock);
-        ApplyDraw.Execute(stage, draw.Id, _clock);
-        stage.Slots.Should().OnlyContain(slot => slot.EntryId != null);
-    }
-
     private void ApplyPartialDrawPipelineToFillSlots(Stage stage, Draw draw, int? seed = null)
     {
         var inputs = DrawInputsFactory.CreatePartial(stage, [stage], DrawResolutionKind.Slot);
@@ -826,7 +815,7 @@ public sealed class RedoDrawTests
             draw.Id,
             _clock,
             slotTargets,
-            randomSource: seed is int value ? new SeededRandomSource(value) : null,
+            randomSource: seed is { } value ? new SeededRandomSource(value) : null,
             competitionStages: [stage]);
         PublishDraw.Execute(stage, draw.Id, _clock);
         ApplyDraw.Execute(stage, draw.Id, _clock);
@@ -844,11 +833,9 @@ public sealed class RedoDrawTests
         stage.ReplaceAffectationAuthoring(entries, _clock);
         ReplaceStageDrawRules.Execute(stage, new DrawRules(DrawMode.Random), _clock);
         draw = null;
-        if (applyPartialFill)
-        {
-            draw = CreateDraw.Execute(stage, DrawResolutionKind.Slot, _clock);
-            ApplyPartialDrawPipelineToFillSlots(stage, draw);
-        }
+        if (!applyPartialFill) return stage;
+        draw = CreateDraw.Execute(stage, DrawResolutionKind.Slot, _clock);
+        ApplyPartialDrawPipelineToFillSlots(stage, draw);
 
         return stage;
     }

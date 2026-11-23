@@ -4,7 +4,6 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-using System.Collections.Generic;
 using System.Net;
 using System.Text;
 using System.Text.Json;
@@ -81,7 +80,7 @@ public sealed class RedoDrawEndpointTests(HostPostgresFixture fixture)
         var stage = await scope.ServiceProvider.GetRequiredService<IStageRepository>().GetByIdForUpdateAsync(seed.StageId);
         stage.Should().NotBeNull();
         stage.GetDraw(seed.DrawId).Status.Should().Be(DrawStatus.Cancelled);
-        stage.GetDraw(new DrawId(body!.DrawId)).InputsIntent.Should().Be(DrawInputsIntent.Partial);
+        stage.GetDraw(new DrawId(body.DrawId)).InputsIntent.Should().Be(DrawInputsIntent.Partial);
         stage.FindSlot("S2")!.EntryId.Should().Be(seed.DirectEntry);
         stage.FindSlot("S1")!.EntryId.Should().BeNull();
         stage.GetDraw(new DrawId(body.DrawId)).Resolution.SlotResults
@@ -200,7 +199,7 @@ public sealed class RedoDrawEndpointTests(HostPostgresFixture fixture)
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<DrawGenerationDto>(HostJson.Options);
         body.Should().NotBeNull();
-        var newDrawId = new DrawId(body!.DrawId);
+        var newDrawId = new DrawId(body.DrawId);
 
         using (var inputs = await client.PostAsJsonAsync(
                    InputsUri(seed.StageId, newDrawId),
@@ -229,7 +228,7 @@ public sealed class RedoDrawEndpointTests(HostPostgresFixture fixture)
         var seed = await SeedAppliedPartialSlotDrawWithDirectAssignmentAsync(factory);
         using var client = factory.CreateClient();
         var before = await ReloadAsync(factory, seed.StageId);
-        var manualBefore = before.FindSlot("S2")!.EntryId;
+        _ = before.FindSlot("S2")!.EntryId;
 
         using var redo = await client.PostAsync(RedoUri(seed.StageId, seed.DrawId), content: null);
         redo.EnsureSuccessStatusCode();
@@ -477,9 +476,6 @@ public sealed class RedoDrawEndpointTests(HostPostgresFixture fixture)
 
     private static Uri GenerateUri(StageId stageId, DrawId drawId) =>
         new($"/stages/{stageId.Value}/draws/{drawId.Value}/generate", UriKind.Relative);
-
-    private static Uri PublishAndApplyUri(StageId stageId, Guid drawId) =>
-        new($"/stages/{stageId.Value}/draws/{drawId}/publish-and-apply", UriKind.Relative);
 
     private static Uri PublishUri(StageId stageId, Guid drawId) =>
         new($"/stages/{stageId.Value}/draws/{drawId}/publish", UriKind.Relative);

@@ -265,7 +265,7 @@ public sealed class StageOverviewAssemblerTests
                 [
                     new GroupDrawPlacement(manual.Id, groupA),
                     new GroupDrawPlacement(qualified.Id, groupA),
-                    new GroupDrawPlacement(departed.Id, groupB),
+                    new GroupDrawPlacement(departed.Id, groupB)
                 ]));
         stage.RecordDrawResolution(
             draw.Id,
@@ -274,7 +274,7 @@ public sealed class StageOverviewAssemblerTests
                 new GroupDrawPlacement(manual.Id, groupA),
                 new GroupDrawPlacement(qualified.Id, groupA),
                 new GroupDrawPlacement(departed.Id, groupB),
-                new GroupDrawPlacement(drawn.Id, groupB),
+                new GroupDrawPlacement(drawn.Id, groupB)
             ]),
             _clock);
 

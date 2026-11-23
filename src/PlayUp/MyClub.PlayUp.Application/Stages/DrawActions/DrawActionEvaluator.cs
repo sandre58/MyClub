@@ -83,20 +83,7 @@ internal static class DrawActionEvaluator
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(stage);
 
-        var cancelledWithReleasable = new List<(Draw Draw, DrawReleaseAssessment Release)>();
-        foreach (var draw in stage.Draws)
-        {
-            if (draw.Status != DrawStatus.Cancelled)
-            {
-                continue;
-            }
-
-            var release = EvaluateRelease(context, draw, treatAsCancelled: false);
-            if (release.ReleasableCount >= 1)
-            {
-                cancelledWithReleasable.Add((draw, release));
-            }
-        }
+        var cancelledWithReleasable = (from draw in stage.Draws where draw.Status == DrawStatus.Cancelled let release = EvaluateRelease(context, draw, treatAsCancelled: false) where release.ReleasableCount >= 1 select (draw, release)).ToList();
 
         if (cancelledWithReleasable.Count == 0)
         {
@@ -104,15 +91,7 @@ internal static class DrawActionEvaluator
         }
 
         var last = cancelledWithReleasable[^1];
-        if (last.Release.State == StageDrawActionState.Blocked
-            && cancelledWithReleasable
-                .Take(cancelledWithReleasable.Count - 1)
-                .Any(entry => entry.Release.State == StageDrawActionState.Available))
-        {
-            return null;
-        }
-
-        return last.Draw.Id.Value;
+        return last.release.State == StageDrawActionState.Blocked && cancelledWithReleasable .Take(cancelledWithReleasable.Count - 1) .Any(entry => entry.release.State == StageDrawActionState.Available) ? null : last.draw.Id.Value;
     }
 
     private static DrawActionAssessment EvaluateCancel(Stage stage, Draw draw)
@@ -293,25 +272,22 @@ internal static class DrawActionEvaluator
                 : DrawActionAssessment.Block(partialBlock);
         }
 
-        if (SlotCupRedoPath.UsesDefaultRerun(draw))
+        if (!SlotCupRedoPath.UsesDefaultRerun(draw)) return DrawActionAssessment.Hidden;
+        if (context.Stage.DirectAssignments.Count > 0)
         {
-            if (context.Stage.DirectAssignments.Count > 0)
-            {
-                return DrawActionAssessment.Block(ApplicationErrorCodes.DrawLaunchDirectAssignmentPresent);
-            }
-
-            var facts = StageDrawBracketLaunchClassifier.ClassifyForDrawKind(
-                context.Stage,
-                context.CompetitionStages,
-                draw.Kind,
-                AlignedSlotKeys(context.Stage, draw),
-                AlignedGroupEntryIds(context.Stage, draw));
-            return facts.BlockingPlaceCount > 0
-                ? DrawActionAssessment.Block(ApplicationErrorCodes.DrawLaunchGridNotVacant)
-                : DrawActionAssessment.Available;
+            return DrawActionAssessment.Block(ApplicationErrorCodes.DrawLaunchDirectAssignmentPresent);
         }
 
-        return DrawActionAssessment.Hidden;
+        var facts = StageDrawBracketLaunchClassifier.ClassifyForDrawKind(
+            context.Stage,
+            context.CompetitionStages,
+            draw.Kind,
+            AlignedSlotKeys(context.Stage, draw),
+            AlignedGroupEntryIds(context.Stage, draw));
+        return facts.BlockingPlaceCount > 0
+            ? DrawActionAssessment.Block(ApplicationErrorCodes.DrawLaunchGridNotVacant)
+            : DrawActionAssessment.Available;
+
     }
 
     private static string? PlacementBlock(Stage stage, Draw draw)
@@ -479,8 +455,6 @@ internal sealed class DrawActionContext(
     IReadOnlyList<MatchParticipantSnapshot> snapshots,
     bool hasAttachedMatches)
 {
-    private DrawReleaseReleasability.LastDrawnAuthorIndex? _releaseIndex;
-
     internal Stage Stage { get; } = stage;
 
     internal IReadOnlyList<Stage> CompetitionStages { get; } = competitionStages;
@@ -490,7 +464,7 @@ internal sealed class DrawActionContext(
     internal bool HasAttachedMatches { get; } = hasAttachedMatches;
 
     internal DrawReleaseReleasability.LastDrawnAuthorIndex ReleaseIndex =>
-        _releaseIndex ??= DrawReleaseReleasability.BuildIndex(Stage);
+        field ??= DrawReleaseReleasability.BuildIndex(Stage);
 }
 
 internal sealed record DrawActionAssessment(

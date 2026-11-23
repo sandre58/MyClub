@@ -34,7 +34,7 @@ public sealed class DrawReleaseLastAuthorTests
         var stage = CreateStage(kind);
         var first = CreatePublishApplyCancel(kind, stage, "S1", "S2", "S3");
         ReleaseDrawAlignedPlacements.Execute(stage, first.Id, _clock);
-        var second = CreatePublishApply(kind, stage, "S1", "S2", "S3", sameAs: first);
+        CreatePublishApply(kind, stage, "S1", "S2", "S3", sameAs: first);
 
         var release = Evaluate(stage, first).Release;
         release.ReleasableCount.Should().Be(0);
@@ -132,7 +132,7 @@ public sealed class DrawReleaseLastAuthorTests
 
         stage.AssignEntryToGroup(groupB.Id, other);
         var fixture = stage.AddFixture(stage.Matchdays[0].Id, _clock);
-        var match = MyClub.PlayUp.Domain.Matches.Match.Create(_competitionId, stage.Id, e2, other, _clock);
+        var match = Domain.Matches.Match.Create(_competitionId, stage.Id, e2, other, _clock);
         stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
 
         var context = DrawActionEvaluator.ForCommand(stage, [match]);
@@ -218,7 +218,7 @@ public sealed class DrawReleaseLastAuthorTests
             {
                 new SlotDrawPlacement(entries[0], s1),
                 new SlotDrawPlacement(entries[1], s2),
-                new SlotDrawPlacement(entries[2], s3),
+                new SlotDrawPlacement(entries[2], s3)
             };
             var draw = ResolveSlotDraw(stage, placements);
             stage.PublishDraw(draw.Id, _clock);
@@ -237,7 +237,6 @@ public sealed class DrawReleaseLastAuthorTests
             entry = EntryId.New();
             e2 = EntryId.New();
             e3 = EntryId.New();
-            stage.ReplaceAffectationAuthoring([entry, e2, e3], _clock);
         }
         else
         {
@@ -245,8 +244,9 @@ public sealed class DrawReleaseLastAuthorTests
             entry = prior[0].EntryId;
             e2 = prior[1].EntryId;
             e3 = prior[2].EntryId;
-            stage.ReplaceAffectationAuthoring([entry, e2, e3], _clock);
         }
+
+        stage.ReplaceAffectationAuthoring([entry, e2, e3], _clock);
 
         var drawG = stage.CreateDraw(DrawResolutionKind.Group, _clock);
         stage.ConfigureDrawInputs(drawG.Id, DrawInputs.ForGroup([entry, e2, e3]));

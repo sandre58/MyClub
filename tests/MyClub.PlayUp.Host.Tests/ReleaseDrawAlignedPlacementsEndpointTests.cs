@@ -75,7 +75,7 @@ public sealed class ReleaseDrawAlignedPlacementsEndpointTests(HostPostgresFixtur
         overviewResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         var overview = await overviewResponse.Content.ReadFromJsonAsync<StageOverviewDto>(HostJson.Options);
         overview.Should().NotBeNull();
-        overview!.ReleaseCandidateDrawId.Should().BeNull();
+        overview.ReleaseCandidateDrawId.Should().BeNull();
         var older = overview.Draws.Single(d => d.Id == seed.OlderDrawId.Value);
         older.Actions!.Release.ReleasableCount.Should().Be(0);
         older.Actions.Release.State.Should().Be(StageDrawActionState.Blocked);
@@ -85,7 +85,7 @@ public sealed class ReleaseDrawAlignedPlacementsEndpointTests(HostPostgresFixtur
         release.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var problem = await release.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
         problem.Should().NotBeNull();
-        GetCode(problem!).Should().Be(ApplicationErrorCodes.DrawReleaseFailure);
+        GetCode(problem).Should().Be(ApplicationErrorCodes.DrawReleaseFailure);
     }
 
     [IntegrationFact]
@@ -192,10 +192,10 @@ public sealed class ReleaseDrawAlignedPlacementsEndpointTests(HostPostgresFixtur
         competition.AddStage(stage.Id, _clock);
         stages.Add(stage);
         await unitOfWork.SaveChangesAsync();
-        return new CollisionDrawSeed(stage.Id, older.Id, active.Id);
+        return new CollisionDrawSeed(stage.Id, older.Id);
     }
 
     private sealed record DrawSeed(StageId StageId, DrawId DrawId);
 
-    private sealed record CollisionDrawSeed(StageId StageId, DrawId OlderDrawId, DrawId ActiveDrawId);
+    private sealed record CollisionDrawSeed(StageId StageId, DrawId OlderDrawId);
 }
