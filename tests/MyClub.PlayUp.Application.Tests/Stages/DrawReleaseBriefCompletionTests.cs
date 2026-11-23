@@ -308,6 +308,107 @@ public sealed class DrawReleaseBriefCompletionTests
     }
 
     [Fact]
+    public void Cup_sixteen_partial_two_direct_assignments_cancelled_reports_fourteen_drawn_targets()
+    {
+        var competition = CreateCompetition.Execute("Cup 16 partial release", _clock);
+        var entries = Enumerable.Range(0, 16)
+            .Select(index => AddEntry.Execute(competition, $"T{index}", _clock).Id)
+            .ToArray();
+        var stage = ConfigureStructure.Execute(competition, null, StructureIntent.Cup(16), _clock).Stage;
+        ReplaceStageDrawRules.Execute(stage, new DrawRules(DrawMode.Random), _clock);
+        stage.ReplaceAffectationAuthoring(entries, _clock);
+        stage.AssignEntryToSlot(stage.Slots[0].SlotKey, entries[0]);
+        stage.AssignEntryToSlot(stage.Slots[1].SlotKey, entries[1]);
+
+        var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
+        var inputs = DrawInputsFactory.CreatePartial(stage, [stage], DrawResolutionKind.Slot);
+        ConfigureDrawInputs.Execute(stage, draw.Id, inputs, DrawInputsIntent.Partial, [stage]);
+        var vacantKeys = stage.Slots
+            .Where(slot => slot.EntryId is null)
+            .Select(slot => slot.SlotKey)
+            .ToArray();
+        vacantKeys.Should().HaveCount(14);
+        GenerateDrawResolution.Execute(
+            stage,
+            draw.Id,
+            _clock,
+            vacantKeys,
+            randomSource: new SeededRandomSource(41),
+            competitionStages: [stage]);
+        stage.PublishDraw(draw.Id, _clock);
+        ApplyDraw.Execute(stage, draw.Id, _clock);
+        stage.CancelDraw(draw.Id, _clock);
+
+        draw = stage.GetDraw(draw.Id);
+        var release = Evaluate(stage, draw).Release;
+        release.DrawnTargetCount.Should().Be(14);
+        release.ReleasableCount.Should().Be(14);
+        release.State.Should().Be(StageDrawActionState.Available);
+
+        var overview = StageOverviewAssembler.Assemble(stage, competition);
+        overview.ReleaseCandidateDrawId.Should().Be(draw.Id.Value);
+        var wire = overview.Draws.Single(item => item.Id == draw.Id.Value).Actions!.Release;
+        wire.ReleasableCount.Should().Be(14);
+        wire.DrawnTargetCount.Should().Be(14);
+    }
+
+    [Fact]
+    public void Cup_sixteen_partial_redo_twice_then_release_candidate_matches_last_author_rule()
+    {
+        var competition = CreateCompetition.Execute("Cup 16 partial redo release", _clock);
+        var entries = Enumerable.Range(0, 16)
+            .Select(index => AddEntry.Execute(competition, $"T{index}", _clock).Id)
+            .ToArray();
+        var stage = ConfigureStructure.Execute(competition, null, StructureIntent.Cup(16), _clock).Stage;
+        ReplaceStageDrawRules.Execute(stage, new DrawRules(DrawMode.Random), _clock);
+        stage.ReplaceAffectationAuthoring(entries, _clock);
+        stage.AssignEntryToSlot(stage.Slots[0].SlotKey, entries[0]);
+        stage.AssignEntryToSlot(stage.Slots[1].SlotKey, entries[1]);
+
+        var draw = stage.CreateDraw(DrawResolutionKind.Slot, _clock);
+        var inputs = DrawInputsFactory.CreatePartial(stage, [stage], DrawResolutionKind.Slot);
+        ConfigureDrawInputs.Execute(stage, draw.Id, inputs, DrawInputsIntent.Partial, [stage]);
+        var vacantKeys = stage.Slots
+            .Where(slot => slot.EntryId is null)
+            .Select(slot => slot.SlotKey)
+            .ToArray();
+        GenerateDrawResolution.Execute(
+            stage,
+            draw.Id,
+            _clock,
+            vacantKeys,
+            randomSource: new SeededRandomSource(7),
+            competitionStages: [stage]);
+        stage.PublishDraw(draw.Id, _clock);
+        ApplyDraw.Execute(stage, draw.Id, _clock);
+
+        var firstRedo = RedoDraw.Execute(stage, draw.Id, _clock, [stage]);
+        firstRedo.IsResolved.Should().BeTrue();
+        var draw2 = stage.GetDraw(firstRedo.DrawId);
+        draw2.InputsIntent.Should().Be(DrawInputsIntent.Partial);
+        stage.PublishDraw(draw2.Id, _clock);
+        ApplyDraw.Execute(stage, draw2.Id, _clock);
+
+        var secondRedo = RedoDraw.Execute(stage, draw2.Id, _clock, [stage]);
+        secondRedo.IsResolved.Should().BeTrue();
+        var draw3 = stage.GetDraw(secondRedo.DrawId);
+        stage.PublishDraw(draw3.Id, _clock);
+        ApplyDraw.Execute(stage, draw3.Id, _clock);
+        stage.CancelDraw(draw3.Id, _clock);
+
+        draw3 = stage.GetDraw(draw3.Id);
+        var cancelledFirst = stage.GetDraw(draw.Id);
+        var releaseLatest = Evaluate(stage, draw3).Release;
+        releaseLatest.DrawnTargetCount.Should().BeGreaterThan(0);
+        releaseLatest.ReleasableCount.Should().Be(releaseLatest.DrawnTargetCount);
+
+        var releaseFirst = Evaluate(stage, cancelledFirst).Release;
+        releaseFirst.ReleasableCount.Should().Be(0);
+        DrawActionEvaluator.ReleaseCandidateDrawId(Context(stage), stage)
+            .Should().Be(draw3.Id.Value);
+    }
+
+    [Fact]
     public void Cup_sixteen_with_direct_assignments_hides_release_after_reconduced_validation()
     {
         var competition = CreateCompetition.Execute("Cup 16 release", _clock);
