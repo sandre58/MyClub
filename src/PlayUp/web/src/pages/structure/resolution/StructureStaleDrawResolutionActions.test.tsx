@@ -85,8 +85,7 @@ function renderActions(overrides: Partial<Props> = {}) {
     ...overrides,
     activeDraw: resolvedActive,
     stageDraws:
-      overrides.stageDraws ??
-      (resolvedActive != null ? [resolvedActive] : []),
+      overrides.stageDraws ?? (resolvedActive != null ? [resolvedActive] : []),
   };
 
   return renderWithI18n(<StructureStaleDrawResolutionActions {...props} />);
