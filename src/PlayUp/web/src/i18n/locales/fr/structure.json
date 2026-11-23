@@ -761,6 +761,13 @@
           "fixedOutsideComposition": "Une équipe placée n’est plus dans la composition. Retirez-la du groupe ou rétablissez la composition avant de tirer.",
           "fixedExceedsCapacity": "Un groupe contient plus d’équipes que le tirage ne peut en placer. Retirez des équipes avant de tirer."
         },
+        "named": {
+          "potConflict": "{{group}}, pot {{pot}} : {{teamA}} et {{teamB}}",
+          "reserved_one": "{{group}} : {{count}} place réservée",
+          "reserved_other": "{{group}} : {{count}} places réservées",
+          "outside": "{{group}} : {{team}}",
+          "capacity": "{{group}} : {{occupants}} équipes pour {{capacity}} places"
+        },
         "echoTeams": "Ouvrir les équipes"
       },
       "partialFillHint": "Le tirage remplira uniquement les places libres. Les équipes déjà placées restent en place.",

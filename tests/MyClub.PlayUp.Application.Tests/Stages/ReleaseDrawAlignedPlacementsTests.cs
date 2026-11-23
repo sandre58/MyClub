@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
+using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
@@ -129,6 +130,13 @@ public sealed class ReleaseDrawAlignedPlacementsTests
         ApplyDraw.Execute(stage, active.Id, _clock);
         stage.ClearDomainEvents();
 
+        var release = DrawActionEvaluator.Evaluate(DrawActionEvaluator.ForCommand(stage, null), cancelled).Release;
+        release.ReleasableCount.Should().Be(0);
+        release.State.Should().Be(StageDrawActionState.Blocked);
+        release.BlockCode.Should().Be(ApplicationErrorCodes.DrawReleaseFailure);
+        DrawActionEvaluator.ReleaseCandidateDrawId(DrawActionEvaluator.ForCommand(stage, null), stage)
+            .Should().BeNull();
+
         var act = () => ReleaseDrawAlignedPlacements.Execute(stage, cancelled.Id, _clock);
 
         act.Should().Throw<ApplicationFailureException>()
@@ -218,6 +226,44 @@ public sealed class ReleaseDrawAlignedPlacementsTests
         result.SkippedCount.Should().Be(0);
         group.EntryIds.Should().BeEmpty();
         stage.Status.Should().Be(StageStatus.Ready);
+    }
+
+    [Fact]
+    public void Overview_reports_releasable_drawn_only_after_group_draw_with_manual_fixed()
+    {
+        var stage = CreateStage();
+        var group = stage.AddGroup("A", _clock);
+        var other = stage.AddGroup("B", _clock);
+        var pinned = EntryId.New();
+        var drawnA = EntryId.New();
+        var drawnB = EntryId.New();
+        stage.ReplaceAffectationAuthoring([pinned, drawnA, drawnB], _clock);
+        stage.AssignEntryToGroup(group.Id, pinned);
+        var draw = stage.CreateDraw(DrawResolutionKind.Group, _clock);
+        stage.ConfigureDrawInputs(
+            draw.Id,
+            DrawInputs.ForGroup(
+                [pinned, drawnA, drawnB],
+                fixedPlacements: [new GroupDrawPlacement(pinned, group.Id)]));
+        stage.RecordDrawResolution(
+            draw.Id,
+            DrawResolution.ResolvedGroups(
+            [
+                new GroupDrawPlacement(pinned, group.Id),
+                new GroupDrawPlacement(drawnA, group.Id),
+                new GroupDrawPlacement(drawnB, other.Id),
+            ]),
+            _clock);
+        stage.PublishDraw(draw.Id, _clock);
+        ApplyDraw.Execute(stage, draw.Id, _clock);
+        stage.CancelDraw(draw.Id, _clock);
+
+        var release = DrawActionEvaluator.Evaluate(
+            DrawActionEvaluator.ForCommand(stage, null),
+            draw).Release;
+        release.ReleasableCount.Should().Be(2);
+        release.DrawnTargetCount.Should().Be(2);
+        release.State.Should().Be(StageDrawActionState.Available);
     }
 
     [Fact]

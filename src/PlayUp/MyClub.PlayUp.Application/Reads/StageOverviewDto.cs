@@ -235,6 +235,7 @@ public sealed record StageDrawDisplayMetricsDto(
 /// <param name="ShortName">Short name when known.</param>
 /// <param name="LogoMediaId">Optional Media Guid for the logo.</param>
 /// <param name="PrimaryColor">Optional primary kit color (#RRGGBB).</param>
+/// <param name="Origin">Draw when the team was drawn. Feed or Manual when it was fixed.</param>
 public sealed record StageDrawGroupPlacementDto(
     Guid GroupId,
     string? GroupDisplayName,
@@ -242,7 +243,8 @@ public sealed record StageDrawGroupPlacementDto(
     string? DisplayName,
     string? ShortName = null,
     Guid? LogoMediaId = null,
-    string? PrimaryColor = null);
+    string? PrimaryColor = null,
+    DrawPlacementOrigin Origin = DrawPlacementOrigin.Draw);
 
 /// <summary>
 /// Whether a projected draw action is offered.
@@ -264,7 +266,12 @@ public enum StageDrawActionState
 /// </summary>
 /// <param name="State">Hidden, Available, or Blocked.</param>
 /// <param name="BlockCode">Existing error code when <paramref name="State"/> is Blocked.</param>
-public sealed record StageDrawActionDto(StageDrawActionState State, string? BlockCode = null);
+/// <param name="BlockDetail">Group redo fragments. Omitted on the wire when null.</param>
+public sealed record StageDrawActionDto(
+    StageDrawActionState State,
+    string? BlockCode = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    IReadOnlyList<string>? BlockDetail = null);
 
 /// <summary>
 /// Projected Libérer action. <paramref name="ReleasableCount"/> excludes direct assignments.
@@ -272,10 +279,12 @@ public sealed record StageDrawActionDto(StageDrawActionState State, string? Bloc
 /// <param name="State">Hidden when the count is zero and nothing else blocks the command.</param>
 /// <param name="BlockCode">Existing error code when <paramref name="State"/> is Blocked.</param>
 /// <param name="ReleasableCount">Aligned placements the command would release.</param>
+/// <param name="DrawnTargetCount">Drawn targets in this execution (slot results minus fixed slots, or drawn group entries).</param>
 public sealed record StageDrawReleaseActionDto(
     StageDrawActionState State,
     string? BlockCode,
-    int ReleasableCount);
+    int ReleasableCount,
+    int DrawnTargetCount);
 
 /// <summary>
 /// Draw actions on <c>GET /stages/{id}</c>.

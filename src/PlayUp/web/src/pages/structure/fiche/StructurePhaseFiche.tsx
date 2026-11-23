@@ -4,7 +4,14 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { useSyncWhen } from '../../../design-system/useRenderSync';
 import { useTranslation } from 'react-i18next';
 import {
@@ -83,6 +90,11 @@ import {
   resolveDrawReadinessChecklist,
 } from '../draw/drawUi';
 import {
+  drawCreateBlockDetailNameIndex,
+  formatDrawCreateBlockDetailLines,
+} from '../draw/drawCreateBlockDetail';
+import {
+  formatReleaseDrawnTeamsLabel,
   resolveServerReleaseCta,
   releaseFooterMode,
 } from '../draw/drawActions';
@@ -221,6 +233,7 @@ export function StructurePhaseFiche({
   const [drawWorkflowOpen, setDrawWorkflowOpen] = useState(false);
   const [deactivateDrawOpen, setDeactivateDrawOpen] = useState(false);
   const [releaseConfirmOpen, setReleaseConfirmOpen] = useState(false);
+  const pendingViewDrawFocusRef = useRef(false);
   const [staleRedoConfirmOpen, setStaleRedoConfirmOpen] = useState(false);
   const [staleReleaseConfirmOpen, setStaleReleaseConfirmOpen] = useState(false);
   const [composeOpen, setComposeOpen] = useState(false);
@@ -281,6 +294,7 @@ export function StructurePhaseFiche({
     onSuccess: (result) => {
       setReleaseConfirmOpen(false);
       setStaleReleaseConfirmOpen(false);
+      pendingViewDrawFocusRef.current = true;
       notify.success(tDraw('toastReleased', { count: result.releasedCount }));
       scheduleStructureRefresh(
         queryClient,
@@ -596,6 +610,28 @@ export function StructurePhaseFiche({
     }
   };
 
+  useLayoutEffect(() => {
+    if (!stage) {
+      return;
+    }
+    if (!pendingViewDrawFocusRef.current) {
+      return;
+    }
+    if (releaseMutation.isPending || drawOverviewQuery.isFetching) {
+      return;
+    }
+    pendingViewDrawFocusRef.current = false;
+    const target = document.querySelector<HTMLButtonElement>(
+      '[data-structure-phase-operational] button[data-action="view-draw-workflow"]:not(:disabled)',
+    );
+    target?.focus({ preventScroll: true });
+  }, [
+    stage,
+    drawOverviewQuery.isFetching,
+    drawOverviewQuery.data?.releaseCandidateDrawId,
+    releaseMutation.isPending,
+  ]);
+
   if (!stage) {
     return (
       <section className="structure-fiche" aria-labelledby="fiche-empty">
@@ -705,6 +741,17 @@ export function StructurePhaseFiche({
   const createBlockedShort = launchBlock?.shortKey
     ? t(launchBlock.shortKey)
     : null;
+  const createBlockedNamedLines =
+    launchBlock != null && createBlockPresentation?.kind === 'inline'
+      ? formatDrawCreateBlockDetailLines(
+          stage.drawCreateLaunch?.blockDetail,
+          drawCreateBlockDetailNameIndex({
+            groups: drawOverviewQuery.data?.groups,
+            roster: data.participants.entries,
+          }),
+          t,
+        )
+      : [];
   const stageHasAppliedDraw = stageHasPublishedAppliedDraw(overviewDraws);
   const releaseCta = resolveServerReleaseCta({
     draws: overviewDraws,
@@ -713,6 +760,11 @@ export function StructurePhaseFiche({
   const releasableDraw = releaseCta.draw;
   const releasableAlignedCount = releaseCta.aligned;
   const showReleaseCta = releasableDraw != null && releasableAlignedCount > 0;
+  const releaseButtonLabel =
+    releasableDraw != null
+      ? formatReleaseDrawnTeamsLabel(tDraw, releasableDraw, overviewDraws)
+      : '';
+
   /** Nouveau path blocked with nothing to manage in the dialog → disable primary CTA. */
   const blockPerformDrawCta =
     showDrawCta && !launchAllowed && !activeDraw && overviewDraws.length === 0;
@@ -1155,6 +1207,7 @@ export function StructurePhaseFiche({
     <StructureStaleDrawResolutionActions
       activeDraw={activeDraw}
       releaseCta={releaseCta}
+      stageDraws={overviewDraws}
       redoPending={staleRedoMutation.isPending}
       releasePending={releaseMutation.isPending}
       redoError={staleRedoMutation.error}
@@ -1166,6 +1219,8 @@ export function StructurePhaseFiche({
       onOpenConfirmRelease={() => setStaleReleaseConfirmOpen(true)}
       onCancelConfirmRedo={() => setStaleRedoConfirmOpen(false)}
       onCancelConfirmRelease={() => setStaleReleaseConfirmOpen(false)}
+      detailGroups={drawOverviewQuery.data?.groups}
+      detailRoster={data.participants.entries}
       onConfirmRedo={() => {
         if (activeDraw && !staleRedoMutation.isPending) {
           staleRedoMutation.mutate(activeDraw.id);
@@ -1212,11 +1267,13 @@ export function StructurePhaseFiche({
         activeDraw: Boolean(activeDraw),
         blockPerformDrawCta,
         createBlockedShort,
+        createBlockedNamedLines,
         createBlockedReason,
         showCreateBlockedCaption,
         showPoolHint,
         releasableAlignedCount,
         releasableTotal: releaseCta.total,
+        releaseButtonLabel,
         releaseDisabled: releaseCta.disabled,
         releaseDisabledReason: releaseCta.disabled
           ? releaseCta.disabledReason
@@ -1687,7 +1744,7 @@ export function StructurePhaseFiche({
               open={releaseConfirmOpen}
               title={tDraw('confirmReleaseTitle')}
               message={tDraw('confirmRelease')}
-              confirmLabel={tDraw('releasePlacements')}
+              confirmLabel={releaseButtonLabel || tDraw('releasePlacements')}
               confirmIcon={<UnlockIcon size="sm" />}
               cancelLabel={tCommon('close')}
               closeLabel={tCommon('close')}
@@ -1720,6 +1777,7 @@ export function StructurePhaseFiche({
               competitionStatus={data.status}
               stage={stage}
               structureStages={data.stages}
+              blockDetailRoster={data.participants.entries}
               open={drawWorkflowOpen}
               onClose={() => setDrawWorkflowOpen(false)}
             />

@@ -47,7 +47,9 @@ internal static class StageDrawDisplay
             return (null, null);
         }
 
-        return draw.Status != DrawStatus.Draft ? (null, HistoricalCells(draw, stage, entries)) : (stageMetrics, DraftCells(draw, stage, competitionStages, entries));
+        return draw.Status != DrawStatus.Draft
+            ? (null, HistoricalCells(draw, stage, competitionStages, entries))
+            : (stageMetrics, DraftCells(draw, stage, competitionStages, entries));
     }
 
     private static StageDrawDisplayMetricsDto Metrics(
@@ -118,14 +120,21 @@ internal static class StageDrawDisplay
     }
 
     /// <summary>
-    /// Resolution placements only. Structural slots absent from the resolution are outside this draw.
-    /// Does not read slot occupants or the current feed snapshot.
+    /// Resolution placements only for default and rerun draws. Partial uses
+    /// <see cref="PartialHistoricalCells"/> so manual and direct-assignment occupants
+    /// match the draft grid while staying frozen after publish or cancel.
     /// </summary>
     private static StageDrawSlotDisplayCellDto[] HistoricalCells(
         Draw draw,
         Stage stage,
+        IReadOnlyList<Stage> competitionStages,
         IReadOnlyDictionary<EntryId, CompetitionEntry> entries)
     {
+        if (draw.InputsIntent == DrawInputsIntent.Partial)
+        {
+            return PartialHistoricalCells(draw, stage, competitionStages, entries);
+        }
+
         var resolution = ResolutionBySlot(draw);
         var cells = new StageDrawSlotDisplayCellDto[stage.Slots.Count];
         for (var index = 0; index < stage.Slots.Count; index++)
@@ -134,6 +143,55 @@ internal static class StageDrawDisplay
             cells[index] = resolution.TryGetValue(slotKey, out var placement)
                 ? FromPlacement(placement, SlotDrawCellState.Drawn, DrawPlacementOrigin.Draw, entries)
                 : WithoutTeam(slotKey, SlotDrawCellState.OutsideDraw, origin: null);
+        }
+
+        return cells;
+    }
+
+    private static StageDrawSlotDisplayCellDto[] PartialHistoricalCells(
+        Draw draw,
+        Stage stage,
+        IReadOnlyList<Stage> competitionStages,
+        IReadOnlyDictionary<EntryId, CompetitionEntry> entries)
+    {
+        var snapshot = SlotFeedSnapshotAssembler.Assemble(stage, competitionStages);
+        var factsByKey = SlotPartialDraw.Classify(stage, snapshot)
+            .ToDictionary(fact => fact.SlotKey, StringComparer.Ordinal);
+        var resolution = ResolutionBySlot(draw);
+        var cells = new StageDrawSlotDisplayCellDto[stage.Slots.Count];
+        for (var index = 0; index < stage.Slots.Count; index++)
+        {
+            var slotKey = stage.Slots[index].SlotKey;
+            if (resolution.TryGetValue(slotKey, out var placement))
+            {
+                cells[index] = FromPlacement(
+                    placement,
+                    SlotDrawCellState.Drawn,
+                    DrawPlacementOrigin.Draw,
+                    entries);
+                continue;
+            }
+
+            if (!factsByKey.TryGetValue(slotKey, out var fact))
+            {
+                cells[index] = WithoutTeam(slotKey, SlotDrawCellState.OutsideDraw, origin: null);
+                continue;
+            }
+
+            cells[index] = fact.Occupancy switch
+            {
+                SlotDrawPlaceOccupancy.AlreadyPlaced => FromOccupant(
+                    fact,
+                    SlotDrawCellState.AlreadyPlaced,
+                    DrawPlacementOrigin.Manual,
+                    entries),
+                SlotDrawPlaceOccupancy.Withdrawn => FromOccupant(
+                    fact,
+                    SlotDrawCellState.Withdrawn,
+                    DrawPlacementOrigin.Manual,
+                    entries),
+                _ => WithoutTeam(slotKey, SlotDrawCellState.OutsideDraw, origin: null),
+            };
         }
 
         return cells;

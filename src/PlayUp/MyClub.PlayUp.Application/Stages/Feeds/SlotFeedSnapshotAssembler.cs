@@ -22,7 +22,23 @@ public static class SlotFeedSnapshotAssembler
     /// <returns>An immutable domain snapshot.</returns>
     public static SlotFeedSnapshot Assemble(
         Stage target,
-        IReadOnlyList<Stage> competitionStages)
+        IReadOnlyList<Stage> competitionStages) =>
+        BuildSnapshot(target, competitionStages, excludePublishedDrawId: null);
+
+    /// <summary>
+    /// Feed snapshot for partial redo: aligned placements of the applied draw are treated as released,
+    /// so that draw's published targets must not reserve those slots before Cancel.
+    /// </summary>
+    public static SlotFeedSnapshot AssembleForPartialRedo(
+        Stage target,
+        IReadOnlyList<Stage> competitionStages,
+        DrawId excludePublishedDrawId) =>
+        BuildSnapshot(target, competitionStages, excludePublishedDrawId);
+
+    private static SlotFeedSnapshot BuildSnapshot(
+        Stage target,
+        IReadOnlyList<Stage> competitionStages,
+        DrawId? excludePublishedDrawId)
     {
         ArgumentNullException.ThrowIfNull(target);
         ArgumentNullException.ThrowIfNull(competitionStages);
@@ -102,18 +118,23 @@ public static class SlotFeedSnapshotAssembler
             directs,
             qualifications,
             progressions,
-            BuildDrawTargets(target));
+            BuildDrawTargets(target, excludePublishedDrawId));
     }
 
     /// <summary>
     /// Draw → SlotResolution (Published) → DrawFeedSource → WhoFeeds.
     /// Draft / Cancelled / NoSolution draws do not contribute feeds (Prepare before Publish → Missing).
     /// </summary>
-    private static DrawFeedSource[] BuildDrawTargets(Stage target)
+    private static DrawFeedSource[] BuildDrawTargets(Stage target, DrawId? excludePublishedDrawId)
     {
         var targets = new List<DrawFeedSource>();
         foreach (var draw in target.Draws)
         {
+            if (excludePublishedDrawId is not null && draw.Id.Equals(excludePublishedDrawId))
+            {
+                continue;
+            }
+
             if (draw.Status != DrawStatus.Published
                 || draw.Kind != DrawResolutionKind.Slot
                 || draw.Resolution.State != DrawResolutionState.Resolved)

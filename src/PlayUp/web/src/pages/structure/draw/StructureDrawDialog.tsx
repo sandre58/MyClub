@@ -16,6 +16,7 @@ import {
   createAndGenerateDraw,
   fetchStageOverview,
   isDrawGenerateFailedError,
+  isStageDrawLaunchRefusalError,
   publishAndApplyDraw,
   releaseDrawAlignedPlacements,
   rerunDrawGeneration,
@@ -50,11 +51,9 @@ import type {
   StructureFormatKind,
   StructureStageHubSummary,
 } from '../../../types';
-import { resolveLifecycleMutationMessage } from '../problems';
 import {
   buildCupDrawDisplayFromDto,
   drawExecutionNumber,
-  drawResolutionPlacementCount,
   getDrawUiProjection,
   pickActiveDraw,
   drawCreateLaunchBlockCopy,
@@ -68,11 +67,18 @@ import {
   type CupDrawCellLabels,
 } from './drawUi';
 import { DrawSlotConfrontationGrid } from './DrawSlotConfrontationGrid';
+import {
+  drawCreateBlockDetailNameIndex,
+  formatDrawCreateBlockDetailLines,
+} from './drawCreateBlockDetail';
 import { redoAppliedDraw } from './drawRedo';
 import {
+  DRAW_RELEASE_ATTACHED_MATCHES,
   drawActionsOf,
+  formatReleaseDrawnTeamsLabel,
   isDrawActionAvailable,
   releaseBlockReason,
+  releaseDrawnTargetCount,
   redoPresentation,
   releaseFooterMode,
   releaseHoldForDraw,
@@ -119,6 +125,11 @@ export type StructureDrawDialogProps = {
   competitionStatus: CompetitionStatus;
   stage: StructureStageHubSummary;
   structureStages: readonly StructureStageHubSummary[];
+  /** Seat names from the structure view, keyed by entry id. */
+  blockDetailRoster: readonly {
+    entryId: string;
+    displayName?: string | null;
+  }[];
 };
 
 const EMPTY_DRAWS: StageDraw[] = [];
@@ -126,6 +137,20 @@ const EMPTY_SLOTS: StageSlot[] = [];
 const EMPTY_GROUPS: StageGroupOverview[] = [];
 
 type ConfirmKind = 'apply' | 'abandon' | 'release' | 'redo' | 'cancelApplied';
+
+function cancelAppliedGroupsMessage(
+  draw: StageDraw,
+  stage: StructureStageHubSummary,
+  tDraw: (key: string) => string,
+): string {
+  const base = tDraw('confirmCancelAppliedGroups');
+  const matchesBlocked =
+    draw.actions?.redo.blockCode === DRAW_RELEASE_ATTACHED_MATCHES ||
+    (stage.status === 'Ready' && stage.matchCount > 0);
+  return matchesBlocked
+    ? `${base} ${tDraw('confirmCancelAppliedGroupsMatches')}`
+    : base;
+}
 
 /**
  * Work dialog — stage draw executions.
@@ -137,6 +162,7 @@ export function StructureDrawDialog({
   competitionId,
   structureStages,
   stage,
+  blockDetailRoster,
 }: StructureDrawDialogProps) {
   const { t } = useTranslation('structure');
   const { t: tDraw } = useTranslation('draw');
@@ -261,6 +287,30 @@ export function StructureDrawDialog({
           })
         : t(launchBlock.detailKey)
       : null;
+  const blockDetailNames = drawCreateBlockDetailNameIndex({
+    groups: overviewGroups,
+    roster: blockDetailRoster,
+  });
+  const createBlockNamedLines =
+    createBlockedDetail != null && createBlockPresentation?.kind === 'inline'
+      ? formatDrawCreateBlockDetailLines(
+          stage.drawCreateLaunch?.blockDetail,
+          blockDetailNames,
+          t,
+        )
+      : [];
+  const occupiedGroupPlaces = overviewGroups.reduce(
+    (sum, group) => sum + group.entryIds.length,
+    0,
+  );
+  const groupSeatCapacity =
+    placesPerGroup != null && (stage.groupCount ?? 0) > 0
+      ? placesPerGroup * (stage.groupCount ?? 0)
+      : null;
+  const groupsHaveAFreePlace =
+    groupSeatCapacity != null &&
+    occupiedGroupPlaces > 0 &&
+    occupiedGroupPlaces < groupSeatCapacity;
 
   /** Draft create / generate — hub + schematic unchanged until publish/apply. */
   function scheduleDrawOverviewRefresh() {
@@ -305,17 +355,14 @@ export function StructureDrawDialog({
         notify.success(tDraw('toastCreated'));
       }
     },
-    onError: async (error) => {
+    onError: (error) => {
+      if (isStageDrawLaunchRefusalError(error)) {
+        scheduleDrawOverviewRefresh();
+        return;
+      }
       if (isDrawGenerateFailedError(error)) {
         scheduleDrawOverviewRefresh();
         notify.error(tDraw('toastGenerationFailed'));
-        return;
-      }
-      if (
-        error instanceof ApiError &&
-        error.code === 'Stage.NonCancelledDrawAlreadyExists'
-      ) {
-        notify.error(resolveLifecycleMutationMessage(t, error));
         return;
       }
       notify.error(tDraw('toastActionFailed'));
@@ -351,6 +398,7 @@ export function StructureDrawDialog({
     },
     onSuccess: () => {
       notify.success(tDraw('toastPublishedAndApplied'));
+      onClose();
     },
     onError: (error) => {
       if (error instanceof ApiError && error.status === 409) {
@@ -366,11 +414,13 @@ export function StructureDrawDialog({
     mutationFn: (drawId: string) => cancelDraw(stageId, drawId),
     onSuccess: () => {
       closeConfirm();
+      scheduleDrawOverviewRefresh();
       scheduleDrawHubRefresh();
       notify.success(tDraw('toastCancelled'));
     },
     onError: (error) => {
       if (error instanceof ApiError && error.status === 409) {
+        scheduleDrawOverviewRefresh();
         scheduleDrawHubRefresh();
       }
     },
@@ -402,6 +452,7 @@ export function StructureDrawDialog({
       closeConfirm();
       scheduleDrawHubRefresh();
       notify.success(tDraw('toastApplied'));
+      onClose();
     },
     onError: (error) => {
       if (error instanceof ApiError && error.status === 409) {
@@ -455,6 +506,9 @@ export function StructureDrawDialog({
   const releaseBodyError = stickyMutationError(releaseMutation.error);
 
   const mutationError =
+    (isStageDrawLaunchRefusalError(createMutation.error)
+      ? createMutation.error
+      : null) ??
     stickyMutationError(publishAndApplyMutation.error) ??
     stickyMutationError(cancelMutation.error) ??
     stickyMutationError(applyMutation.error) ??
@@ -484,10 +538,17 @@ export function StructureDrawDialog({
     !activeUi.isApplied &&
     isDrawActionAvailable(drawActionsOf(activeDraw).cancel);
   const canRedo = activeRedo.kind === 'available';
+  const redoNamedLines =
+    activeDraw != null && activeRedo.kind === 'blocked'
+      ? formatDrawCreateBlockDetailLines(
+          drawActionsOf(activeDraw).redo.blockDetail,
+          blockDetailNames,
+          t,
+        )
+      : [];
   const canCancelApplied =
     activeDraw != null &&
     activeUi?.isApplied === true &&
-    activeRedo.kind === 'blocked' &&
     isDrawActionAvailable(drawActionsOf(activeDraw).cancel);
 
   const releaseTarget = (() => {
@@ -504,6 +565,8 @@ export function StructureDrawDialog({
 
   const releaseFooterBlocked =
     releaseTarget != null && releaseFooterMode(releaseTarget) === 'disabled';
+  const releaseFooterEnabled =
+    releaseTarget != null && releaseFooterMode(releaseTarget) === 'enabled';
   const releaseFooterBlockedReason =
     releaseTarget != null ? releaseBlockReason(releaseTarget) : null;
 
@@ -595,22 +658,7 @@ export function StructureDrawDialog({
       active.isConnected &&
       dialog?.contains(active) === true;
     if (dialog && ((buttonLost && !landedElsewhere) || outsideDialog)) {
-      const footer = dialog.querySelector('.structure-draw-footer');
-      const primary = footer?.querySelector<HTMLElement>(
-        '.ds-btn--primary:not(:disabled)',
-      );
-      const neutral = footer
-        ? [...footer.querySelectorAll<HTMLButtonElement>('button')].find(
-            (button) =>
-              !button.disabled &&
-              !button.classList.contains('ds-btn--primary') &&
-              !button.classList.contains('ds-btn--destructive'),
-          )
-        : undefined;
-      const closeButton = dialog.querySelector<HTMLElement>(
-        'button.ds-icon-button:not(:disabled)',
-      );
-      (primary ?? neutral ?? closeButton)?.focus({
+      pickDrawFooterFocusAfterRelease(dialog)?.focus({
         preventScroll: true,
       });
     }
@@ -636,7 +684,12 @@ export function StructureDrawDialog({
     />
   ) : activeDraw != null && activeRedo.kind === 'blocked' ? (
     <Alert tone="info" role="status">
-      {tDraw(`redoBlocked.${activeRedo.reason}`)}
+      <p className="ds-body">{tDraw(`redoBlocked.${activeRedo.reason}`)}</p>
+      {redoNamedLines.map((line, index) => (
+        <p key={index} className="ds-body">
+          {line}
+        </p>
+      ))}
     </Alert>
   ) : releaseFooterBlocked ? (
     <Alert tone="info" role="status">
@@ -644,9 +697,15 @@ export function StructureDrawDialog({
     </Alert>
   ) : !overviewQuery.isLoading &&
     createBlockedDetail != null &&
-    createBlockPresentation?.kind === 'inline' ? (
+    createBlockPresentation?.kind === 'inline' &&
+    !(createBlockedReason === 'noFreeSlot' && releaseFooterEnabled) ? (
     <Alert tone={createBlockPresentation.tone} role="status">
       <p className="ds-body">{createBlockedDetail}</p>
+      {createBlockNamedLines.map((line, index) => (
+        <p key={index} className="ds-body">
+          {line}
+        </p>
+      ))}
       {createBlockEcho?.cta?.actionCode === 'AddEntry' &&
       createBlockEcho.sotHref ? (
         <p className="ds-body">
@@ -693,7 +752,10 @@ export function StructureDrawDialog({
                 type="button"
                 className="ds-btn ds-btn--destructive"
                 disabled={busy}
-                onClick={() => openConfirm('abandon', activeDraw!.id)}
+                onClick={() => {
+                  createMutation.reset();
+                  openConfirm('abandon', activeDraw!.id);
+                }}
               >
                 {cancelMutation.isPending ? (
                   <PendingLabel>{tDraw('abandoning')}</PendingLabel>
@@ -710,7 +772,10 @@ export function StructureDrawDialog({
                 type="button"
                 className="ds-btn ds-btn--destructive"
                 disabled={busy}
-                onClick={() => openConfirm('cancelApplied', activeDraw!.id)}
+                onClick={() => {
+                  createMutation.reset();
+                  openConfirm('cancelApplied', activeDraw!.id);
+                }}
               >
                 {cancelMutation.isPending ? (
                   <PendingLabel>{tDraw('cancelling')}</PendingLabel>
@@ -728,22 +793,21 @@ export function StructureDrawDialog({
                 className="ds-btn ds-btn--secondary"
                 data-action="release-draw-placements"
                 disabled={busy || releaseFooterBlocked}
-                onClick={() => openConfirm('release', releaseTarget.id)}
+                onClick={() => {
+                  createMutation.reset();
+                  openConfirm('release', releaseTarget.id);
+                }}
               >
                 {releaseMutation.isPending ? (
                   <PendingLabel>{tDraw('releasingPlacements')}</PendingLabel>
                 ) : (
                   <>
                     <UnlockIcon size="sm" />
-                    {releaseTarget.kind === 'Slot'
-                      ? tDraw('releaseDrawnTeams', {
-                          n: alignedCountFor(releaseTarget),
-                        })
-                      : tDraw('releaseRun', {
-                          n: drawExecutionNumber(drawList, releaseTarget.id),
-                          aligned: alignedCountFor(releaseTarget),
-                          total: drawResolutionPlacementCount(releaseTarget),
-                        })}
+                    {formatReleaseDrawnTeamsLabel(
+                      tDraw,
+                      releaseTarget,
+                      drawList,
+                    )}
                   </>
                 )}
               </button>
@@ -753,7 +817,10 @@ export function StructureDrawDialog({
                 type="button"
                 className="ds-btn ds-btn--secondary"
                 disabled={busy}
-                onClick={() => rerunMutation.mutate(activeDraw!.id)}
+                onClick={() => {
+                  createMutation.reset();
+                  rerunMutation.mutate(activeDraw!.id);
+                }}
               >
                 {rerunMutation.isPending ? (
                   <PendingLabel>{tDraw('rerunning')}</PendingLabel>
@@ -782,12 +849,15 @@ export function StructureDrawDialog({
                 <button
                   type="button"
                   className="ds-btn ds-btn--primary"
+                  data-draw-run-trigger="launch"
                   disabled={busy || !canLaunch}
                   onClick={() => {
                     if (!canLaunch) return;
                     createMutation.mutate(undefined, {
-                      onSettled: () => {
-                        createMutation.reset();
+                      onSettled: (_result, error) => {
+                        if (!isStageDrawLaunchRefusalError(error)) {
+                          createMutation.reset();
+                        }
                       },
                     });
                   }}
@@ -811,6 +881,7 @@ export function StructureDrawDialog({
                 className="ds-btn ds-btn--primary"
                 disabled={busy}
                 onClick={() => {
+                  createMutation.reset();
                   applyMutation.reset();
                   publishAndApplyMutation.mutate(activeDraw!);
                 }}
@@ -830,7 +901,10 @@ export function StructureDrawDialog({
                 type="button"
                 className="ds-btn ds-btn--primary"
                 disabled={busy}
-                onClick={() => openConfirm('apply', activeDraw!.id)}
+                onClick={() => {
+                  createMutation.reset();
+                  openConfirm('apply', activeDraw!.id);
+                }}
               >
                 {applyMutation.isPending ? (
                   <PendingLabel>{tDraw('applying')}</PendingLabel>
@@ -847,7 +921,10 @@ export function StructureDrawDialog({
                 type="button"
                 className="ds-btn ds-btn--primary"
                 disabled={busy}
-                onClick={() => openConfirm('redo', activeDraw!.id)}
+                onClick={() => {
+                  createMutation.reset();
+                  openConfirm('redo', activeDraw!.id);
+                }}
               >
                 {redoMutation.isPending ? (
                   <PendingLabel>{tDraw('redoing')}</PendingLabel>
@@ -874,11 +951,12 @@ export function StructureDrawDialog({
             absent, the hint falls back to whether any slot already has an occupant.
           */}
           {canLaunch &&
-          drawKind === 'Slot' &&
-          (stageDrawMetrics
-            ? stageDrawMetrics.alreadyPlacedEntryCount > 0 &&
-              stageDrawMetrics.vacantSlotKeyCount > 0
-            : slotsHaveOccupants(slots)) ? (
+          ((drawKind === 'Group' && groupsHaveAFreePlace) ||
+            (drawKind === 'Slot' &&
+              (stageDrawMetrics
+                ? stageDrawMetrics.alreadyPlacedEntryCount > 0 &&
+                  stageDrawMetrics.vacantSlotKeyCount > 0
+                : slotsHaveOccupants(slots)))) ? (
             <Alert tone="info" role="status">
               <p className="ds-body">
                 {t('fiche.drawWorkflow.partialFillHint')}
@@ -926,7 +1004,7 @@ export function StructureDrawDialog({
               icon={<RandomIcon size="lg" />}
               title={tDraw('noActiveTitle')}
             >
-              {releaseTarget != null && !releaseFooterBlocked
+              {releaseTarget != null && !releaseFooterBlocked && !canLaunch
                 ? tDraw('noActiveReleaseFirst', {
                     n: drawExecutionNumber(drawList, releaseTarget.id),
                   })
@@ -977,7 +1055,7 @@ export function StructureDrawDialog({
                 {cancelledDraws.map((draw) => {
                   const expanded = draw.id === expandedDrawId;
                   const aligned = alignedCountFor(draw);
-                  const total = drawResolutionPlacementCount(draw);
+                  const total = releaseDrawnTargetCount(draw);
                   const panelId = previousRunDetailId(runsDomId, draw.id);
                   const executionNumber = drawExecutionNumber(
                     drawList,
@@ -1165,7 +1243,13 @@ export function StructureDrawDialog({
       <ConfirmDialog
         open={confirm === 'cancelApplied'}
         title={tDraw('confirmCancelAppliedTitle')}
-        message={tDraw('confirmCancelApplied')}
+        message={
+          confirmDraw?.kind === 'Group'
+            ? cancelAppliedGroupsMessage(confirmDraw, stage, (key) =>
+                tDraw(key),
+              )
+            : tDraw('confirmCancelApplied')
+        }
         confirmLabel={tDraw('cancelAppliedDraw')}
         confirmIcon={<CloseIcon size="sm" />}
         cancelLabel={tCommon('close')}
@@ -1205,10 +1289,8 @@ export function StructureDrawDialog({
         title={tDraw('confirmReleaseTitle')}
         message={tDraw('confirmRelease')}
         confirmLabel={
-          confirmDraw?.kind === 'Slot'
-            ? tDraw('releaseDrawnTeams', {
-                n: alignedCountFor(confirmDraw),
-              })
+          confirmDraw != null
+            ? formatReleaseDrawnTeamsLabel(tDraw, confirmDraw, drawList)
             : tDraw('releasePlacements')
         }
         confirmIcon={<UnlockIcon size="sm" />}
@@ -1246,7 +1328,13 @@ export function StructureDrawDialog({
       <ConfirmDialog
         open={confirm === 'redo'}
         title={tDraw('confirmRedoTitle')}
-        message={tDraw('confirmRedo')}
+        message={
+          drawKind === 'Group'
+            ? tDraw('confirmRedoGroups')
+            : activeDraw?.inputsIntent === 'Partial'
+              ? tDraw('confirmRedoCup')
+              : tDraw('confirmRedo')
+        }
         confirmLabel={tDraw('redo')}
         confirmIcon={<UndoIcon size="sm" />}
         cancelLabel={tCommon('close')}
@@ -1257,16 +1345,29 @@ export function StructureDrawDialog({
         confirmPendingLabel={tDraw('redoing')}
         footerStatus={
           redoMutation.isError ? (
-            <MutationError
-              error={
-                stickyMutationError(redoMutation.error) ?? redoMutation.error
-              }
-              structureStages={structureStages}
-              sotHref={persistentStructureMutationSotHref(
-                redoMutation.error,
-                competitionId,
-              )}
-            />
+            <>
+              <MutationError
+                error={
+                  stickyMutationError(redoMutation.error) ?? redoMutation.error
+                }
+                structureStages={structureStages}
+                sotHref={persistentStructureMutationSotHref(
+                  redoMutation.error,
+                  competitionId,
+                )}
+              />
+              {formatDrawCreateBlockDetailLines(
+                redoMutation.error instanceof ApiError
+                  ? redoMutation.error.reasons
+                  : undefined,
+                blockDetailNames,
+                t,
+              ).map((line, index) => (
+                <p key={index} className="ds-body">
+                  {line}
+                </p>
+              ))}
+            </>
           ) : null
         }
         onCancel={() => {
@@ -1519,6 +1620,10 @@ function DrawExecutionView({
               groups={groupModel}
               ariaLabel={omitResultAriaLabel ? undefined : t('result')}
               ghostLabel={t('ghostPlace')}
+              placedLabels={{
+                alreadyPlaced: t('alreadyPlaced'),
+                originManualHint: t('originManualHint'),
+              }}
             />
           </div>
         ) : null}

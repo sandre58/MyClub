@@ -27,13 +27,17 @@ public static class ConfigureDrawInputs
     /// </param>
     /// <param name="competitionStages">Required for Rerun and Partial feed classification.</param>
     /// <param name="stageMatches">Matches of stage.</param>
+    /// <param name="rerunLaunchVacantSlotKeys">
+    /// Slot keys treated as vacant for a Rerun launch guard (Refaire redo path).
+    /// </param>
     public static void Execute(
         Stage stage,
         DrawId drawId,
         DrawInputs inputs,
         DrawInputsIntent configureIntent = DrawInputsIntent.Default,
         IReadOnlyList<Stage>? competitionStages = null,
-        IReadOnlyList<Match>? stageMatches = null)
+        IReadOnlyList<Match>? stageMatches = null,
+        IReadOnlySet<string>? rerunLaunchVacantSlotKeys = null)
     {
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(inputs);
@@ -56,7 +60,11 @@ public static class ConfigureDrawInputs
                     nameof(competitionStages),
                     "Competition stages are required to validate Rerun draw inputs.");
             case DrawInputsIntent.Rerun:
-                StageDrawRerunLaunchGuard.Ensure(stage, competitionStages, draw.Kind);
+                StageDrawRerunLaunchGuard.Ensure(
+                    stage,
+                    competitionStages,
+                    draw.Kind,
+                    rerunLaunchVacantSlotKeys);
                 break;
             case DrawInputsIntent.Partial:
                 EnsurePartialSlotInputs(stage, draw, inputs, competitionStages);

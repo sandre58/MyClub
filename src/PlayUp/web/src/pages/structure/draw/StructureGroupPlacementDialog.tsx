@@ -823,7 +823,7 @@ export function StructureGroupPlacementDialog({
             </button>
             {!showPlacementBlocked &&
             !compositionEmpty &&
-            (mode === 'edit' || teamChoices.length > 0) ? (
+            (mode === 'edit' || teamChoices.length > 0 || canSave) ? (
               <button
                 type="button"
                 className="ds-btn ds-btn--primary"

@@ -656,6 +656,29 @@ describe('draw readiness checklist', () => {
     );
   });
 
+  it('treats the Groups bracket line as met and keeps the occupied count', () => {
+    const items = resolveDrawReadinessChecklist({
+      compositionEntryCount: 4,
+      placesN: 4,
+      inboundResolvedCount: 0,
+      inboundConfiguredVolume: 0,
+      isRootComposition: true,
+      formatKind: 'Groups',
+      slots: [
+        { entryId: 'e1' },
+        { entryId: 'e2' },
+        { entryId: null },
+        { entryId: null },
+      ],
+    });
+    expect(items.find((item) => item.id === 'bracketPlacesFree')).toMatchObject(
+      {
+        met: true,
+        current: 2,
+      },
+    );
+  });
+
   it('omits inbound-known line when no qual/prog volume is configured', () => {
     const items = resolveDrawReadinessChecklist({
       compositionEntryCount: 2,
@@ -863,19 +886,48 @@ describe('areDrawRulesLockedByExecution', () => {
 });
 
 describe('pickDrawFooterFocusAfterRelease', () => {
-  it('prefers the release footer action by data-action', () => {
+  it('prefers view-draw-workflow over footer primary after release', () => {
     document.body.innerHTML = `
       <div role="dialog">
         <div class="structure-draw-footer">
           <button type="button" class="ds-btn ds-btn--primary">Lancer le tirage</button>
-          <button type="button" class="ds-btn ds-btn--secondary" data-action="release-draw-placements">Libérer #1 (1/1)</button>
+          <button type="button" class="ds-btn ds-btn--secondary" data-action="view-draw-workflow">Voir le tirage</button>
         </div>
       </div>
     `;
     const dialog = document.querySelector('[role="dialog"]')!;
     expect(pickDrawFooterFocusAfterRelease(dialog)?.dataset.action).toBe(
-      'release-draw-placements',
+      'view-draw-workflow',
     );
+  });
+
+  it('does not target elements with tabIndex -1 in RTL', () => {
+    document.body.innerHTML = `
+      <div role="dialog" dir="rtl">
+        <div class="structure-draw-footer">
+          <button type="button" class="ds-btn ds-btn--secondary" data-action="view-draw-workflow">Voir le tirage</button>
+        </div>
+      </div>
+    `;
+    const dialog = document.querySelector('[role="dialog"]')!;
+    const target = pickDrawFooterFocusAfterRelease(dialog);
+    expect(target?.dataset.action).toBe('view-draw-workflow');
+    expect(target?.getAttribute('tabindex')).not.toBe('-1');
+  });
+
+  it('prefers footer run trigger over execution tiles outside the footer', () => {
+    document.body.innerHTML = `
+      <div role="dialog">
+        <button type="button" data-draw-run-trigger="draw-1">Tirage #1</button>
+        <div class="structure-draw-footer">
+          <button type="button" class="ds-btn ds-btn--primary" data-draw-run-trigger="launch">Lancer le tirage</button>
+        </div>
+      </div>
+    `;
+    const dialog = document.querySelector('[role="dialog"]')!;
+    expect(
+      pickDrawFooterFocusAfterRelease(dialog)?.dataset.drawRunTrigger,
+    ).toBe('launch');
   });
 });
 
@@ -1034,6 +1086,32 @@ describe('resolveDrawHeroModel', () => {
     entryCount: 4,
     placeCount: 4,
   };
+
+  it('C2-ter aligns hero toPlace and freePlaces counts on partial after redo', () => {
+    const targetCount = 3;
+    expect(
+      resolveDrawHeroModel({
+        formatKind: 'Cup',
+        groupCount: 0,
+        teamCount: 5,
+        placesCount: 5,
+        metrics: {
+          unplacedEntryCount: targetCount,
+          vacantSlotKeyCount: targetCount,
+          vacantSlotKeys: ['S3', 'S4', 'S5'],
+          alreadyPlacedEntryCount: 2,
+          entryCount: 5,
+          placeCount: 5,
+        },
+        inputsIntent: 'Partial',
+        hasActiveDraw: true,
+      }),
+    ).toEqual({
+      layout: 'duo',
+      primary: { value: targetCount, label: 'heroToPlace' },
+      secondary: { value: targetCount, label: 'heroFreePlaces' },
+    });
+  });
 
   it('T5 uses partial duo when free places and unplaced teams remain', () => {
     expect(

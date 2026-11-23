@@ -229,8 +229,19 @@ type StageDrawWire = {
   status: string;
 };
 
+type StageDrawOverviewWire = StageDrawWire & {
+  actions?: {
+    release?: {
+      releasableCount?: number;
+      state?: string;
+    };
+  };
+};
+
 type StageOverviewWire = {
-  draws?: StageDrawWire[];
+  draws?: StageDrawOverviewWire[];
+  slots?: { slotKey: string; entryId: string | null }[];
+  releaseCandidateDrawId?: string | null;
 };
 
 /**
@@ -246,9 +257,9 @@ export async function ensureCupCompositionDrawPending(
 ): Promise<void> {
   const competition = await findCupCompositionCompleteCompetition(request);
   const stageId = await getPrimaryStageId(request, competition.id);
-  const overview = await getStageOverview(request, stageId);
+  const before = await getStageOverview(request, stageId);
 
-  for (const draw of overview.draws ?? []) {
+  for (const draw of before.draws ?? []) {
     if (draw.status === 'Cancelled') {
       continue;
     }
@@ -256,22 +267,78 @@ export async function ensureCupCompositionDrawPending(
     const cancel = await request.post(
       `${playUpApiBase()}/stages/${stageId}/draws/${draw.id}/cancel`,
     );
-    if (!cancel.ok()) {
+    if (!cancel.ok() && cancel.status() !== 409) {
       const body = await cancel.text();
       throw new Error(
         `POST .../draws/${draw.id}/cancel failed (${cancel.status()}): ${body}`,
       );
     }
+  }
 
-    const release = await request.post(
-      `${playUpApiBase()}/stages/${stageId}/draws/${draw.id}/release-aligned-placements`,
+  for (let pass = 0; pass < 6; pass++) {
+    const overview = await getStageOverview(request, stageId);
+    const cancelledDraws = [...(overview.draws ?? [])]
+      .filter((draw) => draw.status === 'Cancelled')
+      .reverse();
+    let released = false;
+    for (const draw of cancelledDraws) {
+      if ((draw.actions?.release?.releasableCount ?? 0) <= 0) {
+        continue;
+      }
+
+      const release = await request.post(
+        `${playUpApiBase()}/stages/${stageId}/draws/${draw.id}/release-aligned-placements`,
+      );
+      if (release.ok()) {
+        released = true;
+        continue;
+      }
+      if (release.status() !== 409 && release.status() !== 404) {
+        const body = await release.text();
+        throw new Error(
+          `POST .../draws/${draw.id}/release-aligned-placements failed (${release.status()}): ${body}`,
+        );
+      }
+    }
+
+    const occupiedSlots =
+      overview.slots?.filter((slot) => slot.entryId != null).length ?? 0;
+    const pendingDraws = (overview.draws ?? []).some(
+      (draw) => draw.status === 'Draft' || draw.status === 'Published',
     );
-    if (!release.ok()) {
-      const body = await release.text();
+    if (occupiedSlots === 0 && !pendingDraws) {
+      return;
+    }
+
+    if (!released) {
+      break;
+    }
+  }
+
+  let finalOverview = await getStageOverview(request, stageId);
+  for (const slot of finalOverview.slots ?? []) {
+    if (slot.entryId == null) {
+      continue;
+    }
+
+    const cleared = await request.delete(
+      `${playUpApiBase()}/stages/${stageId}/slots/${encodeURIComponent(slot.slotKey)}/assignment?expectedEntryId=${encodeURIComponent(slot.entryId)}`,
+    );
+    if (!cleared.ok() && cleared.status() !== 409) {
+      const body = await cleared.text();
       throw new Error(
-        `POST .../draws/${draw.id}/release-aligned-placements failed (${release.status()}): ${body}`,
+        `DELETE slot assignment ${slot.slotKey} failed (${cleared.status()}): ${body}`,
       );
     }
+  }
+
+  finalOverview = await getStageOverview(request, stageId);
+  const remainingOccupied =
+    finalOverview.slots?.filter((slot) => slot.entryId != null).length ?? 0;
+  if (remainingOccupied > 0) {
+    throw new Error(
+      `Cup composition stage still has ${remainingOccupied} occupied slots after draw teardown`,
+    );
   }
 }
 

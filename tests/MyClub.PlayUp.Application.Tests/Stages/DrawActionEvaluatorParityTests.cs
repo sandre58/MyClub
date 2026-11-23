@@ -100,6 +100,32 @@ public sealed class DrawActionEvaluatorParityTests
     }
 
     [Fact]
+    public void Release_slot_blocked_when_another_published_draw_is_applied()
+    {
+        var stage = CreateStage();
+        stage.AddSlot("S1");
+        var entry = EntryId.New();
+        stage.ReplaceAffectationAuthoring([entry], _clock);
+        var cancelled = ResolveSlotDraw(stage, [new SlotDrawPlacement(entry, "S1")]);
+        stage.PublishDraw(cancelled.Id, _clock);
+        ApplyDraw.Execute(stage, cancelled.Id, _clock);
+        stage.CancelDraw(cancelled.Id, _clock);
+        var active = ResolveSlotDraw(stage, [new SlotDrawPlacement(entry, "S1")]);
+        stage.PublishDraw(active.Id, _clock);
+        ApplyDraw.Execute(stage, active.Id, _clock);
+
+        var release = Evaluate(stage, cancelled).Release;
+        release.BlockCode.Should().Be(ApplicationErrorCodes.DrawReleaseFailure);
+        release.ReleasableCount.Should().Be(0);
+        release.State.Should().Be(StageDrawActionState.Blocked);
+        DrawActionEvaluator.ReleaseCandidateDrawId(DrawActionEvaluator.ForCommand(stage, null), stage)
+            .Should().BeNull();
+        AssertBlocked(
+            () => ReleaseDrawAlignedPlacements.Execute(stage, cancelled.Id, _clock),
+            ApplicationErrorCodes.DrawReleaseFailure);
+    }
+
+    [Fact]
     public void Release_blocked_when_another_published_draw_is_applied()
     {
         var stage = CreateStage();
@@ -114,7 +140,12 @@ public sealed class DrawActionEvaluatorParityTests
         stage.PublishDraw(active.Id, _clock);
         ApplyDraw.Execute(stage, active.Id, _clock);
 
-        Evaluate(stage, cancelled).Release.BlockCode.Should().Be(ApplicationErrorCodes.DrawReleaseFailure);
+        var release = Evaluate(stage, cancelled).Release;
+        release.BlockCode.Should().Be(ApplicationErrorCodes.DrawReleaseFailure);
+        release.ReleasableCount.Should().Be(0);
+        release.State.Should().Be(StageDrawActionState.Blocked);
+        DrawActionEvaluator.ReleaseCandidateDrawId(DrawActionEvaluator.ForCommand(stage, null), stage)
+            .Should().BeNull();
         AssertBlocked(
             () => ReleaseDrawAlignedPlacements.Execute(stage, cancelled.Id, _clock),
             ApplicationErrorCodes.DrawReleaseFailure);

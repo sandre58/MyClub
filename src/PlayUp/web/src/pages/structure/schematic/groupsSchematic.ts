@@ -11,6 +11,8 @@ export type GroupsSchematicEntry = {
   displayName: string;
   logoMediaId?: string | null;
   primaryColor?: string | null;
+  /** Absent on the phase sheet. Draw preview sets it from the placement. */
+  origin?: 'Draw' | 'Feed' | 'Manual';
   /**
    * 0-based seat when empty places sit between teams.
    * Omitted entries pack from the first seat; the rest of `capacity` are ghosts.
@@ -133,6 +135,7 @@ export function groupsSchematicFromDrawDraft(input: {
           displayName: entry.displayName,
           logoMediaId: entry.logoMediaId,
           primaryColor: entry.primaryColor,
+          origin: entry.origin ?? 'Draw',
         }),
       );
       const capacity =

@@ -4,8 +4,10 @@ import {
   expectCupDrawAppliedOnStructure,
   findCupCompositionCompleteCompetition,
   getPrimaryStageId,
+  playUpApiBase,
   runCupSlotDrawPublishAndApply,
 } from './hostSeed';
+import { applyCupPartialDrawAfterDirectAssignment } from './cup-partial-redo-helpers';
 
 /**
  * Host + PostgreSQL E2E — critical path #3 (draw publish/apply).
@@ -69,13 +71,69 @@ test.describe('Play’Up business (Host + PostgreSQL)', () => {
       .getByRole('button', { name: 'Fermer', exact: true })
       .click();
 
-    await dialog.getByRole('button', { name: 'Fermer', exact: true }).click();
     await expect(dialog).toBeHidden();
     await expect(
       page.getByText('Un tirage au sort a été appliqué pour cette phase.'),
     ).toBeVisible();
     await expect(
       page.getByRole('button', { name: 'Voir le tirage', exact: true }),
+    ).toBeVisible();
+  });
+
+  test('Draw — Partial appliqué avec DA, Refaire au clavier et confirmRedoCup', async ({
+    page,
+    request,
+  }) => {
+    const competition = await findCupCompositionCompleteCompetition(request);
+    const { stageId, manualSlotKey, manualEntryId } =
+      await applyCupPartialDrawAfterDirectAssignment(request, competition.id);
+
+    await page.goto(`/competitions/${competition.id}/structure`);
+    await page
+      .getByRole('button', { name: 'Voir le tirage', exact: true })
+      .click();
+    const dialog = page.getByRole('dialog', { name: /Exécutions de tirage/ });
+    await expect(dialog).toBeVisible();
+    await expect(
+      dialog.getByRole('listitem', { name: /Déjà placée/i }).first(),
+    ).toBeVisible();
+    await expect(dialog.getByText('Hors de ce tirage')).toHaveCount(0);
+
+    const redo = dialog.getByRole('button', { name: 'Refaire le tirage' });
+    const cancel = dialog.getByRole('button', { name: 'Annuler le tirage' });
+    await expect(cancel).toBeVisible();
+    await expect(redo).toBeVisible();
+    await cancel.focus();
+    await page.keyboard.press('Tab');
+    await expect(redo).toBeFocused();
+
+    await redo.click();
+    const confirm = page.getByRole('dialog', { name: 'Refaire le tirage ?' });
+    await expect(confirm).toContainText(
+      'libère seulement les emplacements placés par le tirage',
+    );
+    await confirm.getByRole('button', { name: 'Refaire le tirage' }).click();
+    await expect(confirm).toBeHidden();
+    await expect(dialog.getByRole('list', { name: 'Résultat' })).toBeVisible();
+
+    const overviewAfterRedo = await request.get(
+      `${playUpApiBase()}/stages/${stageId}`,
+    );
+    expect(overviewAfterRedo.ok()).toBeTruthy();
+    const overview = (await overviewAfterRedo.json()) as {
+      draws?: { status: string; inputsIntent?: string }[];
+      slots?: { slotKey: string; entryId?: string | null }[];
+    };
+    const preview = overview.draws?.find((draw) => draw.status === 'Draft');
+    expect(preview?.inputsIntent).toBe('Partial');
+    expect(
+      overview.slots?.find((slot) => slot.slotKey === manualSlotKey)?.entryId,
+    ).toBe(manualEntryId);
+
+    await dialog.getByRole('button', { name: 'Fermer', exact: true }).click();
+    await expect(dialog).toBeHidden();
+    await expect(
+      page.locator(`[data-slot-key="${manualSlotKey}"]`),
     ).toBeVisible();
   });
 });

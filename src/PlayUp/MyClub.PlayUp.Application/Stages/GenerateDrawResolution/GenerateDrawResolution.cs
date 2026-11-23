@@ -107,10 +107,9 @@ public static class GenerateDrawResolution
         IReadOnlyList<string>? slotTargets,
         IReadOnlyList<Stage>? competitionStages)
     {
-        if (draw.Kind != DrawResolutionKind.Slot
-            || draw.InputsIntent != DrawInputsIntent.Partial
+        if (!SlotCupRedoPath.UsesPartialGeneration(draw)
             || competitionStages is null
-            || draw.Inputs!.FixedSlots.Count > 0)
+            || draw.Inputs is null)
         {
             return slotTargets;
         }

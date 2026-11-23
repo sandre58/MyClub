@@ -132,6 +132,7 @@ export {
   rerunDrawGeneration,
   DrawGenerateFailedError,
   isDrawGenerateFailedError,
+  isStageDrawLaunchRefusalError,
   isStageDrawRerunLaunchGuardError,
   applyDraw,
   redoDraw,

@@ -58,11 +58,12 @@ public static class ReleaseDrawAlignedPlacements
         }
 
         var snapshots = MaterializedParticipantSnapshots.FromMatches(stageMatches ?? []);
+        var index = DrawReleaseReleasability.BuildIndex(stage);
 
         return draw.Kind switch
         {
-            DrawResolutionKind.Slot => ReleaseSlotPlacements(stage, draw, clock, snapshots),
-            DrawResolutionKind.Group => ReleaseGroupPlacements(stage, draw, snapshots),
+            DrawResolutionKind.Slot => ReleaseSlotPlacements(stage, draw, clock, snapshots, index),
+            DrawResolutionKind.Group => ReleaseGroupPlacements(stage, draw, snapshots, index),
             _ => throw new ApplicationFailureException(
                 $"ReleaseDrawAlignedPlacements does not support draw kind '{draw.Kind}'.",
                 ApplicationErrorCodes.DrawKindNotSupported)
@@ -73,22 +74,15 @@ public static class ReleaseDrawAlignedPlacements
         Stage stage,
         Draw draw,
         IClock clock,
-        IReadOnlyList<MatchParticipantSnapshot> snapshots)
+        IReadOnlyList<MatchParticipantSnapshot> snapshots,
+        DrawReleaseReleasability.LastDrawnAuthorIndex index)
     {
         var released = 0;
         var skipped = 0;
 
-        foreach (var placement in draw.Resolution.SlotResults)
+        foreach (var placement in DrawReleaseReleasability.DrawnSlotPlacements(draw))
         {
-            if (stage.DirectAssignments.Any(a =>
-                    string.Equals(a.SlotKey, placement.SlotKey, StringComparison.Ordinal)))
-            {
-                skipped++;
-                continue;
-            }
-
-            var slot = stage.FindSlot(placement.SlotKey);
-            if (slot?.EntryId is not { } current || !current.Equals(placement.EntryId))
+            if (!DrawReleaseReleasability.IsReleasableSlot(stage, draw, placement, index))
             {
                 skipped++;
                 continue;
@@ -104,22 +98,15 @@ public static class ReleaseDrawAlignedPlacements
     private static ReleaseDrawAlignedPlacementsResult ReleaseGroupPlacements(
         Stage stage,
         Draw draw,
-        IReadOnlyList<MatchParticipantSnapshot> snapshots)
+        IReadOnlyList<MatchParticipantSnapshot> snapshots,
+        DrawReleaseReleasability.LastDrawnAuthorIndex index)
     {
         var released = 0;
         var skipped = 0;
-        var drawn = GroupDrawLaunchRules.DrawnEntries(draw);
 
         foreach (var placement in draw.Resolution.GroupResults)
         {
-            if (!drawn.Contains(placement.EntryId))
-            {
-                skipped++;
-                continue;
-            }
-
-            var group = stage.FindGroup(placement.GroupId);
-            if (group?.EntryIds.Contains(placement.EntryId) != true)
+            if (!DrawReleaseReleasability.IsReleasableGroup(stage, draw, placement, index))
             {
                 skipped++;
                 continue;

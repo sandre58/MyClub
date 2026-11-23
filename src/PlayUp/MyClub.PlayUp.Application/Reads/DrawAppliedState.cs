@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Stages;
 
@@ -41,8 +42,12 @@ public static class DrawAppliedState
 
     private static bool IsGroupApplied(Draw draw, Stage stage)
     {
-        var placements = draw.Resolution.GroupResults;
-        return placements.Count != 0 && !(from placement in placements let @group = stage.FindGroup(placement.GroupId) where @group?.EntryIds.Contains(placement.EntryId) != true select placement).Any();
+        var required = AppliedGroupDrawScope.PlacementsThatKeepApplied(draw);
+        return required.Count != 0 && required.All(placement =>
+        {
+            var group = stage.FindGroup(placement.GroupId);
+            return group?.EntryIds.Contains(placement.EntryId) == true;
+        });
     }
 
     private static bool IsSlotApplied(Draw draw, Stage stage)

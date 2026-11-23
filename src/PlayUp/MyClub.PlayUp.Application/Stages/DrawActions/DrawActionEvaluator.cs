@@ -29,6 +29,21 @@ internal static class DrawActionEvaluator
             StageAttachedProduction.HasAttachedMatches(stage, matches));
     }
 
+    internal static DrawActionContext ForRedo(
+        Stage stage,
+        IReadOnlyList<Stage> competitionStages,
+        IReadOnlyList<Match>? stageMatches)
+    {
+        ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(competitionStages);
+        var matches = stageMatches ?? [];
+        return new DrawActionContext(
+            stage,
+            competitionStages,
+            MaterializedParticipantSnapshots.FromMatches(matches),
+            StageAttachedProduction.HasAttachedMatches(stage, matches));
+    }
+
     internal static bool NeedsGroupDraftParticipantRows(Stage stage)
     {
         ArgumentNullException.ThrowIfNull(stage);
@@ -68,7 +83,7 @@ internal static class DrawActionEvaluator
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(stage);
 
-        Guid? candidate = null;
+        var cancelledWithReleasable = new List<(Draw Draw, DrawReleaseAssessment Release)>();
         foreach (var draw in stage.Draws)
         {
             if (draw.Status != DrawStatus.Cancelled)
@@ -79,11 +94,25 @@ internal static class DrawActionEvaluator
             var release = EvaluateRelease(context, draw, treatAsCancelled: false);
             if (release.ReleasableCount >= 1)
             {
-                candidate = draw.Id.Value;
+                cancelledWithReleasable.Add((draw, release));
             }
         }
 
-        return candidate;
+        if (cancelledWithReleasable.Count == 0)
+        {
+            return null;
+        }
+
+        var last = cancelledWithReleasable[^1];
+        if (last.Release.State == StageDrawActionState.Blocked
+            && cancelledWithReleasable
+                .Take(cancelledWithReleasable.Count - 1)
+                .Any(entry => entry.Release.State == StageDrawActionState.Available))
+        {
+            return null;
+        }
+
+        return last.Draw.Id.Value;
     }
 
     private static DrawActionAssessment EvaluateCancel(Stage stage, Draw draw)
@@ -108,16 +137,17 @@ internal static class DrawActionEvaluator
         Draw draw,
         bool treatAsCancelled)
     {
-        var count = CountReleasable(context.Stage, draw);
+        var count = CountReleasable(context, draw);
+        var drawnTargets = DrawReleaseReleasability.CountDrawnTargets(draw);
         var block = TryReleaseBlock(context, draw, treatAsCancelled);
         if (block is not null)
         {
-            return new DrawReleaseAssessment(StageDrawActionState.Blocked, block, count);
+            return new DrawReleaseAssessment(StageDrawActionState.Blocked, block, count, drawnTargets);
         }
 
         return count == 0
-            ? new DrawReleaseAssessment(StageDrawActionState.Hidden, null, 0)
-            : new DrawReleaseAssessment(StageDrawActionState.Available, null, count);
+            ? new DrawReleaseAssessment(StageDrawActionState.Hidden, null, 0, drawnTargets)
+            : new DrawReleaseAssessment(StageDrawActionState.Available, null, count, drawnTargets);
     }
 
     private static string? TryReleaseBlock(DrawActionContext context, Draw draw, bool treatAsCancelled)
@@ -235,11 +265,6 @@ internal static class DrawActionEvaluator
             return DrawActionAssessment.Block(release.BlockCode!);
         }
 
-        if (context.Stage.DirectAssignments.Count > 0)
-        {
-            return DrawActionAssessment.Block(ApplicationErrorCodes.DrawLaunchDirectAssignmentPresent);
-        }
-
         if (draw.Kind == DrawResolutionKind.Group)
         {
             var decision = GroupDrawLaunchRules.Evaluate(
@@ -248,18 +273,45 @@ internal static class DrawActionEvaluator
                 GroupDrawLaunchRules.DrawnEntries(draw));
             return decision.IsAllowed
                 ? DrawActionAssessment.Available
-                : DrawActionAssessment.Block(decision.Code!);
+                : DrawActionAssessment.Block(decision.Code!, decision.Reasons);
         }
 
-        var facts = StageDrawBracketLaunchClassifier.ClassifyForDrawKind(
-            context.Stage,
-            context.CompetitionStages,
-            draw.Kind,
-            AlignedSlotKeys(context.Stage, draw),
-            AlignedGroupEntryIds(context.Stage, draw));
-        return facts.BlockingPlaceCount > 0
-            ? DrawActionAssessment.Block(ApplicationErrorCodes.DrawLaunchGridNotVacant)
-            : DrawActionAssessment.Available;
+        if (draw.Kind != DrawResolutionKind.Slot)
+        {
+            return DrawActionAssessment.Hidden;
+        }
+
+        if (SlotCupRedoPath.UsesPartialVoieP(draw))
+        {
+            var partialBlock = SlotPartialDrawPlanner.TryGetPartialRedoBlockCode(
+                context.Stage,
+                context.CompetitionStages,
+                AlignedSlotKeys(context.Stage, draw),
+                draw.Id);
+            return partialBlock is null
+                ? DrawActionAssessment.Available
+                : DrawActionAssessment.Block(partialBlock);
+        }
+
+        if (SlotCupRedoPath.UsesDefaultRerun(draw))
+        {
+            if (context.Stage.DirectAssignments.Count > 0)
+            {
+                return DrawActionAssessment.Block(ApplicationErrorCodes.DrawLaunchDirectAssignmentPresent);
+            }
+
+            var facts = StageDrawBracketLaunchClassifier.ClassifyForDrawKind(
+                context.Stage,
+                context.CompetitionStages,
+                draw.Kind,
+                AlignedSlotKeys(context.Stage, draw),
+                AlignedGroupEntryIds(context.Stage, draw));
+            return facts.BlockingPlaceCount > 0
+                ? DrawActionAssessment.Block(ApplicationErrorCodes.DrawLaunchGridNotVacant)
+                : DrawActionAssessment.Available;
+        }
+
+        return DrawActionAssessment.Hidden;
     }
 
     private static string? PlacementBlock(Stage stage, Draw draw)
@@ -296,13 +348,14 @@ internal static class DrawActionEvaluator
 
         try
         {
+            var index = context.ReleaseIndex;
             if (draw.Kind == DrawResolutionKind.Slot)
             {
                 var proposed = MaterializedOpponentCoherence.CopySlotOccupants(context.Stage);
                 var changed = false;
-                foreach (var placement in draw.Resolution.SlotResults)
+                foreach (var placement in DrawReleaseReleasability.DrawnSlotPlacements(draw))
                 {
-                    if (IsDirectAssignment(context.Stage, placement.SlotKey) || !SlotAligned(context.Stage, placement))
+                    if (!DrawReleaseReleasability.IsReleasableSlot(context.Stage, draw, placement, index))
                     {
                         continue;
                     }
@@ -334,11 +387,9 @@ internal static class DrawActionEvaluator
                 return null;
             }
 
-            var drawn = GroupDrawLaunchRules.DrawnEntries(draw);
             foreach (var placement in draw.Resolution.GroupResults)
             {
-                if (!drawn.Contains(placement.EntryId)
-                    || context.Stage.FindGroup(placement.GroupId)?.EntryIds.Contains(placement.EntryId) != true)
+                if (!DrawReleaseReleasability.IsReleasableGroup(context.Stage, draw, placement, index))
                 {
                     continue;
                 }
@@ -357,28 +408,8 @@ internal static class DrawActionEvaluator
         }
     }
 
-    private static int CountReleasable(Stage stage, Draw draw)
-    {
-        if (draw.Resolution.State != DrawResolutionState.Resolved)
-        {
-            return 0;
-        }
-
-        return draw.Kind switch
-        {
-            DrawResolutionKind.Slot => draw.Resolution.SlotResults.Count(placement =>
-                !IsDirectAssignment(stage, placement.SlotKey) && SlotAligned(stage, placement)),
-            DrawResolutionKind.Group => CountDrawnStillInResolutionGroup(stage, draw),
-            _ => 0
-        };
-    }
-
-    private static int CountDrawnStillInResolutionGroup(Stage stage, Draw draw)
-    {
-        var drawn = GroupDrawLaunchRules.DrawnEntries(draw);
-
-        return draw.Resolution.GroupResults.Count(placement => drawn.Contains(placement.EntryId) && stage.FindGroup(placement.GroupId)?.EntryIds.Contains(placement.EntryId) == true);
-    }
+    private static int CountReleasable(DrawActionContext context, Draw draw) =>
+        DrawReleaseReleasability.CountReleasable(context.Stage, draw, context.ReleaseIndex);
 
     private static HashSet<string> AlignedSlotKeys(Stage stage, Draw draw)
     {
@@ -448,6 +479,8 @@ internal sealed class DrawActionContext(
     IReadOnlyList<MatchParticipantSnapshot> snapshots,
     bool hasAttachedMatches)
 {
+    private DrawReleaseReleasability.LastDrawnAuthorIndex? _releaseIndex;
+
     internal Stage Stage { get; } = stage;
 
     internal IReadOnlyList<Stage> CompetitionStages { get; } = competitionStages;
@@ -455,21 +488,29 @@ internal sealed class DrawActionContext(
     internal IReadOnlyList<MatchParticipantSnapshot> Snapshots { get; } = snapshots;
 
     internal bool HasAttachedMatches { get; } = hasAttachedMatches;
+
+    internal DrawReleaseReleasability.LastDrawnAuthorIndex ReleaseIndex =>
+        _releaseIndex ??= DrawReleaseReleasability.BuildIndex(Stage);
 }
 
-internal sealed record DrawActionAssessment(StageDrawActionState State, string? BlockCode)
+internal sealed record DrawActionAssessment(
+    StageDrawActionState State,
+    string? BlockCode,
+    IReadOnlyList<string>? BlockDetail = null)
 {
     internal static DrawActionAssessment Hidden { get; } = new(StageDrawActionState.Hidden, null);
 
     internal static DrawActionAssessment Available { get; } = new(StageDrawActionState.Available, null);
 
-    internal static DrawActionAssessment Block(string code) => new(StageDrawActionState.Blocked, code);
+    internal static DrawActionAssessment Block(string code, IReadOnlyList<string>? detail = null) =>
+        new(StageDrawActionState.Blocked, code, detail is { Count: > 0 } ? detail : null);
 }
 
 internal sealed record DrawReleaseAssessment(
     StageDrawActionState State,
     string? BlockCode,
-    int ReleasableCount);
+    int ReleasableCount,
+    int DrawnTargetCount);
 
 internal sealed record DrawActionsAssessment(
     DrawActionAssessment Cancel,
@@ -489,13 +530,13 @@ internal sealed record DrawActionsAssessment(
 
 internal static class DrawActionFailure
 {
-    internal static void Throw(string code, string message)
+    internal static void Throw(string code, string message, IReadOnlyList<string>? reasons = null)
     {
         if (code.StartsWith("Stage.", StringComparison.Ordinal))
         {
             throw new DomainException(message, code);
         }
 
-        throw new ApplicationFailureException(message, code);
+        throw new ApplicationFailureException(message, code, reasons);
     }
 }

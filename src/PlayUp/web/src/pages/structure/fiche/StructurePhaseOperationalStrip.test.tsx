@@ -52,6 +52,7 @@ const basePlacement: StructurePlacementOperationalSectionProps = {
   showPoolHint: true,
   releasableAlignedCount: 0,
   releasableTotal: 0,
+  releaseButtonLabel: '',
   releasePending: false,
   deactivateDrawPending: false,
   drawOperationalReady: true,
@@ -369,11 +370,14 @@ describe('StructurePhaseOperationalStrip', () => {
         showReleaseCta: true,
         releasableAlignedCount: 1,
         releasableTotal: 2,
+        releaseButtonLabel: "Libérer l'équipe tirée",
         releaseDisabled: false,
       },
     });
 
-    expect(screen.getByRole('button', { name: 'Libérer 1/2' })).toBeEnabled();
+    expect(
+      screen.getByRole('button', { name: "Libérer l'équipe tirée" }),
+    ).toBeEnabled();
   });
 
   it('keeps blocked release visible and disabled with the server reason', () => {
@@ -386,12 +390,15 @@ describe('StructurePhaseOperationalStrip', () => {
         showReleaseCta: true,
         releasableAlignedCount: 1,
         releasableTotal: 1,
+        releaseButtonLabel: "Libérer l'équipe tirée",
         releaseDisabled: true,
         releaseDisabledReason: reason,
       },
     });
 
-    const release = screen.getByRole('button', { name: 'Libérer 1/1' });
+    const release = screen.getByRole('button', {
+      name: "Libérer l'équipe tirée",
+    });
     expect(release).toBeDisabled();
     expect(release).toHaveAttribute('title', reason);
   });
@@ -568,6 +575,111 @@ describe('StructurePhaseOperationalStrip', () => {
       ).toBeInTheDocument();
       expect(
         screen.queryByRole('button', { name: /Paramètres/i }),
+      ).not.toBeInTheDocument();
+    });
+
+    it('hides the Cup NoFreeSlot note when the readiness checklist is shown', () => {
+      renderStrip({
+        layoutVariant: 'composition',
+        stage: { ...readyCupStage, formatKind: 'Cup' },
+        placement: {
+          ...basePlacement,
+          stageStatus: 'Ready',
+          canEditDraw: false,
+          showCreateBlockedCaption: true,
+          createBlockedShort: 'Aucune place libre.',
+          createBlockedReason: 'noFreeSlot',
+          drawReadinessChecklist: [
+            {
+              id: 'teamsFillPlaces' as const,
+              met: true,
+              current: 4,
+              capacity: 4,
+            },
+            { id: 'bracketPlacesFree' as const, met: false, current: 4 },
+          ],
+        },
+      });
+
+      expect(
+        screen.getByRole('list', {
+          name: /Prérequis pour effectuer le tirage/i,
+        }),
+      ).toBeInTheDocument();
+      expect(screen.queryByText('Aucune place libre.')).not.toBeInTheDocument();
+    });
+
+    it('shows the Groups named refusal beside the readiness checklist', () => {
+      renderStrip({
+        layoutVariant: 'composition',
+        stage: {
+          ...readyCupStage,
+          formatKind: 'Groups',
+          name: 'Groupes',
+        },
+        placement: {
+          ...basePlacement,
+          stageStatus: 'Ready',
+          canEditDraw: false,
+          showCreateBlockedCaption: true,
+          createBlockedShort: 'Déplacez une équipe du même pot avant de tirer.',
+          createBlockedReason: 'fixedPotConflict',
+          createBlockedNamedLines: ['Groupe A, pot 1 : Alpha et Beta'],
+          drawReadinessChecklist: [
+            {
+              id: 'teamsFillPlaces' as const,
+              met: true,
+              current: 8,
+              capacity: 8,
+            },
+            { id: 'bracketPlacesFree' as const, met: true, current: 2 },
+          ],
+        },
+      });
+
+      expect(
+        screen.getByRole('list', {
+          name: /Prérequis pour effectuer le tirage/i,
+        }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText('Déplacez une équipe du même pot avant de tirer.'),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText('Groupe A, pot 1 : Alpha et Beta'),
+      ).toBeInTheDocument();
+    });
+
+    it('hides a Groups refusal that has no named lines when the checklist is shown', () => {
+      renderStrip({
+        layoutVariant: 'composition',
+        stage: { ...readyCupStage, formatKind: 'Groups', name: 'Groupes' },
+        placement: {
+          ...basePlacement,
+          stageStatus: 'Ready',
+          canEditDraw: false,
+          showCreateBlockedCaption: true,
+          createBlockedShort: 'Renseignez les pots avant de tirer.',
+          createBlockedReason: 'missingPots',
+          drawReadinessChecklist: [
+            {
+              id: 'teamsFillPlaces' as const,
+              met: true,
+              current: 8,
+              capacity: 8,
+            },
+            { id: 'bracketPlacesFree' as const, met: true, current: 0 },
+          ],
+        },
+      });
+
+      expect(
+        screen.getByRole('list', {
+          name: /Prérequis pour effectuer le tirage/i,
+        }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText('Renseignez les pots avant de tirer.'),
       ).not.toBeInTheDocument();
     });
 

@@ -402,6 +402,7 @@ export function StructurePhaseOperationalStrip({
         compositionLayout={compositionStack}
         structureHubBackgroundRefresh={structureHubBackgroundRefresh}
         {...placement}
+        formatKind={stage.formatKind}
         drawApplied={drawApplied}
       />
     ) : null;
@@ -448,6 +449,7 @@ export function StructurePhaseOperationalStrip({
       ) : null}
       <div
         className="structure-operational-strip"
+        data-structure-phase-operational=""
         data-layout-variant={layoutVariant}
         data-places-strip-layout={
           compositionStack ? placesStripLayout : undefined
@@ -690,6 +692,7 @@ function DrawColumn(
     /** Composition band: resolved pool meter lives on Qualifiés. */
     compositionLayout?: boolean;
     structureHubBackgroundRefresh?: boolean;
+    formatKind?: StructureStageHubSummary['formatKind'];
   },
 ) {
   const compactIcon =
@@ -758,6 +761,12 @@ function DrawColumn(
     props.showCreateBlockedCaption && props.createBlockedShort ? (
       <StripOperationalMessage kind="attention">
         {props.createBlockedShort}
+        {(props.createBlockedNamedLines ?? []).map((line, index) => (
+          <span key={index} className="ds-body">
+            <br />
+            {line}
+          </span>
+        ))}
         {props.createBlockedReason === 'belowMinimumTeams' ? (
           <>
             {' '}
@@ -816,23 +825,37 @@ function DrawColumn(
       disabled?: boolean;
       disabledTitle?: string;
       variant?: 'primary' | 'secondary';
+      viewDrawWorkflow?: boolean;
     },
   ) => {
     const btnClass =
       options?.variant === 'secondary' ? secondaryBtn : primaryBtn;
     const disabled = options?.disabled ?? false;
     const disabledTitle = options?.disabledTitle;
+    const viewDrawAttrs = options?.viewDrawWorkflow
+      ? { 'data-action': 'view-draw-workflow' as const }
+      : {};
     return disabled ? (
       <Tooltip content={disabledTitle ?? label}>
         <span className="structure-operational-tile__action-wrap structure-operational-strip__composition-draw-cta-wrap">
-          <button type="button" className={btnClass} disabled>
+          <button
+            type="button"
+            className={btnClass}
+            disabled
+            {...viewDrawAttrs}
+          >
             <DrawPendingIcon size="sm" />
             {label}
           </button>
         </span>
       </Tooltip>
     ) : (
-      <button type="button" className={btnClass} onClick={onClick}>
+      <button
+        type="button"
+        className={btnClass}
+        onClick={onClick}
+        {...viewDrawAttrs}
+      >
         <DrawPendingIcon size="sm" />
         {label}
       </button>
@@ -871,7 +894,7 @@ function DrawColumn(
         {compositionLaunchButton(
           t('fiche.viewDrawWorkflow'),
           props.onOpenDrawWorkflow,
-          { variant: 'secondary' },
+          { variant: 'secondary', viewDrawWorkflow: true },
         )}
       </div>
     );
@@ -885,7 +908,7 @@ function DrawColumn(
           {compositionLaunchButton(
             t('fiche.viewDrawWorkflow'),
             props.onOpenDrawWorkflow,
-            { variant: 'secondary' },
+            { variant: 'secondary', viewDrawWorkflow: true },
           )}
         </div>
       ) : (
@@ -895,6 +918,7 @@ function DrawColumn(
             <button
               type="button"
               className={secondaryBtn}
+              data-action="view-draw-workflow"
               onClick={props.onOpenDrawWorkflow}
             >
               <ViewIcon size="sm" />
@@ -921,9 +945,13 @@ function DrawColumn(
       ? t('fiche.viewDrawWorkflow')
       : t('fiche.performDraw');
     const drawSetupEditable = props.canEditDraw && !props.drawApplied;
+    const showNamedGroupsNote =
+      props.formatKind === 'Groups' &&
+      (props.createBlockedNamedLines?.length ?? 0) > 0;
     body = (
       <div className="structure-operational-strip__composition-draw">
-        {!showDrawReadinessChecklist && drawBlockedNote ? (
+        {(!showDrawReadinessChecklist || showNamedGroupsNote) &&
+        drawBlockedNote ? (
           <div className="structure-operational-strip__message-stack">
             {drawBlockedNote}
           </div>
@@ -940,6 +968,7 @@ function DrawColumn(
                 disabled: props.blockPerformDrawCta,
                 disabledTitle: props.createBlockedShort ?? launchLabel,
                 variant: props.drawApplied ? 'secondary' : 'primary',
+                viewDrawWorkflow: props.drawApplied,
               })
             : null}
           {drawSetupEditable ? (
@@ -968,10 +997,7 @@ function DrawColumn(
               ) : (
                 <>
                   <UnlockIcon size="sm" />
-                  {tDraw('releasePlacementsCount', {
-                    aligned: props.releasableAlignedCount,
-                    total: props.releasableTotal,
-                  })}
+                  {props.releaseButtonLabel}
                 </>
               )}
             </button>
@@ -1010,6 +1036,7 @@ function DrawColumn(
             <button
               type="button"
               className={secondaryBtn}
+              data-action="view-draw-workflow"
               onClick={props.onOpenDrawWorkflow}
             >
               <ViewIcon size="sm" />
@@ -1123,10 +1150,7 @@ function DrawColumn(
               ) : (
                 <>
                   <UnlockIcon size="sm" />
-                  {tDraw('releasePlacementsCount', {
-                    aligned: props.releasableAlignedCount,
-                    total: props.releasableTotal,
-                  })}
+                  {props.releaseButtonLabel}
                 </>
               )}
             </button>

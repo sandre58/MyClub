@@ -13,8 +13,9 @@ namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
 /// Application use case: redo an applied draw in one transaction — cancel, release the drawn
-/// placements, then preview a new resolution. Cup configures Rerun inputs. Groups configures
-/// Default on the current composition, after the launch rule has accepted the grid the release
+/// placements, then preview a new resolution. Cup Partial configures Partial inputs; Cup Default
+/// with fixes configures Rerun. Groups configures Default on the current composition, after the
+/// launch rule has accepted the grid the release
 /// will leave. The rule runs before Cancel, so a refusal leaves the applied draw untouched.
 /// </summary>
 /// <remarks>
@@ -51,14 +52,17 @@ public static class RedoDraw
 
         var draw = stage.GetDraw(drawId);
         var redo = DrawActionEvaluator.Evaluate(
-            DrawActionEvaluator.ForCommand(stage, stageMatches),
+            DrawActionEvaluator.ForRedo(stage, competitionStages, stageMatches),
             draw).Redo;
         if (redo.State != StageDrawActionState.Available)
         {
             // Hidden (Draft, Published not yet applied, Cancelled) has no BlockCode — the read
             // projection just omits the action — so the command needs its own refusal code.
             var code = redo.BlockCode ?? ApplicationErrorCodes.DrawRedoRequiresApplied;
-            DrawActionFailure.Throw(code, $"Cannot redo draw '{draw.Id}' ({code}).");
+            DrawActionFailure.Throw(
+                code,
+                $"Cannot redo draw '{draw.Id}' ({code}).",
+                redo.BlockDetail);
         }
 
         if (draw.Inputs is null)
@@ -79,23 +83,37 @@ public static class RedoDraw
             groupDecision.EnsureAllowed();
         }
 
+        var rerunVacantSlotKeys =
+            draw.Kind == DrawResolutionKind.Slot
+                ? RedoAlignedRelease.AlignedSlotKeys(stage, draw)
+                : null;
+
         CancelDraw.Execute(stage, drawId, clock);
-        ReleaseDrawAlignedPlacements.Execute(stage, drawId, clock, stageMatches);
+        RedoAlignedRelease.Execute(stage, draw, clock, stageMatches);
 
         var created = CreateDraw.Execute(stage, kind, clock, stageMatches, competitionStages);
+        var usePartialCupRedo = SlotCupRedoPath.UsesPartialVoieP(draw);
         var inputs = groupDecision is not null
             ? DrawInputs.ForGroup(
                 [.. stage.CompositionEntries.Select(entry => entry.EntryId)],
                 potMembership: new PotMembership(groupDecision.Pots!),
                 fixedPlacements: groupDecision.FixedGroups)
-            : DrawInputsFactory.CreateRerun(stage, draw);
+            : usePartialCupRedo
+                ? DrawInputsFactory.CreatePartial(stage, competitionStages, DrawResolutionKind.Slot)
+                : DrawInputsFactory.CreateRerun(stage, draw);
+        var inputsIntent = groupDecision is not null
+            ? DrawInputsIntent.Default
+            : usePartialCupRedo
+                ? DrawInputsIntent.Partial
+                : DrawInputsIntent.Rerun;
         ConfigureDrawInputs.Execute(
             stage,
             created.Id,
             inputs,
-            groupDecision is not null ? DrawInputsIntent.Default : DrawInputsIntent.Rerun,
+            inputsIntent,
             competitionStages,
-            stageMatches);
+            stageMatches,
+            rerunVacantSlotKeys);
 
         IReadOnlyList<string>? slotTargets = kind == DrawResolutionKind.Slot
             ? stage.Slots.Select(slot => slot.SlotKey).ToArray()
@@ -110,7 +128,8 @@ public static class RedoDraw
             clock,
             slotTargets,
             groupTargets,
-            stageMatches: stageMatches);
+            stageMatches: stageMatches,
+            competitionStages: competitionStages);
 
         return new RedoDrawResult(created.Id, generation.IsResolved, generation.IsNoSolution);
     }

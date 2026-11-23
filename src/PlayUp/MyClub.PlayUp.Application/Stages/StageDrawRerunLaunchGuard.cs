@@ -20,6 +20,9 @@ public static class StageDrawRerunLaunchGuard
     /// <param name="stage">Stage that owns the draw (tracked snapshot).</param>
     /// <param name="competitionStages">All competition stages for feed resolution.</param>
     /// <param name="drawKind">Draw resolution kind being configured.</param>
+    /// <param name="slotKeysTreatedAsVacant">
+    /// Slot keys treated as vacant for this check only (e.g. Redo release before Rerun).
+    /// </param>
     /// <remarks>
     /// Precedence matches SPA <c>resolveDrawCreateGate</c>: direct assignment before occupied places.
     /// Must run before mutating draw inputs.
@@ -27,7 +30,8 @@ public static class StageDrawRerunLaunchGuard
     public static void Ensure(
         Stage stage,
         IReadOnlyList<Stage> competitionStages,
-        DrawResolutionKind drawKind)
+        DrawResolutionKind drawKind,
+        IReadOnlySet<string>? slotKeysTreatedAsVacant = null)
     {
         ArgumentNullException.ThrowIfNull(stage);
         ArgumentNullException.ThrowIfNull(competitionStages);
@@ -42,7 +46,8 @@ public static class StageDrawRerunLaunchGuard
         var facts = StageDrawBracketLaunchClassifier.ClassifyForDrawKind(
             stage,
             competitionStages,
-            drawKind);
+            drawKind,
+            slotKeysTreatedAsVacant);
 
         if (facts.BlockingPlaceCount > 0)
         {

@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { StageDraw, StructureStageHubSummary } from '../../../types';
 import { drawActions, hiddenDrawActions } from '../../../test/withDrawActions';
+import i18n from '../../../i18n';
 import { renderWithI18n } from '../../../test/renderWithI18n';
 import { DRAW_RELEASE_ATTACHED_MATCHES } from '../draw/drawActions';
 import { StructureStaleDrawResolutionActions } from './StructureStaleDrawResolutionActions';
@@ -52,13 +53,15 @@ const noop = () => {};
 type Props = ComponentProps<typeof StructureStaleDrawResolutionActions>;
 
 function renderActions(overrides: Partial<Props> = {}) {
+  const activeDraw = appliedDraw(
+    drawActions({
+      redo: { state: 'Available' },
+      release: { state: 'Available', releasableCount: 2, drawnTargetCount: 2 },
+    }),
+  );
+  const resolvedActive =
+    overrides.activeDraw === undefined ? activeDraw : overrides.activeDraw;
   const props: Props = {
-    activeDraw: appliedDraw(
-      drawActions({
-        redo: { state: 'Available' },
-        release: { state: 'Available', releasableCount: 2 },
-      }),
-    ),
     releaseCta: {
       draw: null,
       aligned: 0,
@@ -80,6 +83,9 @@ function renderActions(overrides: Partial<Props> = {}) {
     onConfirmRedo: noop,
     onConfirmRelease: noop,
     ...overrides,
+    activeDraw: resolvedActive,
+    stageDraws:
+      overrides.stageDraws ?? (resolvedActive != null ? [resolvedActive] : []),
   };
 
   return renderWithI18n(<StructureStaleDrawResolutionActions {...props} />);
@@ -93,8 +99,8 @@ describe('StructureStaleDrawResolutionActions', () => {
       screen.getByRole('button', { name: 'Refaire le tirage' }),
     ).toBeEnabled();
     expect(
-      screen.getByRole('button', { name: /Libérer les placements/i }),
-    ).toHaveTextContent('Libérer les placements (2)');
+      screen.getByRole('button', { name: 'Libérer les 2 équipes tirées' }),
+    ).toBeEnabled();
   });
 
   it('disables Refaire when redo is blocked by server guard', () => {
@@ -115,6 +121,52 @@ describe('StructureStaleDrawResolutionActions', () => {
     ).toBeDisabled();
   });
 
+  it('shows group redo detail lines on the banner', () => {
+    const groupId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    const alpha = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+    const beta = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+    renderActions({
+      activeDraw: {
+        ...appliedDraw(
+          drawActions({
+            redo: {
+              state: 'Blocked',
+              blockCode: 'Application.DrawFixedPotConflict',
+              blockDetail: [`group:${groupId}:pot:1:entries:${alpha},${beta}`],
+            },
+          }),
+        ),
+        kind: 'Group',
+      },
+      detailGroups: [{ id: groupId, name: 'A' }],
+      detailRoster: [
+        { entryId: alpha, displayName: 'Alpha' },
+        { entryId: beta, displayName: 'Beta' },
+      ],
+    });
+
+    expect(
+      screen.getByText('Groupe A, pot 1 : Alpha et Beta'),
+    ).toBeInTheDocument();
+  });
+
+  it('hides Libérer from server CTA when release is not Available', () => {
+    renderActions({
+      activeDraw: null,
+      releaseCta: {
+        draw: null,
+        aligned: 1,
+        total: 2,
+        disabled: true,
+        disabledReason: 'Application.DrawReleaseFailure',
+      },
+    });
+
+    expect(
+      screen.queryByRole('button', { name: /Libérer les placements/i }),
+    ).not.toBeInTheDocument();
+  });
+
   it('disables Libérer when release action is blocked', () => {
     renderActions({
       activeDraw: appliedDraw(
@@ -130,7 +182,7 @@ describe('StructureStaleDrawResolutionActions', () => {
     });
 
     expect(
-      screen.getByRole('button', { name: 'Libérer les placements' }),
+      screen.getByRole('button', { name: 'Libérer les 3 équipes tirées' }),
     ).toBeDisabled();
   });
 
@@ -149,10 +201,91 @@ describe('StructureStaleDrawResolutionActions', () => {
     renderActions({ confirmRedoOpen: true, onConfirmRedo });
 
     const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveTextContent(
+      'Cela annule l’exécution, libère les placements encore alignés, puis lance un nouvel aperçu, en une seule opération : si une étape échoue, rien n’est modifié.',
+    );
     await user.click(
       within(dialog).getByRole('button', { name: 'Refaire le tirage' }),
     );
     expect(onConfirmRedo).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses the Partial cup redo confirmation when inputsIntent is Partial', () => {
+    renderActions({
+      confirmRedoOpen: true,
+      activeDraw: {
+        ...appliedDraw(
+          drawActions({
+            redo: { state: 'Available' },
+            release: { state: 'Available', releasableCount: 2 },
+          }),
+        ),
+        inputsIntent: 'Partial',
+      },
+    });
+
+    expect(screen.getByRole('dialog')).toHaveTextContent(
+      'Cela annule l’exécution, libère seulement les emplacements placés par le tirage, puis lance un nouvel aperçu. Les équipes placées à la main ou qualifiées restent à leur place. Si une étape échoue, rien n’est modifié.',
+    );
+  });
+
+  it('shows English confirmRedoCup for partial cup draws', async () => {
+    await i18n.changeLanguage('en');
+    renderActions({
+      confirmRedoOpen: true,
+      activeDraw: {
+        ...appliedDraw(
+          drawActions({
+            redo: { state: 'Available' },
+            release: { state: 'Available', releasableCount: 2 },
+          }),
+        ),
+        inputsIntent: 'Partial',
+      },
+    });
+
+    expect(screen.getByRole('dialog')).toHaveTextContent(
+      'This cancels the execution, releases only the slots the draw placed, then starts a new preview.',
+    );
+    await i18n.changeLanguage('fr');
+  });
+
+  it('uses confirmRedo when cup draw inputs intent is not Partial', () => {
+    renderActions({
+      confirmRedoOpen: true,
+      activeDraw: {
+        ...appliedDraw(
+          drawActions({
+            redo: { state: 'Available' },
+            release: { state: 'Available', releasableCount: 2 },
+          }),
+        ),
+        inputsIntent: 'Rerun',
+      },
+    });
+
+    expect(screen.getByRole('dialog')).toHaveTextContent(
+      'libère les placements encore alignés',
+    );
+  });
+
+  it('uses the Groups redo confirmation when the draw is a group draw', () => {
+    renderActions({
+      confirmRedoOpen: true,
+      activeDraw: {
+        ...appliedDraw(
+          drawActions({
+            redo: { state: 'Available' },
+            release: { state: 'Available', releasableCount: 2 },
+          }),
+        ),
+        kind: 'Group',
+      },
+    });
+
+    expect(screen.getByRole('dialog')).toHaveTextContent(
+      'Cela annule l’exécution, retire seulement les équipes placées par le tirage, puis lance un nouvel aperçu. Les équipes placées à la main ou qualifiées restent à leur place. Si une étape échoue, rien n’est modifié.',
+    );
   });
 
   it('requests release confirmation before mutating', async () => {
@@ -161,7 +294,7 @@ describe('StructureStaleDrawResolutionActions', () => {
     renderActions({ onOpenConfirmRelease });
 
     await user.click(
-      screen.getByRole('button', { name: /Libérer les placements/i }),
+      screen.getByRole('button', { name: 'Libérer les 2 équipes tirées' }),
     );
     expect(onOpenConfirmRelease).toHaveBeenCalledTimes(1);
   });

@@ -71,4 +71,54 @@ public static class SlotPartialDrawPlanner
         ArgumentNullException.ThrowIfNull(unplaced);
         return entries.Count == unplaced.Count && entries.ToHashSet().SetEquals(unplaced);
     }
+
+    /// <summary>
+    /// Partial redo perimeter on the grid after aligned placements would be released.
+    /// </summary>
+    public static SlotPartialDrawAfterReleaseScope ComposeAfterReleasingAlignedPlacements(
+        Stage stage,
+        IReadOnlyList<Stage> competitionStages,
+        IReadOnlySet<string> alignedSlotKeys,
+        DrawId appliedDrawId)
+    {
+        ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(competitionStages);
+        ArgumentNullException.ThrowIfNull(alignedSlotKeys);
+
+        var snapshot = SlotFeedSnapshotAssembler.AssembleForPartialRedo(stage, competitionStages, appliedDrawId);
+        return SlotPartialDraw.ComposeAfterReleasingAlignedPlacements(stage, snapshot, alignedSlotKeys);
+    }
+
+    /// <summary>
+    /// Application block code for a partial Cup redo, or null when Refaire may run.
+    /// </summary>
+    public static string? TryGetPartialRedoBlockCode(
+        Stage stage,
+        IReadOnlyList<Stage> competitionStages,
+        IReadOnlySet<string> alignedSlotKeys,
+        DrawId appliedDrawId)
+    {
+        ArgumentNullException.ThrowIfNull(stage);
+        ArgumentNullException.ThrowIfNull(competitionStages);
+        ArgumentNullException.ThrowIfNull(alignedSlotKeys);
+
+        var afterRelease = ComposeAfterReleasingAlignedPlacements(
+            stage,
+            competitionStages,
+            alignedSlotKeys,
+            appliedDrawId);
+        if (afterRelease.AnyLiberatedReservedByFeed && afterRelease.Scope.VacantSlotKeys.Count > 0)
+        {
+            return ApplicationErrorCodes.DrawLaunchGridNotVacant;
+        }
+
+        return afterRelease.Scope.Refusal switch
+        {
+            SlotPartialDrawRefusal.NoFreeSlot => ApplicationErrorCodes.DrawNoFreeSlot,
+            SlotPartialDrawRefusal.NotEnoughTeams => ApplicationErrorCodes.DrawNotEnoughTeams,
+            SlotPartialDrawRefusal.TooManyTeams => ApplicationErrorCodes.DrawTooManyTeams,
+            SlotPartialDrawRefusal.None => null,
+            _ => null
+        };
+    }
 }

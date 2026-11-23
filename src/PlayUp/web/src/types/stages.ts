@@ -89,6 +89,8 @@ export interface StageDrawGroupPlacement {
   shortName?: string | null;
   logoMediaId?: string | null;
   primaryColor?: string | null;
+  /** Draw when the team was drawn. Manual or Feed when it was fixed. Absent payloads stay Draw. */
+  origin?: DrawPlacementOrigin | null;
 }
 
 export interface StageDraw {
@@ -118,10 +120,14 @@ export type StageDrawActionState = 'Hidden' | 'Available' | 'Blocked';
 export interface StageDrawAction {
   state: StageDrawActionState;
   blockCode?: string | null;
+  /** Group redo fragments. Omitted when the action is not blocked by the group launch rule. */
+  blockDetail?: string[] | null;
 }
 
 export interface StageDrawReleaseAction extends StageDrawAction {
   releasableCount: number;
+  /** Drawn targets in this execution (slot results minus fixed slots, or drawn group entries). */
+  drawnTargetCount?: number;
 }
 
 export interface StageDrawActions {

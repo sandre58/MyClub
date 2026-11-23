@@ -21,6 +21,7 @@ export type GroupPlacementEntry = {
   displayName: string;
   logoMediaId?: string | null;
   primaryColor?: string | null;
+  origin?: StageDrawGroupPlacement['origin'];
 };
 
 export type GroupPlacementRow = {
@@ -93,6 +94,7 @@ export function groupPlacementRows(
       displayName: placement.displayName?.trim() || unknownEntry,
       logoMediaId: placement.logoMediaId,
       primaryColor: placement.primaryColor,
+      origin: placement.origin ?? 'Draw',
     });
   }
   return [...byGroup.values()].sort((a, b) =>
@@ -696,7 +698,8 @@ export type DrawReadinessCriterionId =
   | 'teamsAllKnown'
   /**
    * Cup: met when at least one place is free for a partial draw.
-   * Groups: met only when no place blocks a full reshuffle.
+   * Groups: always met. The server gate decides whether the draw can start.
+   * The occupied-place count stays informational.
    */
   | 'bracketPlacesFree';
 
@@ -749,9 +752,11 @@ export function resolveDrawReadinessChecklist(input: {
     input.schematicCases,
   );
   const bracketPlacesFree =
-    input.formatKind === 'Cup'
-      ? vacantBracketPlaces === null || vacantBracketPlaces > 0
-      : occupiedBracketPlaces === 0;
+    input.formatKind === 'Groups'
+      ? true
+      : input.formatKind === 'Cup'
+        ? vacantBracketPlaces === null || vacantBracketPlaces > 0
+        : occupiedBracketPlaces === 0;
 
   const items: DrawReadinessChecklistItem[] = [
     {
@@ -847,9 +852,11 @@ function compareDrawCreationOrder(a: StageDraw, b: StageDraw): number {
 }
 
 /** Oldest execution first (stable chronological identity). */
-export function sortDrawsOldestFirst(draws: StageDraw[]): StageDraw[] {
+export function sortDrawsOldestFirst(
+  draws: ReadonlyArray<StageDraw>,
+): StageDraw[] {
   if (draws.length <= 1) {
-    return draws;
+    return [...draws];
   }
   return [...draws].sort(compareDrawCreationOrder);
 }
@@ -858,16 +865,18 @@ export function sortDrawsOldestFirst(draws: StageDraw[]): StageDraw[] {
  * Newest execution first — rail / default selection.
  * Sorted by draw id (UUID v7), not by a blind reverse of the payload order.
  */
-export function sortDrawsNewestFirst(draws: StageDraw[]): StageDraw[] {
+export function sortDrawsNewestFirst(
+  draws: ReadonlyArray<StageDraw>,
+): StageDraw[] {
   if (draws.length <= 1) {
-    return draws;
+    return [...draws];
   }
   return [...draws].sort((a, b) => compareDrawCreationOrder(b, a));
 }
 
 /** Chronological label #1…#N (oldest = 1), independent of rail display order. */
 export function drawExecutionNumber(
-  draws: StageDraw[],
+  draws: ReadonlyArray<StageDraw>,
   drawId: string,
 ): number {
   const index = sortDrawsOldestFirst(draws).findIndex((d) => d.id === drawId);
@@ -1194,22 +1203,40 @@ export function drawResolutionPlacementCount(draw: StageDraw): number {
   return draw.slotPlacements.length;
 }
 
-/** Footer focus after Libérer — enabled release secondary, else primary, else header X. */
+/**
+ * Footer / dialog focus after Libérer or when the release CTA disappears.
+ * Prefers « Voir le tirage » (fiche or dialog), then an expanded execution tile, then footer primary.
+ */
 export function pickDrawFooterFocusAfterRelease(
   dialog: Element,
 ): HTMLElement | undefined {
+  const viewDraw = dialog.querySelector<HTMLButtonElement>(
+    'button[data-action="view-draw-workflow"]:not(:disabled)',
+  );
+  if (viewDraw) {
+    return viewDraw;
+  }
   const footer = dialog.querySelector('.structure-draw-footer');
   if (!footer) {
     return undefined;
   }
-  const release = footer.querySelector<HTMLButtonElement>(
+  const releaseCta = footer.querySelector<HTMLButtonElement>(
     'button[data-action="release-draw-placements"]:not(:disabled)',
   );
+  if (releaseCta) {
+    return releaseCta;
+  }
+  const runTrigger = footer.querySelector<HTMLButtonElement>(
+    'button[data-draw-run-trigger]:not(:disabled)',
+  );
+  if (runTrigger) {
+    return runTrigger;
+  }
   const primary = footer.querySelector<HTMLElement>(
     '.ds-btn--primary:not(:disabled)',
   );
   const closeButton = dialog.querySelector<HTMLElement>(
     'button.ds-icon-button:not(:disabled)',
   );
-  return release ?? primary ?? closeButton ?? undefined;
+  return primary ?? closeButton ?? undefined;
 }

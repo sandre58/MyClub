@@ -11,43 +11,28 @@ using MyClub.PlayUp.Domain.Stages;
 namespace MyClub.PlayUp.Application.Stages;
 
 /// <summary>
-/// Refuses manual group membership mutations that break placements guaranteed by an Applied group draw.
+/// Refuses manual group membership mutations that move a team drawn by an applied group draw.
+/// Teams fixed before the draw, including qualification and progression arrivals, are not in this scope.
 /// </summary>
 internal static class StructureAppliedDrawGroupPlacementGate
 {
-    private const string BlockMessage =
-        "Group placement is protected by the applied draw on this stage.";
-
-    internal static void EnsureAssignAllowed(Stage stage, GroupId groupId, EntryId proposedEntryId)
-    {
-        if (AssignWouldBreakAppliedDraw(stage, groupId, proposedEntryId))
-        {
-            ThrowProtected();
-        }
-    }
-
-    internal static void EnsureClearAllowed(Stage stage, GroupId groupId, EntryId entryId)
-    {
-        if (ClearWouldBreakAppliedDraw(stage, groupId, entryId))
-        {
-            ThrowProtected();
-        }
-    }
-
     internal static bool AssignWouldBreakAppliedDraw(Stage stage, GroupId groupId, EntryId proposedEntryId)
     {
         ArgumentNullException.ThrowIfNull(stage);
-        return (from draw in stage.Draws where DrawAppliedState.IsApplied(draw, stage) && draw.Kind == DrawResolutionKind.Group from placement in draw.Resolution.GroupResults where placement.EntryId.Equals(proposedEntryId) select !placement.GroupId.Equals(groupId)).FirstOrDefault();
+        return AppliedDraws(stage).Any(draw =>
+            AppliedGroupDrawScope.DrawnPlacements(draw).Any(placement =>
+                placement.EntryId.Equals(proposedEntryId) && !placement.GroupId.Equals(groupId)));
     }
 
     internal static bool ClearWouldBreakAppliedDraw(Stage stage, GroupId groupId, EntryId entryId)
     {
         ArgumentNullException.ThrowIfNull(stage);
-        return stage.Draws.Any(draw => DrawAppliedState.IsApplied(draw, stage) && draw.Kind == DrawResolutionKind.Group && draw.Resolution.GroupResults.Any(placement => placement.GroupId.Equals(groupId) && placement.EntryId.Equals(entryId)));
+        return AppliedDraws(stage).Any(draw =>
+            AppliedGroupDrawScope.DrawnPlacements(draw).Any(placement =>
+                placement.GroupId.Equals(groupId) && placement.EntryId.Equals(entryId)));
     }
 
-    private static void ThrowProtected() =>
-        throw new ApplicationFailureException(
-            BlockMessage,
-            ApplicationErrorCodes.AppliedDrawGroupPlacementProtected);
+    private static IEnumerable<Draw> AppliedDraws(Stage stage) =>
+        stage.Draws.Where(draw =>
+            draw.Kind == DrawResolutionKind.Group && DrawAppliedState.IsApplied(draw, stage));
 }
