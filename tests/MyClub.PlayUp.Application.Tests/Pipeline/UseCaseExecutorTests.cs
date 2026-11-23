@@ -517,12 +517,20 @@ public sealed class UseCaseExecutorTests
         unitOfWork
             .Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
+        SetupExclusive(unitOfWork);
+        SetupCompetitionId(stages, stage.Id, competition.Id);
 
         var executor = CreateExecutor(stages, matches, competitions, unitOfWork);
         await executor.PublishDrawAsync(stage.Id, drawId);
 
         stage.GetDraw(drawId).Status.Should().Be(DrawStatus.Published);
         unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        unitOfWork.Verify(
+            uow => uow.ExecuteExclusiveAsync(
+                competition.Id,
+                It.IsAny<Func<CancellationToken, Task>>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
@@ -612,9 +620,7 @@ public sealed class UseCaseExecutorTests
         var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
         var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
 
-        stages
-            .Setup(repository => repository.GetByIdForUpdateAsync(stageId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Stage?)null);
+        SetupCompetitionId(stages, stageId, null);
 
         var executor = CreateExecutor(stages, matches, competitions, unitOfWork);
         var act = async () => await executor.PublishDrawAsync(stageId, DrawId.New());
@@ -622,6 +628,12 @@ public sealed class UseCaseExecutorTests
         var exception = await act.Should().ThrowAsync<ApplicationFailureException>();
         exception.Which.Code.Should().Be(ApplicationErrorCodes.StageNotFound);
         unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+        unitOfWork.Verify(
+            uow => uow.ExecuteExclusiveAsync(
+                It.IsAny<CompetitionId>(),
+                It.IsAny<Func<CancellationToken, Task>>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
@@ -640,6 +652,8 @@ public sealed class UseCaseExecutorTests
             .Setup(repository => repository.GetByIdForUpdateAsync(scenario.Stage.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(scenario.Stage);
         SetupCompetitionLookup(competitions, scenario.Competition);
+        SetupExclusive(unitOfWork);
+        SetupCompetitionId(stages, scenario.Stage.Id, scenario.Competition.Id);
 
         var executor = CreateExecutor(stages, matches, competitions, unitOfWork);
         var act = async () => await executor.PublishDrawAsync(scenario.Stage.Id, draw.Id);
@@ -647,6 +661,64 @@ public sealed class UseCaseExecutorTests
         var exception = await act.Should().ThrowAsync<DomainException>();
         exception.Which.Code.Should().Be(StageErrorCodes.DrawInvalidTransition);
         unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CancelDrawAsync_loads_cancels_and_saves_onceAsync()
+    {
+        var (competition, stage, drawId) = CreateReadyToPublishSlotDraw();
+        stage.PublishDraw(drawId, _clock);
+        var stages = new Mock<IStageRepository>(MockBehavior.Strict);
+        var matches = new Mock<IMatchRepository>(MockBehavior.Strict);
+        var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
+        var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
+
+        stages
+            .Setup(repository => repository.GetByIdForUpdateAsync(stage.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(stage);
+        SetupCompetitionLookup(competitions, competition);
+        unitOfWork
+            .Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        SetupExclusive(unitOfWork);
+        SetupCompetitionId(stages, stage.Id, competition.Id);
+
+        var executor = CreateExecutor(stages, matches, competitions, unitOfWork);
+        await executor.CancelDrawAsync(stage.Id, drawId);
+
+        stage.GetDraw(drawId).Status.Should().Be(DrawStatus.Cancelled);
+        unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        unitOfWork.Verify(
+            uow => uow.ExecuteExclusiveAsync(
+                competition.Id,
+                It.IsAny<Func<CancellationToken, Task>>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task CancelDrawAsync_when_stage_missing_does_not_saveAsync()
+    {
+        var stageId = StageId.New();
+        var stages = new Mock<IStageRepository>(MockBehavior.Strict);
+        var matches = new Mock<IMatchRepository>(MockBehavior.Strict);
+        var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
+        var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
+
+        SetupCompetitionId(stages, stageId, null);
+
+        var executor = CreateExecutor(stages, matches, competitions, unitOfWork);
+        var act = async () => await executor.CancelDrawAsync(stageId, DrawId.New());
+
+        var exception = await act.Should().ThrowAsync<ApplicationFailureException>();
+        exception.Which.Code.Should().Be(ApplicationErrorCodes.StageNotFound);
+        unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+        unitOfWork.Verify(
+            uow => uow.ExecuteExclusiveAsync(
+                It.IsAny<CompetitionId>(),
+                It.IsAny<Func<CancellationToken, Task>>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]

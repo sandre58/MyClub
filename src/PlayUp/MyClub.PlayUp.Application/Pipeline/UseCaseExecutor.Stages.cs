@@ -410,17 +410,25 @@ public sealed partial class UseCaseExecutor
         DrawId drawId,
         CancellationToken cancellationToken = default)
     {
-        var stage = await stages.GetByIdForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false)
-                    ?? throw new ApplicationFailureException(
-                        $"Stage '{stageId}' was not found.",
-                        ApplicationErrorCodes.StageNotFound);
+        var competitionId = default(Guid);
+        await ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await stages.GetByIdForUpdateAsync(stageId, innerToken).ConfigureAwait(false)
+                            ?? throw new ApplicationFailureException(
+                                $"Stage '{stageId}' was not found.",
+                                ApplicationErrorCodes.StageNotFound);
 
-        await EnsureCompetitionAllowsLifecycleMutationAsync(stage.CompetitionId, cancellationToken)
-            .ConfigureAwait(false);
+                await EnsureCompetitionAllowsLifecycleMutationAsync(stage.CompetitionId, innerToken)
+                    .ConfigureAwait(false);
 
-        PublishDraw.Execute(stage, drawId, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        LogDrawPublished(logger, stageId.Value, drawId.Value, stage.CompetitionId.Value);
+                PublishDraw.Execute(stage, drawId, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+                competitionId = stage.CompetitionId.Value;
+            },
+            cancellationToken).ConfigureAwait(false);
+        LogDrawPublished(logger, stageId.Value, drawId.Value, competitionId);
     }
 
     /// <summary>
@@ -439,6 +447,7 @@ public sealed partial class UseCaseExecutor
         DrawId drawId,
         CancellationToken cancellationToken = default)
     {
+        var competitionId = default(Guid);
         await ExecuteOnStageCompetitionAsync(
             stageId,
             async innerToken =>
@@ -453,9 +462,10 @@ public sealed partial class UseCaseExecutor
 
                 PublishDraw.Execute(stage, drawId, clock);
                 await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
-                LogDrawPublished(logger, stageId.Value, drawId.Value, stage.CompetitionId.Value);
+                competitionId = stage.CompetitionId.Value;
             },
             cancellationToken).ConfigureAwait(false);
+        LogDrawPublished(logger, stageId.Value, drawId.Value, competitionId);
 
         unitOfWork.ClearTrackedChanges();
         await ApplyDrawAsync(stageId, drawId, cancellationToken).ConfigureAwait(false);
@@ -474,17 +484,25 @@ public sealed partial class UseCaseExecutor
         DrawId drawId,
         CancellationToken cancellationToken = default)
     {
-        var stage = await stages.GetByIdForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false)
-                    ?? throw new ApplicationFailureException(
-                        $"Stage '{stageId}' was not found.",
-                        ApplicationErrorCodes.StageNotFound);
+        var competitionId = default(Guid);
+        await ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await stages.GetByIdForUpdateAsync(stageId, innerToken).ConfigureAwait(false)
+                            ?? throw new ApplicationFailureException(
+                                $"Stage '{stageId}' was not found.",
+                                ApplicationErrorCodes.StageNotFound);
 
-        await EnsureCompetitionAllowsLifecycleMutationAsync(stage.CompetitionId, cancellationToken)
-            .ConfigureAwait(false);
+                await EnsureCompetitionAllowsLifecycleMutationAsync(stage.CompetitionId, innerToken)
+                    .ConfigureAwait(false);
 
-        CancelDraw.Execute(stage, drawId, clock);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        LogDrawCancelled(logger, stageId.Value, drawId.Value, stage.CompetitionId.Value);
+                CancelDraw.Execute(stage, drawId, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+                competitionId = stage.CompetitionId.Value;
+            },
+            cancellationToken).ConfigureAwait(false);
+        LogDrawCancelled(logger, stageId.Value, drawId.Value, competitionId);
     }
 
     /// <summary>
