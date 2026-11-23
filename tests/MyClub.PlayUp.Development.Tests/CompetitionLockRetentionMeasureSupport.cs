@@ -26,11 +26,11 @@ internal static class CompetitionLockRetentionMeasureSupport
     /// <summary>Lot 1 baseline (champions-league:running, RecordGoal without competition lock).</summary>
     public const int RecordGoalSqlBaselineWithoutLock = 80;
 
-    /// <summary>Extra EF commands from GetCompetitionId + transaction + <c>pg_advisory_xact_lock</c>.</summary>
-    public const int RecordGoalSqlLockOverhead = 6;
-
-    public const int RecordGoalSqlCeiling =
-        RecordGoalSqlBaselineWithoutLock + RecordGoalSqlLockOverhead;
+    /// <summary>
+    /// Measured delta with real lock (champions-league:running). BEGIN/COMMIT are not counted;
+    /// +3 EF commands = projection competition id + transaction + <c>pg_advisory_xact_lock</c>.
+    /// </summary>
+    public const int RecordGoalSqlWithLock = 83;
 
     public static int ResolveSampleCount()
     {

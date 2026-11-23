@@ -46,12 +46,11 @@ public sealed class RecordGoalSqlCeilingTests(LockMeasurePostgresFixture fixture
             cancellationToken: default);
 
         output.WriteLine(
-            $"RecordGoal SQL={counter.CommandCount}, ceiling={CompetitionLockRetentionMeasureSupport.RecordGoalSqlCeiling} " +
-            $"(baseline {CompetitionLockRetentionMeasureSupport.RecordGoalSqlBaselineWithoutLock} + overhead " +
-            $"{CompetitionLockRetentionMeasureSupport.RecordGoalSqlLockOverhead})");
+            $"RecordGoal SQL={counter.CommandCount}, ceiling={CompetitionLockRetentionMeasureSupport.RecordGoalSqlWithLock} " +
+            $"(baseline lot1={CompetitionLockRetentionMeasureSupport.RecordGoalSqlBaselineWithoutLock}, +3 lock)");
 
         counter.CommandCount.Should().BeLessThanOrEqualTo(
-            CompetitionLockRetentionMeasureSupport.RecordGoalSqlCeiling);
+            CompetitionLockRetentionMeasureSupport.RecordGoalSqlWithLock);
     }
 
     private async Task<LiveMatchTarget> PrepareLiveMatchForRecordGoalAsync()

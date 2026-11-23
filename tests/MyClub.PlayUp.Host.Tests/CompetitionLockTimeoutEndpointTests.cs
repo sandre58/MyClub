@@ -54,6 +54,8 @@ public sealed class CompetitionLockTimeoutEndpointTests(HostPostgresFixture fixt
 
             response.StatusCode.Should().Be(HttpStatusCode.Conflict);
             (await ReadCodeAsync(response)).Should().Be(ApplicationErrorCodes.CompetitionLockTimeout);
+            response.Headers.RetryAfter.Should().BeNull();
+            (await CountRecordedGoalsAsync(factory, seed.MatchId)).Should().Be(0);
         }
     }
 
@@ -165,4 +167,12 @@ public sealed class CompetitionLockTimeoutEndpointTests(HostPostgresFixture fixt
         CompetitionId CompetitionId,
         MatchId MatchId,
         MemberId ScorerMemberId);
+
+    private static async Task<int> CountRecordedGoalsAsync(PlayUpWebApplicationFactory factory, MatchId matchId)
+    {
+        using var scope = factory.Services.CreateScope();
+        var match = await scope.ServiceProvider.GetRequiredService<IMatchRepository>()
+            .GetByIdReadOnlyAsync(matchId);
+        return match?.RecordedGoals.Count ?? 0;
+    }
 }

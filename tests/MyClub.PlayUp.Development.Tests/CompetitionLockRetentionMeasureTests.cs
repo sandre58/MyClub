@@ -91,8 +91,8 @@ public sealed class CompetitionLockRetentionMeasureTests(
         output.WriteLine($"RecordGoal SQL mesuré (verrou réel) : {recordGoalSqlBaseline} commandes EF");
 
         recordGoalSqlBaseline.Should().BeLessThanOrEqualTo(
-            CompetitionLockRetentionMeasureSupport.RecordGoalSqlCeiling,
-            "RecordGoal plafond = baseline lot 1 + overhead verrou");
+            CompetitionLockRetentionMeasureSupport.RecordGoalSqlWithLock,
+            "RecordGoal plafond = valeur mesurée avec verrou (83)");
 
         rows.Should().NotBeEmpty("at least one exclusive operation must be measured");
         concurrent.Attempts.Should().BeGreaterThan(0);
