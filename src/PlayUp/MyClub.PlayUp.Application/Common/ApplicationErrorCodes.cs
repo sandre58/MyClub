@@ -308,6 +308,11 @@ public static class ApplicationErrorCodes
     public const string GroupMembershipConflict = "Application.GroupMembershipConflict";
 
     /// <summary>
+    /// Gets the code when the competition advisory lock could not be acquired before <c>lock_timeout</c>, or when PostgreSQL reports a deadlock while waiting for that lock.
+    /// </summary>
+    public const string CompetitionLockTimeout = "Application.CompetitionLockTimeout";
+
+    /// <summary>
     /// Gets the code when <c>expectedEntryIds</c> does not match the current group membership set.
     /// </summary>
     public const string GroupMembershipStale = "Application.GroupMembershipStale";

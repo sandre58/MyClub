@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using Microsoft.EntityFrameworkCore;
+using MyClub.PlayUp.Infrastructure.DependencyInjection;
 using MyClub.PlayUp.Infrastructure.Persistence;
 using MyClub.PlayUp.Infrastructure.Persistence.SaveInterceptors;
 
@@ -22,6 +23,6 @@ internal static class PlayUpInMemory
                 new MatchOrderedCollectionsInterceptor())
             .Options;
 
-        return new PlayUpDbContext(options);
+        return new PlayUpDbContext(options, PlayUpCompetitionLockOptions.Default);
     }
 }

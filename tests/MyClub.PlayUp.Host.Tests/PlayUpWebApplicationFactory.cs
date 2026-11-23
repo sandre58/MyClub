@@ -17,7 +17,8 @@ internal sealed class PlayUpWebApplicationFactory(
     string connectionString,
     bool failMediaDelete = false,
     string environment = "Development",
-    Action<IServiceCollection>? configureServices = null)
+    Action<IServiceCollection>? configureServices = null,
+    string? competitionLockTimeout = null)
     : WebApplicationFactory<Program>
 {
     private readonly string _mediaStorageRoot = Path.Combine(
@@ -31,6 +32,9 @@ internal sealed class PlayUpWebApplicationFactory(
         builder.UseSetting("ConnectionStrings:PlayUp", connectionString);
         builder.UseSetting("ConnectionStrings:Media", connectionString);
         builder.UseSetting("Media:StorageRoot", _mediaStorageRoot);
+        builder.UseSetting(
+            "PlayUp:CompetitionLockTimeout",
+            competitionLockTimeout ?? "00:00:20");
         builder.UseEnvironment(environment);
 
         if (!failMediaDelete && configureServices is null)

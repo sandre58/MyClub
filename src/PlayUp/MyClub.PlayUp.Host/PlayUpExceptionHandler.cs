@@ -127,6 +127,8 @@ internal sealed partial class PlayUpExceptionHandler(ILogger<PlayUpExceptionHand
                 (StatusCodes.Status409Conflict, "Manual group placement blocked by active draw", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.GroupMembershipConflict } application =>
                 (StatusCodes.Status409Conflict, "Group membership conflict", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.CompetitionLockTimeout } application =>
+                (StatusCodes.Status409Conflict, "Competition lock timeout", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.GroupMembershipStale } application =>
                 (StatusCodes.Status409Conflict, "Group membership stale", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.SlotAssignmentStale } application =>

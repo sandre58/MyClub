@@ -57,7 +57,11 @@ try
         mediaStorageRoot = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, mediaStorageRoot));
     }
 
-    builder.Services.AddPlayUpInfrastructure(connectionString);
+    var competitionLockOptions = PlayUpCompetitionLockOptions.Parse(
+        builder.Configuration[PlayUpCompetitionLockOptions.ConfigKey]);
+    builder.Services.AddPlayUpInfrastructure(
+        connectionString,
+        competitionLockOptions: competitionLockOptions);
     builder.Services.AddMediaInfrastructure(mediaConnectionString, mediaStorageRoot);
     builder.Services.AddScoped<IMediaReferenceChecker, MediaReferenceChecker>();
     builder.Services.AddScoped<UseCaseExecutor>();
