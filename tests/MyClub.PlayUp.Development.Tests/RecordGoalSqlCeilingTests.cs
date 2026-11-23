@@ -9,7 +9,6 @@ using Microsoft.Extensions.DependencyInjection;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Pipeline;
 using MyClub.PlayUp.Development.Runtime;
-using MyClub.PlayUp.Development.Scenarios;
 using MyClub.PlayUp.Development.Templates;
 using MyClub.PlayUp.Development.Tests.Diagnostics;
 using MyClub.PlayUp.Domain.Common;
@@ -63,7 +62,7 @@ public sealed class RecordGoalSqlCeilingTests(LockMeasurePostgresFixture fixture
         var competition = await competitions.GetByIdReadOnlyAsync(competitionId).ConfigureAwait(false);
         competition.Should().NotBeNull();
         var allMatches = new List<Match>();
-        foreach (var stageId in competition!.StageIds)
+        foreach (var stageId in competition.StageIds)
         {
             allMatches.AddRange(await matches.ListByStageForUpdateAsync(stageId).ConfigureAwait(false));
         }

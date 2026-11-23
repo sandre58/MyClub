@@ -14,9 +14,7 @@ using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
-using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Infrastructure.Persistence;
 using Npgsql;
@@ -61,7 +59,7 @@ public sealed class MatchDematerializeStartConcurrencyEndpointTests(HostPostgres
 
                 var match = await ReadMatchAsync(factory, seed.MatchId);
                 match.Should().NotBeNull();
-                match!.Status.Should().Be(MatchStatus.Live);
+                match.Status.Should().Be(MatchStatus.Live);
             }
         }
     }
@@ -98,12 +96,10 @@ public sealed class MatchDematerializeStartConcurrencyEndpointTests(HostPostgres
         }
     }
 
-    private static void AssertNoUnhandledPostgresContention(HttpResponseMessage response)
-    {
+    private static void AssertNoUnhandledPostgresContention(HttpResponseMessage response) =>
         ((int)response.StatusCode).Should().BeLessThan(
             (int)HttpStatusCode.InternalServerError,
             "competition lock must map contention to 409, never an unhandled 500");
-    }
 
     private static async Task AssertBodyFreeOfPostgresLockErrorsAsync(HttpResponseMessage response)
     {
@@ -230,7 +226,7 @@ public sealed class MatchDematerializeStartConcurrencyEndpointTests(HostPostgres
             connection);
         command.Parameters.AddWithValue("classId", classId);
         command.Parameters.AddWithValue("objId", objId);
-        command.Parameters.AddWithValue("granted", granted);
+        command.Parameters.AddWithValue(nameof(granted), granted);
         return (int)(await command.ExecuteScalarAsync() ?? 0);
     }
 

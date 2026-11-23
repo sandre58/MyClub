@@ -26,7 +26,7 @@ public sealed class UseCaseExecutorExclusiveWriteArchitectureTests
         "ExecuteOnStageCompetitionAsync",
         "ExecuteOnMatchCompetitionAsync",
         "ExecuteOnCompetitionAsync",
-        "unitOfWork.ExecuteExclusiveAsync",
+        "unitOfWork.ExecuteExclusiveAsync"
     ];
 
     private static readonly HashSet<string> StableWriteAllowList =
@@ -36,7 +36,7 @@ public sealed class UseCaseExecutorExclusiveWriteArchitectureTests
         "PreviewCascadeReplaceAsync",
         "PreviewResolutionReleaseAsync",
         "PreviewDefinitiveResolutionReleaseAsync",
-        "PreviewDeletedSourceDefinitiveReleaseAsync",
+        "PreviewDeletedSourceDefinitiveReleaseAsync"
     ];
 
     private static readonly HashSet<string> ReadsSurfaceAllowList =
@@ -52,7 +52,7 @@ public sealed class UseCaseExecutorExclusiveWriteArchitectureTests
         "GetStageOverviewAsync",
         "GetStageSchematicAsync",
         "ListMatchesByStageAsync",
-        "GetMatchDetailAsync",
+        "GetMatchDetailAsync"
     ];
 
     private static readonly HashSet<string> PendingByLot = [];
@@ -68,7 +68,7 @@ public sealed class UseCaseExecutorExclusiveWriteArchitectureTests
         "RemoveDeclaredMemberAsync",
         "RenameDeclaredMemberAsync",
         "ReplaceRegulationAsync",
-        "BackfillResolutionProvenanceAsync",
+        "BackfillResolutionProvenanceAsync"
     ];
 
     private static readonly HashSet<string> Rest2LifecycleMethods =
@@ -79,19 +79,19 @@ public sealed class UseCaseExecutorExclusiveWriteArchitectureTests
         "RevertStageToDraftAsync",
         "SuspendStageAsync",
         "ResumeStageAsync",
-        "RevertStageToReadyAsync",
+        "RevertStageToReadyAsync"
     ];
 
     private static readonly HashSet<string> Rest1DrawMethods =
     [
         "PublishDrawAsync",
-        "CancelDrawAsync",
+        "CancelDrawAsync"
     ];
 
     private static readonly HashSet<string> Rest3ScheduleMethods =
     [
         "GenerateNextRoundAsync",
-        "ApplyScheduleAsync",
+        "ApplyScheduleAsync"
     ];
 
     private static readonly HashSet<string> Rest4StructureMethods =
@@ -103,7 +103,7 @@ public sealed class UseCaseExecutorExclusiveWriteArchitectureTests
         "RenameStageAsync",
         "AddCompetitionStageAsync",
         "InsertCompetitionStageAsync",
-        "SetCompetitionStageOrderAsync",
+        "SetCompetitionStageOrderAsync"
     ];
 
     private static readonly HashSet<string> Rest6LifecycleMethods =
@@ -114,7 +114,7 @@ public sealed class UseCaseExecutorExclusiveWriteArchitectureTests
         "ResumeCompetitionAsync",
         "CompleteCompetitionAsync",
         "ArchiveCompetitionAsync",
-        "AddEntryAsync",
+        "AddEntryAsync"
     ];
 
     private static readonly HashSet<string> Rest5ReplaceMethods =
@@ -131,7 +131,7 @@ public sealed class UseCaseExecutorExclusiveWriteArchitectureTests
         "BindStageRegulationAsync",
         "ReplaceStageDrawRulesAsync",
         "ReplaceStageDefaultTieFormatAsync",
-        "ReplaceRoundTieFormatAsync",
+        "ReplaceRoundTieFormatAsync"
     ];
 
     [Fact]
@@ -179,13 +179,7 @@ public sealed class UseCaseExecutorExclusiveWriteArchitectureTests
                 }
 
                 var locked = LockMarkers.Any(marker => body.Contains(marker, StringComparison.Ordinal));
-                if (locked)
-                {
-                    pendingStillUnlocked.Remove(methodName);
-                    continue;
-                }
-
-                if (StableWriteAllowList.Contains(methodName))
+                if (locked || StableWriteAllowList.Contains(methodName))
                 {
                     pendingStillUnlocked.Remove(methodName);
                     continue;
@@ -200,12 +194,9 @@ public sealed class UseCaseExecutorExclusiveWriteArchitectureTests
             }
         }
 
-        foreach (var name in pendingStillUnlocked)
+        foreach (var name in pendingStillUnlocked.Where(name => !MethodExistsInSources(sources, name)))
         {
-            if (!MethodExistsInSources(sources, name))
-            {
-                pendingExtraneous.Add(name);
-            }
+            pendingExtraneous.Add(name);
         }
 
         PendingByLot.Intersect(Rest2LifecycleMethods)
@@ -258,13 +249,7 @@ public sealed class UseCaseExecutorExclusiveWriteArchitectureTests
             }
 
             var cursor = publicIndex + memberPrefix.Length;
-            if (source.AsSpan(cursor).StartsWith("partial ", StringComparison.Ordinal))
-            {
-                searchStart = publicIndex + 1;
-                continue;
-            }
-
-            if (!TryParseMethod(source, cursor, out var name, out var body, out var methodEnd))
+            if (source.AsSpan(cursor).StartsWith("partial ", StringComparison.Ordinal) || !TryParseMethod(source, cursor, out var name, out var body, out var methodEnd))
             {
                 searchStart = publicIndex + 1;
                 continue;
@@ -345,19 +330,16 @@ public sealed class UseCaseExecutorExclusiveWriteArchitectureTests
             return true;
         }
 
-        if (source[cursor] == '{')
+        if (source[cursor] != '{') return false;
+        if (!TryFindMatchingDelimiter(source, cursor, '{', '}', out methodEnd))
         {
-            if (!TryFindMatchingDelimiter(source, cursor, '{', '}', out methodEnd))
-            {
-                return false;
-            }
-
-            body = source[cursor..(methodEnd + 1)];
-            methodEnd++;
-            return true;
+            return false;
         }
 
-        return false;
+        body = source[cursor..(methodEnd + 1)];
+        methodEnd++;
+        return true;
+
     }
 
     private static int SkipReturnType(string source, int cursor)
@@ -497,11 +479,9 @@ public sealed class UseCaseExecutorExclusiveWriteArchitectureTests
             else if (c == close)
             {
                 depth--;
-                if (depth == 0)
-                {
-                    closeIndex = i;
-                    return true;
-                }
+                if (depth != 0) continue;
+                closeIndex = i;
+                return true;
             }
         }
 

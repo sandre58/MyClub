@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using System.Net;
-using System.Net.Http.Json;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using MyClub.PlayUp.Application.Abstractions;
@@ -63,7 +62,7 @@ public sealed class ReplaceQualificationApplyConcurrencyEndpointTests(HostPostgr
                 var applyBody =
                     await applyResponse.Content.ReadFromJsonAsync<QualificationApplyResponse>(HostJson.Options);
                 applyBody.Should().NotBeNull();
-                applyBody!.Assignments.Should().ContainSingle()
+                applyBody.Assignments.Should().ContainSingle()
                     .Which.EntryId.Should().Be(seed.BetaEntryId.Value);
 
                 var terminal = await LoadTerminalAsync(factory, seed.TerminalId);
@@ -102,7 +101,7 @@ public sealed class ReplaceQualificationApplyConcurrencyEndpointTests(HostPostgr
                 var applyBody =
                     await applyResponse.Content.ReadFromJsonAsync<QualificationApplyResponse>(HostJson.Options);
                 applyBody.Should().NotBeNull();
-                applyBody!.Assignments.Should().ContainSingle()
+                applyBody.Assignments.Should().ContainSingle()
                     .Which.EntryId.Should().Be(seed.AlphaEntryId.Value);
 
                 var league = await LoadLeagueAsync(factory, seed.LeagueId);

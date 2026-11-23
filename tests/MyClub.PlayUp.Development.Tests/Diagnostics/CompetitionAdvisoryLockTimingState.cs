@@ -23,10 +23,7 @@ internal static class CompetitionAdvisoryLockTimingState
             "Competition lock timing snapshot is missing (transaction commit/rollback was not observed).");
     }
 
-    public static void Reset()
-    {
-        Current.Value = new TimingFrame();
-    }
+    public static void Reset() => Current.Value = new TimingFrame();
 
     public static void BeginWait()
     {

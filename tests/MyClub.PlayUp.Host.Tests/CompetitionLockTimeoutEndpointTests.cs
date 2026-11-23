@@ -12,12 +12,8 @@ using Microsoft.Extensions.DependencyInjection;
 using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
-using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
-using MyClub.PlayUp.Domain.Rules;
-using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Host.Contracts;
 using MyClub.PlayUp.Infrastructure.Persistence;
 using Npgsql;
@@ -43,20 +39,18 @@ public sealed class CompetitionLockTimeoutEndpointTests(HostPostgresFixture fixt
 
         await using var connection = new NpgsqlConnection(fixture.ConnectionString);
         await connection.OpenAsync();
-        await using (var hold = new NpgsqlCommand("SELECT pg_advisory_lock(@key)", connection))
-        {
-            hold.Parameters.AddWithValue("key", key);
-            _ = await hold.ExecuteScalarAsync();
+        await using var hold = new NpgsqlCommand("SELECT pg_advisory_lock(@key)", connection);
+        hold.Parameters.AddWithValue("key", key);
+        _ = await hold.ExecuteScalarAsync();
 
-            using var response = await client.PostAsJsonAsync(
-                RecordedGoalsUri(seed.MatchId),
-                new RecordGoalRequest(seed.ScorerMemberId.Value, Side.Home, null));
+        using var response = await client.PostAsJsonAsync(
+            RecordedGoalsUri(seed.MatchId),
+            new RecordGoalRequest(seed.ScorerMemberId.Value, Side.Home));
 
-            response.StatusCode.Should().Be(HttpStatusCode.Conflict);
-            (await ReadCodeAsync(response)).Should().Be(ApplicationErrorCodes.CompetitionLockTimeout);
-            response.Headers.RetryAfter.Should().BeNull();
-            (await CountRecordedGoalsAsync(factory, seed.MatchId)).Should().Be(0);
-        }
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        (await ReadCodeAsync(response)).Should().Be(ApplicationErrorCodes.CompetitionLockTimeout);
+        response.Headers.RetryAfter.Should().BeNull();
+        (await CountRecordedGoalsAsync(factory, seed.MatchId)).Should().Be(0);
     }
 
     [IntegrationFact]
@@ -71,36 +65,24 @@ public sealed class CompetitionLockTimeoutEndpointTests(HostPostgresFixture fixt
 
         await using var connection = new NpgsqlConnection(fixture.ConnectionString);
         await connection.OpenAsync();
-        await using (var hold = new NpgsqlCommand("SELECT pg_advisory_lock(@key)", connection))
-        {
-            hold.Parameters.AddWithValue("key", key);
-            _ = await hold.ExecuteScalarAsync();
+        await using var hold = new NpgsqlCommand("SELECT pg_advisory_lock(@key)", connection);
+        hold.Parameters.AddWithValue("key", key);
+        _ = await hold.ExecuteScalarAsync();
 
-            var response = await client.PutAsJsonAsync(
-                $"/stages/{seed.StageId.Value}/groups/{seed.GroupId.Value}/membership",
-                new SetGroupEntriesRequest(
-                    seed.EntryIds.Select(id => id.Value).ToArray(),
-                    []));
+        var response = await client.PutAsJsonAsync(
+            $"/stages/{seed.StageId.Value}/groups/{seed.GroupId.Value}/membership",
+            new SetGroupEntriesRequest(
+                [.. seed.EntryIds.Select(id => id.Value)],
+                []));
 
-            response.StatusCode.Should().Be(HttpStatusCode.Conflict);
-            (await ReadCodeAsync(response)).Should().Be(ApplicationErrorCodes.CompetitionLockTimeout);
-        }
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        (await ReadCodeAsync(response)).Should().Be(ApplicationErrorCodes.CompetitionLockTimeout);
     }
 
     private static async Task<string?> ReadCodeAsync(HttpResponseMessage response)
     {
         var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
-        if (problem is null || !problem.Extensions.TryGetValue("code", out var raw) || raw is null)
-        {
-            return null;
-        }
-
-        return raw switch
-        {
-            string text => text,
-            JsonElement { ValueKind: JsonValueKind.String } element => element.GetString(),
-            _ => raw.ToString()
-        };
+        return problem is null || !problem.Extensions.TryGetValue("code", out var raw) || raw is null ? null : raw switch { string text => text, JsonElement { ValueKind: JsonValueKind.String } element => element.GetString(), _ => raw.ToString() };
     }
 
     private static Uri RecordedGoalsUri(MatchId matchId) =>

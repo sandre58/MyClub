@@ -14,13 +14,10 @@ using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Pipeline;
 using MyClub.PlayUp.Development.Runtime;
-using MyClub.PlayUp.Development.Scenarios;
 using MyClub.PlayUp.Development.Templates;
 using MyClub.PlayUp.Development.Tests.Diagnostics;
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
-using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Infrastructure.Persistence;
 using Xunit;
 using Xunit.Abstractions;
@@ -38,13 +35,14 @@ public sealed class CompetitionLockRetentionMeasureTests(
     LockMeasurePostgresFixture fixture,
     ITestOutputHelper output)
 {
-    private static readonly HashSet<string> TemplateSeedIds = new(StringComparer.OrdinalIgnoreCase)
-    {
+    private static readonly HashSet<string> TemplateSeedIds =
+    [
+        with(StringComparer.OrdinalIgnoreCase),
         "ligue-1",
         "champions-league",
         "world-cup",
         "coupe-de-france"
-    };
+    ];
 
     private static readonly (string Seed, string Jeu, string TeamsHint)[] BigGameSeeds =
     [
@@ -184,7 +182,7 @@ public sealed class CompetitionLockRetentionMeasureTests(
             rows.Add(CompetitionLockRetentionMeasureSupport.BuildRow(
                 "ApplyProgressionOutcomeAsync",
                 jeu,
-                shape!.Value,
+                shape.Value,
                 snapshots));
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
@@ -314,15 +312,13 @@ public sealed class CompetitionLockRetentionMeasureTests(
     private async Task MeasureMaterializeRecetteG1Async(
         int sampleCount,
         List<MeasureRow> rows,
-        List<SkippedMeasure> skipped)
-    {
+        List<SkippedMeasure> skipped) =>
         await MeasureMaterializeChampionshipOrGroupsAsync(
             "structure-materialize-recette",
             "structure-materialize-recette (RECETTE G1 · 6/6 groups)",
             sampleCount,
             rows,
             skipped).ConfigureAwait(false);
-    }
 
     private async Task MeasureMaterializeChampionshipOrGroupsAsync(
         string seed,
@@ -444,7 +440,7 @@ public sealed class CompetitionLockRetentionMeasureTests(
         {
             using var scope = fixture.Services.CreateScope();
             var timing = scope.ServiceProvider.GetRequiredService<CompetitionAdvisoryLockTimingInterceptor>();
-            timing.Reset();
+            CompetitionAdvisoryLockTimingInterceptor.Reset();
             var stopwatch = Stopwatch.StartNew();
             try
             {
@@ -454,7 +450,7 @@ public sealed class CompetitionLockRetentionMeasureTests(
                     targets.ScorerMemberId,
                     Side.Home,
                     cancellationToken: default).ConfigureAwait(false);
-                var snapshot = timing.RequireLastSnapshot();
+                var snapshot = CompetitionAdvisoryLockTimingInterceptor.RequireLastSnapshot();
                 waits.Add(snapshot.LockWait);
                 retentions.Add(snapshot.LockRetention);
             }
@@ -464,7 +460,7 @@ public sealed class CompetitionLockRetentionMeasureTests(
                 lockTimeouts++;
                 try
                 {
-                    var snapshot = timing.RequireLastSnapshot();
+                    var snapshot = CompetitionAdvisoryLockTimingInterceptor.RequireLastSnapshot();
                     waits.Add(snapshot.LockWait);
                     retentions.Add(snapshot.LockRetention);
                 }
@@ -501,15 +497,14 @@ public sealed class CompetitionLockRetentionMeasureTests(
             waits,
             retentions,
             endToEnd,
-            unexpected.ToList());
+            [.. unexpected]);
     }
 
     private Task RunContinuousApplyProgressionAsync(
         ConcurrentTargets targets,
         ConcurrentBag<string> unexpected,
-        CancellationToken cancellationToken)
-    {
-        return Task.Run(
+        CancellationToken cancellationToken) =>
+        Task.Run(
             async () =>
             {
                 while (!cancellationToken.IsCancellationRequested)
@@ -539,7 +534,6 @@ public sealed class CompetitionLockRetentionMeasureTests(
                 }
             },
             cancellationToken);
-    }
 
     private async Task<StageId> PrepareForDematerializeAsync(string seed)
     {
@@ -580,7 +574,7 @@ public sealed class CompetitionLockRetentionMeasureTests(
         var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
         var stage = await stages.GetByIdForUpdateAsync(stageId).ConfigureAwait(false);
         stage.Should().NotBeNull();
-        if (stage!.Status is StageStatus.Ready)
+        if (stage.Status is StageStatus.Ready)
         {
             await executor.StartStageAsync(stageId).ConfigureAwait(false);
         }
@@ -617,7 +611,7 @@ public sealed class CompetitionLockRetentionMeasureTests(
         var competition = await competitions.GetByIdReadOnlyAsync(summary.Id).ConfigureAwait(false);
         competition.Should().NotBeNull();
         var matchCount = 0;
-        foreach (var id in competition!.StageIds)
+        foreach (var id in competition.StageIds)
         {
             matchCount += (await matches.ListByStageForUpdateAsync(id).ConfigureAwait(false)).Count;
         }
@@ -677,10 +671,10 @@ public sealed class CompetitionLockRetentionMeasureTests(
         var competition = await competitions.GetByIdReadOnlyAsync(competitionId).ConfigureAwait(false);
         competition.Should().NotBeNull();
 
-        var quarter = await stages.GetByIdReadOnlyAsync(competition!.StageIds[0], StageLoadProfile.Full)
+        var quarter = await stages.GetByIdReadOnlyAsync(competition.StageIds[0], StageLoadProfile.Full)
             .ConfigureAwait(false);
         quarter.Should().NotBeNull();
-        var fixtureId = quarter!.Rounds[0].Fixtures.OrderBy(item => item.Id.Value).First().Id;
+        var fixtureId = quarter.Rounds[0].Fixtures.OrderBy(item => item.Id.Value).First().Id;
 
         var semiId = competition.StageIds[^1];
         var semiMatches = await matches.ListByStageForUpdateAsync(semiId).ConfigureAwait(false);

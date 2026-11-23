@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using System.Data.Common;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
@@ -19,17 +18,17 @@ internal sealed class CompetitionAdvisoryLockTimingInterceptor : DbCommandInterc
 {
     public CompetitionAdvisoryLockTimingSnapshot? LastSnapshot => CompetitionAdvisoryLockTimingState.LastSnapshot;
 
-    public void Reset() => CompetitionAdvisoryLockTimingState.Reset();
+    public static void Reset() => CompetitionAdvisoryLockTimingState.Reset();
 
-    internal void CompleteRetention() => CompetitionAdvisoryLockTimingState.CompleteRetention();
+    internal static void CompleteRetention() => CompetitionAdvisoryLockTimingState.CompleteRetention();
 
-    internal CompetitionAdvisoryLockTimingSnapshot RequireLastSnapshot() =>
+    internal static CompetitionAdvisoryLockTimingSnapshot RequireLastSnapshot() =>
         CompetitionAdvisoryLockTimingState.RequireSnapshot();
 
     private static bool IsAdvisoryLockCommand(DbCommand command) =>
         command.CommandText.Contains("pg_advisory_xact_lock", StringComparison.Ordinal);
 
-    private void OnAdvisoryLockExecuting(DbCommand command)
+    private static void OnAdvisoryLockExecuting(DbCommand command)
     {
         if (!IsAdvisoryLockCommand(command))
         {
@@ -39,7 +38,7 @@ internal sealed class CompetitionAdvisoryLockTimingInterceptor : DbCommandInterc
         CompetitionAdvisoryLockTimingState.BeginWait();
     }
 
-    private void OnAdvisoryLockExecuted() => CompetitionAdvisoryLockTimingState.EndWait();
+    private static void OnAdvisoryLockExecuted() => CompetitionAdvisoryLockTimingState.EndWait();
 
     public override InterceptionResult<int> NonQueryExecuting(
         DbCommand command,
@@ -182,7 +181,7 @@ internal sealed class CompetitionAdvisoryLockTransactionInterceptor(
 {
     public override void TransactionCommitted(DbTransaction transaction, TransactionEndEventData eventData)
     {
-        timing.CompleteRetention();
+        CompetitionAdvisoryLockTimingInterceptor.CompleteRetention();
         base.TransactionCommitted(transaction, eventData);
     }
 
@@ -191,13 +190,13 @@ internal sealed class CompetitionAdvisoryLockTransactionInterceptor(
         TransactionEndEventData eventData,
         CancellationToken cancellationToken = default)
     {
-        timing.CompleteRetention();
+        CompetitionAdvisoryLockTimingInterceptor.CompleteRetention();
         return base.TransactionCommittedAsync(transaction, eventData, cancellationToken);
     }
 
     public override void TransactionRolledBack(DbTransaction transaction, TransactionEndEventData eventData)
     {
-        timing.CompleteRetention();
+        CompetitionAdvisoryLockTimingInterceptor.CompleteRetention();
         base.TransactionRolledBack(transaction, eventData);
     }
 
@@ -206,7 +205,7 @@ internal sealed class CompetitionAdvisoryLockTransactionInterceptor(
         TransactionEndEventData eventData,
         CancellationToken cancellationToken = default)
     {
-        timing.CompleteRetention();
+        CompetitionAdvisoryLockTimingInterceptor.CompleteRetention();
         return base.TransactionRolledBackAsync(transaction, eventData, cancellationToken);
     }
 }

@@ -53,20 +53,18 @@ public sealed class CompetitionLockTimeoutPostgresTests(PostgresFixture fixture)
 
         await using var sessionConnection = new NpgsqlConnection(fixture.ConnectionString);
         await sessionConnection.OpenAsync();
-        await using (var hold = new NpgsqlCommand("SELECT pg_advisory_lock(@key)", sessionConnection))
-        {
-            hold.Parameters.AddWithValue("key", key);
-            _ = await hold.ExecuteScalarAsync();
+        await using var hold = new NpgsqlCommand("SELECT pg_advisory_lock(@key)", sessionConnection);
+        hold.Parameters.AddWithValue("key", key);
+        _ = await hold.ExecuteScalarAsync();
 
-            using var scope = provider.CreateScope();
-            var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
-            var act = () => unitOfWork.ExecuteExclusiveAsync(
-                competitionId,
-                _ => Task.CompletedTask);
+        using var scope = provider.CreateScope();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+        var act = () => unitOfWork.ExecuteExclusiveAsync(
+            competitionId,
+            _ => Task.CompletedTask);
 
-            var exception = await act.Should().ThrowAsync<ApplicationFailureException>();
-            exception.Which.Code.Should().Be(ApplicationErrorCodes.CompetitionLockTimeout);
-        }
+        var exception = await act.Should().ThrowAsync<ApplicationFailureException>();
+        exception.Which.Code.Should().Be(ApplicationErrorCodes.CompetitionLockTimeout);
     }
 
     [IntegrationFact]
@@ -121,7 +119,7 @@ public sealed class CompetitionLockTimeoutPostgresTests(PostgresFixture fixture)
                         competition.Rename(new CompetitionName(DeadlockRename), _clock);
                         await unitOfWork.SaveChangesAsync(cancellationToken);
                     });
-                return (Exception?)null;
+                return null;
             }
             catch (Exception exception)
             {
@@ -152,7 +150,7 @@ public sealed class CompetitionLockTimeoutPostgresTests(PostgresFixture fixture)
         await blockingAdvisory.WaitAsync(TimeSpan.FromSeconds(5));
         failure.Should().BeOfType<ApplicationFailureException>().Which.Code
             .Should().Be(ApplicationErrorCodes.CompetitionLockTimeout);
-        failure!.InnerException.Should().BeOfType<PostgresException>().Which.SqlState
+        failure.InnerException.Should().BeOfType<PostgresException>().Which.SqlState
             .Should().Be(CompetitionLockFailure.DeadlockSqlState);
 
         exclusiveAttempts.Should().Be(1, "exclusive writes must not be retried");
@@ -163,7 +161,7 @@ public sealed class CompetitionLockTimeoutPostgresTests(PostgresFixture fixture)
                 .GetRequiredService<ICompetitionRepository>()
                 .GetByIdForUpdateAsync(competitionId);
             competition.Should().NotBeNull();
-            competition!.Name.Value.Should().Be(originalName);
+            competition.Name.Value.Should().Be(originalName);
         }
     }
 
@@ -206,22 +204,17 @@ public sealed class CompetitionLockTimeoutPostgresTests(PostgresFixture fixture)
 
         await using var sessionConnection = new NpgsqlConnection(fixture.ConnectionString);
         await sessionConnection.OpenAsync();
-        await using (var hold = new NpgsqlCommand("SELECT pg_advisory_lock(@key)", sessionConnection))
-        {
-            hold.Parameters.AddWithValue("key", key);
-            _ = await hold.ExecuteScalarAsync();
+        await using var hold = new NpgsqlCommand("SELECT pg_advisory_lock(@key)", sessionConnection);
+        hold.Parameters.AddWithValue("key", key);
+        _ = await hold.ExecuteScalarAsync();
 
-            using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(150));
-            using var scope = provider.CreateScope();
-            var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
-            var act = () => unitOfWork.ExecuteExclusiveAsync(
-                competitionId,
-                _ => Task.CompletedTask,
-                cts.Token);
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(150));
+        using var scope = provider.CreateScope();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+        var act = () => unitOfWork.ExecuteExclusiveAsync(competitionId, _ => Task.CompletedTask, cts.Token);
 
-            var exception = await act.Should().ThrowAsync<Exception>();
-            exception.Which.Should().NotBeOfType<ApplicationFailureException>();
-        }
+        var exception = await act.Should().ThrowAsync<Exception>();
+        exception.Which.Should().NotBeOfType<ApplicationFailureException>();
     }
 
     private static async Task<DbConnection> OpenContextConnectionAsync(PlayUpDbContext context)

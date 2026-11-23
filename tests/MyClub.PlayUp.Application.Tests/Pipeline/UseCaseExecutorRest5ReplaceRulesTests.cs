@@ -7,7 +7,6 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
-using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Pipeline;
@@ -54,11 +53,9 @@ public sealed class UseCaseExecutorRest5ReplaceRulesTests
     }
 
     [Fact]
-    public async Task ReplaceStageMatchGenerationFormatAsync_when_stage_missing_throws_without_lock_or_saveAsync()
-    {
+    public async Task ReplaceStageMatchGenerationFormatAsync_when_stage_missing_throws_without_lock_or_saveAsync() =>
         await AssertStageMissingAsync(stageId => executor =>
             executor.ReplaceStageMatchGenerationFormatAsync(stageId, MatchGenerationFormat.SingleRoundRobin));
-    }
 
     [Fact]
     public async Task ReplaceStageSwissSettingsAsync_saves_once_under_stage_competition_lockAsync()
@@ -76,10 +73,7 @@ public sealed class UseCaseExecutorRest5ReplaceRulesTests
     }
 
     [Fact]
-    public async Task ReplaceStageSwissSettingsAsync_when_stage_missing_throws_without_lock_or_saveAsync()
-    {
-        await AssertStageMissingAsync(stageId => executor => executor.ReplaceStageSwissSettingsAsync(stageId, 3));
-    }
+    public async Task ReplaceStageSwissSettingsAsync_when_stage_missing_throws_without_lock_or_saveAsync() => await AssertStageMissingAsync(stageId => executor => executor.ReplaceStageSwissSettingsAsync(stageId, 3));
 
     [Fact]
     public async Task ReplaceStageProgressionRulesAsync_saves_once_under_stage_competition_lockAsync()
@@ -96,11 +90,9 @@ public sealed class UseCaseExecutorRest5ReplaceRulesTests
     }
 
     [Fact]
-    public async Task ReplaceStageProgressionRulesAsync_when_stage_missing_throws_without_lock_or_saveAsync()
-    {
+    public async Task ReplaceStageProgressionRulesAsync_when_stage_missing_throws_without_lock_or_saveAsync() =>
         await AssertStageMissingAsync(stageId => executor =>
             executor.ReplaceStageProgressionRulesAsync(stageId, paths: null));
-    }
 
     [Fact]
     public async Task ReplaceStageProgressionIntentsAsync_saves_once_under_stage_competition_lockAsync()
@@ -117,11 +109,9 @@ public sealed class UseCaseExecutorRest5ReplaceRulesTests
     }
 
     [Fact]
-    public async Task ReplaceStageProgressionIntentsAsync_when_stage_missing_throws_without_lock_or_saveAsync()
-    {
+    public async Task ReplaceStageProgressionIntentsAsync_when_stage_missing_throws_without_lock_or_saveAsync() =>
         await AssertStageMissingAsync(stageId => executor =>
             executor.ReplaceStageProgressionIntentsAsync(stageId, intents: null));
-    }
 
     [Fact]
     public async Task ReplaceStageQualificationRulesAsync_saves_once_under_stage_competition_lockAsync()
@@ -151,11 +141,9 @@ public sealed class UseCaseExecutorRest5ReplaceRulesTests
     }
 
     [Fact]
-    public async Task ReplaceStageQualificationRulesAsync_when_stage_missing_throws_without_lock_or_saveAsync()
-    {
+    public async Task ReplaceStageQualificationRulesAsync_when_stage_missing_throws_without_lock_or_saveAsync() =>
         await AssertStageMissingAsync(stageId => executor =>
             executor.ReplaceStageQualificationRulesAsync(stageId, paths: null));
-    }
 
     [Fact]
     public async Task ReplaceStageQualificationIntentsAsync_saves_once_under_stage_competition_lockAsync()
@@ -187,11 +175,9 @@ public sealed class UseCaseExecutorRest5ReplaceRulesTests
     }
 
     [Fact]
-    public async Task ReplaceStageQualificationIntentsAsync_when_stage_missing_throws_without_lock_or_saveAsync()
-    {
+    public async Task ReplaceStageQualificationIntentsAsync_when_stage_missing_throws_without_lock_or_saveAsync() =>
         await AssertStageMissingAsync(stageId => executor =>
             executor.ReplaceStageQualificationIntentsAsync(stageId, intents: null));
-    }
 
     [Fact]
     public async Task ReplaceStagePlacementAwardRulesAsync_saves_once_under_stage_competition_lockAsync()
@@ -208,11 +194,9 @@ public sealed class UseCaseExecutorRest5ReplaceRulesTests
     }
 
     [Fact]
-    public async Task ReplaceStagePlacementAwardRulesAsync_when_stage_missing_throws_without_lock_or_saveAsync()
-    {
+    public async Task ReplaceStagePlacementAwardRulesAsync_when_stage_missing_throws_without_lock_or_saveAsync() =>
         await AssertStageMissingAsync(stageId => executor =>
             executor.ReplaceStagePlacementAwardRulesAsync(stageId, paths: null));
-    }
 
     [Fact]
     public async Task ReplaceStageStandingRulesAsync_saves_once_under_stage_competition_lockAsync()
@@ -230,13 +214,11 @@ public sealed class UseCaseExecutorRest5ReplaceRulesTests
     }
 
     [Fact]
-    public async Task ReplaceStageStandingRulesAsync_when_stage_missing_throws_without_lock_or_saveAsync()
-    {
+    public async Task ReplaceStageStandingRulesAsync_when_stage_missing_throws_without_lock_or_saveAsync() =>
         await AssertStageMissingAsync(stageId => executor =>
             executor.ReplaceStageStandingRulesAsync(
                 stageId,
                 new StandingRules(new PointsPolicy(3, 1, 0), [RankingCriterion.Points])));
-    }
 
     [Fact]
     public async Task ReplaceStageMatchRulesAsync_saves_once_under_stage_competition_lockAsync()
@@ -244,7 +226,7 @@ public sealed class UseCaseExecutorRest5ReplaceRulesTests
         var scenario = CreateDraftChampionship();
         var (stages, matches, competitions, unitOfWork) = CreateRepositories();
         SetupStageWriteEnvelope(stages, matches, competitions, unitOfWork, scenario.Competition, scenario.Stage);
-        var matchRules = scenario.Competition.Regulation.MatchRules!;
+        var matchRules = scenario.Competition.Regulation.MatchRules;
 
         var executor = CreateExecutor(stages, matches, competitions, unitOfWork);
         await executor.ReplaceStageMatchRulesAsync(scenario.Stage.Id, matchRules);
@@ -253,14 +235,12 @@ public sealed class UseCaseExecutorRest5ReplaceRulesTests
     }
 
     [Fact]
-    public async Task ReplaceStageMatchRulesAsync_when_stage_missing_throws_without_lock_or_saveAsync()
-    {
+    public async Task ReplaceStageMatchRulesAsync_when_stage_missing_throws_without_lock_or_saveAsync() =>
         await AssertStageMissingAsync(stageId => executor =>
         {
-            var rules = SampleRegulations.Standard().MatchRules!;
+            var rules = SampleRegulations.Standard().MatchRules;
             return executor.ReplaceStageMatchRulesAsync(stageId, rules);
         });
-    }
 
     [Fact]
     public async Task BindStageRegulationAsync_saves_once_under_stage_competition_lockAsync()
@@ -276,11 +256,9 @@ public sealed class UseCaseExecutorRest5ReplaceRulesTests
     }
 
     [Fact]
-    public async Task BindStageRegulationAsync_when_stage_missing_throws_without_lock_or_saveAsync()
-    {
+    public async Task BindStageRegulationAsync_when_stage_missing_throws_without_lock_or_saveAsync() =>
         await AssertStageMissingAsync(stageId => executor =>
             executor.BindStageRegulationAsync(stageId, BindStageRegulation.ScopeMatch));
-    }
 
     [Fact]
     public async Task ReplaceStageDrawRulesAsync_saves_once_under_stage_competition_lockAsync()
@@ -299,11 +277,9 @@ public sealed class UseCaseExecutorRest5ReplaceRulesTests
     }
 
     [Fact]
-    public async Task ReplaceStageDrawRulesAsync_when_stage_missing_throws_without_lock_or_saveAsync()
-    {
+    public async Task ReplaceStageDrawRulesAsync_when_stage_missing_throws_without_lock_or_saveAsync() =>
         await AssertStageMissingAsync(stageId => executor =>
             executor.ReplaceStageDrawRulesAsync(stageId, drawRules: null));
-    }
 
     [Fact]
     public async Task ReplaceStageDefaultTieFormatAsync_saves_once_under_stage_competition_lockAsync()
@@ -321,11 +297,9 @@ public sealed class UseCaseExecutorRest5ReplaceRulesTests
     }
 
     [Fact]
-    public async Task ReplaceStageDefaultTieFormatAsync_when_stage_missing_throws_without_lock_or_saveAsync()
-    {
+    public async Task ReplaceStageDefaultTieFormatAsync_when_stage_missing_throws_without_lock_or_saveAsync() =>
         await AssertStageMissingAsync(stageId => executor =>
             executor.ReplaceStageDefaultTieFormatAsync(stageId, tieFormat: null));
-    }
 
     [Fact]
     public async Task ReplaceRoundTieFormatAsync_saves_once_under_stage_competition_lockAsync()
@@ -344,14 +318,12 @@ public sealed class UseCaseExecutorRest5ReplaceRulesTests
     }
 
     [Fact]
-    public async Task ReplaceRoundTieFormatAsync_when_stage_missing_throws_without_lock_or_saveAsync()
-    {
+    public async Task ReplaceRoundTieFormatAsync_when_stage_missing_throws_without_lock_or_saveAsync() =>
         await AssertStageMissingAsync(stageId => executor =>
             executor.ReplaceRoundTieFormatAsync(
                 stageId,
                 RoundId.New(),
                 new TieFormat(TieFormat.SingleLeg, aggregateScoring: false)));
-    }
 
     private static void SetupExclusive(Mock<IUnitOfWork> unitOfWork) =>
         unitOfWork
@@ -416,7 +388,7 @@ public sealed class UseCaseExecutorRest5ReplaceRulesTests
         stages
             .Setup(repository => repository.GetByIdsForUpdateAsync(competition.StageIds, It.IsAny<CancellationToken>()))
             .ReturnsAsync((IReadOnlyList<StageId> ids, CancellationToken _) =>
-                loadedStages.Where(candidate => ids.Contains(candidate.Id)).ToList());
+                [.. loadedStages.Where(candidate => ids.Contains(candidate.Id))]);
         matches
             .Setup(repository => repository.ListByStageForUpdateAsync(It.IsAny<StageId>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);

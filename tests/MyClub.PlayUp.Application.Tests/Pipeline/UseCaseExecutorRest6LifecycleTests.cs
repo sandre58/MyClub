@@ -12,7 +12,6 @@ using MyClub.PlayUp.Application.Pipeline;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
-using MyClub.PlayUp.Domain.Stages;
 using Xunit;
 
 namespace MyClub.PlayUp.Application.Tests.Pipeline;

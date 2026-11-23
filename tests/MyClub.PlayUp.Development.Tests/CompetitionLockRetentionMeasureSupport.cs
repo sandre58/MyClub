@@ -8,13 +8,8 @@ using System.Globalization;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using MyClub.PlayUp.Application.Abstractions;
-using MyClub.PlayUp.Application.Pipeline;
-using MyClub.PlayUp.Development.Scenarios;
 using MyClub.PlayUp.Development.Tests.Diagnostics;
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Domain.Competitions;
-using MyClub.PlayUp.Domain.Matches;
-using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Development.Tests;
 
@@ -52,9 +47,9 @@ internal static class CompetitionLockRetentionMeasureSupport
         Func<IServiceScope, Task> operation)
     {
         var timing = scope.ServiceProvider.GetRequiredService<CompetitionAdvisoryLockTimingInterceptor>();
-        timing.Reset();
+        CompetitionAdvisoryLockTimingInterceptor.Reset();
         operation(scope).GetAwaiter().GetResult();
-        return timing.RequireLastSnapshot();
+        return CompetitionAdvisoryLockTimingInterceptor.RequireLastSnapshot();
     }
 
     public static async Task<CompetitionAdvisoryLockTimingSnapshot> MeasureExclusiveOperationAsync(
@@ -62,9 +57,9 @@ internal static class CompetitionLockRetentionMeasureSupport
         Func<IServiceScope, Task> operation)
     {
         var timing = scope.ServiceProvider.GetRequiredService<CompetitionAdvisoryLockTimingInterceptor>();
-        timing.Reset();
+        CompetitionAdvisoryLockTimingInterceptor.Reset();
         await operation(scope).ConfigureAwait(false);
-        return timing.RequireLastSnapshot();
+        return CompetitionAdvisoryLockTimingInterceptor.RequireLastSnapshot();
     }
 
     public static async Task<CompetitionShape> LoadShapeFromScopeAsync(IServiceScope scope)
@@ -79,7 +74,7 @@ internal static class CompetitionLockRetentionMeasureSupport
         };
         var competition = await competitions.GetByIdReadOnlyAsync(summary.Id).ConfigureAwait(false);
         competition.Should().NotBeNull();
-        var stageId = competition!.StageIds[0];
+        var stageId = competition.StageIds[0];
         var matchCount = 0;
         foreach (var id in competition.StageIds)
         {
@@ -102,7 +97,7 @@ internal static class CompetitionLockRetentionMeasureSupport
         var summary = listed.Should().ContainSingle().Subject;
         var competition = await competitions.GetByIdReadOnlyAsync(summary.Id).ConfigureAwait(false);
         competition.Should().NotBeNull();
-        var stageId = competition!.StageIds[0];
+        var stageId = competition.StageIds[0];
         var matchCount = 0;
         foreach (var id in competition.StageIds)
         {

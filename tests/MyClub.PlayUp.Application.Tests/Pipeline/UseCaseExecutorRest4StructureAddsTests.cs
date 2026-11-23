@@ -7,11 +7,9 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
-using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Pipeline;
-using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
@@ -359,7 +357,7 @@ public sealed class UseCaseExecutorRest4StructureAddsTests
                 It.IsAny<StageReadCapabilities>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((IReadOnlyList<StageId> ids, StageReadCapabilities _, CancellationToken _) =>
-                loadedStages.Where(stage => ids.Contains(stage.Id)).ToArray());
+                [.. loadedStages.Where(stage => ids.Contains(stage.Id))]);
         SetupStructureReads(matches, stages, competition.Id, loadedStages);
     }
 

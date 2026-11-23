@@ -5,11 +5,8 @@
 // -----------------------------------------------------------------------
 
 using System.Net;
-using System.Text.Json;
 using FluentAssertions;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
-using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Pipeline;
 using MyClub.PlayUp.Application.Reads;
@@ -53,7 +50,7 @@ public sealed class BackfillConfirmResolutionReleaseConcurrencyEndpointTests(Hos
                 fixture.ConnectionString,
                 competitionId,
                 () => BackfillAndAssertOccupantStillPresentAsync(factory, client, seeded),
-                () => ConfirmAsync(client, seeded, previewBody!.VersionToken));
+                () => ConfirmAsync(client, seeded, previewBody.VersionToken));
 
             using (confirmResponse)
             {
@@ -83,7 +80,7 @@ public sealed class BackfillConfirmResolutionReleaseConcurrencyEndpointTests(Hos
             var (confirmResponse, _) = await CompetitionOrderedWriterConcurrencySupport.RunOrderedCompetitionWritersAsync(
                 fixture.ConnectionString,
                 competitionId,
-                () => ConfirmAsync(client, seeded, previewBody!.VersionToken),
+                () => ConfirmAsync(client, seeded, previewBody.VersionToken),
                 () => BackfillInProcessAsync(factory, competitionId));
 
             using (confirmResponse)
@@ -124,8 +121,7 @@ public sealed class BackfillConfirmResolutionReleaseConcurrencyEndpointTests(Hos
             entries[0].Value,
             "Champ",
             null,
-            StructureResolutionOccupantTarget.Slot,
-            match.Id.Value);
+            StructureResolutionOccupantTarget.Slot);
     }
 
     private (Competition Competition, Stage League, Stage Terminal, EntryId[] Entries, Match Match) Build(int? position)
@@ -214,7 +210,7 @@ public sealed class BackfillConfirmResolutionReleaseConcurrencyEndpointTests(Hos
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var view = await response.Content.ReadFromJsonAsync<StructureViewDto>(HostJson.Options);
         view.Should().NotBeNull();
-        return [.. view!.Stages.SelectMany(stage => stage.ResolutionOccupants ?? [])];
+        return [.. view.Stages.SelectMany(stage => stage.ResolutionOccupants ?? [])];
     }
 
     private sealed record Seed(
@@ -223,6 +219,5 @@ public sealed class BackfillConfirmResolutionReleaseConcurrencyEndpointTests(Hos
         Guid EntryId,
         string? SlotKey,
         Guid? GroupId,
-        StructureResolutionOccupantTarget Target,
-        Guid MatchId);
+        StructureResolutionOccupantTarget Target);
 }

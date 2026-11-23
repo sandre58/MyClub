@@ -5,16 +5,12 @@
 // -----------------------------------------------------------------------
 
 using System.Net;
-using System.Net.Http.Json;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
-using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
-using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
-using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Host.Contracts;
 using Xunit;
@@ -128,7 +124,7 @@ public sealed class AddStageSlotStructureConcurrencyEndpointTests(HostPostgresFi
                 var rebuildBody =
                     await rebuildResponse.Content.ReadFromJsonAsync<RebuildStageStructureResponse>(HostJson.Options);
                 rebuildBody.Should().NotBeNull();
-                rebuildBody!.Impact.ClearedSlots.Should().BeGreaterThan(0);
+                rebuildBody.Impact.ClearedSlots.Should().BeGreaterThan(0);
 
                 var stage = await LoadStageAsync(factory, seed.StageId);
                 stage!.FindSlot(ExtraSlotKey).Should().BeNull("Rebuild clears ad-hoc slots");
