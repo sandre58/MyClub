@@ -277,7 +277,7 @@ export async function ensureCupCompositionDrawPending(
 
   for (let pass = 0; pass < 6; pass++) {
     const overview = await getStageOverview(request, stageId);
-  const cancelledDraws = [...(overview.draws ?? [])]
+    const cancelledDraws = [...(overview.draws ?? [])]
       .filter((draw) => draw.status === 'Cancelled')
       .reverse();
     let released = false;
@@ -303,7 +303,7 @@ export async function ensureCupCompositionDrawPending(
 
     const occupiedSlots =
       overview.slots?.filter((slot) => slot.entryId != null).length ?? 0;
-  const pendingDraws = (overview.draws ?? []).some(
+    const pendingDraws = (overview.draws ?? []).some(
       (draw) => draw.status === 'Draft' || draw.status === 'Published',
     );
     if (occupiedSlots === 0 && !pendingDraws) {
