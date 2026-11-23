@@ -15,6 +15,7 @@
     "CascadeReplaceNotStale": "The occupant is not stale.",
     "CascadeReplaceOccupantNotFound": "Resolution occupant not found.",
     "CompetitionClosed": "The competition is completed or archived.",
+    "CompetitionLockTimeout": "Another operation is in progress on this competition. Please try again shortly.",
     "CompetitionNotFound": "Competition not found.",
     "CompletionNotAllowed": "Normal completion is not possible at the moment.",
     "ConfrontationUndecidable": "A necessary confrontation cannot always decide a draw (configure a penalty shootout).",

@@ -10,6 +10,7 @@ using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
+using MyClub.PlayUp.Infrastructure.DependencyInjection;
 
 namespace MyClub.PlayUp.Infrastructure.Persistence;
 
@@ -20,8 +21,17 @@ namespace MyClub.PlayUp.Infrastructure.Persistence;
 /// Initializes a new instance of the <see cref="PlayUpDbContext"/> class.
 /// </remarks>
 /// <param name="options">The options for this context.</param>
-public sealed class PlayUpDbContext(DbContextOptions<PlayUpDbContext> options) : DbContext(options), IUnitOfWork
+/// <param name="lockOptions">Competition advisory lock timeout settings.</param>
+public sealed class PlayUpDbContext(
+    DbContextOptions<PlayUpDbContext> options,
+    PlayUpCompetitionLockOptions lockOptions) : DbContext(options), IUnitOfWork
 {
+    private static ApplicationFailureException CreateCompetitionLockTimeoutException(Exception innerException) =>
+        new(
+            "Another operation is in progress on this competition. Please try again shortly.",
+            ApplicationErrorCodes.CompetitionLockTimeout,
+            innerException);
+
     /// <inheritdoc />
     Task IUnitOfWork.SaveChangesAsync(CancellationToken cancellationToken) => SaveChangesAsync(cancellationToken);
 
@@ -45,10 +55,25 @@ public sealed class PlayUpDbContext(DbContextOptions<PlayUpDbContext> options) :
         var transaction = await Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            var key = AdvisoryKey(competitionId);
-            await Database.ExecuteSqlAsync(
-                $"SELECT pg_advisory_xact_lock({key})",
+            var lockTimeoutLiteral = lockOptions.ToPostgresLockTimeoutLiteral();
+#pragma warning disable EF1002 // lock_timeout uses a validated millisecond literal only.
+            await Database.ExecuteSqlRawAsync(
+                $"SET LOCAL lock_timeout = '{lockTimeoutLiteral}'",
                 cancellationToken).ConfigureAwait(false);
+#pragma warning restore EF1002
+
+            var key = CompetitionAdvisoryLock.Key(competitionId);
+            try
+            {
+                await Database.ExecuteSqlAsync(
+                    $"SELECT pg_advisory_xact_lock({key})",
+                    cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception exception) when (CompetitionLockFailure.IsCompetitionLockContention(exception))
+            {
+                throw CreateCompetitionLockTimeoutException(exception);
+            }
+
             try
             {
                 await write(cancellationToken).ConfigureAwait(false);
@@ -60,17 +85,15 @@ public sealed class PlayUpDbContext(DbContextOptions<PlayUpDbContext> options) :
                     "A group membership write conflicted with another writer on the same seat.",
                     ApplicationErrorCodes.GroupMembershipConflict);
             }
+            catch (Exception exception) when (CompetitionLockFailure.IsCompetitionLockContention(exception))
+            {
+                throw CreateCompetitionLockTimeoutException(exception);
+            }
         }
         finally
         {
             await transaction.DisposeAsync().ConfigureAwait(false);
         }
-    }
-
-    private static long AdvisoryKey(CompetitionId competitionId)
-    {
-        var bytes = competitionId.Value.ToByteArray();
-        return BitConverter.ToInt64(bytes, 0) ^ BitConverter.ToInt64(bytes, 8);
     }
 
     /// <summary>

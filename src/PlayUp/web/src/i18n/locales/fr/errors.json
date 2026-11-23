@@ -15,6 +15,7 @@
     "CascadeReplaceNotStale": "L’occupant n’est pas périmé.",
     "CascadeReplaceOccupantNotFound": "Occupant de résolution introuvable.",
     "CompetitionClosed": "La compétition est clôturée ou archivée.",
+    "CompetitionLockTimeout": "Une autre opération est en cours sur cette compétition. Réessayez dans un instant.",
     "CompetitionNotFound": "Compétition introuvable.",
     "CompletionNotAllowed": "La clôture normale n’est pas possible pour le moment.",
     "ConfrontationUndecidable": "Une confrontation nécessaire ne peut pas toujours départager (configurez les tirs au but).",

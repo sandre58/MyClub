@@ -7,6 +7,7 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using MyClub.PlayUp.Domain.Stages;
+using MyClub.PlayUp.Infrastructure.DependencyInjection;
 using MyClub.PlayUp.Infrastructure.Persistence;
 using Xunit;
 
@@ -21,7 +22,7 @@ public sealed class PlayUpDbContextTests
             .UseNpgsql("Host=127.0.0.1;Database=myclub_unconnected;Username=x;Password=x")
             .Options;
 
-        using var context = new PlayUpDbContext(options);
+        using var context = new PlayUpDbContext(options, PlayUpCompetitionLockOptions.Default);
 
         context.Model.GetEntityTypes()
             .Select(entityType => entityType.GetTableName())

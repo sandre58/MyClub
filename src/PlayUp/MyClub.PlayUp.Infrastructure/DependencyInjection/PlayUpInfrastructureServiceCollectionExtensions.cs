@@ -21,26 +21,41 @@ namespace MyClub.PlayUp.Infrastructure.DependencyInjection;
 public static class PlayUpInfrastructureServiceCollectionExtensions
 {
     /// <summary>
+    /// Default Npgsql command timeout in seconds for Play'Up infrastructure registration.
+    /// </summary>
+    public const int DefaultNpgsqlCommandTimeoutSeconds = 30;
+
+    /// <summary>
     /// Adds the Play'Up DbContext (PostgreSQL), ordered-collection interceptors, repositories, unit of work, and system clock.
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <param name="connectionString">The PostgreSQL connection string.</param>
     /// <param name="configureDbContextOptions">Optional hook for tests or diagnostics (e.g. SQL command counter).</param>
+    /// <param name="competitionLockOptions">Optional competition lock timeout override.</param>
+    /// <param name="npgsqlCommandTimeoutSeconds">Npgsql command timeout in seconds.</param>
     /// <returns>The same service collection.</returns>
     public static IServiceCollection AddPlayUpInfrastructure(
         this IServiceCollection services,
         string connectionString,
-        Action<DbContextOptionsBuilder>? configureDbContextOptions = null)
+        Action<DbContextOptionsBuilder>? configureDbContextOptions = null,
+        PlayUpCompetitionLockOptions? competitionLockOptions = null,
+        int npgsqlCommandTimeoutSeconds = DefaultNpgsqlCommandTimeoutSeconds)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
+
+        var lockOptions = competitionLockOptions ?? PlayUpCompetitionLockOptions.Default;
+        lockOptions.ValidateAgainstCommandTimeout(npgsqlCommandTimeoutSeconds);
+        services.AddSingleton(lockOptions);
 
         services.AddSingleton<CompetitionOrderedCollectionsInterceptor>();
         services.AddSingleton<StageOrderedCollectionsInterceptor>();
         services.AddSingleton<MatchOrderedCollectionsInterceptor>();
         services.AddDbContext<PlayUpDbContext>((serviceProvider, options) =>
         {
-            options.UseNpgsql(connectionString);
+            options.UseNpgsql(
+                connectionString,
+                npgsql => npgsql.CommandTimeout(npgsqlCommandTimeoutSeconds));
             configureDbContextOptions?.Invoke(options);
             options.AddInterceptors(
                 serviceProvider.GetRequiredService<CompetitionOrderedCollectionsInterceptor>(),

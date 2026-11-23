@@ -269,11 +269,12 @@ describe('StructureManualPlacementDialog', () => {
     expect(announcer?.textContent?.trim() ?? '').not.toContain('Mise à jour');
     expect(invalidate).toHaveBeenCalled();
     expect(dialog).toBeInTheDocument();
-    await waitFor(() => {
-      const active = document.activeElement;
-      expect(active?.getAttribute('role')).toBe('radio');
-      expect(dialog.contains(active)).toBe(true);
-    });
+    await waitFor(
+      () => {
+        expect(screen.getByRole('radio', { name: 'Alpha' })).toHaveFocus();
+      },
+      { timeout: 3000 },
+    );
 
     rerender(
       <QueryClientProvider client={queryClient}>

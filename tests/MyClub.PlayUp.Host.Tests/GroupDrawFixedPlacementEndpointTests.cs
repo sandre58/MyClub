@@ -19,6 +19,7 @@ using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Host.Contracts;
+using MyClub.PlayUp.Infrastructure.Persistence;
 using Npgsql;
 using Xunit;
 
@@ -611,7 +612,7 @@ public sealed class GroupDrawFixedPlacementEndpointTests(HostPostgresFixture fix
         Func<Task<HttpResponseMessage>> left,
         Func<Task<HttpResponseMessage>> right)
     {
-        var key = CompetitionAdvisoryKey(competitionId);
+        var key = CompetitionAdvisoryLock.Key(competitionId);
         await using var connection = new NpgsqlConnection(fixture.ConnectionString);
         await connection.OpenAsync();
         await using (var hold = new NpgsqlCommand("SELECT pg_advisory_lock(@key)", connection))
@@ -650,12 +651,6 @@ public sealed class GroupDrawFixedPlacementEndpointTests(HostPostgresFixture fix
         var responses = await Task.WhenAll(leftTask, rightTask);
         overlapped.Should().BeTrue("both writers must be waiting on the competition advisory lock");
         return responses;
-    }
-
-    private static long CompetitionAdvisoryKey(CompetitionId competitionId)
-    {
-        var bytes = competitionId.Value.ToByteArray();
-        return BitConverter.ToInt64(bytes, 0) ^ BitConverter.ToInt64(bytes, 8);
     }
 
     [IntegrationFact]

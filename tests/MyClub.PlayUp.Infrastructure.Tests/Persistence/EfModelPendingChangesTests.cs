@@ -6,6 +6,7 @@
 
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using MyClub.PlayUp.Infrastructure.DependencyInjection;
 using MyClub.PlayUp.Infrastructure.Persistence;
 using Xunit;
 
@@ -21,7 +22,7 @@ public sealed class EfModelPendingChangesTests
             .UseNpgsql("Host=127.0.0.1;Database=myclub_unconnected;Username=x;Password=x")
             .Options;
 
-        using var context = new PlayUpDbContext(options);
+        using var context = new PlayUpDbContext(options, PlayUpCompetitionLockOptions.Default);
 
         context.Database.HasPendingModelChanges().Should().BeFalse(
             "run `dotnet ef migrations has-pending-model-changes --context PlayUpDbContext` before merging schema changes");
