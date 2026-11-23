@@ -38,6 +38,7 @@ import type {
   StructureEntry,
 } from '../../types';
 import { invalidateAfterMatchMutation } from './matchInvalidation';
+import { useMatchNotFoundHandler } from './matchNotFoundNavigation';
 
 function canMutateMatchSheet(match: MatchDetail): boolean {
   if (match.status === 'Scheduled' || match.status === 'Postponed') {
@@ -148,6 +149,7 @@ function SheetSideColumn({
 }) {
   const { t } = useTranslation('matches');
   const { t: tc } = useTranslation('common');
+  const onMatchNotFound = useMatchNotFoundHandler(match.stageId);
   const addPlayerFieldId = useId();
   const addJerseyFieldId = useId();
   const jerseyEditFieldId = useId();
@@ -187,6 +189,7 @@ function SheetSideColumn({
       setCompositionStatus('Starter');
       await invalidateAfterMatchMutation(queryClient, match);
     },
+    onError: onMatchNotFound,
   });
 
   const statusMutation = useMutation({
@@ -195,6 +198,7 @@ function SheetSideColumn({
     onSuccess: async () => {
       await invalidateAfterMatchMutation(queryClient, match);
     },
+    onError: onMatchNotFound,
   });
 
   const jerseyMutation = useMutation({
@@ -210,6 +214,7 @@ function SheetSideColumn({
       setJerseyEditValue('');
       await invalidateAfterMatchMutation(queryClient, match);
     },
+    onError: onMatchNotFound,
   });
 
   const removeMutation = useMutation({
@@ -218,8 +223,9 @@ function SheetSideColumn({
       setPendingRemoveId(null);
       await invalidateAfterMatchMutation(queryClient, match);
     },
-    onError: () => {
+    onError: (error) => {
       setPendingRemoveId(null);
+      onMatchNotFound(error);
     },
   });
 

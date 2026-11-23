@@ -31,9 +31,9 @@ public sealed class RecordGoalSqlCeilingTests(LockMeasurePostgresFixture fixture
     public async Task Record_goal_sql_stays_within_lot1_baseline_plus_lock_overheadAsync()
     {
         var runner = fixture.Services.GetRequiredService<TemplateRunner>();
-        await runner.ResetAndRunAsync([SeedSpec.Parse("champions-league:running")]).ConfigureAwait(false);
+        await runner.ResetAndRunAsync([SeedSpec.Parse("champions-league:running")]);
 
-        var live = await PrepareLiveMatchForRecordGoalAsync().ConfigureAwait(false);
+        var live = await PrepareLiveMatchForRecordGoalAsync();
 
         using var scope = fixture.Services.CreateScope();
         var counter = scope.ServiceProvider.GetRequiredService<SqlCommandCounterInterceptor>();
@@ -43,7 +43,7 @@ public sealed class RecordGoalSqlCeilingTests(LockMeasurePostgresFixture fixture
             live.MatchId,
             live.ScorerMemberId,
             Side.Home,
-            cancellationToken: default).ConfigureAwait(false);
+            cancellationToken: default);
 
         output.WriteLine(
             $"RecordGoal SQL={counter.CommandCount}, ceiling={CompetitionLockRetentionMeasureSupport.RecordGoalSqlCeiling} " +

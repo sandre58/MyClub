@@ -22,6 +22,7 @@ import type {
   RecordSubstitutionRequest,
 } from '../../types';
 import { invalidateAfterMatchMutation } from './matchInvalidation';
+import { useMatchNotFoundHandler } from './matchNotFoundNavigation';
 import {
   canMutateRecordedSubstitutions,
   deriveOnFieldMembers,
@@ -36,6 +37,7 @@ export function MatchSubstitutionsPanel({ match }: { match: MatchDetail }) {
   const { t } = useTranslation('matches');
   const { t: tc } = useTranslation('common');
   const queryClient = useQueryClient();
+  const onMatchNotFound = useMatchNotFoundHandler(match.stageId);
   const canMutate = canMutateRecordedSubstitutions(match);
   const sheet = match.declaredParticipations ?? [];
   const substitutions = match.recordedSubstitutions ?? [];
@@ -53,6 +55,7 @@ export function MatchSubstitutionsPanel({ match }: { match: MatchDetail }) {
       resetForm();
       await invalidateAfterMatchMutation(queryClient, match);
     },
+    onError: onMatchNotFound,
   });
 
   const correctMutation = useMutation({
@@ -68,6 +71,7 @@ export function MatchSubstitutionsPanel({ match }: { match: MatchDetail }) {
       resetForm();
       await invalidateAfterMatchMutation(queryClient, match);
     },
+    onError: onMatchNotFound,
   });
 
   const removeMutation = useMutation({
@@ -77,8 +81,9 @@ export function MatchSubstitutionsPanel({ match }: { match: MatchDetail }) {
       setPendingRemoveId(null);
       await invalidateAfterMatchMutation(queryClient, match);
     },
-    onError: () => {
+    onError: (error) => {
       setPendingRemoveId(null);
+      onMatchNotFound(error);
     },
   });
 

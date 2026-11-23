@@ -69,20 +69,20 @@ public sealed class CompetitionLockRetentionMeasureTests(
         var rows = new List<MeasureRow>();
         var skipped = new List<SkippedMeasure>();
 
-        await Assert_contended_wait_is_positive_when_lock_heldAsync().ConfigureAwait(false);
+        await Assert_contended_wait_is_positive_when_lock_heldAsync();
 
-        await MeasureApplyProgressionCupSfAsync(sampleCount, rows, skipped).ConfigureAwait(false);
-        await MeasureDematerializeBigGamesAsync(sampleCount, ciReduced, rows, skipped).ConfigureAwait(false);
-        await MeasureMaterializeBigGamesAsync(sampleCount, ciReduced, rows, skipped).ConfigureAwait(false);
+        await MeasureApplyProgressionCupSfAsync(sampleCount, rows, skipped);
+        await MeasureDematerializeBigGamesAsync(sampleCount, ciReduced, rows, skipped);
+        await MeasureMaterializeBigGamesAsync(sampleCount, ciReduced, rows, skipped);
         if (ciReduced || sampleCount >= CompetitionLockRetentionMeasureSupport.FullCampaignSampleThreshold)
         {
-            await MeasureMaterializeRecetteG1Async(sampleCount, rows, skipped).ConfigureAwait(false);
+            await MeasureMaterializeRecetteG1Async(sampleCount, rows, skipped);
         }
 
-        await TryMeasureConfirmOperationsAsync(skipped).ConfigureAwait(false);
+        await TryMeasureConfirmOperationsAsync(skipped);
 
-        var recordGoalSqlBaseline = await MeasureRecordGoalSqlBaselineAsync().ConfigureAwait(false);
-        var concurrent = await MeasureConcurrentRecordGoalAsync(sampleCount).ConfigureAwait(false);
+        var recordGoalSqlBaseline = await MeasureRecordGoalSqlBaselineAsync();
+        var concurrent = await MeasureConcurrentRecordGoalAsync(sampleCount);
 
         WriteMeasurementTables(rows);
         WriteSkippedOperations(skipped);

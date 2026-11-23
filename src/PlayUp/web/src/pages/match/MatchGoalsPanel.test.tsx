@@ -315,8 +315,16 @@ describe('MatchPage goals', () => {
         selector: '.match-goals__scorer',
       }),
     ).toBeInTheDocument();
-    expect(recordGoal).toHaveBeenCalled();
-    expect(setRunningScore).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(recordGoal).toHaveBeenCalledTimes(1);
+    });
+    expect(setRunningScore).toHaveBeenCalledTimes(1);
+    expect(
+      within(goalsPanel).queryByRole('button', { name: /réessayer/i }),
+    ).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(recordGoal).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('Scheduled: records a goal without SetRunningScore', async () => {
