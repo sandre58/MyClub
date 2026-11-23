@@ -56,6 +56,7 @@ Public **`--color-*`** roles on `.ds-root` (see `tokens/colors.css`). Sole produ
 ## Dialog
 
 - Canonical: `components/Dialog.tsx` + `foundations/dialog.css`.
+- **Portal:** `createPortal` to `document.body` so `z-index: 40` stacks above shell chrome (workspace `isolation` no longer traps the overlay). Sibling portal hosts (toaster, tooltip, popover, select dropdown) stay outside the dialog `inert` walk.
 - **Close = icon X**; accessible name via `closeLabel` (default « Fermer »). Do **not** replace with a text « Fermer » button.
 - **Footer actions.** One right-aligned group. Order: destructive (`.ds-btn--destructive`) first, then a `--space-16` gap, then secondary actions, then the primary (`.ds-btn--primary`) last. Close stays the header X.
 - **Initial focus.** Default `initialFocus="body"` focuses the first control in the body, then the footer rule below. `initialFocus="footer"` uses that footer rule only: focus never lands in the body. `pickFooterInitialFocus` order: enabled `.ds-btn--primary`, then the first enabled footer button that is neither primary nor destructive, then the header close X. Never a destructive button. Never the body. Pass `focusKey` to apply that focus again while the dialog stays open. The Structure draw dialog is the only product surface that sets `initialFocus="footer"`. `ConfirmDialog` keeps the default body path; its message is not focusable, so a danger confirm follows the same footer rule and focuses the ghost cancel (then X), not the destructive confirm.
@@ -96,7 +97,7 @@ Public **`--color-*`** roles on `.ds-root` (see `tokens/colors.css`). Sole produ
 ## Toast
 
 - `Toaster` + `toastStore` (`notify`) + `foundations/toast.css`.
-- Mount in a `position: relative` canvas host (`ShellMain`).
+- Mount from `ShellMain` (or Design Lab); the component portals to `document.body` at `z-index: 45` so toasts stay above portaled dialogs.
 - Specimen: Design Lab **Toast**. Contract: Notion Toast decision.
 - Soft fill ≈ **16%** tone wash (icon + progress carry tone; no border). Docs previously said ~8% — CSS recipe is the SoT.
 

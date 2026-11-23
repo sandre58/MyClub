@@ -1,5 +1,5 @@
 /*
- * Dialog — centered overlay chrome.
+ * Dialog — centered overlay chrome (portaled to document.body).
  * Presence transition only (utility). No hairlines. Sticky header/footer when body scrolls.
  */
 

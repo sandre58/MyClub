@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { createPortal } from 'react-dom';
 import { ToastToneIcon } from '../icons/toastIcons';
 import { CloseIcon } from '../icons/shellIcons';
 import { DS_MOTION_EXIT_MS } from '../motion';
@@ -18,8 +19,8 @@ export type ToasterProps = {
 };
 
 /**
- * Canvas-local toast host — mount inside the product workspace (or Design Lab board).
- * Bottom-end stack; viewport-fixed so it paints above Dialog (z-40). Does not steal focus.
+ * Toast host — mount from ShellMain or the Design Lab board; portals to `document.body`.
+ * Bottom-end stack; viewport-fixed above Dialog (z-40). Does not steal focus.
  * Soft fill (~16% tone), no border; tone icon + 2px progress (pauses on hover; shrinks left).
  */
 export function Toaster({ closeLabel = 'Fermer' }: ToasterProps) {
@@ -33,13 +34,19 @@ export function Toaster({ closeLabel = 'Fermer' }: ToasterProps) {
     return null;
   }
 
-  return (
+  const toasterTree = (
     <div className="ds-toaster" aria-label="Notifications">
       {toasts.map((toast) => (
         <ToastView key={toast.id} toast={toast} closeLabel={closeLabel} />
       ))}
     </div>
   );
+
+  if (typeof document === 'undefined') {
+    return null;
+  }
+
+  return createPortal(toasterTree, document.body);
 }
 
 function ToastView({
