@@ -8,8 +8,11 @@ using System.Diagnostics.CodeAnalysis;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Abstractions;
+using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Pipeline;
+using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
@@ -1061,6 +1064,186 @@ public sealed class UseCaseExecutorTests
         fixture.MatchIds.Should().BeEmpty();
     }
 
+    [Fact]
+    public async Task GenerateNextRoundAsync_loads_generates_and_saves_onceAsync()
+    {
+        var (competition, stage) = CreateRunningSwiss(participantCount: 4, roundCount: 3);
+        var stages = new Mock<IStageRepository>(MockBehavior.Strict);
+        var matchRepo = new Mock<IMatchRepository>(MockBehavior.Strict);
+        var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
+        var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
+
+        stages
+            .Setup(repository => repository.GetByIdForUpdateAsync(stage.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(stage);
+        SetupCompetitionStagesLookup(stages, competition, stage);
+        SetupCompetitionLookup(competitions, competition);
+        SetupEmptyStageMatches(matchRepo, stage.Id);
+        matchRepo
+            .Setup(repository => repository.Add(It.IsAny<DomainMatch>()))
+            .Callback<DomainMatch>(_ => { });
+        unitOfWork
+            .Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        SetupExclusive(unitOfWork);
+        SetupCompetitionId(stages, stage.Id, competition.Id);
+
+        var executor = CreateExecutor(stages, matchRepo, competitions, unitOfWork);
+        var result = await executor.GenerateNextRoundAsync(stage.Id);
+
+        result.RoundIndex.Should().Be(1);
+        result.CreatedMatches.Should().HaveCount(2);
+        matchRepo.Verify(repository => repository.Add(It.IsAny<DomainMatch>()), Times.Exactly(2));
+        unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        unitOfWork.Verify(
+            uow => uow.ExecuteExclusiveAsync(
+                competition.Id,
+                It.IsAny<Func<CancellationToken, Task>>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task GenerateNextRoundAsync_when_stage_missing_does_not_saveAsync()
+    {
+        var stageId = StageId.New();
+        var stages = new Mock<IStageRepository>(MockBehavior.Strict);
+        var matchRepo = new Mock<IMatchRepository>(MockBehavior.Strict);
+        var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
+        var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
+
+        SetupCompetitionId(stages, stageId, null);
+
+        var executor = CreateExecutor(stages, matchRepo, competitions, unitOfWork);
+        var act = async () => await executor.GenerateNextRoundAsync(stageId);
+
+        var exception = await act.Should().ThrowAsync<ApplicationFailureException>();
+        exception.Which.Code.Should().Be(ApplicationErrorCodes.StageNotFound);
+        unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+        unitOfWork.Verify(
+            uow => uow.ExecuteExclusiveAsync(
+                It.IsAny<CompetitionId>(),
+                It.IsAny<Func<CancellationToken, Task>>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task GenerateNextRoundAsync_when_domain_rejects_does_not_saveAsync()
+    {
+        var competition = CreateCompetition.Execute("Swiss reject", _clock);
+        AddEntry.Execute(competition, "A", _clock);
+        AddEntry.Execute(competition, "B", _clock);
+        var stage = Stage.Create(competition.Id, new StageName("Swiss"), SampleRegulations.Standard(), _clock);
+        stage.SetSwissSettings(new SwissSettings(2));
+        competition.AddStage(stage.Id, _clock);
+        ChampionshipSwissPhasePlaces.FillCompositionToPlacesCapacity(competition, stage, [stage], _clock);
+        stage.Prepare(_clock);
+
+        var stages = new Mock<IStageRepository>(MockBehavior.Strict);
+        var matchRepo = new Mock<IMatchRepository>(MockBehavior.Strict);
+        var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
+        var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
+
+        stages
+            .Setup(repository => repository.GetByIdForUpdateAsync(stage.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(stage);
+        SetupCompetitionStagesLookup(stages, competition, stage);
+        SetupCompetitionLookup(competitions, competition);
+        SetupEmptyStageMatches(matchRepo, stage.Id);
+        SetupExclusive(unitOfWork);
+        SetupCompetitionId(stages, stage.Id, competition.Id);
+
+        var executor = CreateExecutor(stages, matchRepo, competitions, unitOfWork);
+        var act = async () => await executor.GenerateNextRoundAsync(stage.Id);
+
+        var exception = await act.Should().ThrowAsync<ApplicationFailureException>();
+        exception.Which.Code.Should().Be(ApplicationErrorCodes.SwissRoundGenerationFailure);
+        unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ApplyScheduleAsync_loads_applies_and_saves_onceAsync()
+    {
+        var competition = Competition.Create(new CompetitionName("Schedule"), SampleRegulations.Standard(), _clock);
+        var home = competition.AddEntry(TeamId.New(), "H", _clock);
+        var away = competition.AddEntry(TeamId.New(), "A", _clock);
+        var stage = Stage.Create(competition.Id, new StageName("Schedule MD"), SampleRegulations.Standard(), _clock);
+        stage.AddMatchday(1, _clock);
+        var fixture = stage.AddFixture(stage.Matchdays[0].Id, _clock);
+        var match = DomainMatch.Create(competition.Id, stage.Id, home.Id, away.Id, _clock);
+        stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, _clock);
+        competition.AddStage(stage.Id, _clock);
+        stage.Prepare(_clock);
+        stage.Start(_clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+
+        var stages = new Mock<IStageRepository>(MockBehavior.Strict);
+        var matchRepo = new Mock<IMatchRepository>(MockBehavior.Strict);
+        var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
+        var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
+
+        stages
+            .Setup(repository => repository.GetByIdForUpdateAsync(stage.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(stage);
+        SetupCompetitionLookup(competitions, competition);
+        matchRepo
+            .Setup(repository => repository.ListByStageForUpdateAsync(stage.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync([match]);
+        unitOfWork
+            .Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        SetupExclusive(unitOfWork);
+        SetupCompetitionId(stages, stage.Id, competition.Id);
+
+        var start = _clock.UtcNow;
+        var resourceId = Guid.NewGuid();
+        var executor = CreateExecutor(stages, matchRepo, competitions, unitOfWork);
+        await executor.ApplyScheduleAsync(
+            stage.Id,
+            [new ScheduleAssignmentDto(match.Id.Value, start, resourceId)],
+            [match.Id.Value]);
+
+        stage.MatchPlacements.Should().ContainSingle()
+            .Which.MatchId.Should().Be(match.Id);
+        unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        unitOfWork.Verify(
+            uow => uow.ExecuteExclusiveAsync(
+                competition.Id,
+                It.IsAny<Func<CancellationToken, Task>>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task ApplyScheduleAsync_when_stage_missing_does_not_saveAsync()
+    {
+        var stageId = StageId.New();
+        var stages = new Mock<IStageRepository>(MockBehavior.Strict);
+        var matchRepo = new Mock<IMatchRepository>(MockBehavior.Strict);
+        var competitions = new Mock<ICompetitionRepository>(MockBehavior.Strict);
+        var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
+
+        SetupCompetitionId(stages, stageId, null);
+
+        var executor = CreateExecutor(stages, matchRepo, competitions, unitOfWork);
+        var act = async () => await executor.ApplyScheduleAsync(
+            stageId,
+            [new ScheduleAssignmentDto(Guid.NewGuid(), _clock.UtcNow, Guid.NewGuid())],
+            [Guid.NewGuid()]);
+
+        var exception = await act.Should().ThrowAsync<ApplicationFailureException>();
+        exception.Which.Code.Should().Be(ApplicationErrorCodes.StageNotFound);
+        unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+        unitOfWork.Verify(
+            uow => uow.ExecuteExclusiveAsync(
+                It.IsAny<CompetitionId>(),
+                It.IsAny<Func<CancellationToken, Task>>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
     private static void SetupExclusive(Mock<IUnitOfWork> unitOfWork) =>
         unitOfWork
             .Setup(uow => uow.ExecuteExclusiveAsync(
@@ -1171,6 +1354,25 @@ public sealed class UseCaseExecutorTests
         stage.AddMatchday(1, _clock);
         competition.AddStage(stage.Id, _clock);
         return new ChampionshipScenario(competition, stage);
+    }
+
+    private (Competition Competition, Stage Stage) CreateRunningSwiss(int participantCount, int roundCount)
+    {
+        var competition = CreateCompetition.Execute("Swiss executor", _clock);
+        for (var index = 0; index < participantCount; index++)
+        {
+            AddEntry.Execute(competition, $"T{index}", _clock);
+        }
+
+        var stage = Stage.Create(competition.Id, new StageName("Swiss"), SampleRegulations.Standard(), _clock);
+        stage.SetSwissSettings(new SwissSettings(roundCount));
+        competition.AddStage(stage.Id, _clock);
+        ChampionshipSwissPhasePlaces.FillCompositionToPlacesCapacity(competition, stage, [stage], _clock);
+        stage.Prepare(_clock);
+        stage.Start(_clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+        return (competition, stage);
     }
 
     private Stage CreateRunningStageForMatchOps(CompetitionId competitionId)

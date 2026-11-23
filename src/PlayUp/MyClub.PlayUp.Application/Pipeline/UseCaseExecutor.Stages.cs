@@ -1559,19 +1559,27 @@ public sealed partial class UseCaseExecutor
         StageId stageId,
         CancellationToken cancellationToken = default)
     {
-        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        var competition = await RequireCompetitionAsync(stage.CompetitionId, cancellationToken).ConfigureAwait(false);
-        var existing = await matches.ListByStageForUpdateAsync(stageId, cancellationToken).ConfigureAwait(false);
-        var competitionStages =
-            await LoadCompetitionStagesForUpdateAsync(competition, cancellationToken).ConfigureAwait(false);
-        var result = GenerateNextRound.Execute(competition, stage, existing, clock, competitionStages);
-        foreach (var created in result.CreatedMatches)
-        {
-            matches.Add(created);
-        }
+        GenerateNextRoundResult? result = null;
+        await ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await RequireStageAsync(stageId, innerToken).ConfigureAwait(false);
+                var competition = await RequireCompetitionAsync(stage.CompetitionId, innerToken)
+                    .ConfigureAwait(false);
+                var existing = await matches.ListByStageForUpdateAsync(stageId, innerToken).ConfigureAwait(false);
+                var competitionStages =
+                    await LoadCompetitionStagesForUpdateAsync(competition, innerToken).ConfigureAwait(false);
+                result = GenerateNextRound.Execute(competition, stage, existing, clock, competitionStages);
+                foreach (var created in result.CreatedMatches)
+                {
+                    matches.Add(created);
+                }
 
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return result;
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
+        return result ?? throw new InvalidOperationException("Swiss next round generation did not run.");
     }
 
     /// <summary>
@@ -1661,21 +1669,27 @@ public sealed partial class UseCaseExecutor
         ArgumentNullException.ThrowIfNull(assignments);
         ArgumentNullException.ThrowIfNull(targetMatchIds);
 
-        var stage = await RequireStageAsync(stageId, cancellationToken).ConfigureAwait(false);
-        await EnsureCompetitionAllowsLifecycleMutationAsync(stage.CompetitionId, cancellationToken)
-            .ConfigureAwait(false);
-        StagePhaseExploitationGuard.EnsureScheduleExploitation(stage);
-        var schedule = new Schedule(
-        [
-            .. assignments.Select(a => new ScheduleAssignment(
-                new MatchId(a.MatchId),
-                new ResourceId(a.ResourceId),
-                a.Start))
-        ]);
-        var result = SchedulingResult.Success(schedule);
-        var targets = targetMatchIds.Select(id => new MatchId(id)).ToArray();
-        ApplySchedule.Execute(stage, result, targets);
-        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await RequireStageAsync(stageId, innerToken).ConfigureAwait(false);
+                await EnsureCompetitionAllowsLifecycleMutationAsync(stage.CompetitionId, innerToken)
+                    .ConfigureAwait(false);
+                StagePhaseExploitationGuard.EnsureScheduleExploitation(stage);
+                var schedule = new Schedule(
+                [
+                    .. assignments.Select(a => new ScheduleAssignment(
+                        new MatchId(a.MatchId),
+                        new ResourceId(a.ResourceId),
+                        a.Start))
+                ]);
+                var result = SchedulingResult.Success(schedule);
+                var targets = targetMatchIds.Select(id => new MatchId(id)).ToArray();
+                ApplySchedule.Execute(stage, result, targets);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
