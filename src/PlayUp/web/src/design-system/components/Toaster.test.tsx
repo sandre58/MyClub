@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Toaster } from './Toaster';
@@ -76,6 +76,25 @@ describe('Toaster', () => {
     notify.success('4');
     expect(getToastsSnapshot()).toHaveLength(TOAST_MAX_VISIBLE);
     expect(getToastsSnapshot().map((t) => t.message)).toEqual(['2', '3', '4']);
+  });
+
+  it('portals the toaster root to document.body, outside the host tree', async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <div className="shell__workspace">
+        <ToastHarness />
+      </div>,
+    );
+
+    await user.click(
+      within(container).getByRole('button', { name: 'Success' }),
+    );
+    await screen.findByRole('status');
+
+    const toasterRoot = document.body.querySelector('.ds-toaster');
+    expect(toasterRoot).toBeTruthy();
+    expect(container.querySelector('.ds-toaster')).toBeNull();
+    expect(toasterRoot?.parentElement).toBe(document.body);
   });
 
   it('auto-dismisses success after its duration', () => {

@@ -6,6 +6,7 @@ import {
   type ReactNode,
   type RefObject,
 } from 'react';
+import { createPortal } from 'react-dom';
 import { CloseIcon } from '../icons/shellIcons';
 import { DS_MOTION_EXIT_MS } from '../motion';
 import { usePresence } from '../usePresence';
@@ -53,6 +54,15 @@ export type DialogProps = {
    */
   focusKey?: string;
 };
+
+function isInertExemptPortalHost(element: HTMLElement): boolean {
+  return (
+    element.classList.contains('ds-toaster') ||
+    element.classList.contains('ds-tooltip') ||
+    element.classList.contains('ds-popover') ||
+    element.classList.contains('ds-select__dropdown')
+  );
+}
 
 function pickFooterInitialFocus(
   footer: HTMLElement | null,
@@ -206,7 +216,11 @@ export function Dialog({
         break;
       }
       for (const sibling of Array.from(parent.children)) {
-        if (sibling !== current && sibling instanceof HTMLElement) {
+        if (
+          sibling !== current &&
+          sibling instanceof HTMLElement &&
+          !isInertExemptPortalHost(sibling)
+        ) {
           if (!sibling.inert) {
             sibling.inert = true;
             inerted.push(sibling);
@@ -235,7 +249,7 @@ export function Dialog({
 
   const showFooter = footer != null || footerStatus != null;
 
-  return (
+  const dialogTree = (
     <div
       className="ds-dialog"
       data-open={visible ? 'true' : 'false'}
@@ -301,4 +315,10 @@ export function Dialog({
       </div>
     </div>
   );
+
+  if (typeof document === 'undefined') {
+    return null;
+  }
+
+  return createPortal(dialogTree, document.body);
 }

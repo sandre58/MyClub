@@ -4,7 +4,7 @@ import { Toaster } from '../design-system/components/Toaster';
 /**
  * Primary content viewport. Pages keep their own `<main id="main">` landmark.
  * Shell provides scroll + canvas background; pages fill available width (padding via `.page`).
- * Toaster is viewport-fixed (bottom-end), above Dialog overlay.
+ * `<Toaster />` mounts here but portals to `document.body` (z-45, above Dialog z-40).
  */
 export function ShellMain({ children }: { children: ReactNode }) {
   return (

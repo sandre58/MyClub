@@ -235,7 +235,7 @@ function structureView() {
       numberOfPots: null,
       matchGenerationFormat: 'SingleRoundRobin',
     },
-    actions: [],
+    actions: ['AddEntry'],
     readiness: {
       readyForNextSlice: true,
       readyForDraw: false,
