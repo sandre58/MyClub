@@ -37,6 +37,7 @@ public sealed class InsertCompetitionStageExecutorTests
         var stages = new Mock<IStageRepository>(MockBehavior.Strict);
         var matches = new Mock<IMatchRepository>(MockBehavior.Strict);
         var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
+        SetupExclusive(unitOfWork);
         var executor = new UseCaseExecutor(
             stages.Object,
             matches.Object,
@@ -76,6 +77,7 @@ public sealed class InsertCompetitionStageExecutorTests
         var stages = new Mock<IStageRepository>(MockBehavior.Strict);
         var matches = new Mock<IMatchRepository>(MockBehavior.Strict);
         var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
+        SetupExclusive(unitOfWork);
         var executor = new UseCaseExecutor(
             stages.Object,
             matches.Object,
@@ -92,4 +94,12 @@ public sealed class InsertCompetitionStageExecutorTests
         competition.StageIds.Should().Equal(first.Id, second.Id);
         unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
+
+    private static void SetupExclusive(Mock<IUnitOfWork> unitOfWork) =>
+        unitOfWork
+            .Setup(uow => uow.ExecuteExclusiveAsync(
+                It.IsAny<CompetitionId>(),
+                It.IsAny<Func<CancellationToken, Task>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns((CompetitionId _, Func<CancellationToken, Task> write, CancellationToken token) => write(token));
 }

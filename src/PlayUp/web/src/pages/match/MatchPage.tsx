@@ -41,6 +41,7 @@ import {
   type MatchStatus,
 } from '../../types';
 import { invalidateAfterMatchMutation } from './matchInvalidation';
+import { useMatchNotFoundHandler } from './matchNotFoundNavigation';
 import { formatKickoffParts } from './matchListMeta';
 import { MatchDisciplinaryPanel } from './MatchDisciplinaryPanel';
 import { adjustRunningScore } from './matchGoalsHelpers';
@@ -105,6 +106,7 @@ function MatchDetailView({
 }) {
   const { t, i18n } = useTranslation('matches');
   const queryClient = useQueryClient();
+  const onMatchNotFound = useMatchNotFoundHandler(data.stageId);
   const homeName = sideLabel(data.home);
   const awayName = sideLabel(data.away);
   const board = displayedScore(data);
@@ -112,17 +114,20 @@ function MatchDetailView({
   const startMutation = useMutation({
     mutationFn: () => startMatch(data.matchId),
     onSuccess: () => invalidateAfterMatchMutation(queryClient, data),
+    onError: onMatchNotFound,
   });
 
   const runningScoreMutation = useMutation({
     mutationFn: (score: MatchScore) => setRunningScore(data.matchId, score),
     onSuccess: () => invalidateAfterMatchMutation(queryClient, data),
+    onError: onMatchNotFound,
   });
 
   const finishMutation = useMutation({
     mutationFn: (request: FinishMatchRequest) =>
       finishMatch(data.matchId, request),
     onSuccess: () => invalidateAfterMatchMutation(queryClient, data),
+    onError: onMatchNotFound,
   });
 
   const mutationError =
@@ -362,7 +367,7 @@ function MatchDetailView({
         </p>
       )}
 
-      {mutationError && <MutationError error={mutationError} />}
+      {mutationError != null ? <MutationError error={mutationError} /> : null}
     </div>
   );
 }

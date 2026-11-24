@@ -54,6 +54,8 @@ public sealed class CupC2ImpasseRecetteProtocolTests(DevelopmentPostgresFixture 
         hub.PresentedIssueCodes.Should().NotContain(
             StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations);
 
+        var unitOfWorkForStart = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+        unitOfWorkForStart.ClearTrackedChanges();
         var executor = scope.ServiceProvider.GetRequiredService<UseCaseExecutor>();
         var startAct = async () => await executor.StartStageAsync(stage.Id);
         (await startAct.Should().ThrowAsync<ApplicationFailureException>())
@@ -101,6 +103,7 @@ public sealed class CupC2ImpasseRecetteProtocolTests(DevelopmentPostgresFixture 
         hub.PresentedIssueCodes.Should().NotContain(
             StructureStageLifecycleAssembler.DisabledUnmaterializedConfrontations);
 
+        unitOfWork.ClearTrackedChanges();
         var executor = scope.ServiceProvider.GetRequiredService<UseCaseExecutor>();
         var startAct = async () => await executor.StartStageAsync(stage.Id);
         (await startAct.Should().ThrowAsync<ApplicationFailureException>())

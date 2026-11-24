@@ -97,6 +97,8 @@ internal sealed partial class PlayUpExceptionHandler(ILogger<PlayUpExceptionHand
                 (StatusCodes.Status409Conflict, "Consequence operation not allowed", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.SlotOccupancyConflict } application =>
                 (StatusCodes.Status409Conflict, "Slot occupancy conflict", application.Code),
+            ApplicationFailureException { Code: ApplicationErrorCodes.SlotEntryUniqueConflict } application =>
+                (StatusCodes.Status409Conflict, "Slot entry unique conflict", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.CompletionNotAllowed } application =>
                 (StatusCodes.Status409Conflict, "Completion not allowed", application.Code),
             ApplicationFailureException { Code: ApplicationErrorCodes.StageCompletionBlocked } application =>
