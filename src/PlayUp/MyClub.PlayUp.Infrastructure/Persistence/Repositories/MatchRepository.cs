@@ -32,6 +32,21 @@ internal sealed class MatchRepository(PlayUpDbContext context) : IMatchRepositor
         LoadByIdAsync(id, trackChanges: true, cancellationToken);
 
     /// <inheritdoc />
+    public async Task<CompetitionId?> GetCompetitionIdReadOnlyAsync(
+        MatchId id,
+        CancellationToken cancellationToken = default)
+    {
+        var row = await context.Set<Match>()
+            .AsNoTracking()
+            .Where(match => match.Id == id)
+            .Select(match => new { match.CompetitionId })
+            .SingleOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        return row?.CompetitionId;
+    }
+
+    /// <inheritdoc />
     public async Task<IReadOnlyList<Match>> GetByIdsForUpdateAsync(
         IReadOnlyList<MatchId> ids,
         CancellationToken cancellationToken = default)

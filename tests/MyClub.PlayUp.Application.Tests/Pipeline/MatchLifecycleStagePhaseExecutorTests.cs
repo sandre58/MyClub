@@ -200,6 +200,9 @@ public sealed class MatchLifecycleStagePhaseExecutorTests
         var unitOfWork = new Mock<IUnitOfWork>(MockBehavior.Strict);
 
         matchRepo
+            .Setup(repository => repository.GetCompetitionIdReadOnlyAsync(match.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(competition.Id);
+        matchRepo
             .Setup(repository => repository.GetByIdForUpdateAsync(match.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(match);
         competitions
@@ -208,6 +211,12 @@ public sealed class MatchLifecycleStagePhaseExecutorTests
         stages
             .Setup(repository => repository.GetByIdForUpdateAsync(stage.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(stage);
+        unitOfWork
+            .Setup(uow => uow.ExecuteExclusiveAsync(
+                competition.Id,
+                It.IsAny<Func<CancellationToken, Task>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns((CompetitionId _, Func<CancellationToken, Task> write, CancellationToken token) => write(token));
         unitOfWork
             .Setup(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);

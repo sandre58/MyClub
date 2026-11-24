@@ -15,6 +15,14 @@ namespace MyClub.PlayUp.Application.Abstractions;
 public interface IMatchRepository
 {
     /// <summary>
+    /// Projects the owning competition id without materializing the match aggregate.
+    /// </summary>
+    /// <param name="id">The match identity.</param>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>The competition id, or <see langword="null"/> when the match does not exist.</returns>
+    Task<CompetitionId?> GetCompetitionIdReadOnlyAsync(MatchId id, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Loads a tracked match for command paths that mutate the aggregate.
     /// </summary>
     /// <param name="id">The match identity.</param>

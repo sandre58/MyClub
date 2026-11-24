@@ -29,6 +29,7 @@ import {
   canMutateRecordedGoals,
 } from './matchGoalsHelpers';
 import { invalidateAfterMatchMutation } from './matchInvalidation';
+import { useMatchNotFoundHandler } from './matchNotFoundNavigation';
 
 /**
  * Nominative goals panel — facts ≠ RunningScore ≠ Finish.
@@ -38,6 +39,7 @@ export function MatchGoalsPanel({ match }: { match: MatchDetail }) {
   const { t } = useTranslation('matches');
   const { t: tc } = useTranslation('common');
   const queryClient = useQueryClient();
+  const onMatchNotFound = useMatchNotFoundHandler(match.stageId);
   const canMutate = canMutateRecordedGoals(match);
   const isLive = match.status === 'Live';
   const sheet = match.declaredParticipations ?? [];
@@ -70,6 +72,7 @@ export function MatchGoalsPanel({ match }: { match: MatchDetail }) {
       resetCreateForm();
       await invalidateAfterMatchMutation(queryClient, match);
     },
+    onError: onMatchNotFound,
   });
 
   const correctMutation = useMutation({
@@ -103,6 +106,7 @@ export function MatchGoalsPanel({ match }: { match: MatchDetail }) {
       resetCreateForm();
       await invalidateAfterMatchMutation(queryClient, match);
     },
+    onError: onMatchNotFound,
   });
 
   const removeMutation = useMutation({
@@ -124,8 +128,9 @@ export function MatchGoalsPanel({ match }: { match: MatchDetail }) {
       setPendingRemoveId(null);
       await invalidateAfterMatchMutation(queryClient, match);
     },
-    onError: () => {
+    onError: (error) => {
       setPendingRemoveId(null);
+      onMatchNotFound(error);
     },
   });
 

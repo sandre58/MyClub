@@ -31,6 +31,7 @@ import {
 } from '../../design-system/icons/contentIcons';
 import { CloseIcon } from '../../design-system/icons/shellIcons';
 import { invalidateAfterMatchMutation } from './matchInvalidation';
+import { useMatchNotFoundHandler } from './matchNotFoundNavigation';
 
 /** Domain CanMutateDisciplinaryEventsFreely — Create/Remove/Correct UI gate. */
 function canMutateRecordedDisciplinaryEvents(match: MatchDetail): boolean {
@@ -53,6 +54,7 @@ export function MatchDisciplinaryPanel({ match }: { match: MatchDetail }) {
   const { t } = useTranslation('matches');
   const { t: tc } = useTranslation('common');
   const queryClient = useQueryClient();
+  const onMatchNotFound = useMatchNotFoundHandler(match.stageId);
   const canMutate = canMutateRecordedDisciplinaryEvents(match);
   const sheet = match.declaredParticipations ?? [];
   const events = match.recordedDisciplinaryEvents ?? [];
@@ -80,6 +82,7 @@ export function MatchDisciplinaryPanel({ match }: { match: MatchDetail }) {
       resetForm();
       await invalidateAfterMatchMutation(queryClient, match);
     },
+    onError: onMatchNotFound,
   });
 
   const correctMutation = useMutation({
@@ -100,6 +103,7 @@ export function MatchDisciplinaryPanel({ match }: { match: MatchDetail }) {
       resetForm();
       await invalidateAfterMatchMutation(queryClient, match);
     },
+    onError: onMatchNotFound,
   });
 
   const removeMutation = useMutation({
@@ -109,8 +113,9 @@ export function MatchDisciplinaryPanel({ match }: { match: MatchDetail }) {
       setPendingRemoveId(null);
       await invalidateAfterMatchMutation(queryClient, match);
     },
-    onError: () => {
+    onError: (error) => {
       setPendingRemoveId(null);
+      onMatchNotFound(error);
     },
   });
 

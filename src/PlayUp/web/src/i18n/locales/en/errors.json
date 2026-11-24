@@ -111,6 +111,7 @@
     "ScheduleApplyFailure": "Unable to apply the schedule.",
     "ScheduleGenerationFailure": "Unable to generate the schedule.",
     "SlotAssignmentStale": "The place has changed in the meantime. Reload, then try again.",
+    "SlotEntryUniqueConflict": "This team already occupies another place in the phase. Refresh and try again.",
     "SlotFeedsInvalid": "Slot feeds are invalid.",
     "SlotOccupancyConflict": "The destination slot is already occupied.",
     "StageCompletionBlocked": "Every match must be finished or cancelled before completing the phase.",

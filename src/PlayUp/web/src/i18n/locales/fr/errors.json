@@ -111,6 +111,7 @@
     "ScheduleApplyFailure": "Impossible d’appliquer le calendrier.",
     "ScheduleGenerationFailure": "Impossible de générer le calendrier.",
     "SlotAssignmentStale": "La place a changé entre-temps. Rechargez puis réessayez.",
+    "SlotEntryUniqueConflict": "Cette équipe occupe déjà une autre place de la phase. Actualisez et réessayez.",
     "SlotFeedsInvalid": "Les alimentations d’emplacements sont invalides.",
     "SlotOccupancyConflict": "L’emplacement de destination est déjà occupé.",
     "StageCompletionBlocked": "Chaque match doit être terminé ou annulé avant de clôturer la phase.",
