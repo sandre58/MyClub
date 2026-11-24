@@ -1149,6 +1149,9 @@ describe('StructureDrawDialog', () => {
     const confirmDialog = await screen.findByRole('dialog', {
       name: 'Libérer les placements du tirage ?',
     });
+    expect(confirmDialog).toHaveTextContent(/placements manuels/);
+    expect(confirmDialog).not.toHaveTextContent(/Les Places/);
+    expect(confirmDialog).not.toHaveTextContent(/affectations directes/);
     await user.click(
       within(confirmDialog).getByRole('button', {
         name: 'Libérer les 2 équipes tirées',
@@ -2852,6 +2855,8 @@ describe('StructureDrawDialog', () => {
       name: 'Annuler le tirage ?',
     });
     expect(confirm).toHaveTextContent(/ne retire pas les placements/);
+    expect(confirm).toHaveTextContent(/équipes tirées/);
+    expect(confirm).not.toHaveTextContent(/Libérer N\/M/);
     await user.click(
       within(confirm).getByRole('button', { name: 'Annuler le tirage' }),
     );
@@ -3391,6 +3396,9 @@ describe('StructureDrawDialog', () => {
       const confirm = await screen.findByRole('dialog', {
         name: 'Libérer les placements du tirage ?',
       });
+      expect(confirm).toHaveTextContent(/placements manuels/);
+      expect(confirm).not.toHaveTextContent(/Les Places/);
+      expect(confirm).not.toHaveTextContent(/affectations directes/);
       await user.click(
         within(confirm).getByRole('button', {
           name: "Libérer l'équipe tirée (#2)",
