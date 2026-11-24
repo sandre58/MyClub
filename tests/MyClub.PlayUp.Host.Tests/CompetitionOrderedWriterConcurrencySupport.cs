@@ -8,7 +8,6 @@ using System.Net;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
-using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Infrastructure.Persistence;
 using Npgsql;
@@ -20,12 +19,10 @@ namespace MyClub.PlayUp.Host.Tests;
 /// </summary>
 internal static class CompetitionOrderedWriterConcurrencySupport
 {
-    public static void AssertNoUnhandledPostgresContention(HttpResponseMessage response)
-    {
+    public static void AssertNoUnhandledPostgresContention(HttpResponseMessage response) =>
         ((int)response.StatusCode).Should().BeLessThan(
             (int)HttpStatusCode.InternalServerError,
             "competition lock must map contention to 409, never an unhandled 500");
-    }
 
     public static async Task AssertBodyFreeOfPostgresLockErrorsAsync(HttpResponseMessage response)
     {
@@ -175,7 +172,7 @@ internal static class CompetitionOrderedWriterConcurrencySupport
             connection);
         command.Parameters.AddWithValue("classId", classId);
         command.Parameters.AddWithValue("objId", objId);
-        command.Parameters.AddWithValue("granted", granted);
+        command.Parameters.AddWithValue(nameof(granted), granted);
         return (int)(await command.ExecuteScalarAsync() ?? 0);
     }
 

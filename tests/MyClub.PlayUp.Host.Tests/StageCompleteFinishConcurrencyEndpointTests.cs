@@ -14,9 +14,6 @@ using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Domain.Common;
-using MyClub.PlayUp.Domain.Competitions;
-using MyClub.PlayUp.Domain.Matches;
-using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Host.Contracts;
 using MyClub.PlayUp.TestKit;
 using Xunit;
@@ -121,9 +118,8 @@ public sealed class StageCompleteFinishConcurrencyEndpointTests(HostPostgresFixt
             .WithStructure(StructureIntent.Championship(stageName: "League"))
             .PreparePrimaryStage();
         var stage = situation.RequirePrimaryStage();
-        var materialized = MaterializeMatches.Execute(situation.Competition, stage, [], _clock, [stage]);
-        var created = materialized.CreatedMatches;
-        var live = created[created.Count - 1];
+        var (created, _, _) = MaterializeMatches.Execute(situation.Competition, stage, [], _clock, [stage]);
+        var live = created[^1];
         for (var index = 0; index < created.Count - 1; index++)
         {
             created[index].Start(_clock);
@@ -131,7 +127,7 @@ public sealed class StageCompleteFinishConcurrencyEndpointTests(HostPostgresFixt
         }
 
         live.Start(_clock);
-        foreach (var match in materialized.CreatedMatches)
+        foreach (var match in created)
         {
             situation.TrackMatch(match);
         }

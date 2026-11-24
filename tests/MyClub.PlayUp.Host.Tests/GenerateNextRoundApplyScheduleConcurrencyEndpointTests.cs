@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using System.Net;
-using System.Net.Http.Json;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using MyClub.PlayUp.Application;
@@ -57,7 +56,7 @@ public sealed class GenerateNextRoundApplyScheduleConcurrencyEndpointTests(HostP
                 var dematerializeBody =
                     await dematerializeResponse.Content.ReadFromJsonAsync<DematerializePhaseResponse>(HostJson.Options);
                 dematerializeBody.Should().NotBeNull();
-                dematerializeBody!.RemovedRoundNumber.Should().Be(1);
+                dematerializeBody.RemovedRoundNumber.Should().Be(1);
 
                 // Current rule: after dematerializing the last Swiss round, a new GenerateNextRound recreates round 1.
                 generateResponse.StatusCode.Should().Be(HttpStatusCode.OK);

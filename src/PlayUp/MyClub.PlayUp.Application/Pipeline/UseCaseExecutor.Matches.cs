@@ -25,7 +25,7 @@ public sealed partial class UseCaseExecutor
     /// <exception cref="ApplicationFailureException">Thrown when the match does not exist, the competition is closed, or sportive exploitation is not open.</exception>
     public async Task StartMatchAsync(MatchId matchId, CancellationToken cancellationToken = default)
     {
-        var competitionId = default(Guid);
+        var competitionId = Guid.Empty;
         await ExecuteOnMatchCompetitionAsync(
             matchId,
             async innerToken =>
@@ -62,7 +62,7 @@ public sealed partial class UseCaseExecutor
         MatchResult result,
         CancellationToken cancellationToken)
     {
-        var competitionId = default(Guid);
+        var competitionId = Guid.Empty;
         await ExecuteOnMatchCompetitionAsync(
             matchId,
             async innerToken =>

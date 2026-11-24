@@ -81,23 +81,29 @@ public sealed class UseCaseExecutorStageLifecycleLogTests
         competition.AddStage(stage.Id, _clock);
 
         IReadOnlyList<DomainMatch> stageMatches = [];
-        if (operation == "Start")
+        switch (operation)
         {
-            StageMaterializationTestSupport.EnsureReadyForMaterialize(competition, stage, [stage], _clock);
-            var materialized = MaterializeMatches.Execute(competition, stage, [], _clock, [stage]);
-            stageMatches = materialized.CreatedMatches;
-            stage.Status.Should().Be(StageStatus.Ready);
-        }
-        else if (operation == "Complete")
-        {
-            PrepareStage.Execute(stage, [stage], _clock);
-            StartStage.Execute(stage, _clock);
-            var home = competition.Entries[0].Id;
-            var away = competition.Entries[1].Id;
-            var match = DomainMatch.Create(competition.Id, stage.Id, home, away, _clock);
-            match.Start(_clock);
-            match.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
-            stageMatches = [match];
+            case "Start":
+                {
+                    StageMaterializationTestSupport.EnsureReadyForMaterialize(competition, stage, [stage], _clock);
+                    var materialized = MaterializeMatches.Execute(competition, stage, [], _clock, [stage]);
+                    stageMatches = materialized.CreatedMatches;
+                    stage.Status.Should().Be(StageStatus.Ready);
+                    break;
+                }
+
+            case "Complete":
+                {
+                    PrepareStage.Execute(stage, [stage], _clock);
+                    StartStage.Execute(stage, _clock);
+                    var home = competition.Entries[0].Id;
+                    var away = competition.Entries[1].Id;
+                    var match = DomainMatch.Create(competition.Id, stage.Id, home, away, _clock);
+                    match.Start(_clock);
+                    match.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
+                    stageMatches = [match];
+                    break;
+                }
         }
 
         var stages = new Mock<IStageRepository>(MockBehavior.Strict);

@@ -33,7 +33,7 @@ public sealed partial class UseCaseExecutor
     /// <exception cref="ApplicationFailureException">Thrown when the stage does not exist.</exception>
     public async Task PrepareStageAsync(StageId stageId, CancellationToken cancellationToken = default)
     {
-        var competitionId = default(Guid);
+        var competitionId = Guid.Empty;
         await ExecuteOnStageCompetitionAsync(
             stageId,
             async innerToken =>
@@ -80,7 +80,7 @@ public sealed partial class UseCaseExecutor
     /// <exception cref="ApplicationFailureException">Thrown when the stage does not exist.</exception>
     public async Task StartStageAsync(StageId stageId, CancellationToken cancellationToken = default)
     {
-        var competitionId = default(Guid);
+        var competitionId = Guid.Empty;
         await ExecuteOnStageCompetitionAsync(
             stageId,
             async innerToken =>
@@ -122,7 +122,7 @@ public sealed partial class UseCaseExecutor
     /// <exception cref="ApplicationFailureException">Thrown when the stage does not exist or completion is blocked.</exception>
     public async Task CompleteStageAsync(StageId stageId, CancellationToken cancellationToken = default)
     {
-        var competitionId = default(Guid);
+        var competitionId = Guid.Empty;
         await ExecuteOnStageCompetitionAsync(
             stageId,
             async innerToken =>
@@ -410,7 +410,7 @@ public sealed partial class UseCaseExecutor
         DrawId drawId,
         CancellationToken cancellationToken = default)
     {
-        var competitionId = default(Guid);
+        var competitionId = Guid.Empty;
         await ExecuteOnStageCompetitionAsync(
             stageId,
             async innerToken =>
@@ -447,7 +447,7 @@ public sealed partial class UseCaseExecutor
         DrawId drawId,
         CancellationToken cancellationToken = default)
     {
-        var competitionId = default(Guid);
+        var competitionId = Guid.Empty;
         await ExecuteOnStageCompetitionAsync(
             stageId,
             async innerToken =>
@@ -484,7 +484,7 @@ public sealed partial class UseCaseExecutor
         DrawId drawId,
         CancellationToken cancellationToken = default)
     {
-        var competitionId = default(Guid);
+        var competitionId = Guid.Empty;
         await ExecuteOnStageCompetitionAsync(
             stageId,
             async innerToken =>

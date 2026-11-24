@@ -7,16 +7,12 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
-using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Pipeline;
-using MyClub.PlayUp.Application.Reads;
-using MyClub.PlayUp.Application.Stages;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
-using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Stages;
 using Xunit;
 
@@ -50,11 +46,12 @@ public sealed class UseCaseExecutorRest7PresentationTests
     public async Task UpdateCompetitionPresentationAsync_when_missing_throws_after_entering_exclusive_write_without_structure_viewAsync()
     {
         var missingId = CompetitionId.New();
-        var (executor, unitOfWork, matches, _) = CreateExecutor(competition: null, competitionId: missingId);
+        var (executor, unitOfWork, matches, _) = CreateConfiguredExecutor(competition: null, extraStages: null, competitionId: missingId);
 
-        var act = () => executor.UpdateCompetitionPresentationAsync(missingId, "PU", null);
+        await AssertMissingCompetitionAsync((Func<Task<Application.Reads.StructureViewDto>>)act, missingId, unitOfWork, matches);
+        return;
 
-        await AssertMissingCompetitionAsync(act, missingId, unitOfWork, matches);
+        Task<Application.Reads.StructureViewDto> act() => executor.UpdateCompetitionPresentationAsync(missingId, "PU", null);
     }
 
     [Fact]
@@ -79,11 +76,12 @@ public sealed class UseCaseExecutorRest7PresentationTests
     public async Task SetCompetitionScheduleAsync_when_missing_throws_after_entering_exclusive_write_without_structure_viewAsync()
     {
         var missingId = CompetitionId.New();
-        var (executor, unitOfWork, matches, _) = CreateExecutor(competition: null, competitionId: missingId);
+        var (executor, unitOfWork, matches, _) = CreateConfiguredExecutor(competition: null, extraStages: null, competitionId: missingId);
 
-        var act = () => executor.SetCompetitionScheduleAsync(missingId, null, null);
+        await AssertMissingCompetitionAsync((Func<Task<Application.Reads.StructureViewDto>>)act, missingId, unitOfWork, matches);
+        return;
 
-        await AssertMissingCompetitionAsync(act, missingId, unitOfWork, matches);
+        Task<Application.Reads.StructureViewDto> act() => executor.SetCompetitionScheduleAsync(missingId, null, null);
     }
 
     [Fact]
@@ -114,17 +112,18 @@ public sealed class UseCaseExecutorRest7PresentationTests
     public async Task UpdateEntryPresentationAsync_when_missing_throws_after_entering_exclusive_write_without_structure_viewAsync()
     {
         var missingId = CompetitionId.New();
-        var (executor, unitOfWork, matches, _) = CreateExecutor(competition: null, competitionId: missingId);
+        var (executor, unitOfWork, matches, _) = CreateConfiguredExecutor(competition: null, extraStages: null, competitionId: missingId);
 
-        var act = () => executor.UpdateEntryPresentationAsync(
+        await AssertMissingCompetitionAsync((Func<Task<Application.Reads.StructureViewDto>>)act, missingId, unitOfWork, matches);
+        return;
+
+        Task<Application.Reads.StructureViewDto> act() => executor.UpdateEntryPresentationAsync(
             missingId,
             EntryId.New(),
             "A",
             null,
             null,
             null);
-
-        await AssertMissingCompetitionAsync(act, missingId, unitOfWork, matches);
     }
 
     [Fact]
@@ -149,11 +148,12 @@ public sealed class UseCaseExecutorRest7PresentationTests
     public async Task RenameEntryAsync_when_missing_throws_after_entering_exclusive_write_without_structure_viewAsync()
     {
         var missingId = CompetitionId.New();
-        var (executor, unitOfWork, matches, _) = CreateExecutor(competition: null, competitionId: missingId);
+        var (executor, unitOfWork, matches, _) = CreateConfiguredExecutor(competition: null, extraStages: null, competitionId: missingId);
 
-        var act = () => executor.RenameEntryAsync(missingId, EntryId.New(), "Alpha");
+        await AssertMissingCompetitionAsync((Func<Task<Application.Reads.StructureViewDto>>)act, missingId, unitOfWork, matches);
+        return;
 
-        await AssertMissingCompetitionAsync(act, missingId, unitOfWork, matches);
+        Task<Application.Reads.StructureViewDto> act() => executor.RenameEntryAsync(missingId, EntryId.New(), "Alpha");
     }
 
     [Fact]
@@ -179,11 +179,12 @@ public sealed class UseCaseExecutorRest7PresentationTests
     public async Task RemoveDeclaredMembersAsync_when_missing_throws_after_entering_exclusive_write_without_structure_viewAsync()
     {
         var missingId = CompetitionId.New();
-        var (executor, unitOfWork, matches, _) = CreateExecutor(competition: null, competitionId: missingId);
+        var (executor, unitOfWork, matches, _) = CreateConfiguredExecutor(competition: null, extraStages: null, competitionId: missingId);
 
-        var act = () => executor.RemoveDeclaredMembersAsync(missingId, EntryId.New(), [MemberId.New()]);
+        await AssertMissingCompetitionAsync((Func<Task<Application.Reads.StructureViewDto>>)act, missingId, unitOfWork, matches);
+        return;
 
-        await AssertMissingCompetitionAsync(act, missingId, unitOfWork, matches);
+        Task<Application.Reads.StructureViewDto> act() => executor.RemoveDeclaredMembersAsync(missingId, EntryId.New(), [MemberId.New()]);
     }
 
     [Fact]
@@ -208,15 +209,16 @@ public sealed class UseCaseExecutorRest7PresentationTests
     public async Task AddDeclaredMemberAsync_when_missing_throws_after_entering_exclusive_write_without_structure_viewAsync()
     {
         var missingId = CompetitionId.New();
-        var (executor, unitOfWork, matches, _) = CreateExecutor(competition: null, competitionId: missingId);
+        var (executor, unitOfWork, matches, _) = CreateConfiguredExecutor(competition: null, extraStages: null, competitionId: missingId);
 
-        var act = () => executor.AddDeclaredMemberAsync(
+        await AssertMissingCompetitionAsync((Func<Task<Application.Reads.StructureViewDto>>)act, missingId, unitOfWork, matches);
+        return;
+
+        Task<Application.Reads.StructureViewDto> act() => executor.AddDeclaredMemberAsync(
             missingId,
             EntryId.New(),
             "Dupont",
             DeclaredMemberRole.Player);
-
-        await AssertMissingCompetitionAsync(act, missingId, unitOfWork, matches);
     }
 
     [Fact]
@@ -242,11 +244,12 @@ public sealed class UseCaseExecutorRest7PresentationTests
     public async Task RemoveDeclaredMemberAsync_when_missing_throws_after_entering_exclusive_write_without_structure_viewAsync()
     {
         var missingId = CompetitionId.New();
-        var (executor, unitOfWork, matches, _) = CreateExecutor(competition: null, competitionId: missingId);
+        var (executor, unitOfWork, matches, _) = CreateConfiguredExecutor(competition: null, extraStages: null, competitionId: missingId);
 
-        var act = () => executor.RemoveDeclaredMemberAsync(missingId, EntryId.New(), MemberId.New());
+        await AssertMissingCompetitionAsync((Func<Task<Application.Reads.StructureViewDto>>)act, missingId, unitOfWork, matches);
+        return;
 
-        await AssertMissingCompetitionAsync(act, missingId, unitOfWork, matches);
+        Task<Application.Reads.StructureViewDto> act() => executor.RemoveDeclaredMemberAsync(missingId, EntryId.New(), MemberId.New());
     }
 
     [Fact]
@@ -272,11 +275,12 @@ public sealed class UseCaseExecutorRest7PresentationTests
     public async Task RenameDeclaredMemberAsync_when_missing_throws_after_entering_exclusive_write_without_structure_viewAsync()
     {
         var missingId = CompetitionId.New();
-        var (executor, unitOfWork, matches, _) = CreateExecutor(competition: null, competitionId: missingId);
+        var (executor, unitOfWork, matches, _) = CreateConfiguredExecutor(competition: null, extraStages: null, competitionId: missingId);
 
-        var act = () => executor.RenameDeclaredMemberAsync(missingId, EntryId.New(), MemberId.New(), "Martin");
+        await AssertMissingCompetitionAsync((Func<Task<Application.Reads.StructureViewDto>>)act, missingId, unitOfWork, matches);
+        return;
 
-        await AssertMissingCompetitionAsync(act, missingId, unitOfWork, matches);
+        Task<Application.Reads.StructureViewDto> act() => executor.RenameDeclaredMemberAsync(missingId, EntryId.New(), MemberId.New(), "Martin");
     }
 
     [Fact]
@@ -284,7 +288,7 @@ public sealed class UseCaseExecutorRest7PresentationTests
     {
         var competition = CreateCompetition.Execute("Regulation", _clock);
         var stage = ConfigureStructure.Execute(competition, null, StructureIntent.Championship("L"), _clock).Stage;
-        var (executor, unitOfWork, _, _) = CreateExecutor(competition, [stage]);
+        var (executor, unitOfWork, _, _) = CreateConfiguredExecutor(competition, [stage], competitionId: null);
 
         _ = await executor.ReplaceRegulationAsync(competition.Id, regulation => regulation);
 
@@ -301,11 +305,12 @@ public sealed class UseCaseExecutorRest7PresentationTests
     public async Task ReplaceRegulationAsync_when_missing_throws_after_entering_exclusive_write_without_structure_viewAsync()
     {
         var missingId = CompetitionId.New();
-        var (executor, unitOfWork, matches, _) = CreateExecutor(competition: null, competitionId: missingId);
+        var (executor, unitOfWork, matches, _) = CreateConfiguredExecutor(competition: null, extraStages: null, competitionId: missingId);
 
-        var act = () => executor.ReplaceRegulationAsync(missingId, regulation => regulation);
+        await AssertMissingCompetitionAsync((Func<Task<Application.Reads.StructureViewDto>>)act, missingId, unitOfWork, matches);
+        return;
 
-        await AssertMissingCompetitionAsync(act, missingId, unitOfWork, matches);
+        Task<Application.Reads.StructureViewDto> act() => executor.ReplaceRegulationAsync(missingId, regulation => regulation);
     }
 
     [Fact]
@@ -330,7 +335,7 @@ public sealed class UseCaseExecutorRest7PresentationTests
     public async Task BackfillResolutionProvenanceAsync_when_missing_throws_after_entering_exclusive_writeAsync()
     {
         var missingId = CompetitionId.New();
-        var (executor, unitOfWork, matches, stages) = CreateExecutor(competition: null, competitionId: missingId);
+        var (executor, unitOfWork, matches, stages) = CreateConfiguredExecutor(competition: null, extraStages: null, competitionId: missingId);
 
         var act = () => executor.BackfillResolutionProvenanceAsync(missingId);
 
@@ -405,10 +410,10 @@ public sealed class UseCaseExecutorRest7PresentationTests
         UseCaseExecutor Executor,
         Mock<IUnitOfWork> UnitOfWork,
         Mock<IMatchRepository> Matches,
-        Mock<IStageRepository> Stages) CreateExecutor(
+        Mock<IStageRepository> Stages) CreateConfiguredExecutor(
         Competition? competition,
-        IReadOnlyList<Stage>? extraStages = null,
-        CompetitionId? competitionId = null)
+        IReadOnlyList<Stage>? extraStages,
+        CompetitionId? competitionId)
     {
         var resolvedId = competition?.Id ?? competitionId ?? CompetitionId.New();
         var stages = new Mock<IStageRepository>(MockBehavior.Strict);
@@ -465,7 +470,7 @@ public sealed class UseCaseExecutorRest7PresentationTests
 
     private (UseCaseExecutor Executor, Mock<IUnitOfWork> UnitOfWork) CreateExecutor(Competition competition)
     {
-        var created = CreateExecutor(competition, extraStages: null);
+        var created = CreateConfiguredExecutor(competition, extraStages: null, competitionId: null);
         return (created.Executor, created.UnitOfWork);
     }
 }

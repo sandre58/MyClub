@@ -47,11 +47,10 @@ public sealed class UseCaseExecutorMatchLockTests
         RemoveRecordedSubstitution,
         RecordDisciplinaryEvent,
         CorrectRecordedDisciplinaryEvent,
-        RemoveRecordedDisciplinaryEvent,
+        RemoveRecordedDisciplinaryEvent
     }
 
-    public static IEnumerable<object[]> AllMatchWriteOps() =>
-        Enum.GetValues<MatchWriteOp>().Select(op => new object[] { op });
+    public static TheoryData<MatchWriteOp> AllMatchWriteOps() => new([.. Enum.GetValues<MatchWriteOp>()]);
 
     private static UseCaseExecutor CreateExecutor(
         Mock<IStageRepository> stages,
@@ -188,19 +187,19 @@ public sealed class UseCaseExecutorMatchLockTests
 
         public Competition Competition { get; }
 
-        public Stage Stage { get; }
+        private Stage Stage { get; }
 
-        public DomainMatch Match { get; }
+        private DomainMatch Match { get; }
 
-        public Mock<IStageRepository> Stages { get; }
+        private Mock<IStageRepository> Stages { get; }
 
-        public Mock<IMatchRepository> Matches { get; }
+        private Mock<IMatchRepository> Matches { get; }
 
-        public Mock<ICompetitionRepository> Competitions { get; }
+        private Mock<ICompetitionRepository> Competitions { get; }
 
         public Mock<IUnitOfWork> UnitOfWork { get; }
 
-        public UseCaseExecutor Executor { get; }
+        private UseCaseExecutor Executor { get; }
 
         public bool EnteredLock { get; private set; }
 
@@ -217,9 +216,8 @@ public sealed class UseCaseExecutorMatchLockTests
                     return write(token);
                 });
 
-        public Task InvokeWriteAsync()
-        {
-            return _writeOp switch
+        public Task InvokeWriteAsync() =>
+            _writeOp switch
             {
                 MatchWriteOp.StartMatch => Executor.StartMatchAsync(Match.Id),
                 MatchWriteOp.FinishMatch => Executor.FinishMatchAsync(
@@ -279,9 +277,8 @@ public sealed class UseCaseExecutorMatchLockTests
                 MatchWriteOp.RemoveRecordedDisciplinaryEvent => Executor.RemoveRecordedDisciplinaryEventAsync(
                     Match.Id,
                     _disciplinaryEventId!.Value),
-                _ => throw new ArgumentOutOfRangeException(nameof(_writeOp)),
+                _ => throw new ArgumentOutOfRangeException(nameof(_writeOp))
             };
-        }
 
         private void PrepareMatchState(FakeClock clock)
         {
@@ -313,29 +310,25 @@ public sealed class UseCaseExecutorMatchLockTests
                     Match.AddDeclaredParticipation(_bernard, Side.Home, CompositionStatus.Bench, clock);
                     Match.Start(clock);
 
-                    if (_writeOp is MatchWriteOp.CorrectRecordedGoal
-                        or MatchWriteOp.RemoveRecordedGoal)
+                    switch (_writeOp)
                     {
-                        _goalId = RecordGoal.Execute(Match, _dupont, Side.Home, clock).Id;
-                        return;
-                    }
-
-                    if (_writeOp is MatchWriteOp.CorrectRecordedSubstitution
-                        or MatchWriteOp.RemoveRecordedSubstitution)
-                    {
-                        _substitutionId = RecordSubstitution.Execute(Match, _dupont, _martin, Side.Home, clock).Id;
-                        return;
-                    }
-
-                    if (_writeOp is MatchWriteOp.CorrectRecordedDisciplinaryEvent
-                        or MatchWriteOp.RemoveRecordedDisciplinaryEvent)
-                    {
-                        _disciplinaryEventId = RecordDisciplinaryEvent.Execute(
-                            Match,
-                            Competition,
-                            _dupont,
-                            DisciplinaryType.Yellow,
-                            clock).Id;
+                        case MatchWriteOp.CorrectRecordedGoal
+                            or MatchWriteOp.RemoveRecordedGoal:
+                            _goalId = RecordGoal.Execute(Match, _dupont, Side.Home, clock).Id;
+                            return;
+                        case MatchWriteOp.CorrectRecordedSubstitution
+                            or MatchWriteOp.RemoveRecordedSubstitution:
+                            _substitutionId = RecordSubstitution.Execute(Match, _dupont, _martin, Side.Home, clock).Id;
+                            return;
+                        case MatchWriteOp.CorrectRecordedDisciplinaryEvent
+                            or MatchWriteOp.RemoveRecordedDisciplinaryEvent:
+                            _disciplinaryEventId = RecordDisciplinaryEvent.Execute(
+                                Match,
+                                Competition,
+                                _dupont,
+                                DisciplinaryType.Yellow,
+                                clock).Id;
+                            break;
                     }
 
                     break;
