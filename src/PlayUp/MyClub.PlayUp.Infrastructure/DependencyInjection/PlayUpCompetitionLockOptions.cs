@@ -4,6 +4,8 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using System.Globalization;
+
 namespace MyClub.PlayUp.Infrastructure.DependencyInjection;
 
 /// <summary>
@@ -65,7 +67,7 @@ public sealed class PlayUpCompetitionLockOptions
 
             timeout = TimeSpan.FromMilliseconds(milliseconds);
         }
-        else if (!TimeSpan.TryParse(trimmed, out timeout))
+        else if (!TimeSpan.TryParse(trimmed, CultureInfo.InvariantCulture, out timeout))
         {
             throw new InvalidOperationException(
                 $"PlayUp:CompetitionLockTimeout must be a time span or a positive integer of milliseconds. '{configurationValue}' is not valid.");
@@ -111,11 +113,6 @@ public sealed class PlayUpCompetitionLockOptions
     internal string ToPostgresLockTimeoutLiteral()
     {
         var milliseconds = checked((long)LockTimeout.TotalMilliseconds);
-        if (milliseconds <= 0)
-        {
-            throw new InvalidOperationException("PlayUp competition lock timeout must be strictly positive.");
-        }
-
-        return FormattableString.Invariant($"{milliseconds}ms");
+        return milliseconds <= 0 ? throw new InvalidOperationException("PlayUp competition lock timeout must be strictly positive.") : FormattableString.Invariant($"{milliseconds}ms");
     }
 }

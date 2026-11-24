@@ -35,7 +35,9 @@ public sealed class WritePerformanceBaselineTests(
 {
     private const int WarmupCallCount = 2;
     private const int MeasuredCallCount = 9;
-    private const int MaxSqlCommandsPerCall = 20;
+
+    // REST-5 competition lock envelope adds read-only competition id resolution + advisory lock setup.
+    private const int MaxSqlCommandsPerCall = 25;
 
     /// <summary>Documented product hot-path latency budget (informational in test output).</summary>
     private const int ProductLatencyBudgetMilliseconds = 150;
