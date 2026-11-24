@@ -314,4 +314,42 @@ describe('StructureManualPlacementDialog', () => {
     await user.click(screen.getByRole('radio', { name: 'Alpha' }));
     expect(within(dialog).queryByRole('status')).not.toBeInTheDocument();
   });
+
+  it('shows SlotEntryUniqueConflict via MutationError and keeps the dialog open', async () => {
+    const user = userEvent.setup();
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+    vi.mocked(assignEntryToSlot).mockRejectedValueOnce(
+      new ApiError(
+        409,
+        'conflict',
+        'detail',
+        'Application.SlotEntryUniqueConflict',
+      ),
+    );
+    const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
+    renderDialog({ initialSlotKey: 'A' }, queryClient);
+
+    await user.click(screen.getByRole('radio', { name: 'Alpha' }));
+    await user.click(screen.getByRole('button', { name: 'Enregistrer' }));
+
+    const dialog = screen.getByRole('dialog');
+    await waitFor(() =>
+      expect(within(dialog).getByRole('alert')).toHaveTextContent(
+        'Cette équipe occupe déjà une autre place de la phase. Actualisez et réessayez.',
+      ),
+    );
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(invalidate).toHaveBeenCalled();
+    expect(dialog).toBeInTheDocument();
+    expect(
+      screen.getAllByText(
+        'Cette équipe occupe déjà une autre place de la phase. Actualisez et réessayez.',
+      ),
+    ).toHaveLength(1);
+  });
 });

@@ -394,6 +394,11 @@ public static class ApplicationErrorCodes
     public const string SlotOccupancyConflict = "Application.SlotOccupancyConflict";
 
     /// <summary>
+    /// Gets the code when a team would occupy two places in the same phase.
+    /// </summary>
+    public const string SlotEntryUniqueConflict = "Application.SlotEntryUniqueConflict";
+
+    /// <summary>
     /// Gets the code when Complete(Normal) is refused because the competition is not sportively complete.
     /// </summary>
     public const string CompletionNotAllowed = "Application.CompletionNotAllowed";

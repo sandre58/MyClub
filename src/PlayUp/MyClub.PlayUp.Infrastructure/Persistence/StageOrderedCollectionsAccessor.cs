@@ -68,6 +68,9 @@ internal static class StageOrderedCollectionsAccessor
     internal static void ReorderMatchdays(Stage stage, IEnumerable<Matchday> ordered) =>
         ReorderInPlace(GetMatchdays(stage), ordered);
 
+    internal static void ReorderSlots(Stage stage, IEnumerable<Slot> ordered) =>
+        ReorderInPlace(GetSlots(stage), ordered);
+
     internal static void ReorderDraws(Stage stage, IEnumerable<Draw> ordered) =>
         ReorderInPlace(GetDraws(stage), ordered);
 
