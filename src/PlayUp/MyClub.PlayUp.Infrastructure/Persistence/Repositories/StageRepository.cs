@@ -232,7 +232,7 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
 
         if (capabilities.IncludeSlots)
         {
-            query = query.Include(candidate => candidate.Slots);
+            query = query.Include(candidate => candidate.Slots.OrderBy(slot => slot.SlotKey));
         }
 
         if (capabilities.IncludePenalties)
@@ -264,7 +264,7 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
                 .ThenInclude(round => round.Fixtures)
                 .Include(candidate => candidate.Matchdays)
                 .ThenInclude(matchday => matchday.Fixtures)
-                .Include(candidate => candidate.Slots)
+                .Include(candidate => candidate.Slots.OrderBy(slot => slot.SlotKey))
                 .Include(candidate => candidate.DirectAssignments)
                 .Include(candidate => candidate.AffectationAuthoring)
                 .Include(candidate => candidate.CompositionEntries)
@@ -404,6 +404,14 @@ internal sealed class StageRepository(PlayUpDbContext context) : IStageRepositor
 
         foreach (var stage in stages)
         {
+            if (StageOrderedCollectionsAccessor.GetSlots(stage).Count > 0)
+            {
+                var slots = StageOrderedCollectionsAccessor.GetSlots(stage)
+                    .OrderBy(slot => slot.SlotKey, StringComparer.Ordinal)
+                    .ToList();
+                StageOrderedCollectionsAccessor.ReorderSlots(stage, slots);
+            }
+
             if (StageOrderedCollectionsAccessor.GetDraws(stage).Count > 0)
             {
                 var draws = StageOrderedCollectionsAccessor.GetDraws(stage)

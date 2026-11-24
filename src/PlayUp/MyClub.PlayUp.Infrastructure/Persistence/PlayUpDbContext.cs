@@ -32,6 +32,37 @@ public sealed class PlayUpDbContext(
             ApplicationErrorCodes.CompetitionLockTimeout,
             innerException);
 
+    private static ApplicationFailureException CreateSlotEntryUniqueConflictException() =>
+        new(
+            "This team already occupies another place in the phase.",
+            ApplicationErrorCodes.SlotEntryUniqueConflict);
+
+    /// <inheritdoc />
+    public override int SaveChanges()
+    {
+        try
+        {
+            return base.SaveChanges();
+        }
+        catch (Exception exception) when (exception is not ApplicationFailureException && SlotEntryUniqueViolation.IsMatch(exception))
+        {
+            throw CreateSlotEntryUniqueConflictException();
+        }
+    }
+
+    /// <inheritdoc />
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            return await base.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception exception) when (exception is not ApplicationFailureException && SlotEntryUniqueViolation.IsMatch(exception))
+        {
+            throw CreateSlotEntryUniqueConflictException();
+        }
+    }
+
     /// <inheritdoc />
     Task IUnitOfWork.SaveChangesAsync(CancellationToken cancellationToken) => SaveChangesAsync(cancellationToken);
 
@@ -77,6 +108,10 @@ public sealed class PlayUpDbContext(
             {
                 await write(cancellationToken).ConfigureAwait(false);
                 await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception exception) when (SlotEntryUniqueViolation.IsMatch(exception))
+            {
+                throw CreateSlotEntryUniqueConflictException();
             }
             catch (Exception exception) when (GroupEntriesUniqueViolation.IsMatch(exception))
             {
