@@ -2,6 +2,7 @@
  * Stage reads and Structure / regulation / lifecycle mutations on a stage.
  */
 import type {
+  ApplyStageTieFormatEditsRequest,
   BindStageRegulationRequest,
   RebuildStageStructureRequest,
   RebuildStageStructureResponse,
@@ -199,6 +200,14 @@ export function setGroupEntries(
       expectedEntryIds: [...expectedEntryIds],
     },
   );
+}
+
+/** PUT /stages/{id}/tie-format-edits → 204 */
+export function applyStageTieFormatEdits(
+  stageId: string,
+  request: ApplyStageTieFormatEditsRequest,
+): Promise<void> {
+  return sendNoContent('PUT', `/stages/${stageId}/tie-format-edits`, request);
 }
 
 /** PUT /stages/{id}/tie-format → 204 */

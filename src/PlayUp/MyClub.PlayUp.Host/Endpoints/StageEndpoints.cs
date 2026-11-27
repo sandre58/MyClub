@@ -9,10 +9,12 @@ using Microsoft.Extensions.Options;
 using MyClub.PlayUp.Application;
 using MyClub.PlayUp.Application.Pipeline;
 using MyClub.PlayUp.Application.Stages;
+using MyClub.PlayUp.Application.Stages.ApplyStageTieFormatEdits;
 using MyClub.PlayUp.Application.Stages.CascadeReplace;
 using MyClub.PlayUp.Application.Stages.ReleaseResolution;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Rules;
+using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Host.Contracts;
 
 namespace MyClub.PlayUp.Host.Endpoints;
@@ -591,6 +593,47 @@ internal static class StageEndpoints
                         new StageId(stageId),
                         new RoundId(roundId),
                         tieFormat,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+                return Results.NoContent();
+            });
+
+        app.MapPut(
+            "/stages/{stageId:guid}/tie-format-edits",
+            async (
+                Guid stageId,
+                ApplyStageTieFormatEditsRequest request,
+                UseCaseExecutor executor,
+                CancellationToken cancellationToken) =>
+            {
+                ArgumentNullException.ThrowIfNull(request);
+                TieFormat? defaultTieFormat = null;
+                if (request.ReplaceDefault && request.Default is { } defaultRequest && !defaultRequest.Clear)
+                {
+                    defaultTieFormat = MapTieFormatRequest(defaultRequest);
+                }
+
+                var roundEdits = (request.RoundEdits ?? [])
+                    .Select(edit =>
+                    {
+                        TieFormat? tieFormat = null;
+                        if (!edit.Clear)
+                        {
+                            tieFormat = MapTieFormatRequest(edit);
+                        }
+
+                        return new StageTieFormatRoundEdit(
+                            new RoundId(edit.RoundId),
+                            tieFormat);
+                    })
+                    .ToArray();
+
+                await executor
+                    .ApplyStageTieFormatEditsAsync(
+                        new StageId(stageId),
+                        defaultTieFormat,
+                        request.ReplaceDefault,
+                        roundEdits,
                         cancellationToken)
                     .ConfigureAwait(false);
                 return Results.NoContent();
@@ -1209,6 +1252,28 @@ internal static class StageEndpoints
                         occupant.StageName,
                         occupant.PlaceLabel))
             ]);
+
+    private static TieFormat MapTieFormatRequest(ReplaceStageDefaultTieFormatRequest request)
+    {
+        var aggregate = request.NumberOfLegs == TieFormat.TwoLegs;
+        return new TieFormat(
+            request.NumberOfLegs,
+            aggregate,
+            request.HasAwayGoalsRule ? new AwayGoalsRule() : null,
+            request.HasExtraTimeRule ? new ExtraTimeRule() : null,
+            request.HasPenaltyShootoutRule ? new PenaltyShootoutRule() : null);
+    }
+
+    private static TieFormat MapTieFormatRequest(ApplyStageTieFormatRoundEditRequest request)
+    {
+        var aggregate = request.NumberOfLegs == TieFormat.TwoLegs;
+        return new TieFormat(
+            request.NumberOfLegs,
+            aggregate,
+            request.HasAwayGoalsRule ? new AwayGoalsRule() : null,
+            request.HasExtraTimeRule ? new ExtraTimeRule() : null,
+            request.HasPenaltyShootoutRule ? new PenaltyShootoutRule() : null);
+    }
 
     private static IResult InvalidReleaseBody() =>
         Results.BadRequest(new { code = ApplicationErrorCodes.InvalidStructureIntent });

@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useId, useMemo, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { replaceRoundTieFormat, replaceStageDefaultTieFormat } from '../../api';
+import { applyStageTieFormatEdits } from '../../api';
 import { Alert } from '../../design-system/components/Alert';
 import { ConfirmDialog } from '../../design-system/components/ConfirmDialog';
 import { Dialog } from '../../design-system/components/Dialog';
@@ -24,15 +24,14 @@ import { useSyncWhen } from '../../design-system/useRenderSync';
 import { useDiscardConfirm } from '../../design-system/useDiscardConfirm';
 import { MutationError, PendingLabel } from '../../ui';
 import type {
-  ReplaceRoundTieFormatRequest,
   StructureConfrontationSegment,
   StructureStageHubSummary,
 } from '../../types';
 import { scheduleStructureRefresh } from '../structure/structureInvalidation';
 import {
   applyPhaseFormToInheritedRounds,
-  buildInheritsAtLoad,
   isRoundCustomized,
+  roundEffectivelyInherits,
   roundPersistenceUpdates,
   shouldShowRoundNavigation,
   singleRoundDriftRoundId,
@@ -44,6 +43,7 @@ import {
   sameTie,
   tieFormFromSummary,
   toRequest,
+  toRoundRequest,
   withLegs,
   type TieFormState,
 } from './tieFormatForm';
@@ -262,7 +262,13 @@ export function TieFormatDialog({
     setBaselinePhase(nextPhase);
     setRoundForms(nextRounds);
     setBaselineRounds(nextRounds);
-    setInheritsAtLoad(buildInheritsAtLoad(nextRoundIds, nextRounds, nextPhase));
+    const nextInherits: Record<string, boolean> = {};
+    for (const segment of stage.confrontationSegments ?? []) {
+      for (const round of segment.rounds) {
+        nextInherits[round.roundId] = round.inheritsDefaultTieFormat;
+      }
+    }
+    setInheritsAtLoad(nextInherits);
     setOverrideEditing({});
     setSessionRealigned({});
     const canDefault = (stage.actions ?? []).includes(
@@ -274,23 +280,30 @@ export function TieFormatDialog({
 
   const mutation = useMutation({
     mutationFn: async () => {
-      const tasks: Promise<void>[] = [];
-      if (phaseDirty) {
-        tasks.push(
-          replaceStageDefaultTieFormat(stage.stageId, toRequest(phaseForm)),
-        );
-      }
-      for (const roundId of roundUpdateIds) {
+      const roundEdits = roundUpdateIds.flatMap((roundId) => {
+        const inherits = roundEffectivelyInherits(roundId, sessionFlags);
+        if (inherits) {
+          if (inheritsAtLoad[roundId]) {
+            return [];
+          }
+          return [{ roundId, ...toRoundRequest(phaseForm, true) }];
+        }
         const form = roundUpdates[roundId];
         if (!form) {
-          continue;
+          return [];
         }
-        const body = toRequest(form) as ReplaceRoundTieFormatRequest;
-        tasks.push(replaceRoundTieFormat(stage.stageId, roundId, body));
+        return [{ roundId, ...toRoundRequest(form, false) }];
+      });
+      if (!phaseDirty && roundEdits.length === 0) {
+        return { demoted: false };
       }
-      await Promise.all(tasks);
+      await applyStageTieFormatEdits(stage.stageId, {
+        replaceDefault: phaseDirty,
+        default: phaseDirty ? toRequest(phaseForm) : undefined,
+        roundEdits,
+      });
       return {
-        demoted: stage.status === 'Ready' && tasks.length > 0,
+        demoted: stage.status === 'Ready',
       };
     },
     onSuccess: (result) => {

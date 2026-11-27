@@ -236,6 +236,7 @@ public sealed record OverviewOperationalFocusDto(
 /// <param name="HasTieExtraTime">TieFormat ExtraTimeRule present.</param>
 /// <param name="HasTiePenaltyShootout">TieFormat PenaltyShootoutRule present.</param>
 /// <param name="SwissPlannedRounds">SwissSettings.RoundCount when Swiss; otherwise null.</param>
+/// <param name="VariesByRound"><see langword="true"/> when rounds disagree on effective TieFormat.</param>
 public sealed record OverviewReferenceStageGameRulesDto(
     Guid StageId,
     string StageName,
@@ -251,7 +252,8 @@ public sealed record OverviewReferenceStageGameRulesDto(
     bool AggregateScoring,
     bool HasTieExtraTime,
     bool HasTiePenaltyShootout,
-    int? SwissPlannedRounds);
+    int? SwissPlannedRounds,
+    bool VariesByRound = false);
 
 /// <summary>
 /// One sport unit (Matchday or Round) on the ReferenceStage for Overview temporal panels.

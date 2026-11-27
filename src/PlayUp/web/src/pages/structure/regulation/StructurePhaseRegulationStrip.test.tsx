@@ -98,7 +98,14 @@ describe('StructurePhaseRegulationStrip', () => {
       stage: baseStage({
         confrontationSegments: [
           {
-            rounds: [{ roundId: 'a', name: 'Finale', sortOrder: 1 }],
+            rounds: [
+              {
+                roundId: 'a',
+                name: 'Finale',
+                sortOrder: 1,
+                inheritsDefaultTieFormat: true,
+              },
+            ],
             numberOfLegs: 1,
             aggregateScoring: false,
             hasAwayGoalsRule: false,
@@ -106,7 +113,14 @@ describe('StructurePhaseRegulationStrip', () => {
             hasTiePenaltyShootout: false,
           },
           {
-            rounds: [{ roundId: 'b', name: 'Demi', sortOrder: 0 }],
+            rounds: [
+              {
+                roundId: 'b',
+                name: 'Demi',
+                sortOrder: 0,
+                inheritsDefaultTieFormat: false,
+              },
+            ],
             numberOfLegs: 2,
             aggregateScoring: true,
             hasAwayGoalsRule: false,

@@ -373,7 +373,7 @@ public static class StructureViewAssembler
         var storedTie = regulation.TieFormat
                         ?? stage.Rounds.Select(round => round.TieFormat).FirstOrDefault(tie => tie is not null);
         var hasTie = storedTie is not null;
-        var confrontationSegments = hasTie && stage.Rounds.Count > 0
+        var confrontationSegments = stage.Rounds.Count > 0
             ? BuildConfrontationSegments(stage)
             : null;
         int? numberOfLegs;
@@ -1222,8 +1222,12 @@ public static class StructureViewAssembler
         for (var index = 0; index < stage.Rounds.Count; index++)
         {
             var round = stage.Rounds[index];
-            var tie = TieFormat.OrDefaultOneLeg(round.TieFormat);
-            var roundRef = new StructureConfrontationRoundRefDto(round.Id.Value, round.Name, index);
+            var tie = Stage.ResolveEffectiveTieFormat(round, stage.Regulation);
+            var roundRef = new StructureConfrontationRoundRefDto(
+                round.Id.Value,
+                round.Name,
+                index,
+                InheritsDefaultTieFormat: round.TieFormat is null);
             if (current is not null && SameTieSignature(current, tie))
             {
                 current = current with { Rounds = [.. current.Rounds, roundRef] };

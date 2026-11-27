@@ -1,4 +1,5 @@
 import type {
+  ReplaceRoundTieFormatRequest,
   ReplaceStageDefaultTieFormatRequest,
   StructureConfrontationSegment,
   StructureStageHubSummary,
@@ -46,6 +47,29 @@ export function cloneTie(form: TieFormState): TieFormState {
 export function toRequest(
   form: TieFormState,
 ): ReplaceStageDefaultTieFormatRequest {
+  const stable = stableTie(form);
+  return {
+    clear: false,
+    numberOfLegs: stable.numberOfLegs,
+    hasAwayGoalsRule: stable.hasAwayGoalsRule,
+    hasExtraTimeRule: stable.hasExtraTimeRule,
+    hasPenaltyShootoutRule: stable.hasPenaltyShootoutRule,
+  };
+}
+
+export function toRoundRequest(
+  form: TieFormState,
+  clear: boolean,
+): ReplaceRoundTieFormatRequest {
+  if (clear) {
+    return {
+      clear: true,
+      numberOfLegs: 1,
+      hasAwayGoalsRule: false,
+      hasExtraTimeRule: false,
+      hasPenaltyShootoutRule: false,
+    };
+  }
   const stable = stableTie(form);
   return {
     clear: false,

@@ -577,7 +577,12 @@ public sealed record StructureProgressionIntentDto(
 /// <param name="RoundId">Round identity.</param>
 /// <param name="Name">Round display name.</param>
 /// <param name="SortOrder">Stage round order (0-based), for stable multi-segment display.</param>
-public sealed record StructureConfrontationRoundRefDto(Guid RoundId, string Name, int SortOrder);
+/// <param name="InheritsDefaultTieFormat"><see langword="true"/> when no round TieFormat is stored.</param>
+public sealed record StructureConfrontationRoundRefDto(
+    Guid RoundId,
+    string Name,
+    int SortOrder,
+    bool InheritsDefaultTieFormat);
 
 /// <summary>
 /// Consecutive rounds that share the same effective TieFormat (legs + resolution options).

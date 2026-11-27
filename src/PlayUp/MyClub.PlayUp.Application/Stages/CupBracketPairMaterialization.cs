@@ -60,7 +60,15 @@ internal static class CupBracketPairMaterialization
     internal static int ExpectedLegs(Stage stage, BracketPair pair)
     {
         var fixture = stage.FindFixtureByBracketPairKey(pair.PairKey);
-        return fixture is not null ? CupConfrontationMaterializer.ExpectedLegsForFixture(stage, fixture) : stage.Rounds.Count > 0 ? CupConfrontationMaterializer.ExpectedLegsForRound(stage.Rounds[0]) : 1;
+        if (fixture is not null)
+        {
+            return CupConfrontationMaterializer.ExpectedLegsForFixture(stage, fixture);
+        }
+
+        var entryRound = stage.FindRoundForConfrontationKey(pair.PairKey);
+        return entryRound is not null
+            ? CupConfrontationMaterializer.ExpectedLegsForRound(stage, entryRound)
+            : 1;
     }
 
     /// <summary>

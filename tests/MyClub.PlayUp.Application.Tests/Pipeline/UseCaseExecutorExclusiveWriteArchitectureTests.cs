@@ -134,7 +134,8 @@ public sealed class UseCaseExecutorExclusiveWriteArchitectureTests
         "BindStageRegulationAsync",
         "ReplaceStageDrawRulesAsync",
         "ReplaceStageDefaultTieFormatAsync",
-        "ReplaceRoundTieFormatAsync"
+        "ReplaceRoundTieFormatAsync",
+        "ApplyStageTieFormatEditsAsync"
     ];
 
     [Fact]

@@ -97,7 +97,7 @@ public static class MaterializeCupFromOccupiedSlots
         }
 
         var round = stage.Rounds[0];
-        var expectedLegs = CupConfrontationMaterializer.ExpectedLegsForRound(round);
+        var expectedLegs = CupConfrontationMaterializer.ExpectedLegsForRound(stage, round);
 
         var knownById = existingMatches
             .Where(match => stage.HasMatch(match.Id))

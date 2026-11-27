@@ -546,15 +546,6 @@ public static class CompetitionFlowAnalyzer
     /// <summary>
     /// Resolves the effective TieFormat for a structural confrontation (same round binding as Domain progression).
     /// </summary>
-    private static TieFormat ResolveEffectiveTieFormat(Stage stage, string sourcePairKey)
-    {
-        var owningRound = stage.Rounds.FirstOrDefault(round =>
-                              round.Fixtures.Any(fixture =>
-                                  string.Equals(fixture.BracketPairKey, sourcePairKey, StringComparison.Ordinal)))
-                          ?? (stage.FindBracketPair(sourcePairKey) is not null && stage.Rounds.Count == 1
-                              ? stage.Rounds[0]
-                              : null);
-
-        return owningRound is not null ? TieFormat.OrDefaultOneLeg(owningRound.TieFormat ?? stage.Regulation.TieFormat) : TieFormat.OrDefaultOneLeg(stage.Regulation.TieFormat);
-    }
+    private static TieFormat ResolveEffectiveTieFormat(Stage stage, string sourcePairKey) =>
+        stage.ResolveEffectiveTieFormatForKey(sourcePairKey);
 }

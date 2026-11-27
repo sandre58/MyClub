@@ -780,7 +780,21 @@ public static class OverviewAssembler
 
         // Stage StandingRules when classifying; otherwise competition defaults  for display.
         var standing = (reference.Regulation.StandingRules ?? competition.Regulation.StandingRules).Points;
-        var tie = TieFormat.OrDefaultOneLeg(reference.Regulation.TieFormat);
+        var entryRound = reference.Rounds.Count > 0 ? reference.Rounds[0] : null;
+        var tie = entryRound is not null
+            ? Stage.ResolveEffectiveTieFormat(entryRound, reference.Regulation)
+            : TieFormat.OrDefaultOneLeg(reference.Regulation.TieFormat);
+        var variesByRound = reference.Rounds.Count > 1
+                            && reference.Rounds
+                                .Select(round => Stage.ResolveEffectiveTieFormat(round, reference.Regulation))
+                                .DistinctBy(format => (
+                                    format.NumberOfLegs,
+                                    format.AggregateScoring,
+                                    format.AwayGoalsRule is not null,
+                                    format.ExtraTimeRule is not null,
+                                    format.PenaltyShootoutRule is not null))
+                                .Skip(1)
+                                .Any();
         var formatKind = ResolveGameRulesFormatKind(reference, competitionFormatKind);
 
         return new OverviewReferenceStageGameRulesDto(
@@ -798,7 +812,8 @@ public static class OverviewAssembler
             AggregateScoring: tie.AggregateScoring,
             HasTieExtraTime: tie.ExtraTimeRule is not null,
             HasTiePenaltyShootout: tie.PenaltyShootoutRule is not null,
-            SwissPlannedRounds: reference.SwissSettings?.RoundCount);
+            SwissPlannedRounds: reference.SwissSettings?.RoundCount,
+            VariesByRound: variesByRound);
     }
 
     private static StructureFormatKind ResolveGameRulesFormatKind(

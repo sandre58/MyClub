@@ -27,7 +27,7 @@ public static class CupSlotCoverage
         var covered = new HashSet<string>(StringComparer.Ordinal);
         foreach (var round in stage.Rounds)
         {
-            var expectedLegs = CupConfrontationMaterializer.ExpectedLegsForRound(round);
+            var expectedLegs = CupConfrontationMaterializer.ExpectedLegsForRound(stage, round);
             foreach (var fixture in round.Fixtures)
             {
                 if (fixture.Attachments.Count < expectedLegs)

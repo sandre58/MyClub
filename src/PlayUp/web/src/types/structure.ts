@@ -623,6 +623,22 @@ export interface ReplaceStageDefaultTieFormatRequest {
   hasPenaltyShootoutRule?: boolean;
 }
 
+/** PUT /stages/{id}/tie-format-edits — atomic default + round TieFormat edits. */
+export interface ApplyStageTieFormatRoundEditRequest {
+  roundId: string;
+  clear?: boolean;
+  numberOfLegs?: number;
+  hasAwayGoalsRule?: boolean;
+  hasExtraTimeRule?: boolean;
+  hasPenaltyShootoutRule?: boolean;
+}
+
+export interface ApplyStageTieFormatEditsRequest {
+  replaceDefault?: boolean;
+  default?: ReplaceStageDefaultTieFormatRequest;
+  roundEdits?: ApplyStageTieFormatRoundEditRequest[];
+}
+
 /** PUT /stages/{id}/rounds/{roundId}/tie-format */
 export interface ReplaceRoundTieFormatRequest {
   clear?: boolean;
@@ -745,6 +761,8 @@ export interface StructureConfrontationRoundRef {
   name: string;
   /** Stage round order (0-based). */
   sortOrder: number;
+  /** True when the round has no stored TieFormat and inherits the phase default. */
+  inheritsDefaultTieFormat: boolean;
 }
 
 /**

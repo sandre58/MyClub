@@ -59,6 +59,7 @@ export {
   setGroupEntries,
   replaceStageDefaultTieFormat,
   replaceRoundTieFormat,
+  applyStageTieFormatEdits,
   fetchStageOverview,
   fetchStageSchematic,
   applyProgressionOutcome,

@@ -3144,7 +3144,7 @@ internal static partial class ScenarioOrchestration
 
         foreach (var round in stage.Rounds)
         {
-            var current = TieFormat.OrDefaultOneLeg(round.TieFormat ?? stage.Regulation.TieFormat);
+            var current = TieFormat.ResolveEffective(round.TieFormat, stage.Regulation.TieFormat);
             if (current.CanAlwaysDecideDraw())
             {
                 continue;

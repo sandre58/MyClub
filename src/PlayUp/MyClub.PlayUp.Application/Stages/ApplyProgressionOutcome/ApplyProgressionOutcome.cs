@@ -193,7 +193,7 @@ public static class ApplyProgressionOutcome
             ?? throw new ApplicationFailureException(
                 $"Fixture '{fixtureId}' is not hosted by a Round (Matchday fixtures cannot drive Progression).",
                 ApplicationErrorCodes.TieFormatRequired);
-        return TieFormat.OrDefaultOneLeg(round.TieFormat);
+        return Stage.ResolveEffectiveTieFormat(round, stage.Regulation);
     }
 
     private static void EnsureFixtureMatchCoherence(

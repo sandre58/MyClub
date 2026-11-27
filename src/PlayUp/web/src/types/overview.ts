@@ -186,6 +186,7 @@ export interface OverviewReferenceStageGameRules {
   hasTieExtraTime: boolean;
   hasTiePenaltyShootout: boolean;
   swissPlannedRounds?: number | null;
+  variesByRound?: boolean;
 }
 
 /** Matchday or Round slice for Overview temporal panels. */

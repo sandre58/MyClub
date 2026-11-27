@@ -13,8 +13,8 @@ namespace MyClub.PlayUp.Domain.Rules;
 /// Distinct from <see cref="MatchRules"/> (how a single match is played).
 /// </summary>
 /// <remarks>
-/// Stored Round TieFormat remains nullable for Thin Authoring: omitted means
-/// <see cref="DefaultOneLeg"/> everywhere legs or outcome are resolved (materialize, draw, prepare, progression).
+/// Stored Round TieFormat remains nullable for Thin Authoring: omitted inherits the stage default
+/// TieFormat, then <see cref="DefaultOneLeg"/> when the default is unset.
 /// <see cref="TwoLegs"/> is only explicit as a stored value.
 /// </remarks>
 public sealed record TieFormat
@@ -37,10 +37,22 @@ public sealed record TieFormat
     /// <summary>
     /// Returns <paramref name="tieFormat"/> when set; otherwise <see cref="DefaultOneLeg"/>.
     /// </summary>
-    /// <param name="tieFormat">Stored round format, or <see langword="null"/> when omitted.</param>
+    /// <param name="tieFormat">Stored format only; not for living inheritance from a stage default.</param>
     /// <returns>The effective tie format for leg count and outcome resolution.</returns>
     public static TieFormat OrDefaultOneLeg(TieFormat? tieFormat) =>
         tieFormat ?? DefaultOneLeg;
+
+    /// <summary>
+    /// Resolves the effective TieFormat for a round using living inheritance
+    /// (round stored value, else stage default, else <see cref="DefaultOneLeg"/>).
+    /// </summary>
+    /// <param name="roundTieFormat">Stored round TieFormat, or <see langword="null"/> when inheriting.</param>
+    /// <param name="stageDefaultTieFormat">Stage regulation default, or <see langword="null"/> when unset.</param>
+    /// <returns>The effective tie format for materialize, prepare, progression, and gauges.</returns>
+    public static TieFormat ResolveEffective(
+        TieFormat? roundTieFormat,
+        TieFormat? stageDefaultTieFormat) =>
+        OrDefaultOneLeg(roundTieFormat ?? stageDefaultTieFormat);
 
     /// <summary>
     /// Returns whether a level score can always be decided to Winner/Loser under this format.

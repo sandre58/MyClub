@@ -17,7 +17,7 @@ namespace MyClub.PlayUp.Application.Stages;
 public static class ReplaceRoundTieFormat
 {
     /// <summary>
-    /// Replaces the round tie format (<see langword="null"/> clears → effective OneLeg).
+    /// Replaces the round tie format (<see langword="null"/> clears → inherit stage default).
     /// </summary>
     public static void Execute(
         Stage stage,

@@ -143,7 +143,7 @@ public static class CascadeReplace
                     continue;
                 }
 
-                var legs = TieFormat.OrDefaultOneLeg(round.TieFormat).NumberOfLegs;
+                var legs = Stage.ResolveEffectiveTieFormat(round, stage.Regulation).NumberOfLegs;
                 var multiLeg = legs > 1 || fixture.Attachments.Count > 1;
                 return multiLeg ? attachment.LegIndex : null;
             }

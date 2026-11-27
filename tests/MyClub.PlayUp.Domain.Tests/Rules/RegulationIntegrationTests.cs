@@ -130,9 +130,9 @@ public sealed class RegulationIntegrationTests
         var final = stage.AddRound("Final", finalTie, _clock);
 
         // Assert
-        quarter.TieFormat.Should().Be(defaultTie);
+        quarter.TieFormat.Should().BeNull();
+        Stage.ResolveEffectiveTieFormat(quarter, stage.Regulation).Should().Be(defaultTie);
         final.TieFormat.Should().Be(finalTie);
-        ReferenceEquals(quarter.TieFormat, stage.Regulation.TieFormat).Should().BeFalse();
         typeof(Round).GetProperty("MatchRules").Should().BeNull();
         typeof(Round).GetProperty(nameof(Round.TieFormat)).Should().NotBeNull();
     }
@@ -198,7 +198,8 @@ public sealed class RegulationIntegrationTests
 
         // Assert
         stage.Regulation.TieFormat!.NumberOfLegs.Should().Be(1);
-        round.TieFormat!.NumberOfLegs.Should().Be(2);
+        round.TieFormat.Should().BeNull();
+        Stage.ResolveEffectiveTieFormat(round, stage.Regulation).NumberOfLegs.Should().Be(1);
     }
 
     private Stage CreateRunningCupStage()
