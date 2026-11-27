@@ -157,6 +157,7 @@
     "DisciplinaryEventNotFound": "Disciplinary event not found on this match.",
     "DuplicateJerseyNumber": "This shirt number is already used on this side.",
     "DuplicateParticipation": "This player is already on the sheet.",
+    "ExtraTimeOrShootoutOnNonFinalLeg": "Extra time and penalty shootouts are not allowed on a leg that is not the final one.",
     "FinishedResultMissing": "Only a finished match can lose its result.",
     "InvalidCompositionStatus": "Invalid player status on the team sheet.",
     "InvalidDisciplinaryType": "Invalid disciplinary type.",
