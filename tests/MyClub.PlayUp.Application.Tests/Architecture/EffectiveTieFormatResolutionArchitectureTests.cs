@@ -25,6 +25,7 @@ public sealed class EffectiveTieFormatResolutionArchitectureTests
     [
         Path.Combine("Application", "Reads", "StructureViewAssembler.cs"),
         Path.Combine("Application", "Reads", "OverviewAssembler.cs"),
+        Path.Combine("Application", "Reads", "StructureMatchProductionCapacity.cs"),
         Path.Combine("Domain", "Rules", "TieFormat", "TieFormat.cs"),
         Path.Combine("Infrastructure", "Persistence", "Converters", "TieFormatJsonConverter.cs"),
         "Infrastructure/Persistence/Migrations",
@@ -56,6 +57,34 @@ public sealed class EffectiveTieFormatResolutionArchitectureTests
 
         violations.Should().BeEmpty(
             "round TieFormat must use Stage.ResolveEffectiveTieFormat / TieFormat.ResolveEffective, not OrDefaultOneLeg(round.TieFormat)");
+    }
+
+    [Fact]
+    public void Production_resolution_prefers_hub_number_of_legs_over_raw_phase_default()
+    {
+        var repoRoot = FindRepositoryRoot();
+        var violations = new List<string>();
+        foreach (var root in Roots)
+        {
+            var directory = Path.Combine(repoRoot, root);
+            foreach (var path in Directory.EnumerateFiles(directory, "*.cs", SearchOption.AllDirectories))
+            {
+                var relative = Path.GetRelativePath(repoRoot, path).Replace('\\', '/');
+                if (IsAllowListed(relative) || !relative.Contains("StructureMatchProduction", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                var text = File.ReadAllText(path);
+                if (text.Contains("defaultTieFormat?.NumberOfLegs ?? numberOfLegs", StringComparison.Ordinal))
+                {
+                    violations.Add(relative);
+                }
+            }
+        }
+
+        violations.Should().BeEmpty(
+            "production legs must prefer hub effective numberOfLegs before stored phase default");
     }
 
     private static bool IsAllowListed(string relative)

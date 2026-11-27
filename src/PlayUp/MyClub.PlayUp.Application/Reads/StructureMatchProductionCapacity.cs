@@ -20,7 +20,7 @@ internal static class StructureMatchProductionCapacity
         StructureTieFormatSummaryDto? defaultTieFormat,
         int? numberOfLegs)
     {
-        var legs = defaultTieFormat?.NumberOfLegs ?? numberOfLegs ?? 1;
+        var legs = numberOfLegs ?? defaultTieFormat?.NumberOfLegs ?? 1;
         return legs > 0 ? legs : 1;
     }
 

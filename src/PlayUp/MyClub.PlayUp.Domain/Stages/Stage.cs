@@ -287,6 +287,12 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
+    /// Resolves the effective TieFormat for a round using living inheritance.
+    /// </summary>
+    public static TieFormat ResolveEffectiveTieFormat(Round round, StageRegulation regulation) =>
+        TieFormat.ResolveEffective(round.TieFormat, regulation.TieFormat);
+
+    /// <summary>
     /// Replaces the stage regulation as a whole (specialization). Unbinds heritable parts that change.
     /// Allowed in Draft only (structure locked from Ready).
     /// </summary>
@@ -4025,12 +4031,6 @@ public sealed class Stage : AggregateRoot<StageId>
             ? _rounds[0]
             : null;
     }
-
-    /// <summary>
-    /// Resolves the effective TieFormat for a round using living inheritance.
-    /// </summary>
-    public static TieFormat ResolveEffectiveTieFormat(Round round, StageRegulation regulation) =>
-        TieFormat.ResolveEffective(round.TieFormat, regulation.TieFormat);
 
     /// <summary>
     /// Resolves the effective TieFormat for a confrontation key on this stage.

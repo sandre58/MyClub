@@ -38,6 +38,16 @@ public static class ApplyStageTieFormatEdits
 
         StageStructureEditGuard.EnsureDraftHeavyStructureAllowed(stage, competition);
 
+        foreach (var edit in roundEdits)
+        {
+            if (stage.Rounds.All(round => !round.Id.Equals(edit.RoundId)))
+            {
+                throw new DomainException(
+                    $"Round '{edit.RoundId}' was not found.",
+                    StageErrorCodes.RoundNotFound);
+            }
+        }
+
         if ((replaceDefault || roundEdits.Count > 0) && stage.Status is StageStatus.Ready)
         {
             RevertToDraft.Execute(stage, stageMatches, clock);

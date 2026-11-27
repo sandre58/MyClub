@@ -1733,6 +1733,41 @@ public sealed class OverviewAssemblerTests
     }
 
     [Fact]
+    public void Assemble_cup_reference_rules_use_entry_round_and_varies_by_round()
+    {
+        var competition = Competition.Create(new CompetitionName("Cup"), SampleRegulations.Standard(), _clock);
+        _ = competition.AddEntry(TeamId.New(), "A", _clock);
+        var regulation = new StageRegulation(
+            SampleRegulations.Standard().MatchRules,
+            standingRules: null,
+            new TieFormat(TieFormat.SingleLeg, aggregateScoring: false));
+        var stage = Stage.Create(competition.Id, new StageName("Knockout"), regulation, _clock);
+        competition.AddStage(stage.Id, _clock);
+
+        var qf = stage.AddRound("QF", _clock);
+        _ = stage.AddRound("SF", _clock);
+        stage.ReplaceRoundTieFormat(
+            qf.Id,
+            new TieFormat(TieFormat.TwoLegs, aggregateScoring: true),
+            _clock);
+
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+        stage.Prepare(_clock);
+        stage.Start(_clock);
+
+        var view = OverviewAssembler.Assemble(
+            competition,
+            [stage],
+            new Dictionary<StageId, IReadOnlyList<Match>>());
+
+        var rules = view.OperationalFocus.ReferenceStageGameRules;
+        rules.Should().NotBeNull();
+        rules!.NumberOfLegs.Should().Be(TieFormat.TwoLegs);
+        rules.VariesByRound.Should().BeTrue();
+    }
+
+    [Fact]
     public void Assemble_temporal_units_mixed_matchday_and_next()
     {
         var competition = Competition.Create(new CompetitionName("League"), SampleRegulations.Standard(), _clock);
