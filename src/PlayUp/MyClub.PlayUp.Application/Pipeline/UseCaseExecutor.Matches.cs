@@ -67,7 +67,8 @@ public sealed partial class UseCaseExecutor
             matchId,
             async innerToken =>
             {
-                var match = await RequireMatchForOperationAsync(matchId, innerToken).ConfigureAwait(false);
+                var (match, stage) = await RequireMatchAndStageForOperationAsync(matchId, innerToken).ConfigureAwait(false);
+                NonFinalLegEtTabEntryGuard.EnsureAllowed(stage, match.Id, result);
                 FinishMatch.Execute(match, result, clock);
                 await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
                 competitionId = match.CompetitionId.Value;
@@ -90,7 +91,8 @@ public sealed partial class UseCaseExecutor
             matchId,
             async innerToken =>
             {
-                var match = await RequireMatchForOperationAsync(matchId, innerToken).ConfigureAwait(false);
+                var (match, stage) = await RequireMatchAndStageForOperationAsync(matchId, innerToken).ConfigureAwait(false);
+                NonFinalLegEtTabEntryGuard.EnsureAllowed(stage, match.Id, result);
                 CorrectMatchResult.Execute(match, result, clock);
                 await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
             },

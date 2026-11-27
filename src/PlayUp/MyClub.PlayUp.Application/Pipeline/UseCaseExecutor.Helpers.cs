@@ -138,7 +138,7 @@ public sealed partial class UseCaseExecutor
         }
     }
 
-    private async Task<Match> RequireMatchForOperationAsync(
+    private async Task<(Match Match, Stage Stage)> RequireMatchAndStageForOperationAsync(
         MatchId matchId,
         CancellationToken cancellationToken)
     {
@@ -155,6 +155,14 @@ public sealed partial class UseCaseExecutor
                         $"Stage '{match.StageId}' was not found.",
                         ApplicationErrorCodes.StageNotFound);
         StagePhaseExploitationGuard.EnsureSportiveExploitation(stage);
+        return (match, stage);
+    }
+
+    private async Task<Match> RequireMatchForOperationAsync(
+        MatchId matchId,
+        CancellationToken cancellationToken)
+    {
+        var (match, _) = await RequireMatchAndStageForOperationAsync(matchId, cancellationToken).ConfigureAwait(false);
         return match;
     }
 
