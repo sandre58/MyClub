@@ -69,7 +69,10 @@ public sealed class BackfillMaterializedRoundTieFormatMigrationTests : IAsyncLif
             var stageRegulation = new StageRegulation(
                 SampleRegulations.Standard().MatchRules,
                 standingRules: null,
-                new TieFormat(TieFormat.SingleLeg, aggregateScoring: false));
+                new TieFormat(
+                    TieFormat.TwoLegs,
+                    aggregateScoring: true,
+                    penaltyShootoutRule: new PenaltyShootoutRule()));
             var stage = Stage.Create(competition.Id, new StageName("Cup"), stageRegulation, _clock);
             competition.AddStage(stage.Id, _clock);
 
@@ -122,11 +125,12 @@ public sealed class BackfillMaterializedRoundTieFormatMigrationTests : IAsyncLif
         await AssertRoundTieFormatsAsync(provider, stageId, materializedRoundId, emptyRoundId, overrideRoundId)
             .ConfigureAwait(false);
 
-        for (var attempt = 0; attempt < 2; attempt++)
+        using (var scope = provider.CreateScope())
         {
-            using var scope = provider.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<PlayUpDbContext>();
-            await ReapplyBackfillSqlAsync(context).ConfigureAwait(false);
+            var migrator = context.Database.GetService<IMigrator>();
+            await migrator.MigrateAsync(MigrationBefore).ConfigureAwait(false);
+            await context.Database.MigrateAsync().ConfigureAwait(false);
         }
 
         await AssertRoundTieFormatsAsync(provider, stageId, materializedRoundId, emptyRoundId, overrideRoundId)
@@ -138,23 +142,6 @@ public sealed class BackfillMaterializedRoundTieFormatMigrationTests : IAsyncLif
             var applied = (await context.Database.GetAppliedMigrationsAsync().ConfigureAwait(false)).ToArray();
             applied.Should().Contain(TargetMigration);
         }
-    }
-
-    private static async Task ReapplyBackfillSqlAsync(PlayUpDbContext context)
-    {
-        var defaultOneLegJson = TieFormatJson.Serialize(TieFormat.DefaultOneLeg);
-        await context.Database.ExecuteSqlRawAsync(
-            """
-            UPDATE rounds AS r
-            SET tie_format = {0}::jsonb
-            WHERE r.tie_format IS NULL
-              AND r.id IN (
-                SELECT DISTINCT fr.round_id
-                FROM fixtures AS fr
-                INNER JOIN fixture_attachments AS fa ON fa.fixture_id = fr.id
-                WHERE fr.round_id IS NOT NULL);
-            """,
-            defaultOneLegJson).ConfigureAwait(false);
     }
 
     private static async Task AssertRoundTieFormatsAsync(

@@ -392,7 +392,7 @@ public static class StructureViewAssembler
         }
         else if (hasTie)
         {
-            var tie = TieFormat.OrDefaultOneLeg(storedTie);
+            var tie = storedTie!;
             numberOfLegs = tie.NumberOfLegs;
             aggregateScoring = tie.AggregateScoring;
             hasAwayGoalsRule = tie.AwayGoalsRule is not null;

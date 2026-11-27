@@ -31,9 +31,9 @@ import { scheduleStructureRefresh } from '../structure/structureInvalidation';
 import {
   applyPhaseFormToInheritedRounds,
   isRoundCustomized,
-  roundEffectivelyInherits,
   roundPersistenceUpdates,
   shouldShowRoundNavigation,
+  buildAtomicRoundEdits,
   singleRoundDriftRoundId,
   type TieFormatSessionFlags,
 } from './tieFormatEditorState';
@@ -280,20 +280,14 @@ export function TieFormatDialog({
 
   const mutation = useMutation({
     mutationFn: async () => {
-      const roundEdits = roundUpdateIds.flatMap((roundId) => {
-        const inherits = roundEffectivelyInherits(roundId, sessionFlags);
-        if (inherits) {
-          if (inheritsAtLoad[roundId]) {
-            return [];
-          }
-          return [{ roundId, ...toRoundRequest(phaseForm, true) }];
-        }
-        const form = roundUpdates[roundId];
-        if (!form) {
-          return [];
-        }
-        return [{ roundId, ...toRoundRequest(form, false) }];
-      });
+      const roundEdits = buildAtomicRoundEdits(
+        roundUpdateIds,
+        inheritsAtLoad,
+        sessionFlags,
+        phaseForm,
+        roundUpdates,
+        toRoundRequest,
+      );
       if (!phaseDirty && roundEdits.length === 0) {
         return { demoted: false };
       }
@@ -377,6 +371,7 @@ export function TieFormatDialog({
 
   const driftRoundId = singleRoundDriftRoundId(
     roundIds,
+    inheritsAtLoad,
     baselineRounds,
     baselinePhase,
   );

@@ -783,7 +783,7 @@ public static class OverviewAssembler
         var entryRound = reference.Rounds.Count > 0 ? reference.Rounds[0] : null;
         var tie = entryRound is not null
             ? Stage.ResolveEffectiveTieFormat(entryRound, reference.Regulation)
-            : TieFormat.OrDefaultOneLeg(reference.Regulation.TieFormat);
+            : TieFormat.ResolveEffective(null, reference.Regulation.TieFormat);
         var variesByRound = reference.Rounds.Count > 1
                             && reference.Rounds
                                 .Select(round => Stage.ResolveEffectiveTieFormat(round, reference.Regulation))

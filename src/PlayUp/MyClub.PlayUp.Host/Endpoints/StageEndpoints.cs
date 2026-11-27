@@ -608,9 +608,28 @@ internal static class StageEndpoints
             {
                 ArgumentNullException.ThrowIfNull(request);
                 TieFormat? defaultTieFormat = null;
-                if (request.ReplaceDefault && request.Default is { } defaultRequest && !defaultRequest.Clear)
+                if (request.ReplaceDefault)
                 {
-                    defaultTieFormat = MapTieFormatRequest(defaultRequest);
+                    if (request.Default is not { } defaultRequest)
+                    {
+                        return Results.Problem(
+                            title: "Bad Request",
+                            detail: "replaceDefault requires a default payload or explicit clear.",
+                            statusCode: StatusCodes.Status400BadRequest,
+                            extensions: new Dictionary<string, object?>
+                            {
+                                ["code"] = ApplicationErrorCodes.TieFormatRequired,
+                            });
+                    }
+
+                    if (defaultRequest.Clear)
+                    {
+                        defaultTieFormat = null;
+                    }
+                    else
+                    {
+                        defaultTieFormat = MapTieFormatRequest(defaultRequest);
+                    }
                 }
 
                 var roundEdits = (request.RoundEdits ?? [])

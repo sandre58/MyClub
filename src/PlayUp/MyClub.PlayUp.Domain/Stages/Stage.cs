@@ -4038,9 +4038,11 @@ public sealed class Stage : AggregateRoot<StageId>
     public TieFormat ResolveEffectiveTieFormatForKey(string sourcePairKey)
     {
         var round = FindRoundForConfrontationKey(sourcePairKey);
+
+        // Non-addressable confrontation keys fall back to living stage default (not round inheritance).
         return round is not null
             ? ResolveEffectiveTieFormat(round, Regulation)
-            : TieFormat.OrDefaultOneLeg(Regulation.TieFormat);
+            : TieFormat.ResolveEffective(null, Regulation.TieFormat);
     }
 
     /// <summary>
