@@ -15,6 +15,7 @@ using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
 using MyClub.PlayUp.Domain.Matches;
+using MyClub.PlayUp.Domain.Rules;
 using MyClub.PlayUp.Domain.Stages;
 using MyClub.PlayUp.Host.Contracts;
 using Xunit;
@@ -363,11 +364,82 @@ public sealed class MatchLifecycleEndpointTests(HostPostgresFixture fixture)
         }
     }
 
+    [IntegrationFact]
+    public async Task Finish_rejects_extra_time_on_non_final_cup_leg_returns_409Async()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var seed = await SeedTwoLegCupFirstLegLiveAsync(factory);
+        var body = new FinishMatchRequest(
+            ResultType.Played,
+            HomeGoals: 1,
+            AwayGoals: 1,
+            ExtraTimePlayed: true);
+
+        using var client = factory.CreateClient();
+        using var response = await client.PostAsJsonAsync(FinishUri(seed.FirstLegId), body);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
+        problem.Should().NotBeNull();
+        GetCode(problem).Should().Be(MatchErrorCodes.ExtraTimeOrShootoutOnNonFinalLeg);
+
+        using var scope = factory.Services.CreateScope();
+        var loaded = await scope.ServiceProvider.GetRequiredService<IMatchRepository>()
+            .GetByIdForUpdateAsync(seed.FirstLegId);
+        loaded!.Status.Should().Be(MatchStatus.Live);
+        loaded.Result.Should().BeNull();
+    }
+
+    [IntegrationFact]
+    public async Task Finish_allows_extra_time_on_final_cup_legAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var seed = await SeedTwoLegCupFirstLegLiveAsync(factory, startSecondLeg: true);
+        var body = new FinishMatchRequest(
+            ResultType.Played,
+            HomeGoals: 0,
+            AwayGoals: 0,
+            ExtraTimePlayed: true);
+
+        using var client = factory.CreateClient();
+        using var response = await client.PostAsJsonAsync(FinishUri(seed.SecondLegId), body);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        using var scope = factory.Services.CreateScope();
+        var loaded = await scope.ServiceProvider.GetRequiredService<IMatchRepository>()
+            .GetByIdForUpdateAsync(seed.SecondLegId);
+        loaded!.Status.Should().Be(MatchStatus.Finished);
+        loaded.Result!.ExtraTimePlayed.Should().BeTrue();
+    }
+
+    [IntegrationFact]
+    public async Task Correct_removing_illegal_extra_time_on_first_leg_is_acceptedAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var seed = await SeedTwoLegCupWithIllegalFirstLegResultAsync(factory);
+        var body = new FinishMatchRequest(ResultType.Played, HomeGoals: 1, AwayGoals: 1, ExtraTimePlayed: false);
+
+        using var client = factory.CreateClient();
+        using var response = await client.PutAsJsonAsync(ResultUri(seed.FirstLegId), body, HostJson.Options);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        using var scope = factory.Services.CreateScope();
+        var loaded = await scope.ServiceProvider.GetRequiredService<IMatchRepository>()
+            .GetByIdForUpdateAsync(seed.FirstLegId);
+        loaded!.Result!.ExtraTimePlayed.Should().BeFalse();
+        loaded.Result.PenaltyShootoutScore.Should().BeNull();
+    }
+
     private static Uri StartUri(MatchId matchId) =>
         new($"/matches/{matchId.Value}/start", UriKind.Relative);
 
     private static Uri FinishUri(MatchId matchId) =>
         new($"/matches/{matchId.Value}/finish", UriKind.Relative);
+
+    private static Uri ResultUri(MatchId matchId) =>
+        new($"/matches/{matchId.Value}/result", UriKind.Relative);
 
     private static string? GetCode(ProblemDetails problem) =>
         !problem.Extensions.TryGetValue("code", out var raw) || raw is null
@@ -518,6 +590,102 @@ public sealed class MatchLifecycleEndpointTests(HostPostgresFixture fixture)
 
         await unitOfWork.SaveChangesAsync();
         return match.Id;
+    }
+
+    private async Task<(MatchId FirstLegId, MatchId SecondLegId)> SeedTwoLegCupFirstLegLiveAsync(
+        PlayUpWebApplicationFactory factory,
+        bool startSecondLeg = false)
+    {
+        using var scope = factory.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+
+        var competition = Competition.Create(new CompetitionName("Two-leg cup"), SampleRegulations.Standard(), _clock);
+        var home = competition.AddEntry(TeamId.New(), "Home", _clock);
+        var away = competition.AddEntry(TeamId.New(), "Away", _clock);
+        competitions.Add(competition);
+
+        var stage = Stage.Create(competition.Id, new StageName("Cup"), SampleRegulations.Standard(), _clock);
+        competition.AddStage(stage.Id, _clock);
+        stage.AddRound("R1", new TieFormat(TieFormat.TwoLegs, aggregateScoring: true), _clock);
+        stage.AddSlot("A");
+        stage.AddSlot("B");
+        stage.ReplaceBracketPairs([new BracketPair("P1", "A", "B")]);
+        var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock, "A", "B", "P1");
+        stage.AddResolvedPopulationEntry(home.Id, _clock);
+        stage.AddResolvedPopulationEntry(away.Id, _clock);
+        stage.AssignEntryToSlot("A", home.Id);
+        stage.AssignEntryToSlot("B", away.Id);
+        var first = Match.Create(competition.Id, stage.Id, home.Id, away.Id, _clock);
+        var second = Match.Create(competition.Id, stage.Id, away.Id, home.Id, _clock);
+        stage.AttachMatch(fixture.Id, first.Id, legIndex: 1, _clock);
+        stage.AttachMatch(fixture.Id, second.Id, legIndex: 2, _clock);
+        stage.Prepare(_clock);
+        stage.Start(_clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+        first.Start(_clock);
+        if (startSecondLeg)
+        {
+            second.Start(_clock);
+        }
+
+        stages.Add(stage);
+        matches.Add(first);
+        matches.Add(second);
+        await unitOfWork.SaveChangesAsync();
+        return (first.Id, second.Id);
+    }
+
+    private async Task<(MatchId FirstLegId, MatchId SecondLegId)> SeedTwoLegCupWithIllegalFirstLegResultAsync(
+        PlayUpWebApplicationFactory factory)
+    {
+        using var scope = factory.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+
+        var competition = Competition.Create(new CompetitionName("Two-leg correction"), SampleRegulations.Standard(), _clock);
+        var home = competition.AddEntry(TeamId.New(), "Home", _clock);
+        var away = competition.AddEntry(TeamId.New(), "Away", _clock);
+        competitions.Add(competition);
+
+        var stage = Stage.Create(competition.Id, new StageName("Cup"), SampleRegulations.Standard(), _clock);
+        competition.AddStage(stage.Id, _clock);
+        stage.AddRound("R1", new TieFormat(TieFormat.TwoLegs, aggregateScoring: true), _clock);
+        stage.AddSlot("A");
+        stage.AddSlot("B");
+        stage.ReplaceBracketPairs([new BracketPair("P1", "A", "B")]);
+        var fixture = stage.AddFixture(stage.Rounds[0].Id, _clock, "A", "B", "P1");
+        stage.AddResolvedPopulationEntry(home.Id, _clock);
+        stage.AddResolvedPopulationEntry(away.Id, _clock);
+        stage.AssignEntryToSlot("A", home.Id);
+        stage.AssignEntryToSlot("B", away.Id);
+        var first = Match.Create(competition.Id, stage.Id, home.Id, away.Id, _clock);
+        var second = Match.Create(competition.Id, stage.Id, away.Id, home.Id, _clock);
+        stage.AttachMatch(fixture.Id, first.Id, legIndex: 1, _clock);
+        stage.AttachMatch(fixture.Id, second.Id, legIndex: 2, _clock);
+        stage.Prepare(_clock);
+        stage.Start(_clock);
+        competition.Prepare(_clock);
+        competition.Start(_clock);
+        first.Start(_clock);
+        first.Finish(
+            new MatchResult(
+                ResultType.Played,
+                new Score(1, 1),
+                extraTimePlayed: true,
+                penaltyShootoutScore: new PenaltyShootoutScore(4, 3)),
+            _clock);
+
+        stages.Add(stage);
+        matches.Add(first);
+        matches.Add(second);
+        await unitOfWork.SaveChangesAsync();
+        return (first.Id, second.Id);
     }
 
     private async Task<(StageId StageId, MatchId MatchId, DateTimeOffset Kickoff, ResourceId ResourceId)>

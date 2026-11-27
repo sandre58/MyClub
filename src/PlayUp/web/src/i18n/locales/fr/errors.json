@@ -157,6 +157,7 @@
     "DisciplinaryEventNotFound": "Fait disciplinaire introuvable sur ce match.",
     "DuplicateJerseyNumber": "Ce numéro de maillot est déjà utilisé de ce côté.",
     "DuplicateParticipation": "Ce joueur est déjà sur la feuille.",
+    "ExtraTimeOrShootoutOnNonFinalLeg": "Les prolongations et les tirs au but ne sont pas autorisés sur une manche qui n’est pas la dernière.",
     "FinishedResultMissing": "Seul un match terminé peut perdre son résultat.",
     "InvalidCompositionStatus": "Statut du joueur invalide sur la feuille de match.",
     "InvalidDisciplinaryType": "Type disciplinaire invalide.",

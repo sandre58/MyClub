@@ -52,6 +52,11 @@ public static class MatchErrorCodes
     public const string InvalidResult = "Match.InvalidResult";
 
     /// <summary>
+    /// Gets the code when extra time or a penalty shootout is entered on a non-final confrontation leg.
+    /// </summary>
+    public const string ExtraTimeOrShootoutOnNonFinalLeg = "Match.ExtraTimeOrShootoutOnNonFinalLeg";
+
+    /// <summary>
     /// Gets the code when a result is already recorded (Finished).
     /// </summary>
     public const string ResultAlreadyRecorded = "Match.ResultAlreadyRecorded";
