@@ -196,6 +196,15 @@
   color: var(--color-text-secondary);
 }
 
+#tile-confrontation .structure-regulation-digest__facts {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+#tile-confrontation .structure-regulation-digest__fact {
+  max-width: 100%;
+}
+
 @container regulation-bar (width >= 64rem) {
   .structure-regulation-digest {
     flex-wrap: nowrap;
@@ -215,16 +224,6 @@
   #tile-confrontation {
     flex: 1 1 14rem;
     min-width: 0;
-    max-width: 100%;
-  }
-
-  #tile-confrontation .structure-regulation-digest__facts {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-4);
-  }
-
-  #tile-confrontation .structure-regulation-digest__fact {
     max-width: 100%;
   }
 }

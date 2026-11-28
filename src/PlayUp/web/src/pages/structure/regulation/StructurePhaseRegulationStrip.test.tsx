@@ -174,13 +174,23 @@ describe('StructurePhaseRegulationStrip', () => {
     });
 
     const confrontationPanel = document.getElementById('tile-confrontation')!;
-    const phaseLine = within(confrontationPanel).getByText(/Phase :/);
-    expect(phaseLine.textContent).toMatch(/2 manches/);
-    expect(phaseLine.textContent).toMatch(/TAB/);
+    const phaseFact = within(confrontationPanel)
+      .getByText('Phase', { exact: false })
+      .closest('.structure-regulation-digest__fact') as HTMLElement;
+    expect(
+      within(phaseFact).getByText('Phase', { exact: true }).className,
+    ).toContain('structure-regulation-digest__segment');
+    expect(phaseFact.textContent).toMatch(/2 manches/);
+    expect(phaseFact.textContent).toMatch(/TAB/);
 
-    const roundLine = within(confrontationPanel).getByText(/Finale/);
-    expect(roundLine.textContent).toMatch(/1 manche/);
-    expect((roundLine.textContent ?? '').match(/TAB/g) ?? []).toHaveLength(0);
+    const roundFact = within(confrontationPanel)
+      .getByText('Finale', { exact: true })
+      .closest('.structure-regulation-digest__fact') as HTMLElement;
+    expect(
+      within(roundFact).getByText('Finale', { exact: true }).className,
+    ).toContain('structure-regulation-digest__segment');
+    expect(roundFact.textContent).toMatch(/1 manche/);
+    expect((roundFact.textContent ?? '').match(/TAB/g) ?? []).toHaveLength(0);
   });
 
   it('keeps uniform confrontation hint when stored overrides match phase signature', () => {
@@ -234,7 +244,11 @@ describe('StructurePhaseRegulationStrip', () => {
     expect(
       screen.queryByText('Certains tours ont leur propre format.'),
     ).not.toBeInTheDocument();
-    expect(screen.getByText(/Phase :/)).toBeInTheDocument();
+    expect(
+      screen
+        .getByText('Phase', { exact: true })
+        .closest('.structure-regulation-digest__fact'),
+    ).toBeInTheDocument();
   });
 
   it('shows phase-specific binding hint when match rules are not frame-bound', () => {

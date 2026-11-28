@@ -336,20 +336,33 @@ export function confrontationRoundDigestDeltaParts(
   return parts;
 }
 
-function formatRoundDigestLine(
-  roundName: string,
+function confrontationDigestLabeledRow(
+  label: string,
+  value: string,
+  separator: ':' | '·' = ':',
+): ReactNode {
+  const sep = separator === ':' ? ' : ' : ' · ';
+  return (
+    <>
+      <span className="structure-regulation-digest__segment">{label}</span>
+      <span aria-hidden="true">{sep}</span>
+      <span>{value}</span>
+    </>
+  );
+}
+
+function formatRoundDigestDeltaText(
   roundForm: TieFormState,
   phaseForm: TieFormState,
   tStructure: Translate,
   tReg: Translate,
 ): string {
-  const deltas = confrontationRoundDigestDeltaParts(
+  return confrontationRoundDigestDeltaParts(
     roundForm,
     phaseForm,
     tStructure,
     tReg,
-  );
-  return `${roundName} · ${deltas.join(' · ')}`;
+  ).join(' · ');
 }
 
 export function buildConfrontationDigestTokens(
@@ -386,10 +399,10 @@ export function buildConfrontationDigestTokens(
         ) : (
           <ArrowRightIcon size="sm" aria-hidden="true" />
         ),
-      content: (
-        <span>
-          {tStructure('fiche.confrontationPhasePrefix')} : {phaseCompact}
-        </span>
+      content: confrontationDigestLabeledRow(
+        tStructure('fiche.confrontationPhasePrefix'),
+        phaseCompact,
+        ':',
       ),
     },
   ];
@@ -430,16 +443,10 @@ export function buildConfrontationDigestTokens(
     tokens.push({
       key: `round-${round.roundId}`,
       icon: <RoundsStatIcon size="sm" aria-hidden="true" />,
-      content: (
-        <span>
-          {formatRoundDigestLine(
-            round.name,
-            round.form,
-            phaseForm,
-            tStructure,
-            tReg,
-          )}
-        </span>
+      content: confrontationDigestLabeledRow(
+        round.name,
+        formatRoundDigestDeltaText(round.form, phaseForm, tStructure, tReg),
+        '·',
       ),
     });
   }

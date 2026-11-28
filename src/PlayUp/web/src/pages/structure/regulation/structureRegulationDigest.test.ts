@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { createElement, Fragment } from 'react';
+import { createElement } from 'react';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import i18n from '../../../i18n';
@@ -231,14 +231,10 @@ describe('buildConfrontationDigestTokens', () => {
     expect(tokens[0]?.key).toBe('phase-format');
     const roundToken = tokens.find((token) => token.key === 'round-f');
     expect(roundToken).toBeDefined();
-    render(
-      createElement(
-        Fragment,
-        null,
-        createElement('span', null, roundToken!.content),
-      ),
+    const { container } = render(
+      createElement('div', null, roundToken!.content),
     );
-    const roundText = screen.getByText(/Finale/).textContent ?? '';
+    const roundText = container.textContent ?? '';
     expect(roundText).toContain(frStructure.regulation.legsOne);
     expect(roundText).not.toContain(frRegulation.tokens.tiePenalties);
     expect((roundText.match(/TAB/g) ?? []).length).toBe(0);
