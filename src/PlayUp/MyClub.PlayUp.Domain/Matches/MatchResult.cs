@@ -159,6 +159,13 @@ public sealed record MatchResult
                 MatchErrorCodes.InvalidResult);
         }
 
+        if (!returnLegHomeEntryId.Equals(firstLegAwayEntryId) || !returnLegAwayEntryId.Equals(firstLegHomeEntryId))
+        {
+            throw new DomainException(
+                "Confrontation tie penalty shootout requires home and away entries to swap on the return leg.",
+                MatchErrorCodes.InvalidResult);
+        }
+
         var firstLegId = firstLegMatchId ?? MatchId.New();
         var returnLegId = returnLegMatchId ?? MatchId.New();
         var legs = new FixtureLegSnapshot[]

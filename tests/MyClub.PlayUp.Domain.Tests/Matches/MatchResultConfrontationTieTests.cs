@@ -104,6 +104,59 @@ public sealed class MatchResultConfrontationTieTests
     }
 
     [Fact]
+    public void CreateConfrontationTiePenaltyShootout_rejects_when_return_leg_does_not_swap_entries()
+    {
+        var tieFormat = TwoLegFormat();
+        var act = () => MatchResult.CreateConfrontationTiePenaltyShootout(
+            tieFormat,
+            _entryA,
+            _entryB,
+            MatchStatus.Finished,
+            new Score(1, 0),
+            false,
+            _entryA,
+            _entryB,
+            new Score(0, 1),
+            false,
+            new PenaltyShootoutScore(5, 4));
+
+        act.Should().Throw<DomainException>()
+            .Which.Code.Should().Be(MatchErrorCodes.InvalidResult);
+    }
+
+    [Fact]
+    public void CreateConfrontationTiePenaltyShootout_rejects_single_leg_format_without_aggregate()
+    {
+        var tieFormat = new TieFormat(
+            TieFormat.SingleLeg,
+            aggregateScoring: false,
+            penaltyShootoutRule: new PenaltyShootoutRule());
+        var act = () => CreateFlagged(tieFormat, new Score(1, 0), new Score(0, 1));
+
+        act.Should().Throw<DomainException>()
+            .Which.Code.Should().Be(MatchErrorCodes.InvalidResult);
+    }
+
+    [Fact]
+    public void CreateConfrontationTiePenaltyShootout_rejects_when_away_goals_break_level_aggregate()
+    {
+        var tieFormat = TwoLegFormat(awayGoals: true);
+        var act = () => CreateFlagged(tieFormat, new Score(2, 1), new Score(1, 0));
+
+        act.Should().Throw<DomainException>()
+            .Which.Code.Should().Be(MatchErrorCodes.InvalidResult);
+    }
+
+    [Fact]
+    public void CreateConfrontationTiePenaltyShootout_accepts_same_scores_without_away_goals_rule()
+    {
+        var tieFormat = TwoLegFormat(awayGoals: false);
+        var result = CreateFlagged(tieFormat, new Score(2, 1), new Score(1, 0));
+
+        result.ConfrontationTiePenaltyShootout.Should().BeTrue();
+    }
+
+    [Fact]
     public void CreateConfrontationTiePenaltyShootout_rejects_when_first_leg_not_finished()
     {
         var tieFormat = TwoLegFormat();

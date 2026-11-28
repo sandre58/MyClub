@@ -14,7 +14,7 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.Converters;
 /// <summary>
 /// Converts a Domain <see cref="MatchResult"/> to a JSON string for a PostgreSQL jsonb column.
 /// </summary>
-public sealed class MatchResultJsonConverter : ValueConverter<MatchResult?, string?>
+internal sealed class MatchResultJsonConverter : ValueConverter<MatchResult?, string?>
 {
     /// <summary>
     /// Gets the comparer that uses Domain record equality and reconstructs snapshots via the public constructor.

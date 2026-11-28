@@ -113,7 +113,7 @@ internal static class MatchResultStaticFactoryScanner
 
         foreach (var node in root.DescendantNodesAndSelf())
         {
-            if (IsMethodDefinitionSite(node))
+            if (IsMethodDefinitionSite(model, node))
             {
                 continue;
             }
@@ -185,7 +185,7 @@ internal static class MatchResultStaticFactoryScanner
         && symbol.ContainingNamespace?.ToDisplayString() == "MyClub.PlayUp.Domain.Matches"
         && (symbol.Name == CreateMethod || symbol.Name == RehydrateMethod);
 
-    private static bool IsMethodDefinitionSite(SyntaxNode node)
+    private static bool IsMethodDefinitionSite(SemanticModel model, SyntaxNode node)
     {
         var methodDecl = node.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
         if (methodDecl is null)
@@ -193,13 +193,12 @@ internal static class MatchResultStaticFactoryScanner
             return false;
         }
 
-        var typeDecl = methodDecl.Ancestors().OfType<TypeDeclarationSyntax>().FirstOrDefault();
-        if (typeDecl?.Identifier.Text != "MatchResult")
+        if (methodDecl.Identifier.Text != CreateMethod && methodDecl.Identifier.Text != RehydrateMethod)
         {
             return false;
         }
 
-        if (methodDecl.Identifier.Text != CreateMethod && methodDecl.Identifier.Text != RehydrateMethod)
+        if (model.GetDeclaredSymbol(methodDecl) is not IMethodSymbol methodSymbol || !IsTrackedFactory(methodSymbol))
         {
             return false;
         }
