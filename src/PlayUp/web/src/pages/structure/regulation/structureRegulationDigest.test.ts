@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import { createElement } from 'react';
 import { beforeAll, describe, expect, it } from 'vitest';
 
