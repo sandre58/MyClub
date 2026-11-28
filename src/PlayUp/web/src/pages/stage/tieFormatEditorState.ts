@@ -126,7 +126,9 @@ export function singleRoundDriftRoundId(
   return roundId;
 }
 
-export type AtomicRoundEdit = ReplaceRoundTieFormatRequest & { roundId: string };
+export type AtomicRoundEdit = ReplaceRoundTieFormatRequest & {
+  roundId: string;
+};
 
 /** PUT /tie-format-edits round payloads (inheritors at load omit edits on default-only saves). */
 export function buildAtomicRoundEdits(
