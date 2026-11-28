@@ -85,6 +85,13 @@ export function roundPersistenceUpdates(
     if (!baseline) {
       continue;
     }
+    if (
+      roundEffectivelyInherits(roundId, flags) &&
+      !flags.inheritsAtLoad[roundId]
+    ) {
+      updates[roundId] = phaseForm;
+      continue;
+    }
     const target = isRoundCustomized(roundId, flags)
       ? roundForms[roundId]
       : phaseForm;

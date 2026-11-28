@@ -170,6 +170,40 @@ describe('tieFormatEditorState', () => {
     expect(edits).toEqual([]);
   });
 
+  it('P1: realigned override equal to baseline still persists for clear', () => {
+    const session = flags({ r1: false }, { sessionRealigned: { r1: true } });
+    const updates = roundPersistenceUpdates(
+      ['r1'],
+      session,
+      phaseDefault,
+      { r1: phaseDefault },
+      { r1: phaseDefault },
+    );
+    expect(updates.r1).toEqual(phaseDefault);
+    const edits = buildAtomicRoundEdits(
+      ['r1'],
+      { r1: false },
+      session,
+      phaseDefault,
+      updates,
+      toRoundRequest,
+    );
+    expect(edits).toHaveLength(1);
+    expect(edits[0]?.clear).toBe(true);
+  });
+
+  it('P2: realigned override different from phase still persists clear', () => {
+    const session = flags({ r1: false }, { sessionRealigned: { r1: true } });
+    const updates = roundPersistenceUpdates(
+      ['r1'],
+      session,
+      phaseTwoLegs,
+      { r1: phaseTwoLegs },
+      { r1: customRound },
+    );
+    expect(updates.r1).toEqual(phaseTwoLegs);
+  });
+
   it('A3: stored override equal to default still sends explicit round edit', () => {
     const session = flags({ r1: false });
     const edits = buildAtomicRoundEdits(

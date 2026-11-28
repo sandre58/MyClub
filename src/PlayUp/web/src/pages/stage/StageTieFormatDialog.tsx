@@ -339,16 +339,20 @@ export function TieFormatDialog({
   function startRoundOverride(roundId: string) {
     setRoundForms((current) => ({
       ...current,
-      [roundId]: cloneTie(current[roundId] ?? phaseForm),
+      [roundId]: cloneTie(
+        baselineRounds[roundId] ?? current[roundId] ?? phaseForm,
+      ),
     }));
     setOverrideEditing((current) => ({ ...current, [roundId]: true }));
+    setSessionRealigned((current) => {
+      const next = { ...current };
+      delete next[roundId];
+      return next;
+    });
   }
 
   function revertRoundToPhase(roundId: string) {
-    setRoundForms((current) => ({
-      ...current,
-      [roundId]: cloneTie(phaseForm),
-    }));
+    setSessionRealigned((current) => ({ ...current, [roundId]: true }));
     setOverrideEditing((current) => {
       const next = { ...current };
       delete next[roundId];
