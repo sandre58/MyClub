@@ -63,7 +63,7 @@ export function relevantPhaseSections(
   ) {
     sections.push('progression');
   }
-  if (stage.hasTieFormat) {
+  if (stage.hasTieFormat || stage.formatKind === 'Cup') {
     sections.push('confrontation');
   }
   if (stageNeedsDrawSection(stage)) {

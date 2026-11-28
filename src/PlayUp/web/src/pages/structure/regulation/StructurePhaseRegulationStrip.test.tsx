@@ -316,4 +316,23 @@ describe('StructurePhaseRegulationStrip', () => {
       within(standingPanel).queryByRole('button', { name: /Modifier/i }),
     ).not.toBeInTheDocument();
   });
+
+  it('shows confrontation digest as match unique when Cup has no stored default', () => {
+    renderStrip({
+      showConfrontation: true,
+      showStanding: false,
+      standingBound: null,
+      stage: baseStage({
+        formatKind: 'Cup',
+        hasTieFormat: false,
+        defaultTieFormat: null,
+        hasStandingRules: false,
+      }),
+    });
+
+    const confrontationPanel = document.getElementById('tile-confrontation')!;
+    expect(
+      within(confrontationPanel).getByText('Match unique'),
+    ).toBeInTheDocument();
+  });
 });

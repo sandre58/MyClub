@@ -297,6 +297,35 @@ describe('relevantPhaseSections', () => {
       ),
     ).toEqual(['construction', 'qualification', 'progression']);
   });
+
+  it('includes confrontation for Cup without stored tie format', () => {
+    expect(relevantPhaseSections(cupStage())).toEqual([
+      'construction',
+      'confrontation',
+    ]);
+  });
+
+  it('includes confrontation when hasTieFormat is set', () => {
+    expect(
+      relevantPhaseSections(championshipStage({ hasTieFormat: true })),
+    ).toEqual(['construction', 'confrontation']);
+  });
+
+  it('omits confrontation for Championship, Groups, and Swiss without stored format', () => {
+    expect(relevantPhaseSections(championshipStage())).not.toContain(
+      'confrontation',
+    );
+    expect(relevantPhaseSections(groupesStage())).not.toContain(
+      'confrontation',
+    );
+    expect(
+      relevantPhaseSections({
+        ...championshipStage(),
+        formatKind: 'Swiss',
+        name: 'Swiss',
+      }),
+    ).not.toContain('confrontation');
+  });
 });
 
 describe('StructurePage Structure hub', () => {
