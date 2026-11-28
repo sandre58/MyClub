@@ -1855,7 +1855,18 @@ function NaturalProgressionSection({
 
   // Structural tip XOR Prepare/Start. Suspend/Resume still render beside the tip.
   if (hasPrimary) {
-    const actions = [...(matched ? [matched] : []), ...(cycle ? [cycle] : [])];
+    const materializeSecondary =
+      code === 'ApplyProgression'
+        ? findActionByCode(
+            data.availableActions,
+            'MaterializeFromOccupiedSlots',
+          )
+        : undefined;
+    const actions = [
+      ...(matched ? [matched] : []),
+      ...(materializeSecondary ? [materializeSecondary] : []),
+      ...(cycle ? [cycle] : []),
+    ];
     return (
       <OverviewNextAction
         headingId="overview-progression"

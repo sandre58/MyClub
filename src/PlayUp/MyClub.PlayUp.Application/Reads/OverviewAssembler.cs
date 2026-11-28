@@ -1607,7 +1607,9 @@ public static class OverviewAssembler
                     {
                         var fixtureId = ResolveMaterializedFixtureIdForAttentionItem(item, stages);
                         Guid? matchId = fixtureId is not null && fixtureToMatch.TryGetValue(fixtureId.Value, out var mid) ? mid : null;
-                        var stageId = ResolveStageIdFromAttention(item, stages);
+                        var stageId = fixtureId is not null
+                            ? FindStageIdForFixture(stages, fixtureId.Value)
+                            : ResolveStageIdFromAttention(item, stages);
                         actions.Add(new OverviewActionDto(
                             ActionApplyProgression,
                             Guaranteed: false,
@@ -1729,11 +1731,11 @@ public static class OverviewAssembler
     /// </summary>
     internal static readonly string[] InProgressStructuralProgressionPriority =
     [
+        ActionApplyProgression,
         ActionMaterializeFromOccupiedSlots,
         ActionGenerateNextRound,
         ActionPublishAndApplyDraw,
         ActionApplyDraw,
-        ActionApplyProgression,
         ActionApplyQualification,
         ActionPrepareStage,
         ActionStartStage,

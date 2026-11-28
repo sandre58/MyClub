@@ -479,7 +479,10 @@ public sealed class OverviewAssemblerTests
         progression.ImpactCode.Should().Be(OverviewAssembler.ImpactBlocksProgression);
         view.NavigationHints.Should().Contain(hint =>
             hint.TargetType == "Fixture" && hint.MatchId == ctx.Match.Id.Value);
-        view.AvailableActions.Should().Contain(action => action.Code == OverviewAssembler.ActionApplyProgression);
+        var apply = view.AvailableActions.Should()
+            .ContainSingle(action => action.Code == OverviewAssembler.ActionApplyProgression).Subject;
+        apply.StageId.Should().Be(ctx.Stage.Id.Value);
+        apply.FixtureId.Should().NotBeNull();
     }
 
     [Fact]
@@ -1139,6 +1142,10 @@ public sealed class OverviewAssemblerTests
         OverviewAssembler.ResolveConstructionStructuralProgression([]).Should().BeNull();
 
     [Theory]
+    [InlineData(
+        OverviewAssembler.ActionMaterializeFromOccupiedSlots,
+        OverviewAssembler.ActionApplyProgression,
+        OverviewAssembler.ActionApplyProgression)]
     [InlineData(
         OverviewAssembler.ActionMaterializeFromOccupiedSlots,
         OverviewAssembler.ActionGenerateNextRound,

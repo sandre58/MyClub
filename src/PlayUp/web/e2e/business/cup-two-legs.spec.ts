@@ -1,6 +1,5 @@
 import { expect, test } from '@playwright/test';
 import {
-  applyCupTwoLegJourneyProgression,
   createCupTwoLegJourneyShell,
   playUpApiBase,
   prepareCupTwoLegJourneyForPlay,
@@ -121,9 +120,20 @@ test.describe('Play’Up business (Host + PostgreSQL)', () => {
     await expect(
       page.getByRole('link', { name: /Progression en attente/i }),
     ).toBeVisible();
-    // Écart vue d’ensemble : `naturalProgression` priorise MaterializeFromOccupiedSlots
-    // (finale) avant ApplyProgression ; apply-progression reste en API jusqu’à arbitrage UX.
-    await applyCupTwoLegJourneyProgression(request, shell.semiStageId);
+
+    const applyProgression = page.waitForResponse(
+      (response) =>
+        response.request().method() === 'POST' &&
+        response.url().includes('/apply-progression') &&
+        response.status() === 204,
+    );
+    await page
+      .getByRole('button', { name: 'Appliquer la progression' })
+      .click();
+    await applyProgression;
+    await expect(
+      page.getByRole('link', { name: /Progression en attente/i }),
+    ).toBeHidden();
 
     const qualifiedName = await readFinalSlotSEntryName(
       request,
