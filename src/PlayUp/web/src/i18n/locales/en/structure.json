@@ -826,6 +826,10 @@
       "uniform": "Same format for every round.",
       "perRound": "Some rounds use their own format."
     },
+    "confrontationPhasePrefix": "Stage",
+    "confrontationWithout": "no {{rule}}",
+    "confrontationAdded": "+ {{rule}}",
+    "confrontationMoreRounds": "+ {{count}} rounds",
     "rule": {
       "placeFirst": "1st",
       "placeNth": "{{value}}th",

@@ -826,6 +826,10 @@
       "uniform": "Même format sur tous les tours.",
       "perRound": "Certains tours ont leur propre format."
     },
+    "confrontationPhasePrefix": "Phase",
+    "confrontationWithout": "sans {{rule}}",
+    "confrontationAdded": "+ {{rule}}",
+    "confrontationMoreRounds": "+ {{count}} tours",
     "rule": {
       "placeFirst": "1er",
       "placeNth": "{{value}}e",

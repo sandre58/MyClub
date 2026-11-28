@@ -96,6 +96,13 @@ describe('StructurePhaseRegulationStrip', () => {
   it('shows confrontation format scope hint under Format de confrontation', () => {
     renderStrip({
       stage: baseStage({
+        defaultTieFormat: {
+          numberOfLegs: 2,
+          aggregateScoring: true,
+          hasAwayGoalsRule: false,
+          hasTieExtraTime: false,
+          hasTiePenaltyShootout: false,
+        },
         confrontationSegments: [
           {
             rounds: [
@@ -134,6 +141,60 @@ describe('StructurePhaseRegulationStrip', () => {
     expect(
       screen.getByText('Certains tours ont leur propre format.'),
     ).toBeInTheDocument();
+  });
+
+  it('keeps uniform confrontation hint when stored overrides match phase signature', () => {
+    renderStrip({
+      stage: baseStage({
+        defaultTieFormat: {
+          numberOfLegs: 2,
+          aggregateScoring: true,
+          hasAwayGoalsRule: false,
+          hasTieExtraTime: false,
+          hasTiePenaltyShootout: false,
+        },
+        confrontationSegments: [
+          {
+            rounds: [
+              {
+                roundId: 'a',
+                name: 'Finale',
+                sortOrder: 0,
+                inheritsDefaultTieFormat: false,
+              },
+            ],
+            numberOfLegs: 2,
+            aggregateScoring: true,
+            hasAwayGoalsRule: false,
+            hasTieExtraTime: false,
+            hasTiePenaltyShootout: false,
+          },
+          {
+            rounds: [
+              {
+                roundId: 'b',
+                name: 'Demi',
+                sortOrder: 1,
+                inheritsDefaultTieFormat: true,
+              },
+            ],
+            numberOfLegs: 2,
+            aggregateScoring: true,
+            hasAwayGoalsRule: false,
+            hasTieExtraTime: false,
+            hasTiePenaltyShootout: false,
+          },
+        ],
+      }),
+    });
+
+    expect(
+      screen.getByText('Même format sur tous les tours.'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText('Certains tours ont leur propre format.'),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText(/Phase :/)).toBeInTheDocument();
   });
 
   it('shows phase-specific binding hint when match rules are not frame-bound', () => {
