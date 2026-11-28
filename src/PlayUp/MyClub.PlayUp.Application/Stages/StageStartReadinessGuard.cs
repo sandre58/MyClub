@@ -219,7 +219,7 @@ internal static class StageStartReadinessGuard
             var entryRound = stage.FindRoundForConfrontationKey(pair.PairKey);
             var legs = entryRound is not null
                 ? CupConfrontationMaterializer.ExpectedLegsForRound(stage, entryRound)
-                : TieFormat.ResolveEffective(null, stage.Regulation.TieFormat).NumberOfLegs;
+                : Stage.ResolveEffectiveDefault(stage.Regulation).NumberOfLegs;
             return legs > 0 ? legs : 1;
         });
         return StructureSkeleton.CountAttachedMatches(stage) < targetMatchSlots;

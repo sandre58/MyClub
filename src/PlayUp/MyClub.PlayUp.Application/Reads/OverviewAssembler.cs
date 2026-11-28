@@ -606,7 +606,7 @@ public static class OverviewAssembler
             QualificationPathCount: qualificationPaths,
             HasProgressionRules: regulation.ProgressionRules is not null,
             ProgressionPathCount: progressionPaths,
-            HasTieFormat: regulation.TieFormat is not null);
+            HasTieFormat: regulation.HasExplicitTieFormatDefault);
     }
 
     private static List<OverviewTransitionReadinessDto> BuildRegulationTransitionReadiness(
@@ -783,7 +783,7 @@ public static class OverviewAssembler
         var entryRound = reference.Rounds.Count > 0 ? reference.Rounds[0] : null;
         var tie = entryRound is not null
             ? Stage.ResolveEffectiveTieFormat(entryRound, reference.Regulation)
-            : TieFormat.ResolveEffective(null, reference.Regulation.TieFormat);
+            : Stage.ResolveEffectiveDefault(reference.Regulation);
         var variesByRound = reference.Rounds.Count > 1
                             && reference.Rounds
                                 .Select(round => Stage.ResolveEffectiveTieFormat(round, reference.Regulation))

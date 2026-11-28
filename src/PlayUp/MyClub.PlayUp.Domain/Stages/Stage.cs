@@ -293,6 +293,12 @@ public sealed class Stage : AggregateRoot<StageId>
         TieFormat.ResolveEffective(round.TieFormat, regulation.TieFormat);
 
     /// <summary>
+    /// Resolves the effective TieFormat when no round is available (stage default, else <see cref="TieFormat.DefaultOneLeg"/>).
+    /// </summary>
+    public static TieFormat ResolveEffectiveDefault(StageRegulation regulation) =>
+        TieFormat.ResolveEffective(null, regulation.TieFormat);
+
+    /// <summary>
     /// Replaces the stage regulation as a whole (specialization). Unbinds heritable parts that change.
     /// Allowed in Draft only (structure locked from Ready).
     /// </summary>

@@ -27,7 +27,7 @@ internal static class CupConfrontationMaterializer
     {
         var round = stage.Rounds.FirstOrDefault(r => r.Fixtures.Any(f => f.Id.Equals(fixture.Id)));
         return round is null
-            ? TieFormat.ResolveEffective(null, stage.Regulation.TieFormat).NumberOfLegs
+            ? Stage.ResolveEffectiveDefault(stage.Regulation).NumberOfLegs
             : ExpectedLegsForRound(stage, round);
     }
 
