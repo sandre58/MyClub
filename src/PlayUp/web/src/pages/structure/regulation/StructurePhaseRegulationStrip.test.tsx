@@ -143,6 +143,46 @@ describe('StructurePhaseRegulationStrip', () => {
     ).toBeInTheDocument();
   });
 
+  it('renders round confrontation lines with deltas only (no duplicate TAB)', () => {
+    renderStrip({
+      stage: baseStage({
+        defaultTieFormat: {
+          numberOfLegs: 2,
+          aggregateScoring: true,
+          hasAwayGoalsRule: false,
+          hasTieExtraTime: false,
+          hasTiePenaltyShootout: true,
+        },
+        confrontationSegments: [
+          {
+            rounds: [
+              {
+                roundId: 'f',
+                name: 'Finale',
+                sortOrder: 0,
+                inheritsDefaultTieFormat: false,
+              },
+            ],
+            numberOfLegs: 1,
+            aggregateScoring: false,
+            hasAwayGoalsRule: false,
+            hasTieExtraTime: false,
+            hasTiePenaltyShootout: true,
+          },
+        ],
+      }),
+    });
+
+    const confrontationPanel = document.getElementById('tile-confrontation')!;
+    const phaseLine = within(confrontationPanel).getByText(/Phase :/);
+    expect(phaseLine.textContent).toMatch(/2 manches/);
+    expect(phaseLine.textContent).toMatch(/TAB/);
+
+    const roundLine = within(confrontationPanel).getByText(/Finale/);
+    expect(roundLine.textContent).toMatch(/1 manche/);
+    expect((roundLine.textContent ?? '').match(/TAB/g) ?? []).toHaveLength(0);
+  });
+
   it('keeps uniform confrontation hint when stored overrides match phase signature', () => {
     renderStrip({
       stage: baseStage({

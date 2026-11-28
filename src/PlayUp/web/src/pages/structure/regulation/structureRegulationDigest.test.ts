@@ -1,32 +1,68 @@
-import { describe, expect, it } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { createElement, Fragment } from 'react';
+import { beforeAll, describe, expect, it } from 'vitest';
 
+import i18n from '../../../i18n';
+import frStructure from '../../../i18n/locales/fr/structure.json';
+import frRegulation from '../../../i18n/locales/fr/regulation.json';
 import {
   buildConfrontationDigestTokens,
   confrontationFormatDiffersFromPhase,
   confrontationFormatScopeHintKey,
+  confrontationRoundDigestDeltaParts,
 } from './structureRegulationDigest.build';
+import { tieFormFromSummary } from '../../stage/tieFormatForm';
 
-const tStructure = (key: string, options?: Record<string, unknown>) => {
-  const table: Record<string, string> = {
-    'fiche.confrontationPhasePrefix': 'Phase',
-    'stage.legsOne': '1 manche',
-    'stage.legsTwo': '2 manches',
-    'fiche.confrontationAdded': `+ ${String(options?.rule ?? '')}`,
-    'fiche.confrontationWithout': `sans ${String(options?.rule ?? '')}`,
-    'fiche.confrontationMoreRounds': `+ ${String(options?.count ?? '')} tours`,
-  };
-  return table[key] ?? key;
-};
+beforeAll(async () => {
+  await i18n.changeLanguage('fr');
+});
 
-const tReg = (key: string) => {
-  const table: Record<string, string> = {
-    'tokens.tieAggregateShort': 'cumul',
-    'tokens.tieAwayGoalsShort': 'buts ext.',
-    'tokens.tieExtraTime': 'Prolongations',
-    'tokens.tiePenalties': 'TAB',
-  };
-  return table[key] ?? key;
-};
+function tStructure(key: string, options?: Record<string, unknown>) {
+  return i18n.t(key, { ns: 'structure', ...options });
+}
+
+function tReg(key: string, options?: Record<string, unknown>) {
+  return i18n.t(key, { ns: 'regulation', ...options });
+}
+
+describe('structure i18n keys for confrontation digest', () => {
+  it('resolves regulation legs labels from bundled fr locale', () => {
+    expect(tStructure('regulation.legsOne')).toBe(
+      frStructure.regulation.legsOne,
+    );
+    expect(tStructure('regulation.legsTwo')).toBe(
+      frStructure.regulation.legsTwo,
+    );
+    expect(tReg('tokens.tiePenalties')).toBe(frRegulation.tokens.tiePenalties);
+  });
+});
+
+describe('confrontationRoundDigestDeltaParts', () => {
+  it('omits rules that match the phase (no TAB duplication)', () => {
+    const phase = tieFormFromSummary({
+      numberOfLegs: 2,
+      aggregateScoring: true,
+      hasAwayGoalsRule: false,
+      hasTieExtraTime: false,
+      hasTiePenaltyShootout: true,
+    });
+    const round = tieFormFromSummary({
+      numberOfLegs: 1,
+      aggregateScoring: false,
+      hasAwayGoalsRule: false,
+      hasTieExtraTime: false,
+      hasTiePenaltyShootout: true,
+    });
+    const parts = confrontationRoundDigestDeltaParts(
+      round,
+      phase,
+      tStructure,
+      tReg,
+    );
+    expect(parts).toEqual([frStructure.regulation.legsOne]);
+    expect(parts.join(' ')).not.toContain(frRegulation.tokens.tiePenalties);
+  });
+});
 
 describe('confrontationFormatScopeHintKey', () => {
   it('returns uniform hint when segments empty or equivalent to phase', () => {
@@ -193,7 +229,19 @@ describe('buildConfrontationDigestTokens', () => {
       tReg,
     );
     expect(tokens[0]?.key).toBe('phase-format');
-    expect(tokens.some((t) => t.key === 'round-f')).toBe(true);
+    const roundToken = tokens.find((token) => token.key === 'round-f');
+    expect(roundToken).toBeDefined();
+    render(
+      createElement(
+        Fragment,
+        null,
+        createElement('span', null, roundToken!.content),
+      ),
+    );
+    const roundText = screen.getByText(/Finale/).textContent ?? '';
+    expect(roundText).toContain(frStructure.regulation.legsOne);
+    expect(roundText).not.toContain(frRegulation.tokens.tiePenalties);
+    expect((roundText.match(/TAB/g) ?? []).length).toBe(0);
   });
 
   it('omits round lines when override signature matches phase', () => {

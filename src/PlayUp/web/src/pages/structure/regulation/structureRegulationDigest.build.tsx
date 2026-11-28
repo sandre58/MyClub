@@ -251,8 +251,8 @@ function formatCompactTieFormat(
   const parts: string[] = [];
   parts.push(
     form.numberOfLegs === 2
-      ? tStructure('stage.legsTwo')
-      : tStructure('stage.legsOne'),
+      ? tStructure('regulation.legsTwo')
+      : tStructure('regulation.legsOne'),
   );
   if (form.numberOfLegs === 2 && form.aggregateScoring) {
     parts.push(tReg('tokens.tieAggregateShort'));
@@ -269,16 +269,25 @@ function formatCompactTieFormat(
   return parts.join(' · ');
 }
 
-function tieRuleDeltaMarkers(
+export function confrontationRoundDigestDeltaParts(
   round: TieFormState,
   phase: TieFormState,
   tStructure: Translate,
   tReg: Translate,
 ): string[] {
-  const markers: string[] = [];
+  const parts: string[] = [];
+
+  if (round.numberOfLegs !== phase.numberOfLegs) {
+    parts.push(
+      tStructure(
+        round.numberOfLegs === 2 ? 'regulation.legsTwo' : 'regulation.legsOne',
+      ),
+    );
+  }
+
   if (round.numberOfLegs === 2) {
     if (round.aggregateScoring !== phase.aggregateScoring) {
-      markers.push(
+      parts.push(
         round.aggregateScoring
           ? tStructure('fiche.confrontationAdded', {
               rule: tReg('tokens.tieAggregateShort'),
@@ -289,7 +298,7 @@ function tieRuleDeltaMarkers(
       );
     }
     if (round.hasAwayGoalsRule !== phase.hasAwayGoalsRule) {
-      markers.push(
+      parts.push(
         round.hasAwayGoalsRule
           ? tStructure('fiche.confrontationAdded', {
               rule: tReg('tokens.tieAwayGoalsShort'),
@@ -300,8 +309,9 @@ function tieRuleDeltaMarkers(
       );
     }
   }
+
   if (round.hasExtraTimeRule !== phase.hasExtraTimeRule) {
-    markers.push(
+    parts.push(
       round.hasExtraTimeRule
         ? tStructure('fiche.confrontationAdded', {
             rule: tReg('tokens.tieExtraTime'),
@@ -312,7 +322,7 @@ function tieRuleDeltaMarkers(
     );
   }
   if (round.hasPenaltyShootoutRule !== phase.hasPenaltyShootoutRule) {
-    markers.push(
+    parts.push(
       round.hasPenaltyShootoutRule
         ? tStructure('fiche.confrontationAdded', {
             rule: tReg('tokens.tiePenalties'),
@@ -322,7 +332,8 @@ function tieRuleDeltaMarkers(
           }),
     );
   }
-  return markers;
+
+  return parts;
 }
 
 function formatRoundDigestLine(
@@ -332,11 +343,13 @@ function formatRoundDigestLine(
   tStructure: Translate,
   tReg: Translate,
 ): string {
-  const segments = [
-    formatCompactTieFormat(roundForm, tStructure, tReg),
-    ...tieRuleDeltaMarkers(roundForm, phaseForm, tStructure, tReg),
-  ];
-  return `${roundName} · ${segments.join(' · ')}`;
+  const deltas = confrontationRoundDigestDeltaParts(
+    roundForm,
+    phaseForm,
+    tStructure,
+    tReg,
+  );
+  return `${roundName} · ${deltas.join(' · ')}`;
 }
 
 export function buildConfrontationDigestTokens(
