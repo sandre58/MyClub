@@ -41,7 +41,8 @@ internal static class MatchResultJson
         int AwayGoals,
         bool ExtraTimePlayed,
         int? PenaltyHomeGoals,
-        int? PenaltyAwayGoals)
+        int? PenaltyAwayGoals,
+        bool ConfrontationTiePenaltyShootout = false)
     {
         internal static MatchResultDocument From(MatchResult result) =>
             new(
@@ -50,7 +51,8 @@ internal static class MatchResultJson
                 result.Score.AwayGoals,
                 result.ExtraTimePlayed,
                 result.PenaltyShootoutScore?.HomeGoals,
-                result.PenaltyShootoutScore?.AwayGoals);
+                result.PenaltyShootoutScore?.AwayGoals,
+                result.ConfrontationTiePenaltyShootout);
 
         internal MatchResult ToDomain()
         {
@@ -58,7 +60,12 @@ internal static class MatchResultJson
                 ? new PenaltyShootoutScore(home, away)
                 : null;
 
-            return new MatchResult(Type, new Score(HomeGoals, AwayGoals), ExtraTimePlayed, shootout);
+            return new MatchResult(
+                Type,
+                new Score(HomeGoals, AwayGoals),
+                ExtraTimePlayed,
+                shootout,
+                ConfrontationTiePenaltyShootout);
         }
     }
 }

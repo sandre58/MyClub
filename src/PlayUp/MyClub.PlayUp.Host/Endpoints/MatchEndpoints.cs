@@ -36,8 +36,17 @@ internal static class MatchEndpoints
             "/matches/{matchId:guid}/finish",
             async (Guid matchId, FinishMatchRequest request, UseCaseExecutor executor, CancellationToken cancellationToken) =>
             {
-                var result = request.ToDomain();
-                await executor.FinishMatchAsync(new MatchId(matchId), result, cancellationToken).ConfigureAwait(false);
+                await executor
+                    .FinishMatchFromRequestAsync(
+                        new MatchId(matchId),
+                        request.Type,
+                        request.HomeGoals,
+                        request.AwayGoals,
+                        request.ExtraTimePlayed,
+                        request.PenaltyShootoutHomeGoals,
+                        request.PenaltyShootoutAwayGoals,
+                        cancellationToken)
+                    .ConfigureAwait(false);
                 return Results.NoContent();
             });
 
@@ -45,9 +54,16 @@ internal static class MatchEndpoints
             "/matches/{matchId:guid}/result",
             async (Guid matchId, FinishMatchRequest request, UseCaseExecutor executor, CancellationToken cancellationToken) =>
             {
-                var result = request.ToDomain();
                 await executor
-                    .CorrectMatchResultAsync(new MatchId(matchId), result, cancellationToken)
+                    .CorrectMatchResultFromRequestAsync(
+                        new MatchId(matchId),
+                        request.Type,
+                        request.HomeGoals,
+                        request.AwayGoals,
+                        request.ExtraTimePlayed,
+                        request.PenaltyShootoutHomeGoals,
+                        request.PenaltyShootoutAwayGoals,
+                        cancellationToken)
                     .ConfigureAwait(false);
                 return Results.NoContent();
             });

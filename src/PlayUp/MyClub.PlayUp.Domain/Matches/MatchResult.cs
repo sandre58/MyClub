@@ -16,9 +16,9 @@ namespace MyClub.PlayUp.Domain.Matches;
 /// Structural invariants (local to this VO; Match does not load MatchRules / TieFormat):
 /// </para>
 /// <list type="number">
-/// <item><description><see cref="PenaltyShootoutScore"/> may exist only when <see cref="Score"/> is equal (Home == Away).</description></item>
+/// <item><description><see cref="PenaltyShootoutScore"/> may exist only when <see cref="Score"/> is equal (Home == Away), unless confrontation tie-break is flagged for a two-legged final leg.</description></item>
 /// <item><description>When shootout is present, shootout Home ≠ Away.</description></item>
-/// <item><description>Unequal play score ⇒ shootout must be null.</description></item>
+/// <item><description>Unequal play score ⇒ shootout must be null unless <see cref="ConfrontationTiePenaltyShootout"/> is set.</description></item>
 /// <item><description><see cref="ExtraTimePlayed"/> is orthogonal (AET without shootout, or shootout without ET).</description></item>
 /// </list>
 /// <para>
@@ -34,11 +34,13 @@ public sealed record MatchResult
     /// <param name="score">Final play score (extra time goals included when played; shootout excluded).</param>
     /// <param name="extraTimePlayed">Whether extra time was actually played.</param>
     /// <param name="penaltyShootoutScore">Shootout score when taken; otherwise <see langword="null"/>.</param>
+    /// <param name="confrontationTiePenaltyShootout">When <see langword="true"/>, allows a decisive shootout although play score is not a draw (two-legged confrontation tie-break).</param>
     public MatchResult(
         ResultType type,
         Score score,
         bool extraTimePlayed = false,
-        PenaltyShootoutScore? penaltyShootoutScore = null)
+        PenaltyShootoutScore? penaltyShootoutScore = null,
+        bool confrontationTiePenaltyShootout = false)
     {
         if (!Enum.IsDefined(type))
         {
@@ -49,7 +51,7 @@ public sealed record MatchResult
 
         if (penaltyShootoutScore is { } shootout)
         {
-            if (score.HomeGoals != score.AwayGoals)
+            if (score.HomeGoals != score.AwayGoals && !confrontationTiePenaltyShootout)
             {
                 throw new DomainException(
                     "Penalty shootout requires an equal play score.",
@@ -68,6 +70,7 @@ public sealed record MatchResult
         Score = score;
         ExtraTimePlayed = extraTimePlayed;
         PenaltyShootoutScore = penaltyShootoutScore;
+        ConfrontationTiePenaltyShootout = confrontationTiePenaltyShootout;
     }
 
     /// <summary>
@@ -89,4 +92,9 @@ public sealed record MatchResult
     /// Gets the penalty shootout score when taken; otherwise <see langword="null"/>.
     /// </summary>
     public PenaltyShootoutScore? PenaltyShootoutScore { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether the decisive shootout breaks a tied confrontation although play score is not level.
+    /// </summary>
+    public bool ConfrontationTiePenaltyShootout { get; }
 }

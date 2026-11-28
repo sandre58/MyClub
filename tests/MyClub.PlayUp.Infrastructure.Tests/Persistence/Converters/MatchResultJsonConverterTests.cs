@@ -95,6 +95,22 @@ public sealed class MatchResultJsonConverterTests
     }
 
     [Fact]
+    public void Convert_round_trips_confrontation_tie_shootout_on_unequal_play_score()
+    {
+        var result = new MatchResult(
+            ResultType.Played,
+            new Score(1, 0),
+            extraTimePlayed: true,
+            penaltyShootoutScore: new PenaltyShootoutScore(5, 4),
+            confrontationTiePenaltyShootout: true);
+
+        var restored = (MatchResult?)_converter.ConvertFromProvider(_converter.ConvertToProvider(result));
+
+        restored.Should().Be(result);
+        restored!.ConfrontationTiePenaltyShootout.Should().BeTrue();
+    }
+
+    [Fact]
     public void Comparer_uses_record_equality_and_independent_snapshot()
     {
         var left = new MatchResult(ResultType.Played, new Score(0, 0), penaltyShootoutScore: new PenaltyShootoutScore(4, 3));
@@ -109,5 +125,21 @@ public sealed class MatchResultJsonConverterTests
         var snapshot = comparer.Snapshot(left);
         snapshot.Should().Be(left);
         ReferenceEquals(snapshot, left).Should().BeFalse();
+    }
+
+    [Fact]
+    public void Comparer_snapshot_preserves_confrontation_tie_shootout_flag()
+    {
+        var left = new MatchResult(
+            ResultType.Played,
+            new Score(1, 0),
+            extraTimePlayed: true,
+            penaltyShootoutScore: new PenaltyShootoutScore(5, 4),
+            confrontationTiePenaltyShootout: true);
+        var comparer = MatchResultJsonConverter.Comparer;
+
+        var snapshot = comparer.Snapshot(left);
+        snapshot.Should().Be(left);
+        snapshot!.ConfrontationTiePenaltyShootout.Should().BeTrue();
     }
 }

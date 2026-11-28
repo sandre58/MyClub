@@ -8,6 +8,7 @@ using MyClub.PlayUp.Application.Matches;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
+using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Pipeline;
 
@@ -55,6 +56,138 @@ public sealed partial class UseCaseExecutor
         ArgumentNullException.ThrowIfNull(result);
 
         return FinishMatchAndLogAfterCommitAsync(matchId, result, cancellationToken);
+    }
+
+    /// <summary>
+    /// Finishes a match from HTTP payload fields, including confrontation tie-break shootout eligibility.
+    /// </summary>
+    public Task FinishMatchFromRequestAsync(
+        MatchId matchId,
+        ResultType type,
+        int homeGoals,
+        int awayGoals,
+        bool extraTimePlayed,
+        int? penaltyShootoutHomeGoals,
+        int? penaltyShootoutAwayGoals,
+        CancellationToken cancellationToken = default) =>
+        FinishMatchAndLogAfterCommitFromRequestAsync(
+            matchId,
+            type,
+            homeGoals,
+            awayGoals,
+            extraTimePlayed,
+            penaltyShootoutHomeGoals,
+            penaltyShootoutAwayGoals,
+            cancellationToken);
+
+    /// <summary>
+    /// Corrects a finished match from HTTP payload fields, including confrontation tie-break shootout eligibility.
+    /// </summary>
+    public Task CorrectMatchResultFromRequestAsync(
+        MatchId matchId,
+        ResultType type,
+        int homeGoals,
+        int awayGoals,
+        bool extraTimePlayed,
+        int? penaltyShootoutHomeGoals,
+        int? penaltyShootoutAwayGoals,
+        CancellationToken cancellationToken = default) =>
+        ExecuteOnMatchCompetitionAsync(
+            matchId,
+            async innerToken =>
+            {
+                var (match, stage) = await RequireMatchAndStageForOperationAsync(matchId, innerToken).ConfigureAwait(false);
+                var result = await BuildMatchResultFromRequestAsync(
+                    stage,
+                    match,
+                    type,
+                    homeGoals,
+                    awayGoals,
+                    extraTimePlayed,
+                    penaltyShootoutHomeGoals,
+                    penaltyShootoutAwayGoals,
+                    innerToken).ConfigureAwait(false);
+                NonFinalLegEtTabEntryGuard.EnsureAllowed(stage, match.Id, result);
+                CorrectMatchResult.Execute(match, result, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken);
+
+    private async Task FinishMatchAndLogAfterCommitFromRequestAsync(
+        MatchId matchId,
+        ResultType type,
+        int homeGoals,
+        int awayGoals,
+        bool extraTimePlayed,
+        int? penaltyShootoutHomeGoals,
+        int? penaltyShootoutAwayGoals,
+        CancellationToken cancellationToken)
+    {
+        var competitionId = Guid.Empty;
+        await ExecuteOnMatchCompetitionAsync(
+            matchId,
+            async innerToken =>
+            {
+                var (match, stage) = await RequireMatchAndStageForOperationAsync(matchId, innerToken).ConfigureAwait(false);
+                var result = await BuildMatchResultFromRequestAsync(
+                    stage,
+                    match,
+                    type,
+                    homeGoals,
+                    awayGoals,
+                    extraTimePlayed,
+                    penaltyShootoutHomeGoals,
+                    penaltyShootoutAwayGoals,
+                    innerToken).ConfigureAwait(false);
+                NonFinalLegEtTabEntryGuard.EnsureAllowed(stage, match.Id, result);
+                FinishMatch.Execute(match, result, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+                competitionId = match.CompetitionId.Value;
+            },
+            cancellationToken).ConfigureAwait(false);
+        LogMatchFinished(logger, matchId.Value, competitionId);
+    }
+
+    private async Task<MatchResult> BuildMatchResultFromRequestAsync(
+        Stage stage,
+        Match match,
+        ResultType type,
+        int homeGoals,
+        int awayGoals,
+        bool extraTimePlayed,
+        int? penaltyShootoutHomeGoals,
+        int? penaltyShootoutAwayGoals,
+        CancellationToken cancellationToken)
+    {
+        PenaltyShootoutScore? shootout = null;
+        if (penaltyShootoutHomeGoals is { } homeShootout && penaltyShootoutAwayGoals is { } awayShootout)
+        {
+            shootout = new PenaltyShootoutScore(homeShootout, awayShootout);
+        }
+        else if (penaltyShootoutHomeGoals is not null || penaltyShootoutAwayGoals is not null)
+        {
+            throw new DomainException(
+                "Penalty shootout requires both home and away kick counts.",
+                MatchErrorCodes.InvalidResult);
+        }
+
+        var playScore = new Score(homeGoals, awayGoals);
+        var confrontationTie = false;
+        if (shootout is not null && playScore.HomeGoals != playScore.AwayGoals)
+        {
+            var stageMatches = await matches
+                .ListByStageForUpdateAsync(stage.Id, cancellationToken)
+                .ConfigureAwait(false);
+            confrontationTie = ConfrontationTiePenaltyShootoutEligibility.AllowsUnequalPlayScore(
+                stage,
+                match,
+                playScore,
+                extraTimePlayed,
+                shootout,
+                stageMatches);
+        }
+
+        return new MatchResult(type, playScore, extraTimePlayed, shootout, confrontationTie);
     }
 
     private async Task FinishMatchAndLogAfterCommitAsync(

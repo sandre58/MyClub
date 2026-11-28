@@ -31,7 +31,7 @@ public sealed record FinishMatchRequest(
     /// </summary>
     /// <returns>The Domain match result.</returns>
     /// <exception cref="DomainException">Thrown when shootout fields are partially specified or Domain rejects the result.</exception>
-    public MatchResult ToDomain()
+    public MatchResult ToDomain(bool confrontationTiePenaltyShootout = false)
     {
         PenaltyShootoutScore? shootout = null;
         if (PenaltyShootoutHomeGoals is { } homeShootout && PenaltyShootoutAwayGoals is { } awayShootout)
@@ -45,6 +45,11 @@ public sealed record FinishMatchRequest(
                 MatchErrorCodes.InvalidResult);
         }
 
-        return new MatchResult(Type, new Score(HomeGoals, AwayGoals), ExtraTimePlayed, shootout);
+        return new MatchResult(
+            Type,
+            new Score(HomeGoals, AwayGoals),
+            ExtraTimePlayed,
+            shootout,
+            confrontationTiePenaltyShootout);
     }
 }

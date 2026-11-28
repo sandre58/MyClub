@@ -112,18 +112,21 @@ public sealed class CupTwoLegJourneyEndpointTests(HostPostgresFixture fixture)
         var teamAEntryId = legs.Leg1HomeEntryId;
         var teamBEntryId = legs.Leg1AwayEntryId;
 
-        // Aller A 1-0 B, retour 0-0 au temps réglementaire → agrégat 1-1 ; TAB au retour désigne A.
+        legs.Leg2HomeEntryId.Should().Be(teamBEntryId);
+        legs.Leg2AwayEntryId.Should().Be(teamAEntryId);
+
+        var structure = await GetStructureAsync(client, seed.CompetitionId);
+        structure.Stages.Single(s => s.StageId == seed.SemiStageId).DefaultTieFormat!
+            .HasAwayGoalsRule.Should().BeFalse();
+
+        // Aller : A domicile 1-0 B extérieur.
         await StartAndFinishAsync(client, legs.Leg1MatchId, homeGoals: 1, awayGoals: 0);
+
+        // Retour : B domicile 1-0 A au TR, prolongations sans but, TAB 5-4 pour B → agrégat 1-1 (buts extérieur off).
         await client.PostAsync($"/matches/{legs.Leg2MatchId}/start", null);
         using (var finishLeg2 = await client.PostAsJsonAsync(
                    $"/matches/{legs.Leg2MatchId}/finish",
-                   new FinishMatchRequest(
-                       ResultType.Played,
-                       HomeGoals: 0,
-                       AwayGoals: 0,
-                       ExtraTimePlayed: true,
-                       PenaltyShootoutHomeGoals: 4,
-                       PenaltyShootoutAwayGoals: 5)))
+                   new FinishMatchRequest(ResultType.Played, 1, 0, true, 5, 4)))
         {
             finishLeg2.StatusCode.Should().Be(HttpStatusCode.NoContent);
         }
@@ -135,8 +138,8 @@ public sealed class CupTwoLegJourneyEndpointTests(HostPostgresFixture fixture)
 
         using var finalOverview = await client.GetAsync($"/stages/{seed.FinalStageId}");
         var final = await finalOverview.Content.ReadFromJsonAsync<StageOverviewDto>(HostJson.Options);
-        final!.Slots.Single(s => s.SlotKey == "S1").EntryId.Should().Be(teamAEntryId);
-        final.Slots.Single(s => s.SlotKey == "S1").EntryId.Should().NotBe(teamBEntryId);
+        final!.Slots.Single(s => s.SlotKey == "S1").EntryId.Should().Be(teamBEntryId);
+        final.Slots.Single(s => s.SlotKey == "S1").EntryId.Should().NotBe(teamAEntryId);
     }
 
     [IntegrationFact]
@@ -323,6 +326,7 @@ public sealed class CupTwoLegJourneyEndpointTests(HostPostgresFixture fixture)
                 new ReplaceStageDefaultTieFormatRequest(
                     Clear: false,
                     NumberOfLegs: 2,
+                    HasAwayGoalsRule: false,
                     HasExtraTimeRule: true,
                     HasPenaltyShootoutRule: true));
             response.StatusCode.Should().Be(HttpStatusCode.NoContent);

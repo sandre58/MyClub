@@ -23,7 +23,12 @@ public sealed class MatchResultJsonConverter : ValueConverter<MatchResult?, stri
         static result => result == null ? 0 : result.GetHashCode(),
         static result => result == null
             ? null
-            : new MatchResult(result.Type, result.Score, result.ExtraTimePlayed, result.PenaltyShootoutScore));
+            : new MatchResult(
+                result.Type,
+                result.Score,
+                result.ExtraTimePlayed,
+                result.PenaltyShootoutScore,
+                result.ConfrontationTiePenaltyShootout));
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MatchResultJsonConverter"/> class.
