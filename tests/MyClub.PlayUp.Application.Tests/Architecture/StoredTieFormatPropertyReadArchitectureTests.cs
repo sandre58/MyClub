@@ -5,9 +5,6 @@
 // -----------------------------------------------------------------------
 
 using FluentAssertions;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Xunit;
 
 namespace MyClub.PlayUp.Application.Tests.Architecture;
@@ -18,156 +15,44 @@ namespace MyClub.PlayUp.Application.Tests.Architecture;
 /// </summary>
 public sealed class StoredTieFormatPropertyReadArchitectureTests
 {
-    private static readonly string[] ProductRoots =
-    [
-        Path.Combine("src", "PlayUp", "MyClub.PlayUp.Application"),
-        Path.Combine("src", "PlayUp", "MyClub.PlayUp.Host"),
-        Path.Combine("src", "PlayUp", "MyClub.PlayUp.Development"),
-        Path.Combine("src", "PlayUp", "MyClub.PlayUp.Domain"),
-        Path.Combine("src", "PlayUp", "MyClub.PlayUp.Infrastructure"),
-    ];
+    private const string ScannerSnippet = """
+        using MyClub.PlayUp.Domain.Rules;
+        using MyClub.PlayUp.Domain.Stages;
 
-    private static readonly string[] AllowListedFileSuffixes =
-    [
-        "src/PlayUp/MyClub.PlayUp.Domain/Rules/TieFormat/TieFormat.cs",
-        "src/PlayUp/MyClub.PlayUp.Domain/Stages/Round.cs",
-        "src/PlayUp/MyClub.PlayUp.Domain/Rules/StageRegulation.cs",
-        "src/PlayUp/MyClub.PlayUp.Infrastructure/Persistence/Configurations/RoundConfiguration.cs",
-    ];
+        namespace MyClub.PlayUp.Application.Tests.Architecture.Snippets;
 
-    private static readonly string[] AllowListedTypeNames =
-    [
-        "StructureViewAssembler",
-        "ApplyStageTieFormatEdits",
-    ];
+        internal static class TieFormatReadScannerSnippet
+        {
+            internal static void WhitelistedResolver(Stage stage, Round round)
+            {
+                _ = Stage.ResolveEffectiveTieFormat(round, stage.Regulation);
+            }
 
-    private static readonly (string Type, string Method)[] AllowListedMethods =
-    [
-        ("Stage", "ResolveEffectiveTieFormat"),
-        ("Stage", "ResolveEffectiveTieFormatForKey"),
-        ("Stage", "ResolveEffectiveDefault"),
-        ("TieFormat", "ResolveEffective"),
-        ("TieFormat", "OrDefaultOneLeg"),
-    ];
+            internal static void ForbiddenDirectAndConditional(Round round)
+            {
+                _ = round.TieFormat;
+                _ = round?.TieFormat;
+            }
+        }
+        """;
 
     [Fact]
     public void Product_code_reads_stored_TieFormat_only_in_whitelisted_members()
     {
-        var repoRoot = FindRepositoryRoot();
-        var violations = new List<string>();
-
-        foreach (var root in ProductRoots)
-        {
-            var directory = Path.Combine(repoRoot, root);
-            if (!Directory.Exists(directory))
-            {
-                continue;
-            }
-
-            foreach (var path in Directory.EnumerateFiles(directory, "*.cs", SearchOption.AllDirectories))
-            {
-                var relative = Path.GetRelativePath(repoRoot, path).Replace('\\', '/');
-                if (ShouldSkipFile(relative))
-                {
-                    continue;
-                }
-
-                var source = File.ReadAllText(path);
-                var tree = CSharpSyntaxTree.ParseText(source, path: relative);
-                var compilationUnit = tree.GetCompilationUnitRoot();
-
-                foreach (var memberAccess in compilationUnit
-                             .DescendantNodes()
-                             .OfType<MemberAccessExpressionSyntax>())
-                {
-                    if (memberAccess.Name.Identifier.Text != "TieFormat")
-                    {
-                        continue;
-                    }
-
-                    if (memberAccess.Expression is IdentifierNameSyntax { Identifier.Text: "TieFormat" })
-                    {
-                        continue;
-                    }
-
-                    if (IsInsideNameOf(memberAccess))
-                    {
-                        continue;
-                    }
-
-                    if (IsInsideTypePropertyDeclaration(memberAccess))
-                    {
-                        continue;
-                    }
-
-                    var (typeName, methodName) = GetEnclosingContext(memberAccess);
-                    if (IsAllowListed(relative, typeName, methodName))
-                    {
-                        continue;
-                    }
-
-                    var line = tree.GetLineSpan(memberAccess.Span).StartLinePosition.Line + 1;
-                    violations.Add($"{relative}:{line} ({typeName}.{methodName})");
-                }
-            }
-        }
-
+        var violations = StoredTieFormatReadScanner.ScanRepository(FindRepositoryRoot());
         violations.Should().BeEmpty(
             "read stored TieFormat via Stage.ResolveEffectiveTieFormat / Stage.ResolveEffectiveDefault / "
             + "Structure DTO assemblers, or extend the explicit whitelist with justification");
     }
 
-    private static bool IsInsideTypePropertyDeclaration(SyntaxNode node) =>
-        node.Ancestors().OfType<PropertyDeclarationSyntax>()
-            .Any(property => property.Identifier.Text == "TieFormat");
-
-    private static bool IsInsideNameOf(SyntaxNode node)
+    [Fact]
+    public void Scanner_flags_direct_and_conditional_reads_only_outside_whitelisted_members()
     {
-        for (var current = node.Parent; current is not null; current = current.Parent)
-        {
-            if (current is InvocationExpressionSyntax invocation
-                && invocation.Expression is IdentifierNameSyntax { Identifier.Text: "nameof" })
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private static (string? TypeName, string? MethodName) GetEnclosingContext(SyntaxNode node)
-    {
-        var type = node.Ancestors().OfType<TypeDeclarationSyntax>().FirstOrDefault();
-        var method = node.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
-        return (type?.Identifier.Text, method?.Identifier.Text);
-    }
-
-    private static bool ShouldSkipFile(string relative) =>
-        relative.Contains("/Migrations/", StringComparison.Ordinal)
-        || relative.Contains("/Persistence/Converters/", StringComparison.Ordinal);
-
-    private static bool IsAllowListed(string relative, string? typeName, string? methodName)
-    {
-        if (AllowListedFileSuffixes.Any(suffix =>
-                relative.Equals(suffix, StringComparison.OrdinalIgnoreCase)))
-        {
-            return true;
-        }
-
-        if (typeName is not null
-            && AllowListedTypeNames.Any(allowed => string.Equals(typeName, allowed, StringComparison.Ordinal)))
-        {
-            return true;
-        }
-
-        if (typeName is not null && methodName is not null)
-        {
-            return AllowListedMethods.Any(pair =>
-                string.Equals(pair.Type, typeName, StringComparison.Ordinal)
-                && string.Equals(pair.Method, methodName, StringComparison.Ordinal));
-        }
-
-        return false;
+        var violations = StoredTieFormatReadScanner.FindViolations(ScannerSnippet, "snippet.cs");
+        violations.Should().Contain(v => v.Contains("ForbiddenDirectAndConditional", StringComparison.Ordinal));
+        violations.Should().HaveCount(2);
+        violations.Should().NotContain(v => v.Contains("WhitelistedResolver", StringComparison.Ordinal));
+        violations.Should().NotContain(v => v.Contains("WhitelistedConditional", StringComparison.Ordinal));
     }
 
     private static string FindRepositoryRoot()
