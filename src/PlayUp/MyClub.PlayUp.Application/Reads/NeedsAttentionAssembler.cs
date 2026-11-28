@@ -355,7 +355,7 @@ public static class NeedsAttentionAssembler
             {
                 var snapshot = FixtureConfrontationSnapshotAssembler.Assemble(fixture, matches);
                 outcome = FixtureOutcomeResolver.Resolve(
-                    TieFormat.OrDefaultOneLeg(round.TieFormat),
+                    Stage.ResolveEffectiveTieFormat(round, source.Regulation),
                     snapshot);
             }
             catch (Exception)

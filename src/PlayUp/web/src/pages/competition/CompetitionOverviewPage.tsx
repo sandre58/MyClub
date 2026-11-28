@@ -1621,15 +1621,17 @@ function buildGameRegulationTextFacts(
   });
 
   if (rules.formatKind === 'Cup') {
-    if (rules.numberOfLegs >= 2) {
-      push(
-        rules.aggregateScoring
+    const legsLabel =
+      rules.numberOfLegs >= 2
+        ? rules.aggregateScoring
           ? t('dimensions.regulation.twoLegsAggregate')
-          : t('dimensions.regulation.twoLegs'),
-      );
-    } else {
-      push(t('dimensions.regulation.elimination'));
-    }
+          : t('dimensions.regulation.twoLegs')
+        : t('dimensions.regulation.elimination');
+    push(
+      rules.variesByRound
+        ? `${legsLabel} · ${t('dimensions.regulation.variesByRound')}`
+        : legsLabel,
+    );
     push(duration);
 
     const extras: string[] = [];

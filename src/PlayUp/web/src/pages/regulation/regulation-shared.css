@@ -787,6 +787,25 @@
   background: color-mix(in srgb, var(--color-attention) 12%, var(--color-surface-secondary));
 }
 
+.tie-format-editor fieldset:disabled {
+  opacity: 1;
+}
+
+.tie-format-editor fieldset:disabled .ds-toggle-button-group[data-disabled='true'],
+.tie-format-editor fieldset:disabled .ds-toggle-button-group__option:disabled,
+.tie-format-editor fieldset:disabled .ds-switch-panel[data-disabled='true'] {
+  opacity: 1;
+}
+
+.tie-format-editor fieldset:disabled .ds-toggle-button-group__option[data-selected='false'] {
+  color: var(--color-text-secondary);
+}
+
+.tie-format-editor fieldset:disabled .ds-toggle-button-group__option[data-selected='true'] {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
 .tie-format-editor__detail-body {
   display: flex;
   flex: 1 1 auto;

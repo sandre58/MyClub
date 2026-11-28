@@ -1,3 +1,4 @@
+import type { ReplaceRoundTieFormatRequest } from '../../types';
 import { cloneTie, sameTie, type TieFormState } from './tieFormatForm';
 
 export type TieFormatSessionFlags = {
@@ -84,6 +85,13 @@ export function roundPersistenceUpdates(
     if (!baseline) {
       continue;
     }
+    if (
+      roundEffectivelyInherits(roundId, flags) &&
+      !flags.inheritsAtLoad[roundId]
+    ) {
+      updates[roundId] = phaseForm;
+      continue;
+    }
     const target = isRoundCustomized(roundId, flags)
       ? roundForms[roundId]
       : phaseForm;
@@ -104,9 +112,10 @@ export function shouldShowRoundNavigation(
   return canEditRounds && roundCount > 1;
 }
 
-/** Single-round shape with stored round tie differing from stage default at load. */
+/** Single-round historical drift: DTO says inheriting but stored copy still diverges from phase at load. */
 export function singleRoundDriftRoundId(
   roundIds: string[],
+  inheritsAtLoad: Record<string, boolean>,
   baselineRounds: Record<string, TieFormState>,
   baselinePhase: TieFormState,
 ): string | null {
@@ -114,8 +123,44 @@ export function singleRoundDriftRoundId(
     return null;
   }
   const roundId = roundIds[0]!;
-  if (inheritsFromPhaseAtLoad(roundId, baselineRounds, baselinePhase)) {
+  if (!inheritsAtLoad[roundId]) {
+    return null;
+  }
+  const round = baselineRounds[roundId];
+  if (!round || sameTie(round, baselinePhase)) {
     return null;
   }
   return roundId;
+}
+
+export type AtomicRoundEdit = ReplaceRoundTieFormatRequest & {
+  roundId: string;
+};
+
+/** PUT /tie-format-edits round payloads (inheritors at load omit edits on default-only saves). */
+export function buildAtomicRoundEdits(
+  roundIds: string[],
+  inheritsAtLoad: Record<string, boolean>,
+  flags: TieFormatSessionFlags,
+  phaseForm: TieFormState,
+  roundForms: Record<string, TieFormState>,
+  toRoundRequest: (
+    form: TieFormState,
+    clear: boolean,
+  ) => ReplaceRoundTieFormatRequest,
+): AtomicRoundEdit[] {
+  return roundIds.flatMap((roundId) => {
+    const inherits = roundEffectivelyInherits(roundId, flags);
+    if (inherits) {
+      if (inheritsAtLoad[roundId]) {
+        return [];
+      }
+      return [{ roundId, ...toRoundRequest(phaseForm, true) }];
+    }
+    const form = roundForms[roundId];
+    if (!form) {
+      return [];
+    }
+    return [{ roundId, ...toRoundRequest(form, false) }];
+  });
 }

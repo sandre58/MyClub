@@ -8,6 +8,7 @@ using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Reads;
 using MyClub.PlayUp.Application.Stages;
+using MyClub.PlayUp.Application.Stages.ApplyStageTieFormatEdits;
 using MyClub.PlayUp.Application.Stages.CascadeReplace;
 using MyClub.PlayUp.Application.Stages.ReleaseResolution;
 using MyClub.PlayUp.Domain.Common;
@@ -1374,6 +1375,36 @@ public sealed partial class UseCaseExecutor
                 var competition = await RequireCompetitionAsync(stage.CompetitionId, innerToken)
                     .ConfigureAwait(false);
                 ReplaceRoundTieFormat.Execute(stage, competition, roundId, tieFormat, clock);
+                await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
+            },
+            cancellationToken).ConfigureAwait(false);
+
+    /// <summary>
+    /// Atomically applies default and per-round TieFormat edits (single Ready → Draft when needed).
+    /// </summary>
+    public async Task ApplyStageTieFormatEditsAsync(
+        StageId stageId,
+        TieFormat? defaultTieFormat,
+        bool replaceDefault,
+        IReadOnlyList<StageTieFormatRoundEdit> roundEdits,
+        CancellationToken cancellationToken = default) =>
+        await ExecuteOnStageCompetitionAsync(
+            stageId,
+            async innerToken =>
+            {
+                var stage = await RequireStageAsync(stageId, innerToken).ConfigureAwait(false);
+                var competition = await RequireCompetitionAsync(stage.CompetitionId, innerToken)
+                    .ConfigureAwait(false);
+                var stageMatches = await matches.ListByStageForUpdateAsync(stageId, innerToken)
+                    .ConfigureAwait(false);
+                ApplyStageTieFormatEdits.Execute(
+                    stage,
+                    competition,
+                    defaultTieFormat,
+                    replaceDefault,
+                    roundEdits,
+                    stageMatches,
+                    clock);
                 await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
             },
             cancellationToken).ConfigureAwait(false);

@@ -7,11 +7,18 @@ import {
   LegsStatIcon,
   PenaltiesIcon,
   PointsRulesIcon,
+  RoundsStatIcon,
   SortingRulesIcon,
   TimerIcon,
 } from '../../../design-system/icons/contentIcons';
 import { PinIcon } from '../../../design-system/icons/metaIcons';
 import { Chip } from '../../../design-system/components/Chip';
+import {
+  sameTie,
+  tieFormFromSegment,
+  tieFormFromSummary,
+  type TieFormState,
+} from '../../stage/tieFormatForm';
 import type {
   RankingCriterion,
   StructureConfrontationSegment,
@@ -22,9 +29,12 @@ type Translate = (key: string, options?: Record<string, unknown>) => string;
 
 export type RegulationDigestToken = {
   key: string;
-  icon: ReactNode;
+  icon: ReactNode | null;
   content: ReactNode;
+  variant?: 'default' | 'confrontation-row';
 };
+
+const MAX_VISIBLE_ROUND_LINES = 6;
 
 function rankingCriterionLabel(criterion: RankingCriterion, t: Translate) {
   return t(`criteria.${criterion}`, { defaultValue: criterion });
@@ -192,18 +202,220 @@ function confrontationItems(
   return items;
 }
 
+export function confrontationPhaseForm(
+  stage: Pick<StructureStageHubSummary, 'defaultTieFormat'>,
+): TieFormState {
+  return tieFormFromSummary(stage.defaultTieFormat);
+}
+
+export function confrontationFormatDiffersFromPhase(
+  stage: Pick<
+    StructureStageHubSummary,
+    'confrontationSegments' | 'defaultTieFormat'
+  >,
+): boolean {
+  const phaseForm = confrontationPhaseForm(stage);
+  const segments = stage.confrontationSegments ?? [];
+  if (segments.length === 0) {
+    return false;
+  }
+  return segments.some(
+    (segment) => !sameTie(tieFormFromSegment(segment), phaseForm),
+  );
+}
+
 export function confrontationFormatScopeHintKey(
-  stage: Pick<StructureStageHubSummary, 'confrontationSegments'>,
+  stage: Pick<
+    StructureStageHubSummary,
+    'confrontationSegments' | 'defaultTieFormat'
+  >,
 ): string {
-  const segmentCount = stage.confrontationSegments?.length ?? 0;
-  return segmentCount > 1
+  return confrontationFormatDiffersFromPhase(stage)
     ? 'fiche.confrontationFormatHint.perRound'
     : 'fiche.confrontationFormatHint.uniform';
 }
 
+export function confrontationFormatScopeHintAttention(
+  stage: Pick<
+    StructureStageHubSummary,
+    'confrontationSegments' | 'defaultTieFormat'
+  >,
+): boolean {
+  return confrontationFormatDiffersFromPhase(stage);
+}
+
+type ConfrontationFactChip = {
+  key: string;
+  icon: ReactNode;
+  content: ReactNode;
+};
+
+function withoutRuleLabel(rule: string, tStructure: Translate): string {
+  return tStructure('fiche.confrontationWithout', { rule });
+}
+
+export function confrontationFactsFromForm(
+  form: TieFormState,
+  keyPrefix: string,
+  tReg: Translate,
+): ConfrontationFactChip[] {
+  const twoLegs = form.numberOfLegs === 2;
+  const chips: ConfrontationFactChip[] = [
+    {
+      key: `${keyPrefix}-legs`,
+      icon: twoLegs ? (
+        <LegsStatIcon size="sm" aria-hidden="true" />
+      ) : (
+        <ArrowRightIcon size="sm" aria-hidden="true" />
+      ),
+      content: twoLegs ? tReg('tokens.tieTwoLegs') : tReg('tokens.tieOneLeg'),
+    },
+  ];
+  if (twoLegs && form.aggregateScoring) {
+    chips.push({
+      key: `${keyPrefix}-agg`,
+      icon: <AggregateIcon size="sm" aria-hidden="true" />,
+      content: tReg('tokens.tieAggregate'),
+    });
+  }
+  if (twoLegs && form.hasAwayGoalsRule) {
+    chips.push({
+      key: `${keyPrefix}-away`,
+      icon: <PinIcon size="sm" aria-hidden="true" />,
+      content: tReg('tokens.tieAwayGoals'),
+    });
+  }
+  if (form.hasExtraTimeRule) {
+    chips.push({
+      key: `${keyPrefix}-et`,
+      icon: <ExtraTimeIcon size="sm" aria-hidden="true" />,
+      content: tReg('tokens.tieExtraTime'),
+    });
+  }
+  if (form.hasPenaltyShootoutRule) {
+    chips.push({
+      key: `${keyPrefix}-tab`,
+      icon: <PenaltiesIcon size="sm" aria-hidden="true" />,
+      content: tReg('tokens.tiePenalties'),
+    });
+  }
+  return chips;
+}
+
+export function confrontationDeltaFactsFromForms(
+  round: TieFormState,
+  phase: TieFormState,
+  keyPrefix: string,
+  tStructure: Translate,
+  tReg: Translate,
+): ConfrontationFactChip[] {
+  const chips: ConfrontationFactChip[] = [];
+
+  if (round.numberOfLegs !== phase.numberOfLegs) {
+    const twoLegs = round.numberOfLegs === 2;
+    chips.push({
+      key: `${keyPrefix}-legs`,
+      icon: twoLegs ? (
+        <LegsStatIcon size="sm" aria-hidden="true" />
+      ) : (
+        <ArrowRightIcon size="sm" aria-hidden="true" />
+      ),
+      content: twoLegs ? tReg('tokens.tieTwoLegs') : tReg('tokens.tieOneLeg'),
+    });
+  }
+
+  if (round.numberOfLegs === 2) {
+    if (round.aggregateScoring !== phase.aggregateScoring) {
+      chips.push({
+        key: `${keyPrefix}-agg`,
+        icon: <AggregateIcon size="sm" aria-hidden="true" />,
+        content: round.aggregateScoring
+          ? tReg('tokens.tieAggregate')
+          : withoutRuleLabel(tReg('tokens.tieAggregate'), tStructure),
+      });
+    }
+    if (round.hasAwayGoalsRule !== phase.hasAwayGoalsRule) {
+      chips.push({
+        key: `${keyPrefix}-away`,
+        icon: <PinIcon size="sm" aria-hidden="true" />,
+        content: round.hasAwayGoalsRule
+          ? tReg('tokens.tieAwayGoals')
+          : withoutRuleLabel(tReg('tokens.tieAwayGoals'), tStructure),
+      });
+    }
+  }
+
+  if (round.hasExtraTimeRule !== phase.hasExtraTimeRule) {
+    chips.push({
+      key: `${keyPrefix}-et`,
+      icon: <ExtraTimeIcon size="sm" aria-hidden="true" />,
+      content: round.hasExtraTimeRule
+        ? tReg('tokens.tieExtraTime')
+        : withoutRuleLabel(tReg('tokens.tieExtraTime'), tStructure),
+    });
+  }
+  if (round.hasPenaltyShootoutRule !== phase.hasPenaltyShootoutRule) {
+    chips.push({
+      key: `${keyPrefix}-tab`,
+      icon: <PenaltiesIcon size="sm" aria-hidden="true" />,
+      content: round.hasPenaltyShootoutRule
+        ? tReg('tokens.tiePenalties')
+        : withoutRuleLabel(tReg('tokens.tiePenalties'), tStructure),
+    });
+  }
+
+  return chips;
+}
+
+function confrontationRowContent(
+  leading: ReactNode | null,
+  chips: ConfrontationFactChip[],
+): ReactNode {
+  return (
+    <span className="structure-regulation-digest__confrontation-row">
+      {leading}
+      {chips.map((chip) => (
+        <span
+          key={chip.key}
+          className="structure-regulation-digest__confrontation-chip"
+        >
+          <span className="structure-regulation-digest__fact-icon" aria-hidden>
+            {chip.icon}
+          </span>
+          <span>{chip.content}</span>
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function roundNameLead(roundName: string): ReactNode {
+  return (
+    <span className="structure-regulation-digest__confrontation-chip">
+      <span className="structure-regulation-digest__fact-icon" aria-hidden>
+        <RoundsStatIcon size="sm" aria-hidden="true" />
+      </span>
+      <span className="structure-regulation-digest__segment">{roundName}</span>
+    </span>
+  );
+}
+
+function confrontationRowToken(
+  key: string,
+  content: ReactNode,
+): RegulationDigestToken {
+  return {
+    key,
+    icon: null,
+    content,
+    variant: 'confrontation-row',
+  };
+}
+
 export function buildConfrontationDigestTokens(
   stage: StructureStageHubSummary,
-  t: Translate,
+  tStructure: Translate,
+  tReg: Translate,
 ): RegulationDigestToken[] {
   const segments = [...(stage.confrontationSegments ?? [])].sort((a, b) => {
     const ao = a.rounds[0]?.sortOrder ?? 0;
@@ -220,28 +432,85 @@ export function buildConfrontationDigestTokens(
       hasTieExtraTime: stage.hasTieExtraTime ?? false,
       hasTiePenaltyShootout: stage.hasTiePenaltyShootout ?? false,
     };
-    return confrontationItems(fallback, 'default', t);
+    return confrontationItems(fallback, 'default', tReg);
   }
 
-  if (segments.length === 1) {
-    return confrontationItems(segments[0]!, 'seg-0', t);
-  }
-
-  const tokens: RegulationDigestToken[] = [];
-  segments.forEach((seg, index) => {
-    const title =
-      seg.rounds
-        .map((r) => r.name)
-        .filter(Boolean)
-        .join(' / ') || `§${index + 1}`;
-    tokens.push({
-      key: `seg-${index}-title`,
-      icon: <ArrowRightIcon size="sm" aria-hidden="true" />,
-      content: (
-        <span className="structure-regulation-digest__segment">{title}</span>
+  const phaseForm = confrontationPhaseForm(stage);
+  const tokens: RegulationDigestToken[] = [
+    confrontationRowToken(
+      'phase-row',
+      confrontationRowContent(
+        null,
+        confrontationFactsFromForm(phaseForm, 'phase', tReg),
       ),
-    });
-    tokens.push(...confrontationItems(seg, `seg-${index}`, t));
-  });
+    ),
+  ];
+
+  type RoundRow = {
+    roundId: string;
+    name: string;
+    sortOrder: number;
+    form: TieFormState;
+  };
+  const differingRounds: RoundRow[] = [];
+
+  for (const segment of segments) {
+    const segmentForm = tieFormFromSegment(segment);
+    if (sameTie(segmentForm, phaseForm)) {
+      continue;
+    }
+    for (const round of [...segment.rounds].sort(
+      (a, b) => a.sortOrder - b.sortOrder,
+    )) {
+      differingRounds.push({
+        roundId: round.roundId,
+        name: round.name || round.roundId,
+        sortOrder: round.sortOrder,
+        form: segmentForm,
+      });
+    }
+  }
+
+  differingRounds.sort((a, b) => a.sortOrder - b.sortOrder);
+
+  const visible =
+    differingRounds.length > MAX_VISIBLE_ROUND_LINES
+      ? differingRounds.slice(0, MAX_VISIBLE_ROUND_LINES - 1)
+      : differingRounds;
+
+  for (const round of visible) {
+    const deltaChips = confrontationDeltaFactsFromForms(
+      round.form,
+      phaseForm,
+      `round-${round.roundId}`,
+      tStructure,
+      tReg,
+    );
+    tokens.push(
+      confrontationRowToken(
+        `round-${round.roundId}`,
+        confrontationRowContent(roundNameLead(round.name), deltaChips),
+      ),
+    );
+  }
+
+  const hiddenCount = differingRounds.length - visible.length;
+  if (hiddenCount > 0) {
+    tokens.push(
+      confrontationRowToken(
+        'rounds-overflow',
+        confrontationRowContent(null, [
+          {
+            key: 'rounds-overflow',
+            icon: <RoundsStatIcon size="sm" aria-hidden="true" />,
+            content: tStructure('fiche.confrontationMoreRounds', {
+              count: hiddenCount,
+            }),
+          },
+        ]),
+      ),
+    );
+  }
+
   return tokens;
 }

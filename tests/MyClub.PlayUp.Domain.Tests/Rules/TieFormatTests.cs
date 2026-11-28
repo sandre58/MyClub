@@ -129,4 +129,12 @@ public sealed class TieFormatTests
         var twoLegs = new TieFormat(TieFormat.TwoLegs, aggregateScoring: true);
         TieFormat.OrDefaultOneLeg(twoLegs).Should().BeSameAs(twoLegs);
     }
+
+    [Fact]
+    public void ResolveEffective_inherits_stage_default_then_default_one_leg()
+    {
+        var stageDefault = new TieFormat(TieFormat.TwoLegs, aggregateScoring: true);
+        TieFormat.ResolveEffective(null, stageDefault).Should().Be(stageDefault);
+        TieFormat.ResolveEffective(null, null).Should().Be(TieFormat.DefaultOneLeg);
+    }
 }

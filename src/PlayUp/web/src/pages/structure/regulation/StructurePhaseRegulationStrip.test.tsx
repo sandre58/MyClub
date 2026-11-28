@@ -96,9 +96,23 @@ describe('StructurePhaseRegulationStrip', () => {
   it('shows confrontation format scope hint under Format de confrontation', () => {
     renderStrip({
       stage: baseStage({
+        defaultTieFormat: {
+          numberOfLegs: 2,
+          aggregateScoring: true,
+          hasAwayGoalsRule: false,
+          hasTieExtraTime: false,
+          hasTiePenaltyShootout: false,
+        },
         confrontationSegments: [
           {
-            rounds: [{ roundId: 'a', name: 'Finale', sortOrder: 1 }],
+            rounds: [
+              {
+                roundId: 'a',
+                name: 'Finale',
+                sortOrder: 1,
+                inheritsDefaultTieFormat: true,
+              },
+            ],
             numberOfLegs: 1,
             aggregateScoring: false,
             hasAwayGoalsRule: false,
@@ -106,7 +120,14 @@ describe('StructurePhaseRegulationStrip', () => {
             hasTiePenaltyShootout: false,
           },
           {
-            rounds: [{ roundId: 'b', name: 'Demi', sortOrder: 0 }],
+            rounds: [
+              {
+                roundId: 'b',
+                name: 'Demi',
+                sortOrder: 0,
+                inheritsDefaultTieFormat: false,
+              },
+            ],
             numberOfLegs: 2,
             aggregateScoring: true,
             hasAwayGoalsRule: false,
@@ -120,6 +141,154 @@ describe('StructurePhaseRegulationStrip', () => {
     expect(
       screen.getByText('Certains tours ont leur propre format.'),
     ).toBeInTheDocument();
+  });
+
+  it('renders confrontation digest in main style without colon separators', () => {
+    renderStrip({
+      stage: baseStage({
+        defaultTieFormat: {
+          numberOfLegs: 2,
+          aggregateScoring: true,
+          hasAwayGoalsRule: false,
+          hasTieExtraTime: false,
+          hasTiePenaltyShootout: true,
+        },
+        confrontationSegments: [
+          {
+            rounds: [
+              {
+                roundId: 'f',
+                name: 'Finale',
+                sortOrder: 0,
+                inheritsDefaultTieFormat: false,
+              },
+            ],
+            numberOfLegs: 1,
+            aggregateScoring: false,
+            hasAwayGoalsRule: false,
+            hasTieExtraTime: false,
+            hasTiePenaltyShootout: true,
+          },
+        ],
+      }),
+    });
+
+    const confrontationPanel = document.getElementById('tile-confrontation')!;
+    const panelText = confrontationPanel.textContent ?? '';
+    expect(panelText).toContain('Aller-retour');
+    expect(panelText).toContain('TAB');
+    expect(panelText).toContain('Match unique');
+    expect(panelText).not.toMatch(/Phase\s*:/);
+    expect(panelText).not.toContain('·');
+    expect(panelText).not.toContain('+');
+
+    const rows = confrontationPanel.querySelectorAll(
+      '.structure-regulation-digest__fact--row',
+    );
+    expect(rows.length).toBeGreaterThanOrEqual(2);
+
+    const finaleRow = within(confrontationPanel)
+      .getByText('Finale', { exact: true })
+      .closest('.structure-regulation-digest__fact--row') as HTMLElement;
+    expect(finaleRow.textContent).toContain('Match unique');
+    expect(finaleRow.textContent).not.toContain('Aller-retour');
+  });
+
+  it('shows sans TAB on a round row when phase has shootout and round does not', () => {
+    renderStrip({
+      stage: baseStage({
+        defaultTieFormat: {
+          numberOfLegs: 2,
+          aggregateScoring: true,
+          hasAwayGoalsRule: false,
+          hasTieExtraTime: false,
+          hasTiePenaltyShootout: true,
+        },
+        confrontationSegments: [
+          {
+            rounds: [
+              {
+                roundId: 'f',
+                name: 'Finale',
+                sortOrder: 0,
+                inheritsDefaultTieFormat: false,
+              },
+            ],
+            numberOfLegs: 1,
+            aggregateScoring: false,
+            hasAwayGoalsRule: false,
+            hasTieExtraTime: false,
+            hasTiePenaltyShootout: false,
+          },
+        ],
+      }),
+    });
+
+    const confrontationPanel = document.getElementById('tile-confrontation')!;
+    const finaleRow = within(confrontationPanel)
+      .getByText('Finale', { exact: true })
+      .closest('.structure-regulation-digest__fact--row') as HTMLElement;
+    expect(finaleRow.textContent).toMatch(/sans TAB/);
+  });
+
+  it('keeps uniform confrontation hint when stored overrides match phase signature', () => {
+    renderStrip({
+      stage: baseStage({
+        defaultTieFormat: {
+          numberOfLegs: 2,
+          aggregateScoring: true,
+          hasAwayGoalsRule: false,
+          hasTieExtraTime: false,
+          hasTiePenaltyShootout: false,
+        },
+        confrontationSegments: [
+          {
+            rounds: [
+              {
+                roundId: 'a',
+                name: 'Finale',
+                sortOrder: 0,
+                inheritsDefaultTieFormat: false,
+              },
+            ],
+            numberOfLegs: 2,
+            aggregateScoring: true,
+            hasAwayGoalsRule: false,
+            hasTieExtraTime: false,
+            hasTiePenaltyShootout: false,
+          },
+          {
+            rounds: [
+              {
+                roundId: 'b',
+                name: 'Demi',
+                sortOrder: 1,
+                inheritsDefaultTieFormat: true,
+              },
+            ],
+            numberOfLegs: 2,
+            aggregateScoring: true,
+            hasAwayGoalsRule: false,
+            hasTieExtraTime: false,
+            hasTiePenaltyShootout: false,
+          },
+        ],
+      }),
+    });
+
+    expect(
+      screen.getByText('Même format sur tous les tours.'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText('Certains tours ont leur propre format.'),
+    ).not.toBeInTheDocument();
+    const confrontationPanel = document.getElementById('tile-confrontation')!;
+    expect(
+      within(confrontationPanel).getByText('Aller-retour'),
+    ).toBeInTheDocument();
+    expect(
+      within(confrontationPanel).queryByText('Finale', { exact: true }),
+    ).not.toBeInTheDocument();
   });
 
   it('shows phase-specific binding hint when match rules are not frame-bound', () => {

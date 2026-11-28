@@ -11,6 +11,7 @@ using MyClub.PlayUp.Application.Abstractions;
 using MyClub.PlayUp.Application.Competitions;
 using MyClub.PlayUp.Application.Pipeline;
 using MyClub.PlayUp.Application.Stages;
+using MyClub.PlayUp.Application.Stages.ApplyStageTieFormatEdits;
 using MyClub.PlayUp.Application.Tests.Common;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Competitions;
@@ -314,6 +315,29 @@ public sealed class UseCaseExecutorRest5ReplaceRulesTests
         await executor.ReplaceRoundTieFormatAsync(scenario.Stage.Id, roundId, tieFormat);
 
         scenario.Stage.Rounds[0].TieFormat.Should().Be(tieFormat);
+        unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ApplyStageTieFormatEditsAsync_saves_once_under_stage_competition_lockAsync()
+    {
+        var scenario = CreateDraftCupStage();
+        scenario.Stage.Prepare(_clock);
+        var (stages, matches, competitions, unitOfWork) = CreateRepositories();
+        SetupStageWriteEnvelope(stages, matches, competitions, unitOfWork, scenario.Competition, scenario.Stage);
+        var roundId = scenario.Stage.Rounds[0].Id;
+        var tieFormat = new TieFormat(TieFormat.TwoLegs, aggregateScoring: true);
+
+        var executor = CreateExecutor(stages, matches, competitions, unitOfWork);
+        await executor.ApplyStageTieFormatEditsAsync(
+            scenario.Stage.Id,
+            tieFormat,
+            replaceDefault: true,
+            [new StageTieFormatRoundEdit(roundId, null)]);
+
+        scenario.Stage.Status.Should().Be(StageStatus.Draft);
+        scenario.Stage.Regulation.TieFormat.Should().Be(tieFormat);
+        scenario.Stage.Rounds[0].TieFormat.Should().BeNull();
         unitOfWork.Verify(uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 

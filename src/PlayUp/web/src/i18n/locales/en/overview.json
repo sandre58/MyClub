@@ -41,6 +41,7 @@
       "elimination": "Knockout",
       "twoLegs": "2 legs",
       "twoLegsAggregate": "2 legs · aggregate score",
+      "variesByRound": "Varies by round",
       "extraTime": "Extra time",
       "penalties": "Penalties",
       "swissPlannedRounds_one": "{{count}} planned matchday",

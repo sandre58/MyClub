@@ -41,6 +41,7 @@
       "elimination": "Élimination directe",
       "twoLegs": "2 manches",
       "twoLegsAggregate": "2 manches · cumul des scores",
+      "variesByRound": "Varie selon le tour",
       "extraTime": "Prolongation",
       "penalties": "Tirs au but",
       "swissPlannedRounds_one": "{{count}} journée planifiée",

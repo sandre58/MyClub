@@ -251,6 +251,33 @@ public sealed class StructureMatchProductionPresentationAssemblerTests
     }
 
     [Fact]
+    public void Cup_entry_round_two_legs_overrides_phase_default_one_leg_for_gauge_capacity()
+    {
+        var situation = TestCompetition.Create("Cup-entry-2L", _clock)
+            .WithTeams("Alpha", "Bravo")
+            .WithStructure(StructureIntent.Cup(2));
+        var stage = situation.RequirePrimaryStage();
+        stage.ReplaceRegulation(
+            stage.Regulation.WithTieFormat(new TieFormat(TieFormat.SingleLeg, aggregateScoring: false)),
+            _clock);
+        stage.ReplaceRoundTieFormat(
+            stage.Rounds[0].Id,
+            new TieFormat(TieFormat.TwoLegs, aggregateScoring: true),
+            _clock);
+
+        var entries = situation.Competition.Entries.Select(entry => entry.Id).ToArray();
+        stage.ApplyResolvedEntry(stage.Slots[0].SlotKey, entries[0], _clock);
+        stage.ApplyResolvedEntry(stage.Slots[1].SlotKey, entries[1], _clock);
+        stage.Prepare(_clock);
+
+        var presentation = StructureViewAssembler.Assemble(situation.Competition, [stage]).Stages[0]
+            .MatchProductionPresentation;
+
+        presentation.Should().NotBeNull();
+        presentation!.PrimaryGauge.Capacity.Should().Be(2);
+    }
+
+    [Fact]
     public void Cup_mono_round_exhausted_primary_success_without_follow_up()
     {
         var situation = TestCompetition.Create("Cup", _clock)

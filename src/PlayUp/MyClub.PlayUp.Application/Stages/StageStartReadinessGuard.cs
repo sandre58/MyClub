@@ -206,19 +206,22 @@ internal static class StageStartReadinessGuard
             return false;
         }
 
-        var legs = TieFormat.OrDefaultOneLeg(stage.Regulation.TieFormat).NumberOfLegs;
-        if (legs < 1)
-        {
-            legs = 1;
-        }
-
-        var startedPairCount = stage.BracketPairs.Count(pair => BracketPairPlacementStarted(stage, pair));
-        if (startedPairCount == 0)
+        var startedPairs = stage.BracketPairs
+            .Where(pair => BracketPairPlacementStarted(stage, pair))
+            .ToArray();
+        if (startedPairs.Length == 0)
         {
             return false;
         }
 
-        var targetMatchSlots = startedPairCount * legs;
+        var targetMatchSlots = startedPairs.Sum(pair =>
+        {
+            var entryRound = stage.FindRoundForConfrontationKey(pair.PairKey);
+            var legs = entryRound is not null
+                ? CupConfrontationMaterializer.ExpectedLegsForRound(stage, entryRound)
+                : Stage.ResolveEffectiveDefault(stage.Regulation).NumberOfLegs;
+            return legs > 0 ? legs : 1;
+        });
         return StructureSkeleton.CountAttachedMatches(stage) < targetMatchSlots;
     }
 

@@ -542,7 +542,7 @@ public static class BackfillResolutionProvenance
             return false;
         }
 
-        var tieFormat = TieFormat.OrDefaultOneLeg(round.TieFormat);
+        var tieFormat = Stage.ResolveEffectiveTieFormat(round, source.Regulation);
         var fixtureMatches = matches.Where(match => fixture.MatchIds.Contains(match.Id)).ToArray();
         if (fixtureMatches.Length != tieFormat.NumberOfLegs)
         {

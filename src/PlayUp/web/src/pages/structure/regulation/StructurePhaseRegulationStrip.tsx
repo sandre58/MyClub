@@ -23,6 +23,7 @@ import {
   buildConfrontationDigestTokens,
   buildMatchDigestTokens,
   buildStandingDigestTokens,
+  confrontationFormatScopeHintAttention,
   confrontationFormatScopeHintKey,
 } from './structureRegulationDigest.build';
 import { RegulationDigestFacts } from './structureRegulationDigest';
@@ -60,6 +61,7 @@ function RegulationDigestSection({
   onEdit,
   bindingHint,
   bindingPhaseSpecific,
+  bindingHintAttention,
   tokens,
   factsAriaLabel,
   issues,
@@ -72,13 +74,14 @@ function RegulationDigestSection({
   onEdit?: () => void;
   bindingHint?: string;
   bindingPhaseSpecific?: boolean;
+  bindingHintAttention?: boolean;
   tokens: ReturnType<typeof buildMatchDigestTokens>;
   factsAriaLabel: string;
   issues?: ReactNode;
 }) {
   const bindingHintClass = [
     'structure-regulation-digest__binding-hint',
-    bindingPhaseSpecific
+    bindingPhaseSpecific || bindingHintAttention
       ? 'structure-regulation-digest__binding-hint--phase'
       : null,
   ]
@@ -220,7 +223,8 @@ export function StructurePhaseRegulationStrip({
         editLabel={t('fiche.edit')}
         onEdit={canEditTie ? onEditConfrontation : undefined}
         bindingHint={t(confrontationFormatScopeHintKey(stage))}
-        tokens={buildConfrontationDigestTokens(stage, tReg)}
+        bindingHintAttention={confrontationFormatScopeHintAttention(stage)}
+        tokens={buildConfrontationDigestTokens(stage, t, tReg)}
         factsAriaLabel={t('fiche.tiles.confrontation')}
         issues={confrontationIssues}
       />,

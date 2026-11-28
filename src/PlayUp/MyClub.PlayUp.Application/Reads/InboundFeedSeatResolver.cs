@@ -301,7 +301,7 @@ internal static class InboundFeedSeatResolver
         {
             var snapshot = FixtureConfrontationSnapshotAssembler.Assemble(fixture, slices);
             var outcome = FixtureOutcomeResolver.Resolve(
-                TieFormat.OrDefaultOneLeg(round.TieFormat),
+                Stage.ResolveEffectiveTieFormat(round, sourceStage.Regulation),
                 snapshot);
             var instruction = ProgressionApplier.Apply(path, path.SourcePairKey, outcome);
             return instruction.EntryId;

@@ -33,7 +33,7 @@ public sealed class RoundTieFormatTests
     }
 
     [Fact]
-    public void AddRound_materializes_stage_default_tie_format()
+    public void AddRound_leaves_tie_format_null_to_inherit_stage_default()
     {
         // Arrange
         var defaultFormat = new TieFormat(2, true, new AwayGoalsRule());
@@ -43,10 +43,8 @@ public sealed class RoundTieFormatTests
         var round = stage.AddRound("QF", _clock);
 
         // Assert
-        round.TieFormat.Should().Be(defaultFormat);
-        ReferenceEquals(round.TieFormat, stage.Regulation.TieFormat).Should().BeFalse();
-        ReferenceEquals(round.TieFormat!.AwayGoalsRule, stage.Regulation.TieFormat!.AwayGoalsRule)
-            .Should().BeFalse();
+        round.TieFormat.Should().BeNull();
+        Stage.ResolveEffectiveTieFormat(round, stage.Regulation).Should().Be(defaultFormat);
     }
 
     [Fact]
@@ -70,13 +68,16 @@ public sealed class RoundTieFormatTests
     }
 
     [Fact]
-    public void Round_tie_format_stays_unchanged_when_stage_default_is_replaced()
+    public void Inherited_round_follows_stage_default_when_default_is_replaced()
     {
         // Arrange
         var initialDefault = new TieFormat(2, true, new AwayGoalsRule());
         var stage = CreateCupStage(initialDefault);
-        var round = stage.AddRound("QF", _clock);
-        var roundSnapshot = round.TieFormat;
+        var inheriting = stage.AddRound("QF", _clock);
+        var overriding = stage.AddRound(
+            "SF",
+            new TieFormat(1, false, extraTimeRule: new ExtraTimeRule()),
+            _clock);
 
         // Act
         stage.ReplaceRegulation(
@@ -85,8 +86,10 @@ public sealed class RoundTieFormatTests
 
         // Assert
         stage.Regulation.TieFormat!.NumberOfLegs.Should().Be(1);
-        round.TieFormat.Should().Be(roundSnapshot);
-        round.TieFormat!.NumberOfLegs.Should().Be(2);
+        inheriting.TieFormat.Should().BeNull();
+        Stage.ResolveEffectiveTieFormat(inheriting, stage.Regulation).NumberOfLegs.Should().Be(1);
+        overriding.TieFormat!.NumberOfLegs.Should().Be(1);
+        overriding.TieFormat!.ExtraTimeRule.Should().NotBeNull();
     }
 
     [Fact]

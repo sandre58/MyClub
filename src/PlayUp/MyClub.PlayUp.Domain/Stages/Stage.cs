@@ -287,6 +287,18 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
+    /// Resolves the effective TieFormat for a round using living inheritance.
+    /// </summary>
+    public static TieFormat ResolveEffectiveTieFormat(Round round, StageRegulation regulation) =>
+        TieFormat.ResolveEffective(round.TieFormat, regulation.TieFormat);
+
+    /// <summary>
+    /// Resolves the effective TieFormat when no round is available (stage default, else <see cref="TieFormat.DefaultOneLeg"/>).
+    /// </summary>
+    public static TieFormat ResolveEffectiveDefault(StageRegulation regulation) =>
+        TieFormat.ResolveEffective(null, regulation.TieFormat);
+
+    /// <summary>
     /// Replaces the stage regulation as a whole (specialization). Unbinds heritable parts that change.
     /// Allowed in Draft only (structure locked from Ready).
     /// </summary>
@@ -2625,16 +2637,16 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
-    /// Adds a round to the stage, materializing <see cref="StageRegulation.TieFormat"/> when present.
+    /// Adds a round to the stage; the round TieFormat stays <see langword="null"/> until explicitly set.
     /// </summary>
     /// <param name="name">The round name.</param>
     /// <param name="clock">The clock used for domain events.</param>
     /// <returns>The created round.</returns>
     public Round AddRound(string name, IClock clock) =>
-        AddRound(name, Regulation.TieFormat, clock);
+        AddRound(name, tieFormat: null, clock);
 
     /// <summary>
-    /// Adds a round with an explicit tie format (or <see langword="null"/> to omit one).
+    /// Adds a round with an explicit tie format (or <see langword="null"/> to inherit the stage default).
     /// </summary>
     /// <param name="name">The round name.</param>
     /// <param name="tieFormat">The tie format to materialize, or <see langword="null"/>.</param>
@@ -4008,19 +4020,43 @@ public sealed class Stage : AggregateRoot<StageId>
     }
 
     /// <summary>
-    /// Resolves the round that owns a path source PairKey (fixture bound to BracketPairKey,
-    /// or sole round when only a structural BracketPair exists — Cup mono-round).
+    /// Resolves the round that owns a confrontation source PairKey (fixture bound to BracketPairKey,
+    /// or entry-round when a structural BracketPair exists on a multi-round Cup).
     /// </summary>
-    private Round? FindRoundForProgressionSource(string sourcePairKey)
+    public Round? FindRoundForConfrontationKey(string sourcePairKey)
     {
         var byPairKey = _rounds.FirstOrDefault(r =>
             r.Fixtures.Any(f =>
                 string.Equals(f.BracketPairKey, sourcePairKey, StringComparison.Ordinal)));
-        return byPairKey
-               ?? (FindBracketPair(sourcePairKey) is not null && _rounds.Count == 1
-                   ? _rounds[0]
-                   : null);
+        if (byPairKey is not null)
+        {
+            return byPairKey;
+        }
+
+        return FindBracketPair(sourcePairKey) is not null && _rounds.Count > 0
+            ? _rounds[0]
+            : null;
     }
+
+    /// <summary>
+    /// Resolves the effective TieFormat for a confrontation key on this stage.
+    /// </summary>
+    public TieFormat ResolveEffectiveTieFormatForKey(string sourcePairKey)
+    {
+        var round = FindRoundForConfrontationKey(sourcePairKey);
+
+        // Non-addressable confrontation keys fall back to living stage default (not round inheritance).
+        return round is not null
+            ? ResolveEffectiveTieFormat(round, Regulation)
+            : TieFormat.ResolveEffective(null, Regulation.TieFormat);
+    }
+
+    /// <summary>
+    /// Resolves the round that owns a path source PairKey (fixture bound to BracketPairKey,
+    /// or entry round when a structural BracketPair exists).
+    /// </summary>
+    private Round? FindRoundForProgressionSource(string sourcePairKey) =>
+        FindRoundForConfrontationKey(sourcePairKey);
 
     private void EnsureBracketPairSlotExists(string slotKey)
     {

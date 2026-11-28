@@ -963,6 +963,46 @@ describe('CompetitionOverviewPage — En cours / Terminée', () => {
     expect(screen.queryByText(/pts victoire/)).not.toBeInTheDocument();
   });
 
+  it('shows varies-by-round indicator on Cup game rules', async () => {
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      overviewView({
+        status: 'Running',
+        cycleReading: { code: 'InProgress' },
+        naturalProgression: null,
+        constructionDimensions: {
+          ...overviewView().constructionDimensions,
+          regulation: {
+            ...overviewView().constructionDimensions.regulation,
+            prominence: 'Condensed',
+          },
+          structure: {
+            prominence: 'Condensed',
+            facts: { formatKind: 'Cup', roundCount: '3' },
+          },
+          teams: { prominence: 'Absent', facts: {} },
+        },
+        operationalFocus: {
+          ...overviewView().operationalFocus,
+          referenceStageGameRules: referenceStageGameRules({
+            formatKind: 'Cup',
+            numberOfLegs: 2,
+            aggregateScoring: true,
+            variesByRound: true,
+          }),
+        },
+      }),
+    );
+
+    renderOverviewPage();
+
+    expect(
+      await screen.findByTestId('overview-regulation-game'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/2 manches · cumul des scores · Varie selon le tour/),
+    ).toBeInTheDocument();
+  });
+
   it('renders every closure-slot action with the normal-completion hint', async () => {
     const user = userEvent.setup();
     vi.mocked(completeCompetition).mockResolvedValue(undefined);

@@ -66,6 +66,11 @@ public sealed record StageRegulation
     public TieFormat? TieFormat { get; }
 
     /// <summary>
+    /// Gets a value indicating whether an explicit default tie format was stored on the regulation (not living inheritance).
+    /// </summary>
+    public bool HasExplicitTieFormatDefault => TieFormat is not null;
+
+    /// <summary>
     /// Gets the draw rules when present; otherwise <see langword="null"/>.
     /// </summary>
     public DrawRules? DrawRules { get; }

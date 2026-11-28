@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   applyPhaseFormToInheritedRounds,
+  buildAtomicRoundEdits,
   buildInheritsAtLoad,
   isRoundCustomized,
   roundPersistenceUpdates,
@@ -9,6 +10,7 @@ import {
   singleRoundDriftRoundId,
   type TieFormatSessionFlags,
 } from './tieFormatEditorState';
+import { toRoundRequest } from './tieFormatForm';
 import type { TieFormState } from './tieFormatForm';
 
 const phaseDefault: TieFormState = {
@@ -120,15 +122,101 @@ describe('tieFormatEditorState', () => {
     expect(shouldShowRoundNavigation(2, true)).toBe(true);
   });
 
-  it('detects single-round historical drift at load', () => {
+  it('shows drift only for DTO inheritors with divergent stored copy', () => {
     expect(
-      singleRoundDriftRoundId(['r1'], { r1: customRound }, phaseDefault),
+      singleRoundDriftRoundId(
+        ['r1'],
+        { r1: true },
+        { r1: customRound },
+        phaseDefault,
+      ),
     ).toBe('r1');
     expect(
-      singleRoundDriftRoundId(['r1'], { r1: phaseDefault }, phaseDefault),
+      singleRoundDriftRoundId(
+        ['r1'],
+        { r1: false },
+        { r1: phaseDefault },
+        phaseDefault,
+      ),
     ).toBeNull();
     expect(
-      singleRoundDriftRoundId(['r1', 'r2'], { r1: customRound }, phaseDefault),
+      singleRoundDriftRoundId(
+        ['r1'],
+        { r1: false },
+        { r1: customRound },
+        phaseDefault,
+      ),
     ).toBeNull();
+    expect(
+      singleRoundDriftRoundId(
+        ['r1', 'r2'],
+        { r1: true },
+        { r1: customRound },
+        phaseDefault,
+      ),
+    ).toBeNull();
+  });
+
+  it('A3: inherited round at load emits no round edit when default changes', () => {
+    const session = flags({ r1: true });
+    const edits = buildAtomicRoundEdits(
+      ['r1'],
+      { r1: true },
+      session,
+      phaseTwoLegs,
+      { r1: phaseTwoLegs },
+      toRoundRequest,
+    );
+    expect(edits).toEqual([]);
+  });
+
+  it('P1: realigned override equal to baseline still persists for clear', () => {
+    const session = flags({ r1: false }, { sessionRealigned: { r1: true } });
+    const updates = roundPersistenceUpdates(
+      ['r1'],
+      session,
+      phaseDefault,
+      { r1: phaseDefault },
+      { r1: phaseDefault },
+    );
+    expect(updates.r1).toEqual(phaseDefault);
+    const edits = buildAtomicRoundEdits(
+      ['r1'],
+      { r1: false },
+      session,
+      phaseDefault,
+      updates,
+      toRoundRequest,
+    );
+    expect(edits).toHaveLength(1);
+    expect(edits[0]?.clear).toBe(true);
+  });
+
+  it('P2: realigned override different from phase still persists clear', () => {
+    const session = flags({ r1: false }, { sessionRealigned: { r1: true } });
+    const updates = roundPersistenceUpdates(
+      ['r1'],
+      session,
+      phaseTwoLegs,
+      { r1: phaseTwoLegs },
+      { r1: customRound },
+    );
+    expect(updates.r1).toEqual(phaseTwoLegs);
+  });
+
+  it('A3: stored override equal to default still sends explicit round edit', () => {
+    const session = flags({ r1: false });
+    const edits = buildAtomicRoundEdits(
+      ['r1'],
+      { r1: false },
+      session,
+      phaseTwoLegs,
+      { r1: phaseDefault },
+      toRoundRequest,
+    );
+    expect(edits).toHaveLength(1);
+    expect(edits[0]?.roundId).toBe('r1');
+    expect(edits[0]?.clear).toBe(false);
+    expect(edits[0]?.numberOfLegs).toBe(1);
   });
 });

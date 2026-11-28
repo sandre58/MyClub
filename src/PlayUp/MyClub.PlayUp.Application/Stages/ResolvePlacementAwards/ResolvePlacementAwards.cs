@@ -156,7 +156,7 @@ public static class ResolvePlacementAwards
 
         try
         {
-            var tieFormat = TieFormat.OrDefaultOneLeg(round.TieFormat);
+            var tieFormat = Stage.ResolveEffectiveTieFormat(round, stage.Regulation);
             if (fixture.Attachments.Count != tieFormat.NumberOfLegs)
             {
                 return false;

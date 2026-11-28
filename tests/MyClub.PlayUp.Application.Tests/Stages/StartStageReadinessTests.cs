@@ -395,4 +395,106 @@ public sealed class StartStageReadinessTests
             .Should()
             .Be(StructureStageLifecycleAssembler.DisabledIncompleteEntryRound);
     }
+
+    [Fact]
+    public void Start_allowed_when_cup_entry_override_one_leg_materialized_under_two_leg_default()
+    {
+        var situation = TestCompetition.Create("Cup-1L-entry", _clock)
+            .WithTeams("A", "B")
+            .WithStructure(StructureIntent.Cup(2));
+        var stage = situation.RequirePrimaryStage();
+        stage.ReplaceRegulation(
+            stage.Regulation.WithTieFormat(
+                new TieFormat(TieFormat.TwoLegs, aggregateScoring: true)),
+            _clock);
+        stage.ReplaceRoundTieFormat(
+            stage.Rounds[0].Id,
+            new TieFormat(TieFormat.SingleLeg, aggregateScoring: false),
+            _clock);
+        var entries = situation.Competition.Entries.Select(entry => entry.Id).ToArray();
+        stage.ApplyResolvedEntry(stage.Slots[0].SlotKey, entries[0], _clock);
+        stage.ApplyResolvedEntry(stage.Slots[1].SlotKey, entries[1], _clock);
+        situation.PreparePrimaryStage();
+
+        var materialized = MaterializeCupFromOccupiedSlots.Execute(
+            situation.Competition,
+            stage,
+            [],
+            [],
+            _clock,
+            planEntireRound: true);
+        var summaries = StageStartReadinessGuard.ToSummaryRows(materialized.CreatedMatches);
+        materialized.CreatedMatches.Should().ContainSingle();
+
+        var act = () => StageStartReadinessGuard.EnsureReadyToStart(
+            stage,
+            situation.Competition,
+            summaries);
+
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void Start_allowed_when_cup_inherits_two_leg_default_on_null_entry_round()
+    {
+        var situation = TestCompetition.Create("Cup-2L-inherit", _clock)
+            .WithTeams("A", "B")
+            .WithStructure(StructureIntent.Cup(2));
+        var stage = situation.RequirePrimaryStage();
+        stage.ReplaceRegulation(
+            stage.Regulation.WithTieFormat(
+                new TieFormat(TieFormat.TwoLegs, aggregateScoring: true)),
+            _clock);
+        stage.Rounds[0].TieFormat.Should().BeNull();
+        var entries = situation.Competition.Entries.Select(entry => entry.Id).ToArray();
+        stage.ApplyResolvedEntry(stage.Slots[0].SlotKey, entries[0], _clock);
+        stage.ApplyResolvedEntry(stage.Slots[1].SlotKey, entries[1], _clock);
+        situation.PreparePrimaryStage();
+
+        var materialized = MaterializeCupFromOccupiedSlots.Execute(
+            situation.Competition,
+            stage,
+            [],
+            [],
+            _clock,
+            planEntireRound: true);
+        var summaries = StageStartReadinessGuard.ToSummaryRows(materialized.CreatedMatches);
+
+        materialized.CreatedMatches.Should().HaveCount(2);
+        var act = () => StageStartReadinessGuard.EnsureReadyToStart(
+            stage,
+            situation.Competition,
+            summaries);
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void Running_stage_future_null_round_inherits_living_phase_default_for_legs()
+    {
+        var situation = TestCompetition.Create("Cup-running-future", _clock)
+            .WithTeams("A", "B")
+            .WithStructure(StructureIntent.Cup(2));
+        var stage = situation.RequirePrimaryStage();
+        var twoLegDefault = new TieFormat(TieFormat.TwoLegs, aggregateScoring: true);
+        stage.ReplaceRegulation(stage.Regulation.WithTieFormat(twoLegDefault), _clock);
+        var futureRound = stage.AddRound("SF", _clock);
+        futureRound.TieFormat.Should().BeNull();
+
+        var entries = situation.Competition.Entries.Select(entry => entry.Id).ToArray();
+        stage.ApplyResolvedEntry(stage.Slots[0].SlotKey, entries[0], _clock);
+        stage.ApplyResolvedEntry(stage.Slots[1].SlotKey, entries[1], _clock);
+        situation.PreparePrimaryStage();
+        MaterializeCupFromOccupiedSlots.Execute(
+            situation.Competition,
+            stage,
+            [],
+            [],
+            _clock,
+            planEntireRound: true);
+        StartStage.Execute(stage, _clock);
+        stage.Status.Should().Be(StageStatus.Running);
+
+        Stage.ResolveEffectiveTieFormat(futureRound, stage.Regulation).Should().Be(twoLegDefault);
+        CupConfrontationMaterializer.ExpectedLegsForRound(stage, futureRound).Should().Be(TieFormat.TwoLegs);
+    }
 }

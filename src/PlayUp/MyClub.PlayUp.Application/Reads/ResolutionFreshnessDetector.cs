@@ -1096,7 +1096,7 @@ public static class ResolutionFreshnessDetector
                 return OutcomeRead.Failed(Classify(ex));
             }
 
-            var format = TieFormat.OrDefaultOneLeg(round.TieFormat);
+            var format = Stage.ResolveEffectiveTieFormat(round, source.Regulation);
             if (snapshot.Legs.Count != format.NumberOfLegs)
             {
                 var missing = snapshot.Legs.OrderBy(leg => leg.LegIndex).FirstOrDefault();
