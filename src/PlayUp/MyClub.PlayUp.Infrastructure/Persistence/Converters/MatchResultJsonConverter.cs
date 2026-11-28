@@ -21,9 +21,7 @@ public sealed class MatchResultJsonConverter : ValueConverter<MatchResult?, stri
     public static ValueComparer<MatchResult?> Comparer { get; } = new(
         static (left, right) => left == right,
         static result => result == null ? 0 : result.GetHashCode(),
-        static result => result == null
-            ? null
-            : new MatchResult(result.Type, result.Score, result.ExtraTimePlayed, result.PenaltyShootoutScore));
+        static result => Snapshot(result));
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MatchResultJsonConverter"/> class.
@@ -33,5 +31,22 @@ public sealed class MatchResultJsonConverter : ValueConverter<MatchResult?, stri
             static result => result == null ? null : MatchResultJson.Serialize(result),
             static json => string.IsNullOrEmpty(json) ? null : MatchResultJson.Deserialize(json))
     {
+    }
+
+    private static MatchResult? Snapshot(MatchResult? result)
+    {
+        if (result is null)
+        {
+            return null;
+        }
+
+        if (result.ConfrontationTiePenaltyShootout)
+        {
+            return result.PenaltyShootoutScore is { } shootout
+                ? MatchResult.CreateConfrontationTiePenaltyShootout(result.Score, result.ExtraTimePlayed, shootout)
+                : throw new InvalidOperationException("Confrontation tie shootout flag requires a shootout score.");
+        }
+
+        return new MatchResult(result.Type, result.Score, result.ExtraTimePlayed, result.PenaltyShootoutScore);
     }
 }

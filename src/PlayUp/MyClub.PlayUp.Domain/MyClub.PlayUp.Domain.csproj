@@ -5,6 +5,12 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="MyClub.PlayUp.Application" />
+    <InternalsVisibleTo Include="MyClub.PlayUp.Infrastructure" />
+    <InternalsVisibleTo Include="MyClub.PlayUp.Domain.Tests" />
+  </ItemGroup>
+
   <!-- Physical folders under Common / Rules organize files; they must not append namespace segments (convention B / Rider). -->
   <ItemGroup>
     <Folder Include="Common\Ids">

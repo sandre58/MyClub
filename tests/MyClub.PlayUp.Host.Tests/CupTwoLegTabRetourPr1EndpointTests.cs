@@ -31,6 +31,7 @@ namespace MyClub.PlayUp.Host.Tests;
 public sealed class CupTwoLegTabRetourPr1EndpointTests(HostPostgresFixture fixture)
 {
     private static readonly FakeClock Clock = new(new DateTimeOffset(2026, 11, 28, 16, 0, 0, TimeSpan.Zero));
+
     [IntegrationFact]
     public async Task Return_leg_TAB_when_aggregate_level_promotes_shootout_winnerAsync()
     {

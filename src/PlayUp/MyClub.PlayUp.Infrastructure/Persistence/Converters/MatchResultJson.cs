@@ -17,6 +17,9 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.Converters;
 /// <remarks>
 /// Domain <see cref="Score"/> / <see cref="PenaltyShootoutScore"/> are get-only structs; STJ cannot reliably
 /// rehydrate them through the Domain constructors, so persistence uses a flat document shape.
+/// Before reverting a release that persisted confrontation tie shootouts, run:
+/// <c>SELECT id FROM matches WHERE result -&gt;&gt; 'ConfrontationTiePenaltyShootout' = 'true'</c>
+/// and correct or clear those results.
 /// </remarks>
 internal static class MatchResultJson
 {
@@ -41,7 +44,9 @@ internal static class MatchResultJson
         int AwayGoals,
         bool ExtraTimePlayed,
         int? PenaltyHomeGoals,
-        int? PenaltyAwayGoals)
+        int? PenaltyAwayGoals,
+        [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        bool ConfrontationTiePenaltyShootout)
     {
         internal static MatchResultDocument From(MatchResult result) =>
             new(
@@ -50,7 +55,8 @@ internal static class MatchResultJson
                 result.Score.AwayGoals,
                 result.ExtraTimePlayed,
                 result.PenaltyShootoutScore?.HomeGoals,
-                result.PenaltyShootoutScore?.AwayGoals);
+                result.PenaltyShootoutScore?.AwayGoals,
+                result.ConfrontationTiePenaltyShootout);
 
         internal MatchResult ToDomain()
         {
@@ -58,7 +64,18 @@ internal static class MatchResultJson
                 ? new PenaltyShootoutScore(home, away)
                 : null;
 
-            return new MatchResult(Type, new Score(HomeGoals, AwayGoals), ExtraTimePlayed, shootout);
+            var score = new Score(HomeGoals, AwayGoals);
+            if (ConfrontationTiePenaltyShootout)
+            {
+                if (shootout is null)
+                {
+                    throw new InvalidOperationException("Confrontation tie shootout flag requires a shootout score.");
+                }
+
+                return MatchResult.CreateConfrontationTiePenaltyShootout(score, ExtraTimePlayed, shootout.Value);
+            }
+
+            return new MatchResult(Type, score, ExtraTimePlayed, shootout);
         }
     }
 }

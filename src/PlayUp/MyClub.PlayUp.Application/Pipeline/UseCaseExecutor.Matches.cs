@@ -8,6 +8,7 @@ using MyClub.PlayUp.Application.Matches;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
+using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Application.Pipeline;
 
@@ -54,12 +55,33 @@ public sealed partial class UseCaseExecutor
     {
         ArgumentNullException.ThrowIfNull(result);
 
-        return FinishMatchAndLogAfterCommitAsync(matchId, result, cancellationToken);
+        return FinishMatchAndLogAfterCommitAsync(
+            matchId,
+            (_, _, _) => Task.FromResult(result),
+            cancellationToken);
+    }
+
+    /// <summary>
+    /// Finishes a match from HTTP entry, resolving confrontation tie shootout eligibility before building the result.
+    /// </summary>
+    public Task FinishMatchFromEntryAsync(
+        MatchId matchId,
+        MatchResultEntry entry,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+
+        return FinishMatchAndLogAfterCommitAsync(
+            matchId,
+            async (match, stage, innerToken) => await MatchResultFromEntry
+                .BuildAsync(stage, match, entry, matches, innerToken)
+                .ConfigureAwait(false),
+            cancellationToken);
     }
 
     private async Task FinishMatchAndLogAfterCommitAsync(
         MatchId matchId,
-        MatchResult result,
+        Func<Match, Stage, CancellationToken, Task<MatchResult>> buildResult,
         CancellationToken cancellationToken)
     {
         var competitionId = Guid.Empty;
@@ -68,6 +90,7 @@ public sealed partial class UseCaseExecutor
             async innerToken =>
             {
                 var (match, stage) = await RequireMatchAndStageForOperationAsync(matchId, innerToken).ConfigureAwait(false);
+                var result = await buildResult(match, stage, innerToken).ConfigureAwait(false);
                 NonFinalLegEtTabEntryGuard.EnsureAllowed(stage, match.Id, result);
                 FinishMatch.Execute(match, result, clock);
                 await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
@@ -87,17 +110,45 @@ public sealed partial class UseCaseExecutor
     {
         ArgumentNullException.ThrowIfNull(result);
 
-        return ExecuteOnMatchCompetitionAsync(
+        return CorrectMatchResultAndCommitAsync(
+            matchId,
+            (_, _, _) => Task.FromResult(result),
+            cancellationToken);
+    }
+
+    /// <summary>
+    /// Corrects a finished match from HTTP entry, resolving confrontation tie shootout eligibility before building the result.
+    /// </summary>
+    public Task CorrectMatchResultFromEntryAsync(
+        MatchId matchId,
+        MatchResultEntry entry,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+
+        return CorrectMatchResultAndCommitAsync(
+            matchId,
+            async (match, stage, innerToken) => await MatchResultFromEntry
+                .BuildAsync(stage, match, entry, matches, innerToken)
+                .ConfigureAwait(false),
+            cancellationToken);
+    }
+
+    private Task CorrectMatchResultAndCommitAsync(
+        MatchId matchId,
+        Func<Match, Stage, CancellationToken, Task<MatchResult>> buildResult,
+        CancellationToken cancellationToken) =>
+        ExecuteOnMatchCompetitionAsync(
             matchId,
             async innerToken =>
             {
                 var (match, stage) = await RequireMatchAndStageForOperationAsync(matchId, innerToken).ConfigureAwait(false);
+                var result = await buildResult(match, stage, innerToken).ConfigureAwait(false);
                 NonFinalLegEtTabEntryGuard.EnsureAllowed(stage, match.Id, result);
                 CorrectMatchResult.Execute(match, result, clock);
                 await unitOfWork.SaveChangesAsync(innerToken).ConfigureAwait(false);
             },
             cancellationToken);
-    }
 
     /// <summary>
     /// Adds an eligible player to the match composition sheet and saves changes.
