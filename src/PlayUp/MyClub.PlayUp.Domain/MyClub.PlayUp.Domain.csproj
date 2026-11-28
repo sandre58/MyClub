@@ -48,4 +48,9 @@
     </Folder>
   </ItemGroup>
 
+  <!-- Domain IVT is closed to Application/tests; this sole exception lets Infrastructure call MatchResult.Rehydrate for JSONB only. -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="MyClub.PlayUp.Infrastructure" />
+  </ItemGroup>
+
 </Project>

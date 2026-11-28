@@ -17,6 +17,11 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.Converters;
 /// <remarks>
 /// Domain <see cref="Score"/> / <see cref="PenaltyShootoutScore"/> are get-only structs; STJ cannot reliably
 /// rehydrate them through the Domain constructors, so persistence uses a flat document shape.
+/// Before reverting a release that persisted confrontation tie shootouts, run:
+/// <c>SELECT id FROM matches WHERE result -&gt;&gt; 'ConfrontationTiePenaltyShootout' = 'true'</c>
+/// and correct or clear those results.
+/// To list flagged results that are ill-formed for rehydration (Played = 0):
+/// <c>SELECT id FROM matches WHERE result -&gt;&gt; 'ConfrontationTiePenaltyShootout' = 'true' AND (result -&gt;&gt; 'Type' IS DISTINCT FROM '0' OR result -&gt;&gt; 'PenaltyHomeGoals' IS NULL OR result -&gt;&gt; 'PenaltyAwayGoals' IS NULL OR (result -&gt;&gt; 'HomeGoals') = (result -&gt;&gt; 'AwayGoals'))</c>.
 /// </remarks>
 internal static class MatchResultJson
 {
@@ -41,7 +46,9 @@ internal static class MatchResultJson
         int AwayGoals,
         bool ExtraTimePlayed,
         int? PenaltyHomeGoals,
-        int? PenaltyAwayGoals)
+        int? PenaltyAwayGoals,
+        [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        bool ConfrontationTiePenaltyShootout)
     {
         internal static MatchResultDocument From(MatchResult result) =>
             new(
@@ -50,7 +57,8 @@ internal static class MatchResultJson
                 result.Score.AwayGoals,
                 result.ExtraTimePlayed,
                 result.PenaltyShootoutScore?.HomeGoals,
-                result.PenaltyShootoutScore?.AwayGoals);
+                result.PenaltyShootoutScore?.AwayGoals,
+                result.ConfrontationTiePenaltyShootout);
 
         internal MatchResult ToDomain()
         {
@@ -58,7 +66,8 @@ internal static class MatchResultJson
                 ? new PenaltyShootoutScore(home, away)
                 : null;
 
-            return new MatchResult(Type, new Score(HomeGoals, AwayGoals), ExtraTimePlayed, shootout);
+            var score = new Score(HomeGoals, AwayGoals);
+            return MatchResult.Rehydrate(Type, score, ExtraTimePlayed, shootout, ConfrontationTiePenaltyShootout);
         }
     }
 }

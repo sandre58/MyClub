@@ -4,6 +4,7 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using MyClub.PlayUp.Application.Matches;
 using MyClub.PlayUp.Application.Pipeline;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Host.Contracts;
@@ -36,8 +37,9 @@ internal static class MatchEndpoints
             "/matches/{matchId:guid}/finish",
             async (Guid matchId, FinishMatchRequest request, UseCaseExecutor executor, CancellationToken cancellationToken) =>
             {
-                var result = request.ToDomain();
-                await executor.FinishMatchAsync(new MatchId(matchId), result, cancellationToken).ConfigureAwait(false);
+                await executor
+                    .FinishMatchFromEntryAsync(new MatchId(matchId), ToEntry(request), cancellationToken)
+                    .ConfigureAwait(false);
                 return Results.NoContent();
             });
 
@@ -45,9 +47,8 @@ internal static class MatchEndpoints
             "/matches/{matchId:guid}/result",
             async (Guid matchId, FinishMatchRequest request, UseCaseExecutor executor, CancellationToken cancellationToken) =>
             {
-                var result = request.ToDomain();
                 await executor
-                    .CorrectMatchResultAsync(new MatchId(matchId), result, cancellationToken)
+                    .CorrectMatchResultFromEntryAsync(new MatchId(matchId), ToEntry(request), cancellationToken)
                     .ConfigureAwait(false);
                 return Results.NoContent();
             });
@@ -294,4 +295,13 @@ internal static class MatchEndpoints
 
         return app;
     }
+
+    private static MatchResultEntry ToEntry(FinishMatchRequest request) =>
+        new(
+            request.Type,
+            request.HomeGoals,
+            request.AwayGoals,
+            request.ExtraTimePlayed,
+            request.PenaltyShootoutHomeGoals,
+            request.PenaltyShootoutAwayGoals);
 }

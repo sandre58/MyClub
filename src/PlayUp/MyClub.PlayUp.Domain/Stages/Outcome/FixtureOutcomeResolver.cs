@@ -163,37 +163,14 @@ public static class FixtureOutcomeResolver
         TieFormat tieFormat,
         IReadOnlyList<FixtureLegSnapshot> legs,
         EntryId entryA,
-        EntryId entryB)
-    {
-        var totalA = 0;
-        var totalB = 0;
-        var awayA = 0;
-        var awayB = 0;
-
-        foreach (var leg in legs)
+        EntryId entryB) =>
+        TwoLegAggregateStillLevel.Evaluate(tieFormat, entryA, entryB, legs) switch
         {
-            var score = leg.Score!.Value;
-            AddGoals(leg.HomeEntryId!.Value, score.HomeGoals, isAway: false, entryA, entryB, ref totalA, ref totalB, ref awayA, ref awayB);
-            AddGoals(leg.AwayEntryId!.Value, score.AwayGoals, isAway: true, entryA, entryB, ref totalA, ref totalB, ref awayA, ref awayB);
-        }
-
-        if (totalA != totalB)
-        {
-            return totalA > totalB
-                ? new FixtureOutcome(entryA, entryB)
-                : new FixtureOutcome(entryB, entryA);
-        }
-
-        if (tieFormat.AwayGoalsRule is not null && awayA != awayB)
-        {
-            return awayA > awayB
-                ? new FixtureOutcome(entryA, entryB)
-                : new FixtureOutcome(entryB, entryA);
-        }
-
-        // Aggregate (and away goals when enabled) still tied: ET goals are already in Score totals.
-        return ResolveLevelScore(tieFormat, legs[^1]);
-    }
+            TwoLegAggregatePlayDecision.EntryAWins => new FixtureOutcome(entryA, entryB),
+            TwoLegAggregatePlayDecision.EntryBWins => new FixtureOutcome(entryB, entryA),
+            TwoLegAggregatePlayDecision.StillLevel => ResolveLevelScore(tieFormat, legs[^1]),
+            _ => throw new InvalidOperationException("Unknown two-leg aggregate decision.")
+        };
 
     /// <summary>
     /// Resolves a still-level confrontation on the last leg (ET then TAB when configured).
@@ -204,35 +181,6 @@ public static class FixtureOutcomeResolver
                 "Fixture outcome is undecided: extra time is required but has not been played.",
                 StageErrorCodes.FixtureOutcomeUndecided)
             : ResolveByShootout(tieFormat, lastLeg);
-
-    private static void AddGoals(
-        EntryId scorer,
-        int goals,
-        bool isAway,
-        EntryId entryA,
-        EntryId entryB,
-        ref int totalA,
-        ref int totalB,
-        ref int awayA,
-        ref int awayB)
-    {
-        if (scorer.Equals(entryA))
-        {
-            totalA += goals;
-            if (isAway)
-            {
-                awayA += goals;
-            }
-        }
-        else if (scorer.Equals(entryB))
-        {
-            totalB += goals;
-            if (isAway)
-            {
-                awayB += goals;
-            }
-        }
-    }
 
     private static FixtureOutcome ResolveByShootout(TieFormat tieFormat, FixtureLegSnapshot leg)
     {

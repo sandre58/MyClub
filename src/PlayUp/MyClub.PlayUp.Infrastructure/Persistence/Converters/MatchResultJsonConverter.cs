@@ -6,6 +6,7 @@
 
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
 
 namespace MyClub.PlayUp.Infrastructure.Persistence.Converters;
@@ -13,7 +14,7 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.Converters;
 /// <summary>
 /// Converts a Domain <see cref="MatchResult"/> to a JSON string for a PostgreSQL jsonb column.
 /// </summary>
-public sealed class MatchResultJsonConverter : ValueConverter<MatchResult?, string?>
+internal sealed class MatchResultJsonConverter : ValueConverter<MatchResult?, string?>
 {
     /// <summary>
     /// Gets the comparer that uses Domain record equality and reconstructs snapshots via the public constructor.
@@ -21,9 +22,7 @@ public sealed class MatchResultJsonConverter : ValueConverter<MatchResult?, stri
     public static ValueComparer<MatchResult?> Comparer { get; } = new(
         static (left, right) => left == right,
         static result => result == null ? 0 : result.GetHashCode(),
-        static result => result == null
-            ? null
-            : new MatchResult(result.Type, result.Score, result.ExtraTimePlayed, result.PenaltyShootoutScore));
+        static result => Snapshot(result));
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MatchResultJsonConverter"/> class.
@@ -33,5 +32,20 @@ public sealed class MatchResultJsonConverter : ValueConverter<MatchResult?, stri
             static result => result == null ? null : MatchResultJson.Serialize(result),
             static json => string.IsNullOrEmpty(json) ? null : MatchResultJson.Deserialize(json))
     {
+    }
+
+    private static MatchResult? Snapshot(MatchResult? result)
+    {
+        if (result is null)
+        {
+            return null;
+        }
+
+        return MatchResult.Rehydrate(
+            result.Type,
+            result.Score,
+            result.ExtraTimePlayed,
+            result.PenaltyShootoutScore,
+            result.ConfrontationTiePenaltyShootout);
     }
 }
