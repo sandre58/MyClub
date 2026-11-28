@@ -4,6 +4,8 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using System.Collections.Immutable;
+using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -11,183 +13,179 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace MyClub.PlayUp.Application.Tests.Architecture;
 
 /// <summary>
-/// Finds product-code references to <see cref="MyClub.PlayUp.Domain.Matches.MatchResult"/> static factories
-/// and <c>ConfrontationTieEligibility.CreateProof</c> (invocation, method group, <c>nameof</c>).
+/// Semantically scans all <c>src/</c> C# for calls to confrontation tie <see cref="MyClub.PlayUp.Domain.Matches.MatchResult"/> factories.
 /// </summary>
+/// <remarks>
+/// Reflection (<c>GetMethod</c> / <c>Invoke</c> / <c>Activator</c>) bypasses this guard; that limitation is accepted and documented on the architecture tests.
+/// </remarks>
 internal static class MatchResultStaticFactoryScanner
 {
-    private static readonly string[] ProductRoots =
-    [
-        Path.Combine("src", "PlayUp", "MyClub.PlayUp.Application"),
-        Path.Combine("src", "PlayUp", "MyClub.PlayUp.Host"),
-        Path.Combine("src", "PlayUp", "MyClub.PlayUp.Development"),
-        Path.Combine("src", "PlayUp", "MyClub.PlayUp.Domain"),
-        Path.Combine("src", "PlayUp", "MyClub.PlayUp.Infrastructure"),
-    ];
+    private const string CreateMethod = "CreateConfrontationTiePenaltyShootout";
+    private const string RehydrateMethod = "Rehydrate";
 
-    private static readonly Dictionary<string, HashSet<string>> AllowedPathsByTarget = new(StringComparer.Ordinal)
+    private static readonly Dictionary<string, HashSet<string>> AllowedPathsByMethod = new(StringComparer.Ordinal)
     {
-        ["MatchResult.CreateConfrontationTiePenaltyShootout"] =
+        [CreateMethod] =
         [
             "src/PlayUp/MyClub.PlayUp.Domain/Matches/MatchResult.cs",
             "src/PlayUp/MyClub.PlayUp.Application/Matches/ConfrontationTiePenaltyShootoutEligibility.cs",
         ],
-        ["MatchResult.Rehydrate"] =
+        [RehydrateMethod] =
         [
             "src/PlayUp/MyClub.PlayUp.Domain/Matches/MatchResult.cs",
             "src/PlayUp/MyClub.PlayUp.Infrastructure/Persistence/Converters/MatchResultJson.cs",
             "src/PlayUp/MyClub.PlayUp.Infrastructure/Persistence/Converters/MatchResultJsonConverter.cs",
         ],
-        ["ConfrontationTieEligibility.CreateProof"] =
-        [
-            "src/PlayUp/MyClub.PlayUp.Domain/Matches/ConfrontationTieEligibility.cs",
-            "src/PlayUp/MyClub.PlayUp.Application/Matches/ConfrontationTiePenaltyShootoutEligibility.cs",
-        ],
     };
 
-    public static IReadOnlyList<string> DiscoverMatchResultStaticFactoryNames()
-    {
-        var matchResultType = typeof(MyClub.PlayUp.Domain.Matches.MatchResult);
-        return matchResultType
-            .GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
-            .Where(method => method.ReturnType == matchResultType)
+    public static IReadOnlyList<string> DiscoverPublicMatchResultStaticFactoryNames() =>
+        typeof(MyClub.PlayUp.Domain.Matches.MatchResult)
+            .GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .Where(method => method.ReturnType == typeof(MyClub.PlayUp.Domain.Matches.MatchResult))
             .Select(method => method.Name)
             .OrderBy(name => name, StringComparer.Ordinal)
             .ToArray();
-    }
 
     public static IReadOnlyList<string> ScanRepository(string repoRoot)
     {
-        var violations = new List<string>();
-        foreach (var root in ProductRoots)
+        var srcRoot = Path.Combine(repoRoot, "src");
+        if (!Directory.Exists(srcRoot))
         {
-            var directory = Path.Combine(repoRoot, root);
-            if (!Directory.Exists(directory))
-            {
-                continue;
-            }
+            return [];
+        }
 
-            foreach (var path in Directory.EnumerateFiles(directory, "*.cs", SearchOption.AllDirectories))
-            {
-                var relative = Path.GetRelativePath(repoRoot, path).Replace('\\', '/');
-                if (relative.Contains("/Migrations/", StringComparison.Ordinal))
-                {
-                    continue;
-                }
+        var sourcePaths = Directory
+            .EnumerateFiles(srcRoot, "*.cs", SearchOption.AllDirectories)
+            .Where(path => !path.Contains("/Migrations/", StringComparison.Ordinal))
+            .ToList();
 
-                violations.AddRange(FindViolations(File.ReadAllText(path), relative));
-            }
+        var trees = sourcePaths
+            .Select(path => CSharpSyntaxTree.ParseText(File.ReadAllText(path), path: path))
+            .ToImmutableArray();
+
+        var references = BuildMetadataReferences(repoRoot);
+        var compilation = CSharpCompilation.Create(
+            assemblyName: "ProductSemanticScan",
+            syntaxTrees: trees,
+            references: references,
+            options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+
+        var violations = new List<string>();
+        foreach (var tree in trees)
+        {
+            var relative = Path.GetRelativePath(repoRoot, tree.FilePath).Replace('\\', '/');
+            var model = compilation.GetSemanticModel(tree, ignoreAccessibility: true);
+            violations.AddRange(FindViolations(model, tree.GetRoot(), relative));
         }
 
         return violations;
     }
 
-    public static IReadOnlyList<string> FindViolations(string source, string relativePath)
+    public static IReadOnlyList<string> FindViolations(
+        string source,
+        string relativePath,
+        IReadOnlyList<MetadataReference>? extraReferences = null)
     {
         var tree = CSharpSyntaxTree.ParseText(source, path: relativePath);
-        var root = tree.GetCompilationUnitRoot();
-        var violations = new List<string>();
-
-        foreach (var reference in EnumerateReferences(root))
-        {
-            if (IsMethodDefinition(reference.Node))
-            {
-                continue;
-            }
-
-            var targetKey = $"{reference.TypeName}.{reference.MethodName}";
-            if (!AllowedPathsByTarget.TryGetValue(targetKey, out var allowed))
-            {
-                continue;
-            }
-
-            if (allowed.Contains(relativePath, StringComparer.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
-            var line = tree.GetLineSpan(reference.Node.Span).StartLinePosition.Line + 1;
-            var kind = reference.Kind;
-            violations.Add($"{relativePath}:{line} {targetKey} ({kind})");
-        }
-
-        return violations;
+        var references = extraReferences is { Count: > 0 }
+            ? extraReferences
+            : BuildMetadataReferences(FindRepositoryRootFromCaller());
+        var compilation = CSharpCompilation.Create(
+            assemblyName: "MyClub.PlayUp.Infrastructure",
+            syntaxTrees: [tree],
+            references: references,
+            options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        var model = compilation.GetSemanticModel(tree, ignoreAccessibility: true);
+        return FindViolations(model, tree.GetRoot(), relativePath).ToList();
     }
 
-    private static IEnumerable<(SyntaxNode Node, string TypeName, string MethodName, string Kind)> EnumerateReferences(
-        SyntaxNode root)
+    private static IEnumerable<string> FindViolations(
+        SemanticModel model,
+        SyntaxNode? root,
+        string relativePath)
     {
-        foreach (var invocation in root.DescendantNodes().OfType<InvocationExpressionSyntax>())
+        if (root is null)
         {
-            if (invocation.Expression is MemberAccessExpressionSyntax
-                {
-                    Expression: IdentifierNameSyntax { Identifier.Text: var typeName },
-                    Name.Identifier.Text: var methodName
-                })
-            {
-                if (IsTrackedTarget(typeName, methodName))
-                {
-                    yield return (invocation, typeName, methodName, "invoke");
-                }
-            }
+            yield break;
         }
 
-        foreach (var memberAccess in root.DescendantNodes().OfType<MemberAccessExpressionSyntax>())
+        var reported = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var node in root.DescendantNodesAndSelf())
         {
-            if (memberAccess.Expression is not IdentifierNameSyntax { Identifier.Text: var typeName })
+            if (IsMethodDefinitionSite(node))
             {
                 continue;
             }
 
-            var methodName = memberAccess.Name.Identifier.Text;
-            if (!IsTrackedTarget(typeName, methodName))
+            var symbol = ResolveMethodSymbol(model, node);
+            if (symbol is null)
             {
                 continue;
             }
 
-            if (memberAccess.Parent is InvocationExpressionSyntax invocation && invocation.Expression == memberAccess)
+            var methodName = symbol.Name;
+            if (!AllowedPathsByMethod.ContainsKey(methodName))
             {
                 continue;
             }
 
-            yield return (memberAccess, typeName, methodName, "method-group-or-member");
-        }
-
-        foreach (var nameofInvocation in root.DescendantNodes().OfType<InvocationExpressionSyntax>())
-        {
-            if (nameofInvocation.Expression is not IdentifierNameSyntax { Identifier.Text: "nameof" })
+            if (AllowedPathsByMethod[methodName].Contains(relativePath, StringComparer.OrdinalIgnoreCase))
             {
                 continue;
             }
 
-            if (nameofInvocation.ArgumentList.Arguments.Count != 1)
+            var line = node.SyntaxTree.GetLineSpan(node.Span).StartLinePosition.Line + 1;
+            var kind = node.Kind().ToString();
+            var message = $"{relativePath}:{line} MatchResult.{methodName} ({kind})";
+            if (!reported.Add(message))
             {
                 continue;
             }
 
-            if (nameofInvocation.ArgumentList.Arguments[0].Expression is not MemberAccessExpressionSyntax
-                {
-                    Expression: IdentifierNameSyntax { Identifier.Text: var typeName },
-                    Name.Identifier.Text: var methodName
-                })
-            {
-                continue;
-            }
-
-            if (!IsTrackedTarget(typeName, methodName))
-            {
-                continue;
-            }
-
-            yield return (nameofInvocation, typeName, methodName, "nameof");
+            yield return message;
         }
     }
 
-    private static bool IsTrackedTarget(string typeName, string methodName) =>
-        (typeName == "MatchResult" && (methodName == "CreateConfrontationTiePenaltyShootout" || methodName == "Rehydrate"))
-        || (typeName == "ConfrontationTieEligibility" && methodName == "CreateProof");
+    private static bool IsInsideNameOf(SyntaxNode node)
+    {
+        for (var current = node.Parent; current is not null; current = current.Parent)
+        {
+            if (current is InvocationExpressionSyntax invocation
+                && invocation.Expression is IdentifierNameSyntax { Identifier.Text: "nameof" })
+            {
+                return true;
+            }
+        }
 
-    private static bool IsMethodDefinition(SyntaxNode node)
+        return false;
+    }
+
+    private static IMethodSymbol? ResolveMethodSymbol(SemanticModel model, SyntaxNode node) =>
+        node switch
+        {
+            InvocationExpressionSyntax invocation => ResolveFromSymbolInfo(model.GetSymbolInfo(invocation)),
+            MemberAccessExpressionSyntax memberAccess => ResolveFromSymbolInfo(model.GetSymbolInfo(memberAccess)),
+            IdentifierNameSyntax identifier => ResolveFromSymbolInfo(model.GetSymbolInfo(identifier)),
+            _ => null,
+        };
+
+    private static IMethodSymbol? ResolveFromSymbolInfo(SymbolInfo info)
+    {
+        if (info.Symbol is IMethodSymbol direct && IsTrackedFactory(direct))
+        {
+            return direct;
+        }
+
+        return info.CandidateSymbols.OfType<IMethodSymbol>().FirstOrDefault(IsTrackedFactory);
+    }
+
+    private static bool IsTrackedFactory(IMethodSymbol symbol) =>
+        symbol.ContainingType.Name == "MatchResult"
+        && symbol.ContainingNamespace?.ToDisplayString() == "MyClub.PlayUp.Domain.Matches"
+        && (symbol.Name == CreateMethod || symbol.Name == RehydrateMethod);
+
+    private static bool IsMethodDefinitionSite(SyntaxNode node)
     {
         var methodDecl = node.Ancestors().OfType<MethodDeclarationSyntax>().FirstOrDefault();
         if (methodDecl is null)
@@ -196,18 +194,85 @@ internal static class MatchResultStaticFactoryScanner
         }
 
         var typeDecl = methodDecl.Ancestors().OfType<TypeDeclarationSyntax>().FirstOrDefault();
-        if (typeDecl is null)
+        if (typeDecl?.Identifier.Text != "MatchResult")
         {
             return false;
         }
 
-        if (node is MemberAccessExpressionSyntax memberAccess
-            && methodDecl.Identifier.Text == memberAccess.Name.Identifier.Text
-            && typeDecl.Identifier.Text == (memberAccess.Expression as IdentifierNameSyntax)?.Identifier.Text)
+        if (methodDecl.Identifier.Text != CreateMethod && methodDecl.Identifier.Text != RehydrateMethod)
         {
-            return true;
+            return false;
         }
 
-        return false;
+        return methodDecl.DescendantNodesAndSelf().Contains(node);
+    }
+
+    private static ImmutableArray<MetadataReference> BuildMetadataReferences(string repoRoot)
+    {
+        var references = new List<MetadataReference>
+        {
+            MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+            MetadataReference.CreateFromFile(typeof(Enumerable).Assembly.Location),
+            MetadataReference.CreateFromFile(typeof(MyClub.PlayUp.Domain.Matches.MatchResult).Assembly.Location),
+        };
+
+        foreach (var referenceName in typeof(MyClub.PlayUp.Domain.Matches.MatchResult).Assembly.GetReferencedAssemblies())
+        {
+            try
+            {
+                var loaded = Assembly.Load(referenceName);
+                if (!string.IsNullOrEmpty(loaded.Location))
+                {
+                    references.Add(MetadataReference.CreateFromFile(loaded.Location));
+                }
+            }
+            catch (FileNotFoundException)
+            {
+                // Optional dependency not on disk in test context.
+            }
+        }
+
+        var trustedAssemblies = AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") as string;
+        if (!string.IsNullOrEmpty(trustedAssemblies))
+        {
+            foreach (var path in trustedAssemblies.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (File.Exists(path))
+                {
+                    references.Add(MetadataReference.CreateFromFile(path));
+                }
+            }
+        }
+
+        var srcRoot = Path.Combine(repoRoot, "src");
+        if (Directory.Exists(srcRoot))
+        {
+            foreach (var assemblyPath in Directory.EnumerateFiles(srcRoot, "*.dll", SearchOption.AllDirectories))
+            {
+                if (assemblyPath.Contains("/bin/", StringComparison.Ordinal)
+                    && assemblyPath.Contains("/Release/", StringComparison.Ordinal))
+                {
+                    references.Add(MetadataReference.CreateFromFile(assemblyPath));
+                }
+            }
+        }
+
+        return references.ToImmutableArray();
+    }
+
+    private static string FindRepositoryRootFromCaller()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null)
+        {
+            if (File.Exists(Path.Combine(directory.FullName, "MyClub.slnx")))
+            {
+                return directory.FullName;
+            }
+
+            directory = directory.Parent;
+        }
+
+        throw new InvalidOperationException("Repository root not found.");
     }
 }

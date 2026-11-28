@@ -120,7 +120,7 @@ public sealed class TwoLegAggregateStillLevelTests
     }
 
     [Fact]
-    public void Parity_entry_b_wins_on_mirror_scores_with_away_goals_level_on_goals()
+    public void Parity_entry_b_wins_on_mirror_scores_when_aggregate_favors_b()
     {
         var tieFormat = TwoLeg(awayGoals: true);
         var legs = Legs(

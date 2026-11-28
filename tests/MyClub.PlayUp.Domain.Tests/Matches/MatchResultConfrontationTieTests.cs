@@ -8,7 +8,6 @@ using FluentAssertions;
 using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
 using MyClub.PlayUp.Domain.Rules;
-using MyClub.PlayUp.Domain.Stages;
 using Xunit;
 
 namespace MyClub.PlayUp.Domain.Tests.Matches;
@@ -22,15 +21,18 @@ public sealed class MatchResultConfrontationTieTests
     private readonly EntryId _entryA = EntryId.New();
     private readonly EntryId _entryB = EntryId.New();
 
+    private static TieFormat TwoLegFormat(bool awayGoals = false, bool withShootout = true) =>
+        new(
+            TieFormat.TwoLegs,
+            aggregateScoring: true,
+            awayGoalsRule: awayGoals ? new AwayGoalsRule() : null,
+            penaltyShootoutRule: withShootout ? new PenaltyShootoutRule() : null);
+
     [Fact]
-    public void CreateConfrontationTiePenaltyShootout_accepts_unequal_score_with_decisive_shootout()
+    public void CreateConfrontationTiePenaltyShootout_accepts_unequal_return_with_level_aggregate()
     {
-        var proof = CreateProofForLevelAggregate();
-        var result = MatchResult.CreateConfrontationTiePenaltyShootout(
-            new Score(1, 0),
-            extraTimePlayed: false,
-            new PenaltyShootoutScore(5, 4),
-            proof);
+        var tieFormat = TwoLegFormat();
+        var result = CreateFlagged(tieFormat, firstScore: new Score(1, 0), returnScore: new Score(1, 0));
 
         result.Type.Should().Be(ResultType.Played);
         result.Score.Should().Be(new Score(1, 0));
@@ -39,14 +41,10 @@ public sealed class MatchResultConfrontationTieTests
     }
 
     [Fact]
-    public void CreateConfrontationTiePenaltyShootout_rejects_equal_play_score()
+    public void CreateConfrontationTiePenaltyShootout_rejects_equal_return_play_score()
     {
-        var proof = CreateProofForLevelAggregate();
-        var act = () => MatchResult.CreateConfrontationTiePenaltyShootout(
-            new Score(1, 1),
-            extraTimePlayed: true,
-            new PenaltyShootoutScore(5, 4),
-            proof);
+        var tieFormat = TwoLegFormat();
+        var act = () => CreateFlagged(tieFormat, new Score(1, 0), new Score(0, 0));
 
         act.Should().Throw<DomainException>()
             .Which.Code.Should().Be(MatchErrorCodes.InvalidResult);
@@ -55,41 +53,75 @@ public sealed class MatchResultConfrontationTieTests
     [Fact]
     public void CreateConfrontationTiePenaltyShootout_rejects_non_decisive_shootout()
     {
-        var proof = CreateProofForLevelAggregate();
+        var tieFormat = TwoLegFormat();
         var act = () => MatchResult.CreateConfrontationTiePenaltyShootout(
-            new Score(2, 1),
-            extraTimePlayed: false,
-            new PenaltyShootoutScore(3, 3),
-            proof);
+            tieFormat,
+            _entryA,
+            _entryB,
+            MatchStatus.Finished,
+            new Score(1, 0),
+            false,
+            _entryB,
+            _entryA,
+            new Score(1, 0),
+            false,
+            new PenaltyShootoutScore(3, 3));
 
         act.Should().Throw<DomainException>()
             .Which.Code.Should().Be(MatchErrorCodes.InvalidResult);
     }
 
     [Fact]
-    public void Rehydrate_accepts_stored_flag_without_proof()
+    public void CreateConfrontationTiePenaltyShootout_rejects_level_first_leg_with_breaking_return_aggregate()
     {
-        var result = MatchResult.Rehydrate(
-            ResultType.Played,
-            new Score(1, 0),
-            extraTimePlayed: false,
-            new PenaltyShootoutScore(5, 4),
-            confrontationTiePenaltyShootout: true);
+        var tieFormat = TwoLegFormat();
+        var act = () => CreateFlagged(tieFormat, new Score(1, 0), new Score(5, 0));
 
-        result.ConfrontationTiePenaltyShootout.Should().BeTrue();
+        act.Should().Throw<DomainException>()
+            .Which.Code.Should().Be(MatchErrorCodes.InvalidResult);
     }
 
     [Fact]
-    public void Rehydrate_rejects_flag_without_shootout()
+    public void CreateConfrontationTiePenaltyShootout_rejects_another_breaking_return_score_for_same_first_leg()
     {
-        var act = () => MatchResult.Rehydrate(
-            ResultType.Played,
+        var tieFormat = TwoLegFormat();
+        CreateFlagged(tieFormat, new Score(1, 0), new Score(1, 0)).ConfrontationTiePenaltyShootout.Should().BeTrue();
+
+        var act = () => CreateFlagged(tieFormat, new Score(1, 0), new Score(0, 3));
+
+        act.Should().Throw<DomainException>()
+            .Which.Code.Should().Be(MatchErrorCodes.InvalidResult);
+    }
+
+    [Fact]
+    public void CreateConfrontationTiePenaltyShootout_rejects_equal_legs_without_shootout_rule_on_format()
+    {
+        var tieFormat = TwoLegFormat(withShootout: false);
+        var act = () => CreateFlagged(tieFormat, new Score(0, 0), new Score(0, 0));
+
+        act.Should().Throw<DomainException>()
+            .Which.Code.Should().Be(MatchErrorCodes.InvalidResult);
+    }
+
+    [Fact]
+    public void CreateConfrontationTiePenaltyShootout_rejects_when_first_leg_not_finished()
+    {
+        var tieFormat = TwoLegFormat();
+        var act = () => MatchResult.CreateConfrontationTiePenaltyShootout(
+            tieFormat,
+            _entryA,
+            _entryB,
+            MatchStatus.Live,
             new Score(1, 0),
             false,
-            penaltyShootoutScore: null,
-            confrontationTiePenaltyShootout: true);
+            _entryB,
+            _entryA,
+            new Score(1, 0),
+            false,
+            new PenaltyShootoutScore(5, 4));
 
-        act.Should().Throw<DomainException>().Which.Code.Should().Be(MatchErrorCodes.InvalidResult);
+        act.Should().Throw<DomainException>()
+            .Which.Code.Should().Be(MatchErrorCodes.InvalidResult);
     }
 
     [Fact]
@@ -104,15 +136,17 @@ public sealed class MatchResultConfrontationTieTests
             .Which.Code.Should().Be(MatchErrorCodes.InvalidResult);
     }
 
-    private ConfrontationTieEligibilityProof CreateProofForLevelAggregate()
-    {
-        var tieFormat = new TieFormat(TieFormat.TwoLegs, aggregateScoring: true);
-        var legs = new FixtureLegSnapshot[]
-        {
-            new(1, MatchId.New(), _entryA, _entryB, MatchStatus.Finished, new Score(1, 0), false, null),
-            new(2, MatchId.New(), _entryB, _entryA, MatchStatus.Finished, new Score(1, 0), false, new PenaltyShootoutScore(5, 4)),
-        };
-
-        return ConfrontationTieEligibility.CreateProof(tieFormat, _entryA, _entryB, legs);
-    }
+    private MatchResult CreateFlagged(TieFormat tieFormat, Score firstScore, Score returnScore) =>
+        MatchResult.CreateConfrontationTiePenaltyShootout(
+            tieFormat,
+            _entryA,
+            _entryB,
+            MatchStatus.Finished,
+            firstScore,
+            false,
+            _entryB,
+            _entryA,
+            returnScore,
+            false,
+            new PenaltyShootoutScore(5, 4));
 }

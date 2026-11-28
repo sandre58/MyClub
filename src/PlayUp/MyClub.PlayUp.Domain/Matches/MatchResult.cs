@@ -5,6 +5,8 @@
 // -----------------------------------------------------------------------
 
 using MyClub.PlayUp.Domain.Common;
+using MyClub.PlayUp.Domain.Rules;
+using MyClub.PlayUp.Domain.Stages;
 
 namespace MyClub.PlayUp.Domain.Matches;
 
@@ -90,21 +92,111 @@ public sealed record MatchResult
     }
 
     /// <summary>
-    /// Creates a played result with <see cref="ConfrontationTiePenaltyShootout"/> after route eligibility and a domain proof.
+    /// Single domain entry point for a played confrontation-tie shootout on an unequal final-leg score.
     /// </summary>
-    /// <param name="score">Unequal final-leg play score (shootout excluded).</param>
-    /// <param name="extraTimePlayed">Whether extra time was played.</param>
-    /// <param name="penaltyShootoutScore">Decisive shootout score.</param>
-    /// <param name="proof">Proof that the aggregate was level when the result was entered.</param>
+    /// <param name="tieFormat">Effective confrontation format (aggregate, away goals, penalty rule).</param>
+    /// <param name="firstLegHomeEntryId">First-leg home entry.</param>
+    /// <param name="firstLegAwayEntryId">First-leg away entry.</param>
+    /// <param name="firstLegStatus">First-leg match status.</param>
+    /// <param name="firstLegScore">First-leg play score.</param>
+    /// <param name="firstLegExtraTimePlayed">Whether extra time was played on the first leg.</param>
+    /// <param name="returnLegHomeEntryId">Return-leg home entry.</param>
+    /// <param name="returnLegAwayEntryId">Return-leg away entry.</param>
+    /// <param name="returnLegScore">Return-leg play score (shootout excluded).</param>
+    /// <param name="returnLegExtraTimePlayed">Whether extra time was played on the return leg.</param>
+    /// <param name="penaltyShootoutScore">Decisive shootout on the return leg.</param>
+    /// <param name="firstLegMatchId">Optional first-leg match identity for snapshots.</param>
+    /// <param name="returnLegMatchId">Optional return-leg match identity for snapshots.</param>
     public static MatchResult CreateConfrontationTiePenaltyShootout(
-        Score score,
-        bool extraTimePlayed,
+        TieFormat tieFormat,
+        EntryId firstLegHomeEntryId,
+        EntryId firstLegAwayEntryId,
+        MatchStatus firstLegStatus,
+        Score firstLegScore,
+        bool firstLegExtraTimePlayed,
+        EntryId returnLegHomeEntryId,
+        EntryId returnLegAwayEntryId,
+        Score returnLegScore,
+        bool returnLegExtraTimePlayed,
         PenaltyShootoutScore penaltyShootoutScore,
-        ConfrontationTieEligibilityProof proof)
+        MatchId? firstLegMatchId = null,
+        MatchId? returnLegMatchId = null)
     {
-        ArgumentNullException.ThrowIfNull(proof);
+        ArgumentNullException.ThrowIfNull(tieFormat);
 
-        return new(ResultType.Played, score, extraTimePlayed, penaltyShootoutScore, confrontationTiePenaltyShootout: true);
+        if (tieFormat.NumberOfLegs != TieFormat.TwoLegs || !tieFormat.AggregateScoring)
+        {
+            throw new DomainException(
+                "Confrontation tie penalty shootout requires a two-leg aggregate format.",
+                MatchErrorCodes.InvalidResult);
+        }
+
+        if (tieFormat.PenaltyShootoutRule is null)
+        {
+            throw new DomainException(
+                "Confrontation tie penalty shootout requires a penalty shootout rule.",
+                MatchErrorCodes.InvalidResult);
+        }
+
+        if (firstLegStatus != MatchStatus.Finished)
+        {
+            throw new DomainException(
+                "Confrontation tie penalty shootout requires a finished first leg with a score.",
+                MatchErrorCodes.InvalidResult);
+        }
+
+        if (returnLegScore.HomeGoals == returnLegScore.AwayGoals)
+        {
+            throw new DomainException(
+                "Confrontation tie penalty shootout requires an unequal play score on the final leg.",
+                MatchErrorCodes.InvalidResult);
+        }
+
+        if (penaltyShootoutScore.HomeGoals == penaltyShootoutScore.AwayGoals)
+        {
+            throw new DomainException(
+                "Penalty shootout score must be decisive (home ≠ away).",
+                MatchErrorCodes.InvalidResult);
+        }
+
+        var firstLegId = firstLegMatchId ?? MatchId.New();
+        var returnLegId = returnLegMatchId ?? MatchId.New();
+        var legs = new FixtureLegSnapshot[]
+        {
+            new(
+                1,
+                firstLegId,
+                firstLegHomeEntryId,
+                firstLegAwayEntryId,
+                firstLegStatus,
+                firstLegScore,
+                firstLegExtraTimePlayed,
+                penaltyShootoutScore: null),
+            new(
+                2,
+                returnLegId,
+                returnLegHomeEntryId,
+                returnLegAwayEntryId,
+                MatchStatus.Finished,
+                returnLegScore,
+                returnLegExtraTimePlayed,
+                penaltyShootoutScore),
+        };
+
+        var (entryA, entryB) = ResolveEntryPair(legs);
+        if (!TwoLegAggregateStillLevel.AfterPlayScores(tieFormat, entryA, entryB, legs))
+        {
+            throw new DomainException(
+                "Confrontation tie penalty shootout requires a level aggregate after play scores.",
+                MatchErrorCodes.InvalidResult);
+        }
+
+        return new MatchResult(
+            ResultType.Played,
+            returnLegScore,
+            returnLegExtraTimePlayed,
+            penaltyShootoutScore,
+            confrontationTiePenaltyShootout: true);
     }
 
     /// <summary>
@@ -115,13 +207,7 @@ public sealed record MatchResult
     /// eligibility is not replayed (sister leg and live rules are not loaded). The fixture outcome resolver
     /// remains the authority for the qualified entry. Only shape invariants are enforced here.
     /// </remarks>
-    /// <param name="type">Stored result type.</param>
-    /// <param name="score">Stored play score.</param>
-    /// <param name="extraTimePlayed">Stored extra time flag.</param>
-    /// <param name="penaltyShootoutScore">Stored shootout when present.</param>
-    /// <param name="confrontationTiePenaltyShootout">Stored confrontation tie flag.</param>
-    /// <returns>The rehydrated result.</returns>
-    public static MatchResult Rehydrate(
+    internal static MatchResult Rehydrate(
         ResultType type,
         Score score,
         bool extraTimePlayed,
@@ -148,6 +234,25 @@ public sealed record MatchResult
         }
 
         return new MatchResult(type, score, extraTimePlayed, penaltyShootoutScore.Value, confrontationTiePenaltyShootout: true);
+    }
+
+    private static (EntryId EntryA, EntryId EntryB) ResolveEntryPair(IReadOnlyList<FixtureLegSnapshot> legs)
+    {
+        var entries = legs
+            .SelectMany(l => new[] { l.HomeEntryId, l.AwayEntryId })
+            .Where(id => id is not null)
+            .Select(id => id!.Value)
+            .Distinct()
+            .ToArray();
+
+        if (entries.Length != 2)
+        {
+            throw new DomainException(
+                "Fixture confrontation requires exactly two distinct entries across all legs.",
+                MatchErrorCodes.InvalidResult);
+        }
+
+        return (entries[0], entries[1]);
     }
 
     private static void ValidateCommon(ResultType type, Score score, PenaltyShootoutScore? penaltyShootoutScore)

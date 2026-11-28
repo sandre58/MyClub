@@ -12,49 +12,79 @@ namespace MyClub.PlayUp.Application.Tests.Architecture;
 /// <summary>
 /// Confrontation tie factory calls in product code must stay at eligibility and persistence edges.
 /// </summary>
+/// <remarks>
+/// Runtime reflection (<c>GetMethod</c>, <c>Invoke</c>, <c>Activator</c>, <c>GetUninitializedObject</c>) can bypass this scan; that gap is an accepted limitation.
+/// </remarks>
 public sealed class MatchResultConfrontationTieFactoryArchitectureTests
 {
     [Fact]
-    public void MatchResult_public_static_factories_are_tracked()
+    public void MatchResult_has_single_public_static_factory_for_flagged_results()
     {
-        var names = MatchResultStaticFactoryScanner.DiscoverMatchResultStaticFactoryNames();
-        names.Should().BeEquivalentTo(["CreateConfrontationTiePenaltyShootout", "Rehydrate"]);
+        var names = MatchResultStaticFactoryScanner.DiscoverPublicMatchResultStaticFactoryNames();
+        names.Should().BeEquivalentTo(["CreateConfrontationTiePenaltyShootout"]);
     }
 
     [Fact]
-    public void Product_code_references_MatchResult_static_factories_only_at_allowed_sites()
+    public void Product_code_references_confrontation_tie_factories_only_at_allowed_sites()
     {
         var repoRoot = FindRepositoryRoot();
         var violations = MatchResultStaticFactoryScanner.ScanRepository(repoRoot);
 
         violations.Should().BeEmpty(
             "CreateConfrontationTiePenaltyShootout must be called only from ConfrontationTiePenaltyShootoutEligibility, "
-            + "Rehydrate only from MatchResultJson and MatchResultJsonConverter, "
-            + "and ConfrontationTieEligibility.CreateProof only from eligibility.");
+            + "and Rehydrate only from MatchResultJson and MatchResultJsonConverter.");
     }
 
-    [Fact]
-    public void Scanner_detects_method_group_and_nameof_references()
+    [Theory]
+    [InlineData(
+        """
+        using MR = MyClub.PlayUp.Domain.Matches.MatchResult;
+        static class P { static readonly string N = nameof(MR.Rehydrate); }
+        """,
+        "Rehydrate")]
+    [InlineData(
+        """
+        static class P {
+            static void M() => global::MyClub.PlayUp.Domain.Matches.MatchResult.Rehydrate(
+                MyClub.PlayUp.Domain.Matches.ResultType.Played,
+                new MyClub.PlayUp.Domain.Common.Score(1, 0),
+                false,
+                new MyClub.PlayUp.Domain.Matches.PenaltyShootoutScore(5, 4),
+                true);
+        }
+        """,
+        "Rehydrate")]
+    [InlineData(
+        """
+        using static MyClub.PlayUp.Domain.Matches.MatchResult;
+        using MyClub.PlayUp.Domain.Common;
+        using MyClub.PlayUp.Domain.Matches;
+        using MyClub.PlayUp.Domain.Rules;
+        static class P {
+            static void M() => CreateConfrontationTiePenaltyShootout(
+                new TieFormat(TieFormat.TwoLegs, aggregateScoring: true, penaltyShootoutRule: new PenaltyShootoutRule()),
+                default, default, MatchStatus.Finished, new Score(1, 0), false,
+                default, default, new Score(2, 1), false, new PenaltyShootoutScore(5, 4));
+        }
+        """,
+        "CreateConfrontationTiePenaltyShootout")]
+    [InlineData(
+        """
+        using System;
+        using MyClub.PlayUp.Domain.Common;
+        using MyClub.PlayUp.Domain.Matches;
+        using MyClub.PlayUp.Domain.Rules;
+        static class P {
+            static Func<TieFormat, EntryId, EntryId, MatchStatus, Score, bool, EntryId, EntryId, Score, bool, PenaltyShootoutScore, MatchResult> G =
+                MatchResult.CreateConfrontationTiePenaltyShootout;
+        }
+        """,
+        "CreateConfrontationTiePenaltyShootout")]
+    public void Semantic_scanner_detects_negative_probe(string snippet, string expectedMethod)
     {
-        const string snippet = """
-            using System;
-            using MyClub.PlayUp.Domain.Matches;
-            static class Probe
-            {
-                static void Bad()
-                {
-                    Func<Score, bool, PenaltyShootoutScore, ConfrontationTieEligibilityProof, MatchResult> a =
-                        MatchResult.CreateConfrontationTiePenaltyShootout;
-                    _ = nameof(MatchResult.Rehydrate);
-                }
-            }
-            """;
-
         var violations = MatchResultStaticFactoryScanner.FindViolations(snippet, "tests/Architecture/probe.cs");
 
-        violations.Should().Contain(v => v.Contains("CreateConfrontationTiePenaltyShootout", StringComparison.Ordinal));
-        violations.Should().Contain(v => v.Contains("Rehydrate", StringComparison.Ordinal));
-        violations.Should().HaveCountGreaterThanOrEqualTo(2);
+        violations.Should().Contain(v => v.Contains(expectedMethod, StringComparison.Ordinal), snippet);
     }
 
     private static string FindRepositoryRoot()

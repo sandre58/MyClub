@@ -46,13 +46,6 @@ internal static class ConfrontationTiePenaltyShootoutEligibility
                             "Confrontation tie penalty shootout requires a decisive shootout score.",
                             MatchErrorCodes.InvalidResult);
 
-        if (shape.Score.HomeGoals == shape.Score.AwayGoals)
-        {
-            throw new DomainException(
-                "Confrontation tie penalty shootout requires an unequal play score on the final leg.",
-                MatchErrorCodes.InvalidResult);
-        }
-
         var fixtureId = stage.FindFixtureIdContainingMatch(match.Id);
         if (fixtureId is null)
         {
@@ -85,19 +78,6 @@ internal static class ConfrontationTiePenaltyShootoutEligibility
         }
 
         var tieFormat = Stage.ResolveEffectiveTieFormat(round, stage.Regulation);
-        if (tieFormat.NumberOfLegs != TieFormat.TwoLegs || !tieFormat.AggregateScoring)
-        {
-            throw new DomainException(
-                "Confrontation tie penalty shootout requires a two-leg aggregate format.",
-                MatchErrorCodes.InvalidResult);
-        }
-
-        if (tieFormat.PenaltyShootoutRule is null)
-        {
-            throw new DomainException(
-                "Confrontation tie penalty shootout requires a penalty shootout rule.",
-                MatchErrorCodes.InvalidResult);
-        }
 
         var expectedLegs = CupConfrontationMaterializer.ExpectedLegsForFixture(stage, fixture);
         if (expectedLegs != TieFormat.TwoLegs)
@@ -139,90 +119,41 @@ internal static class ConfrontationTiePenaltyShootoutEligibility
                 MatchErrorCodes.InvalidResult);
         }
 
-        if (firstLeg.Status != MatchStatus.Finished || firstLeg.Result?.Score is null)
-        {
-            throw new DomainException(
-                "Confrontation tie penalty shootout requires a finished first leg with a score.",
-                MatchErrorCodes.InvalidResult);
-        }
+        var firstResult = firstLeg.Result
+                           ?? throw new DomainException(
+                               "Confrontation tie penalty shootout requires a finished first leg with a score.",
+                               MatchErrorCodes.InvalidResult);
 
-        var legs = BuildLegSnapshots(
-            fixture,
-            match,
+        var firstHome = firstLeg.HomeEntryId
+                        ?? throw new DomainException(
+                            "Confrontation tie penalty shootout requires resolved first-leg entries.",
+                            MatchErrorCodes.InvalidResult);
+        var firstAway = firstLeg.AwayEntryId
+                        ?? throw new DomainException(
+                            "Confrontation tie penalty shootout requires resolved first-leg entries.",
+                            MatchErrorCodes.InvalidResult);
+        var returnHome = match.HomeEntryId
+                         ?? throw new DomainException(
+                             "Confrontation tie penalty shootout requires resolved return-leg entries.",
+                             MatchErrorCodes.InvalidResult);
+        var returnAway = match.AwayEntryId
+                         ?? throw new DomainException(
+                             "Confrontation tie penalty shootout requires resolved return-leg entries.",
+                             MatchErrorCodes.InvalidResult);
+
+        return MatchResult.CreateConfrontationTiePenaltyShootout(
+            tieFormat,
+            firstHome,
+            firstAway,
+            firstLeg.Status,
+            firstResult.Score,
+            firstResult.ExtraTimePlayed,
+            returnHome,
+            returnAway,
             shape.Score,
             shape.ExtraTimePlayed,
             shootout,
-            firstLeg);
-        var (entryA, entryB) = ResolveEntryPair(legs);
-        var proof = ConfrontationTieEligibility.CreateProof(tieFormat, entryA, entryB, legs);
-
-        return MatchResult.CreateConfrontationTiePenaltyShootout(shape.Score, shape.ExtraTimePlayed, shootout, proof);
-    }
-
-    private static List<FixtureLegSnapshot> BuildLegSnapshots(
-        Fixture fixture,
-        Match currentMatch,
-        Score proposedPlayScore,
-        bool proposedExtraTimePlayed,
-        PenaltyShootoutScore proposedShootout,
-        Match firstLeg)
-    {
-        var snapshots = new List<FixtureLegSnapshot>(fixture.Attachments.Count);
-        foreach (var attachment in fixture.Attachments.OrderBy(a => a.LegIndex))
-        {
-            if (attachment.MatchId.Equals(currentMatch.Id))
-            {
-                snapshots.Add(new FixtureLegSnapshot(
-                    attachment.LegIndex,
-                    currentMatch.Id,
-                    currentMatch.HomeEntryId,
-                    currentMatch.AwayEntryId,
-                    MatchStatus.Finished,
-                    proposedPlayScore,
-                    proposedExtraTimePlayed,
-                    proposedShootout));
-                continue;
-            }
-
-            if (attachment.LegIndex == 1)
-            {
-                var firstResult = firstLeg.Result!;
-                snapshots.Add(new FixtureLegSnapshot(
-                    attachment.LegIndex,
-                    firstLeg.Id,
-                    firstLeg.HomeEntryId,
-                    firstLeg.AwayEntryId,
-                    firstLeg.Status,
-                    firstResult.Score,
-                    firstResult.ExtraTimePlayed,
-                    firstResult.PenaltyShootoutScore));
-                continue;
-            }
-
-            throw new DomainException(
-                $"Unexpected leg attachment for confrontation tie eligibility on leg {attachment.LegIndex}.",
-                MatchErrorCodes.InvalidResult);
-        }
-
-        return snapshots;
-    }
-
-    private static (EntryId EntryA, EntryId EntryB) ResolveEntryPair(IReadOnlyList<FixtureLegSnapshot> legs)
-    {
-        var entries = legs
-            .SelectMany(l => new[] { l.HomeEntryId, l.AwayEntryId })
-            .Where(id => id is not null)
-            .Select(id => id!.Value)
-            .Distinct()
-            .ToArray();
-
-        if (entries.Length != 2)
-        {
-            throw new DomainException(
-                "Fixture confrontation requires exactly two distinct entries across all legs.",
-                MatchErrorCodes.InvalidResult);
-        }
-
-        return (entries[0], entries[1]);
+            firstLeg.Id,
+            match.Id);
     }
 }
