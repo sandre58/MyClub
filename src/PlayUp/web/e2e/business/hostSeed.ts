@@ -1181,6 +1181,8 @@ type StageOverviewResponse = {
     id: string;
     fixtures: {
       id: string;
+      slotAKey?: string | null;
+      slotBKey?: string | null;
       attachments: { matchId: string; legIndex: number }[];
     }[];
   }[];
@@ -1242,9 +1244,16 @@ async function readFirstTwoLegFixture(
     throw new Error(`Semi stage ${semiStageId} has no bracket pairs.`);
   }
   const target = overview.rounds.flatMap((round) => round.fixtures);
-  const twoLeg = target.find((f) => f.attachments.length === 2);
+  const twoLeg = target.find(
+    (f) =>
+      f.attachments.length === 2 &&
+      f.slotAKey === p1.slotAKey &&
+      f.slotBKey === p1.slotBKey,
+  );
   if (!twoLeg) {
-    throw new Error(`No two-leg fixture on semi stage ${semiStageId}.`);
+    throw new Error(
+      `No two-leg fixture for pair ${p1.pairKey} on semi stage ${semiStageId}.`,
+    );
   }
   const leg1 = twoLeg.attachments.find((a) => a.legIndex === 1);
   const leg2 = twoLeg.attachments.find((a) => a.legIndex === 2);

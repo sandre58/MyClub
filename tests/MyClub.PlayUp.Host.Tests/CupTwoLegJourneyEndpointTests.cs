@@ -42,6 +42,12 @@ public sealed class CupTwoLegJourneyEndpointTests(HostPostgresFixture fixture)
         legs.Leg1Index.Should().Be(1);
         legs.Leg2Index.Should().Be(2);
 
+        var teamAEntryId = legs.Leg1HomeEntryId;
+        var teamBEntryId = legs.Leg1AwayEntryId;
+        teamAEntryId.Should().NotBe(teamBEntryId);
+        legs.Leg2HomeEntryId.Should().Be(teamBEntryId);
+        legs.Leg2AwayEntryId.Should().Be(teamAEntryId);
+
         using (var startLeg1 = await client.PostAsync($"/matches/{legs.Leg1MatchId}/start", null))
         {
             startLeg1.StatusCode.Should().Be(HttpStatusCode.NoContent);
@@ -56,6 +62,7 @@ public sealed class CupTwoLegJourneyEndpointTests(HostPostgresFixture fixture)
             GetCode(problem).Should().Be(MatchErrorCodes.ExtraTimeOrShootoutOnNonFinalLeg);
         }
 
+        // Aller (manche 1) : A domicile 2-0 B extérieur.
         using (var finishLeg1 = await client.PostAsJsonAsync(
                    $"/matches/{legs.Leg1MatchId}/finish",
                    new FinishMatchRequest(ResultType.Played, 2, 0)))
@@ -68,9 +75,10 @@ public sealed class CupTwoLegJourneyEndpointTests(HostPostgresFixture fixture)
             startLeg2.StatusCode.Should().Be(HttpStatusCode.NoContent);
         }
 
+        // Retour (manche 2, côtés inversés) : B domicile 1-0 A — A perd la manche, agrégat 2-1 pour A.
         using (var finishLeg2 = await client.PostAsJsonAsync(
                    $"/matches/{legs.Leg2MatchId}/finish",
-                   new FinishMatchRequest(ResultType.Played, 0, 1)))
+                   new FinishMatchRequest(ResultType.Played, 1, 0)))
         {
             finishLeg2.StatusCode.Should().Be(HttpStatusCode.NoContent);
         }
@@ -85,7 +93,7 @@ public sealed class CupTwoLegJourneyEndpointTests(HostPostgresFixture fixture)
         var final = await finalOverview.Content.ReadFromJsonAsync<StageOverviewDto>(HostJson.Options);
         var qualifiedSlot = final!.Slots.Single(s => s.SlotKey == "S1");
         qualifiedSlot.EntryId.Should().NotBeNull();
-        qualifiedSlot.EntryId.Should().Be(legs.Leg1HomeEntryId);
+        qualifiedSlot.EntryId.Should().Be(teamAEntryId);
     }
 
     [IntegrationFact]
@@ -101,8 +109,11 @@ public sealed class CupTwoLegJourneyEndpointTests(HostPostgresFixture fixture)
         await CupTwoLegHttpSeed.StartExploitationAsync(client, seed.CompetitionId, seed.SemiStageId);
 
         var legs = await CupTwoLegHttpSeed.ReadTwoLegAttachmentsAsync(client, seed.SemiStageId);
+        var teamAEntryId = legs.Leg1HomeEntryId;
+        var teamBEntryId = legs.Leg1AwayEntryId;
 
-        await StartAndFinishAsync(client, legs.Leg1MatchId, 1, 0);
+        // Aller A 1-0 B, retour 0-0 au temps réglementaire → agrégat 1-1 ; TAB au retour désigne A.
+        await StartAndFinishAsync(client, legs.Leg1MatchId, homeGoals: 1, awayGoals: 0);
         await client.PostAsync($"/matches/{legs.Leg2MatchId}/start", null);
         using (var finishLeg2 = await client.PostAsJsonAsync(
                    $"/matches/{legs.Leg2MatchId}/finish",
@@ -111,8 +122,8 @@ public sealed class CupTwoLegJourneyEndpointTests(HostPostgresFixture fixture)
                        HomeGoals: 0,
                        AwayGoals: 0,
                        ExtraTimePlayed: true,
-                       PenaltyShootoutHomeGoals: 5,
-                       PenaltyShootoutAwayGoals: 4)))
+                       PenaltyShootoutHomeGoals: 4,
+                       PenaltyShootoutAwayGoals: 5)))
         {
             finishLeg2.StatusCode.Should().Be(HttpStatusCode.NoContent);
         }
@@ -124,7 +135,54 @@ public sealed class CupTwoLegJourneyEndpointTests(HostPostgresFixture fixture)
 
         using var finalOverview = await client.GetAsync($"/stages/{seed.FinalStageId}");
         var final = await finalOverview.Content.ReadFromJsonAsync<StageOverviewDto>(HostJson.Options);
-        final!.Slots.Single(s => s.SlotKey == "S1").EntryId.Should().Be(legs.Leg1HomeEntryId);
+        final!.Slots.Single(s => s.SlotKey == "S1").EntryId.Should().Be(teamAEntryId);
+        final.Slots.Single(s => s.SlotKey == "S1").EntryId.Should().NotBe(teamBEntryId);
+    }
+
+    [IntegrationFact]
+    public async Task Cup_two_leg_materialized_dematerialize_before_any_play_succeedsAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        using var client = factory.CreateClient();
+
+        var seed = await CupTwoLegHttpSeed.CreateSemiAndFinalAsync(client);
+        await CupTwoLegHttpSeed.SetDefaultTwoLegsAsync(client, seed.SemiStageId);
+        await CupTwoLegHttpSeed.WireSemiWinnerToFinalSlotAsync(client, seed);
+        await CupTwoLegHttpSeed.RunSlotDrawAndMaterializeP1Async(client, seed.SemiStageId);
+
+        using var dematerialize = await client.PostAsync(
+            $"/stages/{seed.SemiStageId}/matches/dematerialize",
+            null);
+        dematerialize.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await dematerialize.Content.ReadFromJsonAsync<DematerializePhaseResponse>(HostJson.Options);
+        body!.RemovedMatchCount.Should().BeGreaterThan(0);
+
+        using var structure = await client.GetAsync($"/competitions/{seed.CompetitionId}/structure");
+        var view = await structure.Content.ReadFromJsonAsync<StructureViewDto>(HostJson.Options);
+        view!.Readiness.AttachedMatchCount.Should().Be(0);
+    }
+
+    [IntegrationFact]
+    public async Task Cup_two_leg_dematerialize_blocked_after_first_leg_scoredAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        using var client = factory.CreateClient();
+
+        var seed = await CupTwoLegHttpSeed.CreateSemiAndFinalAsync(client);
+        await CupTwoLegHttpSeed.SetDefaultTwoLegsAsync(client, seed.SemiStageId);
+        await CupTwoLegHttpSeed.WireSemiWinnerToFinalSlotAsync(client, seed);
+        await CupTwoLegHttpSeed.RunSlotDrawAndMaterializeP1Async(client, seed.SemiStageId);
+        await CupTwoLegHttpSeed.StartExploitationAsync(client, seed.CompetitionId, seed.SemiStageId);
+
+        var legs = await CupTwoLegHttpSeed.ReadTwoLegAttachmentsAsync(client, seed.SemiStageId);
+        await StartAndFinishAsync(client, legs.Leg1MatchId, homeGoals: 1, awayGoals: 0);
+
+        using var dematerialize = await client.PostAsync(
+            $"/stages/{seed.SemiStageId}/matches/dematerialize",
+            null);
+        dematerialize.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var problem = await dematerialize.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options);
+        GetCode(problem).Should().Be(ApplicationErrorCodes.StructureNotMutable);
     }
 
     [IntegrationFact]
@@ -407,7 +465,8 @@ public sealed class CupTwoLegJourneyEndpointTests(HostPostgresFixture fixture)
                 leg2.LegIndex,
                 leg1Body!.Home.EntryId!.Value,
                 leg1Body.Away.EntryId!.Value,
-                leg2Body!.Home.EntryId!.Value);
+                leg2Body!.Home.EntryId!.Value,
+                leg2Body.Away.EntryId!.Value);
         }
 
         private static async Task<Guid[]> ReadActiveEntryIdsAsync(HttpClient client, Guid competitionId)
@@ -426,5 +485,6 @@ public sealed class CupTwoLegJourneyEndpointTests(HostPostgresFixture fixture)
         int Leg2Index,
         Guid Leg1HomeEntryId,
         Guid Leg1AwayEntryId,
-        Guid Leg2HomeEntryId);
+        Guid Leg2HomeEntryId,
+        Guid Leg2AwayEntryId);
 }

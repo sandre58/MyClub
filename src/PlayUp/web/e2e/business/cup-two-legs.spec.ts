@@ -100,40 +100,40 @@ test.describe('Play’Up business (Host + PostgreSQL)', () => {
       await expect(page.getByText('Terminé')).toBeVisible();
     };
 
-    await page.goto(`/matches/${ready.p1Leg1MatchId}`);
-    await finishMatchWithScore(
-      ready.leg1HomeName,
-      ready.leg1AwayName,
-      '2',
-      '0',
-    );
+    const teamAName = ready.leg1HomeName;
+    const teamBName = ready.leg1AwayName;
 
+    // Manche 1 : équipe A domicile 2-0 équipe B.
+    await page.goto(`/matches/${ready.p1Leg1MatchId}`);
+    await finishMatchWithScore(teamAName, teamBName, '2', '0');
+
+    // Manche 2 (retour, côtés inversés) : B domicile 1-0 A — A perd le retour, gagne l’agrégat.
     await page.goto(`/matches/${ready.p1Leg2MatchId}`);
     await expect(page.getByText('Manche 2')).toBeVisible();
     await finishMatchWithScore(
       ready.leg2HomeName,
       ready.leg2AwayName,
-      '0',
       '1',
+      '0',
     );
 
     await page.goto(`/competitions/${shell.competitionId}`);
     await expect(
       page.getByRole('link', { name: /Progression en attente/i }),
     ).toBeVisible();
-    // Read overview : « Appliquer la progression » n’est pas le CTA principal tant
-    // que la phase finale projette « Créer les matchs » (MaterializeFromOccupiedSlots).
+    // Écart vue d’ensemble : `naturalProgression` priorise MaterializeFromOccupiedSlots
+    // (finale) avant ApplyProgression ; apply-progression reste en API jusqu’à arbitrage UX.
     await applyCupTwoLegJourneyProgression(request, shell.semiStageId);
 
     const qualifiedName = await readFinalSlotSEntryName(
       request,
       shell.finalStageId,
     );
-    expect(qualifiedName).toBe(ready.leg1HomeName);
+    expect(qualifiedName).toBe(teamAName);
 
     await page.goto(
       `/competitions/${shell.competitionId}/structure?stage=${shell.finalStageId}`,
     );
-    await expect(page.getByText(ready.leg1HomeName)).toBeVisible();
+    await expect(page.getByText(teamAName)).toBeVisible();
   });
 });
