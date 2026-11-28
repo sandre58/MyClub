@@ -110,4 +110,62 @@ public sealed class MatchResultJsonConverterTests
         snapshot.Should().Be(left);
         ReferenceEquals(snapshot, left).Should().BeFalse();
     }
+
+    [Fact]
+    public void Convert_ordinary_played_result_omits_confrontation_tie_flag_from_json_shape()
+    {
+        var result = new MatchResult(ResultType.Played, new Score(2, 1));
+
+        var json = _converter.ConvertToProvider(result).Should().BeOfType<string>().Subject;
+
+        json.Should().Be("{\"Type\":0,\"HomeGoals\":2,\"AwayGoals\":1,\"ExtraTimePlayed\":false}");
+        json.Should().NotContain("ConfrontationTiePenaltyShootout");
+    }
+
+    [Fact]
+    public void Convert_legacy_json_without_confrontation_tie_flag_round_trips()
+    {
+        const string legacy = "{\"Type\":0,\"HomeGoals\":2,\"AwayGoals\":1,\"ExtraTimePlayed\":false}";
+
+        var restored = (MatchResult?)_converter.ConvertFromProvider(legacy);
+
+        restored.Should().Be(new MatchResult(ResultType.Played, new Score(2, 1)));
+        restored!.ConfrontationTiePenaltyShootout.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Convert_confrontation_tie_result_serializes_flag()
+    {
+        const string incoming =
+            "{\"Type\":0,\"HomeGoals\":1,\"AwayGoals\":0,\"ExtraTimePlayed\":false,"
+            + "\"PenaltyHomeGoals\":5,\"PenaltyAwayGoals\":4,\"ConfrontationTiePenaltyShootout\":true}";
+        var result = (MatchResult?)_converter.ConvertFromProvider(incoming);
+        result.Should().NotBeNull();
+        result!.ConfrontationTiePenaltyShootout.Should().BeTrue();
+
+        var json = _converter.ConvertToProvider(result).Should().BeOfType<string>().Subject;
+
+        json.Should().Contain("\"ConfrontationTiePenaltyShootout\":true");
+        json.Should().Contain("\"PenaltyHomeGoals\":5");
+        json.Should().Contain("\"PenaltyAwayGoals\":4");
+        _converter.ConvertFromProvider(json).Should().Be(result);
+    }
+
+    [Fact]
+    public void Comparer_snapshots_confrontation_tie_flag()
+    {
+        const string leftJson =
+            "{\"Type\":0,\"HomeGoals\":1,\"AwayGoals\":0,\"ExtraTimePlayed\":false,"
+            + "\"PenaltyHomeGoals\":5,\"PenaltyAwayGoals\":4,\"ConfrontationTiePenaltyShootout\":true}";
+        const string rightJson =
+            "{\"Type\":0,\"HomeGoals\":1,\"AwayGoals\":0,\"ExtraTimePlayed\":true,"
+            + "\"PenaltyHomeGoals\":4,\"PenaltyAwayGoals\":3,\"ConfrontationTiePenaltyShootout\":true}";
+        var left = (MatchResult)_converter.ConvertFromProvider(leftJson)!;
+        var right = (MatchResult)_converter.ConvertFromProvider(rightJson)!;
+        var comparer = MatchResultJsonConverter.Comparer;
+
+        comparer.Equals(left, right).Should().BeFalse();
+        comparer.Snapshot(left).Should().Be(left);
+        comparer.Snapshot(left)!.ConfrontationTiePenaltyShootout.Should().BeTrue();
+    }
 }
