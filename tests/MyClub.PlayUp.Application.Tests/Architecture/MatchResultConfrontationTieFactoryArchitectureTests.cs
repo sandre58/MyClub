@@ -11,7 +11,7 @@ using Xunit;
 namespace MyClub.PlayUp.Application.Tests.Architecture;
 
 /// <summary>
-/// Confrontation tie factory calls must stay at the persistence and entry-mapping edges.
+/// Confrontation tie factory calls in product code must stay at eligibility and persistence edges.
 /// </summary>
 public sealed class MatchResultConfrontationTieFactoryArchitectureTests
 {
@@ -22,7 +22,7 @@ public sealed class MatchResultConfrontationTieFactoryArchitectureTests
     private static readonly string[] AllowedRelativePaths =
     [
         "src/PlayUp/MyClub.PlayUp.Domain/Matches/MatchResult.cs",
-        "src/PlayUp/MyClub.PlayUp.Application/Matches/MatchResultFromEntry.cs",
+        "src/PlayUp/MyClub.PlayUp.Application/Matches/ConfrontationTiePenaltyShootoutEligibility.cs",
         "src/PlayUp/MyClub.PlayUp.Infrastructure/Persistence/Converters/MatchResultJson.cs",
         "src/PlayUp/MyClub.PlayUp.Infrastructure/Persistence/Converters/MatchResultJsonConverter.cs",
     ];
@@ -54,8 +54,8 @@ public sealed class MatchResultConfrontationTieFactoryArchitectureTests
         }
 
         violations.Should().BeEmpty(
-            "CreateConfrontationTiePenaltyShootout must be invoked only from MatchResult, MatchResultFromEntry, "
-            + "MatchResultJson, and MatchResultJsonConverter");
+            "CreateConfrontationTiePenaltyShootout must be invoked only from MatchResult (definition), "
+            + "ConfrontationTiePenaltyShootoutEligibility, MatchResultJson, and MatchResultJsonConverter");
     }
 
     private static string FindRepositoryRoot()

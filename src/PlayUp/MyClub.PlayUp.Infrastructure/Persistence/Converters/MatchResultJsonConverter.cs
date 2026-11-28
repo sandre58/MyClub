@@ -6,6 +6,7 @@
 
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using MyClub.PlayUp.Domain.Common;
 using MyClub.PlayUp.Domain.Matches;
 
 namespace MyClub.PlayUp.Infrastructure.Persistence.Converters;
@@ -42,9 +43,14 @@ public sealed class MatchResultJsonConverter : ValueConverter<MatchResult?, stri
 
         if (result.ConfrontationTiePenaltyShootout)
         {
-            return result.PenaltyShootoutScore is { } shootout
-                ? MatchResult.CreateConfrontationTiePenaltyShootout(result.Score, result.ExtraTimePlayed, shootout)
-                : throw new InvalidOperationException("Confrontation tie shootout flag requires a shootout score.");
+            if (result.PenaltyShootoutScore is not { } shootout)
+            {
+                throw new DomainException(
+                    "Confrontation tie penalty shootout requires a decisive shootout score.",
+                    MatchErrorCodes.InvalidResult);
+            }
+
+            return MatchResult.CreateConfrontationTiePenaltyShootout(result.Score, result.ExtraTimePlayed, shootout);
         }
 
         return new MatchResult(result.Type, result.Score, result.ExtraTimePlayed, result.PenaltyShootoutScore);

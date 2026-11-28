@@ -67,9 +67,18 @@ internal static class MatchResultJson
             var score = new Score(HomeGoals, AwayGoals);
             if (ConfrontationTiePenaltyShootout)
             {
+                if (Type != ResultType.Played)
+                {
+                    throw new DomainException(
+                        "Confrontation tie penalty shootout is allowed only for played results.",
+                        MatchErrorCodes.InvalidResult);
+                }
+
                 if (shootout is null)
                 {
-                    throw new InvalidOperationException("Confrontation tie shootout flag requires a shootout score.");
+                    throw new DomainException(
+                        "Confrontation tie penalty shootout requires a decisive shootout score.",
+                        MatchErrorCodes.InvalidResult);
                 }
 
                 return MatchResult.CreateConfrontationTiePenaltyShootout(score, ExtraTimePlayed, shootout.Value);

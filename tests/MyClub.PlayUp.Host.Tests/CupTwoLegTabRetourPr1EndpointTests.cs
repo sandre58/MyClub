@@ -83,6 +83,30 @@ public sealed class CupTwoLegTabRetourPr1EndpointTests(HostPostgresFixture fixtu
     }
 
     [IntegrationFact]
+    public async Task Finish_return_leg_TAB_when_aggregate_not_level_without_away_goals_returns_409Async()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        using var client = factory.CreateClient();
+
+        var seed = await PrepareLiveTwoLegCupAsync(client);
+        var legs = await CupTwoLegHttpSeed.ReadTwoLegAttachmentsAsync(client, seed.SemiStageId);
+        await StartAndFinishAsync(client, legs.Leg1MatchId, homeGoals: 2, awayGoals: 0);
+        await client.PostAsync($"/matches/{legs.Leg2MatchId}/start", null);
+
+        using var finishLeg2 = await client.PostAsJsonAsync(
+            $"/matches/{legs.Leg2MatchId}/finish",
+            new FinishMatchRequest(
+                ResultType.Played,
+                HomeGoals: 1,
+                AwayGoals: 0,
+                PenaltyShootoutHomeGoals: 5,
+                PenaltyShootoutAwayGoals: 4));
+        finishLeg2.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        GetCode(await finishLeg2.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options))
+            .Should().Be(MatchErrorCodes.InvalidResult);
+    }
+
+    [IntegrationFact]
     public async Task Finish_return_leg_TAB_when_away_goals_break_aggregate_returns_409Async()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
@@ -192,7 +216,7 @@ public sealed class CupTwoLegTabRetourPr1EndpointTests(HostPostgresFixture fixtu
     public async Task Finish_championship_match_unequal_TAB_returns_409Async()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
-        var matchId = await SeedChampionshipLiveMatchAsync(factory);
+        var matchId = await SeedChampionshipTwoLegDefaultLiveMatchAsync(factory);
         using var client = factory.CreateClient();
 
         using var response = await client.PostAsJsonAsync(
@@ -356,6 +380,61 @@ public sealed class CupTwoLegTabRetourPr1EndpointTests(HostPostgresFixture fixtu
                 PenaltyShootoutAwayGoals: 4));
         correct.StatusCode.Should().Be(HttpStatusCode.Conflict);
         GetCode(await correct.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options))
+            .Should().Be(MatchErrorCodes.InvalidResult);
+    }
+
+    [IntegrationFact]
+    public async Task Finish_groups_match_with_two_leg_default_unequal_TAB_returns_409Async()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        var matchId = await SeedGroupsTwoLegDefaultLiveMatchAsync(factory);
+        using var client = factory.CreateClient();
+
+        using var response = await client.PostAsJsonAsync(
+            $"/matches/{matchId.Value}/finish",
+            new FinishMatchRequest(
+                ResultType.Played,
+                HomeGoals: 2,
+                AwayGoals: 1,
+                PenaltyShootoutHomeGoals: 5,
+                PenaltyShootoutAwayGoals: 4));
+
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        GetCode(await response.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options))
+            .Should().Be(MatchErrorCodes.InvalidResult);
+    }
+
+    [IntegrationFact]
+    public async Task Put_return_leg_after_first_leg_correction_breaks_aggregate_refuses_identical_replayAsync()
+    {
+        await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
+        using var client = factory.CreateClient();
+
+        var seed = await PrepareLiveTwoLegCupAsync(client, requireExtraTime: false);
+        var legs = await CupTwoLegHttpSeed.ReadTwoLegAttachmentsAsync(client, seed.SemiStageId);
+        await StartAndFinishAsync(client, legs.Leg1MatchId, 1, 0);
+        var returnBody = new FinishMatchRequest(
+            ResultType.Played,
+            HomeGoals: 1,
+            AwayGoals: 0,
+            PenaltyShootoutHomeGoals: 5,
+            PenaltyShootoutAwayGoals: 4);
+        await client.PostAsync($"/matches/{legs.Leg2MatchId}/start", null);
+        using (var finish = await client.PostAsJsonAsync($"/matches/{legs.Leg2MatchId}/finish", returnBody))
+        {
+            finish.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        }
+
+        using (var correctFirst = await client.PutAsJsonAsync(
+                   $"/matches/{legs.Leg1MatchId}/result",
+                   new FinishMatchRequest(ResultType.Played, HomeGoals: 2, AwayGoals: 0)))
+        {
+            correctFirst.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        }
+
+        using var replayReturn = await client.PutAsJsonAsync($"/matches/{legs.Leg2MatchId}/result", returnBody);
+        replayReturn.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        GetCode(await replayReturn.Content.ReadFromJsonAsync<ProblemDetails>(HostJson.Options))
             .Should().Be(MatchErrorCodes.InvalidResult);
     }
 
@@ -557,7 +636,7 @@ public sealed class CupTwoLegTabRetourPr1EndpointTests(HostPostgresFixture fixtu
         return match.Id;
     }
 
-    private static async Task<MatchId> SeedChampionshipLiveMatchAsync(PlayUpWebApplicationFactory factory)
+    private static async Task<MatchId> SeedChampionshipTwoLegDefaultLiveMatchAsync(PlayUpWebApplicationFactory factory)
     {
         using var scope = factory.Services.CreateScope();
         var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
@@ -571,6 +650,12 @@ public sealed class CupTwoLegTabRetourPr1EndpointTests(HostPostgresFixture fixtu
         competitions.Add(competition);
         var stage = Stage.Create(competition.Id, new StageName("League"), SampleRegulations.Standard(), Clock);
         competition.AddStage(stage.Id, Clock);
+        stage.ReplaceDefaultTieFormat(
+            new TieFormat(
+                TieFormat.TwoLegs,
+                aggregateScoring: true,
+                penaltyShootoutRule: new PenaltyShootoutRule()),
+            Clock);
         stage.AddMatchday(1, Clock);
         stage.Prepare(Clock);
         stage.Start(Clock);
@@ -579,6 +664,42 @@ public sealed class CupTwoLegTabRetourPr1EndpointTests(HostPostgresFixture fixtu
         stages.Add(stage);
 
         var match = Match.Create(competition.Id, stage.Id, home.Id, away.Id, Clock);
+        match.Start(Clock);
+        matches.Add(match);
+        await unitOfWork.SaveChangesAsync();
+        return match.Id;
+    }
+
+    private static async Task<MatchId> SeedGroupsTwoLegDefaultLiveMatchAsync(PlayUpWebApplicationFactory factory)
+    {
+        using var scope = factory.Services.CreateScope();
+        var competitions = scope.ServiceProvider.GetRequiredService<ICompetitionRepository>();
+        var stages = scope.ServiceProvider.GetRequiredService<IStageRepository>();
+        var matches = scope.ServiceProvider.GetRequiredService<IMatchRepository>();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+
+        var competition = Competition.Create(new CompetitionName("Groups"), SampleRegulations.Standard(), Clock);
+        var home = competition.AddEntry(TeamId.New(), "Home", Clock);
+        var away = competition.AddEntry(TeamId.New(), "Away", Clock);
+        competitions.Add(competition);
+        var stage = Stage.Create(competition.Id, new StageName("Groups"), SampleRegulations.Standard(), Clock);
+        competition.AddStage(stage.Id, Clock);
+        stage.ReplaceDefaultTieFormat(
+            new TieFormat(
+                TieFormat.TwoLegs,
+                aggregateScoring: true,
+                penaltyShootoutRule: new PenaltyShootoutRule()),
+            Clock);
+        stage.AddGroup("G1", Clock);
+        var matchday = stage.AddMatchday(1, Clock);
+        var fixture = stage.AddFixture(matchday.Id, Clock);
+        var match = Match.Create(competition.Id, stage.Id, home.Id, away.Id, Clock);
+        stage.AttachMatch(fixture.Id, match.Id, legIndex: 1, Clock);
+        stage.Prepare(Clock);
+        stage.Start(Clock);
+        competition.Prepare(Clock);
+        competition.Start(Clock);
+        stages.Add(stage);
         match.Start(Clock);
         matches.Add(match);
         await unitOfWork.SaveChangesAsync();

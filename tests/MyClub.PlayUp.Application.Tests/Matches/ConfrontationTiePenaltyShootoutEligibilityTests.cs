@@ -23,254 +23,191 @@ public sealed class ConfrontationTiePenaltyShootoutEligibilityTests
     private readonly FakeClock _clock = new(new DateTimeOffset(2026, 11, 28, 14, 0, 0, TimeSpan.Zero));
 
     [Fact]
-    public async Task IsEligible_true_on_final_leg_when_aggregate_still_levelAsync()
+    public async Task BuildFlaggedResult_creates_flagged_result_on_final_leg_when_aggregate_still_levelAsync()
     {
         var (stage, first, second) = CreateTwoLegCup(withShootout: true);
         first.Start(_clock);
         first.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
         second.Start(_clock);
 
-        var entry = new MatchResultEntry(
+        var shape = Shape(
             ResultType.Played,
-            HomeGoals: 1,
-            AwayGoals: 0,
-            PenaltyShootoutHomeGoals: 5,
-            PenaltyShootoutAwayGoals: 4);
+            new Score(1, 0),
+            extraTime: false,
+            shootout: new PenaltyShootoutScore(5, 4));
 
         var matches = RepoReturning(first);
-        var eligible = await ConfrontationTiePenaltyShootoutEligibility.IsEligibleAsync(
+        var result = await ConfrontationTiePenaltyShootoutEligibility.BuildFlaggedResultAsync(
             stage,
             second,
-            entry,
+            shape,
             matches.Object,
             CancellationToken.None);
 
-        eligible.Should().BeTrue();
+        result.ConfrontationTiePenaltyShootout.Should().BeTrue();
+        result.PenaltyShootoutScore.Should().Be(new PenaltyShootoutScore(5, 4));
     }
 
     [Fact]
-    public async Task IsEligible_false_when_play_score_is_equalAsync()
+    public async Task BuildFlaggedResult_rejects_equal_play_score_on_shapeAsync()
     {
         var (stage, first, second) = CreateTwoLegCup(withShootout: true);
         first.Start(_clock);
         first.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
         second.Start(_clock);
+        var shape = Shape(ResultType.Played, new Score(0, 0), false, new PenaltyShootoutScore(5, 4));
 
-        var entry = new MatchResultEntry(
-            ResultType.Played,
-            HomeGoals: 0,
-            AwayGoals: 0,
-            PenaltyShootoutHomeGoals: 5,
-            PenaltyShootoutAwayGoals: 4);
-
-        var matches = RepoReturning(first);
-        var eligible = await ConfrontationTiePenaltyShootoutEligibility.IsEligibleAsync(
+        var act = async () => await ConfrontationTiePenaltyShootoutEligibility.BuildFlaggedResultAsync(
             stage,
             second,
-            entry,
-            matches.Object,
+            shape,
+            RepoReturning(first).Object,
             CancellationToken.None);
 
-        eligible.Should().BeFalse();
+        (await act.Should().ThrowAsync<DomainException>())
+            .Which.Code.Should().Be(MatchErrorCodes.InvalidResult);
     }
 
     [Fact]
-    public async Task IsEligible_false_when_shootout_absentAsync()
-    {
-        var (stage, first, second) = CreateTwoLegCup(withShootout: true);
-        first.Start(_clock);
-        first.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
-        second.Start(_clock);
-
-        var entry = new MatchResultEntry(ResultType.Played, HomeGoals: 1, AwayGoals: 0);
-
-        var matches = RepoReturning(first);
-        var eligible = await ConfrontationTiePenaltyShootoutEligibility.IsEligibleAsync(
-            stage,
-            second,
-            entry,
-            matches.Object,
-            CancellationToken.None);
-
-        eligible.Should().BeFalse();
-    }
-
-    [Fact]
-    public async Task IsEligible_false_on_first_legAsync()
+    public async Task BuildFlaggedResult_rejects_on_first_legAsync()
     {
         var (stage, first, _) = CreateTwoLegCup(withShootout: true);
         first.Start(_clock);
         first.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
+        var shape = Shape(ResultType.Played, new Score(1, 0), false, new PenaltyShootoutScore(5, 4));
 
-        var entry = new MatchResultEntry(
-            ResultType.Played,
-            HomeGoals: 1,
-            AwayGoals: 0,
-            PenaltyShootoutHomeGoals: 5,
-            PenaltyShootoutAwayGoals: 4);
-
-        var matches = RepoReturning(first);
-        var eligible = await ConfrontationTiePenaltyShootoutEligibility.IsEligibleAsync(
+        var act = async () => await ConfrontationTiePenaltyShootoutEligibility.BuildFlaggedResultAsync(
             stage,
             first,
-            entry,
-            matches.Object,
+            shape,
+            RepoReturning(first).Object,
             CancellationToken.None);
 
-        eligible.Should().BeFalse();
+        (await act.Should().ThrowAsync<DomainException>())
+            .Which.Code.Should().Be(MatchErrorCodes.InvalidResult);
     }
 
     [Fact]
-    public async Task IsEligible_false_when_first_leg_not_finishedAsync()
+    public async Task BuildFlaggedResult_rejects_when_first_leg_not_finishedAsync()
     {
         var (stage, first, second) = CreateTwoLegCup(withShootout: true);
         first.Start(_clock);
         second.Start(_clock);
+        var shape = Shape(ResultType.Played, new Score(1, 0), false, new PenaltyShootoutScore(5, 4));
 
-        var entry = new MatchResultEntry(
-            ResultType.Played,
-            HomeGoals: 1,
-            AwayGoals: 0,
-            PenaltyShootoutHomeGoals: 5,
-            PenaltyShootoutAwayGoals: 4);
-
-        var matches = RepoReturning(first);
-        var eligible = await ConfrontationTiePenaltyShootoutEligibility.IsEligibleAsync(
+        var act = async () => await ConfrontationTiePenaltyShootoutEligibility.BuildFlaggedResultAsync(
             stage,
             second,
-            entry,
-            matches.Object,
+            shape,
+            RepoReturning(first).Object,
             CancellationToken.None);
 
-        eligible.Should().BeFalse();
+        (await act.Should().ThrowAsync<DomainException>())
+            .Which.Code.Should().Be(MatchErrorCodes.InvalidResult);
     }
 
     [Fact]
-    public async Task IsEligible_false_when_away_goals_break_aggregateAsync()
+    public async Task BuildFlaggedResult_rejects_when_away_goals_break_aggregateAsync()
     {
         var (stage, first, second) = CreateTwoLegCup(withShootout: true, awayGoals: true);
         first.Start(_clock);
         first.Finish(new MatchResult(ResultType.Played, new Score(2, 1)), _clock);
         second.Start(_clock);
+        var shape = Shape(ResultType.Played, new Score(1, 0), false, new PenaltyShootoutScore(5, 4));
 
-        var entry = new MatchResultEntry(
-            ResultType.Played,
-            HomeGoals: 1,
-            AwayGoals: 0,
-            PenaltyShootoutHomeGoals: 5,
-            PenaltyShootoutAwayGoals: 4);
-
-        var matches = RepoReturning(first);
-        var eligible = await ConfrontationTiePenaltyShootoutEligibility.IsEligibleAsync(
+        var act = async () => await ConfrontationTiePenaltyShootoutEligibility.BuildFlaggedResultAsync(
             stage,
             second,
-            entry,
-            matches.Object,
+            shape,
+            RepoReturning(first).Object,
             CancellationToken.None);
 
-        eligible.Should().BeFalse();
+        (await act.Should().ThrowAsync<DomainException>())
+            .Which.Code.Should().Be(MatchErrorCodes.InvalidResult);
     }
 
     [Fact]
-    public async Task IsEligible_false_when_penalty_shootout_rule_absentAsync()
+    public async Task BuildFlaggedResult_rejects_when_penalty_shootout_rule_absentAsync()
     {
         var (stage, first, second) = CreateTwoLegCup(withShootout: false);
         first.Start(_clock);
         first.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
         second.Start(_clock);
+        var shape = Shape(ResultType.Played, new Score(1, 0), false, new PenaltyShootoutScore(5, 4));
 
-        var entry = new MatchResultEntry(
-            ResultType.Played,
-            HomeGoals: 1,
-            AwayGoals: 0,
-            PenaltyShootoutHomeGoals: 5,
-            PenaltyShootoutAwayGoals: 4);
-
-        var matches = RepoReturning(first);
-        var eligible = await ConfrontationTiePenaltyShootoutEligibility.IsEligibleAsync(
+        var act = async () => await ConfrontationTiePenaltyShootoutEligibility.BuildFlaggedResultAsync(
             stage,
             second,
-            entry,
-            matches.Object,
+            shape,
+            RepoReturning(first).Object,
             CancellationToken.None);
 
-        eligible.Should().BeFalse();
+        (await act.Should().ThrowAsync<DomainException>())
+            .Which.Code.Should().Be(MatchErrorCodes.InvalidResult);
     }
 
     [Fact]
-    public async Task IsEligible_false_on_single_leg_cup_async()
+    public async Task BuildFlaggedResult_rejects_on_single_leg_cup_async()
     {
         var (stage, match) = CreateSingleLegCup(withShootout: true);
         match.Start(_clock);
+        var shape = Shape(ResultType.Played, new Score(1, 0), false, new PenaltyShootoutScore(5, 4));
 
-        var entry = new MatchResultEntry(
-            ResultType.Played,
-            HomeGoals: 1,
-            AwayGoals: 0,
-            PenaltyShootoutHomeGoals: 5,
-            PenaltyShootoutAwayGoals: 4);
-
-        var matches = new Mock<IMatchRepository>(MockBehavior.Strict);
-        var eligible = await ConfrontationTiePenaltyShootoutEligibility.IsEligibleAsync(
+        var act = async () => await ConfrontationTiePenaltyShootoutEligibility.BuildFlaggedResultAsync(
             stage,
             match,
-            entry,
-            matches.Object,
+            shape,
+            new Mock<IMatchRepository>(MockBehavior.Strict).Object,
             CancellationToken.None);
 
-        eligible.Should().BeFalse();
+        (await act.Should().ThrowAsync<DomainException>())
+            .Which.Code.Should().Be(MatchErrorCodes.InvalidResult);
     }
 
     [Fact]
-    public async Task IsEligible_false_on_championship_match_without_fixtureAsync()
+    public async Task BuildFlaggedResult_rejects_on_championship_match_without_roundAsync()
     {
         var stage = CreateRunningChampionshipStage();
         var match = Match.Create(stage.CompetitionId, stage.Id, EntryId.New(), EntryId.New(), _clock);
         match.Start(_clock);
+        var shape = Shape(ResultType.Played, new Score(2, 1), false, new PenaltyShootoutScore(5, 4));
 
-        var entry = new MatchResultEntry(
-            ResultType.Played,
-            HomeGoals: 2,
-            AwayGoals: 1,
-            PenaltyShootoutHomeGoals: 5,
-            PenaltyShootoutAwayGoals: 4);
-
-        var matches = new Mock<IMatchRepository>(MockBehavior.Strict);
-        var eligible = await ConfrontationTiePenaltyShootoutEligibility.IsEligibleAsync(
+        var act = async () => await ConfrontationTiePenaltyShootoutEligibility.BuildFlaggedResultAsync(
             stage,
             match,
-            entry,
-            matches.Object,
+            shape,
+            new Mock<IMatchRepository>(MockBehavior.Strict).Object,
             CancellationToken.None);
 
-        eligible.Should().BeFalse();
+        (await act.Should().ThrowAsync<DomainException>())
+            .Which.Code.Should().Be(MatchErrorCodes.InvalidResult);
     }
 
     [Fact]
-    public async Task IsEligible_false_for_forfeit_with_shootout_countsAsync()
+    public async Task BuildFlaggedResult_rejects_for_forfeit_with_shootout_countsAsync()
     {
         var (stage, first, second) = CreateTwoLegCup(withShootout: true);
         first.Start(_clock);
         first.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
         second.Start(_clock);
+        var shape = Shape(ResultType.Forfeit, new Score(0, 3), false, new PenaltyShootoutScore(5, 4));
 
-        var entry = new MatchResultEntry(
-            ResultType.Forfeit,
-            HomeGoals: 0,
-            AwayGoals: 3,
-            PenaltyShootoutHomeGoals: 5,
-            PenaltyShootoutAwayGoals: 4);
-
-        var matches = RepoReturning(first);
-        var eligible = await ConfrontationTiePenaltyShootoutEligibility.IsEligibleAsync(
+        var act = async () => await ConfrontationTiePenaltyShootoutEligibility.BuildFlaggedResultAsync(
             stage,
             second,
-            entry,
-            matches.Object,
+            shape,
+            RepoReturning(first).Object,
             CancellationToken.None);
 
-        eligible.Should().BeFalse();
+        (await act.Should().ThrowAsync<DomainException>())
+            .Which.Code.Should().Be(MatchErrorCodes.InvalidResult);
     }
+
+    private static MatchResultEntryShape Shape(
+        ResultType type,
+        Score score,
+        bool extraTime,
+        PenaltyShootoutScore? shootout) => new(type, score, extraTime, shootout);
 
     private static Mock<IMatchRepository> RepoReturning(Match firstLeg)
     {

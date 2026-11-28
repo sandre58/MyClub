@@ -73,6 +73,42 @@ public sealed class TwoLegAggregateStillLevelTests
         TwoLegAggregateStillLevel.AfterPlayScores(TwoLeg(awayGoals: false), _entryA, _entryB, legs).Should().BeTrue();
     }
 
+    [Theory]
+    [InlineData(1, 0, 1, 0, false)]
+    [InlineData(2, 1, 1, 0, true)]
+    public void Parity_evaluate_still_level_matches_resolver_aggregate_decision(
+        int leg1Home,
+        int leg1Away,
+        int leg2Home,
+        int leg2Away,
+        bool awayGoals)
+    {
+        var legs = Legs(
+            Leg(1, _entryA, _entryB, new Score(leg1Home, leg1Away)),
+            Leg(2, _entryB, _entryA, new Score(leg2Home, leg2Away)));
+        var tieFormat = TwoLeg(awayGoals);
+
+        var decision = TwoLegAggregateStillLevel.Evaluate(tieFormat, _entryA, _entryB, legs);
+        var snapshot = new FixtureConfrontationSnapshot(FixtureId.New(), legs);
+
+        if (decision == TwoLegAggregatePlayDecision.StillLevel)
+        {
+            TwoLegAggregateStillLevel.AfterPlayScores(tieFormat, _entryA, _entryB, legs).Should().BeTrue();
+            var act = () => FixtureOutcomeResolver.Resolve(tieFormat, snapshot);
+            act.Should().Throw<DomainException>().Which.Code.Should().Be(StageErrorCodes.FixtureOutcomeUndecided);
+        }
+        else if (decision == TwoLegAggregatePlayDecision.EntryAWins)
+        {
+            var outcome = FixtureOutcomeResolver.Resolve(tieFormat, snapshot);
+            outcome.WinnerEntryId.Should().Be(_entryA);
+        }
+        else
+        {
+            var outcome = FixtureOutcomeResolver.Resolve(tieFormat, snapshot);
+            outcome.WinnerEntryId.Should().Be(_entryB);
+        }
+    }
+
     private static FixtureLegSnapshot Leg(
         int index,
         EntryId home,

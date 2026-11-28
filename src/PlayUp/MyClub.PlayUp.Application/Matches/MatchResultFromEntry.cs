@@ -14,38 +14,34 @@ namespace MyClub.PlayUp.Application.Matches;
 /// <summary>
 /// Builds a domain <see cref="MatchResult"/> from route entry after confrontation tie eligibility.
 /// </summary>
-/// <remarks>Eligibility on finish/result routes is a precondition for the flagged factory.</remarks>
 internal static class MatchResultFromEntry
 {
     /// <summary>
-    /// Maps <paramref name="entry"/> to a domain result, using the confrontation tie factory only when eligible.
+    /// Validates entry shape (partial shootout, unknown type, etc.) before match load.
+    /// </summary>
+    public static MatchResultEntryShape ValidateShape(MatchResultEntry entry) => Parse(entry);
+
+    /// <summary>
+    /// Maps validated entry to a domain result under stage/match context.
     /// </summary>
     public static async Task<MatchResult> BuildAsync(
         Stage stage,
         Match match,
-        MatchResultEntry entry,
+        MatchResultEntryShape shape,
         IMatchRepository matches,
         CancellationToken cancellationToken)
     {
-        var (type, score, extraTimePlayed, shootout) = Parse(entry);
-
-        if (shootout is null || score.HomeGoals == score.AwayGoals)
+        if (!shape.RequiresConfrontationTieEligibility)
         {
-            return new MatchResult(type, score, extraTimePlayed, shootout);
+            return new MatchResult(shape.Type, shape.Score, shape.ExtraTimePlayed, shape.Shootout);
         }
 
-        if (await ConfrontationTiePenaltyShootoutEligibility
-                .IsEligibleAsync(stage, match, entry, matches, cancellationToken)
-                .ConfigureAwait(false))
-        {
-            return MatchResult.CreateConfrontationTiePenaltyShootout(score, extraTimePlayed, shootout.Value);
-        }
-
-        return new MatchResult(type, score, extraTimePlayed, shootout);
+        return await ConfrontationTiePenaltyShootoutEligibility
+            .BuildFlaggedResultAsync(stage, match, shape, matches, cancellationToken)
+            .ConfigureAwait(false);
     }
 
-    private static (ResultType Type, Score Score, bool ExtraTimePlayed, PenaltyShootoutScore? Shootout) Parse(
-        MatchResultEntry entry)
+    private static MatchResultEntryShape Parse(MatchResultEntry entry)
     {
         PenaltyShootoutScore? shootout = null;
         if (entry.PenaltyShootoutHomeGoals is { } homeShootout && entry.PenaltyShootoutAwayGoals is { } awayShootout)
@@ -59,6 +55,10 @@ internal static class MatchResultFromEntry
                 MatchErrorCodes.InvalidResult);
         }
 
-        return (entry.Type, new Score(entry.HomeGoals, entry.AwayGoals), entry.ExtraTimePlayed, shootout);
+        return new MatchResultEntryShape(
+            entry.Type,
+            new Score(entry.HomeGoals, entry.AwayGoals),
+            entry.ExtraTimePlayed,
+            shootout);
     }
 }

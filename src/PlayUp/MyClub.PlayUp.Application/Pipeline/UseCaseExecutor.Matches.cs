@@ -70,11 +70,12 @@ public sealed partial class UseCaseExecutor
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(entry);
+        var shape = MatchResultFromEntry.ValidateShape(entry);
 
         return FinishMatchAndLogAfterCommitAsync(
             matchId,
             async (match, stage, innerToken) => await MatchResultFromEntry
-                .BuildAsync(stage, match, entry, matches, innerToken)
+                .BuildAsync(stage, match, shape, matches, innerToken)
                 .ConfigureAwait(false),
             cancellationToken);
     }
@@ -125,11 +126,12 @@ public sealed partial class UseCaseExecutor
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(entry);
+        var shape = MatchResultFromEntry.ValidateShape(entry);
 
         return CorrectMatchResultAndCommitAsync(
             matchId,
             async (match, stage, innerToken) => await MatchResultFromEntry
-                .BuildAsync(stage, match, entry, matches, innerToken)
+                .BuildAsync(stage, match, shape, matches, innerToken)
                 .ConfigureAwait(false),
             cancellationToken);
     }

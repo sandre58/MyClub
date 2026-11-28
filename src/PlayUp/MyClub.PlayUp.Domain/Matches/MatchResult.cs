@@ -93,7 +93,7 @@ public sealed record MatchResult
     /// Creates a played result with <see cref="ConfrontationTiePenaltyShootout"/> for eligibility-approved entry only.
     /// </summary>
     /// <remarks>Eligibility on finish/result routes is a precondition for this factory.</remarks>
-    internal static MatchResult CreateConfrontationTiePenaltyShootout(
+    public static MatchResult CreateConfrontationTiePenaltyShootout(
         Score score,
         bool extraTimePlayed,
         PenaltyShootoutScore penaltyShootoutScore) =>
@@ -119,26 +119,26 @@ public sealed record MatchResult
     /// <summary>
     /// Gets how the result was obtained.
     /// </summary>
-    public ResultType Type { get; init; }
+    public ResultType Type { get; }
 
     /// <summary>
     /// Gets the final play score (extra time included when played; shootout excluded).
     /// </summary>
-    public Score Score { get; init; }
+    public Score Score { get; }
 
     /// <summary>
     /// Gets a value indicating whether extra time was actually played.
     /// </summary>
-    public bool ExtraTimePlayed { get; init; }
+    public bool ExtraTimePlayed { get; }
 
     /// <summary>
     /// Gets the penalty shootout score when taken; otherwise <see langword="null"/>.
     /// </summary>
-    public PenaltyShootoutScore? PenaltyShootoutScore { get; init; }
+    public PenaltyShootoutScore? PenaltyShootoutScore { get; }
 
     /// <summary>
     /// Gets a value indicating whether the shootout on an unequal final-leg score was entered
     /// because the two-leg aggregate (after away goals when active) is still level.
     /// </summary>
-    public bool ConfrontationTiePenaltyShootout { get; init; }
+    public bool ConfrontationTiePenaltyShootout { get; }
 }

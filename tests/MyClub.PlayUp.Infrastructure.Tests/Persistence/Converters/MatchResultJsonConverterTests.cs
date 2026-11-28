@@ -168,4 +168,16 @@ public sealed class MatchResultJsonConverterTests
         comparer.Snapshot(left).Should().Be(left);
         comparer.Snapshot(left)!.ConfrontationTiePenaltyShootout.Should().BeTrue();
     }
+
+    [Fact]
+    public void Convert_rejects_confrontation_tie_flag_when_type_is_not_played()
+    {
+        const string json =
+            "{\"Type\":1,\"HomeGoals\":1,\"AwayGoals\":0,\"ExtraTimePlayed\":false,"
+            + "\"PenaltyHomeGoals\":5,\"PenaltyAwayGoals\":4,\"ConfrontationTiePenaltyShootout\":true}";
+
+        var act = () => _converter.ConvertFromProvider(json);
+
+        act.Should().Throw<DomainException>().Which.Code.Should().Be(MatchErrorCodes.InvalidResult);
+    }
 }
