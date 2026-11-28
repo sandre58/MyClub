@@ -97,6 +97,21 @@ public sealed class MatchResultConfrontationTieFactoryArchitectureTests
         }}
         """,
         "Rehydrate")]
+    [InlineData(
+        """
+        namespace Evil {
+        public class MatchResult {
+            public static void Rehydrate() {
+                _ = global::MyClub.PlayUp.Domain.Matches.MatchResult.Rehydrate(
+                    MyClub.PlayUp.Domain.Matches.ResultType.Played,
+                    new MyClub.PlayUp.Domain.Common.Score(1, 0),
+                    false,
+                    new MyClub.PlayUp.Domain.Matches.PenaltyShootoutScore(5, 4),
+                    true);
+            }
+        }}
+        """,
+        "Rehydrate")]
     public void Semantic_scanner_detects_negative_probe(string snippet, string expectedMethod)
     {
         var violations = MatchResultStaticFactoryScanner.FindViolations(snippet, "tests/Architecture/probe.cs");
