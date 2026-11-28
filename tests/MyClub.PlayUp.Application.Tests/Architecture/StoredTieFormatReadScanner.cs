@@ -13,6 +13,11 @@ namespace MyClub.PlayUp.Application.Tests.Architecture;
 /// <summary>
 /// Scans C# source for stored <c>Round.TieFormat</c> / <c>StageRegulation.TieFormat</c> member reads.
 /// </summary>
+/// <remarks>
+/// Allow-list entries are <see cref="AllowListedMembers"/> (type name + method name only).
+/// There is no parameter or signature matching: every overload or local function that shares a whitelisted
+/// method name on a whitelisted type is treated as allowed (known limitation AN2 — homonyms stay covered).
+/// </remarks>
 internal static class StoredTieFormatReadScanner
 {
     private static readonly string[] AllowListedFileSuffixes =

@@ -52,7 +52,76 @@ public sealed class StoredTieFormatPropertyReadArchitectureTests
         violations.Should().Contain(v => v.Contains("ForbiddenDirectAndConditional", StringComparison.Ordinal));
         violations.Should().HaveCount(2);
         violations.Should().NotContain(v => v.Contains("WhitelistedResolver", StringComparison.Ordinal));
-        violations.Should().NotContain(v => v.Contains("WhitelistedConditional", StringComparison.Ordinal));
+    }
+
+    private const string PartialTypeSnippet = """
+        using MyClub.PlayUp.Domain.Rules;
+        using MyClub.PlayUp.Domain.Stages;
+        using MyClub.PlayUp.Application.Reads;
+
+        namespace MyClub.PlayUp.Application.Tests.Architecture.Snippets;
+
+        internal static partial class StructureViewAssembler
+        {
+            internal static void BuildStageHubSummary(Stage stage)
+            {
+                _ = stage.Regulation.TieFormat;
+                _ = stage.Rounds.Select(r => r.TieFormat).FirstOrDefault();
+            }
+
+            internal static void ForbiddenSiblingInPartialType(Round round)
+            {
+                _ = round.TieFormat;
+                _ = round?.TieFormat;
+            }
+        }
+        """;
+
+    [Fact]
+    public void Scanner_partially_whitelisted_type_flags_only_non_listed_methods()
+    {
+        var violations = StoredTieFormatReadScanner.FindViolations(PartialTypeSnippet, "snippet.cs");
+        violations.Should().HaveCount(2);
+        violations.Should().OnlyContain(v => v.Contains("ForbiddenSiblingInPartialType", StringComparison.Ordinal));
+        violations.Should().NotContain(v => v.Contains("BuildStageHubSummary", StringComparison.Ordinal));
+    }
+
+    private const string HomonymousOverloadSnippet = """
+        using MyClub.PlayUp.Domain.Rules;
+        using MyClub.PlayUp.Domain.Stages;
+        using MyClub.PlayUp.Application.Reads;
+
+        namespace MyClub.PlayUp.Application.Tests.Architecture.Snippets;
+
+        /// <summary>
+        /// Documents AN2: whitelist is by method name; homonymous overloads share the same allowance.
+        /// </summary>
+        internal static partial class StructureViewAssembler
+        {
+            internal static void BuildStageHubSummary(Stage stage)
+            {
+                _ = stage.Regulation.TieFormat;
+            }
+
+            internal static void BuildStageHubSummary(Round round)
+            {
+                _ = round.TieFormat;
+            }
+
+            internal static void NotOnWhitelist(Round round)
+            {
+                _ = round.TieFormat;
+            }
+        }
+        """;
+
+    [Fact]
+    public void Whitelist_matches_method_name_only_homonymous_overloads_share_allowance()
+    {
+        var violations = StoredTieFormatReadScanner.FindViolations(HomonymousOverloadSnippet, "snippet.cs");
+        violations.Should().HaveCount(1);
+        violations[0].Should().Contain("NotOnWhitelist");
+        violations.Should().NotContain(v => v.Contains("BuildStageHubSummary", StringComparison.Ordinal));
     }
 
     private static string FindRepositoryRoot()
