@@ -9,6 +9,7 @@ import {
   suspendCompetition,
 } from '../../api';
 import {
+  overviewIds,
   overviewSituation,
   overviewView,
   competitionId,
@@ -1130,6 +1131,64 @@ describe('CompetitionOverviewPage — En cours / Terminée', () => {
       }),
     ).not.toBeInTheDocument();
     expect(within(closure).queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  it('shows Apply progression as primary and materialize as secondary when both are projected', async () => {
+    const fixtureId = 'ffffffff-ffff-ffff-ffff-ffffffffffff';
+    const finalStageId = '12121212-1212-1212-1212-121212121212';
+    const progressionPending = overviewSituation({
+      source: 'ProgressionPending',
+      nature: 'Blocking',
+      targetType: 'Fixture',
+      targetId: fixtureId,
+      matchId: overviewIds.matchId,
+      actionable: true,
+      actionCode: 'ApplyProgression',
+      impactCode: 'BlocksProgression',
+      params: {},
+    });
+    vi.mocked(fetchCompetitionOverview).mockResolvedValue(
+      inProgressLayoutBase({
+        status: 'Running',
+        naturalProgression: { code: 'ApplyProgression' },
+        situations: [progressionPending],
+        attentionSummary: { count: 1, items: [progressionPending] },
+        availableActions: [
+          {
+            code: 'ApplyProgression',
+            guaranteed: false,
+            stageId,
+            fixtureId,
+            matchId: overviewIds.matchId,
+          },
+          {
+            code: 'MaterializeFromOccupiedSlots',
+            guaranteed: false,
+            stageId: finalStageId,
+            params: {
+              stageName: 'Finale',
+              occupiedSlotCount: '0',
+              labelVariant: 'create',
+            },
+          },
+        ],
+      }),
+    );
+
+    renderOverviewPage();
+
+    await screen.findByRole('link', { name: /Progression en attente/i });
+    const progression = await screen.findByTestId(
+      'overview-region-progression',
+    );
+    const apply = within(progression).getByRole('button', {
+      name: 'Appliquer la progression',
+    });
+    const materialize = within(progression).getByRole('button', {
+      name: 'Créer les matchs',
+    });
+    expect(apply.className).toMatch(/ds-btn--primary/);
+    expect(materialize.className).toMatch(/ds-btn--secondary/);
   });
 
   it('renders Suspend competition beside a structural tip and confirms before the Host command', async () => {
