@@ -143,7 +143,7 @@ describe('StructurePhaseRegulationStrip', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders round confrontation lines with deltas only (no duplicate TAB)', () => {
+  it('renders confrontation digest in main style without colon separators', () => {
     renderStrip({
       stage: baseStage({
         defaultTieFormat: {
@@ -174,23 +174,61 @@ describe('StructurePhaseRegulationStrip', () => {
     });
 
     const confrontationPanel = document.getElementById('tile-confrontation')!;
-    const phaseFact = within(confrontationPanel)
-      .getByText('Phase', { exact: false })
-      .closest('.structure-regulation-digest__fact') as HTMLElement;
-    expect(
-      within(phaseFact).getByText('Phase', { exact: true }).className,
-    ).toContain('structure-regulation-digest__segment');
-    expect(phaseFact.textContent).toMatch(/2 manches/);
-    expect(phaseFact.textContent).toMatch(/TAB/);
+    const panelText = confrontationPanel.textContent ?? '';
+    expect(panelText).toContain('Aller-retour');
+    expect(panelText).toContain('TAB');
+    expect(panelText).toContain('Match unique');
+    expect(panelText).not.toMatch(/Phase\s*:/);
+    expect(panelText).not.toContain('·');
+    expect(panelText).not.toContain('+');
 
-    const roundFact = within(confrontationPanel)
+    const rows = confrontationPanel.querySelectorAll(
+      '.structure-regulation-digest__fact--row',
+    );
+    expect(rows.length).toBeGreaterThanOrEqual(2);
+
+    const finaleRow = within(confrontationPanel)
       .getByText('Finale', { exact: true })
-      .closest('.structure-regulation-digest__fact') as HTMLElement;
-    expect(
-      within(roundFact).getByText('Finale', { exact: true }).className,
-    ).toContain('structure-regulation-digest__segment');
-    expect(roundFact.textContent).toMatch(/1 manche/);
-    expect((roundFact.textContent ?? '').match(/TAB/g) ?? []).toHaveLength(0);
+      .closest('.structure-regulation-digest__fact--row') as HTMLElement;
+    expect(finaleRow.textContent).toContain('Match unique');
+    expect(finaleRow.textContent).not.toContain('Aller-retour');
+  });
+
+  it('shows sans TAB on a round row when phase has shootout and round does not', () => {
+    renderStrip({
+      stage: baseStage({
+        defaultTieFormat: {
+          numberOfLegs: 2,
+          aggregateScoring: true,
+          hasAwayGoalsRule: false,
+          hasTieExtraTime: false,
+          hasTiePenaltyShootout: true,
+        },
+        confrontationSegments: [
+          {
+            rounds: [
+              {
+                roundId: 'f',
+                name: 'Finale',
+                sortOrder: 0,
+                inheritsDefaultTieFormat: false,
+              },
+            ],
+            numberOfLegs: 1,
+            aggregateScoring: false,
+            hasAwayGoalsRule: false,
+            hasTieExtraTime: false,
+            hasTiePenaltyShootout: false,
+          },
+        ],
+      }),
+    });
+
+    const confrontationPanel = document.getElementById('tile-confrontation')!;
+    const finaleRow = within(confrontationPanel)
+      .getByText('Finale', { exact: true })
+      .closest('.structure-regulation-digest__fact--row') as HTMLElement;
+    expect(finaleRow.textContent).toMatch(/sans TAB/);
   });
 
   it('keeps uniform confrontation hint when stored overrides match phase signature', () => {
@@ -244,11 +282,13 @@ describe('StructurePhaseRegulationStrip', () => {
     expect(
       screen.queryByText('Certains tours ont leur propre format.'),
     ).not.toBeInTheDocument();
+    const confrontationPanel = document.getElementById('tile-confrontation')!;
     expect(
-      screen
-        .getByText('Phase', { exact: true })
-        .closest('.structure-regulation-digest__fact'),
+      within(confrontationPanel).getByText('Aller-retour'),
     ).toBeInTheDocument();
+    expect(
+      within(confrontationPanel).queryByText('Finale', { exact: true }),
+    ).not.toBeInTheDocument();
   });
 
   it('shows phase-specific binding hint when match rules are not frame-bound', () => {
