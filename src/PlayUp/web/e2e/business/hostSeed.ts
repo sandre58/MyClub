@@ -989,3 +989,290 @@ export async function openSportiveExploitation(
     );
   }
 }
+
+export type CupTwoLegJourneyShell = {
+  competitionId: string;
+  semiStageId: string;
+  finalStageId: string;
+  semiRoundId: string;
+};
+
+export type CupTwoLegJourneyReady = CupTwoLegJourneyShell & {
+  p1Leg1MatchId: string;
+  p1Leg2MatchId: string;
+  leg1HomeName: string;
+  leg1AwayName: string;
+  leg2HomeName: string;
+  leg2AwayName: string;
+};
+
+/**
+ * Coupe 4 (demi-finale) + phase finale 2 places, progression gagnant → S1.
+ * Sans format de confrontation : l’E2E le pose via l’UI.
+ */
+export async function createCupTwoLegJourneyShell(
+  request: APIRequestContext,
+): Promise<CupTwoLegJourneyShell> {
+  const competitionId = await postId(request, '/competitions', {
+    name: `Coupe AR ${crypto.randomUUID()}`,
+  });
+  for (let i = 1; i <= 4; i++) {
+    await addNamedEntry(request, competitionId, `Équipe ${i}`);
+  }
+
+  const structureCreate = await request.post(
+    `${playUpApiBase()}/competitions/${competitionId}/structure`,
+    { data: { format: 'Cup', bracketSize: 4 } },
+  );
+  if (!structureCreate.ok()) {
+    throw new Error(
+      `POST structure failed (${structureCreate.status()}): ${await structureCreate.text()}`,
+    );
+  }
+  const configured = (await structureCreate.json()) as {
+    structure: { format: { primaryStageId?: string | null } };
+  };
+  const semiStageId = configured.structure.format.primaryStageId?.trim();
+  if (!semiStageId) {
+    throw new Error(`No primary stage for competition ${competitionId}`);
+  }
+  const structure = await getCompetitionStructure(request, competitionId);
+
+  const finalStageId = await addStage(request, competitionId, {
+    format: 'Cup',
+    name: 'Finale',
+    bracketSize: 2,
+  });
+
+  const stageOverview = await readStageOverview(request, semiStageId);
+  const semiRoundId = stageOverview.rounds[0]?.id;
+  if (!semiRoundId) {
+    throw new Error(`Semi stage ${semiStageId} has no round.`);
+  }
+
+  const entryIds = structure.participants.entries.map((entry) => entry.entryId);
+  await sendOk(request, 'PUT', `/stages/${semiStageId}/progression-rules`, {
+    intents: [
+      {
+        intentId: crypto.randomUUID(),
+        order: 1,
+        roundId: semiRoundId,
+        outcome: 'Winner',
+        destinationStageId: finalStageId,
+        destinationSlotKeys: ['S1', 'S2'],
+      },
+    ],
+  });
+  await sendOk(request, 'PUT', `/stages/${semiStageId}/affectation`, {
+    entryIds,
+  });
+
+  return { competitionId, semiStageId, finalStageId, semiRoundId };
+}
+
+/**
+ * Complète le format 2 manches pour un départage possible (porte de préparation Coupe + progression).
+ */
+export async function ensureCupTwoLegDecidableTieFormat(
+  request: APIRequestContext,
+  semiStageId: string,
+): Promise<void> {
+  await sendOk(request, 'PUT', `/stages/${semiStageId}/tie-format`, {
+    clear: false,
+    numberOfLegs: 2,
+    hasExtraTimeRule: true,
+    hasPenaltyShootoutRule: true,
+  });
+}
+
+/** Tirage, préparation, matérialisation (2 demies) et exploitation sportive. */
+export async function prepareCupTwoLegJourneyForPlay(
+  request: APIRequestContext,
+  shell: CupTwoLegJourneyShell,
+): Promise<CupTwoLegJourneyReady> {
+  await ensureCupTwoLegDecidableTieFormat(request, shell.semiStageId);
+  await sendOk(request, 'PUT', `/stages/${shell.semiStageId}/draw-rules`, {
+    clear: false,
+    mode: 'Random',
+  });
+  await runCupSlotDrawPublishAndApply(request, shell.semiStageId);
+  await sendOk(request, 'POST', `/stages/${shell.semiStageId}/prepare`);
+  await sendOk(request, 'POST', `/competitions/${shell.competitionId}/prepare`);
+  await sendOk(
+    request,
+    'POST',
+    `/stages/${shell.semiStageId}/matches/materialize-from-slots`,
+    { pairKeys: ['P1', 'P2'] },
+  );
+  await openSportiveExploitation(
+    request,
+    shell.competitionId,
+    shell.semiStageId,
+  );
+
+  const legs = await readFirstTwoLegFixture(request, shell.semiStageId);
+  const leg1 = await readMatchDetail(request, legs.leg1MatchId);
+  const leg2 = await readMatchDetail(request, legs.leg2MatchId);
+
+  return {
+    ...shell,
+    p1Leg1MatchId: legs.leg1MatchId,
+    p1Leg2MatchId: legs.leg2MatchId,
+    leg1HomeName: leg1.homeDisplayName,
+    leg1AwayName: leg1.awayDisplayName,
+    leg2HomeName: leg2.homeDisplayName,
+    leg2AwayName: leg2.awayDisplayName,
+  };
+}
+
+export async function applyCupTwoLegJourneyProgression(
+  request: APIRequestContext,
+  semiStageId: string,
+): Promise<string> {
+  const legs = await readFirstTwoLegFixture(request, semiStageId);
+  await sendOk(
+    request,
+    'POST',
+    `/stages/${semiStageId}/fixtures/${legs.fixtureId}/apply-progression`,
+  );
+  return legs.leg1HomeEntryId;
+}
+
+export async function readFinalSlotSEntryName(
+  request: APIRequestContext,
+  finalStageId: string,
+): Promise<string | null> {
+  const overview = await readStageOverview(request, finalStageId);
+  const slot = overview.slots.find((s) => s.slotKey === 'S1');
+  return slot?.displayName ?? null;
+}
+
+type CompetitionStructureView = StructureView & {
+  participants: { entries: { entryId: string; displayName?: string }[] };
+  stages: {
+    stageId: string;
+    defaultTieFormat?: { numberOfLegs: number } | null;
+    confrontationSegments?:
+      | {
+          rounds: { roundId: string; inheritsDefaultTieFormat: boolean }[];
+          numberOfLegs: number;
+        }[]
+      | null;
+  }[];
+};
+
+async function getCompetitionStructure(
+  request: APIRequestContext,
+  competitionId: string,
+): Promise<CompetitionStructureView> {
+  const response = await request.get(
+    `${playUpApiBase()}/competitions/${competitionId}/structure`,
+  );
+  if (!response.ok()) {
+    throw new Error(
+      `GET structure failed (${response.status()}): ${await response.text()}`,
+    );
+  }
+  return (await response.json()) as CompetitionStructureView;
+}
+
+type StageOverviewResponse = {
+  rounds: {
+    id: string;
+    fixtures: {
+      id: string;
+      slotAKey?: string | null;
+      slotBKey?: string | null;
+      attachments: { matchId: string; legIndex: number }[];
+    }[];
+  }[];
+  bracketPairs: { pairKey: string; slotAKey: string; slotBKey: string }[];
+  slots: {
+    slotKey: string;
+    entryId?: string | null;
+    displayName?: string | null;
+  }[];
+};
+
+async function readStageOverview(
+  request: APIRequestContext,
+  stageId: string,
+): Promise<StageOverviewResponse> {
+  const response = await request.get(`${playUpApiBase()}/stages/${stageId}`);
+  if (!response.ok()) {
+    throw new Error(
+      `GET /stages/${stageId} failed (${response.status()}): ${await response.text()}`,
+    );
+  }
+  return (await response.json()) as StageOverviewResponse;
+}
+
+async function readMatchDetail(
+  request: APIRequestContext,
+  matchId: string,
+): Promise<{ homeDisplayName: string; awayDisplayName: string }> {
+  const response = await request.get(`${playUpApiBase()}/matches/${matchId}`);
+  if (!response.ok()) {
+    throw new Error(
+      `GET /matches/${matchId} failed (${response.status()}): ${await response.text()}`,
+    );
+  }
+  const body = (await response.json()) as {
+    home?: { displayName?: string };
+    away?: { displayName?: string };
+  };
+  return {
+    homeDisplayName: body.home?.displayName?.trim() || 'Domicile',
+    awayDisplayName: body.away?.displayName?.trim() || 'Extérieur',
+  };
+}
+
+async function readFirstTwoLegFixture(
+  request: APIRequestContext,
+  semiStageId: string,
+): Promise<{
+  fixtureId: string;
+  leg1MatchId: string;
+  leg2MatchId: string;
+  leg1HomeEntryId: string;
+}> {
+  const overview = await readStageOverview(request, semiStageId);
+  const p1 = [...overview.bracketPairs].sort((a, b) =>
+    a.pairKey.localeCompare(b.pairKey),
+  )[0];
+  if (!p1) {
+    throw new Error(`Semi stage ${semiStageId} has no bracket pairs.`);
+  }
+  const target = overview.rounds.flatMap((round) => round.fixtures);
+  const twoLeg = target.find(
+    (f) =>
+      f.attachments.length === 2 &&
+      f.slotAKey === p1.slotAKey &&
+      f.slotBKey === p1.slotBKey,
+  );
+  if (!twoLeg) {
+    throw new Error(
+      `No two-leg fixture for pair ${p1.pairKey} on semi stage ${semiStageId}.`,
+    );
+  }
+  const leg1 = twoLeg.attachments.find((a) => a.legIndex === 1);
+  const leg2 = twoLeg.attachments.find((a) => a.legIndex === 2);
+  if (!leg1 || !leg2) {
+    throw new Error('Fixture attachments missing leg 1 or leg 2.');
+  }
+  const leg1Detail = await request.get(
+    `${playUpApiBase()}/matches/${leg1.matchId}`,
+  );
+  const leg1Body = (await leg1Detail.json()) as {
+    home?: { entryId?: string };
+  };
+  if (!leg1Body.home?.entryId) {
+    throw new Error(`Match ${leg1.matchId} missing home entry.`);
+  }
+  return {
+    fixtureId: twoLeg.id,
+    leg1MatchId: leg1.matchId,
+    leg2MatchId: leg2.matchId,
+    leg1HomeEntryId: leg1Body.home.entryId,
+  };
+}
