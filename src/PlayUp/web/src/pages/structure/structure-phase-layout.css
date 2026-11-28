@@ -196,7 +196,40 @@
   color: var(--color-text-secondary);
 }
 
-@container regulation-bar (max-width: 40rem) {
+@container regulation-bar (min-width: 64rem) {
+  .structure-regulation-digest {
+    flex-wrap: nowrap;
+    align-items: flex-start;
+  }
+
+  .structure-regulation-digest__sep {
+    align-self: stretch;
+  }
+
+  #tile-match,
+  #tile-standing {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+
+  #tile-confrontation {
+    flex: 1 1 14rem;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  #tile-confrontation .structure-regulation-digest__facts {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-4);
+  }
+
+  #tile-confrontation .structure-regulation-digest__fact {
+    max-width: 100%;
+  }
+}
+
+@container regulation-bar (max-width: 64rem) {
   .structure-regulation-digest__section {
     flex: 1 1 100%;
   }

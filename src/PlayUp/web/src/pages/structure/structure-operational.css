@@ -681,7 +681,7 @@
   }
 }
 
-@container regulation-bar (max-width: 42rem) {
+@container regulation-bar (max-width: 64rem) {
   .structure-phase-regulation {
     grid-template-columns: minmax(0, 1fr) !important;
     row-gap: var(--space-16);
