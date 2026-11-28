@@ -20,6 +20,8 @@ namespace MyClub.PlayUp.Infrastructure.Persistence.Converters;
 /// Before reverting a release that persisted confrontation tie shootouts, run:
 /// <c>SELECT id FROM matches WHERE result -&gt;&gt; 'ConfrontationTiePenaltyShootout' = 'true'</c>
 /// and correct or clear those results.
+/// To list flagged results that are ill-formed for rehydration (Played = 0):
+/// <c>SELECT id FROM matches WHERE result -&gt;&gt; 'ConfrontationTiePenaltyShootout' = 'true' AND (result -&gt;&gt; 'Type' IS DISTINCT FROM '0' OR result -&gt;&gt; 'PenaltyHomeGoals' IS NULL OR result -&gt;&gt; 'PenaltyAwayGoals' IS NULL OR (result -&gt;&gt; 'HomeGoals') = (result -&gt;&gt; 'AwayGoals'))</c>.
 /// </remarks>
 internal static class MatchResultJson
 {
@@ -65,26 +67,7 @@ internal static class MatchResultJson
                 : null;
 
             var score = new Score(HomeGoals, AwayGoals);
-            if (ConfrontationTiePenaltyShootout)
-            {
-                if (Type != ResultType.Played)
-                {
-                    throw new DomainException(
-                        "Confrontation tie penalty shootout is allowed only for played results.",
-                        MatchErrorCodes.InvalidResult);
-                }
-
-                if (shootout is null)
-                {
-                    throw new DomainException(
-                        "Confrontation tie penalty shootout requires a decisive shootout score.",
-                        MatchErrorCodes.InvalidResult);
-                }
-
-                return MatchResult.CreateConfrontationTiePenaltyShootout(score, ExtraTimePlayed, shootout.Value);
-            }
-
-            return new MatchResult(Type, score, ExtraTimePlayed, shootout);
+            return MatchResult.Rehydrate(Type, score, ExtraTimePlayed, shootout, ConfrontationTiePenaltyShootout);
         }
     }
 }

@@ -315,7 +315,7 @@ public sealed class CupTwoLegTabRetourPr1EndpointTests(HostPostgresFixture fixtu
     }
 
     [IntegrationFact]
-    public async Task Finish_return_leg_equal_at_90_unequal_after_ET_with_TAB_succeedsAsync()
+    public async Task Finish_return_leg_still_level_after_ET_with_TAB_succeedsAsync()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
         using var client = factory.CreateClient();
@@ -439,7 +439,7 @@ public sealed class CupTwoLegTabRetourPr1EndpointTests(HostPostgresFixture fixtu
     }
 
     [IntegrationFact]
-    public async Task Put_first_leg_with_ET_after_progression_refuses_replayAsync()
+    public async Task Put_first_leg_non_final_with_extra_time_after_progression_is_rejectedAsync()
     {
         await using var factory = new PlayUpWebApplicationFactory(fixture.ConnectionString);
         using var client = factory.CreateClient();

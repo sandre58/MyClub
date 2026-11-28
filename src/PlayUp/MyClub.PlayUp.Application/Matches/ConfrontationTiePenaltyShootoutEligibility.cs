@@ -154,14 +154,9 @@ internal static class ConfrontationTiePenaltyShootoutEligibility
             shootout,
             firstLeg);
         var (entryA, entryB) = ResolveEntryPair(legs);
-        if (!TwoLegAggregateStillLevel.AfterPlayScores(tieFormat, entryA, entryB, legs))
-        {
-            throw new DomainException(
-                "Confrontation tie penalty shootout requires a level aggregate after play scores.",
-                MatchErrorCodes.InvalidResult);
-        }
+        var proof = ConfrontationTieEligibility.CreateProof(tieFormat, entryA, entryB, legs);
 
-        return MatchResult.CreateConfrontationTiePenaltyShootout(shape.Score, shape.ExtraTimePlayed, shootout);
+        return MatchResult.CreateConfrontationTiePenaltyShootout(shape.Score, shape.ExtraTimePlayed, shootout, proof);
     }
 
     private static List<FixtureLegSnapshot> BuildLegSnapshots(

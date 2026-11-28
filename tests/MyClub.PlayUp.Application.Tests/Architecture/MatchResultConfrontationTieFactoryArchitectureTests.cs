@@ -4,7 +4,6 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-using System.Text.RegularExpressions;
 using FluentAssertions;
 using Xunit;
 
@@ -15,47 +14,47 @@ namespace MyClub.PlayUp.Application.Tests.Architecture;
 /// </summary>
 public sealed class MatchResultConfrontationTieFactoryArchitectureTests
 {
-    private static readonly Regex CreateConfrontationTieCall = new(
-        @"CreateConfrontationTiePenaltyShootout\s*\(",
-        RegexOptions.CultureInvariant);
-
-    private static readonly string[] AllowedRelativePaths =
-    [
-        "src/PlayUp/MyClub.PlayUp.Domain/Matches/MatchResult.cs",
-        "src/PlayUp/MyClub.PlayUp.Application/Matches/ConfrontationTiePenaltyShootoutEligibility.cs",
-        "src/PlayUp/MyClub.PlayUp.Infrastructure/Persistence/Converters/MatchResultJson.cs",
-        "src/PlayUp/MyClub.PlayUp.Infrastructure/Persistence/Converters/MatchResultJsonConverter.cs",
-    ];
+    [Fact]
+    public void MatchResult_public_static_factories_are_tracked()
+    {
+        var names = MatchResultStaticFactoryScanner.DiscoverMatchResultStaticFactoryNames();
+        names.Should().BeEquivalentTo(["CreateConfrontationTiePenaltyShootout", "Rehydrate"]);
+    }
 
     [Fact]
-    public void Product_code_calls_CreateConfrontationTiePenaltyShootout_only_at_allowed_sites()
+    public void Product_code_references_MatchResult_static_factories_only_at_allowed_sites()
     {
         var repoRoot = FindRepositoryRoot();
-        var violations = new List<string>();
-        foreach (var path in Directory.EnumerateFiles(repoRoot, "*.cs", SearchOption.AllDirectories))
-        {
-            var relative = Path.GetRelativePath(repoRoot, path).Replace('\\', '/');
-            if (relative.StartsWith("tests/", StringComparison.Ordinal)
-                || relative.Contains("/Migrations/", StringComparison.Ordinal))
-            {
-                continue;
-            }
-
-            var text = File.ReadAllText(path);
-            if (!CreateConfrontationTieCall.IsMatch(text))
-            {
-                continue;
-            }
-
-            if (!AllowedRelativePaths.Any(allowed => relative.Equals(allowed, StringComparison.OrdinalIgnoreCase)))
-            {
-                violations.Add(relative);
-            }
-        }
+        var violations = MatchResultStaticFactoryScanner.ScanRepository(repoRoot);
 
         violations.Should().BeEmpty(
-            "CreateConfrontationTiePenaltyShootout must be invoked only from MatchResult (definition), "
-            + "ConfrontationTiePenaltyShootoutEligibility, MatchResultJson, and MatchResultJsonConverter");
+            "CreateConfrontationTiePenaltyShootout must be called only from ConfrontationTiePenaltyShootoutEligibility, "
+            + "Rehydrate only from MatchResultJson and MatchResultJsonConverter, "
+            + "and ConfrontationTieEligibility.CreateProof only from eligibility.");
+    }
+
+    [Fact]
+    public void Scanner_detects_method_group_and_nameof_references()
+    {
+        const string snippet = """
+            using System;
+            using MyClub.PlayUp.Domain.Matches;
+            static class Probe
+            {
+                static void Bad()
+                {
+                    Func<Score, bool, PenaltyShootoutScore, ConfrontationTieEligibilityProof, MatchResult> a =
+                        MatchResult.CreateConfrontationTiePenaltyShootout;
+                    _ = nameof(MatchResult.Rehydrate);
+                }
+            }
+            """;
+
+        var violations = MatchResultStaticFactoryScanner.FindViolations(snippet, "tests/Architecture/probe.cs");
+
+        violations.Should().Contain(v => v.Contains("CreateConfrontationTiePenaltyShootout", StringComparison.Ordinal));
+        violations.Should().Contain(v => v.Contains("Rehydrate", StringComparison.Ordinal));
+        violations.Should().HaveCountGreaterThanOrEqualTo(2);
     }
 
     private static string FindRepositoryRoot()

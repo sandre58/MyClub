@@ -41,18 +41,11 @@ public sealed class MatchResultJsonConverter : ValueConverter<MatchResult?, stri
             return null;
         }
 
-        if (result.ConfrontationTiePenaltyShootout)
-        {
-            if (result.PenaltyShootoutScore is not { } shootout)
-            {
-                throw new DomainException(
-                    "Confrontation tie penalty shootout requires a decisive shootout score.",
-                    MatchErrorCodes.InvalidResult);
-            }
-
-            return MatchResult.CreateConfrontationTiePenaltyShootout(result.Score, result.ExtraTimePlayed, shootout);
-        }
-
-        return new MatchResult(result.Type, result.Score, result.ExtraTimePlayed, result.PenaltyShootoutScore);
+        return MatchResult.Rehydrate(
+            result.Type,
+            result.Score,
+            result.ExtraTimePlayed,
+            result.PenaltyShootoutScore,
+            result.ConfrontationTiePenaltyShootout);
     }
 }

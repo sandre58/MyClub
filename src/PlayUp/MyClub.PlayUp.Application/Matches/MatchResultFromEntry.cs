@@ -43,6 +43,13 @@ internal static class MatchResultFromEntry
 
     private static MatchResultEntryShape Parse(MatchResultEntry entry)
     {
+        if (!Enum.IsDefined(entry.Type))
+        {
+            throw new DomainException(
+                $"Unknown result type '{entry.Type}'.",
+                MatchErrorCodes.InvalidResult);
+        }
+
         PenaltyShootoutScore? shootout = null;
         if (entry.PenaltyShootoutHomeGoals is { } homeShootout && entry.PenaltyShootoutAwayGoals is { } awayShootout)
         {

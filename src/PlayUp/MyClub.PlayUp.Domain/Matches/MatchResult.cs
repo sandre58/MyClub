@@ -90,14 +90,65 @@ public sealed record MatchResult
     }
 
     /// <summary>
-    /// Creates a played result with <see cref="ConfrontationTiePenaltyShootout"/> for eligibility-approved entry only.
+    /// Creates a played result with <see cref="ConfrontationTiePenaltyShootout"/> after route eligibility and a domain proof.
     /// </summary>
-    /// <remarks>Eligibility on finish/result routes is a precondition for this factory.</remarks>
+    /// <param name="score">Unequal final-leg play score (shootout excluded).</param>
+    /// <param name="extraTimePlayed">Whether extra time was played.</param>
+    /// <param name="penaltyShootoutScore">Decisive shootout score.</param>
+    /// <param name="proof">Proof that the aggregate was level when the result was entered.</param>
     public static MatchResult CreateConfrontationTiePenaltyShootout(
         Score score,
         bool extraTimePlayed,
-        PenaltyShootoutScore penaltyShootoutScore) =>
-        new(ResultType.Played, score, extraTimePlayed, penaltyShootoutScore, confrontationTiePenaltyShootout: true);
+        PenaltyShootoutScore penaltyShootoutScore,
+        ConfrontationTieEligibilityProof proof)
+    {
+        ArgumentNullException.ThrowIfNull(proof);
+
+        return new(ResultType.Played, score, extraTimePlayed, penaltyShootoutScore, confrontationTiePenaltyShootout: true);
+    }
+
+    /// <summary>
+    /// Rehydrates a persisted <see cref="MatchResult"/> without re-running route eligibility.
+    /// </summary>
+    /// <remarks>
+    /// When <paramref name="confrontationTiePenaltyShootout"/> is true, the flag is taken as stored on disk:
+    /// eligibility is not replayed (sister leg and live rules are not loaded). The fixture outcome resolver
+    /// remains the authority for the qualified entry. Only shape invariants are enforced here.
+    /// </remarks>
+    /// <param name="type">Stored result type.</param>
+    /// <param name="score">Stored play score.</param>
+    /// <param name="extraTimePlayed">Stored extra time flag.</param>
+    /// <param name="penaltyShootoutScore">Stored shootout when present.</param>
+    /// <param name="confrontationTiePenaltyShootout">Stored confrontation tie flag.</param>
+    /// <returns>The rehydrated result.</returns>
+    public static MatchResult Rehydrate(
+        ResultType type,
+        Score score,
+        bool extraTimePlayed,
+        PenaltyShootoutScore? penaltyShootoutScore,
+        bool confrontationTiePenaltyShootout = false)
+    {
+        if (!confrontationTiePenaltyShootout)
+        {
+            return new MatchResult(type, score, extraTimePlayed, penaltyShootoutScore);
+        }
+
+        if (type != ResultType.Played)
+        {
+            throw new DomainException(
+                "Confrontation tie penalty shootout is allowed only for played results.",
+                MatchErrorCodes.InvalidResult);
+        }
+
+        if (penaltyShootoutScore is null)
+        {
+            throw new DomainException(
+                "Confrontation tie penalty shootout requires a decisive shootout score.",
+                MatchErrorCodes.InvalidResult);
+        }
+
+        return new MatchResult(type, score, extraTimePlayed, penaltyShootoutScore.Value, confrontationTiePenaltyShootout: true);
+    }
 
     private static void ValidateCommon(ResultType type, Score score, PenaltyShootoutScore? penaltyShootoutScore)
     {

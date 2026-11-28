@@ -184,6 +184,47 @@ public sealed class ConfrontationTiePenaltyShootoutEligibilityTests
     }
 
     [Fact]
+    public async Task BuildFlaggedResult_rejects_when_shootout_absentAsync()
+    {
+        var (stage, first, second) = CreateTwoLegCup(withShootout: true);
+        first.Start(_clock);
+        first.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
+        second.Start(_clock);
+        var shape = Shape(ResultType.Played, new Score(1, 0), false, shootout: null);
+
+        var act = async () => await ConfrontationTiePenaltyShootoutEligibility.BuildFlaggedResultAsync(
+            stage,
+            second,
+            shape,
+            RepoReturning(first).Object,
+            CancellationToken.None);
+
+        (await act.Should().ThrowAsync<DomainException>())
+            .Which.Code.Should().Be(MatchErrorCodes.InvalidResult);
+    }
+
+    [Fact]
+    public async Task BuildFlaggedResult_rejects_when_fixture_has_single_attachmentAsync()
+    {
+        var (stage, first, second) = CreateTwoLegCup(withShootout: true);
+        var fixtureId = stage.FindFixtureIdContainingMatch(first.Id)!.Value;
+        stage.DetachMatch(fixtureId, second.Id, _clock);
+        first.Start(_clock);
+        first.Finish(new MatchResult(ResultType.Played, new Score(1, 0)), _clock);
+        var shape = Shape(ResultType.Played, new Score(1, 0), false, new PenaltyShootoutScore(5, 4));
+
+        var act = async () => await ConfrontationTiePenaltyShootoutEligibility.BuildFlaggedResultAsync(
+            stage,
+            first,
+            shape,
+            RepoReturning(first).Object,
+            CancellationToken.None);
+
+        (await act.Should().ThrowAsync<DomainException>())
+            .Which.Code.Should().Be(MatchErrorCodes.InvalidResult);
+    }
+
+    [Fact]
     public async Task BuildFlaggedResult_rejects_for_forfeit_with_shootout_countsAsync()
     {
         var (stage, first, second) = CreateTwoLegCup(withShootout: true);
